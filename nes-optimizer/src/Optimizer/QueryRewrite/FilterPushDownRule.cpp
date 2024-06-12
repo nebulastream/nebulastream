@@ -12,12 +12,9 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
-#include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -33,7 +30,6 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/FilterPushDownRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Types/ContentBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunction.hpp>
 #include <queue>

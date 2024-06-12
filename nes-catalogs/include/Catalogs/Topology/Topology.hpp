@@ -195,9 +195,16 @@ class Topology {
     /**
      * @brief acquire the lock on the topology node
      * @param workerId : the id of the topology node
-     * @return true if successfully acquired the lock else false
+     * @return locked topology node
      */
     TopologyNodeWLock lockTopologyNode(WorkerId workerId);
+
+    /**
+     * @brief acquire the lock on the topology node
+     * @param workerIds : the id of the topology nodes
+     * @return vector of locked topology nodes
+     */
+    std::vector<TopologyNodeWLock> lockTopologyNodes(std::vector<WorkerId> workerIds);
 
     /**
      * @brief Increase the amount of resources on the node with the id
@@ -412,7 +419,7 @@ class Topology {
     WorkerId getNextWorkerId();
 
     std::vector<WorkerId> rootWorkerIds;
-    folly::Synchronized<std::map<WorkerId, folly::Synchronized<TopologyNodePtr>>> workerIdToTopologyNode;
+    std::unordered_map<WorkerId, folly::Synchronized<TopologyNodePtr>> workerIdToTopologyNode;
     folly::Synchronized<NES::Spatial::Index::Experimental::LocationIndexPtr> locationIndex;
     static constexpr int BASE_MULTIPLIER = 10000;
     std::atomic_uint64_t topologyNodeIdCounter = INITIAL_WORKER_NODE_ID.getRawValue();

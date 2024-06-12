@@ -101,10 +101,8 @@ bool BasePlacementAdditionStrategy::optimisticPathSelection(
     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
 
     bool success = false;
-    uint8_t retryCount = 0;
-    std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
     // 1. Perform path selection and if failure than use the exponential back-off and retry strategy
-    while (!success && retryCount < MAX_PATH_SELECTION_RETRIES) {
+    while (!success) {
 
         // 1.1. Performs path selection
         std::vector<TopologyNodePtr> sourceTopologyNodesInSelectedPath =
@@ -144,16 +142,6 @@ bool BasePlacementAdditionStrategy::optimisticPathSelection(
             }
             success = true;
         }
-
-        // 1.5. If unable to lock the topology nodes then wait for other processes to release locks on the topology node
-        if (!success) {
-            NES_WARNING("Unable to lock topology nodes in the path. Waiting for the process to release locks and retry "
-                        "path selection.");
-            std::this_thread::sleep_for(backOffTime);
-            retryCount++;
-            backOffTime *= 2;
-            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
-        }
     }
     return success;
 }
@@ -162,52 +150,50 @@ bool BasePlacementAdditionStrategy::pessimisticPathSelection(
     const std::set<WorkerId>& topologyNodesWithUpStreamPinnedOperators,
     const std::set<WorkerId>& topologyNodesWithDownStreamPinnedOperators) {
     bool success = false;
-    uint8_t retryCount = 0;
-    std::chrono::milliseconds backOffTime = PATH_SELECTION_RETRY_WAIT;
     // 1. Perform path selection and if failure than use the exponential back-off and retry strategy
-    while (!success && retryCount < MAX_PATH_SELECTION_RETRIES) {
+    while (!success) {
 
         //1.1 Performs path selection
         std::vector<TopologyNodePtr> sourceTopologyNodesInSelectedPath =
             findPath(topologyNodesWithUpStreamPinnedOperators, topologyNodesWithDownStreamPinnedOperators);
 
         if (!sourceTopologyNodesInSelectedPath.empty()) {
-            //1.2 Lock the selected topology nodes exclusively and create a topology map
-            success = lockTopologyNodesInSelectedPath(sourceTopologyNodesInSelectedPath);
-        }
+            workerIdToTopologyNodeMap.clear();
+            // Temp container for iteration
+            std::queue<TopologyNodePtr> topologyNodesInBFSOrder;
+            // Iterate topology nodes in a true breadth first order
+            // Initialize with the upstream nodes
+            std::for_each(sourceTopologyNodesInSelectedPath.begin(),
+                          sourceTopologyNodesInSelectedPath.end(),
+                          [&](const TopologyNodePtr& topologyNode) {
+                              topologyNodesInBFSOrder.push(topologyNode);
+                          });
 
-        //1.3 If unable to lock the topology nodes then wait for other processes to release locks on the topology node
-        if (!success) {
-            NES_WARNING("Unable to lock topology nodes in the path. Waiting for the process to release locks and retry "
-                        "path selection.");
-            std::this_thread::sleep_for(backOffTime);
-            retryCount++;
-            backOffTime *= 2;
-            backOffTime = std::min(MAX_PATH_SELECTION_RETRY_WAIT, backOffTime);
+            while (!topologyNodesInBFSOrder.empty()) {
+                auto topologyNodeToLock = topologyNodesInBFSOrder.front();
+                topologyNodesInBFSOrder.pop();
+                // Skip if the topology node was visited previously
+                WorkerId idOfTopologyNodeToLock = topologyNodeToLock->getId();
+                if (workerIdToTopologyNodeMap.contains(idOfTopologyNodeToLock)) {
+                    continue;
+                }
+                // Add to the list of topology nodes for which locks are acquired
+                workerNodeIdsInBFS.emplace_back(idOfTopologyNodeToLock);
+                workerIdToTopologyNodeMap[idOfTopologyNodeToLock] = topologyNodeToLock;
+                const auto& downstreamTopologyNodes = topologyNodeToLock->getParents();
+                std::for_each(downstreamTopologyNodes.begin(), downstreamTopologyNodes.end(), [&](const NodePtr& topologyNode) {
+                    topologyNodesInBFSOrder.push(topologyNode->as<TopologyNode>());
+                });
+            }
+            //1.2 Lock the selected topology nodes exclusively and create a topology map
+            success = lockTopologyNodesInSelectedPath();
         }
     }
     return success;
 }
 
-bool BasePlacementAdditionStrategy::lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes) {
-    workerIdToTopologyNodeMap.clear();
-    // Temp container for iteration
-    std::queue<TopologyNodePtr> topologyNodesInBFSOrder;
-    // Iterate topology nodes in a true breadth first order
-    // Initialize with the upstream nodes
-    std::for_each(sourceTopologyNodes.begin(), sourceTopologyNodes.end(), [&](const TopologyNodePtr& topologyNode) {
-        topologyNodesInBFSOrder.push(topologyNode);
-    });
-
-    while (!topologyNodesInBFSOrder.empty()) {
-        auto topologyNodeToLock = topologyNodesInBFSOrder.front();
-        topologyNodesInBFSOrder.pop();
-        // Skip if the topology node was visited previously
-        WorkerId idOfTopologyNodeToLock = topologyNodeToLock->getId();
-        if (workerIdToTopologyNodeMap.contains(idOfTopologyNodeToLock)) {
-            continue;
-        }
-
+bool BasePlacementAdditionStrategy::lockTopologyNodesInSelectedPath() {
+    for (const auto& idOfTopologyNodeToLock : workerNodeIdsInBFS) {
         //Try to acquire the lock
         TopologyNodeWLock lock = topology->lockTopologyNode(idOfTopologyNodeToLock);
         if (!lock) {
@@ -217,14 +203,6 @@ bool BasePlacementAdditionStrategy::lockTopologyNodesInSelectedPath(const std::v
             return false;
         }
         lockedTopologyNodeMap[idOfTopologyNodeToLock] = std::move(lock);
-
-        // Add to the list of topology nodes for which locks are acquired
-        workerNodeIdsInBFS.emplace_back(idOfTopologyNodeToLock);
-        workerIdToTopologyNodeMap[idOfTopologyNodeToLock] = topologyNodeToLock;
-        const auto& downstreamTopologyNodes = topologyNodeToLock->getParents();
-        std::for_each(downstreamTopologyNodes.begin(), downstreamTopologyNodes.end(), [&](const NodePtr& topologyNode) {
-            topologyNodesInBFSOrder.push(topologyNode->as<TopologyNode>());
-        });
     }
     return true;
 }
@@ -240,8 +218,10 @@ bool BasePlacementAdditionStrategy::unlockTopologyNodesInSelectedPath() {
     //2 Release the locks in the inverse order of their acquisition
     std::for_each(workerNodeIdsInBFS.rbegin(), workerNodeIdsInBFS.rend(), [&](const WorkerId& lockedTopologyNodeId) {
         //2.1 Release the lock on the locked topology node
-        lockedTopologyNodeMap[lockedTopologyNodeId]->unlock();
-        lockedTopologyNodeMap.erase(lockedTopologyNodeId);
+        if (lockedTopologyNodeMap.contains(lockedTopologyNodeId)) {
+            lockedTopologyNodeMap[lockedTopologyNodeId]->unlock();
+            lockedTopologyNodeMap.erase(lockedTopologyNodeId);
+        }
     });
     workerNodeIdsInBFS.clear();
     return true;
@@ -531,7 +511,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
     // }
     //
 
-    // Iterate over all computed sub query plans and add network source and sink operators.
+    // Iterate over all computed decomposed query plans and add network source and sink operators.
     for (const auto& [workerId, decomposedQueryPlans] : computedDecomposedQueryPlans) {
         auto downstreamTopologyNode = getTopologyNode(workerId);
 
@@ -574,6 +554,8 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                 // upstream logical operators.
                 for (const auto& upstreamOperator : originalCopiedOperator->getChildren()) {
 
+                    NES_DEBUG("Connected upstream operator {}", upstreamOperator->toString())
+
                     // 6. Fetch the id of the topology node hosting the upstream operator to connect.
                     const auto& upstreamOperatorToConnect = upstreamOperator->as<LogicalOperator>();
                     auto upstreamWorkerId = std::any_cast<WorkerId>(upstreamOperatorToConnect->getProperty(PINNED_WORKER_ID));
@@ -590,6 +572,11 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                     // 9. Find topology nodes connecting the iterated workerId and pinnedUpstreamWorkerId.
                     std::vector<TopologyNodePtr> topologyNodesBetween =
                         pathFinder->findNodesBetween(upstreamTopologyNode, downstreamTopologyNode);
+
+                    NES_DEBUG("Num of nodes between topology node {} and {} is {}",
+                              upstreamTopologyNode->toString(),
+                              downstreamTopologyNode->toString(),
+                              topologyNodesBetween.size())
 
                     DecomposedQueryPlanPtr querySubPlanWithUpstreamOperator;
 
@@ -613,7 +600,7 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                     auto networkSourceOperatorId = getNextOperatorId();
 
                     // compute a vector of sub plan id and worker node id where the system generated plans are placed
-                    std::vector<SysPlanMetaData> connectedSysSubPlanDetails;
+                    std::vector<SysPlanMetaData> connectedSysDecomposedPlanDetails{};
                     OperatorPtr operatorToConnectInMatchedPlan;
                     // 12. Starting from the upstream to downstream topology node and add network sink source pairs.
                     for (uint16_t pathIndex = 0; pathIndex < topologyNodesBetween.size(); pathIndex++) {
@@ -643,22 +630,40 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
 
                             // 13. Record information about the query plan and worker id
                             DecomposedQueryPlanId decomposedPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
+
                             if (candidateOperator->as<LogicalOperator>()->getOperatorState() == OperatorState::PLACED) {
                                 decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
                                     candidateOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                            } else if (decomposedPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
+                                // The candidate operator is not in the placed state but it is connected to a placed downstream operator
+                                // therefore connected downstream operator prop should be explored
+                                for (const auto& placedOperator : decomposedQueryPlan->getAllOperators()) {
+                                    if (placedOperator->as_if<LogicalOperator>()->getOperatorState() == OperatorState::PLACED) {
+                                        decomposedPlanId = std::any_cast<DecomposedQueryPlanId>(
+                                            placedOperator->getProperty(PLACED_DECOMPOSED_PLAN_ID));
+                                        break;
+                                    }
+                                }
+
+                                // Check if found a decomposed query plan
+                                if (decomposedPlanId == INVALID_DECOMPOSED_QUERY_PLAN_ID) {
+                                    NES_ERROR("No placed operator found to retrieve original decomposed query plan.")
+                                    throw Exceptions::RuntimeException(
+                                        "No placed operator found to retrieve original decomposed query plan.");
+                                }
                             }
 
-                            connectedSysSubPlanDetails.emplace_back(SysPlanMetaData(decomposedPlanId, currentWorkerId));
+                            connectedSysDecomposedPlanDetails.emplace_back(SysPlanMetaData(decomposedPlanId, currentWorkerId));
                             // 14. create network source operator
                             auto networkSourceOperator = createNetworkSourceOperator(sharedQueryId,
                                                                                      sourceSchema,
                                                                                      networkSourceOperatorId,
                                                                                      topologyNodesBetween[pathIndex - 1]);
-                            candidateOperator->addChild(networkSourceOperator);
-
                             //set properties on new source
                             networkSourceOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
                             networkSourceOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
+
+                            candidateOperator->addChild(networkSourceOperator);
                             break;
                         } else {
                             // 12. Compute a network source sink plan.
@@ -680,18 +685,22 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                             // 16. add network source as the child
                             networkSinkOperator->addChild(networkSourceOperator);
 
-                            // 17. create the query sub plan
+                            // 17. add upstream and downstream operator id
+                            networkSinkOperator->addProperty(UPSTREAM_LOGICAL_OPERATOR_ID, upstreamNonSystemOperatorId);
+                            networkSinkOperator->addProperty(DOWNSTREAM_LOGICAL_OPERATOR_ID, downStreamNonSystemOperatorId);
+
+                            // 18. create the query sub plan
                             auto newDecomposedQueryPlan =
                                 DecomposedQueryPlan::create(PlanIdGenerator::getNextDecomposedQueryPlanId(),
                                                             sharedQueryId,
                                                             currentWorkerId,
                                                             {networkSinkOperator});
 
-                            // 18. Record information about the query plan and worker id
-                            connectedSysSubPlanDetails.emplace_back(
+                            // 19. Record information about the query plan and worker id
+                            connectedSysDecomposedPlanDetails.emplace_back(
                                 SysPlanMetaData(newDecomposedQueryPlan->getDecomposedQueryPlanId(), currentWorkerId));
 
-                            // 19. add the new query plan
+                            // 20. add the new query plan
                             if (computedDecomposedQueryPlans.contains(currentWorkerId)) {
                                 computedDecomposedQueryPlans[currentWorkerId].emplace_back(newDecomposedQueryPlan);
                             } else {
@@ -702,8 +711,17 @@ void BasePlacementAdditionStrategy::addNetworkOperators(ComputedDecomposedQueryP
                         }
                     }
 
+                    std::map<OperatorId, std::vector<SysPlanMetaData>> downStreamOperatorToConnectedSysPlansMetaDataMap;
                     // 15. Add metadata about the plans and topology nodes hosting the system generated operators.
-                    operatorToConnectInMatchedPlan->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS, connectedSysSubPlanDetails);
+                    if (operatorToConnectInMatchedPlan->hasProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS)) {
+                        downStreamOperatorToConnectedSysPlansMetaDataMap =
+                            std::any_cast<std::map<OperatorId, std::vector<SysPlanMetaData>>>(
+                                operatorToConnectInMatchedPlan->getProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS));
+                    }
+                    downStreamOperatorToConnectedSysPlansMetaDataMap[downStreamNonSystemOperatorId] =
+                        connectedSysDecomposedPlanDetails;
+                    operatorToConnectInMatchedPlan->addProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS,
+                                                                downStreamOperatorToConnectedSysPlansMetaDataMap);
                 }
             }
         }
@@ -716,31 +734,38 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                                     DecomposedQueryPlanVersion decomposedQueryPlanVersion) {
 
     std::unordered_map<DecomposedQueryPlanId, DeploymentContextPtr> deploymentContexts;
-
     for (const auto& workerNodeId : workerNodeIdsInBFS) {
 
-        TopologyNodeWLock lockedTopologyNode;
-        // 1. If using optimistic strategy then, lock the topology node with the workerId and perform the "validation" before continuing.
-        if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
-            //1.1. wait till lock is acquired
-            while (!(lockedTopologyNode = topology->lockTopologyNode(workerNodeId))) {
-                std::this_thread::sleep_for(PATH_SELECTION_RETRY_WAIT);
-            };
-        } else {
-            lockedTopologyNode = lockedTopologyNodeMap[workerNodeId];
-        }
-
         // Used for computing the deployment context
-        const std::string& ipAddress = lockedTopologyNode->operator*()->getIpAddress();
-        uint32_t grpcPort = lockedTopologyNode->operator*()->getGrpcPort();
+        auto copiedTopologyNode = workerIdToTopologyNodeMap[workerNodeId];
+        const std::string& ipAddress = copiedTopologyNode->getIpAddress();
+        uint32_t grpcPort = copiedTopologyNode->getGrpcPort();
 
         try {
+            // 1. If using optimistic strategy then, directly use the topology node with the workerId and perform the "validation" before continuing.
             // 1.2. Perform validation by checking if we can occupy the resources the operator placement algorithm reserved
             // for placing the operators.
             auto consumedResources = workerIdToResourceConsumedMap[workerNodeId];
-            if (!lockedTopologyNode->operator*()->occupySlots(consumedResources)) {
-                NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.", workerNodeId);
-                return PlacementAdditionResult(false, deploymentContexts);
+            if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
+                if (!topology->occupySlots(workerNodeId, consumedResources)) {
+                    NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.",
+                              workerNodeId);
+                    return PlacementAdditionResult(false, deploymentContexts);
+                }
+                //Create execution node if doe not exists
+                TopologyNodeWLock lockedTopologyNode;
+                while (!(lockedTopologyNode = topology->lockTopologyNode(workerNodeId))) {
+                };
+                globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
+            } else {
+                auto lockedTopologyNode = lockedTopologyNodeMap[workerNodeId];
+                if (!lockedTopologyNode->operator*()->occupySlots(consumedResources)) {
+                    NES_ERROR("Unable to occupy resources on the topology node {} to successfully place operators.",
+                              workerNodeId);
+                    return PlacementAdditionResult(false, deploymentContexts);
+                }
+                //Create execution node if doe not exists
+                globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
             }
 
             // 1.3. Check if the worker node contains pinned upstream operators
@@ -781,17 +806,17 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                                 // Flag indicating, if we found a placed decomposed query plan that contains pinned operator
                                 bool found = false;
 
-                                // Find and merge with the shared query plan
+                                // Find and merge with the placed decomposed query plan
                                 for (const auto& placedDecomposedQueryPlan : placedDecomposedQueryPlans) {
 
-                                    // If the placed query sub plan contains the pinned upstream operator
+                                    // Check if the placed decomposed query plan contains the pinned upstream operator
                                     auto matchingPlacedLeafOperator =
                                         placedDecomposedQueryPlan->getOperatorWithOperatorId(computedOperator->getId());
                                     if (matchingPlacedLeafOperator) {
-                                        if (computedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
+                                        if (computedOperator->hasProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS)) {
                                             auto connectedSysSubPlanDetails =
-                                                computedOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS);
-                                            matchingPlacedLeafOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
+                                                computedOperator->getProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS);
+                                            matchingPlacedLeafOperator->addProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS,
                                                                                     connectedSysSubPlanDetails);
                                         } else {
                                             NES_WARNING("connected sys sub plan details not found");
@@ -865,7 +890,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
                         //Add decomposed query plan to the global execution plan
-                        globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                        globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.7. Compute deployment context
@@ -957,7 +982,7 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                         updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_REDEPLOYMENT);
                         updatedDecomposedQueryPlan = typeInferencePhase->execute(updatedDecomposedQueryPlan);
                         updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
-                        globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                        globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.6. Update state and properties of all operators placed on the execution node
                         markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                         // 1.7. Compute deployment context
@@ -974,18 +999,13 @@ BasePlacementAdditionStrategy::updateExecutionNodes(SharedQueryId sharedQueryId,
                     auto updatedDecomposedQueryPlan = typeInferencePhase->execute(computedDecomposedQueryPlan);
                     updatedDecomposedQueryPlan->setState(QueryState::MARKED_FOR_DEPLOYMENT);
                     updatedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
-                    globalExecutionPlan->addDecomposedQueryPlan(lockedTopologyNode, updatedDecomposedQueryPlan);
+                    globalExecutionPlan->addDecomposedQueryPlan(workerNodeId, updatedDecomposedQueryPlan);
                     // 1.6. Update state and properties of all operators placed on the execution node
                     markOperatorsAsPlaced(workerNodeId, updatedDecomposedQueryPlan);
                     // 1.7. Compute deployment context
                     deploymentContexts[updatedDecomposedQueryPlan->getDecomposedQueryPlanId()] =
                         DeploymentContext::create(ipAddress, grpcPort, updatedDecomposedQueryPlan->copy());
                 }
-            }
-
-            // 1.8. Release lock on the topology node
-            if (placementAmendmentMode == PlacementAmendmentMode::OPTIMISTIC) {
-                lockedTopologyNode->unlock();
             }
         } catch (std::exception& ex) {
             NES_ERROR("Exception occurred during pinned operator placement {}.", ex.what());
@@ -1007,9 +1027,9 @@ void BasePlacementAdditionStrategy::markOperatorsAsPlaced(WorkerId workerId, Dec
             originalOperator->setOperatorState(OperatorState::PLACED);
             originalOperator->addProperty(PINNED_WORKER_ID, workerId);
             originalOperator->addProperty(PLACED_DECOMPOSED_PLAN_ID, decomposedQueryPlanId);
-            if (placedOperator->hasProperty(CONNECTED_SYS_SUB_PLAN_DETAILS)) {
-                originalOperator->addProperty(CONNECTED_SYS_SUB_PLAN_DETAILS,
-                                              placedOperator->getProperty(CONNECTED_SYS_SUB_PLAN_DETAILS));
+            if (placedOperator->hasProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS)) {
+                originalOperator->addProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS,
+                                              placedOperator->getProperty(CONNECTED_SYS_DECOMPOSED_PLAN_DETAILS));
             }
         }
     }

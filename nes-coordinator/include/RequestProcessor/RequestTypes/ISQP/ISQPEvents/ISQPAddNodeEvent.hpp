@@ -26,7 +26,8 @@ namespace NES::RequestProcessor {
  * @brief ISQP add node response indicating if the event was applied successfully or not
  */
 struct ISQPAddNodeResponse : public ISQPResponse {
-    explicit ISQPAddNodeResponse(bool success) : success(success){};
+    explicit ISQPAddNodeResponse(WorkerId workerId, bool success) : workerId(workerId), success(success){};
+    WorkerId workerId;
     bool success;
 };
 using ISQPAddNodeResponsePtr = std::shared_ptr<ISQPAddNodeResponse>;

@@ -143,6 +143,7 @@ NesWorkerPtr NesCoordinator::getNesWorker() { return worker; }
 Statistic::StatisticProbeHandlerPtr NesCoordinator::getStatisticProbeHandler() const { return statisticProbeHandler; }
 
 Runtime::NodeEnginePtr NesCoordinator::getNodeEngine() { return worker->getNodeEngine(); }
+
 bool NesCoordinator::isCoordinatorRunning() { return isRunning; }
 
 uint64_t NesCoordinator::startCoordinator(bool blocking) {

@@ -51,14 +51,28 @@ class GlobalExecutionPlan {
     static GlobalExecutionPlanPtr create();
 
     /**
-     * @brief Add a decomposed query plan belonging to a shared query plan on the given execution node.
-     * @note If the execution node does not exists then create one and create parent child relationships based on the
+     * @brief Create an execution node If the execution node does not exists and create parent child relationships based on the
      * topology node.
-     * @param lockedTopologyNode: the locked topology node that will be represented by the execution node
+     * @param lockedTopologyNode: the topology node to be represented
+     * @return true if success else false
+     */
+    bool registerExecutionNode(const TopologyNodeWLock& lockedTopologyNode);
+
+    /**
+     * @brief Add a decomposed query plan belonging to a shared query plan on the given execution node.
+     * @param workerId: the id of the execution node
      * @param decomposedQueryPlan: the decomposed query plan
      * @return true if success else false
      */
-    bool addDecomposedQueryPlan(const TopologyNodeWLock& lockedTopologyNode, DecomposedQueryPlanPtr decomposedQueryPlan);
+    bool addDecomposedQueryPlan(const WorkerId& workerId, DecomposedQueryPlanPtr decomposedQueryPlan);
+
+    /**
+     * @brief Update existing decomposed query plans belonging to a shared query plan on the given execution node.
+     * @param workerId: the id of the execution node
+     * @param decomposedQueryPlans: the vector of decomposed query plans
+     * @return true if success else false
+     */
+    bool updateDecomposedQueryPlans(const WorkerId& workerId, std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans);
 
     /**
      * @brief Update the decomposed query plan state to the new query state.
@@ -174,12 +188,12 @@ class GlobalExecutionPlan {
     /**
      * Index based on nodeId for faster access to the execution nodes
      */
-    folly::Synchronized<std::map<WorkerId, folly::Synchronized<ExecutionNodePtr>>> idToExecutionNodeMap;
+    std::unordered_map<WorkerId, folly::Synchronized<ExecutionNodePtr>> idToExecutionNodeMap;
 
     /**
      * Index based on shared query Id for faster access to the execution nodes
      */
-    folly::Synchronized<std::map<SharedQueryId, std::set<WorkerId>>> sharedQueryIdToWorkerIdMap;
+    folly::Synchronized<std::unordered_map<SharedQueryId, std::set<WorkerId>>> sharedQueryIdToWorkerIdMap;
 
     /**
      * List of root node ids

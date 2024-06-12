@@ -113,9 +113,8 @@ class PlacementRemovalStrategy {
     /**
      * @brief Select path for placement using pessimistic 2PL strategy. If attempt fails then an exponential retries are performed.
      * NOTE: These paths are local copies of the topology nodes. Any changes done on these nodes are not reflected in the topology catalog.
-     * @return true if successful else false
      */
-    bool pessimisticPathSelection();
+    void pessimisticPathSelection();
 
     /**
      * @brief Perform unlocking of all topology nodes on which the lock was acquired.
@@ -126,18 +125,21 @@ class PlacementRemovalStrategy {
 
     /**
      * @brief Update the query sub plans by removing the query operators
-     * @param sharedQueryId
+     * @param sharedQueryId id of the shared query plan
      */
-    void updateQuerySubPlans(SharedQueryId sharedQueryId);
+    void updateDecomposedQueryPlans(SharedQueryId sharedQueryId);
 
     /**
      * @brief Add the computed query sub plans tot he global execution plan
      * @param sharedQueryId: the shared query plan id
      * @param querySubPlanVersion: the new version of the query sub plan
+     * @param upStreamPinnedOperators: the pinned upstream operators
      * @return vector of deployment contexts
      */
-    std::map<DecomposedQueryPlanId, DeploymentContextPtr> updateExecutionNodes(SharedQueryId sharedQueryId,
-                                                                               DecomposedQueryPlanVersion querySubPlanVersion);
+    std::map<DecomposedQueryPlanId, DeploymentContextPtr>
+    updateExecutionNodes(SharedQueryId sharedQueryId,
+                         DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+                         std::set<LogicalOperatorPtr>& upStreamPinnedOperators);
 
     PlacementRemovalStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
                              const TopologyPtr& topology,
@@ -149,19 +151,15 @@ class PlacementRemovalStrategy {
     TypeInferencePhasePtr typeInferencePhase;
     PlacementAmendmentMode placementAmendmentMode;
     PathFinderPtr pathFinder;
-    std::set<WorkerId> workerIdsInBFS;
+    std::vector<WorkerId> workerIdsInBFS;
+    std::vector<OperatorId> idsOfOperatorsToBeProcessed;
     std::unordered_map<OperatorId, LogicalOperatorPtr> operatorIdToOriginalOperatorMap;
     std::unordered_map<WorkerId, uint32_t> workerIdToReleasedSlotMap;
     std::unordered_map<WorkerId, std::set<DecomposedQueryPlanId>> workerIdToDecomposedQueryPlanIds;
     std::unordered_map<WorkerId, std::vector<OperatorId>> workerIdToOperatorIdMap;
     std::unordered_map<WorkerId, std::vector<DecomposedQueryPlanPtr>> workerIdToUpdatedDecomposedQueryPlans;
     std::unordered_map<WorkerId, TopologyNodeWLock> lockedTopologyNodeMap;
-
-    //Max retires for path selection before failing the placement
-    static constexpr auto MAX_PATH_SELECTION_RETRIES = 3;
-    //Time interval in which to retry
-    static constexpr auto PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(1000);
-    static constexpr auto MAX_PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(120000);
+    std::unordered_map<WorkerId, TopologyNodePtr> workerIdToTopologyNodeMap;
 };
 
 }// namespace Optimizer

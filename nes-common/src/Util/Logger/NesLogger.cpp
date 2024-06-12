@@ -55,6 +55,10 @@ auto toSpdlogLevel(LogLevel level) {
             spdlogLevel = spdlog::level::critical;
             break;
         }
+        case LogLevel::LOG_NONE: {
+            spdlogLevel = spdlog::level::off;
+            break;
+        }
         default: {
             break;
         }

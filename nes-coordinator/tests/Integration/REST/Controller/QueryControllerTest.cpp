@@ -212,8 +212,8 @@ TEST_F(QueryControllerTest, testGetExecutionPlan) {
     EXPECT_EQ(response2.size(), 1);
     for (auto executionNode : response2["ExecutionNodes"]) {
         const auto& rootWorkerNodeIds = coordinator->getTopology()->getRootWorkerNodeIds();
-        const auto& executionNodeId = executionNode["WorkerId"].get<WorkerId>();
-        auto foundInRootWorkerId = std::find(rootWorkerNodeIds.begin(), rootWorkerNodeIds.end(), executionNodeId);
+        const auto& workerId = executionNode["WorkerId"].get<WorkerId>();
+        auto foundInRootWorkerId = std::find(rootWorkerNodeIds.begin(), rootWorkerNodeIds.end(), workerId);
         EXPECT_NE(foundInRootWorkerId, rootWorkerNodeIds.end());
         EXPECT_TRUE(executionNode["ScheduledDecomposedQueries"].size() != 0);
     }

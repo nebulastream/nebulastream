@@ -228,32 +228,6 @@ TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithBottomUpStrategy) {
     }
 }
 
-/* Test query placement with elegant strategy  */ /*
-TEST_F(QueryPlacementTest, testElegantPlacingQueryWithTopDownStrategy) {
-
-    setupTopologyAndSourceCatalog({4, 4, 4});
-
-    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-
-    Query query = Query::from("car").filter(Attribute("id") < 45).sink(PrintSinkDescriptor::create());
-    QueryPlanPtr queryPlan = query.getQueryPlan();
-    queryPlan->setPlacementStrategy(Optimizer::PlacementStrategy::ELEGANT_ENERGY);
-
-    auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-    auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
-    queryPlan = queryReWritePhase->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-
-    auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
-    queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
-
-    auto topologySpecificQueryRewrite =
-        Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, Configurations::OptimizerConfiguration(), statisticProbeHandler);
-    topologySpecificQueryRewrite->execute(queryPlan);
-    typeInferencePhase->execute(queryPlan);
-}*/
-
 /* Test query placement with top down strategy  */
 TEST_F(QueryPlacementAmendmentTest, testPlacingQueryWithTopDownStrategy) {
 
@@ -2641,9 +2615,12 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
             std::vector<DecomposedQueryPlanPtr> decomposedQueryPlans =
                 executionNode->operator*()->getAllDecomposedQueryPlans(sharedQueryId);
             for (const auto& decomposedQueryPlan : decomposedQueryPlans) {
+                if (decomposedQueryPlan->getState() == QueryState::MARKED_FOR_MIGRATION) {
+                    continue;
+                }
                 auto ops = decomposedQueryPlan->getRootOperators();
                 if (executionNode->operator*()->getId() == WorkerId(1)) {
-                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     ASSERT_EQ(ops[0]->getId(), testQueryPlan->getRootOperators()[0]->getId());
                     ASSERT_EQ(ops[0]->getChildren().size(), 1);
@@ -2656,7 +2633,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                ->getNesPartition();
                 } else if (executionNode->operator*()->getId() == WorkerId(2)
                            && decomposedQueryPlan->getDecomposedQueryPlanId() == subPlanIdToRemoveInNextIteration) {
-                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_MIGRATION);
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                 } else if (executionNode->operator*()->getId() == WorkerId(2)
                            && decomposedQueryPlan->getDecomposedQueryPlanId() != subPlanIdToRemoveInNextIteration) {
                     EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
@@ -2677,7 +2654,7 @@ TEST_F(QueryPlacementAmendmentTest, testTopDownForRePlacement) {
                                                                ->as<Network::NetworkSourceDescriptor>()
                                                                ->getNesPartition();
                 } else if (executionNode->operator*()->getId() == WorkerId(3)) {
-                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_REDEPLOYMENT);
+                    EXPECT_EQ(decomposedQueryPlan->getState(), QueryState::MARKED_FOR_DEPLOYMENT);
                     EXPECT_EQ(ops.size(), 1);
                     auto sink = ops[0];
                     sinkPartitionNode2afterReplacement = sink->as<SinkLogicalOperator>()
@@ -2760,6 +2737,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForRePlacement) {
     // Execute optimization phases prior to placement
     testQueryPlan = typeInferencePhase->execute(testQueryPlan);
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
+    coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
     auto queryReWritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
     testQueryPlan = queryReWritePhase->execute(testQueryPlan);
     typeInferencePhase->execute(testQueryPlan);
@@ -3039,7 +3017,7 @@ TEST_F(QueryPlacementAmendmentTest, testBottomUpForProcessingSharedQueryPlanToBe
     }
 
     {
-        sharedQueryPlan->removeQuery(QueryId(1));
+        sharedQueryPlan->markQueryForRemoval(QueryId(1));
         queryPlacementAmendmentPhase->execute(sharedQueryPlan);
         auto executionNodes = globalExecutionPlan->getLockedExecutionNodesHostingSharedQueryId(sharedQueryId);
         EXPECT_EQ(executionNodes.size(), 3UL);

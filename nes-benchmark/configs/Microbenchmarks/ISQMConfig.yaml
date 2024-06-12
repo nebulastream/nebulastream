@@ -1,7 +1,6 @@
 #Location of query set
 # For each query set we will run the experiments
-querySetLocation: '<Path To Query-Set Folder>'
-#querySetLocation: '/data-ssd/lmons-ldap/nes-remote/nes-benchmark/test/testData/'
+QuerySetLocation: '<query set location>'
 
 # List of Query merging strategies in comma separated
 #queryMergerRule: Z3SignatureBasedCompleteQueryMergerRule,SyntaxBasedCompleteQueryMergerRule,HybridCompleteQueryMergerRule,DefaultQueryMergerRule,HashSignatureBasedCompleteQueryMergerRule,ImprovedHashSignatureBasedCompleteQueryMergerRule,Z3SignatureBasedPartialQueryMergerBottomUpRule

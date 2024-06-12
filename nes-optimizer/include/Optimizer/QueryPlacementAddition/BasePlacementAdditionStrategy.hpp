@@ -178,10 +178,9 @@ class BasePlacementAdditionStrategy {
      * @brief Perform locking of all topology nodes selected by the path selection algorithm.
      * We use "back-off and retry" mechanism to lock topology nodes following a strict breadth-first order.
      * This allows us to prevent deadlocks and starvation situation.
-     * @param sourceTopologyNodes: the topology nodes hosting the pinned upstream operators
      * @return true if successful else false
      */
-    bool lockTopologyNodesInSelectedPath(const std::vector<TopologyNodePtr>& sourceTopologyNodes);
+    bool lockTopologyNodesInSelectedPath();
 
     /**
      * @brief Perform unlocking of all topology nodes on which the lock was acquired.
@@ -297,13 +296,7 @@ class BasePlacementAdditionStrategy {
     static constexpr auto SOURCE_RETRIES = 100;
     //Time interval in which to retry
     static constexpr auto SOURCE_RETRY_WAIT = std::chrono::milliseconds(10);
-    //Max retires for path selection before failing the placement
-    static constexpr auto MAX_PATH_SELECTION_RETRIES = 3;
-    //Time interval in which to retry
-    static constexpr auto PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(1000);
-    static constexpr auto MAX_PATH_SELECTION_RETRY_WAIT = std::chrono::milliseconds(120000);
     // Metadata
-
     std::set<WorkerId> pinnedUpStreamTopologyNodeIds;
     std::set<WorkerId> pinnedDownStreamTopologyNodeIds;
     std::unordered_map<WorkerId, uint16_t> workerIdToResourceConsumedMap;

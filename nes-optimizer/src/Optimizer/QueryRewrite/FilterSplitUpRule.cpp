@@ -47,6 +47,7 @@ QueryPlanPtr FilterSplitUpRule::apply(NES::QueryPlanPtr queryPlan) {
         for (auto filterOperator : filterOperators) {
             splitUpFilters(filterOperator);
         }
+        NES_INFO("After applying FilterSplitUpRule to query {}", queryPlan->toString());
         return queryPlan;
     } catch (std::exception& exc) {
         NES_ERROR("FilterSplitUpRule: Error while applying FilterSplitUpRule: {}", exc.what());

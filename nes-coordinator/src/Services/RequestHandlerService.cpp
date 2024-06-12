@@ -147,13 +147,14 @@ bool RequestHandlerService::queueNodeRelocationRequest(const std::vector<Topolog
     return changeResponse->success;
 }
 
-bool RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents) {
+RequestProcessor::ISQPRequestResponsePtr
+RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents) {
 
     auto isqpRequest = RequestProcessor::ISQPRequest::create(z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES);
     asyncRequestExecutor->runAsync(isqpRequest);
     auto future = isqpRequest->getFuture();
     auto changeResponse = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
-    return changeResponse->success;
+    return changeResponse;
 }
 
 std::vector<Statistic::StatisticKey>

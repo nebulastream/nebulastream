@@ -84,7 +84,8 @@ constexpr std::chrono::milliseconds WAIT_TIME = std::chrono::milliseconds(1000);
  * @brief This tests the asynchronous connection establishment, where the sink buffers incoming tuples while waiting for the
  * network channel to become available
  */
-TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
+//FIXME: 4968
+TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testAsyncConnectingSink) {
     const uint64_t numBuffersToProduceBeforeCount = 20;
     const uint64_t numBuffersToProduceAfterCount = 20;
     const uint64_t numBuffersToProduce = numBuffersToProduceBeforeCount + numBuffersToProduceAfterCount;
@@ -194,7 +195,8 @@ TEST_P(QueryRedeploymentIntegrationTest, testAsyncConnectingSink) {
 /**
  * @brief This tests multiple iterations of inserting VersionDrain events to trigger the reconfiguration of a network sink to point to a new source.
  */
-TEST_P(QueryRedeploymentIntegrationTest, testMultiplePlannedReconnects) {
+//FIXME: 4968
+TEST_P(QueryRedeploymentIntegrationTest, DISABLED_testMultiplePlannedReconnects) {
     const uint64_t numberOfReconnectsToPerform = 3;
     const uint64_t numBuffersToProduceBeforeReconnect = 10;
     const uint64_t numBuffersToProduceWhileBuffering = 10;

@@ -33,6 +33,7 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
+#include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkPropertyEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddNodeEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddQueryEvent.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
@@ -62,128 +63,139 @@ ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<
 }
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
+    try {
+        auto processingStartTime =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        topology = storageHandle->getTopologyHandle(requestId);
+        globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
+        globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
+        queryCatalog = storageHandle->getQueryCatalogHandle(requestId);
+        udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
+        sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
+        coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
+        enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
+        auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
+        statisticProbeHandler = storageHandle->getStatisticProbeHandler(requestId);
 
-    auto processingStartTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    topology = storageHandle->getTopologyHandle(requestId);
-    globalQueryPlan = storageHandle->getGlobalQueryPlanHandle(requestId);
-    globalExecutionPlan = storageHandle->getGlobalExecutionPlanHandle(requestId);
-    queryCatalog = storageHandle->getQueryCatalogHandle(requestId);
-    udfCatalog = storageHandle->getUDFCatalogHandle(requestId);
-    sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
-    coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
-    auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
-    statisticProbeHandler = storageHandle->getStatisticProbeHandler(requestId);
-
-    // Apply all topology events
-    for (const auto& event : events) {
-        if (event->instanceOf<ISQPRemoveNodeEvent>()) {
-            auto removeNodeEvent = event->as<ISQPRemoveNodeEvent>();
-            topology->unregisterWorker(removeNodeEvent->getWorkerId());
-        } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
-            auto removeLinkEvent = event->as<ISQPRemoveLinkEvent>();
-            topology->removeTopologyNodeAsChild(removeLinkEvent->getParentNodeId(), removeLinkEvent->getChildNodeId());
-        } else if (event->instanceOf<ISQPAddLinkEvent>()) {
-            auto addLinkEvent = event->as<ISQPAddLinkEvent>();
-            topology->addTopologyNodeAsChild(addLinkEvent->getParentNodeId(), addLinkEvent->getChildNodeId());
-            event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
-        } else if (event->instanceOf<ISQPAddNodeEvent>()) {
-            auto addNodeEvent = event->as<ISQPAddNodeEvent>();
-            if (addNodeEvent->getWorkerType() == WorkerType::CLOUD) {
-                topology->registerWorkerAsRoot(addNodeEvent->getWorkerId(),
-                                               addNodeEvent->getIpAddress(),
-                                               addNodeEvent->getGrpcPort(),
-                                               addNodeEvent->getDataPort(),
-                                               addNodeEvent->getResources(),
-                                               addNodeEvent->getProperties(),
-                                               0,
-                                               0);
-            } else {
-                topology->registerWorker(addNodeEvent->getWorkerId(),
-                                         addNodeEvent->getIpAddress(),
-                                         addNodeEvent->getGrpcPort(),
-                                         addNodeEvent->getDataPort(),
-                                         addNodeEvent->getResources(),
-                                         addNodeEvent->getProperties(),
-                                         0,
-                                         0);
+        // Apply all topology events
+        for (const auto& event : events) {
+            if (event->instanceOf<ISQPRemoveNodeEvent>()) {
+                auto removeNodeEvent = event->as<ISQPRemoveNodeEvent>();
+                topology->unregisterWorker(removeNodeEvent->getWorkerId());
+            } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
+                auto removeLinkEvent = event->as<ISQPRemoveLinkEvent>();
+                topology->removeTopologyNodeAsChild(removeLinkEvent->getParentNodeId(), removeLinkEvent->getChildNodeId());
+            } else if (event->instanceOf<ISQPAddLinkEvent>()) {
+                auto addLinkEvent = event->as<ISQPAddLinkEvent>();
+                topology->addTopologyNodeAsChild(addLinkEvent->getParentNodeId(), addLinkEvent->getChildNodeId());
+                event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
+            } else if (event->instanceOf<ISQPAddLinkPropertyEvent>()) {
+                auto addLinkPropertyEvent = event->as<ISQPAddLinkPropertyEvent>();
+                topology->addLinkProperty(addLinkPropertyEvent->getParentNodeId(),
+                                          addLinkPropertyEvent->getChildNodeId(),
+                                          addLinkPropertyEvent->getBandwidth(),
+                                          addLinkPropertyEvent->getLatency());
+                event->response.set_value(std::make_shared<ISQPAddLinkPropertyResponse>(true));
+            } else if (event->instanceOf<ISQPAddNodeEvent>()) {
+                auto addNodeEvent = event->as<ISQPAddNodeEvent>();
+                WorkerId workerId(0);
+                if (addNodeEvent->getWorkerType() == WorkerType::CLOUD) {
+                    workerId = topology->registerWorkerAsRoot(addNodeEvent->getWorkerId(),
+                                                              addNodeEvent->getIpAddress(),
+                                                              addNodeEvent->getGrpcPort(),
+                                                              addNodeEvent->getDataPort(),
+                                                              addNodeEvent->getResources(),
+                                                              addNodeEvent->getProperties(),
+                                                              0,
+                                                              0);
+                } else {
+                    workerId = topology->registerWorker(addNodeEvent->getWorkerId(),
+                                                        addNodeEvent->getIpAddress(),
+                                                        addNodeEvent->getGrpcPort(),
+                                                        addNodeEvent->getDataPort(),
+                                                        addNodeEvent->getResources(),
+                                                        addNodeEvent->getProperties(),
+                                                        0,
+                                                        0);
+                }
+                event->response.set_value(std::make_shared<ISQPAddNodeResponse>(workerId, true));
             }
-            event->response.set_value(std::make_shared<ISQPAddLinkResponse>(true));
         }
-    }
 
-    // Identify affected operator placements
-    for (const auto& event : events) {
-        if (event->instanceOf<ISQPRemoveNodeEvent>()) {
-            handleRemoveNodeRequest(event->as<ISQPRemoveNodeEvent>());
-            event->response.set_value(std::make_shared<ISQPRemoveNodeResponse>(true));
-        } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
-            handleRemoveLinkRequest(event->as<ISQPRemoveLinkEvent>());
-            event->response.set_value(std::make_shared<ISQPRemoveLinkResponse>(true));
-        } else if (event->instanceOf<ISQPAddQueryEvent>()) {
-            auto queryId = handleAddQueryRequest(event->as<ISQPAddQueryEvent>());
-            event->response.set_value(std::make_shared<ISQPAddQueryResponse>(queryId));
-        } else if (event->instanceOf<ISQPRemoveQueryEvent>()) {
-            handleRemoveQueryRequest(event->as<ISQPRemoveQueryEvent>());
-            event->response.set_value(std::make_shared<ISQPRemoveQueryResponse>(true));
+        // Identify affected operator placements
+        for (const auto& event : events) {
+            if (event->instanceOf<ISQPRemoveNodeEvent>()) {
+                handleRemoveNodeRequest(event->as<ISQPRemoveNodeEvent>());
+                event->response.set_value(std::make_shared<ISQPRemoveNodeResponse>(true));
+            } else if (event->instanceOf<ISQPRemoveLinkEvent>()) {
+                handleRemoveLinkRequest(event->as<ISQPRemoveLinkEvent>());
+                event->response.set_value(std::make_shared<ISQPRemoveLinkResponse>(true));
+            } else if (event->instanceOf<ISQPAddQueryEvent>()) {
+                auto queryId = handleAddQueryRequest(event->as<ISQPAddQueryEvent>());
+                event->response.set_value(std::make_shared<ISQPAddQueryResponse>(queryId));
+            } else if (event->instanceOf<ISQPRemoveQueryEvent>()) {
+                handleRemoveQueryRequest(event->as<ISQPRemoveQueryEvent>());
+                event->response.set_value(std::make_shared<ISQPRemoveQueryResponse>(true));
+            }
         }
-    }
 
-    // Fetch affected SQPs and call in parallel operator placement amendment phase
-    auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
-
-    auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-
-    auto amendmentStartTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    std::vector<std::future<bool>> completedAmendments;
-    for (const auto& sharedQueryPlan : sharedQueryPlans) {
-        const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
-                                                                                      globalExecutionPlan,
-                                                                                      topology,
-                                                                                      typeInferencePhase,
-                                                                                      coordinatorConfiguration,
-                                                                                      queryCatalog);
-        completedAmendments.emplace_back(amendmentInstance->getFuture());
-        placementAmendmentQueue->enqueue(amendmentInstance);
-    }
-
-    uint64_t numOfFailedPlacements = 0;
-    // Wait for all amendment runners to finish processing
-    for (auto& completedAmendment : completedAmendments) {
-        if (!completedAmendment.get()) {
-            numOfFailedPlacements++;
+        // Fetch affected SQPs and call in parallel operator placement amendment phase
+        auto sharedQueryPlans = globalQueryPlan->getSharedQueryPlansToDeploy();
+        auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
+        auto amendmentStartTime =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        std::vector<std::future<bool>> completedAmendments;
+        for (const auto& sharedQueryPlan : sharedQueryPlans) {
+            const auto& amendmentInstance = Optimizer::PlacementAmendmentInstance::create(sharedQueryPlan,
+                                                                                          globalExecutionPlan,
+                                                                                          topology,
+                                                                                          typeInferencePhase,
+                                                                                          coordinatorConfiguration,
+                                                                                          queryCatalog);
+            completedAmendments.emplace_back(amendmentInstance->getFuture());
+            placementAmendmentQueue->enqueue(amendmentInstance);
         }
+        uint64_t numOfFailedPlacements = 0;
+        // Wait for all amendment runners to finish processing
+        for (auto& completedAmendment : completedAmendments) {
+            if (!completedAmendment.get()) {
+                numOfFailedPlacements++;
+            }
+        }
+        NES_DEBUG("Post ISQPRequest completion the updated Global Execution Plan:\n{}", globalExecutionPlan->getAsString());
+        auto processingEndTime =
+            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        auto numOfSQPAffected = sharedQueryPlans.size();
+        responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
+                                                                        amendmentStartTime,
+                                                                        processingEndTime,
+                                                                        numOfSQPAffected,
+                                                                        numOfFailedPlacements,
+                                                                        true));
+    } catch (RequestExecutionException& exception) {
+        NES_ERROR("Exception occurred while processing ISQPRequest with error {}", exception.what());
+        responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, -1, -1, -1, true));
+        handleError(std::current_exception(), storageHandle);
     }
-
-    auto processingEndTime =
-        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-    auto numOfSQPAffected = sharedQueryPlans.size();
-    responsePromise.set_value(std::make_shared<ISQPRequestResponse>(processingStartTime,
-                                                                    amendmentStartTime,
-                                                                    processingEndTime,
-                                                                    numOfSQPAffected,
-                                                                    numOfFailedPlacements,
-                                                                    true));
     return {};
 }
 
 void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkEventPtr removeLinkEvent) {
 
-    auto upstreamNodeId = removeLinkEvent->getChildNodeId();
     auto downstreamNodeId = removeLinkEvent->getParentNodeId();
+    auto upstreamNodeId = removeLinkEvent->getChildNodeId();
 
     // Step1. Identify the impacted SQPs
-    auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
     auto downstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(downstreamNodeId);
+    auto upstreamExecutionNode = globalExecutionPlan->getLockedExecutionNode(upstreamNodeId);
     //If any of the two execution nodes do not exist then skip rest of the operation
     if (!upstreamExecutionNode || !downstreamExecutionNode) {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
         return;
     }
 
-    auto upstreamSharedQueryIds = upstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
     auto downstreamSharedQueryIds = downstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
+    auto upstreamSharedQueryIds = upstreamExecutionNode->operator*()->getPlacedSharedQueryPlanIds();
     //If any of the two execution nodes do not have any shared query plan placed then skip rest of the operation
     if (upstreamSharedQueryIds.empty() || downstreamSharedQueryIds.empty()) {
         NES_INFO("Removing topology link {}->{} has no effect on the running queries", upstreamNodeId, downstreamNodeId);
@@ -214,14 +226,16 @@ void ISQPRequest::handleRemoveLinkRequest(NES::RequestProcessor::ISQPRemoveLinkE
 
         queryCatalog->updateSharedQueryStatus(impactedSharedQueryId, QueryState::MIGRATING, "");
 
-        //find the pinned operators for the changelog
-        auto [upstreamOperatorIds, downstreamOperatorIds] =
-            NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
-                                                                        upstreamExecutionNode,
-                                                                        downstreamExecutionNode,
-                                                                        topology);
-        //perform re-operator placement on the query plan
-        sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
+        if (enableIncrementalPlacement) {
+            //find the pinned operators for the changelog
+            auto [upstreamOperatorIds, downstreamOperatorIds] =
+                NES::Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
+                                                                            upstreamExecutionNode,
+                                                                            downstreamExecutionNode,
+                                                                            topology);
+            //perform re-operator placement on the query plan
+            sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
+        }
     }
 }
 
@@ -286,6 +300,8 @@ void ISQPRequest::handleRemoveNodeRequest(NES::RequestProcessor::ISQPRemoveNodeE
                     //perform re-operator placement on the query plan
                     sharedQueryPlan->performReOperatorPlacement(upstreamOperatorIds, downstreamOperatorIds);
                 }
+                upstreamExecutionNode->unlock();
+                downstreamExecutionNode->unlock();
             }
         }
     }
