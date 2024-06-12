@@ -156,18 +156,17 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     auto deserializedFloat64 = DataTypeSerializationUtil::deserializeDataType(*serializedFloat64);
     EXPECT_TRUE(DataTypeFactory::createDouble()->equals(deserializedFloat64));
 
-    // serialize and deserialize float64
+    // serialize and deserialize array
     auto serializedArray =
         DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createArray(42, DataTypeFactory::createInt8()),
                                                      new SerializableDataType());
     auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(*serializedArray);
     EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->equals(deserializedArray));
 
-    /*
-   std::string json_string;
-   google::protobuf::util::MessageToJsonString(type, &json_string);
-   NES_DEBUG(json_string);
-   */
+    // serialize and deserialize array
+    auto serializedText = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createText(), new SerializableDataType());
+    auto deserializedText = DataTypeSerializationUtil::deserializeDataType(*serializedText);
+    EXPECT_TRUE(DataTypeFactory::createText()->equals(deserializedText));
 }
 
 TEST_F(SerializationUtilTest, schemaSerializationTest) {
@@ -176,6 +175,7 @@ TEST_F(SerializationUtilTest, schemaSerializationTest) {
     schema->addField("f1", DataTypeFactory::createDouble());
     schema->addField("f2", DataTypeFactory::createInt32());
     schema->addField("f3", DataTypeFactory::createArray(42, DataTypeFactory::createInt8()));
+    schema->addField("f4", DataTypeFactory::createText());
 
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
     auto deserializedSchema = SchemaSerializationUtil::deserializeSchema(*serializedSchema);
@@ -188,6 +188,7 @@ TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {
     schema->addField("f1", DataTypeFactory::createDouble());
     schema->addField("f2", DataTypeFactory::createInt32());
     schema->addField("f3", DataTypeFactory::createArray(42, DataTypeFactory::createInt8()));
+    schema->addField("f4", DataTypeFactory::createText());
     schema->setLayoutType(NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
 
     auto serializedSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());

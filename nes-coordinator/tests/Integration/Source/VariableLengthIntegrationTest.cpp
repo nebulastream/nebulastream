@@ -50,7 +50,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
                           ->addField("rows", BasicType::UINT64)
                           ->addField("cols", BasicType::UINT64)
                           ->addField("type", BasicType::UINT64)
-                          ->addField("data", BasicType::TEXT);// TEXT is the variable length field
+                          ->addField("data", DataTypeFactory::createText());// TEXT is the variable length field
 
     auto query = Query::from("variable_length")
                      .map(Attribute("camera_id_2") = Attribute("camera_id") + 10)
@@ -107,7 +107,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFieldsFilte
                           ->addField("rows", BasicType::UINT64)
                           ->addField("cols", BasicType::UINT64)
                           ->addField("type", BasicType::UINT64)
-                          ->addField("data", BasicType::TEXT);// TEXT is the variable length field
+                          ->addField("data", DataTypeFactory::createText());// TEXT is the variable length field
 
     auto query = Query::from("variable_length")
                      .filter(Attribute("camera_id") < 55)
@@ -165,7 +165,7 @@ TEST_F(VariableLengthIntegrationTest, testCsvSourceWithVariableLengthFields) {
                           ->addField("rows", BasicType::UINT64)
                           ->addField("cols", BasicType::UINT64)
                           ->addField("type", BasicType::UINT64)
-                          ->addField("data", BasicType::TEXT);// TEXT is the variable length field
+                          ->addField("data", DataTypeFactory::createText());// TEXT is the variable length field
 
     auto query = Query::from("variable_length");
 

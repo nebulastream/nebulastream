@@ -23,7 +23,10 @@ class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
 
 class ArrayType;
-using ArrayPtr = std::shared_ptr<ArrayType>;
+using ArrayTypePtr = std::shared_ptr<ArrayType>;
+
+class TextType;
+using TextTypePtr = std::shared_ptr<TextType>;
 
 class ValueType;
 using ValueTypePtr = std::shared_ptr<ValueType>;

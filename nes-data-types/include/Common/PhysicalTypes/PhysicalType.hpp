@@ -76,6 +76,12 @@ class PhysicalType {
      */
     [[nodiscard]] virtual bool isArrayType() const noexcept { return false; };
 
+    /**
+     * @brief Indicates if this is a text data type.
+     * @return true if type is text
+     */
+    [[nodiscard]] virtual bool isTextType() const noexcept { return false; };
+
     /// @brief true only for arrays which contain chars as their immediate child type.
     [[nodiscard]] virtual bool isCharArrayType() const noexcept { return false; };
 

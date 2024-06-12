@@ -562,12 +562,12 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
         }
     };
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("id1", BasicType::TEXT)
+                                ->addField("id1", DataTypeFactory::createText())
                                 ->addField("timestamp", BasicType::UINT64)
                                 ->updateSourceName(*srcName);
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("id2", BasicType::TEXT)
+                                 ->addField("id2", DataTypeFactory::createText())
                                  ->addField("timestamp", BasicType::UINT64)
                                  ->updateSourceName(*srcName);
 

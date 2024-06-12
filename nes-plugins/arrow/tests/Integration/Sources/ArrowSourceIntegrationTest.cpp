@@ -60,7 +60,7 @@ TEST_F(ArrowSourceIntegrationTest, testArrowSourceWithMultipleDatatypes) {
                           ->addField("field_uint64", BasicType::UINT64)
                           ->addField("field_float", BasicType::FLOAT32)
                           ->addField("field_double", BasicType::FLOAT64)
-                          ->addField("field_string", BasicType::TEXT);
+                          ->addField("field_string", DataTypeFactory::createText());
 
     // setup coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();

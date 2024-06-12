@@ -113,7 +113,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, cardinality) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("car");
@@ -158,7 +158,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, selectivity) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
@@ -209,7 +209,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, ingestionRate) {
     inputSchema = inputSchema->addField(INGESTION_RATE_FIELD_NAME, BasicType::UINT64);
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
@@ -260,7 +260,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, bufferRate) {
     inputSchema = inputSchema->addField(BUFFER_RATE_FIELD_NAME, BasicType::UINT64);
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
@@ -308,7 +308,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, minVal) {
     using namespace Windowing;
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(DEPTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
@@ -370,7 +370,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicMapOperatorCard
     queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", query.getQueryPlan());
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("car");
@@ -442,7 +442,7 @@ TEST_F(DefaultStatisticQueryGeneratorTest, workloadCharacteristicFilterBeforeJoi
     queryCatalog->addUpdatedQueryPlan(queryId, "Executed Query Plan", query.getQueryPlan());
 
     // Adding here the specific descriptor fields
-    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+    outputSchemaBuildOperator = outputSchemaBuildOperator->addField(STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                     ->addField(WIDTH_FIELD_NAME, BasicType::UINT64)
                                     ->addField(ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
                                     ->updateSourceName("cartruck");

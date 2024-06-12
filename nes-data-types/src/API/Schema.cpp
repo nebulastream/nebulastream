@@ -176,6 +176,8 @@ AttributeFieldPtr createField(const std::string& name, BasicType type) {
     return AttributeField::create(name, DataTypeFactory::createType(type));
 }
 
+AttributeFieldPtr createField(const std::string& name, DataTypePtr type) { return AttributeField::create(name, type); }
+
 std::string Schema::getQualifierNameForSystemGeneratedFieldsWithSeparator() const {
     return getQualifierNameForSystemGeneratedFields() + ATTRIBUTE_NAME_SEPARATOR;
 }

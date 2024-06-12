@@ -180,9 +180,9 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues) {
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                          ->addField(createField("value1", BasicType::TEXT))
-                          ->addField(createField("value2", BasicType::TEXT))
-                          ->addField(createField("value3", BasicType::TEXT));
+                          ->addField(createField("value1", DataTypeFactory::createText()))
+                          ->addField(createField("value2", DataTypeFactory::createText()))
+                          ->addField(createField("value3", DataTypeFactory::createText()));
     const auto entrySize = 3 * sizeof(uint64_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
     const auto numItems = 507_u64;
@@ -194,7 +194,8 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues) {
 }
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveLargeVarSizedValues) {
-    auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(createField("value1", BasicType::TEXT));
+    auto testSchema =
+        Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(createField("value1", DataTypeFactory::createText()));
     const auto entrySize = 1 * sizeof(uint64_t);
     const auto pageSize = 8_u64;
     const auto numItems = 507_u64;
@@ -208,7 +209,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveLargeVarSizedValues) {
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", BasicType::TEXT))
+                          ->addField(createField("value2", DataTypeFactory::createText()))
                           ->addField(createField("value3", BasicType::FLOAT64));
     const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
@@ -237,7 +238,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedValuesNonDefaultPageSize) {
 TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", BasicType::TEXT));
+                          ->addField(createField("value2", DataTypeFactory::createText()));
     const auto entrySize = 2 * sizeof(uint64_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
     const auto numItems = 507_u64;
@@ -262,7 +263,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors) {
 TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", BasicType::TEXT))
+                          ->addField(createField("value2", DataTypeFactory::createText()))
                           ->addField(createField("value3", BasicType::FLOAT64));
     const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;
@@ -288,7 +289,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors) {
 TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectorsWithDifferentPageSizes) {
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
-                          ->addField(createField("value2", BasicType::TEXT))
+                          ->addField(createField("value2", DataTypeFactory::createText()))
                           ->addField(createField("value3", BasicType::FLOAT64));
     const auto entrySize = 2 * sizeof(uint64_t) + sizeof(double_t);
     const auto pageSize = PagedVectorVarSized::PAGE_SIZE;

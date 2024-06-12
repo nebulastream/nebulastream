@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -68,7 +69,7 @@ class TextPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineEx
  */
 TEST_P(TextPipelineTest, textEqualsPipeline) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("f1", BasicType::TEXT);
+    schema->addField("f1", DataTypeFactory::createText());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);

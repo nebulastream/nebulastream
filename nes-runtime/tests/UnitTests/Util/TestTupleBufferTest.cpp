@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include "Common/DataTypes/DataTypeFactory.hpp"
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
@@ -48,9 +49,9 @@ class TestTupleBufferTest : public Testing::BaseUnitTest, public testing::WithPa
 
         varSizedDataSchema = Schema::create(memoryLayout)
                                  ->addField("test$t1", BasicType::UINT16)
-                                 ->addField("test$t2", BasicType::TEXT)
+                                 ->addField("test$t2", DataTypeFactory::createText())
                                  ->addField("test$t3", BasicType::FLOAT64)
-                                 ->addField("test$t4", BasicType::TEXT);
+                                 ->addField("test$t4", DataTypeFactory::createText());
 
         auto tupleBuffer = bufferManager->getBufferBlocking();
         auto tupleBufferVarSizedData = bufferManager->getBufferBlocking();

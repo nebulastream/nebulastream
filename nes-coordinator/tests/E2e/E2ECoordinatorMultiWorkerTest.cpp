@@ -122,7 +122,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
-              "BasicType::TEXT)->addField(createField(\\\"timestamp\\\", BasicType::UINT64))"
+              "DataTypeFactory::createText())->addField(createField(\\\"timestamp\\\", BasicType::UINT64))"
               "->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
               "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;
@@ -205,7 +205,7 @@ TEST_F(E2ECoordinatorMultiWorkerTest, testExecutingValidQueryWithFileOutputTwoWo
 
     std::stringstream schema;
     schema << "{\"logicalSourceName\" : \"QnV\",\"schema\" : \"Schema::create()->addField(\\\"sensor_id\\\", "
-              "BasicType::TEXT)->addField(createField(\\\"timestamp\\\", "
+              "DataTypeFactory::createText())->addField(createField(\\\"timestamp\\\", "
               "BasicType::UINT64))->addField(createField(\\\"velocity\\\", BasicType::FLOAT32))"
               "->addField(createField(\\\"quantity\\\", BasicType::UINT64));\"}";
     schema << endl;

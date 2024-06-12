@@ -143,7 +143,7 @@ void checkBufferResult(std::string variableName, auto pipelineContext, auto memo
  */
 TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
     auto variableName = "stringVariable";
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::TEXT);
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, DataTypeFactory::createText());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
@@ -193,7 +193,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap) {
  */
 TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
-    schema->addField("stringVariable", BasicType::TEXT);
+    schema->addField("stringVariable", DataTypeFactory::createText());
     schema->addField("intVariable", BasicType::INT32);
     schema->addField("byteVariable", BasicType::INT8);
     schema->addField("shortVariable", BasicType::INT16);

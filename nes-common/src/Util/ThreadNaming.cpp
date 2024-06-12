@@ -14,6 +14,7 @@
 
 #include <Util/ThreadNaming.hpp>
 #include <cstdarg>
+#include <cstdint>
 #include <cstdio>
 #include <cstring>
 #include <unistd.h>

@@ -41,7 +41,6 @@ uint64_t BasicPhysicalType::size() const {
         case DOUBLE: return sizeof(double);
         case BOOLEAN: return sizeof(bool);
         case CHAR: return sizeof(char);
-        case TEXT: return sizeof(uint32_t);// we store the child buffer index (NestedTupleBufferKey) in the tuple
         case UNDEFINED: return -1;
     }
     return -1;
@@ -64,11 +63,6 @@ std::string BasicPhysicalType::convertRawToString(void const* data) const noexce
         case FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
         case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
-        case TEXT: {
-            NES_DEBUG(
-                "BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.");
-            return "TEXT conversion to string not implemented.";
-        }
         case CHAR:
             if (size() != 1) {
                 return "invalid char type";
@@ -96,9 +90,6 @@ std::string BasicPhysicalType::convertRawToStringWithoutFill(void const* data) c
         case FLOAT: return std::to_string(*reinterpret_cast<float const*>(data));
         case DOUBLE: return std::to_string(*reinterpret_cast<double const*>(data));
         case BOOLEAN: return std::to_string(*reinterpret_cast<bool const*>(data));
-        case TEXT: {
-            return "BasicPhysicalType::convertRawToString(): TEXT conversion to string not implemented. Should never be here.";
-        }
         case CHAR:
             if (size() != 1) {
                 return "invalid char type";
@@ -123,7 +114,6 @@ std::string BasicPhysicalType::toString() const noexcept {
         case DOUBLE: return "FLOAT64";
         case BOOLEAN: return "BOOLEAN";
         case CHAR: return "CHAR";
-        case TEXT: return "TEXT";
         case UNDEFINED: return "UNDEFINED";
     }
     return "";

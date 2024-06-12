@@ -102,7 +102,7 @@ class HyperLogLogPipelineTest : public Testing::BaseUnitTest,
                            ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::ESTIMATE_FIELD_NAME, BasicType::FLOAT64)
-                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT);
+                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText());
         testStatisticStore = Statistic::DefaultStatisticStore::create();
         sendingPolicy = Statistic::SendingPolicyASAP::create(sinkDataCodec);
         statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(outputSchema,

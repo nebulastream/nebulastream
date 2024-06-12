@@ -119,7 +119,7 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaCompatibleTypes) {
                               ->addField("floatField", BasicType::FLOAT32)
                               ->addField("doubleField", BasicType::FLOAT64)
                               ->addField("booleanField", BasicType::BOOLEAN)
-                              ->addField("textField", BasicType::TEXT);
+                              ->addField("textField", DataTypeFactory::createText());
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
     auto childOutputSchema = Schema::create()
@@ -131,7 +131,7 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaCompatibleTypes) {
                                  ->addField("source$floatField", BasicType::FLOAT32)
                                  ->addField("source$doubleField", BasicType::FLOAT64)
                                  ->addField("source$booleanField", BasicType::BOOLEAN)
-                                 ->addField("source$textField", BasicType::TEXT);
+                                 ->addField("source$textField", DataTypeFactory::createText());
     auto source = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(childOutputSchema)));
     op->addChild(source);
     // No exception is thrown here
@@ -148,7 +148,7 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaInCompatibleTypes) {
                               ->addField("floatField", BasicType::FLOAT32)
                               ->addField("doubleField", BasicType::FLOAT64)
                               ->addField("booleanField", BasicType::BOOLEAN)
-                              ->addField("textField", BasicType::TEXT);
+                              ->addField("textField", DataTypeFactory::createText());
     auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(
         Catalogs::UDF::JavaUDFDescriptorBuilder().setInputSchema(udfInputSchema).build());
     // Field types in the schema below are deliberately wrong.
@@ -159,7 +159,7 @@ TEST_F(MapJavaUDFLogicalOperatorTest, InferSchemaInCompatibleTypes) {
                                  ->addField("source$longField", BasicType::INT8)
                                  ->addField("source$floatField", BasicType::FLOAT64)
                                  ->addField("source$doubleField", BasicType::FLOAT32)
-                                 ->addField("source$booleanField", BasicType::TEXT)
+                                 ->addField("source$booleanField", DataTypeFactory::createText())
                                  ->addField("source$textField", BasicType::BOOLEAN);
     auto source = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(childOutputSchema)));
     op->addChild(source);

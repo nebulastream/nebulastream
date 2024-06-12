@@ -204,7 +204,7 @@ TEST_P(StatisticSinkTest, testCountMin) {
                                        ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
                                        ->addField(Statistic::DEPTH_FIELD_NAME, BasicType::UINT64)
                                        ->addField(Statistic::NUMBER_OF_BITS_IN_KEY, BasicType::UINT64)
-                                       ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                       ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                        ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                                        ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
                                        ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)
@@ -239,7 +239,7 @@ TEST_P(StatisticSinkTest, testCountMin) {
 TEST_P(StatisticSinkTest, testHyperLogLog) {
     auto hyperLogLogStatisticSchema = Schema::create()
                                           ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
-                                          ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                                          ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                                           ->addField(Statistic::BASE_FIELD_NAME_START, BasicType::UINT64)
                                           ->addField(Statistic::BASE_FIELD_NAME_END, BasicType::UINT64)
                                           ->addField(Statistic::STATISTIC_HASH_FIELD_NAME, BasicType::UINT64)

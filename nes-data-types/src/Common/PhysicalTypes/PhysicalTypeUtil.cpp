@@ -21,12 +21,6 @@ bool isChar(PhysicalTypePtr physicalType) {
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::CHAR;
 }
-
-bool isText(PhysicalTypePtr physicalType) {
-    return physicalType->isBasicType()
-        && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::TEXT;
-}
-
 bool isBool(PhysicalTypePtr physicalType) {
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::BOOLEAN;
@@ -71,9 +65,12 @@ bool isDouble(PhysicalTypePtr physicalType) {
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::DOUBLE;
 }
+
 bool isArray(PhysicalTypePtr physicalType) { return physicalType->isArrayType(); }
 PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType) {
     return std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType)->physicalComponentType;
 }
+
+bool isText(PhysicalTypePtr physicalType) { return physicalType->isTextType(); }
 
 }// namespace NES::PhysicalTypes
