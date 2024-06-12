@@ -1,5 +1,16 @@
 # Changelog
 
+## [v0.6.151](https://github.com/nebulastream/nebulastream/tree/v0.6.151) (2024-06-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.150...v0.6.151)
+
+**Implemented enhancements:**
+
+- \[TASK\] equi width hist change bounds to int  [\#4894](https://github.com/nebulastream/nebulastream/issues/4894)
+- \[TASK\] equi-width histogram [\#4854](https://github.com/nebulastream/nebulastream/issues/4854)
+- \[TASK\] Fix Statistic Registry [\#4778](https://github.com/nebulastream/nebulastream/issues/4778)
+- \[TASK\] Benchmark ISQP performance for different configurations [\#4667](https://github.com/nebulastream/nebulastream/issues/4667)
+
 ## [v0.6.150](https://github.com/nebulastream/nebulastream/tree/v0.6.150) (2024-06-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.149...v0.6.150)
