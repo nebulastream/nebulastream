@@ -275,51 +275,6 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         arrowArrays.push_back(doubleArray);
                         break;
                     }
-                    case NES::BasicPhysicalType::NativeType::TEXT: {
-                        arrow::StringBuilder stringBuilder;
-
-                        // iterate over all values in the column and add values to the builder
-                        for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
-                            std::string str;
-                            auto* buffer = inputBuffer.getBuffer<char>();
-                            auto indexInBuffer = buffer + offset + rowIndex * schema->getSchemaSizeInBytes();
-
-                            // read the child buffer index from the tuple buffer
-                            Runtime::TupleBuffer::NestedTupleBufferKey childIdx =
-                                *reinterpret_cast<uint32_t const*>(indexInBuffer);
-
-                            // retrieve the child buffer from the tuple buffer
-                            auto childTupleBuffer = inputBuffer.loadChildBuffer(childIdx);
-
-                            // retrieve the size of the variable-length field from the child buffer
-                            uint32_t sizeOfTextField = *(childTupleBuffer.getBuffer<uint32_t>());
-
-                            // build the string
-                            if (sizeOfTextField > 0) {
-                                auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
-                                std::string deserialized(begin, begin + sizeOfTextField);
-                                str = std::move(deserialized);
-                            }
-
-                            else {
-                                NES_WARNING("ArrowFormat::getArrowArrays: Variable-length field could not be read."
-                                            "Invalid size in the variable-length TEXT field. Adding an empty string.")
-                            }
-
-                            auto append = stringBuilder.Append(str);
-                        }
-
-                        // build the stringArray
-                        auto buildArray = stringBuilder.Finish();
-                        if (!buildArray.ok()) {
-                            NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert TEXT field to arrow array.");
-                        }
-
-                        // add the stringArray to the arrowArrays
-                        std::shared_ptr<arrow::Array> stringArray = *buildArray;
-                        arrowArrays.push_back(stringArray);
-                        break;
-                    }
                     case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                         // create a boolean builder
                         arrow::BooleanBuilder booleanBuilder;
@@ -351,6 +306,49 @@ std::vector<std::shared_ptr<arrow::Array>> ArrowFormat::getArrowArrays(Runtime::
                         break;
                     }
                 }
+            } else if (physicalType->isTextType()) {
+                arrow::StringBuilder stringBuilder;
+
+                // iterate over all values in the column and add values to the builder
+                for (uint64_t rowIndex = 0; rowIndex < numberOfTuples; ++rowIndex) {
+                    std::string str;
+                    auto* buffer = inputBuffer.getBuffer<char>();
+                    auto indexInBuffer = buffer + offset + rowIndex * schema->getSchemaSizeInBytes();
+
+                    // read the child buffer index from the tuple buffer
+                    Runtime::TupleBuffer::NestedTupleBufferKey childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
+
+                    // retrieve the child buffer from the tuple buffer
+                    auto childTupleBuffer = inputBuffer.loadChildBuffer(childIdx);
+
+                    // retrieve the size of the variable-length field from the child buffer
+                    uint32_t sizeOfTextField = *(childTupleBuffer.getBuffer<uint32_t>());
+
+                    // build the string
+                    if (sizeOfTextField > 0) {
+                        auto begin = childTupleBuffer.getBuffer() + sizeof(uint32_t);
+                        std::string deserialized(begin, begin + sizeOfTextField);
+                        str = std::move(deserialized);
+                    }
+
+                    else {
+                        NES_WARNING("ArrowFormat::getArrowArrays: Variable-length field could not be read."
+                                    "Invalid size in the variable-length TEXT field. Adding an empty string.")
+                    }
+
+                    auto append = stringBuilder.Append(str);
+                }
+
+                // build the stringArray
+                auto buildArray = stringBuilder.Finish();
+                if (!buildArray.ok()) {
+                    NES_FATAL_ERROR("ArrowFormat::getArrowArrays: could not convert TEXT field to arrow array.");
+                }
+
+                // add the stringArray to the arrowArrays
+                std::shared_ptr<arrow::Array> stringArray = *buildArray;
+                arrowArrays.push_back(stringArray);
+                break;
             }
         } catch (const std::exception& e) {
             NES_ERROR("ArrowFormat::getArrowArrays: Failed to convert the arrowArray to desired NES data type. "
@@ -418,10 +416,6 @@ std::shared_ptr<arrow::Schema> ArrowFormat::getArrowSchema() {
                         arrowFields.push_back(arrow::field(fieldName, arrow::float64()));
                         break;
                     }
-                    case NES::BasicPhysicalType::NativeType::TEXT: {
-                        arrowFields.push_back(arrow::field(fieldName, arrow::utf8()));
-                        break;
-                    }
                     case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                         arrowFields.push_back(arrow::field(fieldName, arrow::boolean()));
                         break;
@@ -436,6 +430,9 @@ std::shared_ptr<arrow::Schema> ArrowFormat::getArrowSchema() {
                         break;
                     }
                 }
+            } else if (physicalType->isTextType()) {
+                arrowFields.push_back(arrow::field(fieldName, arrow::utf8()));
+                break;
             }
         } catch (const std::exception& e) {
             NES_ERROR("Failed to convert the arrowArray to desired NES data type. Error: {}", e.what());

@@ -270,5 +270,7 @@ class Schema {
 
 AttributeFieldPtr createField(const std::string& name, BasicType type);
 
+AttributeFieldPtr createField(const std::string& name, DataTypePtr type);
+
 }// namespace NES
 #endif// NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_

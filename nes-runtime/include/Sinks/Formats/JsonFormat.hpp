@@ -35,7 +35,6 @@ class JsonFormat : public SinkFormat {
      */
     std::string getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) override;
 
-    //TODO implement this function with an SinkFormatIterator
     /**
     * @brief method to write a TupleBuffer
     * @param a tuple buffers pointer

@@ -16,6 +16,7 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -56,7 +57,7 @@ TEST_F(ExplainRequestIntegrationTest, executeExplainRequest) {
                       ->addField("id", BasicType::UINT32)
                       ->addField("timestamp", BasicType::UINT64)
                       ->addField("speed", BasicType::UINT64)
-                      ->addField("type", BasicType::TEXT);
+                      ->addField("type", DataTypeFactory::createText());
     auto sourceCatalog = crd->getSourceCatalogService();
     sourceCatalog->registerLogicalSource("test_source", schema);
 

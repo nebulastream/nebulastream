@@ -76,8 +76,8 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest) {
             .setClassName("stream.nebula.StringFlatMapFunction")
             .setInputClassName("java.lang.String")
             .setByteCodeList({{"stream.nebula.FlatMapFunction", {}}, {{"stream.nebula.StringFlatMapFunction"}, {}}})
-            .setInputSchema(Schema::create()->addField("id", BasicType::TEXT))
-            .setOutputSchema(Schema::create()->addField("id", BasicType::TEXT))
+            .setInputSchema(Schema::create()->addField("id", DataTypeFactory::createText()))
+            .setOutputSchema(Schema::create()->addField("id", DataTypeFactory::createText()))
             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
             .build();
     auto outputRecords = setupAndExecuteFlatMapUdf(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
@@ -100,7 +100,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction) {
                       ->addField("longVariable", BasicType::INT64)
                       ->addField("floatVariable", BasicType::FLOAT32)
                       ->addField("doubleVariable", BasicType::FLOAT64)
-                      ->addField("stringVariable", BasicType::TEXT)
+                      ->addField("stringVariable", DataTypeFactory::createText())
                       ->addField("booleanVariable", BasicType::BOOLEAN);
     int8_t initialByte = 10;
     int16_t initialShort = 10;

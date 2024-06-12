@@ -167,11 +167,6 @@ std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFro
                     readers.emplace_back(reader);
                     break;
                 }
-                case NES::BasicPhysicalType::NativeType::TEXT: {
-                    auto reader = std::make_shared<ArrowFieldReader<arrow::StringArray>>(fieldIndex, field->getName());
-                    readers.emplace_back(reader);
-                    break;
-                }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                     auto reader = std::make_shared<ArrowFieldReader<arrow::BooleanArray>>(fieldIndex, field->getName());
                     readers.emplace_back(reader);
@@ -181,6 +176,10 @@ std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFro
                     NES_NOT_IMPLEMENTED();
                 }
             }
+        } else if (physicalType->isTextType()) {
+            auto reader = std::make_shared<ArrowFieldReader<arrow::StringArray>>(fieldIndex, field->getName());
+            readers.emplace_back(reader);
+            break;
         } else {
             // We do not support any other ARROW types (such as Lists, Maps, Tensors) yet. We could however later store
             // them in the childBuffers similar to how we store TEXT and push the computation supported by arrow down to

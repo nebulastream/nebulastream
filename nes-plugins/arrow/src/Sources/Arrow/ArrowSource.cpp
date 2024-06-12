@@ -249,6 +249,10 @@ void ArrowSource::populateOptionsFromSchema(arrow::csv::ReadOptions& readOptions
         auto dataType = fields[schemaFieldIdx]->getDataType();
         auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
         if (!physicalType->isBasicType()) {
+            if (physicalType->isTextType()) {
+                convertOptions.column_types[fieldName] = arrow::utf8();
+                return;
+            }
             NES_THROW_RUNTIME_ERROR("ArrowSource::populateConvertOptionsFromSchema: error inferring types");
         }
         auto basicPhysicalType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
@@ -264,7 +268,6 @@ void ArrowSource::populateOptionsFromSchema(arrow::csv::ReadOptions& readOptions
             case BasicPhysicalType::NativeType::FLOAT: convertOptions.column_types[fieldName] = arrow::float32(); break;
             case BasicPhysicalType::NativeType::DOUBLE: convertOptions.column_types[fieldName] = arrow::float64(); break;
             case BasicPhysicalType::NativeType::BOOLEAN: convertOptions.column_types[fieldName] = arrow::boolean(); break;
-            case BasicPhysicalType::NativeType::TEXT: convertOptions.column_types[fieldName] = arrow::utf8(); break;
             case BasicPhysicalType::NativeType::CHAR:
             case BasicPhysicalType::NativeType::UNDEFINED:
                 NES_THROW_RUNTIME_ERROR("ArrowSource::writeArrowArrayToTupleBuffer: illegal type");
@@ -515,41 +518,6 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                     throw std::invalid_argument("Arrow does not support CHAR");
                     break;
                 }
-                case NES::BasicPhysicalType::NativeType::TEXT: {
-                    NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::STRING,
-                                    "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent STRING data types. Type found"
-                                    " in IPC file: "
-                                        + arrowArray->type()->ToString());
-
-                    // cast the arrow array to the string type
-                    auto values = std::static_pointer_cast<arrow::StringArray>(arrowArray);
-
-                    // write all values to the tuple buffer
-                    for (uint64_t index = 0; index < arrayLength; ++index) {
-                        uint64_t bufferRowIndex = tupleCountInBuffer + index;
-                        auto value = values->GetString(index);
-
-                        auto sizeOfValue = value.size();
-                        auto totalSize = sizeOfValue + sizeof(uint32_t);
-                        auto childTupleBuffer = allocateVariableLengthField(localBufferManager, totalSize);
-
-                        NES_ASSERT2_FMT(
-                            childTupleBuffer.getBufferSize() >= totalSize,
-                            "Parser::writeFieldValueToTupleBuffer(): Could not write TEXT field to tuple buffer, there was not "
-                            "sufficient space available. Required space: "
-                                << totalSize << ", available space: " << childTupleBuffer.getBufferSize());
-
-                        // write out the length and the variable-sized text to the child buffer
-                        (*childTupleBuffer.getBuffer<uint32_t>()) = sizeOfValue;
-                        std::memcpy(childTupleBuffer.getBuffer() + sizeof(uint32_t), value.data(), sizeOfValue);
-
-                        // attach the child buffer to the parent buffer and write the child buffer index in the
-                        // schema field index of the tuple buffer
-                        auto childIdx = tupleBuffer.getBuffer().storeChildBuffer(childTupleBuffer);
-                        tupleBuffer[bufferRowIndex][schemaFieldIndex].write<Runtime::TupleBuffer::NestedTupleBufferKey>(childIdx);
-                    }
-                    break;
-                }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
                     NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::BOOL,
                                     "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent BOOL data types. Type found"
@@ -570,6 +538,39 @@ void ArrowSource::writeArrowArrayToTupleBuffer(uint64_t tupleCountInBuffer,
                 }
                 case NES::BasicPhysicalType::NativeType::UNDEFINED:
                     NES_FATAL_ERROR("ArrowSource::writeArrowArrayToTupleBuffer: Field Type UNDEFINED");
+            }
+        } else if (physicalType->isTextType()) {
+            NES_ASSERT2_FMT(arrowArray->type()->id() == arrow::Type::type::STRING,
+                            "ArrowSource::writeArrowArrayToTupleBuffer: inconsistent STRING data types. Type found"
+                            " in IPC file: "
+                                + arrowArray->type()->ToString());
+
+            // cast the arrow array to the string type
+            auto values = std::static_pointer_cast<arrow::StringArray>(arrowArray);
+
+            // write all values to the tuple buffer
+            for (uint64_t index = 0; index < arrayLength; ++index) {
+                uint64_t bufferRowIndex = tupleCountInBuffer + index;
+                auto value = values->GetString(index);
+
+                auto sizeOfValue = value.size();
+                auto totalSize = sizeOfValue + sizeof(uint32_t);
+                auto childTupleBuffer = allocateVariableLengthField(localBufferManager, totalSize);
+
+                NES_ASSERT2_FMT(
+                    childTupleBuffer.getBufferSize() >= totalSize,
+                    "Parser::writeFieldValueToTupleBuffer(): Could not write TEXT field to tuple buffer, there was not "
+                    "sufficient space available. Required space: "
+                        << totalSize << ", available space: " << childTupleBuffer.getBufferSize());
+
+                // write out the length and the variable-sized text to the child buffer
+                (*childTupleBuffer.getBuffer<uint32_t>()) = sizeOfValue;
+                std::memcpy(childTupleBuffer.getBuffer() + sizeof(uint32_t), value.data(), sizeOfValue);
+
+                // attach the child buffer to the parent buffer and write the child buffer index in the
+                // schema field index of the tuple buffer
+                auto childIdx = tupleBuffer.getBuffer().storeChildBuffer(childTupleBuffer);
+                tupleBuffer[bufferRowIndex][schemaFieldIndex].write<Runtime::TupleBuffer::NestedTupleBufferKey>(childIdx);
             }
         } else {
             // We do not support any other ARROW types (such as Lists, Maps, Tensors) yet. We could however later store

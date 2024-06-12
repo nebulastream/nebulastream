@@ -231,12 +231,12 @@ TEST_P(JoinDeploymentTest, testJoinWithVarSizedData) {
     }
 
     const auto leftSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                ->addField("test1$id1", BasicType::TEXT)
+                                ->addField("test1$id1", DataTypeFactory::createText())
                                 ->addField("test1$timestamp", BasicType::UINT64)
                                 ->updateSourceName("test1");
 
     const auto rightSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                                 ->addField("test2$id2", BasicType::TEXT)
+                                 ->addField("test2$id2", DataTypeFactory::createText())
                                  ->addField("test2$timestamp", BasicType::UINT64)
                                  ->updateSourceName("test2");
 

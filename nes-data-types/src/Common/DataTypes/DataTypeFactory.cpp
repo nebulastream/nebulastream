@@ -19,7 +19,7 @@
 #include <Common/DataTypes/FixedChar.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Common/DataTypes/Text.hpp>
+#include <Common/DataTypes/TextType.hpp>
 #include <Common/DataTypes/Undefined.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -76,7 +76,7 @@ DataTypePtr DataTypeFactory::createInt64() { return createInteger(64, INT64_MIN,
 
 DataTypePtr DataTypeFactory::createUInt64() {
     return createInteger(64, 0, UINT64_MAX);
-};// TODO / BUG: upper bound is a INT64 and can not capture this upper bound. -> upperbound overflows and is set to -1.
+};// TODO 4911: BUG: upper bound is a INT64 and can not capture this upper bound. -> upperbound overflows and is set to -1. (https://github.com/nebulastream/nebulastream/issues/4911)
 
 DataTypePtr DataTypeFactory::createInt32() { return createInteger(32, INT32_MIN, INT32_MAX); };
 
@@ -88,7 +88,7 @@ DataTypePtr DataTypeFactory::createArray(uint64_t length, const DataTypePtr& com
 
 DataTypePtr DataTypeFactory::createFixedChar(uint64_t length) { return std::make_shared<FixedChar>(length); }
 
-DataTypePtr DataTypeFactory::createText() { return std::make_shared<Text>(); }
+DataTypePtr DataTypeFactory::createText() { return std::make_shared<TextType>(); }
 
 DataTypePtr DataTypeFactory::createChar() { return std::make_shared<Char>(); }
 
@@ -151,7 +151,6 @@ DataTypePtr DataTypeFactory::createType(BasicType type) {
         case UINT64: return DataTypeFactory::createUInt64();
         case FLOAT32: return DataTypeFactory::createFloat();
         case FLOAT64: return DataTypeFactory::createDouble();
-        case TEXT: return DataTypeFactory::createText();
         default: return nullptr;
     }
 }

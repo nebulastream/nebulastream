@@ -289,7 +289,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap) {
  */
 TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap) {
     auto variableName = "stringVariable";
-    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::TEXT);
+    auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, DataTypeFactory::createText());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
@@ -343,7 +343,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap) {
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
     // TODO #3980 enable once string works
-    // schema->addField("stringVariable", BasicType::TEXT);
+    // schema->addField("stringVariable", DataTypeFactory::createText());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);

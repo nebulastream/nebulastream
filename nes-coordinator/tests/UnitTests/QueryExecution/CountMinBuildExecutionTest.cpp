@@ -81,7 +81,7 @@ class CountMinBuildExecutionTest
                            ->addField(Statistic::OBSERVED_TUPLES_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::WIDTH_FIELD_NAME, BasicType::UINT64)
                            ->addField(Statistic::DEPTH_FIELD_NAME, BasicType::UINT64)
-                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, BasicType::TEXT)
+                           ->addField(Statistic::STATISTIC_DATA_FIELD_NAME, DataTypeFactory::createText())
                            ->updateSourceName("test");
         testStatisticStore = Statistic::DefaultStatisticStore::create();
         statisticFormat =

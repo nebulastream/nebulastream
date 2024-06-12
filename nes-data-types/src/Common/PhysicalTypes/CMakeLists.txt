@@ -15,4 +15,5 @@ add_source_files(nes-data-types
         BasicPhysicalType.cpp
         DefaultPhysicalTypeFactory.cpp
         PhysicalTypeUtil.cpp
+        TextPhysicalType.cpp
 )

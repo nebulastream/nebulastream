@@ -23,8 +23,8 @@ namespace NES {
  * @brief Arrays con be constructed of any built-in type.
  * Arrays always have a fixed sized and can not be extended.
  */
+// Todo #4906: remove or reenable https://github.com/nebulastream/nebulastream/issues/4907
 class ArrayType : public DataType {
-
   public:
     /**
      * @brief Constructs a new ArrayType.

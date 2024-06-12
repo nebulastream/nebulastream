@@ -248,8 +248,8 @@ TEST_F(MapJavaUdfOperatorTest, StringUDFTest) {
             .setInputClassName("java.lang.String")
             .setOutputClassName("java.lang.String")
             .setByteCodeList({{{"stream.nebula.MapFunction"}, {}}, {{"stream.nebula.StringMapFunction"s}, {}}})
-            .setInputSchema(Schema::create()->addField("id", BasicType::TEXT))
-            .setOutputSchema(Schema::create()->addField("id", BasicType::TEXT))
+            .setInputSchema(Schema::create()->addField("id", DataTypeFactory::createText()))
+            .setOutputSchema(Schema::create()->addField("id", DataTypeFactory::createText()))
             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
             .build();
     auto outputRecord = setupAndExecuteMapUdfWithBuffer(javaUDFDescriptor, (int8_t*) &wc, inputRecord);
@@ -272,7 +272,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
             ->addField("unsignedLongVariable", BasicType::UINT64)// UINT64 input fields are also mapped to Java long
             ->addField("floatVariable", BasicType::FLOAT32)
             ->addField("doubleVariable", BasicType::FLOAT64)
-            ->addField("stringVariable", BasicType::TEXT)
+            ->addField("stringVariable", DataTypeFactory::createText())
             ->addField("booleanVariable", BasicType::BOOLEAN);
     auto outputSchema = Schema::create()
                             ->addField("byteVariable", BasicType::INT8)
@@ -282,7 +282,7 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                             ->addField("unsignedLongVariable", BasicType::INT64)// Java long are always mapped to INT64 in output
                             ->addField("floatVariable", BasicType::FLOAT32)
                             ->addField("doubleVariable", BasicType::FLOAT64)
-                            ->addField("stringVariable", BasicType::TEXT)
+                            ->addField("stringVariable", DataTypeFactory::createText())
                             ->addField("booleanVariable", BasicType::BOOLEAN);
     int8_t initialByte = 10;
     int16_t initialShort = 10;

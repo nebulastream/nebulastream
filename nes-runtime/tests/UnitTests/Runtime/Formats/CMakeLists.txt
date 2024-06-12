@@ -10,4 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_nes_runtime_test(iterator-tests "IteratorTest.cpp")
+add_nes_runtime_test(json-format-tests "JsonFormatTest.cpp")

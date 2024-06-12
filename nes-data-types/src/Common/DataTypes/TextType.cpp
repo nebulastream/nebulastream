@@ -13,19 +13,15 @@
 */
 
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Text.hpp>
+#include <Common/DataTypes/TextType.hpp>
 
 namespace NES {
 
-bool Text::equals(DataTypePtr otherDataType) { return otherDataType->isText(); }
+bool TextType::equals(DataTypePtr otherDataType) { return otherDataType->isText(); }
 
-DataTypePtr Text::join(DataTypePtr otherDataType) {
-    if (otherDataType->isText()) {
-        return DataTypeFactory::createText();
-    }
-    return DataTypeFactory::createUndefined();
-}
+// A text type cannot be joined with another type.
+DataTypePtr TextType::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
 
-std::string Text::toString() { return "Text"; }
+std::string TextType::toString() { return "Text"; }
 
 }// namespace NES

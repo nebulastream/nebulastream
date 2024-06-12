@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Arrow/ArrowRecordBatchScan.hpp>
 #include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
@@ -84,7 +85,7 @@ TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
                       ->addField("field_uint64", BasicType::UINT64)
                       ->addField("field_float", BasicType::FLOAT32)
                       ->addField("field_double", BasicType::FLOAT64)
-                      ->addField("field_string", BasicType::TEXT);
+                      ->addField("field_string", DataTypeFactory::createText());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::ArrowRecordBatchScan>(schema);

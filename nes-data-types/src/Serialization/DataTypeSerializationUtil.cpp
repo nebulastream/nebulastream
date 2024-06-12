@@ -17,6 +17,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+#include <Common/DataTypes/TextType.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 #include <SerializableDataType.pb.h>
@@ -73,8 +74,6 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
     }
     if (serializedDataType.type() == SerializableDataType_Type_CHAR) {
         return DataTypeFactory::createChar();
-    } else if (serializedDataType.type() == SerializableDataType_Type_TEXT) {
-        return DataTypeFactory::createText();
     } else if (serializedDataType.type() == SerializableDataType_Type_INTEGER) {
         auto integerDetails = SerializableDataType_IntegerDetails();
         serializedDataType.details().UnpackTo(&integerDetails);
@@ -100,6 +99,9 @@ DataTypePtr DataTypeSerializationUtil::deserializeDataType(const SerializableDat
         return DataTypeFactory::createChar();
     } else if (serializedDataType.type() == SerializableDataType_Type_ARRAY) {
         return deserializeArrayType(serializedDataType);
+    } else if (serializedDataType.type() == SerializableDataType_Type_TEXT) {
+        return std::make_shared<TextType>();
+        ;
     }
     NES_THROW_RUNTIME_ERROR("DataTypeSerializationUtil: data type which is to be serialized not registered. "
                             "Deserialization is not possible");
