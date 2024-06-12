@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.6.152](https://github.com/nebulastream/nebulastream/tree/v0.6.152) (2024-06-12)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.151...v0.6.152)
+
+### Bug Fixes 🐛
+
+- \[BUG\] convertRawToString for TEXT type not implemented [\#4601](https://github.com/nebulastream/nebulastream/issues/4601)
+- \[BUG\] MQTTSource not supported [\#3645](https://github.com/nebulastream/nebulastream/issues/3645)
+
 ## [v0.6.151](https://github.com/nebulastream/nebulastream/tree/v0.6.151) (2024-06-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.150...v0.6.151)
