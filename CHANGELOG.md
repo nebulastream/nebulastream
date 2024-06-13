@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.153](https://github.com/nebulastream/nebulastream/tree/v0.6.153) (2024-06-13)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.152...v0.6.153)
+
+**Implemented enhancements:**
+
+- \[TASK\] Testing for AND operator [\#4955](https://github.com/nebulastream/nebulastream/issues/4955)
+
 ## [v0.6.152](https://github.com/nebulastream/nebulastream/tree/v0.6.152) (2024-06-12)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.151...v0.6.152)
