@@ -459,7 +459,7 @@ TEST_F(QueryAPITest, testQuerySeqWithTwoSources) {
     EXPECT_TRUE(seqPlan->compare(joinPlan));
 }
 
-/*
+/**
  * @brief Test for Sequence-Operator (seqWith) with three sources.
  * This test compares the structure of the seqWith operator with the structure of the joinWith operator.
  * Query: SEQ(A,B,C) WITHIN 2 minutes
@@ -499,6 +499,76 @@ TEST_F(QueryAPITest, testQuerySeqWithThreeSources) {
     auto joinPlan = queryJoin.getQueryPlan();
     // compare if seq- and join-plan are equal
     EXPECT_TRUE(seqPlan->compare(joinPlan));
+}
+
+/**
+ * @brief Test for AND-Operator (andWith) with two sources.
+ * Compares the actual query plan of andWith with the expected query plan.
+ * Query: AND(A,B) WITHIN 2 minutes
+ */
+TEST_F(QueryAPITest, testQueryAndWithTwoSources) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+
+    // Query: AND(A,B) WITHIN 2 minutes
+    auto queryAnd = Query::from("default_logical")// A in query
+                        .andWith(subQueryB)
+                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                        .sink(PrintSinkDescriptor::create());
+    // reset input streams
+    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
+    auto queryJoin = Query::from("default_logical")                   // A in query
+                         // create andWith B
+                         .map(Attribute("cep_leftKey") = 1)
+                         .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
+                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         .sink(PrintSinkDescriptor::create());
+    auto andPlan = queryAnd.getQueryPlan();
+    auto joinPlan = queryJoin.getQueryPlan();
+    // compare if and- and join-plan are equal
+    EXPECT_TRUE(andPlan->compare(joinPlan));
+}
+
+/**
+ * @brief Test for AND-Operator (andWith) with three sources.
+ * Compares the actual query plan of andWith with the expected query plan.
+ * Query: AND(A,B,C) WITHIN 2 minutes
+ */
+TEST_F(QueryAPITest, testQueryAndWithThreeSources) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+    auto subQueryC = Query::from("default_logical").filter(lessExpression);// C in query
+
+    // Query: AND(A,B,C) WITHIN 2 minutes
+    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
+    auto queryAnd = Query::from("default_logical")                    // A in query
+                        .andWith(subQueryB)
+                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                        .andWith(subQueryC)
+                        .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                        .sink(PrintSinkDescriptor::create());
+    // reset input streams
+    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
+    subQueryC = Query::from("default_logical").filter(lessExpression);// reset C
+    auto queryJoin = Query::from("default_logical")                   // A in query
+                         // create andWith B
+                         .map(Attribute("cep_leftKey") = 1)
+                         .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
+                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         // create andWith C
+                         .map(Attribute("cep_leftKey") = 1)
+                         .joinWith(subQueryC.map(Attribute("cep_rightKey") = 1))
+                         .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
+                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                         .sink(PrintSinkDescriptor::create());
+    auto andPlan = queryAnd.getQueryPlan();
+    auto joinPlan = queryJoin.getQueryPlan();
+    // compare if and- and join-plan are equal
+    EXPECT_TRUE(andPlan->compare(joinPlan));
 }
 
 }// namespace NES
