@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.154](https://github.com/nebulastream/nebulastream/tree/v0.6.154) (2024-06-19)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.153...v0.6.154)
+
+### Bug Fixes 🐛
+
+- \[BUG\] GRPC BuildAndStart Crashes When Starting Coordinator [\#4834](https://github.com/nebulastream/nebulastream/issues/4834)
+
 ## [v0.6.153](https://github.com/nebulastream/nebulastream/tree/v0.6.153) (2024-06-13)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.152...v0.6.153)
