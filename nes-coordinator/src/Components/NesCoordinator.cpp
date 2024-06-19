@@ -52,6 +52,7 @@
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <csignal>
 #include <grpcpp/ext/health_check_service_server_builder_option.h>
 #include <grpcpp/health_check_service_interface.h>
 #include <grpcpp/server_builder.h>
@@ -325,6 +326,15 @@ void NesCoordinator::buildAndStartGRPCServer(const std::shared_ptr<std::promise<
         HEALTH_SERVICE_NAME,
         grpc::health::v1::HealthCheckResponse_ServingStatus::HealthCheckResponse_ServingStatus_SERVING);
     builder.RegisterService(&healthCheckServiceImpl);
+
+    // Create a signal handler to give a meaningful error message in case the rpcServer cannot be built.
+    auto signalHandler = [](int signal) {
+        std::cerr << "Error with signal: " << signal
+                  << " while building and starting an GRPC server. "
+                     "Possible reason: LLD compilation flag is true.\n";
+        _exit(1);// Exit immediately, avoiding complex logic in signal handler.
+    };
+    signal(SIGSEGV, signalHandler);
 
     rpcServer = builder.BuildAndStart();
     prom->set_value(true);
