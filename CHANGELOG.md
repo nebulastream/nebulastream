@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.155](https://github.com/nebulastream/nebulastream/tree/v0.6.155) (2024-06-20)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.154...v0.6.155)
+
+**Implemented enhancements:**
+
+- \[TASK\] Testing for Times-operator [\#4967](https://github.com/nebulastream/nebulastream/issues/4967)
+
 ## [v0.6.154](https://github.com/nebulastream/nebulastream/tree/v0.6.154) (2024-06-19)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.153...v0.6.154)
