@@ -429,7 +429,7 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
     EXPECT_EQ(sinkOperators2.size(), 1U);
 }
 
-/*
+/**
  * @brief Test for Sequence-Operator (seqWith) with two sources.
  * This test compares the structure of the seqWith operator with the structure of the joinWith operator.
  * Query: SEQ(A,B) WITHIN 2 minutes
@@ -569,6 +569,110 @@ TEST_F(QueryAPITest, testQueryAndWithThreeSources) {
     auto joinPlan = queryJoin.getQueryPlan();
     // compare if and- and join-plan are equal
     EXPECT_TRUE(andPlan->compare(joinPlan));
+}
+
+/**
+ * @brief Test for Times-Operator.
+ * In this test, there are no occurrences specified (Times() without parameter),
+ * leading to a query that expects the default behavior of the Times-operator without filtering for min/max occurrences.
+ */
+TEST_F(QueryAPITest, testQueryTimesNoSpecifiedOccurrences) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+
+    auto timesQuery = Query::from("default_logical")
+                          .times()
+                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                          .sink(PrintSinkDescriptor::create());
+    auto expectedQuery = Query::from("default_logical")
+                             .map(Attribute("Count") = 1)
+                             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                             .apply(API::Sum(Attribute("Count")), API::Max(Attribute("timestamp")))
+                             .sink(PrintSinkDescriptor::create());
+    auto timesPlan = timesQuery.getQueryPlan();
+    auto expectedPlan = expectedQuery.getQueryPlan();
+    // compare if times- and expected-plan are equal
+    EXPECT_TRUE(timesPlan->compare(expectedPlan));
+}
+
+/**
+ * @brief Test for Times-Operator.
+ * In this test, there is an exact number (larger than 0) occurrences specified (Times(occurrences)),
+ * leading to a query that filters the tuples by the exact number of occurrences.
+ */
+TEST_F(QueryAPITest, testQueryTimesExactOccurrences) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+
+    uint64_t numberOfOccurrences = 3;
+
+    auto timesQuery = Query::from("default_logical")
+                          .times(numberOfOccurrences)
+                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                          .sink(PrintSinkDescriptor::create());
+    auto expectedQuery = Query::from("default_logical")
+                             .map(Attribute("Count") = 1)
+                             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                             .apply(API::Sum(Attribute("Count")), API::Max(Attribute("timestamp")))
+                             // filter by exact number of occurrences
+                             .filter(Attribute("Count") == numberOfOccurrences)
+                             .sink(PrintSinkDescriptor::create());
+    auto timesPlan = timesQuery.getQueryPlan();
+    auto expectedPlan = expectedQuery.getQueryPlan();
+    // compare if times- and expected-plan are equal
+    EXPECT_TRUE(timesPlan->compare(expectedPlan));
+}
+
+/**
+* @brief Test for Times-Operator.
+* If the exact number of occurrences is 0 (Times(0)), this test should fail because
+* min- and max-occurrences are set to 0 which is not allowed.
+*/
+TEST_F(QueryAPITest, testQueryTimesZeroOccurrences) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+
+    uint64_t numberOfOccurrences = 0;
+    try {
+        auto timesQuery = Query::from("default_logical")
+                              .times(numberOfOccurrences)
+                              .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                              .sink(PrintSinkDescriptor::create());
+    } catch (const NES::Exceptions::RuntimeException& error) {
+        // expected to fail with a RuntimeException since numberOfOccurrences == 0 is not allowed.
+        EXPECT_THAT(error.what(), ::testing::HasSubstr("Number of occurrences must be at least 1."));
+    } catch (...) {
+        FAIL() << "Expected NES::Exceptions::RuntimeException to be thrown, because occurrences == 0 is not allowed.";
+    }
+}
+
+/**
+ * @brief Test for Times-Operator.
+ * If there are two parameters specified (Times(min_occurrences, max_occurrences)), the query-plan
+ * is expected to filtered according to the minimum and maximum number of occurrences.
+ */
+TEST_F(QueryAPITest, testQueryTimesMinMaxOccurrences) {
+    auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
+    auto lessExpression = Attribute("field_1") <= 10;
+
+    uint64_t numberOfMinOccurrences = 3;
+    uint64_t numberOfMaxOccurrences = 5;
+
+    auto timesQuery = Query::from("default_logical")
+                          .times(numberOfMinOccurrences, numberOfMaxOccurrences)
+                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                          .sink(PrintSinkDescriptor::create());
+    auto expectedQuery = Query::from("default_logical")
+                             .map(Attribute("Count") = 1)
+                             .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
+                             .apply(API::Sum(Attribute("Count")), API::Max(Attribute("timestamp")))
+                             // filter by min-/max-occurrences
+                             .filter(Attribute("Count") >= numberOfMinOccurrences && Attribute("Count") <= numberOfMaxOccurrences)
+                             .sink(PrintSinkDescriptor::create());
+    auto timesPlan = timesQuery.getQueryPlan();
+    auto expectedPlan = expectedQuery.getQueryPlan();
+    // compare if times- and expected-plan are equal
+    EXPECT_TRUE(timesPlan->compare(expectedPlan));
 }
 
 }// namespace NES
