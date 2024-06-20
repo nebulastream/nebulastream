@@ -49,7 +49,7 @@ CEPOperatorBuilder::Times Query::times(const uint64_t minOccurrences, const uint
     return CEPOperatorBuilder::Times(minOccurrences, maxOccurrences, *this);
 }
 
-CEPOperatorBuilder::Times Query::times(const uint64_t maxOccurrences) { return CEPOperatorBuilder::Times(maxOccurrences, *this); }
+CEPOperatorBuilder::Times Query::times(const uint64_t occurrences) { return CEPOperatorBuilder::Times(occurrences, *this); }
 
 CEPOperatorBuilder::Times Query::times() { return CEPOperatorBuilder::Times(*this); }
 
@@ -171,6 +171,10 @@ Query& Times::window(const Windowing::WindowTypePtr& windowType) const {
     if (!bounded) {
         return originalQuery.window(windowType).apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)));
     } else {
+        // if user passed 0 occurrences which is not wanted
+        if ((minOccurrences == 0) && (maxOccurrences == 0)) {
+            NES_THROW_RUNTIME_ERROR("Number of occurrences must be at least 1.");
+        }
         // if min and/or max occurrence are defined, apply count without filter
         if (maxOccurrences == 0) {
             return originalQuery.window(windowType)
