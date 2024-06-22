@@ -1,5 +1,18 @@
 # Changelog
 
+## [v0.6.156](https://github.com/nebulastream/nebulastream/tree/v0.6.156) (2024-06-22)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.155...v0.6.156)
+
+**Implemented enhancements:**
+
+- \[TASK\] Investigate Synopses Performance [\#4898](https://github.com/nebulastream/nebulastream/issues/4898)
+- \[TASK\] Tracking multiple triggerconditions and callbacks [\#4776](https://github.com/nebulastream/nebulastream/issues/4776)
+
+### Bug Fixes 🐛
+
+- \[BUG\] High coordinator CPU usage [\#4995](https://github.com/nebulastream/nebulastream/issues/4995)
+
 ## [v0.6.155](https://github.com/nebulastream/nebulastream/tree/v0.6.155) (2024-06-20)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.154...v0.6.155)
