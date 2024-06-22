@@ -46,7 +46,10 @@
 
 namespace NES::RequestProcessor {
 
-ISQPRequest::ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries)
+ISQPRequest::ISQPRequest(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+                         const z3::ContextPtr& z3Context,
+                         std::vector<ISQPEventPtr> events,
+                         uint8_t maxRetries)
     : AbstractUniRequest({ResourceType::QueryCatalogService,
                           ResourceType::GlobalExecutionPlan,
                           ResourceType::Topology,
@@ -56,10 +59,13 @@ ISQPRequest::ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventP
                           ResourceType::CoordinatorConfiguration,
                           ResourceType::StatisticProbeHandler},
                          maxRetries),
-      z3Context(z3Context), events(events) {}
+      placementAmendmentHandler(placementAmendmentHandler), z3Context(z3Context), events(events) {}
 
-ISQPRequestPtr ISQPRequest::create(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries) {
-    return std::make_shared<ISQPRequest>(z3Context, events, maxRetries);
+ISQPRequestPtr ISQPRequest::create(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+                                   const z3::ContextPtr& z3Context,
+                                   std::vector<ISQPEventPtr> events,
+                                   uint8_t maxRetries) {
+    return std::make_shared<ISQPRequest>(placementAmendmentHandler, z3Context, events, maxRetries);
 }
 
 std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::RequestProcessor::StorageHandlerPtr& storageHandle) {
@@ -74,7 +80,6 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
         sourceCatalog = storageHandle->getSourceCatalogHandle(requestId);
         coordinatorConfiguration = storageHandle->getCoordinatorConfiguration(requestId);
         enableIncrementalPlacement = coordinatorConfiguration->optimizer.enableIncrementalPlacement;
-        auto placementAmendmentQueue = storageHandle->getAmendmentQueue();
         statisticProbeHandler = storageHandle->getStatisticProbeHandler(requestId);
 
         // Apply all topology events
@@ -153,7 +158,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                                           coordinatorConfiguration,
                                                                                           queryCatalog);
             completedAmendments.emplace_back(amendmentInstance->getFuture());
-            placementAmendmentQueue->enqueue(amendmentInstance);
+            placementAmendmentHandler->enqueueRequest(amendmentInstance);
         }
         uint64_t numOfFailedPlacements = 0;
         // Wait for all amendment runners to finish processing
@@ -174,7 +179,7 @@ std::vector<AbstractRequestPtr> ISQPRequest::executeRequestLogic(const NES::Requ
                                                                         true));
     } catch (RequestExecutionException& exception) {
         NES_ERROR("Exception occurred while processing ISQPRequest with error {}", exception.what());
-        responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, -1, -1, -1, true));
+        responsePromise.set_value(std::make_shared<ISQPRequestResponse>(-1, -1, -1, -1, -1, false));
         handleError(std::current_exception(), storageHandle);
     }
     return {};

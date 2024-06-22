@@ -156,12 +156,6 @@ class StorageHandler {
     virtual Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId);
 
     /**
-     * @brief Get placement amendment queue to perform concurrent placement amendment
-     * @return shared pointer to folly multi producer multi consumer queue
-     */
-    virtual Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue();
-
-    /**
      * @brief Get the statistic probe handler
      * @param requestId the id of the request which calls this function
      * @return  a handle to the statistic probe handler

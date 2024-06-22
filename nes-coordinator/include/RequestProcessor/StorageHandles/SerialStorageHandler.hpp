@@ -33,7 +33,6 @@ class SerialStorageHandler : public StorageHandler {
      * -globalQueryPlan
      * -sourceCatalog
      * -udfCatalog
-     * -amendmentQueue
      * -lockManager
      * -statisticProbeHandler
      * @return shared pointer to the serial storage manager
@@ -89,8 +88,6 @@ class SerialStorageHandler : public StorageHandler {
      */
     Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId requestId) override;
 
-    Optimizer::UMPMCAmendmentQueuePtr getAmendmentQueue() override;
-
     /**
      * @brief Obtain a mutable Statistic probe handler
      * @param requestId The id of the request making the call
@@ -119,7 +116,6 @@ class SerialStorageHandler : public StorageHandler {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
-    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 }// namespace NES::RequestProcessor

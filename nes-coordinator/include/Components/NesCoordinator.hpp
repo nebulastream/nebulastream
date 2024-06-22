@@ -105,11 +105,6 @@ namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
-class PlacementAmendmentInstance;
-using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
-
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
-
 class PlacementAmendmentHandler;
 using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace Optimizer
@@ -177,12 +172,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
      * @return Pointer to the UDF catalog.
      */
     Catalogs::UDF::UDFCatalogPtr getUDFCatalog();
-
-    /**
-     * @brief Get placement amendment queue
-     * @return pointer to the placement amendment queue
-     */
-    Optimizer::UMPMCAmendmentQueuePtr getPlacementAmendmentQueue();
 
     /**
      * @brief Get instance of monitoring service
@@ -262,7 +251,6 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     bool enableMonitoring;
     LocationServicePtr locationService;
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
-    Optimizer::UMPMCAmendmentQueuePtr placementAmendmentQueue;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
   public:

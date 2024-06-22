@@ -112,7 +112,6 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
     SinkLogicalOperatorPtr sinkOperator1 = queryPlan->getSinkOperators()[0];
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                  topology,
                                                                  globalExecutionPlan,
@@ -120,7 +119,6 @@ TEST_F(AddQueryRequestTest, testAddQueryRequestWithOneQuery) {
                                                                  queryCatalog,
                                                                  sourceCatalog,
                                                                  udfCatalog,
-                                                                 amendmentQueue,
                                                                  statisticProbeHandler});
 
     //Create new entry in query catalog service

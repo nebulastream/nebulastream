@@ -53,10 +53,11 @@ RequestHandlerService::RequestHandlerService(Configurations::OptimizerConfigurat
                                              const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                                              const z3::ContextPtr& z3Context,
                                              const Statistic::AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
-                                             const Statistic::StatisticRegistryPtr& statisticRegistry)
+                                             const Statistic::StatisticRegistryPtr& statisticRegistry,
+                                             const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler)
     : optimizerConfiguration(optimizerConfiguration), queryParsingService(queryParsingService), queryCatalog(queryCatalog),
       asyncRequestExecutor(asyncRequestExecutor), z3Context(z3Context), statisticQueryGenerator(statisticQueryGenerator),
-      statisticRegistry(statisticRegistry) {
+      statisticRegistry(statisticRegistry), placementAmendmentHandler(placementAmendmentHandler) {
     NES_DEBUG("RequestHandlerService()");
     syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(this->queryParsingService);
     semanticQueryValidation = Optimizer::SemanticQueryValidation::create(sourceCatalog,
@@ -150,11 +151,18 @@ bool RequestHandlerService::queueNodeRelocationRequest(const std::vector<Topolog
 RequestProcessor::ISQPRequestResponsePtr
 RequestHandlerService::queueISQPRequest(const std::vector<RequestProcessor::ISQPEventPtr>& isqpEvents) {
 
-    auto isqpRequest = RequestProcessor::ISQPRequest::create(z3Context, isqpEvents, RequestProcessor::DEFAULT_RETRIES);
+    // 1. Compute an ISQP request for the collection of external change events (ISQP events)
+    auto isqpRequest = RequestProcessor::ISQPRequest::create(placementAmendmentHandler,
+                                                             z3Context,
+                                                             isqpEvents,
+                                                             RequestProcessor::DEFAULT_RETRIES);
+
+    // 2. Execute the request
     asyncRequestExecutor->runAsync(isqpRequest);
+
+    // 3. Wait for the response
     auto future = isqpRequest->getFuture();
-    auto changeResponse = std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
-    return changeResponse;
+    return std::static_pointer_cast<RequestProcessor::ISQPRequestResponse>(future.get());
 }
 
 std::vector<Statistic::StatisticKey>

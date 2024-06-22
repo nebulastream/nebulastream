@@ -36,11 +36,6 @@ using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-
-class PlacementAmendmentInstance;
-using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance>;
-
-using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer::PlacementAmendmentInstancePtr, false>>;
 }// namespace Optimizer
 
 class GlobalQueryPlan;
@@ -73,7 +68,6 @@ struct StorageDataStructures {
                           Catalogs::Query::QueryCatalogPtr queryCatalog,
                           Catalogs::Source::SourceCatalogPtr sourceCatalog,
                           Catalogs::UDF::UDFCatalogPtr udfCatalog,
-                          Optimizer::UMPMCAmendmentQueuePtr amendmentQueue,
                           Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
 
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
@@ -83,7 +77,6 @@ struct StorageDataStructures {
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
-    Optimizer::UMPMCAmendmentQueuePtr amendmentQueue;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 }// namespace RequestProcessor
