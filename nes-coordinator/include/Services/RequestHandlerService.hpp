@@ -55,6 +55,9 @@ using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
 
 class SemanticQueryValidation;
 using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
+
+class PlacementAmendmentHandler;
+using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace Optimizer
 
 class QueryPlan;
@@ -112,7 +115,8 @@ class RequestHandlerService {
                                    const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
                                    const z3::ContextPtr& z3Context,
                                    const Statistic::AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
-                                   const Statistic::StatisticRegistryPtr& statisticRegistry);
+                                   const Statistic::StatisticRegistryPtr& statisticRegistry,
+                                   const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -224,6 +228,7 @@ class RequestHandlerService {
     Statistic::AbstractStatisticQueryGeneratorPtr statisticQueryGenerator;
     Statistic::StatisticRegistryPtr statisticRegistry;
     Statistic::StatisticIdsExtractor statisticIdsExtractor;
+    Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
 };
 
 }// namespace NES

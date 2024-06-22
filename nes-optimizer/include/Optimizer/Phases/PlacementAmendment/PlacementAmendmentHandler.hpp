@@ -33,7 +33,16 @@ using UMPMCAmendmentQueuePtr = std::shared_ptr<folly::UMPMCQueue<NES::Optimizer:
 class PlacementAmendmentHandler {
 
   public:
-    PlacementAmendmentHandler(uint16_t numOfHandler, UMPMCAmendmentQueuePtr amendmentRequestQueue);
+    /**
+     * @brief Ctor
+     * @param numOfHandler: number of handler threads to spawn
+     */
+    PlacementAmendmentHandler(uint16_t numOfHandler);
+
+    /**
+     * @brief Dtor
+     */
+    ~PlacementAmendmentHandler();
 
     /**
      * @brief Start processing amendment instances
@@ -41,21 +50,30 @@ class PlacementAmendmentHandler {
     void start();
 
     /**
-     * @brief Processed requests queued in the amendment request queue
-     */
-    void handleRequest();
-
-    /**
      * @brief Shutdown the handler
      */
     void shutDown();
 
+    /**
+     * @brief Method allows to enqueue the amendment instance for execution in the queue
+     * @param placementAmendmentInstance : the object containing required payload and execution logic for amending invalid or
+     * missing placements of a shared query plan
+     */
+    void enqueueRequest(const NES::Optimizer::PlacementAmendmentInstancePtr& placementAmendmentInstance);
+
   private:
+    /**
+     * @brief Processed requests queued in the amendment request queue
+     */
+    void handleRequest();
+
     bool running;
+    std::mutex mutex;
+    std::condition_variable cv;
     uint16_t numOfHandler;
-    UMPMCAmendmentQueuePtr amendmentQueue;
+    UMPMCAmendmentQueuePtr placementAmendmentQueue;
     std::vector<std::thread> amendmentRunners;
 };
-
+using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace NES::Optimizer
 #endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_PLACEMENTAMENDMENTHANDLER_HPP_

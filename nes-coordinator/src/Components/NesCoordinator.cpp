@@ -85,7 +85,6 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
     sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
     queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
-    placementAmendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
 
     sourceCatalogService = std::make_shared<SourceCatalogService>(sourceCatalog);
     topology = Topology::create();
@@ -112,10 +111,13 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                      queryCatalog,
                                                                      sourceCatalog,
                                                                      udfCatalog,
-                                                                     placementAmendmentQueue,
                                                                      statisticProbeHandler};
 
     auto asyncRequestExecutor = std::make_shared<RequestProcessor::AsyncRequestProcessor>(storageDataStructures);
+
+    placementAmendmentHandler = std::make_shared<Optimizer::PlacementAmendmentHandler>(
+        this->coordinatorConfiguration->optimizer.placementAmendmentThreadCount.getValue());
+
     requestHandlerService = std::make_shared<RequestHandlerService>(this->coordinatorConfiguration->optimizer,
                                                                     queryParsingService,
                                                                     queryCatalog,
@@ -124,7 +126,8 @@ NesCoordinator::NesCoordinator(CoordinatorConfigurationPtr coordinatorConfigurat
                                                                     asyncRequestExecutor,
                                                                     z3Context,
                                                                     Statistic::DefaultStatisticQueryGenerator::create(),
-                                                                    statisticRegistry);
+                                                                    statisticRegistry,
+                                                                    placementAmendmentHandler);
 
     udfCatalog = Catalogs::UDF::UDFCatalog::create();
 
@@ -226,9 +229,6 @@ uint64_t NesCoordinator::startCoordinator(bool blocking) {
     coordinatorHealthCheckService->startHealthCheck();
 
     // Start placement amendment handler
-    auto amendmentThreadCount = coordinatorConfiguration->optimizer.placementAmendmentThreadCount.getValue();
-    placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(amendmentThreadCount, placementAmendmentQueue);
     placementAmendmentHandler->start();
 
     if (blocking) {//blocking is for the starter to wait here for user to send query
@@ -353,8 +353,6 @@ RequestHandlerServicePtr NesCoordinator::getRequestHandlerService() { return req
 Catalogs::Query::QueryCatalogPtr NesCoordinator::getQueryCatalog() { return queryCatalog; }
 
 Catalogs::UDF::UDFCatalogPtr NesCoordinator::getUDFCatalog() { return udfCatalog; }
-
-Optimizer::UMPMCAmendmentQueuePtr NesCoordinator::getPlacementAmendmentQueue() { return placementAmendmentQueue; }
 
 MonitoringServicePtr NesCoordinator::getMonitoringService() { return monitoringService; }
 

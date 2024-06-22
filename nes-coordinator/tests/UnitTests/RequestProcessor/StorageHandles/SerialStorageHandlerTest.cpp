@@ -51,7 +51,6 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
                                                                           Statistic::DefaultStatisticProbeGenerator::create(),
                                                                           Statistic::DefaultStatisticCache::create(),
                                                                           topology);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     StorageDataStructures storageDataStructures = {coordinatorConfiguration,
                                                    topology,
                                                    globalExecutionPlan,
@@ -59,7 +58,6 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
                                                    queryCatalog,
                                                    sourceCatalog,
                                                    udfCatalog,
-                                                   amendmentQueue,
                                                    statisticProbeHandler};
     auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
 

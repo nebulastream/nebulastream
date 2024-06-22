@@ -35,8 +35,6 @@ Catalogs::UDF::UDFCatalogPtr StorageHandler::getUDFCatalogHandle(RequestId) { NE
 
 Configurations::CoordinatorConfigurationPtr StorageHandler::getCoordinatorConfiguration(RequestId) { NES_NOT_IMPLEMENTED(); }
 
-Optimizer::UMPMCAmendmentQueuePtr StorageHandler::getAmendmentQueue() { NES_NOT_IMPLEMENTED(); }
-
 Statistic::StatisticProbeHandlerPtr StorageHandler::getStatisticProbeHandler(RequestId) { NES_NOT_IMPLEMENTED(); }
 
 RequestId StorageHandler::generateRequestId() {

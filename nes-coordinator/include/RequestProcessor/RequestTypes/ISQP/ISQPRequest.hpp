@@ -28,6 +28,9 @@ using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
 namespace Optimizer {
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
+
+class PlacementAmendmentHandler;
+using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
 }// namespace Optimizer
 
 class GlobalQueryPlan;
@@ -97,9 +100,23 @@ using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance
 class ISQPRequest : public AbstractUniRequest {
 
   public:
-    ISQPRequest(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries);
+    ISQPRequest(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+                const z3::ContextPtr& z3Context,
+                std::vector<ISQPEventPtr> events,
+                uint8_t maxRetries);
 
-    static ISQPRequestPtr create(const z3::ContextPtr& z3Context, std::vector<ISQPEventPtr> events, uint8_t maxRetries);
+    /**
+     * @brief Create shared instance of the ISQP request
+     * @param placementAmendmentHandler: the concurrent amendment handler
+     * @param z3Context : the z3 context for MQO and ILP placement
+     * @param events : the vector of events to be processed
+     * @param maxRetries : the number of retries in case of failure
+     * @return the shared instance
+     */
+    static ISQPRequestPtr create(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+                                 const z3::ContextPtr& z3Context,
+                                 std::vector<ISQPEventPtr> events,
+                                 uint8_t maxRetries);
 
   protected:
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
@@ -136,6 +153,7 @@ class ISQPRequest : public AbstractUniRequest {
      */
     void handleRemoveLinkRequest(ISQPRemoveLinkEventPtr removeLinkEvent);
 
+    Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
     z3::ContextPtr z3Context;
     std::vector<ISQPEventPtr> events;
     TopologyPtr topology;

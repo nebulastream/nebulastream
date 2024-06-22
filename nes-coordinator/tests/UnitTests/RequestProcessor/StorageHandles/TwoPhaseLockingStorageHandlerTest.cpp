@@ -51,7 +51,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
                                                                           Statistic::DefaultStatisticProbeGenerator::create(),
                                                                           Statistic::DefaultStatisticCache::create(),
                                                                           topology);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                     topology,
                                                                     globalExecutionPlan,
@@ -59,7 +58,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestResourceAccess) {
                                                                     queryCatalog,
                                                                     sourceCatalog,
                                                                     udfCatalog,
-                                                                    amendmentQueue,
                                                                     statisticProbeHandler});
 
     //test if we can obtain the resource we passed to the constructor
@@ -85,7 +83,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
                                                                           Statistic::DefaultStatisticProbeGenerator::create(),
                                                                           Statistic::DefaultStatisticCache::create(),
                                                                           topology);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                     topology,
                                                                     globalExecutionPlan,
@@ -93,7 +90,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoResourcesLocked) {
                                                                     queryCatalog,
                                                                     sourceCatalog,
                                                                     udfCatalog,
-                                                                    amendmentQueue,
                                                                     statisticProbeHandler});
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {}));
@@ -112,7 +108,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestDoubleLocking) {
                                                                           Statistic::DefaultStatisticProbeGenerator::create(),
                                                                           Statistic::DefaultStatisticCache::create(),
                                                                           topology);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                     topology,
                                                                     globalExecutionPlan,
@@ -120,7 +115,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestDoubleLocking) {
                                                                     queryCatalog,
                                                                     sourceCatalog,
                                                                     udfCatalog,
-                                                                    amendmentQueue,
                                                                     statisticProbeHandler});
     ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId1, {ResourceType::Topology}));
     ASSERT_THROW(twoPLAccessHandle->acquireResources(queryId1, {}), std::exception);
@@ -143,7 +137,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
                                                                           Statistic::DefaultStatisticProbeGenerator::create(),
                                                                           Statistic::DefaultStatisticCache::create(),
                                                                           topology);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     auto twoPLAccessHandle = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
                                                                     topology,
                                                                     globalExecutionPlan,
@@ -151,7 +144,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestLocking) {
                                                                     queryCatalog,
                                                                     sourceCatalog,
                                                                     udfCatalog,
-                                                                    amendmentQueue,
                                                                     statisticProbeHandler});
     thread = std::make_shared<std::thread>([&twoPLAccessHandle, queryId2]() {
         ASSERT_NO_THROW(twoPLAccessHandle->acquireResources(queryId2,
@@ -237,7 +229,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
                                                                           Statistic::DefaultStatisticProbeGenerator::create(),
                                                                           Statistic::DefaultStatisticCache::create(),
                                                                           topology);
-    auto amendmentQueue = std::make_shared<folly::UMPMCQueue<Optimizer::PlacementAmendmentInstancePtr, false>>();
     std::vector<ResourceType> resourceVector = {ResourceType::Topology,
                                                 ResourceType::GlobalExecutionPlan,
                                                 ResourceType::QueryCatalogService,
@@ -253,7 +244,6 @@ TEST_F(TwoPhaseLockingStorageHandlerTest, TestNoDeadLock) {
                                                                     queryCatalog,
                                                                     sourceCatalog,
                                                                     udfCatalog,
-                                                                    amendmentQueue,
                                                                     statisticProbeHandler});
     std::vector<std::thread> threads;
     threads.reserve(numThreads);

@@ -25,7 +25,7 @@ SerialStorageHandler::SerialStorageHandler(StorageDataStructures& storageDataStr
       globalExecutionPlan(std::move(storageDataStructures.globalExecutionPlan)),
       globalQueryPlan(std::move(storageDataStructures.globalQueryPlan)),
       queryCatalog(std::move(storageDataStructures.queryCatalog)), sourceCatalog(std::move(storageDataStructures.sourceCatalog)),
-      udfCatalog(std::move(storageDataStructures.udfCatalog)), amendmentQueue(std::move(storageDataStructures.amendmentQueue)),
+      udfCatalog(std::move(storageDataStructures.udfCatalog)),
       statisticProbeHandler(std::move(storageDataStructures.statisticProbeHandler)) {}
 
 StorageHandlerPtr SerialStorageHandler::create(StorageDataStructures storageDataStructures) {
@@ -55,8 +55,6 @@ Catalogs::UDF::UDFCatalogPtr SerialStorageHandler::getUDFCatalogHandle(const Req
 Configurations::CoordinatorConfigurationPtr SerialStorageHandler::getCoordinatorConfiguration(const RequestId) {
     return {&*coordinatorConfiguration, UnlockDeleter()};
 }
-
-Optimizer::UMPMCAmendmentQueuePtr SerialStorageHandler::getAmendmentQueue() { return {&*amendmentQueue, UnlockDeleter()}; }
 
 Statistic::StatisticProbeHandlerPtr SerialStorageHandler::getStatisticProbeHandler(RequestId) {
     return {&*statisticProbeHandler, UnlockDeleter()};
