@@ -25,6 +25,7 @@
 #include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
+#include <Sinks/Mediums/RawBufferSink.hpp>
 #include <Sinks/Mediums/StatisticSink.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
@@ -86,6 +87,22 @@ DataSinkPtr createJSONFileSink(const SchemaPtr& schema,
                                       sharedQueryId,
                                       decomposedQueryPlanId,
                                       numberOfOrigins);
+}
+
+DataSinkPtr createMigrateFileSink(SharedQueryId sharedQueryId,
+                                  DecomposedQueryPlanId decomposedQueryPlanId,
+                                  Runtime::NodeEnginePtr nodeEngine,
+                                  uint32_t numOfProducers,
+                                  const std::string& filePath,
+                                  bool append,
+                                  uint64_t numberOfOrigins) {
+    return std::make_shared<RawBufferSink>(nodeEngine,
+                                           numOfProducers,
+                                           filePath,
+                                           append,
+                                           sharedQueryId,
+                                           decomposedQueryPlanId,
+                                           numberOfOrigins);
 }
 
 DataSinkPtr createCsvZmqSink(const SchemaPtr& schema,

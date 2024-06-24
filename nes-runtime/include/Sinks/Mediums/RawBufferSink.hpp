@@ -11,45 +11,45 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
-#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
+#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_
+#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_
 
 #include <Sinks/Mediums/SinkMedium.hpp>
-
 #include <cstdint>
 #include <memory>
 #include <string>
 
 namespace NES {
 
-/**
- * @brief The file sink writes the stream result to a text file, in CSV or JSON format.
- */
-class FileSink : public SinkMedium {
+/*
+Sink to write raw tuple buffers to the file in format:
+buffer size | number of tuples in buffer | buffer content
+uint_64 | uint_64 | buffer content of buffer size
+*/
+class RawBufferSink : public SinkMedium {
   public:
     /**
-     * @brief Create a file sink.
+     * @brief Create a file sink in migrate format.
      * @param nodeEngine The node engine of the worker.
-     * @param numOfProducers ?
+     * @param numOfProducers
      * @param filePath Name of the file to which the stream is written.
      * @param append True, if the stream should be appended to an existing file. If false, an existing file is first removed.
-     * @param sharedQueryId ?
-     * @param decomposedQueryPlanId ?
+     * @param sharedQueryId
+     * @param decomposedQueryPlanId
      * @param numberOfOrigins number of origins of a given query
      */
-    explicit FileSink(SinkFormatPtr format,
-                      Runtime::NodeEnginePtr nodeEngine,
-                      uint32_t numOfProducers,
-                      const std::string& filePath,
-                      bool append,
-                      SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
-                      uint64_t numberOfOrigins = 1);
+    explicit RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
+                           uint32_t numOfProducers,
+                           const std::string& filePath,
+                           bool append,
+                           SharedQueryId sharedQueryId,
+                           DecomposedQueryPlanId decomposedQueryPlanId,
+                           uint64_t numberOfOrigins = 1);
+
+    ~RawBufferSink() override;
 
     /**
      * @brief Setup the file sink.
-     *
      * This method attempts to open the file. If the file exists, it is first removed, unless append is true.
      * If the file cannot be opened, subsequent calls to writeData will fail.
      */
@@ -57,13 +57,14 @@ class FileSink : public SinkMedium {
 
     /**
      * @brief Clean up the file sink.
-     *
      * This method closes the file.
      */
     void shutdown() override;
 
-    /** 
+    /**
      * @brief Write the contents of a tuple buffer to the file sink.
+     * format: buffer size | number of tuples in buffer | buffer content
+     * uint64_t | uint64_t | buffer size bytes
      * @param inputBuffer The tuple buffer that should be written to the file sink.
      * @return True, if the contents of the tuple buffer could be written completely to the file sink.
      */
@@ -94,7 +95,6 @@ class FileSink : public SinkMedium {
     /// Indicate if the file could be opened during setup.
     bool isOpen{false};
 };
-using FileSinkPtr = std::shared_ptr<FileSink>;
 }// namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
+#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_

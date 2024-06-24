@@ -65,4 +65,11 @@ bool recycleTupleBuffer(void* bufferPointer) {
     auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - sizeof(Runtime::detail::BufferControlBlock));
     return block->release();
 }
+
+bool TupleBuffer::hasSpaceLeft(uint64_t used, uint64_t needed) const {
+    if (used + needed <= this->size) {
+        return true;
+    }
+    return false;
+}
 }// namespace NES::Runtime

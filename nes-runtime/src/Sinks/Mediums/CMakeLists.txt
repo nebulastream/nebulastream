@@ -21,6 +21,7 @@ add_source_files(nes-runtime
         MultiOriginWatermarkProcessor.cpp
         WatermarkProcessor.cpp
         StatisticSink.cpp
+        RawBufferSink.cpp
 )
 
 

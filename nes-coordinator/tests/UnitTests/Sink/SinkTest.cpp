@@ -58,6 +58,7 @@ class SinkTest : public Testing::BaseIntegrationTest {
     std::array<uint32_t, 8> test_data{};
     bool write_result{};
     std::string path_to_csv_file;
+    std::string path_to_migrate_file;
     std::string path_to_bin_file;
     std::string path_to_osfile_file;
     Testing::BorrowedPortPtr borrowedZmqPort;
@@ -74,6 +75,7 @@ class SinkTest : public Testing::BaseIntegrationTest {
         test_schema = TestSchemas::getSchemaTemplate("id_val_u32");
         write_result = false;
         path_to_csv_file = getTestResourceFolder() / "sink.csv";
+        path_to_migrate_file = getTestResourceFolder() / "serialized_state.bin";
         path_to_bin_file = getTestResourceFolder() / "sink.bin";
         path_to_osfile_file = getTestResourceFolder() / "testOs.txt";
         auto workerConfiguration = WorkerConfiguration::create();
@@ -112,13 +114,13 @@ TEST_F(SinkTest, testCSVFileSink) {
     }
     buffer.setNumberOfTuples(4);
     csvSink->setup();
-    write_result = csvSink->writeData(buffer, wctx);
-
-    EXPECT_TRUE(write_result);
     auto rowLayoutBeforeWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
     auto testTupleBufferBeforeWrite = Runtime::MemoryLayouts::TestTupleBuffer(rowLayoutBeforeWrite, buffer);
     std::string bufferContentBeforeWrite = testTupleBufferBeforeWrite.toString(test_schema);
     NES_TRACE("Buffer Content= {}", bufferContentBeforeWrite);
+
+    write_result = csvSink->writeData(buffer, wctx);
+    EXPECT_TRUE(write_result);
 
     // get buffer content as string
     auto rowLayoutAfterWrite = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
@@ -139,19 +141,72 @@ TEST_F(SinkTest, testCSVFileSink) {
     while (getline(ss, item, ',')) {
         EXPECT_TRUE(bufferContentAfterWrite.find(item) != std::string::npos);
     }
-    buffer.release();
+}
+
+/**
+ * Writing buffer to the file using RawBufferSink, then reading from the file and comparing written and read buffers content
+ */
+TEST_F(SinkTest, testRawBufferSink) {
+    auto sourceConf = PhysicalSource::create("x", "x1");
+
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
+    const DataSinkPtr migrateFileSink =
+        createMigrateFileSink(SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, path_to_migrate_file, true);
+
+    // insert tuples to buffer
+    constexpr auto expectedNumberOfTuples = 4;
+    for (uint64_t i = 0; i < expectedNumberOfTuples; ++i) {
+        buffer.getBuffer<uint64_t>()[i] = i;
+    }
+    buffer.setNumberOfTuples(expectedNumberOfTuples);
+
+    // buffer content before writing
+    auto rowLayoutExpected = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto testTupleBufferExpected = Runtime::MemoryLayouts::TestTupleBuffer(rowLayoutExpected, buffer);
+    auto bufferContentExpected = testTupleBufferExpected.toString(test_schema);
+
+    migrateFileSink->setup();
+    // write buffer to file using sink
+    write_result = migrateFileSink->writeData(buffer, wctx);
+
+    EXPECT_TRUE(write_result);
+
+    // open file to read
+    std::ifstream deser_file(path_to_migrate_file, std::ios::binary | std::ios::in);
+    if (!deser_file.is_open()) {
+        NES_ERROR("Error: Failed to open file for reading.");
+    }
+
+    // read size and number of tuples from the file
+    auto size = 0ULL, numberOfTuples = 0ULL;
+    deser_file.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+    deser_file.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+
+    EXPECT_EQ(size, buffer.getBufferSize());
+    EXPECT_EQ(numberOfTuples, expectedNumberOfTuples);
+
+    auto newBuffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    // read buffer content
+    deser_file.read(reinterpret_cast<char*>(newBuffer.getBuffer()), size);
+
+    // compare buffers before writing and after reading
+    auto rowLayoutDeserealized = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto testTupleBufferDeserealized = Runtime::MemoryLayouts::TestTupleBuffer(rowLayoutExpected, buffer);
+    auto bufferContentDeserealized = testTupleBufferExpected.toString(test_schema);
+    EXPECT_EQ(bufferContentDeserealized, bufferContentExpected);
+    deser_file.close();
 }
 
 TEST_F(SinkTest, testCSVPrintSink) {
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-    auto nodeEngine = this->nodeEngine;
 
     std::filebuf fb;
     fb.open(path_to_osfile_file, std::ios::out);
     std::ostream os(&fb);
-    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
-    auto csvSink = createCSVPrintSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, os);
+    Runtime::WorkerContext wctx(Runtime::NesThread::getId(), this->nodeEngine->getBufferManager(), 64);
+    TupleBuffer buffer = this->nodeEngine->getBufferManager()->getBufferBlocking();
+    auto csvSink = createCSVPrintSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, this->nodeEngine, 1, os);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
             buffer.getBuffer<uint64_t>()[j] = j;
@@ -190,18 +245,17 @@ TEST_F(SinkTest, testCSVPrintSink) {
         }
     }
     fb.close();
-    buffer.release();
 }
 
 TEST_F(SinkTest, testNullOutSink) {
-    PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
+    auto sourceConf = PhysicalSource::create("x", "x1");
     auto nodeEngine = this->nodeEngine;
 
     std::filebuf fb;
     fb.open(path_to_osfile_file, std::ios::out);
     std::ostream os(&fb);
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     auto nullSink = createNullOutputSink(SharedQueryId(1), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1);
     for (uint64_t i = 0; i < 2; ++i) {
         for (uint64_t j = 0; j < 2; ++j) {
@@ -221,10 +275,9 @@ TEST_F(SinkTest, testNullOutSink) {
 
 TEST_F(SinkTest, testCSVZMQSink) {
     PhysicalSourcePtr sourceConf = PhysicalSource::create("x", "x1");
-    auto nodeEngine = this->nodeEngine;
 
     Runtime::WorkerContext wctx(Runtime::NesThread::getId(), nodeEngine->getBufferManager(), 64);
-    TupleBuffer buffer = nodeEngine->getBufferManager()->getBufferBlocking();
+    auto buffer = nodeEngine->getBufferManager()->getBufferBlocking();
     const DataSinkPtr zmq_sink =
         createCSVZmqSink(test_schema, SharedQueryId(0), INVALID_DECOMPOSED_QUERY_PLAN_ID, nodeEngine, 1, "localhost", zmqPort);
     for (uint64_t i = 1; i < 3; ++i) {
@@ -275,7 +328,6 @@ TEST_F(SinkTest, testCSVZMQSink) {
     // Wait until receiving is complete.
     zmq_sink->writeData(buffer, wctx);
     receiving_thread.join();
-    buffer.release();
 }
 
 TEST_F(SinkTest, testWatermarkForZMQ) {
@@ -327,7 +379,6 @@ TEST_F(SinkTest, testWatermarkForZMQ) {
     // Wait until receiving is complete.
     zmq_sink->writeData(buffer, wctx);
     receiving_thread.join();
-    buffer.release();
 }
 
 TEST_F(SinkTest, testWatermarkCsvSource) {
@@ -349,7 +400,6 @@ TEST_F(SinkTest, testWatermarkCsvSource) {
     write_result = csvSink->writeData(buffer, wctx);
 
     EXPECT_EQ(buffer.getWatermark(), 1234567ull);
-    buffer.release();
 }
 
 TEST_F(SinkTest, testMonitoringSink) {
@@ -425,8 +475,6 @@ TEST_F(SinkTest, testMonitoringSink) {
     NES_INFO("MetricStoreTest: Stored metrics{}", Monitoring::MetricUtils::toJson(storedMetricsCpu));
     ASSERT_TRUE(storedMetricsCpu->size() == 1);
     EXPECT_EQ(parsedMetricsCpu, typedMetricCpu);
-
-    tupleBuffer.release();
 }
 
 }// namespace NES

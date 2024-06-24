@@ -59,8 +59,33 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void start(PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
     void stop(QueryTerminationType terminationType, PipelineExecutionContextPtr pipelineExecutionContext) override;
 
-    std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override;
-    void restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) override;
+    /**
+     * @brief Retrieve the state as a vector of tuple buffers
+     * Format of buffers looks like:
+     * start buffers contain metadata in format:
+     * -----------------------------------------
+     * number of metadata buffers | number of slices (n) | number of buffers in 1st slice (m_0) | ... | number of slices in n-th slice (m_n)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
+     * -----------------------------------------
+     * all other buffers are: 1st buffer of 1st slice | .... | m_0 buffer of 1 slice | ... | 1 buffer of n-th slice | m_n buffer of n-th slice
+     * @param startTS as a left border of slices
+     * @param stopTS as a right border of slice
+     * @return vector of tuple buffers
+     */
+    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override;
+
+    /**
+     * @brief Restores the state from vector of tuple buffers
+     * Expected format of buffers:
+     * start buffers contain metadata in format:
+     * -----------------------------------------
+     * number of slices (n) | number of buffers in 1st slice (m_0) | ... | number of slices in n-th slice (m_n)
+     * uint64_t | uint64_t | uint64_t | ... | uint64_t
+     *-----------------------------------------
+     * all other buffers are: 1st buffer of 1st slice | .... | m_0 buffer of 1 slice | ... | 1 buffer of n-th slice | m_n buffer of n-th slice
+     * @param buffers
+     */
+    void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
 
     /**
      * @brief Retrieves the slice/window by a slice/window identifier. If no slice/window exists for the windowIdentifier,
@@ -179,6 +204,14 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     uint64_t getWindowSize() const;
 
     void setBufferManager(const BufferManagerPtr& bufManager);
+
+  private:
+    /**
+     * Deserialize slice from span of buffers, which is join specific and is implemented in sub-classes
+     * @param buffers as a span
+     * @return recreated StreamSlicePtr
+     */
+    virtual StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) = 0;
 
   protected:
     uint64_t numberOfWorkerThreads = 1;

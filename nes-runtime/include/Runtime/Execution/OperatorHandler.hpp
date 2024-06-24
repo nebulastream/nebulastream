@@ -16,7 +16,6 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/Execution/MigratableStateInterface.hpp>
-#include <Runtime/Execution/StreamSliceInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -52,15 +51,15 @@ class OperatorHandler : public virtual Reconfigurable, public virtual Migratable
      * @brief Gets the state
      * @param startTS
      * @param stopTS
-     * @return list of StreamSlices
+     * @return list of TupleBuffers
      */
-    std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t, uint64_t) override;
+    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) override;
 
     /**
      * @brief Merges migrated slices
-     * @param slices
+     * @param buffer
      */
-    void restoreState(std::list<std::shared_ptr<StreamSliceInterface>>) override;
+    void restoreState(std::vector<Runtime::TupleBuffer>&) override;
 
     /**
      * @brief Default deconstructor

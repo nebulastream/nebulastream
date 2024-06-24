@@ -30,6 +30,9 @@ bool StreamSlice::operator==(const StreamSlice& rhs) const { return (sliceStart 
 
 bool StreamSlice::operator!=(const StreamSlice& rhs) const { return !(rhs == *this); }
 
+// default implementation to not implementing this method for HJSlice
+std::vector<Runtime::TupleBuffer> StreamSlice::serialize(std::shared_ptr<BufferManager>&) { return {}; }
+
 std::string StreamSlice::toString() {
     std::ostringstream basicOstringstream;
     basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";

@@ -30,40 +30,131 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, 
     }
 }
 
-std::list<std::shared_ptr<StreamSliceInterface>> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
+std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS) {
     auto slicesLocked = slices.rlock();
 
-    std::list<std::shared_ptr<StreamSliceInterface>> fliteredSlices;
+    std::list<StreamSlicePtr> filteredSlices;
     // filtering slices, which start is in [startTS, stopTS) or end is in (startTS, stopTS]
     // (records are in range [start, end) in slice)
     std::copy_if(slicesLocked->begin(),
                  slicesLocked->end(),
-                 std::back_inserter(fliteredSlices),
-                 [&startTS, &stopTS](StreamSlicePtr slice) {
+                 std::back_inserter(filteredSlices),
+                 [&startTS, &stopTS](const StreamSlicePtr& slice) {
                      uint64_t sliceStartTS = slice->getSliceStart();
                      uint64_t sliceEndTS = slice->getSliceEnd();
                      return (sliceStartTS >= startTS && sliceStartTS < stopTS) || (sliceEndTS > startTS && sliceEndTS < stopTS);
                  });
-    return fliteredSlices;
+
+    auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
+
+    // metadata buffer
+    auto mainMetadata = bufferManager->getBufferBlocking();
+    buffersToTransfer.insert(buffersToTransfer.begin(), mainMetadata);
+    auto metadataBuffersCount = 1;
+
+    // check that tuple buffer size is more than uint64_t to write number of metadata buffers
+    if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t))) {
+        NES_THROW_RUNTIME_ERROR("Buffer is too small");
+    }
+
+    // metadata pointer
+    auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
+    auto metadataIdx = 1ULL;
+
+    /** @brief Lambda to write to metadata buffers
+     * captured variables:
+     * mainMetadata - generic metadata buffer, used for checking space left
+     * metadataPtr - pointer to the start of current metadata buffer
+     * metadataIdx - index of size64_t data inside metadata buffer
+     * metadataBuffersCount - number of metadata buffers
+     * buffers - vector of buffers
+     * @param dataToWrite - value to write to the buffer
+    */
+    auto writeToMetadata =
+        [&mainMetadata, &metadataPtr, &metadataIdx, this, &metadataBuffersCount, &buffersToTransfer](uint64_t dataToWrite) {
+            // check that current metadata buffer has enough space, by sending used space and space needed
+            if (!mainMetadata.hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
+                // if current buffer does not contain enough space then
+                // get new buffer and insert to vector of buffers
+                auto newBuffer = bufferManager->getBufferBlocking();
+                buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
+                // update pointer and index
+                metadataPtr = newBuffer.getBuffer<uint64_t>();
+                metadataIdx = 0;
+            }
+            metadataPtr[metadataIdx++] = dataToWrite;
+        };
+
+    // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
+    // 1. Insert number of slices to metadata buffer
+    writeToMetadata(filteredSlices.size());
+
+    for (const auto& slice : filteredSlices) {
+        // get buffers with records and store
+        auto sliceBuffers = slice->serialize(bufferManager);
+        buffersToTransfer.insert(buffersToTransfer.end(), sliceBuffers.begin(), sliceBuffers.end());
+
+        // 2. Insert number of buffers in i-th slice to metadata buffer
+        writeToMetadata(sliceBuffers.size());
+    }
+
+    // set number of metadata buffers to the first metadata buffer
+    mainMetadata.getBuffer<uint64_t>()[0] = metadataBuffersCount;
+
+    return buffersToTransfer;
 }
 
-void StreamJoinOperatorHandler::restoreState(std::list<std::shared_ptr<StreamSliceInterface>> slices) {
+void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers) {
+
+    // get main metadata buffer
+    auto metadataBuffersIdx = 0;
+    auto metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
+    auto metadataIdx = 0;
+
+    // read number of metadata buffers
+    auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];
+
+    /** @brief Lambda to read from metadata buffers
+     * captured variables:
+     * metadataPtr - pointer to the start of current metadata buffer
+     * metadataIdx - index of size64_t data inside metadata buffer
+     * metadataBuffersIdx - index of current buffer to read
+     * buffers - vector of buffers
+    */
+    auto readFromMetadata = [&metadataPtr, &metadataIdx, &metadataBuffersIdx, &buffers]() -> uint64_t {
+        // check left space in metadata buffer
+        if (!buffers[metadataBuffersIdx].hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
+            // update metadata pointer and index
+            metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
+            metadataIdx = 0;
+        }
+        return metadataPtr[metadataIdx++];
+    };
+    // NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
+    // 1. Retrieve number of slices from metadata buffer
+    auto numberOfSlices = readFromMetadata();
+
+    auto buffIdx = 0UL;
     auto slicesLocked = this->slices.wlock();
 
-    // restored slices
-    std::list<StreamSlicePtr> castedSlices;
-    // casting slices to derived class StreamSlice
-    std::transform(slices.begin(),
-                   slices.end(),
-                   std::back_inserter(castedSlices),
-                   [](const std::shared_ptr<StreamSliceInterface>& element) -> StreamSlicePtr {
-                       return std::dynamic_pointer_cast<StreamSlice>(element);
-                   });
+    // recreate slices from buffers
+    for (auto sliceIdx = 0UL; sliceIdx < numberOfSlices; ++sliceIdx) {
 
-    // merging restored slices with existing
-    slicesLocked->merge(castedSlices, [](StreamSlicePtr first, StreamSlicePtr second) {
-        return first->getSliceEnd() < second->getSliceStart();
-    });
+        // 2. Retrieve number of buffers in i-th slice
+        auto numberOfBuffers = readFromMetadata();
+
+        const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
+        auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers));
+
+        // insert recreated slice
+        auto indexToInsert = std::find_if(slicesLocked->begin(),
+                                          slicesLocked->end(),
+                                          [&recreatedSlice](const std::shared_ptr<StreamSlice>& currSlice) {
+                                              return recreatedSlice->getSliceStart() > currSlice->getSliceEnd();
+                                          });
+        slicesLocked->emplace(indexToInsert, recreatedSlice);
+        buffIdx += numberOfBuffers;
+    }
 }
 
 std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(uint64_t sliceIdentifier) {
