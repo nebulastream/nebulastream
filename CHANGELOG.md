@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.158](https://github.com/nebulastream/nebulastream/tree/v0.6.158) (2024-06-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.157...v0.6.158)
+
+**Implemented enhancements:**
+
+- Ability to obtain the state from the NLJ Operator Handler and recreate it from a file [\#4887](https://github.com/nebulastream/nebulastream/issues/4887)
+
 ## [v0.6.157](https://github.com/nebulastream/nebulastream/tree/v0.6.157) (2024-06-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.156...v0.6.157)
