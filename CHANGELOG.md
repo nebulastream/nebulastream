@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.157](https://github.com/nebulastream/nebulastream/tree/v0.6.157) (2024-06-24)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.156...v0.6.157)
+
+### Bug Fixes 🐛
+
+- \[BUG\] NES worker crashes after running queries for a while [\#4994](https://github.com/nebulastream/nebulastream/issues/4994)
+
 ## [v0.6.156](https://github.com/nebulastream/nebulastream/tree/v0.6.156) (2024-06-22)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.155...v0.6.156)
