@@ -19,6 +19,11 @@
 
 namespace NES::Runtime::Execution::Operators {
 
+StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer>) {
+    NES_WARNING("Deserialize Slice function is not implemented for HJOperatorHandler.")
+    NES_NOT_IMPLEMENTED();
+}
+
 StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) {
     switch (joinStrategy) {
         case QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED:

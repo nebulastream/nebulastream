@@ -267,7 +267,7 @@ bool SharedQueryPlan::removeQueryMarkedForRemoval() {
             removeOperator(sinkOperator);
             queryPlan->removeAsRootOperator(sinkOperator);
         }
-        std::remove(runningQueryIds.begin(), runningQueryIds.end(), queryId);
+        static_cast<void>(std::remove(runningQueryIds.begin(), runningQueryIds.end(), queryId));
         queryIdToSinkOperatorMap.erase(queryId);
     }
     queriesMarkedForRemoval.clear();

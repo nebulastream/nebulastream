@@ -52,6 +52,9 @@ class NLJOperatorHandler : public virtual StreamJoinOperatorHandler {
                              const WindowInfo& windowInfo,
                              PipelineExecutionContext* pipelineCtx) override;
 
+  private:
+    StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) override;
+
   protected:
     const uint64_t pageSizeLeft;
     const uint64_t pageSizeRight;

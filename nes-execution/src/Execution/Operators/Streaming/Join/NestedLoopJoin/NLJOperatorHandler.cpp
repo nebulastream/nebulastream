@@ -15,8 +15,14 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <span>
 
 namespace NES::Runtime::Execution::Operators {
+
+StreamSlicePtr NLJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) {
+    return NLJSlice::deserialize(bufferManager, leftSchema, pageSizeLeft, rightSchema, pageSizeRight, buffers);
+}
+
 void NLJOperatorHandler::emitSliceIdsToProbe(StreamSlice& sliceLeft,
                                              StreamSlice& sliceRight,
                                              const WindowInfo& windowInfo,

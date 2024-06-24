@@ -18,14 +18,11 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <utility>
 
 namespace NES::Nautilus::Interface {
-PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize)
-    : bufferManager(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize) {
-    appendPage();
-    appendVarSizedDataPage();
-    varSizedDataEntryMapCounter = 0;
-    totalNumberOfEntries = 0;
+
+void PagedVectorVarSized::setEntrySizeAndCapacityPerPage() {
     entrySize = 0;
 
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
@@ -39,6 +36,34 @@ PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager
         }
     }
     capacityPerPage = pageSize / entrySize;
+}
+
+PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize)
+    : PagedVectorVarSized(bufferManager, schema, {}, pageSize) {}
+
+PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager,
+                                         SchemaPtr schema,
+                                         std::span<const Runtime::TupleBuffer> buffers,
+                                         uint64_t pageSize)
+    : bufferManager(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize) {
+    appendVarSizedDataPage();
+    varSizedDataEntryMapCounter = 0;
+    totalNumberOfEntries = 0;
+    setEntrySizeAndCapacityPerPage();
+
+    // store pages with records
+    this->pages.assign(buffers.begin(), buffers.end());
+
+    if (this->pages.empty()) {
+        appendPage();
+    } else {
+        numberOfEntriesOnCurrPage = this->pages.back().getNumberOfTuples();
+    }
+
+    for (size_t index = 0; index < this->pages.size(); index++) {
+        totalNumberOfEntries += this->pages[index].getNumberOfTuples();
+    }
+
     NES_ASSERT2_FMT(entrySize > 0, "EntrySize for a pagedVector has to be larger than 0!");
     NES_ASSERT2_FMT(capacityPerPage > 0, "At least one tuple has to fit on a page!");
 }

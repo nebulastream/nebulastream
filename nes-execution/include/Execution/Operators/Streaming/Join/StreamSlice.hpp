@@ -20,6 +20,7 @@
 #include <memory>
 #include <mutex>
 #include <ostream>
+#include <span>
 #include <vector>
 
 namespace NES::Runtime::Execution {
@@ -86,6 +87,13 @@ class StreamSlice : public StreamSliceInterface {
      * @return uint64_t
      */
     static uint64_t getSliceIdentifier(uint64_t sliceStart, uint64_t sliceEnd);
+
+    /**
+     * @brief Gets stored state as vector of tuple buffers
+     * @param std::shared_ptr<BufferManager>&
+     * @return list of pages that store records and metadata
+     */
+    std::vector<Runtime::TupleBuffer> serialize(std::shared_ptr<BufferManager>&) override;
 
     /**
      * @brief Creates a string representation of this slice

@@ -48,6 +48,22 @@ DataSinkPtr createCSVFileSink(const SchemaPtr& schema,
                               uint64_t numberOfOrigins = 1);
 
 /**
+ * @brief create a migrate test sink
+ * @param number of producers
+ * @param path to file
+ * @param bool indicating if data is appended (true) or overwritten (false)
+ * @param numberOfOrigins: number of origins of a given query
+ * @return a data sink pointer
+ */
+DataSinkPtr createMigrateFileSink(SharedQueryId sharedQueryId,
+                                  DecomposedQueryPlanId decomposedQueryPlanId,
+                                  Runtime::NodeEnginePtr nodeEngine,
+                                  uint32_t numOfProducers,
+                                  const std::string& filePath,
+                                  bool append,
+                                  uint64_t numberOfOrigins = 1);
+
+/**
  * @brief create a binary test sink with a schema into the nes
  * @param schema of sink
  * @param bufferManager

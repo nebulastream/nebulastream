@@ -83,6 +83,9 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
      */
     uint64_t getTotalSizeForDataStructures() const;
 
+  private:
+    StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer>) override;
+
   protected:
     QueryCompilation::StreamJoinStrategy joinStrategy;
     uint64_t totalSizeForDataStructures;

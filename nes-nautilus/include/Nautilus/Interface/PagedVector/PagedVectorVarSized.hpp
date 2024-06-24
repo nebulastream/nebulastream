@@ -19,6 +19,7 @@
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <span>
 
 namespace NES::Nautilus::Interface {
 class PagedVectorVarSizedRef;
@@ -52,11 +53,23 @@ class PagedVectorVarSized {
 
     /**
      * @brief Constructor. It calculates the entrySize and the capacityPerPage based on the schema and the pageSize.
-     * @param bufferManager
-     * @param schema
-     * @param pageSize
+     * @param bufferManager - manager to get new buffers
+     * @param schema - schema of tuples associated with paged vector
+     * @param pageSize - size of page to get from buffer manager
      */
     PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
+
+    /**
+     * @brief Constructor. Recreated PagedVectorVarSized from tuple buffers [Recreation not implemented for variable sized pages right now]
+     * @param bufferManager - manager to get new buffers
+     * @param schema - schema of tuples associated with paged vector
+     * @param buffers - buffers to recreate paged vector from
+     * @param pageSize - size of page to get from buffer manager
+     */
+    PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager,
+                        SchemaPtr schema,
+                        std::span<const Runtime::TupleBuffer> buffers,
+                        uint64_t pageSize = PAGE_SIZE);
 
     /**
      * @brief Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
@@ -147,11 +160,16 @@ class PagedVectorVarSized {
     uint64_t getCapacityPerPage() const;
 
   private:
+    /**
+     * @brief Calculates the size of one entry in page according to schema, assigns to entrySize and also calculates capacity per page.
+     */
+    void setEntrySizeAndCapacityPerPage();
+
     friend PagedVectorVarSizedRef;
     Runtime::BufferManagerPtr bufferManager;
     SchemaPtr schema;
-    uint64_t entrySize;
     uint64_t pageSize;
+    uint64_t entrySize;
     uint64_t capacityPerPage;
     uint64_t totalNumberOfEntries;
     uint64_t numberOfEntriesOnCurrPage;

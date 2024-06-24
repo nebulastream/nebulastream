@@ -20,9 +20,12 @@
 #include <cstdint>
 #include <mutex>
 #include <ostream>
+#include <span>
 #include <vector>
 
 namespace NES::Runtime::Execution {
+
+using StreamSlicePtr = std::shared_ptr<StreamSlice>;
 
 /**
  * @brief This class represents a single slice for the nested loop join. It stores all values for the left and right stream.
@@ -90,9 +93,46 @@ class NLJSlice : public StreamSlice {
      */
     std::string toString() override;
 
+    /**
+     * @brief Gets left and right tuples' pages [Not implemented for variable sized pages right now]
+     * Format of buffers looks like:
+     * start metadata buffers contains metadata in format:
+     * -----------------------------------------
+     * number of metadata buffers | sliceStart | sliceEnd | number of var sized pages (also number of workers) (n) | number of buffers in first var_sized_page (m_0) | ... | number of buffers in n-th var_sized_page (m_n)
+     * uint64_t | uint64_t | uint64_t | uint64_t | ... | uint64_t
+     * -----------------------------------------
+     * all other buffers are: 1st buffer of 1st var_sized_page | .... | m_0 buffer of 1 var_sized_page | ... | 1 buffer of n-th var_sized_page | m_n buffer of n-th var_sized_page
+     * @param bufferManager for getting new tuple buffers
+     * @return list of pages that store records and metadata
+     */
+    std::vector<Runtime::TupleBuffer> serialize(BufferManagerPtr& bufferManager) override;
+
+    /**
+     * @brief Recreates the slice from tuple buffers [Not implemented for variable sized pages right now
+     * Expected format:
+     * start buffers contain metadata in format:
+     * -----------------------------------------
+     * number of metadata buffers | sliceStart | sliceEnd | number of var sized pages (also number of workers) | number of buffers in first var_sized_page (m_0) | ... | number of buffers in n-th var_sized_page (m_n)
+     * uint64_t | uint64_t | uint64_t | uint64_t | ... | uint64_t
+     * -----------------------------------------
+     * all other buffers are: 1st buffer of 1st var_sized_page | .... | m_0 buffer of 1 var_sized_page | ... | 1 buffer of n-th var_sized_page | m_n buffer of n-th var_sized_page
+     * @param bufferManager: Allocates pages for both pagedVectorVarSized
+     * @param leftSchema: schema of the tuple on the left
+     * @param leftPageSize: Size of a single page for the left paged vectors
+     * @param rightSchema: schema of the tuple on the right
+     * @param rightPageSize: Size of a singe page for the right paged vectors
+     * @param buffers List of tuple buffers to recreate the state of slice
+     */
+    static StreamSlicePtr deserialize(BufferManagerPtr& bufferManager,
+                                      SchemaPtr& leftSchema,
+                                      uint64_t leftPageSize,
+                                      SchemaPtr& rightSchema,
+                                      uint64_t rightPageSize,
+                                      std::span<const Runtime::TupleBuffer> buffers);
+
   private:
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftTuples;
-    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> rightTuples;
+    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftPagedVectors;
+    std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> rightPagedVectors;
 };
 }// namespace NES::Runtime::Execution
 

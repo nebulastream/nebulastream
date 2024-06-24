@@ -77,7 +77,6 @@ class SinkMedium : public Runtime::Reconfigurable {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    //Todo: In the scope of #4040 we decide whether writeData() should return an ExecutionResult
     virtual bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
 
     /**

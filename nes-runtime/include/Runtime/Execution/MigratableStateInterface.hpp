@@ -14,9 +14,9 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_
-#include <Runtime/Execution/StreamSliceInterface.hpp>
-#include <list>
+#include <Runtime/TupleBuffer.hpp>
 #include <memory>
+#include <vector>
 
 namespace NES::Runtime::Execution {
 /**
@@ -28,15 +28,15 @@ class MigratableStateInterface {
      * @brief Gets the state
      * @param startTS
      * @param stopTS
-     * @return list of StreamSlices
+     * @return list of TupleBuffers
      */
-    virtual std::list<std::shared_ptr<StreamSliceInterface>> getStateToMigrate(uint64_t, uint64_t) = 0;
+    virtual std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) = 0;
 
     /**
      * @brief Merges migrated slices
-     * @param slices
+     * @param buffers
      */
-    virtual void restoreState(std::list<std::shared_ptr<StreamSliceInterface>>) = 0;
+    virtual void restoreState(std::vector<Runtime::TupleBuffer>&) = 0;
 };
 }// namespace NES::Runtime::Execution
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_

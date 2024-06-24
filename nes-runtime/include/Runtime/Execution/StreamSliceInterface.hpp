@@ -14,7 +14,10 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
+#include <span>
 
 namespace NES::Runtime::Execution {
 /**
@@ -33,6 +36,13 @@ class StreamSliceInterface {
      * @return uint64_t
      */
     [[nodiscard]] virtual uint64_t getSliceEnd() const = 0;
+
+    /**
+     * @brief Gets stored state as vector of tuple buffers
+     * @param std::shared_ptr<BufferManager>&
+     * @return list of pages that store records and metadata
+     */
+    virtual std::vector<Runtime::TupleBuffer> serialize(std::shared_ptr<BufferManager>&) = 0;
 
     virtual ~StreamSliceInterface() = default;
 };
