@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.160](https://github.com/nebulastream/nebulastream/tree/v0.6.160) (2024-06-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.159...v0.6.160)
+
+### Miscellaneous Issues ✌️
+
+- Simplify specification of MQTT sources and sinks [\#5004](https://github.com/nebulastream/nebulastream/issues/5004)
+
 ## [v0.6.159](https://github.com/nebulastream/nebulastream/tree/v0.6.159) (2024-06-25)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.158...v0.6.159)
