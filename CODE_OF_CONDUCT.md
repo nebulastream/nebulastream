@@ -23,8 +23,8 @@ NebulaStream project follows the [Apache Software Foundation code of conduct](ht
 
 # NebulaStream Specific 
 1. We prefer to do things right and clean (codebase, architecture, documentation, reviews) instead of quick and dirty.
-2. Issues SHOULD be meaningful and contain enough information that someone else can pick it up and work on them (self-contained).
-3. Meetings must be prepared and there should exist action items (who, what, until when) at the end of a meeting. Further, an agenda has to be presented and sent around before the meeting starts
+2. Issues SHOULD be meaningful and contain enough information that someone else can pick them up and work on them (self-contained).
+3. Meetings must be prepared and there should exist action items (who, what, until when) at the end of a meeting. Further, an agenda has to be presented and sent around before the meeting starts.
 4. Commit messages should be meaningful and contain enough information to understand what the commit is about.
 5. PRs MUST undergo a thorough review before merging. 
 
@@ -33,4 +33,4 @@ NebulaStream project follows the [Apache Software Foundation code of conduct](ht
 2. The maintainers are responsible for **merging** pull requests and are the only ones who can merge a pull request.
 3. Each maintainer is equal and has equal voting rights.
 4. The group of maintainers is dynamic and can change over time. Each maintainer must contribute to the project and be active. If a maintainer does not contribute, the other maintainers can decide to remove him/her from the group.
-5. Maintainers let other maintainers know if they are not able to contribute for a longer period of time, due to vacation, sickness, etc.
+5. Maintainers let other maintainers know if they are not able to contribute for a longer period of time, e.g., due to vacation, sickness, etc.
