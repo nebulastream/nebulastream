@@ -150,7 +150,7 @@ void RestServer::run() {
     if (corsAllowedOrigin.has_value()) {
         connectionHandler->addRequestInterceptor(std::make_shared<oatpp::web::server::interceptor::AllowOptionsGlobal>());
         connectionHandler->addResponseInterceptor(
-            std::make_shared<oatpp::web::server::interceptor::AllowCorsGlobal>(corsAllowedOrigin.value()));
+            std::make_shared<oatpp::web::server::interceptor::AllowCorsGlobal>(corsAllowedOrigin.value(), corsAllowedMethods));
     }
 
     /* Create TCP connection provider */

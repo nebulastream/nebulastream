@@ -38,7 +38,7 @@ TEST_F(ConnectivityControllerTest, testCORSRequest) {
     coordinatorConfig->restServerCorsAllowedOrigin = corsOrigin;
 
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("ConnectivityControllerTest: Coordinator started successfully");
 
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
@@ -52,7 +52,7 @@ TEST_F(ConnectivityControllerTest, testCORSRequest) {
     EXPECT_EQ(corsOriginHeader, corsOrigin);
     std::string corsMethodHeader;
     EXPECT_NO_THROW(corsMethodHeader = r.header.at("Access-Control-Allow-Methods"));
-    EXPECT_EQ(corsMethodHeader, "GET, POST, OPTIONS");
+    EXPECT_EQ(corsMethodHeader, "GET, POST, OPTIONS, DELETE, PUT");
     std::string corsAllowedHeaders;
     EXPECT_NO_THROW(corsAllowedHeaders = r.header.at("Access-Control-Allow-Headers"));
     EXPECT_EQ(corsAllowedHeaders,
@@ -68,7 +68,7 @@ TEST_F(ConnectivityControllerTest, testGetRequest) {
     coordinatorConfig->restPort = *restPort;
 
     auto coordinator = std::make_shared<NesCoordinator>(coordinatorConfig);
-    EXPECT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
+    ASSERT_EQ(coordinator->startCoordinator(false), *rpcCoordinatorPort);
     NES_INFO("ConnectivityControllerTest: Coordinator started successfully");
 
     bool success = TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5);
