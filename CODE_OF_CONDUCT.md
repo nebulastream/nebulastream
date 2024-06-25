@@ -34,3 +34,4 @@ NebulaStream project follows the [Apache Software Foundation code of conduct](ht
 3. Each maintainer is equal and has equal voting rights.
 4. The group of maintainers is dynamic and can change over time. Each maintainer must contribute to the project and be active. If a maintainer does not contribute, the other maintainers can decide to remove him/her from the group.
 5. Maintainers let other maintainers know if they are not able to contribute for a longer period of time, e.g., due to vacation, sickness, etc.
+6. Maintainers do not blame each other. Maintainers do not attack each other. Maintainers do not get personal, directly or indirectly. Maintainers let other people speak out. Maintainers follow the majority, even if they feel very strongly against it. A maintainer may be voted out of the team for behavior that violates these rules.
