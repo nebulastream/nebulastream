@@ -33,7 +33,6 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     /**
      * @brief Creates the MQTT sink description
      * @param address: address name of MQTT broker
-     * @param clientId: client ID for MQTT client. If non is given, the operatorID is used automatically (see 'ConvertLogicalToPhysicalSink.cpp).
      * @param topic: MQTT topic chosen to publish client data to
      * @param user: user identification for client
      * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
@@ -41,17 +40,18 @@ class MQTTSinkDescriptor : public SinkDescriptor {
      * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
      * @param asynchronousClient: determine whether client is async- or synchronous
+     * @param clientId: client ID for MQTT client. If non is given, the operatorID is used automatically (see 'ConvertLogicalToPhysicalSink.cpp).
      * @param numberOfOrigins: number of origins of a given query
      * @return descriptor for MQTT sink
      */
     static SinkDescriptorPtr create(std::string&& address,
                                     std::string&& topic,
-                                    std::string&& user,
-                                    uint64_t maxBufferedMSGs,
-                                    TimeUnits timeUnit,
-                                    uint64_t messageDelay,
-                                    ServiceQualities qualityOfService,
-                                    bool asynchronousClient,
+                                    std::string&& user = "user",
+                                    uint64_t maxBufferedMSGs = 1000,
+                                    TimeUnits timeUnit = TimeUnits::milliseconds,
+                                    uint64_t messageDelay = 0,
+                                    ServiceQualities qualityOfService = ServiceQualities::atLeastOnce,
+                                    bool asynchronousClient = true,
                                     std::string&& clientId = "",
                                     uint64_t numberOfOrigins = 1);
 
@@ -113,21 +113,19 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
     /**
-     * @brief Creates the MQTT sink
-     * @param address: address name of MQTT broker
-     * @param clientId: client ID for MQTT client
-     * @param topic: MQTT topic chosen to publish client data to
-     * @param user: user identification for client
-     * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
-     * @param timeUnit: time unit chosen by client user for message delay
-     * @param messageDelay: time before next message is sent by client to broker
-     * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
-     * @param asynchronousClient: determine whether client is async- or synchronous
-     * @param numberOfOrigins: number of origins of a given query
-     * @return MQTT sink
+     * @brief Creates the MQTT sink descriptor
+     * @param address address name of MQTT broker
+     * @param topic mqtt topic to write date to
+     * @param user user identification of client
+     * @param maxBufferedMSGs maximum number of messages that can be buffered by the client before disconnecting
+     * @param timeUnit time unit chosen by client user foe message delay
+     * @param messageDelay time before next message is sent by client to broker
+     * @param qualityOfService either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
+     * @param asynchronousClient determine whether client is async- or synchronous
+     * @param clientId client ID for MQTT client
+     * @param numberOfOrigins number of origins of a given query
      */
     explicit MQTTSinkDescriptor(std::string&& address,
-                                std::string&& clientId,
                                 std::string&& topic,
                                 std::string&& user,
                                 uint64_t maxBufferedMSGs,
@@ -135,11 +133,11 @@ class MQTTSinkDescriptor : public SinkDescriptor {
                                 uint64_t messageDelay,
                                 ServiceQualities qualityOfService,
                                 bool asynchronousClient,
+                                std::string&& clientId,
                                 uint64_t numberOfOrigins);
 
   private:
     std::string address;
-    std::string clientId;
     std::string topic;
     std::string user;
     uint64_t maxBufferedMSGs;
@@ -147,6 +145,7 @@ class MQTTSinkDescriptor : public SinkDescriptor {
     uint64_t messageDelay;
     ServiceQualities qualityOfService;
     bool asynchronousClient;
+    std::string clientId;
 };
 
 using MQTTSinkDescriptorPtr = std::shared_ptr<MQTTSinkDescriptor>;

@@ -1318,7 +1318,7 @@ void OperatorSerializationUtil::serializeSinkDescriptor(const SinkDescriptor& si
         mqttSerializedSinkDescriptor.set_clientid(mqttSinkDescriptor->getClientId());
         mqttSerializedSinkDescriptor.set_topic(mqttSinkDescriptor->getTopic());
         mqttSerializedSinkDescriptor.set_user(mqttSinkDescriptor->getUser());
-        mqttSerializedSinkDescriptor.set_maxbufferedmsgs(mqttSinkDescriptor->getMaxBufferedMSGs());
+        mqttSerializedSinkDescriptor.set_maxbufferedmessages(mqttSinkDescriptor->getMaxBufferedMSGs());
         mqttSerializedSinkDescriptor.set_timeunit(
             (SerializableOperator_SinkDetails_SerializableMQTTSinkDescriptor_TimeUnits) mqttSinkDescriptor->getTimeUnit());
         mqttSerializedSinkDescriptor.set_msgdelay(mqttSinkDescriptor->getMsgDelay());
@@ -1465,7 +1465,7 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         return MQTTSinkDescriptor::create(std::string{serializedSinkDescriptor.address()},
                                           std::string{serializedSinkDescriptor.topic()},
                                           std::string{serializedSinkDescriptor.user()},
-                                          serializedSinkDescriptor.maxbufferedmsgs(),
+                                          serializedSinkDescriptor.maxbufferedmessages(),
                                           (MQTTSinkDescriptor::TimeUnits) serializedSinkDescriptor.timeunit(),
                                           serializedSinkDescriptor.msgdelay(),
                                           (MQTTSinkDescriptor::ServiceQualities) serializedSinkDescriptor.qualityofservice(),
