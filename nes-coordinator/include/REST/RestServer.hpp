@@ -72,6 +72,12 @@ using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 }// namespace Catalogs
 
 /**
+ * @brief A constant to be used for extending the set of
+ * allowed operations without the CORS plugin.
+ */
+static const std::string corsAllowedMethods = "GET, POST, OPTIONS, DELETE, PUT";
+
+/**
  * @brief : This class is responsible for starting the REST server.
  */
 class RestServer {
