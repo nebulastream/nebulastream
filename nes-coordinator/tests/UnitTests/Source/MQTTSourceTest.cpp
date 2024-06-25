@@ -155,7 +155,7 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
         + mqttSourceType->getLogicalSourceName() + "_" + mqttSourceType->getPhysicalSourceName()
         + ", "
           "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
-          "DATATYPE=JSON, QOS=atLeastOnce, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=10. ";
+          "DATATYPE=JSON, QOS=atLeastOnce, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=60. ";
 
     EXPECT_EQ(mqttSource->toString(), expected);
 
