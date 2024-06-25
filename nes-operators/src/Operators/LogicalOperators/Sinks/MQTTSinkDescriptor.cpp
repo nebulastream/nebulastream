@@ -17,18 +17,18 @@
 
 namespace NES {
 MQTTSinkDescriptor::MQTTSinkDescriptor(std::string&& address,
-                                       std::string&& clientId,
                                        std::string&& topic,
                                        std::string&& user,
                                        uint64_t maxBufferedMSGs,
-                                       const TimeUnits timeUnit,
+                                       NES::MQTTSinkDescriptor::TimeUnits timeUnit,
                                        uint64_t messageDelay,
-                                       const ServiceQualities qualityOfService,
+                                       NES::MQTTSinkDescriptor::ServiceQualities qualityOfService,
                                        bool asynchronousClient,
+                                       std::string&& clientId,
                                        uint64_t numberOfOrigins)
-    : SinkDescriptor(numberOfOrigins), address(std::move(address)), clientId(std::move(clientId)), topic(std::move(topic)),
-      user(std::move(user)), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay),
-      qualityOfService(qualityOfService), asynchronousClient(asynchronousClient) {}
+    : SinkDescriptor(numberOfOrigins), address(std::move(address)), topic(std::move(topic)), user(std::move(user)),
+      maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService),
+      asynchronousClient(asynchronousClient), clientId(std::move(clientId)) {}
 
 std::string MQTTSinkDescriptor::getAddress() const { return address; }
 
@@ -59,7 +59,6 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                              std::string&& clientId,
                                              uint64_t numberOfOrigins) {
     return std::make_shared<MQTTSinkDescriptor>(std::move(address),
-                                                std::move(clientId),
                                                 std::move(topic),
                                                 std::move(user),
                                                 maxBufferedMSGs,
@@ -67,6 +66,7 @@ SinkDescriptorPtr MQTTSinkDescriptor::create(std::string&& address,
                                                 messageDelay,
                                                 qualityOfService,
                                                 asynchronousClient,
+                                                std::move(clientId),
                                                 numberOfOrigins);
 }
 

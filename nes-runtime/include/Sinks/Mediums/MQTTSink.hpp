@@ -35,7 +35,7 @@ class MQTTSink : public SinkMedium {
      * @param clientId: client ID for MQTT client. If non is given, the operatorID is used automatically (see 'ConvertLogicalToPhysicalSink.cpp).
      * @param topic: MQTT topic chosen to publish client data to
      * @param user: user identification for client
-     * @param maxBufferedMSGs: maximal number of messages that can be buffered by the client before disconnecting
+     * @param maxBufferedMessages: maximal number of messages that can be buffered by the client before disconnecting
      * @param timeUnit: time unit chosen by client user for message delay
      * @param messageDelay: time before next message is sent by client to broker
      * @param qualityOfService: either 'at most once' or 'at least once'. QOS > 0 required for a non-clean (persistent) session.
@@ -43,7 +43,6 @@ class MQTTSink : public SinkMedium {
      * @param numberOfOrigins: number of origins of a given query
      * @return MQTT sink
      */
-    // TODO change MSGS to Messages
     explicit MQTTSink(SinkFormatPtr sinkFormat,
                       Runtime::NodeEnginePtr nodeEngine,
                       uint32_t numOfProducers,
@@ -53,7 +52,7 @@ class MQTTSink : public SinkMedium {
                       std::string const& clientId,
                       std::string const& topic,
                       std::string const& user,
-                      uint64_t maxBufferedMSGs,
+                      uint64_t maxBufferedMessages,
                       MQTTSinkDescriptor::TimeUnits timeUnit,
                       uint64_t messageDelay,
                       MQTTSinkDescriptor::ServiceQualities qualityOfService,
@@ -102,10 +101,10 @@ class MQTTSink : public SinkMedium {
     std::string getUser() const;
 
     /**
-     * @brief get the number of MSGs that can maximally be buffered (default is 60)
+     * @brief get the number of messages that can maximally be buffered (default is 60)
      * @return number of messages that can maximally be buffered
      */
-    uint64_t getMaxBufferedMSGs() const;
+    uint64_t getMaxBufferedMessages() const;
 
     /**
      * @brief get the user chosen time unit (default is milliseconds)
@@ -148,14 +147,13 @@ class MQTTSink : public SinkMedium {
     std::string clientId;
     std::string topic;
     std::string user;
-    uint64_t maxBufferedMSGs;
+    uint64_t maxBufferedMessages;
     MQTTSinkDescriptor::TimeUnits timeUnit;
     uint64_t messageDelay;
     MQTTSinkDescriptor::ServiceQualities qualityOfService;
     bool asynchronousClient;
     bool connected;
     std::chrono::duration<int64_t, std::ratio<1, 1000000000>> minDelayBetweenSends{};
-
     MQTTClientWrapperPtr client;
 };
 using MQTTSinkPtr = std::shared_ptr<MQTTSink>;

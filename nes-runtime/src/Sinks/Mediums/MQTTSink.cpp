@@ -46,15 +46,16 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
                    const std::string& clientId,
                    const std::string& topic,
                    const std::string& user,
-                   uint64_t maxBufferedMSGs,
+                   uint64_t maxBufferedMessages,
                    MQTTSinkDescriptor::TimeUnits timeUnit,
                    uint64_t messageDelay,
                    MQTTSinkDescriptor::ServiceQualities qualityOfService,
                    bool asynchronousClient,
                    uint64_t numberOfOrigins)
     : SinkMedium(std::move(sinkFormat), nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
-      address(address), clientId(clientId), topic(topic), user(user), maxBufferedMSGs(maxBufferedMSGs), timeUnit(timeUnit),
-      messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient), connected(false) {
+      address(address), clientId(clientId), topic(topic), user(user), maxBufferedMessages(maxBufferedMessages),
+      timeUnit(timeUnit), messageDelay(messageDelay), qualityOfService(qualityOfService), asynchronousClient(asynchronousClient),
+      connected(false) {
 
     minDelayBetweenSends =
         std::chrono::nanoseconds(messageDelay
@@ -66,7 +67,7 @@ MQTTSink::MQTTSink(SinkFormatPtr sinkFormat,
     client = std::make_shared<MQTTClientWrapper>(asynchronousClient,
                                                  address,
                                                  clientId,
-                                                 maxBufferedMSGs,
+                                                 maxBufferedMessages,
                                                  topic,
                                                  magic_enum::enum_integer(qualityOfService));
     NES_TRACE("MQTTSink::MQTTSink {}: Init MQTT Sink to {}", this->toString(), address);
@@ -129,7 +130,7 @@ std::string MQTTSink::toString() const {
     ss << "CLIENT_ID=" << clientId << ", ";
     ss << "TOPIC=" << topic << ", ";
     ss << "USER=" << user << ", ";
-    ss << "MAX_BUFFERED_MESSAGES=" << maxBufferedMSGs << ", ";
+    ss << "MAX_BUFFERED_MESSAGES=" << maxBufferedMessages << ", ";
     ss << "TIME_UNIT=" << magic_enum::enum_name(timeUnit) << ", ";
     ss << "SEND_PERIOD=" << messageDelay << ", ";
     ss << "SEND_DURATION_IN_NS=" << std::to_string(minDelayBetweenSends.count()) << ", ";
@@ -144,7 +145,7 @@ bool MQTTSink::connect() {
     if (!connected) {
         try {
             auto connOpts = mqtt::connect_options_builder()
-                                .keep_alive_interval(maxBufferedMSGs * minDelayBetweenSends)
+                                .keep_alive_interval(maxBufferedMessages * minDelayBetweenSends)
                                 .user_name(user)
                                 .clean_session(true)
                                 .automatic_reconnect(true)
@@ -181,7 +182,7 @@ std::string MQTTSink::getAddress() const { return address; }
 std::string MQTTSink::getClientId() const { return clientId; }
 std::string MQTTSink::getTopic() const { return topic; }
 std::string MQTTSink::getUser() const { return user; }
-uint64_t MQTTSink::getMaxBufferedMSGs() const { return maxBufferedMSGs; }
+uint64_t MQTTSink::getMaxBufferedMessages() const { return maxBufferedMessages; }
 MQTTSinkDescriptor::TimeUnits MQTTSink::getTimeUnit() const { return timeUnit; }
 uint64_t MQTTSink::getMsgDelay() const { return messageDelay; }
 MQTTSinkDescriptor::ServiceQualities MQTTSink::getQualityOfService() const { return qualityOfService; }

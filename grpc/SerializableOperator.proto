@@ -310,7 +310,7 @@ message SerializableOperator{
       string clientId = 2;
       string topic = 3;
       string user = 4;
-      uint64 maxBufferedMSGs = 5;
+      uint64 maxBufferedMessages = 5;
       TimeUnits timeUnit = 6;
       uint64 msgDelay = 7;
       ServiceQualities qualityOfService = 8;

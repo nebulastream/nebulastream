@@ -151,9 +151,11 @@ TEST_F(MQTTSourceTest, MQTTSourcePrint) {
                                        SUCCESSORS);
 
     std::string expected = "MQTTSOURCE(SCHEMA(var:INTEGER(32 bits)), SERVERADDRESS=tcp://127.0.0.1:1883, "
-                           "CLIENTID=nes-mqtt-test-client, "
-                           "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
-                           "DATATYPE=JSON, QOS=atLeastOnce, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=-1. ";
+                           "CLIENTID=nes-mqtt-test-client-"
+        + std::to_string(OPERATORID.getRawValue())
+        + ", "
+          "USER=rfRqLGZRChg8eS30PEeR, TOPIC=v1/devices/me/telemetry, "
+          "DATATYPE=JSON, QOS=atLeastOnce, CLEANSESSION=0. BUFFERFLUSHINTERVALMS=10. ";
 
     EXPECT_EQ(mqttSource->toString(), expected);
 
