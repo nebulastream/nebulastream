@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.159](https://github.com/nebulastream/nebulastream/tree/v0.6.159) (2024-06-25)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.158...v0.6.159)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Cannot Stop Queries from UI due to CORS Restriction [\#5001](https://github.com/nebulastream/nebulastream/issues/5001)
+
 ## [v0.6.158](https://github.com/nebulastream/nebulastream/tree/v0.6.158) (2024-06-24)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.157...v0.6.158)
