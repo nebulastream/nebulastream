@@ -75,7 +75,8 @@ MQTTSource::MQTTSource(SchemaPtr schema,
     //TODO: This is a workaround currently. Every MQTT client needs to connect with a unique ID otherwise MQTT broker will
     // disconnect clients with same client ID while accepting request for a new client with same id. For now we use the combination
     // of logical and physical source name. A better solution will be to have a UUID as the client id.
-    this->clientId = this->clientId + "-" + sourceConfig->getLogicalSourceName() + "_" + sourceConfig->getPhysicalSourceName();
+    this->clientId = this->clientId + "-" + sourceConfig->getLogicalSourceName() + "_" + sourceConfig->getPhysicalSourceName()
+        + "_" + operatorId.toString();
     client = std::make_shared<mqtt::async_client>(serverAddress, this->clientId);
 
     //init physical types
