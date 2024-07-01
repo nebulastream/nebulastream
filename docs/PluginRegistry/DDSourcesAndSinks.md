@@ -146,8 +146,16 @@ This approach keeps the properties of the ClickHouse registry approach, but enab
 
 (Additionally, DuckDB provides an [extension-template repository](https://github.com/duckdb/extension-template) that makes getting started with extension (plugin) development simple.)
 
+### Advantages
+- (same advantages that ClickHouse approach has)
+- statically linked external plugins
+- registration functions are private class functions (no violations of ODR possible)
+### Disadvantages
+- requires code generation via CMake which adds complexity
+
+
 # Our Proposed Solution
-```Mermaid
+```mermaid
 ---
 title: Our Solution Overview (Example - TypeRegistry - UInt32)
 ---
