@@ -1,3 +1,10 @@
+# Prerequisites
+This section should not be part of the actual design document.
+If a design document is linked to a Github discussion, the issue for the design document should be created from the github discussion to provide a link between the discussion and the design document.
+Every design document gets its own issue with a [DD] tag, similar how documentation gets a [DOC] tag.
+Every design document is placed into the `docs` folder that is located in the root directory of the project. *Open question: do we enforce a specific structure in the docs directory?*
+Every design document gets its own PR and must go through a review process like any other issue.
+
 # Context and Scope
 A design document introduces a change to the system that is severe enough that it warrants a design document.
 The context and scope section of the design document should discuss the following two aspects of the change:
