@@ -1,36 +1,30 @@
-# Context and Scope
-## Background
+# The Problem
 Adding a new feature to NebulaStream usually means adding code to the core of NebulaStream. Adding a single source, e.g., an [OBC](https://encyclopedia.pub/entry/43375) source or an arbitrarily exotic source or operator or data type that is needed by a single person means adding ~20 files to core code paths of NebulaStream, at very different places.
 Enabling and disabling a plugin, since it might have dependencies that should are not shipped with the main repository, means adding `#ifdef`s to core code paths of NebulaStream.
 This results in code like the following in `LowerLogicalToPhysicalSource.cpp`, where we must differentiate between all source types and we must hide sources that have dependencies behind `#ifdef`s.
-![LowerLogicalToPhysicalSource](LowerLogicalToPhysicalSource.png)
+![LowerLogicalToPhysicalSource](resources/LowerLogicalToPhysicalSource.png)
 
+## Current Implementation
 With Nautilus, @philippgrulich introduced the [registry pattern](https://www.geeksforgeeks.org/registry-pattern/) to NebulaStream. In particular, he introduced a plugin registry with auto-register support. Nautilus backends (plugins), such as the MLIR backend or the Flounder backend can register themselves in a single registry (singleton) by adding a static like of code at the right place `[[maybe_unused]] static CompilationBackendRegistry::Add<MLIRCompilationBackend> mlirCompilerBackend("MLIR");`.
 With the addition of the registry, we decided that we should modularize our code and introduce clear separation of concerns. Cuda, Tensorflow, ONNX, and Arrow were added to NebulaStream using the registry. As a result, they exist in `nes-plugins` and do not pollute the core code paths. Additionally, there was an effort to support sources with the plugin registry that was never fully realized.
 
-## Motivation
-As part of a major refactoring of NebulaStream we realize the idea of a modularized NebulaStream. As a result, adding a new exotic source, data type, or operator can be done by writing an external plugin that is then auto-registered in the plugin registry, if the plugin is configured to be used. Thus, no more `#ifdef`s are required. The plugin is either activated or not. Additionally, the core code paths are kept clean. Lastly, we need to rethink our interfaces and improve them, leading to overall cleaner code, even on the core paths. An additional benefit of using a registry is that query API support can come for free. If a user creates a data type called FANCY_DATA_TYPE, which is registered using the string 'FANCY_DATA_TYPE', then we can load the correct data type during query parsing by simple parsing the query string for the data type and using it as a key for the registry
-
 ## Problems with the Current Implementation
 We cannot rely on the current implementation of the plugin registry, because it strongly depends on dynamic linking with shared libraries. The static registry line highlighted above to register the MLIRCompilationBackend is discarded by our linker (the **linker problem**) if we build and link static libraries. Additionally, even with dynamic linking, the current approach runs into the **Static Initialization Order Fiasco (SIOF)**. That is, there are no guarantees concerning the order in which static code is executed. As a result, if plugins have dependencies on other plugins, the dependencies might be resolved in the wrong order, leading to difficult to debug crash, because everything happens before `main()` is executed.
-  
-## Scope:
-With this design document we introduce a new plugin registry that overcomes the problems of the old registry. The registry will facilitate modularizing NebulaStream and will therefore be part of upcoming design documents, e.g., the sink and source refactoring design document.
 
-# Goals and Non-Goals
-## Goals
+# Goals
 Creating a registry that:
-- is flexible enough to be used in various scenarios (sources, sinks, operators, data types, query rewrite rules, query compilation backends, expressions/functions, etc.)
-- allows us to separate between internal and external plugins
+- G1: is flexible enough to be used in various scenarios (sources, sinks, operators, data types, query rewrite rules, query compilation backends, expressions/functions, etc.)
+- G2: allows us to separate between internal and external plugins
   - internal plugins are core plugins that are always active and therefore fully supported
   - external plugins are plugins that may have dependencies that are not shipped with main repository and that can be deactivated
-- enables self-registering plugins that are statically linked
-- guarantees that specified plugins are registered (optimizer & linker cannot eliminate code essential to registering plugins)
-- avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins
-- is only instantiated if it is used
-- has a prototype that demonstrates all the above capabilities (see 'Proposed Solution')
+- G3: enables self-registering plugins that are statically linked
+- G4: guarantees that specified plugins are registered (optimizer & linker cannot eliminate code essential to registering plugins)
+- G5: avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins
+- G6: is only instantiated if it is used
+- G7: has a prototype that demonstrates all the above capabilities (see 'Proposed Solution')
+- G8: disabling a plugin is as simple as turning it to OFF, in contrast to having multiple `#ifdefs` scattered across the codebase
 
-## Non-Goals
+# Non-Goals
 A registry that:
 - can link registries during runtime (after building and compiling)
   - this requires dynamic linking
@@ -327,7 +321,7 @@ register_plugin("Types/UInt32" ON)
 ```
 A plugin that is set to off is not considered in the build process which means that all dependencies of that plugin are not processed.
 
-### Create a new Registry
+### Creating a new Registry
 Creating a new registry involves the following steps:
 1. Implement registry following the design of other registries. Each registry is distinct, that is, the registries do not inherit functionality from a common parent.
 2. Make sure the implementation of the registry is part of the CMake build.
@@ -342,6 +336,19 @@ set(final_plugin_types
         SourceDescriptor
 )
 ```
+## Solution vs Goals 
+In the following we check wether we reached the goals defined in the [Goals](#goals) section.
+
+- G1: we did not create a single registry implementation that is flexible enough to handle various scenarios. An explanation can be found in [Alternative 3](#a3---one-templated-registry). It is still simple to create a new registry using an existing one as a template.
+- G2: Our solution clearly allows us to separate internal and external plugins. We can deactivate all external plugins and therefore limit support. In contrast, internal plugins cannot be deactivated and must be supported
+- G3: Our solution supports self-registering plugins that are statically linked by using CMake code generation
+- G4: Our solution guarantees that specified plugins are registered (optimizer & linker cannot eliminate code essential to registering plugins) by making registration explicit using function calls that are executed during runtime.
+- G5: Our solution avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins by entirely avoiding static initialization of plugins before the `main()` function is executed.
+- G6: Our solution is only instantiated if it is used, because it is constructed the first time `instance()` is called
+- G7: We provide a prototype that demonstrates all the above capabilities.
+- G8: Our solution allows to disable a plugin by simply turning it to OFF in a config file
+
+Additionally, we checked that our solution supports external plugins with external dependencies and plugin-specific tests.
 
 # Alternatives
 ## A1 - Factory Pattern
@@ -349,11 +356,11 @@ Why not use the factory pattern? In a way, the registry can be considered a fact
 1. It is a singleton. As a result, it can be accessed globally and it is only created once (on first use).
 2. It provides constructors by supplying a key. This enables to add new plugins without changing the core code, just use the new string. Since queries are also just text that is parsed, this characteristic enables support for new keywords in queries without any changes to the query parser.
 3. Self-registering plugins. To make the process of adding external plugins as simple as possible, we require a self-registering mechanism that is based on characteristics 1 and 2.
-4. 
+
 ## A2 - Self-Registering via Static and Global Code
 Our prior registry approach used static, global code to implement auto-registering plugins. The downsides of this approach are discussed in [Context and Scope](#context-and-scope) and are also highlighted [here](https://openusd.org/dev/api/page_tf__registry_manager.html) and [here](https://www.cppstories.com/2018/02/factory-selfregister/).
 
-## A3 - One Templated Registry
+## A3 - Single Templated Registry Implementation
 In our solution, each registry implements the singleton registry pattern again. We considered creating a templated registry. A functional prototype can be found at the end of this document [Templated Registry](#templated-registry). We decided against the templated registry for several reasons:
 1. It adds further complexity on top of an already complex data structure. Auto registering plugins via a registrar becomes more indirect (see constructor) and the unordered registry map needs to be hidden behind a static function to make sure that no copy of the non-static registry map is created.
 2. Registries might significantly diverge in the future making it difficult to cram all the logic in a single registry.
@@ -385,7 +392,8 @@ https://www.industrialempathy.com/posts/design-docs-at-google/
   - Pixar OpenUSD registry implementation
   - heavy use of macros, a lot of dependencies on other code openusd code
 
-# Templated Registry
+# Appendix
+## Single Templated Registry Implementation
 ```c++
 #ifndef IRegistry_H
 #define IRegistry_H
