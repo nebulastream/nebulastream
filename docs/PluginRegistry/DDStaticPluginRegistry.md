@@ -349,7 +349,7 @@ Why not use the factory pattern? In a way, the registry can be considered a fact
 1. It is a singleton. As a result, it can be accessed globally and it is only created once (on first use).
 2. It provides constructors by supplying a key. This enables to add new plugins without changing the core code, just use the new string. Since queries are also just text that is parsed, this characteristic enables support for new keywords in queries without any changes to the query parser.
 3. Self-registering plugins. To make the process of adding external plugins as simple as possible, we require a self-registering mechanism that is based on characteristics 1 and 2.
-
+4. 
 ## A2 - Self-Registering via Static and Global Code
 Our prior registry approach used static, global code to implement auto-registering plugins. The downsides of this approach are discussed in [Context and Scope](#context-and-scope) and are also highlighted [here](https://openusd.org/dev/api/page_tf__registry_manager.html) and [here](https://www.cppstories.com/2018/02/factory-selfregister/).
 
