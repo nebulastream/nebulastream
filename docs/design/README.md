@@ -40,6 +40,9 @@ It is not necessary to provide a fully detailed technical solution. The solution
 In this section, alternatives to the proposed solution need to be discussed. Each alternative should be tagged, e.g., A1, A2, and A3, to enable precise and consistent references during PR discussions.
 It should be clear what the advantages and the disadvantages of each alternative it must be clear why the proposed solution was preferred over the respective alternative.
 
+## (Optional) Open Questions
+All questions that go beyond the scope of the design documents and that are therefore not answered by the design document for good reason should be listed here.
+
 ## (Optional) Sources and Further Reading
 If possible, the design document should provide links to resources that cover the topic of the design document. This has three advantages. First, it shows that the author of the design document performed research on the topic. Second, it provides additional reading material for reviewers to better understand the topic covered by the design document. Third, it provides more in-depth documentation for future readers of the design document. All sources that went into the process of creating the design documents should not be lost.
 
