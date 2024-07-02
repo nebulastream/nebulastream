@@ -100,9 +100,8 @@ function(project_enable_clang_format)
     endif ()
 
     message(STATUS "Enabling format targets using ${CLANG_FORMAT_EXECUTABLE}")
-    get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
-    add_custom_target(format-clang       COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} --fix USES_TERMINAL)
-    add_custom_target(check-format-clang COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED}       USES_TERMINAL)
+    add_custom_target(format-clang       COMMAND scripts/format.sh -i WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
+    add_custom_target(check-format-clang COMMAND scripts/format.sh    WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} USES_TERMINAL)
 endfunction(project_enable_clang_format)
 
 macro(project_enable_check_comment_format)
