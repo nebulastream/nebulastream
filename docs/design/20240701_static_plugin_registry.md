@@ -23,6 +23,7 @@ Creating a registry that:
 - G6: is only instantiated if it is used
 - G7: has a prototype that demonstrates all the above capabilities (see 'Proposed Solution')
 - G8: disabling a plugin is as simple as turning it to OFF, in contrast to having multiple `#ifdefs` scattered across the codebase
+- G9: it must be possible to create tests for external plugins in the directory of the external plugin itself
 
 # Non-Goals
 A registry that:
@@ -347,6 +348,7 @@ In the following we check wether we reached the goals defined in the [Goals](#go
 - G6: Our solution is only instantiated if it is used, because it is constructed the first time `instance()` is called
 - G7: We provide a prototype that demonstrates all the above capabilities.
 - G8: Our solution allows to disable a plugin by simply turning it to OFF in a config file
+- G9: it is possible to write tests in the directory of the external plugin itself. The prototype demonstrates this for a plugin that additionally has a dependency on grpc. To build the test, the external plugin must be activated in the config first.
 
 Additionally, we checked that our solution supports external plugins with external dependencies and plugin-specific tests.
 
