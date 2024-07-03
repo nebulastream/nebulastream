@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.6.163](https://github.com/nebulastream/nebulastream/tree/v0.6.163) (2024-07-03)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.162...v0.6.163)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Query stays in OPTIMIZING [\#5000](https://github.com/nebulastream/nebulastream/issues/5000)
+
+### Miscellaneous Issues ✌️
+
+- `as` operator prepends schema name to existing fully qualified schema [\#4999](https://github.com/nebulastream/nebulastream/issues/4999)
+
+## [v0.6.162](https://github.com/nebulastream/nebulastream/tree/v0.6.162) (2024-07-02)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.161...v0.6.162)
+
 ## [v0.6.161](https://github.com/nebulastream/nebulastream/tree/v0.6.161) (2024-06-27)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.160...v0.6.161)
