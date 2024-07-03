@@ -111,11 +111,15 @@ TEST_F(RenameSourceToProjectOperatorRuleTest, testAddingMultipleSourceRenameOper
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
     EXPECT_TRUE(!renameSourceOperators.empty());
 
+    NES_INFO("{}", queryPlan->toString());
+
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     typeInferencePhase->execute(queryPlan);
 
     auto renameSourceToProjectOperatorRule = Optimizer::RenameSourceToProjectOperatorRule::create();
     auto updatedQueryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
+
+    NES_INFO("{}", updatedQueryPlan->toString());
 
     typeInferencePhase->execute(updatedQueryPlan);
 

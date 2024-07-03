@@ -494,8 +494,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSource) {
 
     SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f1"));
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f2"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f1"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f2"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -554,8 +554,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProject) {
 
     SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f3"));
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f4"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f3"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -660,8 +660,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 
     SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f3"));
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f4"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f3"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
@@ -729,13 +729,13 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 
     SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
     EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f3"));
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f4"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f3"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(sinkOutputSchema->getField("x$default_logical$f3"));
-    EXPECT_TRUE(sinkOutputSchema->getField("x$default_logical$f4"));
+    EXPECT_TRUE(sinkOutputSchema->getField("x$f3"));
+    EXPECT_TRUE(sinkOutputSchema->getField("x$f4"));
 }
 
 /**
@@ -755,9 +755,9 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
                      .joinWith(subQuery)
                      .where(Attribute("f1") == Attribute("f1"))
                      .window(windowType1)
-                     .filter(Attribute("x$default_logical$f2") < 42)
-                     .project(Attribute("x$default_logical$f1").as("f3"), Attribute("y$default_logical$f2").as("f4"))
-                     .map(Attribute("default_logical$f3") = Attribute("f4") + 2)
+                     .filter(Attribute("x$f2") < 42)
+                     .project(Attribute("x$f1").as("f3"), Attribute("y$f2").as("f4"))
+                     .map(Attribute("f3") = Attribute("f4") + 2)
                      .as("x")
                      .sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
@@ -772,42 +772,42 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
     auto sinkOperator = plan->getOperatorByType<SinkLogicalOperator>();
 
     SchemaPtr sourceOutputSchema = sourceOperator[0]->getOutputSchema();
-    EXPECT_TRUE(sourceOutputSchema->fields.size() == 3);
+    EXPECT_EQ(sourceOutputSchema->fields.size(), 3);
     EXPECT_TRUE(sourceOutputSchema->getField("default_logical$f2"));
     EXPECT_TRUE(sourceOutputSchema->getField("default_logical$f1"));
     EXPECT_TRUE(sourceOutputSchema->getField("default_logical$ts"));
 
     SchemaPtr filterOutputSchema = filterOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", filterOperator[0]->getOutputSchema()->toString());
-    EXPECT_TRUE(filterOutputSchema->fields.size() == 8);
-    EXPECT_TRUE(filterOutputSchema->getField("x$default_logical$f2"));
-    EXPECT_TRUE(filterOutputSchema->getField("x$default_logical$f1"));
-    EXPECT_TRUE(filterOutputSchema->getField("x$default_logical$ts"));
-    EXPECT_TRUE(filterOutputSchema->getField("y$default_logical$f2"));
-    EXPECT_TRUE(filterOutputSchema->getField("y$default_logical$f1"));
-    EXPECT_TRUE(filterOutputSchema->getField("y$default_logical$ts"));
+    EXPECT_EQ(filterOutputSchema->fields.size(), 8);
+    EXPECT_TRUE(filterOutputSchema->getField("x$f2"));
+    EXPECT_TRUE(filterOutputSchema->getField("x$f1"));
+    EXPECT_TRUE(filterOutputSchema->getField("x$ts"));
+    EXPECT_TRUE(filterOutputSchema->getField("y$f2"));
+    EXPECT_TRUE(filterOutputSchema->getField("y$f1"));
+    EXPECT_TRUE(filterOutputSchema->getField("y$ts"));
     EXPECT_TRUE(filterOutputSchema->getField("yx$start"));
     EXPECT_TRUE(filterOutputSchema->getField("yx$end"));
 
     SchemaPtr projectOutputSchema = projectOperator[0]->getOutputSchema();
-    EXPECT_TRUE(projectOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(projectOutputSchema->getField("x$default_logical$f3"));
-    EXPECT_TRUE(projectOutputSchema->getField("y$default_logical$f4"));
+    EXPECT_EQ(projectOutputSchema->fields.size(), 2);
+    EXPECT_TRUE(projectOutputSchema->getField("x$f3"));
+    EXPECT_TRUE(projectOutputSchema->getField("y$f4"));
 
     SchemaPtr mapOutputSchema = mapOperator[0]->getOutputSchema();
-    EXPECT_TRUE(mapOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(mapOutputSchema->getField("default_logical$f3"));
-    EXPECT_TRUE(mapOutputSchema->getField("y$default_logical$f4"));
+    EXPECT_EQ(mapOutputSchema->fields.size(), 2);
+    EXPECT_TRUE(mapOutputSchema->getField("y$f4"));
+    EXPECT_TRUE(mapOutputSchema->getField("x$f3"));
 
     SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
-    EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$x$default_logical$f3"));
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$y$default_logical$f4"));
+    EXPECT_EQ(renameSourceOutputSchema->fields.size(), 2);
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f3"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f4"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
-    EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(sinkOutputSchema->getField("x$default_logical$f3"));
-    EXPECT_TRUE(sinkOutputSchema->getField("y$default_logical$f4"));
+    EXPECT_EQ(sinkOutputSchema->fields.size(), 2);
+    EXPECT_TRUE(sinkOutputSchema->getField("x$f3"));
+    EXPECT_TRUE(sinkOutputSchema->getField("x$f4"));
 }
 
 /**
@@ -901,13 +901,13 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
     SchemaPtr renameSourceOutputSchema = renameSourceOperator[0]->getOutputSchema();
     NES_DEBUG("expected = {}", renameSourceOperator[0]->getOutputSchema()->toString());
     EXPECT_TRUE(renameSourceOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical2$f44"));
-    EXPECT_TRUE(renameSourceOutputSchema->getField("x$default_logical$f23"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f44"));
+    EXPECT_TRUE(renameSourceOutputSchema->getField("x$f23"));
 
     SchemaPtr sinkOutputSchema = sinkOperator[0]->getOutputSchema();
     EXPECT_TRUE(sinkOutputSchema->fields.size() == 2);
-    EXPECT_TRUE(sinkOutputSchema->getField("x$default_logical$f23"));
-    EXPECT_TRUE(sinkOutputSchema->getField("x$default_logical2$f44"));
+    EXPECT_TRUE(sinkOutputSchema->getField("x$f23"));
+    EXPECT_TRUE(sinkOutputSchema->getField("x$f44"));
 }
 
 /**

@@ -42,18 +42,20 @@ QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
 OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operatorNode) {
     //Fetch the new source name and input schema for the as operator
     auto renameSourceOperator = operatorNode->as<RenameSourceOperator>();
-    auto newSourceName = renameSourceOperator->getNewSourceName();
-    auto inputSchema = renameSourceOperator->getInputSchema();
+    auto inputSchemaFields = renameSourceOperator->getInputSchema()->fields;
+    auto outputSchemaFields = renameSourceOperator->getOutputSchema()->fields;
 
     std::vector<ExpressionNodePtr> projectionAttributes;
     //Iterate over the input schema and add a new field rename expression
-    for (const auto& field : inputSchema->fields) {
+    for (size_t fieldIndex = 0; fieldIndex < inputSchemaFields.size(); fieldIndex++) {
         //compute the new name for the field by added new source name as field qualifier
-        std::string fieldName = field->getName();
+        const auto& inputSchemaAttribute = inputSchemaFields[fieldIndex];
+        std::string originalFieldName = inputSchemaAttribute->getName();
+        auto originalDataType = inputSchemaAttribute->getDataType();
         //Compute new name without field qualifier
-        std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
+        std::string updatedFieldName = outputSchemaFields[fieldIndex]->getName();
         //Compute field access and field rename expression
-        auto originalField = FieldAccessExpressionNode::create(field->getDataType(), fieldName);
+        auto originalField = FieldAccessExpressionNode::create(originalDataType, originalFieldName);
         auto fieldRenameExpression =
             FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
         projectionAttributes.push_back(fieldRenameExpression);
