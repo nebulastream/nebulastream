@@ -13,147 +13,48 @@ This PR closes #<issue number>.
 
 ## Verifying this change
 This change is tested enough, either by unit tests, integration tests, or manual tests (via a script).
-<style>
-  .item {white-space: nowrap;display:inline  }
-</style>
-<fieldset>
-<div class="item">
-    <input type="checkbox" id="a">
-    <label for="a">PR Assignee</label>
-</div>
-<div class="item">
-   <input type="checkbox" id="b">
-    <label for="b">Reviewer 1</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 2</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 3 (Optional)</label>
-</div>
-</fieldset>
+- [ ] PR assignee
+- [ ] Reviewer 1
+- [ ] Reviewer 2
+- [ ] Reviewer 3 (Optional)
 
 ## Does this pull request potentially affect one of the following parts:
+*(remove inapplicable items. Feel free to state if you are unsure about potential impact.)*
   - Dependencies (does it add or upgrade a dependency): (yes / no)
   - The compiler: (yes / no / don't know)
   - The threading model: (yes / no / don't know)
   - The Runtime per-record code paths (performance sensitive): (yes / no / don't know)
   - The network stack: (yes / no / don't know)
   - Anything that affects deployment or recovery: Coordinator (and its components), NodeEngine (and its components): (yes / no / don't know)
-<style>
-  .item {white-space: nowrap;display:inline  }
-</style>
-<fieldset>
-<div class="item">
-    <input type="checkbox" id="a">
-    <label for="a">PR Assignee</label>
-</div>
-<div class="item">
-   <input type="checkbox" id="b">
-    <label for="b">Reviewer 1</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 2</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 3 (Optional)</label>
-</div>
-</fieldset>
 
+- [ ] PR assignee
+- [ ] Reviewer 1
+- [ ] Reviewer 2
+- [ ] Reviewer 3 (Optional)
 # Non-Technical Checklist
 ### Are all issue numbers included and the PR is not added to any project or milestone?
-<style>
-  .item {white-space: nowrap;display:inline  }
-</style>
-<fieldset>
-<div class="item">
-    <input type="checkbox" id="a">
-    <label for="a">PR Assignee</label>
-</div>
-<div class="item">
-   <input type="checkbox" id="b">
-    <label for="b">Reviewer 1</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 2</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 3 (Optional)</label>
-</div>
-</fieldset>
+
+- [ ] PR assignee
+- [ ] Reviewer 1
+- [ ] Reviewer 2
+- [ ] Reviewer 3 (Optional)
 
 ### Are the commits atomic and well-organized?
-<style>
-  .item {white-space: nowrap;display:inline  }
-</style>
-<fieldset>
-<div class="item">
-    <input type="checkbox" id="a">
-    <label for="a">PR Assignee</label>
-</div>
-<div class="item">
-   <input type="checkbox" id="b">
-    <label for="b">Reviewer 1</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 2</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 3 (Optional)</label>
-</div>
-</fieldset>
+
+- [ ] PR assignee
+- [ ] Reviewer 1
+- [ ] Reviewer 2
+- [ ] Reviewer 3 (Optional)
 
 ### Does there exist good enough documentation both in the code and a markdown for the bigger component?
-<style>
-  .item {white-space: nowrap;display:inline  }
-</style>
-<fieldset>
-<div class="item">
-    <input type="checkbox" id="a">
-    <label for="a">PR Assignee</label>
-</div>
-<div class="item">
-   <input type="checkbox" id="b">
-    <label for="b">Reviewer 1</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 2</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 3 (Optional)</label>
-</div>
-</fieldset>
+
+- [ ] PR assignee
+- [ ] Reviewer 1
+- [ ] Reviewer 2
+- [ ] Reviewer 3 (Optional)
 
 ### Is the documentation free of grammar and spelling mistakes?
-<style>
-  .item {white-space: nowrap;display:inline  }
-</style>
-<fieldset>
-<div class="item">
-    <input type="checkbox" id="a">
-    <label for="a">PR Assignee</label>
-</div>
-<div class="item">
-   <input type="checkbox" id="b">
-    <label for="b">Reviewer 1</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 2</label>
-</div>
-<div class="item">
-    <input type="checkbox" id="c">
-    <label for="c">Reviewer 3 (Optional)</label>
-</div>
-</fieldset>
 
+| PR assignee             | Reviewer 1              | Reviewer 2              | Reviewer 3 (Optional)   |
+|-------------------------|-------------------------|-------------------------|-------------------------|
+| <ul><li>-[ ] </li></ul> | <ul><li>-[ ] </li></ul> | <ul><li>-[ ] </li></ul> | <ul><li>-[ ] </li></ul> |
