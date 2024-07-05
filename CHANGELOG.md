@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.165](https://github.com/nebulastream/nebulastream/tree/v0.6.165) (2024-07-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.164...v0.6.165)
+
+**Implemented enhancements:**
+
+- \[TASK\] clean up /scripts folder [\#5020](https://github.com/nebulastream/nebulastream/issues/5020)
+
 ## [v0.6.164](https://github.com/nebulastream/nebulastream/tree/v0.6.164) (2024-07-05)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.163...v0.6.164)
