@@ -1,24 +1,14 @@
-# This is the config file for the github reviewer lottery action
+# This is the config file for the GitHub reviewer lottery action
 # You can specify the groups and the usernames of the reviewers
 
 groups:
   - name: maintainer
     reviewers: 1 # how many reviewers do you want to assign
-    usernames: # github usernames of the reviewers
+    usernames: # GitHub usernames of the reviewers
       - zeuchste
-      - ankitgit
-      - arianeziehn
-      - digiou
-      - xchatzil
       - keyseven123
-      - dpanugroho
-      - he-sk
       - adrianmichalke
       - alepping
       - kisa7
-      - varpande
-      - ichbinrich
       - klauck
-      - tekdogan
       - ls-1801
-      - kykrueger
