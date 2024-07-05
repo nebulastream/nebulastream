@@ -8,3 +8,5 @@ paths:
     - You are doing changes to github configurations. Did you assign member of build management team to your PR for change review?
   "docker/**":
     - You are doing changes to docker configurations. Did you update all images? Did you assign member of build management team to your PR for change review?
+  "**":
+    - Did you checked the PR checklist located under `docs/checklist_pr.md`?
