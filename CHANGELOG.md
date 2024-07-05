@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.164](https://github.com/nebulastream/nebulastream/tree/v0.6.164) (2024-07-05)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.163...v0.6.164)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enforce LF line endings [\#4933](https://github.com/nebulastream/nebulastream/issues/4933)
+
 ## [v0.6.163](https://github.com/nebulastream/nebulastream/tree/v0.6.163) (2024-07-03)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.162...v0.6.163)
