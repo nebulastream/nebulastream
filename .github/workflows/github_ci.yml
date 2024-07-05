@@ -231,7 +231,7 @@ jobs:
           file="/data/nes-ci/tmp/last_checked_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}.txt"
           
           # We check, if we have to perform some cleanup. 
-          perform_cleanup=$(bash $github_workspace/scripts/build/check_cleanup.sh $file)
+          perform_cleanup=$(bash $github_workspace/scripts/check_cleanup.sh $file)
           if [ $perform_cleanup -eq 1 ]; then
             echo "Performing cleanup!"
             # Running the script in the docker container, as otherwise, we will have permission issues
