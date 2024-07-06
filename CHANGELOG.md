@@ -1,6 +1,6 @@
 # Changelog
 
-## [v0.6.165](https://github.com/nebulastream/nebulastream/tree/v0.6.165) (2024-07-05)
+## [v0.6.165](https://github.com/nebulastream/nebulastream/tree/v0.6.165) (2024-07-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.164...v0.6.165)
 
