@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.166](https://github.com/nebulastream/nebulastream/tree/v0.6.166) (2024-07-06)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.165...v0.6.166)
+
+**Implemented enhancements:**
+
+- \[TASK\] Enable ccache by default if binary is found [\#5022](https://github.com/nebulastream/nebulastream/issues/5022)
+
 ## [v0.6.165](https://github.com/nebulastream/nebulastream/tree/v0.6.165) (2024-07-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.164...v0.6.165)
