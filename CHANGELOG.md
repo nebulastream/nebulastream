@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.167](https://github.com/nebulastream/nebulastream/tree/v0.6.167) (2024-07-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.166...v0.6.167)
+
+**Implemented enhancements:**
+
+- \[TASK\] Handling out of order tuples at destination for the state migration [\#4965](https://github.com/nebulastream/nebulastream/issues/4965)
+
 ## [v0.6.166](https://github.com/nebulastream/nebulastream/tree/v0.6.166) (2024-07-06)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.165...v0.6.166)
