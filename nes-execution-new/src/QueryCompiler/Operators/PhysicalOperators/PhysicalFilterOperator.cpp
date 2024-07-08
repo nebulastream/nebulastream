@@ -1,0 +1,59 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
+#include <sstream>
+#include <utility>
+
+namespace NES::QueryCompilation::PhysicalOperators {
+
+PhysicalFilterOperator::PhysicalFilterOperator(OperatorId id,
+                                               StatisticId statisticId,
+                                               SchemaPtr inputSchema,
+                                               SchemaPtr outputSchema,
+                                               ExpressionNodePtr predicate)
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
+      predicate(std::move(predicate)) {}
+
+PhysicalOperatorPtr PhysicalFilterOperator::create(OperatorId id,
+                                                   StatisticId statisticId,
+                                                   const SchemaPtr& inputSchema,
+                                                   const SchemaPtr& outputSchema,
+                                                   const ExpressionNodePtr& expression) {
+    return std::make_shared<PhysicalFilterOperator>(id, statisticId, inputSchema, outputSchema, expression);
+}
+
+ExpressionNodePtr PhysicalFilterOperator::getPredicate() { return predicate; }
+
+PhysicalOperatorPtr PhysicalFilterOperator::create(StatisticId statisticId,
+                                                   SchemaPtr inputSchema,
+                                                   SchemaPtr outputSchema,
+                                                   ExpressionNodePtr expression) {
+    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(expression));
+}
+
+std::string PhysicalFilterOperator::toString() const {
+    std::stringstream out;
+    out << std::endl;
+    out << "PhysicalFilterOperator:\n";
+    out << PhysicalUnaryOperator::toString();
+    return out.str();
+}
+
+OperatorPtr PhysicalFilterOperator::copy() {
+    auto result = create(id, statisticId, inputSchema, outputSchema, getPredicate());
+    result->addAllProperties(properties);
+    return result;
+}
+
+}// namespace NES::QueryCompilation::PhysicalOperators
