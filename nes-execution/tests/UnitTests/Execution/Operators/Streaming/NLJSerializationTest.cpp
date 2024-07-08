@@ -325,7 +325,6 @@ TEST_F(NLJSliceSerializationTest, nljSliceSerialization) {
     for (auto buffer : dataToMigrate) {
         fileSink.writeData(buffer, context);
     }
-
     // file to read the data from
     std::ifstream deser_file(filePath, std::ios::binary | std::ios::in);
 
@@ -348,9 +347,10 @@ TEST_F(NLJSliceSerializationTest, nljSliceSerialization) {
     std::vector<TupleBuffer> recreatedBuffers = {};
     while (!deser_file.eof()) {
         // read size and number of tuples in evert tuple buffer from the file
-        uint64_t size = 0, numberOfTuples = 0;
+        uint64_t size = 0, numberOfTuples = 0, seqNumber = 0;
         deser_file.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
         deser_file.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+        deser_file.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
         NES_DEBUG("size {} tuples{}", size, numberOfTuples);
         if (size > bm->getBufferSize()) {
             NES_NOT_IMPLEMENTED();
@@ -361,6 +361,7 @@ TEST_F(NLJSliceSerializationTest, nljSliceSerialization) {
             if (newBuffer.has_value()) {
                 deser_file.read(reinterpret_cast<char*>(newBuffer.value().getBuffer()), size);
                 newBuffer.value().setNumberOfTuples(numberOfTuples);
+                newBuffer.value().setSequenceNumber(seqNumber);
                 NES_DEBUG("buffer size {}", newBuffer.value().getNumberOfTuples());
                 recreatedBuffers.insert(recreatedBuffers.end(), newBuffer.value());
             } else {
@@ -376,5 +377,10 @@ TEST_F(NLJSliceSerializationTest, nljSliceSerialization) {
 
     // 7. compare state inside old and new operator handler
     compareExpectedOperatorHandlerWith(newNLJOperatorHandler, maxTimestamp);
+
+    // 8. check order in vector of tuple buffers. seq numbers start from 1
+    for (size_t i = 1; i <= recreatedBuffers.size(); i++) {
+        EXPECT_EQ(recreatedBuffers[i - 1].getSequenceNumber(), i);
+    }
 }
 }// namespace NES::Runtime::Execution

@@ -216,6 +216,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
   protected:
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
+    uint64_t lastMigratedSlicesSeqNumber = 1;
     SliceAssigner sliceAssigner;
     uint64_t windowSize;
     uint64_t windowSlide;

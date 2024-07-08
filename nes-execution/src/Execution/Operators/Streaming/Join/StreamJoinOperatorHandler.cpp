@@ -101,6 +101,14 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     // set number of metadata buffers to the first metadata buffer
     mainMetadata.getBuffer<uint64_t>()[0] = metadataBuffersCount;
 
+    // set order of tuple buffers
+    // TODO: #5027 change if getStateToMigrate will be used by several threads
+    for (auto i = 0ULL; i < buffersToTransfer.size(); i++) {
+        buffersToTransfer[i].setSequenceNumber(lastMigratedSlicesSeqNumber + i);
+    }
+
+    lastMigratedSlicesSeqNumber += buffersToTransfer.size();
+
     return buffersToTransfer;
 }
 

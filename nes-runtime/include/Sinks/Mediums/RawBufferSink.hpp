@@ -63,8 +63,8 @@ class RawBufferSink : public SinkMedium {
 
     /**
      * @brief Write the contents of a tuple buffer to the file sink.
-     * format: buffer size | number of tuples in buffer | buffer content
-     * uint64_t | uint64_t | buffer size bytes
+     * format: buffer size | number of tuples in buffer | sequence number | buffer content
+     * uint64_t | uint64_t | uint64_t | buffer size bytes
      * @param inputBuffer The tuple buffer that should be written to the file sink.
      * @return True, if the contents of the tuple buffer could be written completely to the file sink.
      */

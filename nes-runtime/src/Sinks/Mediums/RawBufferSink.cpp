@@ -93,10 +93,16 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     }
 
     NES_DEBUG("Writing tuples to file sink; filePath={}", filePath);
+    // 1. write buffer size
     auto size = inputBuffer.getBufferSize();
     outputFile.write(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+    // 2. write number of tuples in buffer
     auto numberOfTuples = inputBuffer.getNumberOfTuples();
     outputFile.write(reinterpret_cast<char*>((&numberOfTuples)), sizeof(uint64_t));
+    // 3. write sequence number of buffer
+    auto seqNumber = inputBuffer.getSequenceNumber();
+    outputFile.write(reinterpret_cast<char*>((&seqNumber)), sizeof(uint64_t));
+    // 4. write buffer content
     outputFile.write(reinterpret_cast<char*>(inputBuffer.getBuffer()), size);
     outputFile.flush();
     return true;

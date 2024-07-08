@@ -308,7 +308,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
         NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
-        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        auto workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
         auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
                                                  Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
 
@@ -528,9 +528,16 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
      * @param end - slice end timestamp
      */
     void checkNumberOfBuffers(uint64_t start, uint64_t end) {
-        auto expectedNumberOfSlice = (end - start) / windowSize;
+        auto sliceStartId = start / windowSize;
+        auto sliceEndId = std::ceil((double) end / windowSize);
+        auto expectedNumberOfSlice = sliceEndId - sliceStartId;
 
         auto buffers = nljOperatorHandler->getStateToMigrate(start, end);
+
+        // check sequence numbers order. They should start from 1
+        for (auto i = 0ULL; i < buffers.size(); i++) {
+            EXPECT_EQ(buffers[i].getSequenceNumber(), i + 1);
+        }
 
         auto numberOfBuffersInLeft = std::ceil((double) windowSize / (leftPageSize / getSizeOfRecord(leftSchema)));
         auto numberOfBuffersInRight = std::ceil((double) windowSize / (rightPageSize / getSizeOfRecord(rightSchema)));
@@ -547,7 +554,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto startMetadataPtr = buffers[numberOfOperatorMetadataBuffers].getBuffer<uint64_t>();
         // Second uint64_t in metadata is sliceStart
         uint64_t sliceStart = startMetadataPtr[1];
-        ASSERT_EQ(sliceStart, start);
+        ASSERT_EQ(sliceStart, sliceStartId * windowSize);
 
         auto sliceEndIdx = 3;
         // count index of sliceEnd metadata buffer (from of sliceEnd and pageSize)
@@ -560,7 +567,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto sliceEndIdxInBuffer = (sliceEndIdx - 1) % (bm->getBufferSize() / sizeof(uint64_t));
         // Third uint64_t in metadata is sliceEnd
         uint64_t sliceEnd = endMetadataPtr[sliceEndIdxInBuffer];
-        ASSERT_EQ(sliceEnd, end);
+        ASSERT_EQ(sliceEnd, sliceEndId * windowSize);
     }
 };
 
@@ -599,8 +606,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTest) {
     const auto numberOfRecordsRight = 5000;
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
-    // Checking corner case when stopTS is equal to end timestamp of slice.
-    auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);
+    // checking corner case when stopTS is equal to end timestamp of slice.
     checkNumberOfBuffers(2000, 4000);
 }
 /**
@@ -615,7 +621,6 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTestWithSmallBufferSize)
     bm = std::make_shared<BufferManager>(20, 10000);
     nljOperatorHandler->setBufferManager(bm);
     // Checking corner case when stopTS is equal to end timestamp of slice.
-    auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);
     checkNumberOfBuffers(2000, 4000);
 }
 /**
@@ -627,8 +632,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesMiddleBordersTest) {
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     // Checking case when startTS and stopTS are in the middle of slices timestamps.
-    auto slices = nljOperatorHandler->getStateToMigrate(1500, 3500);
-    checkNumberOfBuffers(1000, 4000);
+    checkNumberOfBuffers(1500, 3500);
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {

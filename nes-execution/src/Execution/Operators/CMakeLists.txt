@@ -15,7 +15,9 @@ add_source_files(nes-execution
         ExecutableOperator.cpp
         Emit.cpp
         Scan.cpp
-        ExecutionContext.cpp)
+        ExecutionContext.cpp
+        ReorderTupleBuffersOperator.cpp
+        ReorderTupleBuffersOperatorHandler.cpp)
 
 add_subdirectory(Relational)
 add_subdirectory(ThresholdWindow)

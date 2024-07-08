@@ -14,5 +14,6 @@ add_nes_execution_test(execution-stream-hash-join-operator-test "HashJoinOperato
 add_nes_execution_test(execution-stream-hash-join-operator-var-sized-test "HashJoinOperatorVarSizedTest.cpp")
 add_nes_execution_test(execution-stream-nested-loop-join-operator-test "NestedLoopJoinOperatorTest.cpp")
 add_nes_execution_test(nlj-state-serialization-state "NLJSerializationTest.cpp")
+add_nes_execution_test(migrate-operator-test "ReorderTupleBuffersOperatorTest.cpp")
 
 add_subdirectory(Aggregations)
