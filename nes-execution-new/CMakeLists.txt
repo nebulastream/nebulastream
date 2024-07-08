@@ -60,8 +60,9 @@ endif ()
 message(STATUS "Execution benchmarks status: ${NES_BUILD_BENCHMARKS}")
 if (NES_BUILD_BENCHMARKS)
     # Add tests with command
-    add_subdirectory(benchmark)
-    message(STATUS "Execution benchmarks are enabled")
+    # for now, we do not want to include the benchmark folder, as it is not ported to the new nautilus API yet.
+    # add_subdirectory(benchmark)
+    # message(STATUS "Execution benchmarks are enabled")
 endif ()
 
 #Add the nes common and headers to cpack

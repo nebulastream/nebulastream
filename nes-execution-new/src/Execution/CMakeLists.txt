@@ -14,8 +14,9 @@ add_source_files(nes-execution
         RecordBuffer.cpp
         )
 
-add_subdirectory(Aggregation)
-add_subdirectory(Expressions)
+# for now, we do not want to include the aggregations and expressions, as they are not ported to the new nautilus API yet.
+# add_subdirectory(Aggregation)
+# add_subdirectory(Expressions)
 add_subdirectory(Operators)
 add_subdirectory(Pipelines)
 add_subdirectory(MemoryProvider)
