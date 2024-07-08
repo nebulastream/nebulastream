@@ -251,7 +251,7 @@ foreach(var ${BACKWARD_DEFINITIONS})
   mark_as_advanced(${var_name})
 endforeach()
 
-if (NOT TARGET Backward::Backward)
+if (NOT TARGET Backward::Backward AND NOT TARGET Backward::Interface)
 	add_library(Backward::Backward INTERFACE IMPORTED)
 	set_target_properties(Backward::Backward PROPERTIES
 	    INTERFACE_INCLUDE_DIRECTORIES "${BACKWARD_INCLUDE_DIRS}"
