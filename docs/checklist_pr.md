@@ -12,8 +12,12 @@ The non-technical checklist includes items related to the PR itself, such as iss
 - The code aims for high-quality C++ code, e.g., RAII, operator overloading, the STL, and appropriate use of smart-pointers. 
 
 # Non-Technical Checklist
-- The PR title is descriptive and concise.
+- The PR title is descriptive, concise and follows our naming scheme below:
+  - `Fix(IssueNumber) QueryCompiler: Nullptr when doing the thing`
+  - `Critical Fix(IssueNumber) QueryCompiler: 2 Nullptr when doing the thing`
+  - `Chore(IssueNumber) Global: Clang-Formatting changes`
+  - `Feature(FeatureName) IssueNumber: Adds destroy function to Feature`
 - All issue numbers are linked and the PR is not added to any project or milestone.
-- The commits are organized logically and are squashed if necessary.
+- The commits are organized logically, squashed if necessary, and are properly named.
 - All necessary methods (no getter, setter, or constructor) have been documented.
 - The documentation is up-to-date and the documentation has been proofread.
