@@ -1,25 +1,29 @@
 # Global Organisational Variables
 
 Sprint - 2 weeks
-Milestone - 6 weeks
+Temporal Milestone - 6 weeks
+Standup Meeting - daily
 
-# Meetings Agenda
+# Meeting Agenda
 
-- Once in two weeks, a sprint meeting
-- Every day 5min standup meeting
+- Once in 2 weeks, a sprint meeting
+- A weekly blocker for a knowledge transfer/
+- Every day 10min standup meeting, where every team member presents his/her status
 - Once every 6 weeks, a milestone meetings
-- Once every 6 weeks, a retrospective meeting
+- Once every 6 weeks, a retrospective meeting at the end of the milestone
 - Anytime on demand
 
-After every meeting, we create action items and write them to the nes_maintainer chat.
+Before every meeting, we create an agenda for the meeting
+After every meeting, we create action items as a conclusion of the meeting
+We write them to the Google doc
 
-# Meetings Structure
+# Meeting Structure
 
 - One person is moderating a meeting
 - Every meeting has an agenda and potential action items
 - If the meeting participants cannot agree on an action item, the voting starts
 - Every member has an equivalent vote
-- The action item cannot be accepted if one of the team members did not vote (except holidays, sick leave etc.)
+- An action item cannot be accepted unless everyone who is affected by it has voted (except holidays, sick leave, etc.)
 
 # General Flow of the Milestone
 
@@ -27,15 +31,11 @@ After every meeting, we create action items and write them to the nes_maintainer
 2. Once the Discussion is closed (the owner(s) decides on that), the owner(s) creates a design document.
 3. The owner(s) uploads the design document to the repository and creates a PR
 4. Once the PR is approved, the owner(s) creates an epic based on the revised design document
-5. An epic encapsulates sub-epics that try to be equivalent in estimated implementation time, which is one milestone.
-6. For every milestone, the owner(s) picks a sub-epic and creates issues that are equivalent to one sprint of working time.
-7. Based on these issues, the owner(s) create a presentation that includes:
-	- The resulting design of the feature
-	- The estimated time of development 
-	- The sub-epics picked for the milestone
-8. The maintainer team priorities sub-epics
-9. The maintainer team picks sub-epics from both the previous milestone and the backlog depending on the priority until it reaches the estimated time of the milestone
-10. The owner(s) creates issues based on the chosen sub-epics
+5. An epic encapsulates sub-epics that try to be equivalent in estimated implementation time, which is one milestone
+6. For every milestone, the owner(s) creates a list of sub-epics
+7. The maintainer team priorities sub-epics during the milestone meeting
+8. The maintainer team picks sub-epics from both the previous milestone and the backlog depending on the priority until it reaches the estimated time of the milestone
+9. The owner(s) creates issues based on the chosen sub-epics
 
 Additional sub-epics cannot be created during a milestone, they can only be created for the next milestone. 
 
