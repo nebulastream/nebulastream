@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.168](https://github.com/nebulastream/nebulastream/tree/v0.6.168) (2024-07-08)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.167...v0.6.168)
+
+**Implemented enhancements:**
+
+- Move state recreation into operator handler  [\#4984](https://github.com/nebulastream/nebulastream/issues/4984)
+
 ## [v0.6.167](https://github.com/nebulastream/nebulastream/tree/v0.6.167) (2024-07-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.166...v0.6.167)
