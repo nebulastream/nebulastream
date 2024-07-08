@@ -62,6 +62,12 @@ class OperatorHandler : public virtual Reconfigurable, public virtual Migratable
     void restoreState(std::vector<Runtime::TupleBuffer>&) override;
 
     /**
+     * @brief Restores state from the file
+     * @param stream with the state data
+     */
+    void restoreStateFromFile(std::ifstream&) override;
+
+    /**
      * @brief Default deconstructor
      */
     virtual ~OperatorHandler() override = default;

@@ -16,11 +16,15 @@
 
 namespace NES::Runtime::Execution {
 std::vector<Runtime::TupleBuffer> OperatorHandler::getStateToMigrate(uint64_t, uint64_t) {
-    NES_WARNING("No state inside default implementation");
+    NES_WARNING("No state inside abstract operator handler");
     return {};
 };
 
 void OperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>&) {
-    NES_WARNING("Not possible to restore state in default implementation");
+    NES_WARNING("Restore state is not implemented in abstract operator handler.");
+};
+
+void OperatorHandler::restoreStateFromFile(std::ifstream&) {
+    NES_WARNING("Restore state from the file is not implemented in abstract operator handler.");
 };
 }// namespace NES::Runtime::Execution

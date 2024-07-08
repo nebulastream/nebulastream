@@ -15,6 +15,7 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <fstream>
 
 namespace NES::Runtime::Execution::Operators {
 void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, uint32_t) {
@@ -163,6 +164,39 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
         slicesLocked->emplace(indexToInsert, recreatedSlice);
         buffIdx += numberOfBuffers;
     }
+}
+
+void StreamJoinOperatorHandler::restoreStateFromFile(std::ifstream& stream) {
+    std::vector<TupleBuffer> recreatedBuffers = {};
+
+    while (!stream.eof()) {
+        uint64_t size = 0, numberOfTuples = 0, seqNumber = 0;
+        ;
+        // 1. read size of current buffer
+        stream.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+        // 2. read number of tuples in current buffer
+        stream.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+        // 3. read sequence number of current buffer
+        stream.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
+
+        // if size of the read buffer is more than size of pooled buffers in buffer manager
+        if (size > bufferManager->getBufferSize()) {
+            // then it is not implemented as it should be split into several smaller buffers
+            NES_NOT_IMPLEMENTED();
+        }
+        if (size > 0) {
+            //recreate vector of tuple buffers from the file
+            auto newBuffer = bufferManager->getBufferBlocking();
+            // 3. read buffer content
+            stream.read(reinterpret_cast<char*>(newBuffer.getBuffer()), size);
+            newBuffer.setNumberOfTuples(numberOfTuples);
+            newBuffer.setSequenceNumber(seqNumber);
+            recreatedBuffers.emplace_back(newBuffer);
+        }
+    }
+
+    // restore state from tuple buffers
+    restoreState(recreatedBuffers);
 }
 
 std::optional<StreamSlicePtr> StreamJoinOperatorHandler::getSliceBySliceIdentifier(uint64_t sliceIdentifier) {

@@ -76,6 +76,7 @@ class DummyQueryListener : public AbstractQueryStatusListener {
 class NLJSliceSerializationTest : public Testing::BaseUnitTest {
   public:
     Operators::NLJOperatorHandlerPtr nljOperatorHandler;
+    Operators::NLJOperatorHandlerPtr recreatedOperatorHandler;
     std::shared_ptr<Runtime::BufferManager> bm;
     Runtime::NodeEnginePtr nodeEngine{nullptr};
     std::string joinFieldNameLeft;
@@ -116,7 +117,86 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
                                                                           rightSchema,
                                                                           leftPageSize,
                                                                           rightPageSize);
+        recreatedOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
+                                                                                OriginId(1),
+                                                                                windowSize,
+                                                                                windowSize,
+                                                                                leftSchema,
+                                                                                rightSchema,
+                                                                                leftPageSize,
+                                                                                rightPageSize);
         nljOperatorHandler->setBufferManager(bm);
+        recreatedOperatorHandler->setBufferManager(bm);
+    }
+
+    /**
+     * @brief write tuples to the file
+     * @param state - vector of tuple buffers to sink
+     */
+    void sinkToTheFile(std::vector<Runtime::TupleBuffer> state) {
+        // create mocked configuration for sink
+        SinkFormatPtr format = std::make_shared<CsvFormat>(leftSchema, bm, false);
+        auto workerConfigurations = Configurations::WorkerConfiguration::create();
+        this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
+                               .setQueryStatusListener(std::make_shared<DummyQueryListener>())
+                               .build();
+        // create sink, which is used to write buffers to the file
+        auto fileSink =
+            RawBufferSink(nodeEngine, 1, filePath, false, INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, 1);
+        fileSink.setup();
+
+        // mocked context
+        auto context = WorkerContext(INITIAL<WorkerThreadId>, bm, 100);
+        for (auto buffer : state) {
+            fileSink.writeData(buffer, context);
+        }
+    }
+
+    /**
+     * @brief recreate state from the file to recreated operator handler
+     */
+    void recreateStateFromTheFile() {
+        // file to read the data from
+        std::ifstream deserFile(filePath, std::ios::binary | std::ios::in);
+
+        if (!deserFile.is_open()) {
+            NES_ERROR("Error: Failed to open file with the state for reading. Path is wrong.");
+        }
+
+        std::vector<TupleBuffer> recreatedBuffers = {};
+        while (!deserFile.eof()) {
+            // read size, number of tuples and sequence number in every tuple buffer from the file
+            uint64_t size = 0, numberOfTuples = 0, seqNumber = 0;
+            deserFile.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
+            deserFile.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
+            deserFile.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
+            NES_DEBUG("size {} tuples{}", size, numberOfTuples);
+            if (size > bm->getBufferSize()) {
+                NES_NOT_IMPLEMENTED();
+            }
+            if (size > 0) {
+                // 5. recreate vector of tuple buffers from the file
+                auto newBuffer = bm->getUnpooledBuffer(size);
+                if (newBuffer.has_value()) {
+                    deserFile.read(reinterpret_cast<char*>(newBuffer.value().getBuffer()), size);
+                    newBuffer.value().setNumberOfTuples(numberOfTuples);
+                    newBuffer.value().setSequenceNumber(seqNumber);
+                    NES_DEBUG("buffer size {}", newBuffer.value().getNumberOfTuples());
+                    recreatedBuffers.insert(recreatedBuffers.end(), newBuffer.value());
+                } else {
+                    NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
+                }
+            }
+        }
+
+        deserFile.close();
+
+        // check order in vector of tuple buffers. Seq numbers start from 1
+        for (size_t i = 1; i <= recreatedBuffers.size(); i++) {
+            EXPECT_EQ(recreatedBuffers[i - 1].getSequenceNumber(), i);
+        }
+
+        recreatedOperatorHandler->restoreState(recreatedBuffers);
     }
 
     /**
@@ -212,11 +292,9 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
 
     /**
      * @brief Compares state inside recreatedOperatorHandler and expected nljOperatorHandler
-     * @param recreatedOperatorHandler - recreated NLJOperatorHandler
      * @param maxTimestamp of generated records to iterate over slices
      */
-    void compareExpectedOperatorHandlerWith(std::shared_ptr<Operators::NLJOperatorHandler> recreatedOperatorHandler,
-                                            uint64_t maxTimestamp) {
+    void compareExpectedOperatorHandlerAndRecreated(uint64_t maxTimestamp) {
         // compare number of slices in both operator handlers
         NES_DEBUG("Checking number of slices = {}", recreatedOperatorHandler->getNumberOfSlices());
         EXPECT_EQ(nljOperatorHandler->getNumberOfSlices(), recreatedOperatorHandler->getNumberOfSlices());
@@ -299,88 +377,52 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
 /**
  * Test behaviour of serialization and deserialization methods of StreamJoinOperatorHandler and NLJSlice, by getting, writing to the file, reading and deserializing the state.
  */
-TEST_F(NLJSliceSerializationTest, nljSliceSerialization) {
+TEST_F(NLJSliceSerializationTest, nljSliceSerializationAndDeserialization) {
     const auto numberOfRecordsLeft = 5000;
     const auto numberOfRecordsRight = 5000;
 
     // 1. generate and insert records to the operator handler
     auto maxTimestamp = generateAndInsertRecordsToBuilds(numberOfRecordsLeft, numberOfRecordsRight);
 
-    // create mocked configuration for sink
-    SinkFormatPtr format = std::make_shared<CsvFormat>(leftSchema, bm, false);
-    auto workerConfigurations = Configurations::WorkerConfiguration::create();
-    this->nodeEngine = Runtime::NodeEngineBuilder::create(workerConfigurations)
-                           .setQueryStatusListener(std::make_shared<DummyQueryListener>())
-                           .build();
-    // create sink, which is used to write buffers to the file
-    auto fileSink = RawBufferSink(nodeEngine, 1, filePath, false, INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, 1);
-    fileSink.setup();
+    // 2. get the state from old operator handler
+    auto dataToMigrate = nljOperatorHandler->getStateToMigrate(0, 5000);
+
+    // 3. write the state to the file using sink
+    sinkToTheFile(dataToMigrate);
+
+    // 4. recreate state from the file
+    recreateStateFromTheFile();
+
+    // 5. compare state inside old and new operator handler
+    compareExpectedOperatorHandlerAndRecreated(maxTimestamp);
+}
+
+/**
+ * Test recreation function in stream join operator handler
+ */
+TEST_F(NLJSliceSerializationTest, nljSliceSerializationAndRecreationFromFile) {
+    const auto numberOfRecordsLeft = 5000;
+    const auto numberOfRecordsRight = 5000;
+    // 1. generate and insert records to the operator handler
+    auto maxTimestamp = generateAndInsertRecordsToBuilds(numberOfRecordsLeft, numberOfRecordsRight);
 
     // 2. get the state from old operator handler
     auto dataToMigrate = nljOperatorHandler->getStateToMigrate(0, 5000);
 
-    // mocked context
-    auto context = WorkerContext(INITIAL<WorkerThreadId>, bm, 100);
     // 3. write the state to the file using sink
-    for (auto buffer : dataToMigrate) {
-        fileSink.writeData(buffer, context);
-    }
-    // file to read the data from
-    std::ifstream deser_file(filePath, std::ios::binary | std::ios::in);
+    sinkToTheFile(dataToMigrate);
 
-    if (!deser_file.is_open()) {
-        NES_ERROR("Error: Failed to open file for reading.");
-    }
+    // 4. create stream
+    std::ifstream file(filePath, std::ios::binary | std::ios::in);
 
-    // 4. create new operator handler to recreate the state in
-    auto newNLJOperatorHandler = Operators::NLJOperatorHandlerSlicing::create({INVALID_ORIGIN_ID},
-                                                                              OriginId(1),
-                                                                              windowSize,
-                                                                              windowSize,
-                                                                              leftSchema,
-                                                                              rightSchema,
-                                                                              leftPageSize,
-                                                                              rightPageSize);
-
-    newNLJOperatorHandler->setBufferManager(bm);
-
-    std::vector<TupleBuffer> recreatedBuffers = {};
-    while (!deser_file.eof()) {
-        // read size and number of tuples in evert tuple buffer from the file
-        uint64_t size = 0, numberOfTuples = 0, seqNumber = 0;
-        deser_file.read(reinterpret_cast<char*>(&size), sizeof(uint64_t));
-        deser_file.read(reinterpret_cast<char*>(&numberOfTuples), sizeof(uint64_t));
-        deser_file.read(reinterpret_cast<char*>(&seqNumber), sizeof(uint64_t));
-        NES_DEBUG("size {} tuples{}", size, numberOfTuples);
-        if (size > bm->getBufferSize()) {
-            NES_NOT_IMPLEMENTED();
-        }
-        if (size > 0) {
-            // 5. recreate vector of tuple buffers from the file
-            auto newBuffer = bm->getUnpooledBuffer(size);
-            if (newBuffer.has_value()) {
-                deser_file.read(reinterpret_cast<char*>(newBuffer.value().getBuffer()), size);
-                newBuffer.value().setNumberOfTuples(numberOfTuples);
-                newBuffer.value().setSequenceNumber(seqNumber);
-                NES_DEBUG("buffer size {}", newBuffer.value().getNumberOfTuples());
-                recreatedBuffers.insert(recreatedBuffers.end(), newBuffer.value());
-            } else {
-                NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
-            }
-        }
+    if (!file.is_open()) {
+        NES_ERROR("Error: Failed to open file with the state for reading. Path is wrong.");
     }
 
-    deser_file.close();
+    // 5. recreate state from the file
+    recreatedOperatorHandler->restoreStateFromFile(file);
 
-    // 6. restore the state inside new operator handler
-    newNLJOperatorHandler->restoreState(recreatedBuffers);
-
-    // 7. compare state inside old and new operator handler
-    compareExpectedOperatorHandlerWith(newNLJOperatorHandler, maxTimestamp);
-
-    // 8. check order in vector of tuple buffers. seq numbers start from 1
-    for (size_t i = 1; i <= recreatedBuffers.size(); i++) {
-        EXPECT_EQ(recreatedBuffers[i - 1].getSequenceNumber(), i);
-    }
+    // 6. compare state inside old and new operator handler
+    compareExpectedOperatorHandlerAndRecreated(maxTimestamp);
 }
 }// namespace NES::Runtime::Execution

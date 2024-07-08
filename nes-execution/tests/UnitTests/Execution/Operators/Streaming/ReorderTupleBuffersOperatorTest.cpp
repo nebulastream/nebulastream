@@ -68,7 +68,7 @@ class ReorderTupleBuffersOperatorTest : public Testing::BaseUnitTest {
  * Check that reorderTupleBuffer operator emits buffers in order
 */
 TEST_F(ReorderTupleBuffersOperatorTest, checkOrderInReorderTupleBuffersOperator) {
-    const auto numberOfTupleBuffers = 5;
+    const auto numberOfTupleBuffers = 1000;
 
     // 1. Set mock emit lambda to be able to check order of emitted buffers
     std::vector<TupleBuffer> emittedBuffers;

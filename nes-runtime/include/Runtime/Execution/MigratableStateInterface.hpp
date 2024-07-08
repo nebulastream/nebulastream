@@ -37,6 +37,12 @@ class MigratableStateInterface {
      * @param buffers
      */
     virtual void restoreState(std::vector<Runtime::TupleBuffer>&) = 0;
+
+    /**
+     * @brief Restores state from the file
+     * @param stream with the state data
+     */
+    virtual void restoreStateFromFile(std::ifstream&) = 0;
 };
 }// namespace NES::Runtime::Execution
 #endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_

@@ -88,6 +88,12 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
 
     /**
+     * @brief Retrieves buffers from the file and restores the state
+     * @param stream with the state data
+     */
+    void restoreStateFromFile(std::ifstream& stream) override;
+
+    /**
      * @brief Retrieves the slice/window by a slice/window identifier. If no slice/window exists for the windowIdentifier,
      * the optional return value is of nullopt.
      * @param sliceIdentifier
