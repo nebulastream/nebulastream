@@ -12,6 +12,37 @@
     limitations under the License.
 */
 
-#include <Interface/Record.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <sstream>
 
-namespace NES::Nautilus {}// namespace NES::Nautilus
+namespace NES::Nautilus {
+const DataType& Record::read(const std::string& recordFieldIdentifier) const {
+    return recordFields.at(recordFieldIdentifier);
+}
+void Record::write(const Record::RecordFieldIdentifier& recordFieldIdentifier, const DataType& dataType) {
+    recordFields[recordFieldIdentifier] = dataType;
+}
+
+std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
+    std::vector<Record::RecordFieldIdentifier> fieldIdentifierVec;
+    fieldIdentifierVec.reserve(recordFields.size());
+for (auto& [fieldIdentifier, value] : recordFields) {
+        fieldIdentifierVec.emplace_back(fieldIdentifier);
+    }
+
+    return fieldIdentifierVec;
+}
+
+std::string Record::toString() {
+    // Figure out later why this does not seem to work.
+//    return fmt::format("{}", fmt::join(recordFields, ", "));
+    NES_NOT_IMPLEMENTED();
+}
+
+uint64_t Record::numberOfFields() const { return recordFields.size(); }
+bool Record::hasField(const Record::RecordFieldIdentifier& fieldName) { return recordFields.contains(fieldName); }
+
+
+}// namespace NES::Nautilus

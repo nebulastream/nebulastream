@@ -29,7 +29,9 @@ add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/nautilus ${CMAKE_CURRENT_BINARY_DIR
 target_link_libraries(nes-nautilus PRIVATE nautilus)
 target_include_directories(nes-nautilus PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nautilus/nautilus/include>
+        $<INSTALL_INTERFACE:include/nebulastream/>
+)
 install(TARGETS nautilus
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary
