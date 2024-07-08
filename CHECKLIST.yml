@@ -9,4 +9,4 @@ paths:
   "docker/**":
     - You are doing changes to docker configurations. Did you update all images? Did you assign member of build management team to your PR for change review?
   "**":
-    - Did you checked the PR checklist located under `docs/checklist_pr.md`?
+    - Did you check the [PR CheckList](docs/checklist_pr.md)?
