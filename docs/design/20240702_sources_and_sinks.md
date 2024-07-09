@@ -31,7 +31,7 @@ The specific problems are the following:
   - addresses P1 and P3
 - G2: Starting a query should be handled by a separate class that simply uses a Source implementation.
   - addresses P2
-- G3: Handle formatting separate from ingesting data. A data source simply ingests data. A formatter formats the raw data according to a specific format.
+- G3: Handle formatting/parsing separate from ingesting data. A data source simply ingests data. A formatter/parser formats/parses the raw data according to a specific format.
   - addresses P1
 - G4: Create a plugin registry that enables us to easily create a new source as an internal or external plugin and that returns a constructor given a source name (or enum if feasible).
   - mainly addresses P3
@@ -40,7 +40,7 @@ The specific problems are the following:
   - keep the process of creating sinks as similar as possible to that of creating sources
 - G6: Simplify the process of going from a logical source name or a sink name to the implementation of the source(s) or sink(s) as much as possible, especially on the worker side
   - addresses P1,P3, P5, and P7
-  - builds on top of prior goals and addresses involves reducing our source/sink implementation to only the code that we think is required
+  - builds on top of prior goals and addresses minimizing the code required to implement source/sink support end to end
 
 # Non-Goals
 - refactoring the coordinator side of source/sink handling
@@ -49,15 +49,15 @@ The specific problems are the following:
 
 # Proposed Solution
 ## Fully Specified Source/Sink Descriptor
-Currently, we are creating physical sources from source types. Source types are configured using either a `YAML::Node` as input or a `std::map<std::string, std::string>`. Disregarding the YAML configuration, which we are getting rid of on the worker node (see [Assumptions](#assumptions)), all current configurations are possible to represent as a map from string to string. We also observe that most configurations use scalar values from the following set {uint32_t, uint64_t, bool, float, char}. Therefore, we conclude that we can model all current source configurations as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>`.
+Currently, we are creating physical sources from source types. Source types are configured using either a `YAML::Node` as input or a `std::map<std::string, std::string>`. Therefore, all current configurations are possible to represent as a map from string to string. We also observe that most configurations use scalar values from the following set {uint32_t, uint64_t, bool, float, char}. Therefore, we conclude that we can model all current source configurations as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>`.
 Given that everything that a worker needs to know to create a source/sink is the type, and potentially the configuration and meta information, we define the following:
 
-Fully specified source descriptor:
+Fully specified source/sink descriptor:
   - the distinct type of the source/sink (one to one mapping from type to source/sink implementation)
   - (optional) the configuration of the source/sink, represented as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>`
   - (optional) meta data, such as whether a source allows source sharing, represented as class member variables of the SourceDescriptor and the SinkDescriptor respectively.
 
-Thus, there is only one source descriptor implementation and one sink descriptor implementation. The distinct type identifies which type of source the descriptor describes. The configuration is general enough to handle all source/sink configurations and the meta information are part of the source/sink descriptor.
+Thus, there is only one source descriptor implementation and one sink descriptor implementation. The distinct type identifies which type of source the descriptor describes. The configuration is general enough to handle all source/sink configurations and the meta information are part of the source/sink descriptor. This descriptor contains all information to construct a fully specified source/sink, allowing for 'RESTful queries', i.e., the worker does not require to maintain state concerning sources and sinks to execute queries.
 
 *Open question: does it make sense to only have one descriptor, both for sources and sinks? Intuitively, it seems better to separate both, so that the object type is descriptive (SourceDescriptor vs SinkDescriptor). Additionally, some meta information such as 'source sharing' are exclusive to sources or sinks (in this case sources).*
 
