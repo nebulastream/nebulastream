@@ -26,7 +26,9 @@ NebulaStream project follows the [Apache Software Foundation code of conduct](ht
 2. Issues SHOULD be meaningful and contain enough information that someone else can pick them up and work on them (self-contained).
 3. Meetings must be prepared and there should exist action items (who, what, until when) at the end of a meeting. Further, an agenda has to be presented and sent around before the meeting starts.
 4. Commit messages should be meaningful and contain enough information to understand what the commit is about.
-5. PRs MUST undergo a thorough review before merging. 
+5. Reviewers of a PR thoroughly review the PR and only accept it when they have no more concerns.
+6. The author of a PR addresses all elements from the technical and non-technical checklists and addresses all points raised by the reviewers. 
+7. If the author of a PR changes something in the PR, the author should ask the reviewers to review the PR again.
 
 # NebulaStream Maintainers
 1. The task of the maintainers is to give **direction**, enforce **code quality** and take **responsibility** for the project. This means that if a problem arises it is the highest priority job of the maintainers to solve it or delegate it.
