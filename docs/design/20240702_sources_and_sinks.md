@@ -145,13 +145,7 @@ The source and sink descriptor both inherit from the same abstract descriptor cl
 We mainly address this problem by removing the necessity of workers to store any state concerning sources and sinks (see [Assumptions](#assumptions)). Workers receive decomposed queries with [fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor) from the coordinator. In combination with the plugin registry (see solution [G4](#g4)), we allow source/sink descriptors to be dragged through the lowering process until we construct the actual sources and sinks using the registry, requiring only the descriptor.
 
 # Alternatives
-Todo: discuss alternatives 
-Todo: internal vs external?
----
-- config on worker vs config on coordinator
-- config transferred to worker or kept on coordinator
-- 
----
+In this section, we regard alternatives concerning where to configure physical sources and sinks [A1](#a1---where-to-configure-physical-sources-and-sinks) and how to construct the [A2](#a2---constructing-sources-and-sinks).
 ## A1 - Where to Configure Physical Sources (and Sinks)
 In A1, we regard different alternatives concerning where to configure and where to maintain the state of physical sources and sinks.
 ### A1.1 - Configure Physical Sources on the worker
