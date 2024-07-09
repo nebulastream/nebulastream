@@ -127,7 +127,7 @@ For the initial implementation of sources and sinks we use simple runtime implem
 Todo: provide implementation details on interaction between source and formatter/parser and how the formatter/parser is represented in the query and when it is constructed (will follow with prototype)
 
 ## G4
-In PR #48 we introduced the design of a static plugin registry. This registry allows to auto-register source and sinks constructors using a string key. In [Assumptions](#assumptions) we described that the worker receives fully specified query plans, were all sink and source names were already resolved to [fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor). Thus, on the worker, after compiling the query, we can construct a source/sink in the following way using a fully specified source/sink descriptor and the source plugin registry:
+In PR [#48](https://github.com/nebulastream/nebulastream-public/pull/48) we introduced the design of a static plugin registry. This registry allows to auto-register source and sinks constructors using a string key. In [Assumptions](#assumptions) we described that the worker receives fully specified query plans, were all sink and source names were already resolved to [fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor). Thus, on the worker, after compiling the query, we can construct a source/sink in the following way using a fully specified source/sink descriptor and the source plugin registry:
 1. get the distinct type as a string from the descriptor and use it as a key for the plugin registry to construct a `std::unique_ptr` of the specified source/sink type
 2. if provided, get the configuration represented as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>` from the descriptor and pass it to the newly constructed source/sink to configure it
 3. if provided, configure meta data using the meta data configured in the descriptor
@@ -145,7 +145,7 @@ The source and sink descriptor both inherit from the same abstract descriptor cl
 We mainly address this problem by removing the necessity of workers to store any state concerning sources and sinks (see [Assumptions](#assumptions)). Workers receive decomposed queries with [fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor) from the coordinator. In combination with the plugin registry (see solution [G4](#g4)), we allow source/sink descriptors to be dragged through the lowering process until we construct the actual sources and sinks using the registry, requiring only the descriptor.
 
 # Alternatives
-In this section, we regard alternatives concerning where to configure physical sources and sinks [A1](#a1---where-to-configure-physical-sources-and-sinks) and how to construct the [A2](#a2---constructing-sources-and-sinks).
+In this section, we regard alternatives concerning where to configure physical sources and sinks [A1](#a1---where-to-configure-physical-sources-and-sinks) and how to construct sources and sinks [A2](#a2---constructing-sources-and-sinks).
 ## A1 - Where to Configure Physical Sources (and Sinks)
 In A1, we regard different alternatives concerning where to configure and where to maintain the state of physical sources and sinks.
 ### A1.1 - Configure Physical Sources on the worker
@@ -199,7 +199,7 @@ Configure a physical source and attach it to a logical source on the worker usin
 - the [Proposed Solution](#proposed-solution) mostly builds on top of existing logic and therefore requires little changes in our system and it is easier to reason about
 
 ## A2 - Constructing Sources and Sinks
-For the most part, sources and sinks exist as descriptors (see [fully specified source/sink descriptor](#fully-specified-sourcesink-descriptor)). However, to physically consume data, NebulaStream needs to construct the source/sink implementations from the descriptors. We discuss our solution approach concerning how to best construct the sources and sinks implementations in detail #48. The following is a brief summary.
+For the most part, sources and sinks exist as descriptors (see [fully specified source/sink descriptor](#fully-specified-sourcesink-descriptor)). However, to physically consume data, NebulaStream needs to construct the source/sink implementations from the descriptors. We discuss our solution approach concerning how to best construct the sources and sinks implementations in detail [#48](https://github.com/nebulastream/nebulastream-public/pull/48). The following is a brief summary.
 
 ### Factories (Current State)
 - factories are well understood and allow us to construct any source/sink
@@ -211,7 +211,7 @@ For the most part, sources and sinks exist as descriptors (see [fully specified 
   - this results in verbose core code paths (pollution)
 
 #### vs Proposed Solution (Static Plugin Registry)
-- the implementation logic static plugin registry (#48) is far more complex than a simple factory
+- the implementation logic static plugin registry ([#48](https://github.com/nebulastream/nebulastream-public/pull/48)) is far more complex than a simple factory
 - the static plugin registry enables us to construct sources/sinks using a name from the source/sink descriptor and thereby avoids large if-else branches
 - the static plugin registry enables us to create external plugins that are still in-tree, but that are not part of core code paths and that can be activated/deactivated
   - no more/very few #ifdefs
