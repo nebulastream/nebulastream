@@ -47,7 +47,7 @@ The specific problems are the following:
   - we allow ourselves to make reasonable assumptions, which must be part of this design document, of how the coordinator will handle sources and sinks in the future
     - this affects P4 in particular
 
-# Our Proposed Solution
+# Proposed Solution
 ## Fully Specified Source/Sink Descriptor
 Currently, we are creating physical sources from source types. Source types are configured using either a `YAML::Node` as input or a `std::map<std::string, std::string>`. Disregarding the YAML configuration, which we are getting rid of on the worker node (see [Assumptions](#assumptions)), all current configurations are possible to represent as a map from string to string. We also observe that most configurations use scalar values from the following set {uint32_t, uint64_t, bool, float, char}. Therefore, we conclude that we can model all current source configurations as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>`.
 Given that everything that a worker needs to know to create a source/sink is the type, and potentially the configuration and meta information, we define the following:
@@ -92,7 +92,8 @@ We make the following assumptions:
   - this assumption logically follows from Assumption 2 and 3
 
 ## Solution
-Todo: mermaid diagram
+Todo: mermaid diagram that shows on overview of the implementation
+
 We propose the following solution.
 ## G1
 Source implementations now only implement the logic to read data from a certain source, e.g. File, Kafka, or ZMQ, and write the raw bytes received from that source into a TupleBuffer (not a TestTupleBuffer!). This design follows the encapsulation principle of OOP. Additionally, since we write only the raw bytes into a buffer, there is no CSVSource anymore, or a JSONFileSource, or a ParquetSource. There is only a FileSource that reads data from a file. CSV, JSON and Parquet are formats, therefore they are handled by a formatter/parser.
@@ -133,7 +134,6 @@ In PR #48 we introduced the design of a static plugin registry. This registry al
 
 We could also pass the descriptor to the constructed source/sink by reference and the source/sink then configures itself and sets the meta data, but that is an implementation detail.
 
-Todo: argue why G5 and G6 are covered.
 ## G5 - Unify Sources and Sinks
 ### Coordinator exclusive
 In [Assumptions](#assumptions) we describe that the coordinator will allow users to create a source or a sink using the same mechanism, which we will specify in an upcoming design document. This addresses the main issue, that physical sources are typically created in YAML files that configure workers and (physical) sinks are created in analytical queries. Furthermore, both source and sink names will be resolved to [fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor) in the same way on the coordinator.
@@ -146,17 +146,82 @@ We mainly address this problem by removing the necessity of workers to store any
 
 # Alternatives
 Todo: discuss alternatives 
+Todo: internal vs external?
 ---
 - config on worker vs config on coordinator
 - config transferred to worker or kept on coordinator
 - 
 ---
-- A1: Source/Sink handling (worker coordinator)
-  - A1.1: physical source creation on the worker via configuration file (using names and a factory)
-  - A1.2: physical source creation on the worker, triggered by the coordinator (bind calls)
-  - A1.3: physical source broadcasting
-- A2: source sink creation on worker (registry vs whatever)
-- todo: talk about yaml config?
+## A1 - Where to Configure Physical Sources (and Sinks)
+In A1, we regard different alternatives concerning where to configure and where to maintain the state of physical sources and sinks.
+### A1.1 - Configure Physical Sources on the worker
+This is our current approach. We configure physical sources using YAML files. Configuring a physical source requires a logical- and a physical source name. The logical source name must already exist on the coordinator (must be configured).
+#### Advantages
+- physical sources are already configured on start up, allowing to submit queries directly after start up
+- workers can be opaque to end users that submit analytical queries since everything was configured beforehand
+- allows to statically register queries at start up (not yet supported)
+  - great for devices that can only be configured during start up
+#### Disadvantages
+- it is not possible to add new sources after start up
+  - if a worker moves into another subnet, configured physical sources may not be supported anymore
+- setting up NebulaStream becomes difficult (see [The Problem](#the-problem))
+- configuring sinks is different from configuring sources
+  - we could also configure sinks in the YAML configuration but that would make the setup even less flexible
+- the worker needs to keep track of all registered physical source in addition to the coordinator
+- the coordinator and worker need to sync their physical sources (during start up)
+#### vs Proposed Solution
+- the [Proposed Solution](#proposed-solution) requires configuring sources after startup and looses the potential to deploy queries statically
+- long-term the [Proposed Solution](#proposed-solution) enables to mix DDL and DQL queries, meaning that we can create larger queries that register physical sources and sinks and then query the newly created physical sources (and sinks)
+  - the associated [discussion](https://github.com/nebulastream/nebulastream-public/discussions/10) describes this vision in more detail
+- the [Proposed Solution](#proposed-solution) enables to worker to be stateless concerning sources and sinks
+  - similar to REST, our queries contain the state needed to execute the query ([fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor))
+
+### A1.2 - Binding Physical Sources to Workers on the Coordinator
+Same as A1.1, but register physical sources via queries on the coordinator. Could potentially combine A1.1 and A1.2, but that would mean managing more registering logic.
+#### Advantages
+- makes adding sources and sinks after set up possible
+- makes a zero configuration NebulaStream a possibility
+#### Disadvantages
+- requires knowledge of workers in queries addressed at the coordinator (bind calls)
+- no more support for statically registered queries (which we don't support yet)
+- coordinator and worker need to sync their physical sources
+- extra state kept on worker
+#### vs Proposed Solution
+- the [Proposed Solution](#proposed-solution) goes one step further, by not registering the physical sources and sinks on the worker, enabling the worker to be stateless concerning sources and sinks
+  - similar to REST, our queries contain the state needed to execute the query ([fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor))
+
+### A1.3 - Broadcasting
+Configure a physical source and attach it to a logical source on the worker using DDL queries. Use the logical source name in a query. The coordinator then sends a broadcast message to all workers inquiring whether they support the specified physical source. The workers respond. All workers that support the physical source become part of the query.
+#### Advantages
+- does not require knowledge of workers when writing DQL queries
+- can help using workers that are otherwise neglected
+#### Disadvantages
+- potentially spams the system with broadcast messages
+- requires a lot of non-existing logic
+- difficult to manage authorization (potentially not all nodes that support a source should participate)
+- requires synchronization between all workers and the coordinator, which is difficult to implement robustly
+#### vs Proposed Solution
+- the [Proposed Solution](#proposed-solution) requires manually setting up physical sources and sinks on the coordinator, which requires knowledge about workers and in particular worker ids
+- the [Proposed Solution](#proposed-solution) mostly builds on top of existing logic and therefore requires little changes in our system and it is easier to reason about
+
+## A2 - Constructing Sources and Sinks
+For the most part, sources and sinks exist as descriptors (see [fully specified source/sink descriptor](#fully-specified-sourcesink-descriptor)). However, to physically consume data, NebulaStream needs to construct the source/sink implementations from the descriptors. We discuss our solution approach concerning how to best construct the sources and sinks implementations in detail #48. The following is a brief summary.
+
+### Factories (Current State)
+- factories are well understood and allow us to construct any source/sink
+- creating sources/sinks should be limited to very few places in the code, thus, only a few places need to import the factory and we don't need to forward factory objects between classes
+- simple factories require big if-else cases on the different source/sink types
+  - a source/sink descriptor is given, but it is still necessary to determine the correct constructor
+- the factory is part of the core code paths, thus constructing any kind of source/sink is part of the core code paths, thus optional sources, e.g., an OPC source become part of the core code paths
+  - this results in #ifdefs along core code paths
+  - this results in verbose core code paths (pollution)
+
+#### vs Proposed Solution (Static Plugin Registry)
+- the implementation logic static plugin registry (#48) is far more complex than a simple factory
+- the static plugin registry enables us to construct sources/sinks using a name from the source/sink descriptor and thereby avoids large if-else branches
+- the static plugin registry enables us to create external plugins that are still in-tree, but that are not part of core code paths and that can be activated/deactivated
+  - no more/very few #ifdefs
+  - less verbose code paths (logic is in (external) plugins)
 
 # Open Questions
 Currently, all open questions are contained in the individual sections.
