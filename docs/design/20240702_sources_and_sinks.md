@@ -1,10 +1,9 @@
 # The Problem
 A core idea of NebulaStream is that it supports millions of sources.
 Therefore, supporting a large number of heterogeneous data sources and sinks and making it easy to add new ones is vital to the usability of NebulaStream. A good example for a system that supports a large number of data sources and makes adding new ones easy is [Telegraf](https://github.com/influxdata/telegraf).
-Our current implementation is far away from being on the level of Telegraf. The implementation of sources and sinks happened over many years without clear direction. It was executed by various people, including many Hiwis that did not have any prior C++ experience, and it was never refactored, even though we have been talking about a refactor for several years.
 
 The specific problems are the following:
-- P1: the implementation of data sources are scattered across an enormous amount of classes
+- P1: the implementation of data sources are scattered across an enormous number of classes
   - LogicalSource and PhysicalSource
   - SourceLogicalOperator (that shares a directory with LogicalSourceDescriptor)
   - source/sink implementations (inherit from DataSource/SinkMedium)
@@ -13,16 +12,17 @@ The specific problems are the following:
   - a file with ~2000 lines that handles serialization of operators, including sources and sinks
   - proto files for sources and sinks
   - many places where sources and sinks are lowered (LowerToExecutableQueryPlan, ConvertLogicalToPhysicalSource, ConvertLogicalToPhysicalSink, DefaultPhysicalOperatorProvider, DefaultPhysicalOperatorProvider)
-  - factories (DefaultDataSourceProvider, DataSinkProvider, PhysicalOperatorProvider, LogicalSourceTypeFactory, LogicalOperatorFactory, PhysicalSourceTypeFactory)
+  - different factories (DefaultDataSourceProvider, DataSinkProvider, PhysicalOperatorProvider, LogicalSourceTypeFactory, LogicalOperatorFactory, PhysicalSourceTypeFactory)
   - additional implementations for plugins (DataSourcePlugin, DataSinkPlugin, PhysicalSourceFactoryPlugin, SourceDescriptorPlugin, ..)
-- P2: all source implementations inherit from DataSource
-  - DataSource implements the query start logic, which should be handled by a separate class
+- P2: The DataSource interface forces all sources to use the TestTupleBuffer and it mixes reading data from sources and starting and stopping queries in a single class
   - DataSource provides the allocateBuffer() function which returns a TestTupleBuffer
     - as a result, all sources use the TestTupleBuffer
 - P3: adding a single source and sink requires changing/touching 20+ files
 - P4: the process of setting up a source and a sink and querying requires defining logical sources in the coordinator config, physical sources in the worker config, using the correct logical source name in a query and defining a physical sink descriptor in the same query
+Todo: adapt P5, make more concrete
 - P5: the process of going from a logical source name in a query to an implementation for that source is unnecessarily complex
-- P6: the process of specifying a sink is different from the process of specifying a source and it mixes DQL and DDL syntax in our queries
+- P6: the process of specifying a sink is different from the process of specifying a source and it mixes data query language (DQL) and data definition language (DDL) syntax in our queries
+Todo: adapt P7, make more concrete
 - P7: the process of going from a physical source definition in a query to an implementation for that sink is unnecessarily complex
 
 
@@ -44,7 +44,7 @@ The specific problems are the following:
 
 # Non-Goals
 - refactoring the coordinator side of source/sink handling
-  - we allow ourselves to make reasonable assumptions, which must be part of this design document, of how the coordinator will handle sources and sinks in the future
+  - we allow ourselves to make reasonable [assumptions](#assumptions), which must be part of this design document, of how the coordinator will handle sources and sinks in the future
     - this affects P4 in particular
 
 # Proposed Solution
@@ -52,7 +52,7 @@ The specific problems are the following:
 Currently, we are creating physical sources from source types. Source types are configured using either a `YAML::Node` as input or a `std::map<std::string, std::string>`. Therefore, all current configurations are possible to represent as a map from string to string. We also observe that most configurations use scalar values from the following set {uint32_t, uint64_t, bool, float, char}. Therefore, we conclude that we can model all current source configurations as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>`.
 Given that everything that a worker needs to know to create a source/sink is the type, and potentially the configuration and meta information, we define the following:
 
-Fully specified source/sink descriptor:
+The fully specified source descriptor contains:
   - the distinct type of the source/sink (one to one mapping from type to source/sink implementation)
   - (optional) the configuration of the source/sink, represented as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>`
   - (optional) meta data, such as whether a source allows source sharing, represented as class member variables of the SourceDescriptor and the SinkDescriptor respectively.
@@ -67,7 +67,7 @@ Thus, there is only one source descriptor implementation and one sink descriptor
 
 ## Assumptions
 We make the following assumptions:
-- Assumption 1: The coordinator allows to create fully specified physical *source* descriptors during runtime
+- Assumption 1: The coordinator allows to create [fully specified source descriptors](#fully-specified-sourcesink-descriptor) during runtime
   - when creating a physical source/sink, the user must supply a worker id (or similar)
   - the user must connect the physical source to at least one logical source
   - this assumption is reasonable, since users currently already need to configure physical sources for each worker. During startup the workers then register the physical sources at the coordinator. 
@@ -83,7 +83,7 @@ We make the following assumptions:
       //NOTE: This is required at the time of placement to know where the source operator is pinned
       duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());
       ```
-- Assumption 4: The decomposed query plans that a worker receives from the coordinator contains a fully specified source/sink descriptor
+- Assumption 4: The decomposed query plans that a worker receives from the coordinator contains a [fully specified source/sink descriptor](#fully-specified-sourcesink-descriptor)
   - even though the mapping from logical source names to source types and descriptors currently happens on the worker, this assumption is still reasonable, because:
     - the coordinator and worker can share a module that defines source and sink descriptors
     - the coordinator is already able to map logical source names to physical source names. Based on Assumption 1 and Assumption 2, the coordinator will therefore be able to map logical source names to fully specified source descriptors (sink descriptors are already given)
