@@ -1,50 +1,28 @@
-
-## What is the purpose of the change
-
-*(For example: This pull request makes task deployment go through the gRPC server, rather than through CAF. That way we avoid CAF's problems them on each deployment.)*
-
-
-## Brief change log
-
-*(for example:)**
-  - *The TaskInfo is stored in the RPC message*
-  - *Deployments RPC transmits the following information:....*
-  - *NodeEngine does the following: ...*
-
+## Purpose of the Change and Brief Change Log
+**(for example:)** 
+This pull request adds support for variable sized data to the nested loop join. The change list is as follows:
+- Added a `write()` and `read()` method to the `PagedVector` that supports variable sized data.
+- Changed the `NLJBuild` to call the `write()` method when adding a tuple to the `PagedVector`.
+- Changed the `NLJProbe` to call the `read()` method when reading a tuple from the `PagedVector`.
 
 ## Verifying this change
+This change is tested by
+*(for example:)*
+- *Added integration tests for end-to-end deployment with large payloads (100MB)*
+- *Extended integration test for recovery after master failure*
+- *Added test that validates that TaskInfo is transferred only once across recoveries*
 
-*(Please pick either of the following options)*
-
-This change is a trivial rework / code cleanup without any test coverage.
-
-*(or)*
-
-This change is already covered by existing tests, such as *(please describe tests)*.
-
-*(or)*
-
-This change added tests and can be verified as follows:
-
-*(example:)*
-  - *Added integration tests for end-to-end deployment with large payloads (100MB)*
-  - *Extended integration test for recovery after master failure*
-  - *Added test that validates that TaskInfo is transferred only once across recoveries*
-  - *Manually verified the change by running a 4 node cluser with 2 Coordinators and 4 NodeEngines, a stateful streaming program, and killing one Coordinators and two NodeEngines during the execution, verifying that recovery happens correctly.*
-
-## Does this pull request potentially affect one of the following parts:
-
-  - Dependencies (does it add or upgrade a dependency): (yes / no)
-  - The compiler: (yes / no / don't know)
-  - The threading model: (yes / no / don't know)
-  - The Runtime per-record code paths (performance sensitive): (yes / no / don't know)
-  - The network stack: (yes / no / don't know)
-  - Anything that affects deployment or recovery: Coordinator (and its components), NodeEngine (and its components): (yes / no / don't know)
+## What components does this pull request potentially affect?
+*(for example:)*
+- Dependencies (does it add or upgrade a dependency)
+- ExecutionEngine
+- QueryCompiler
+- QueryManager
+- RestAPI
 
 ## Documentation
-
-  - Does this pull request introduce a new feature? (yes / no)
-  - If yes, how is the feature documented? (not applicable / docs / JavaDocs / not documented)
+- The change is reflected in the necessary documentation, e.g., design document, in-code documentation.
+- All necessary methods (no getter, setter, or constructor) have a documentation.
 
 ## Issue Closed by this pull request:
 
