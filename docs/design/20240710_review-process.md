@@ -62,7 +62,7 @@ Formal commit messages are required to quickly determine if a commit on the `mai
 [optional footer(s)]
 ```
 
-An `IDEA` plugin exists to verify commit messages locally: https://github.com/lppedd/idea-conventional-commit. The PR-Process can verify the commit messages using: https://github.com/siderolabs/conform
+An `IDEA` plugin exists to verify commit messages locally: [IDEA-Plugin](https://github.com/lppedd/idea-conventional-commit). The PR-Process can verify the commit messages using: [conform](https://github.com/siderolabs/conform)
 
 ## Code Quality
 
@@ -79,4 +79,14 @@ Basic naming conventions are enforced using `Clang-Tidy`, e.g., class names use 
 # Alternatives
 
 **Open for Alternatives!**
+
+# Sources and Further Reading
+- Clang-Tidy integration into the PR Workflow: (clang-tidy-pr-comments)[https://github.com/platisd/clang-tidy-pr-comments]
+- Commit Message specification: [Conventional Commit](https://www.conventionalcommits.org/en/v1.0.0/#specification)
+    - Integration of Conventional Commit into the developer's workflow using Clion: [IDEA-Plugin](https://github.com/lppedd/idea-conventional-commit)
+    - Integration into the CI: [conform](https://github.com/siderolabs/conform)
+
+
+
+
 
