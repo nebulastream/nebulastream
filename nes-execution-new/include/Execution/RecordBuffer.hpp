@@ -49,13 +49,13 @@ class RecordBuffer {
      * @brief Retrieve the reference to the underling buffer from the record buffer.
      * @return val<void*>
      */
-    [[nodiscard]] val<void*> getBuffer() const;
+    [[nodiscard]] val<int8_t*> getBuffer() const;
 
     /**
      * @brief Get the reference to the TupleBuffer
      * @return val<void*>
      */
-    [[nodiscard]] const val<void*>& getReference() const;
+    [[nodiscard]] const val<int8_t*>& getReference() const;
 
     /**
      * @brief Set the number of records in the underlying tuple buffer.

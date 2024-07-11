@@ -11,7 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        MemoryProvider.cpp
-        ColumnMemoryProvider.cpp
-        RowMemoryProvider.cpp
+        TupleBufferMemoryProvider.cpp
+        ColumnTupleBufferMemoryProvider.cpp
+        RowTupleBufferMemoryProvider.cpp
         )

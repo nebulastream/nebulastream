@@ -28,10 +28,10 @@ void RecordBuffer::setNumRecords(const val<uint64_t>& numRecordsValue) {
     invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, numRecordsValue);
 }
 
-val<void*> RecordBuffer::getBuffer() const {
+val<int8_t*> RecordBuffer::getBuffer() const {
     return invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);
 }
-const val<void*>& RecordBuffer::getReference() const { return tupleBufferRef; }
+const val<int8_t*>& RecordBuffer::getReference() const { return tupleBufferRef; }
 
 val<uint64_t> RecordBuffer::getOriginId() {
     return invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getOriginId, tupleBufferRef);
