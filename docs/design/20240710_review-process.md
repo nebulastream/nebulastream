@@ -39,7 +39,7 @@ To reduce the number of round trips required, we build the system with the `keep
 
 ## Testing and Test-Coverage
 
-Depending on the resources available, we may decide to run multiple test suites with different build configurations. The testing Design Document should provide further insights. The CI is only concerned with Pass/Fail and provides enough details for the developer involved to investigate the cause of failure.
+Depending on the resources available, we may decide to run multiple test suites with different build configurations. The testing Design Document should provide further insights. The CI is only concerned with Pass/Fail and provides enough details for the developer involved to investigate the cause(s) of failure.
 
 Test coverage is evaluated after successful test execution; its output is correlated with the PR changes. The threshold for the test coverage requirement is TBD. The CI will provide an opt-out to skip the code coverage requirement, but this requires reasoning and the approval of all reviewers.
 
