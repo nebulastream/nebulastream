@@ -24,11 +24,11 @@ class Record {
   public:
     using RecordFieldIdentifier = std::string;
     explicit Record();
-    explicit Record(std::unordered_map<RecordFieldIdentifier, DataType>&& fields);
+    explicit Record(std::unordered_map<RecordFieldIdentifier, ExecDataType>&& fields);
     ~Record() = default;
 
-    const DataType& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
-    void write(const RecordFieldIdentifier& recordFieldIdentifier, const DataType& dataType);
+    const ExecDataType& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
+    void write(const RecordFieldIdentifier& recordFieldIdentifier, const ExecDataType& dataType);
     uint64_t numberOfFields() const;
     bool hasField(const RecordFieldIdentifier& fieldName);
     std::vector<RecordFieldIdentifier> getAllFields();
@@ -36,7 +36,7 @@ class Record {
     bool operator==(const Record& rhs) const;
     bool operator!=(const Record& rhs) const;
   private:
-    std::unordered_map<RecordFieldIdentifier, DataType> recordFields;
+    std::unordered_map<RecordFieldIdentifier, ExecDataType> recordFields;
 };
 
 }// namespace NES::Nautilus

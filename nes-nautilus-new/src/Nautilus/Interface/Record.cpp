@@ -18,10 +18,10 @@
 #include <sstream>
 
 namespace NES::Nautilus {
-const DataType& Record::read(const std::string& recordFieldIdentifier) const {
+const ExecDataType& Record::read(const std::string& recordFieldIdentifier) const {
     return recordFields.at(recordFieldIdentifier);
 }
-void Record::write(const Record::RecordFieldIdentifier& recordFieldIdentifier, const DataType& dataType) {
+void Record::write(const Record::RecordFieldIdentifier& recordFieldIdentifier, const ExecDataType& dataType) {
     recordFields[recordFieldIdentifier] = dataType;
 }
 
