@@ -33,7 +33,7 @@ The PR-Process will upon creating the PR check basic requirements and *warn* (ma
 
 ## Building
 
-The process attempts to build the branch and all tests. With changes to our dependencies, it is now possible to build NebulaStream with sanitizers and the libc++ hardening mode. Depending on the overall CI Resources, we may consider building them all. Building has frequently caused issues regarding the support of C++20 on older Ubuntu Distributions, not having a recent compiler and standard library version. This is especially annoying if multiple round-trips are required to fix all build errors, which only occur after fixing the initial issues.
+The process attempts to build the branch and all tests. With proposed [changes to our dependencies](20240710_dependency-management.md), it is now possible to build NebulaStream with sanitizers and the libc++ hardening mode. Depending on the overall CI Resources, we may consider building them all. Building has frequently caused issues regarding the support of C++20 on older Ubuntu Distributions, not having a recent compiler and standard library version. This is especially annoying if multiple round-trips are required to fix all build errors, which only occur after fixing the initial issues.
 
 To reduce the number of round trips required, we build the system with the `keep going` flag, which will not stop the build if errors occur. This will potentially blow up the overall log output, which can be reduced by providing filtered views with all build errors.
 
