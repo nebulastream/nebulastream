@@ -1,4 +1,4 @@
-# Problems
+# The Problem
 
 PR Review process can be labor intensive, and thus it is not uncommon that the PR process is either postponed, or performed lackluster only on the surface level. PR Reviews focus on easily digestible components, like `formatting`, using `auto` or preferring to `pass by reference`, and rarely focus on the bigger picture of the overall change to the system.
 
@@ -69,6 +69,10 @@ An `IDEA` plugin exists to verify commit messages locally: https://github.com/lp
 We propose using `Clang-Tidy` to assist the code review process. However, this will require fine-tuning the `Clang-Tidy` configuration. We investigated more advanced static analysis tooling like `Sonar` or `CodeQL`, but those are either not free or require NebulaStream to be open-sourced. We keep the list of possible static analysis tools open for future extensions. 
 
 We propose proper SpellChecking for all future changes, requiring us to maintain a list of NES specific terms.
+
+The bot will provide an overview of detected issues. For some issues, `Clang-Tidy` can provide quick fixes that the bot will provide. (clang-tidy-pr-comments)[https://github.com/platisd/clang-tidy-pr-comments]
+Not all issues flagged by `Clang-Tidy` will be valuable. Some of them might even be incorrect. At least for the initial tuning of rules, it may be possible to overrule the bot.
+More advanced static analysis tools can better categorize these issues, providing a notion of severity that could, in the future, dictate if the suggestion is irrelevant or mandatory.
 
 Basic naming conventions are enforced using `Clang-Tidy`, e.g., class names use CamelCase. 
 
