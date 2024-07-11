@@ -12,7 +12,7 @@ Overall, PR quality is enforced very differently from reviewer to reviewer due t
 
 (**G2**): Remove the need for the reviewer to call out trivial code changes (e.g., using const) or missing test coverage: good Cop, bad Bot.
 
-(**G3**): Enforce equal requirements for all PR: `Definition of Done`, if you pass all these checks, the PR will be merged, no more, no less.
+(**G3**): Enforce equal requirements for all PRs: like the [Definition of Done](https://www.scrum.org/resources/what-definition-done), if you pass all these checks, the PR will be merged, no more, no less.
 
 (**G4**): The CI Checks should be reproducible locally to reduce the usage of CI Resources and tighten the feedback loop for debugging CI-related issues.
 
