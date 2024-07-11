@@ -6,7 +6,7 @@ This results in code like the following in `LowerLogicalToPhysicalSource.cpp`, w
 
 ## Current Implementation
 With Nautilus, @philippgrulich introduced the [registry pattern](https://www.geeksforgeeks.org/registry-pattern/) to NebulaStream. In particular, he introduced a plugin registry with auto-register support. Nautilus backends (plugins), such as the MLIR backend or the Flounder backend can register themselves in a single registry (singleton) by adding a static like of code at the right place `[[maybe_unused]] static CompilationBackendRegistry::Add<MLIRCompilationBackend> mlirCompilerBackend("MLIR");`.
-With the addition of the registry, we decided that we should modularize our code and introduce clear separation of concerns. Cuda, Tensorflow, ONNX, and Arrow were added to NebulaStream using the registry. As a result, they exist in `nes-plugins` and do not pollute the core code paths. Additionally, there was an effort to support sources with the plugin registry that was never fully realized.
+With the addition of the registry, we decided that we should modularize our code and introduce clear separation of concerns. Cuda (backend), Tensorflow and ONNX (model inference), and Arrow (source) were added to NebulaStream using the registry. As a result, they exist in `nes-plugins` and do not pollute the core code paths. Additionally, there was an effort to support sources with the plugin registry that was never fully realized.
 
 ## Problems with the Current Implementation
 We cannot rely on the current implementation of the plugin registry, because it strongly depends on dynamic linking with shared libraries. The static registry line highlighted above to register the MLIRCompilationBackend is discarded by our linker (the **linker problem**) if we build and link static libraries. Additionally, even with dynamic linking, the current approach runs into the **Static Initialization Order Fiasco (SIOF)**. That is, there are no guarantees concerning the order in which static code is executed. As a result, if plugins have dependencies on other plugins, the dependencies might be resolved in the wrong order, leading to difficult to debug crash, because everything happens before `main()` is executed.
@@ -16,7 +16,7 @@ Creating a registry that:
 - G1: is flexible enough to be used in various scenarios (sources, sinks, operators, data types, query rewrite rules, query compilation backends, expressions/functions, etc.)
 - G2: allows us to separate between internal and external plugins
   - internal plugins are core plugins that are always active and therefore fully supported
-  - external plugins are plugins that may have dependencies that are not shipped with main repository and that can be deactivated
+  - external plugins are plugins that are deactivated by default, that are not guaranteed to be maintained, and that may have dependencies that are not shipped with main repository
 - G3: enables self-registering plugins that are statically linked
 - G4: guarantees that specified plugins are registered (optimizer & linker cannot eliminate code essential to registering plugins)
 - G5: avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins
@@ -28,15 +28,15 @@ Creating a registry that:
 # Non-Goals
 A registry that:
 - can link registries during runtime (after building and compiling)
-  - this requires dynamic linking
-  - implemented by DuckDB see [here](https://github.com/duckdb/duckdb/blob/ff3d6071e03582fe19e5d15cab5e4a2c3bc2f92f/src/main/extension/extension_load.cpp#L275)
-    - uses dlsym and dlopen and a specific function `auto init_fun_name = res.filebase + "_init";` that must be implemented to have a fixed entry point
-- is already fully implemented in NebulaStream
-  - implementing and using it in NebulaStream will be realized when refactoring the sources and sinks
+  - this requires dynamic linking, however, this design document is about static linking
+  - we don't have a need for linking plugins during runtime yet, if the need arises we can add it using the following approach (without great difficulties):
+    - implemented by DuckDB see [here](https://github.com/duckdb/duckdb/blob/ff3d6071e03582fe19e5d15cab5e4a2c3bc2f92f/src/main/extension/extension_load.cpp#L275)
+      - uses dlsym and dlopen and a specific function `auto init_fun_name = res.filebase + "_init";` that must be implemented to have a fixed entry point
 
 
 # Solution Background
-The proposed solution uses a slightly adapted version of the registries used by ClickHouse and DuckDB and the [dependency injection](https://www.codymorterud.com/design/2018/09/07/dependency-injection-cpp.html) design pattern. For internal plugins we use the ClickHouse approach. For external plugins, we use the DuckDB approach.
+The proposed solution uses a slightly adapted version of the registries used by ClickHouse and DuckDB, since they cover our goals. The ClickHouse implementation covers G1, G2, G4, G5, G6, G9. The DuckDB implementation additionally covers, G3 and G8.
+
 ## ClickHouse Approach
 ClickHouse uses many different registries (called factories) throughout their codebase. An example is the [DataTypeFactory](https://github.com/ClickHouse/ClickHouse/blob/master/src/DataTypes/DataTypeFactory.h). The DataTypeFactory publicly inherits from IFactoryWithAliases:
 ```c++
@@ -96,7 +96,7 @@ The constructor is called the first time when DataTypeFactory::instance() is cal
 - static registration functions could lead to violations of the one definition rule
 
 ## DuckDB Approach
-DuckDB has a very similar [approach](https://github.com/duckdb/duckdb/blob/main/src/include/duckdb/function/built_in_functions.hpp) with three main differences:
+DuckDB has a very similar [approach](https://github.com/duckdb/duckdb/blob/main/src/include/duckdb/function/built_in_functions.hpp), but it enables auto-registering of statically compiled plugins and activating/deactivating plugins via CMake configurations (G4, G8). The implementation has three main differences:
 ```c++
 ...
 private:
@@ -111,7 +111,7 @@ private:
 	void RegisterReadFunctions();
   ...
 ```
-1. register functions are private member functions the registry (BuiltinFunctions in the example). The classes that register the plugin then define the register function(s) in their implementation (In `table_scan.cpp`):
+1. register functions are private member functions of the registry (BuiltinFunctions in the example). The classes that register the plugin then define the register function(s) in their implementation (In `table_scan.cpp`):
 ```c++
 void BuiltinFunctions::RegisterTableScanFunctions() {
 	TableScanFunction::RegisterFunction(*this);
@@ -135,9 +135,9 @@ void BuiltinFunctions::RegisterOperators() {
 	Register<ModFun>();
 }
 ```
-3. For external plugins, DuckDB requires a specific cmake function to register the plugin. All registered plugins are tracked and using Cmake's `configure_file()` functionality, the register functions are code generated into a template file called [generated_extension_loader.cpp.in](https://github.com/duckdb/duckdb/blob/9ab29c02cb98c3d1956349039230039639f4ff01/src/main/extension/generated_extension_loader.cpp.in).
+3. For external plugins, DuckDB requires a specific cmake function to register the plugin. All registered plugins are tracked and passed to Cmake's `configure_file()` functionality. Using `configure_File()`, the register functions are code generated into a template file called [generated_extension_loader.cpp.in](https://github.com/duckdb/duckdb/blob/9ab29c02cb98c3d1956349039230039639f4ff01/src/main/extension/generated_extension_loader.cpp.in).
 Furthermore, `configure_file()` outputs a `generated_extension_loader.cpp` file that then contains all the register functions in the body of the `TryLoadLinkedExtension()` function. This function can then be used to register extensions (plugins) in a registry.
-This approach keeps the properties of the ClickHouse registry approach, but enables statically linked, self-registering plugins.
+This approach keeps achieves the same goals that the ClickHouse registry approach achieves, but enables statically linked, self-registering plugins (G4, G8).
 
 (Additionally, DuckDB provides an [extension-template repository](https://github.com/duckdb/extension-template) that makes getting started with extension (plugin) development simple.)
 
@@ -150,6 +150,7 @@ This approach keeps the properties of the ClickHouse registry approach, but enab
 
 
 # Our Proposed Solution
+Our solution closely resembles the [DuckDB Approach](#duckdb-approach) with two small differences. First, we don't register with a central catalog, but with multiple purpose-built registries. TypeRegistry, see diagram below, could be one such registry that is able to create all data types. If a plugin was successfully registered, a user can create a data type using the registry.
 ```mermaid
 ---
 title: Our Solution Overview (Example - TypeRegistry - UInt32)
@@ -202,11 +203,12 @@ classDiagram
   }
 
 ```
-Our solution closely resembles the DuckDB approach with two small differences. First, we don't register with a central catalog, but with multiple purpose-built registries. TypeRegistry, see diagram above, could be one such registry that is able to create all data types. If a plugin was successfully registered, a user can create a data type using the registry.
 Second, we use a Registrar class to `Registrar` plugins.
-The sole purpose of the Registrar is to separate the cmake code generation for the register functions of the individual plugins into a dedicated class. Because of the Registrar, the Registry does not need to be involved in code generation itself. That means the registry can be implemented like any other C++ class. In contrast, changes to the Registrar, which are two adding two lines of code for a new internal plugin, need to be applied to the `.in` file so that when the Registrar is generated, the new internal plugins are also generated. 
-Each registry has its own Registrar. The registrar is defined in a `.in` file. The `.in` file contains all internal plugins and no external plugins:
+The sole purpose of the Registrar is to separate the cmake code generation for the register functions of the individual plugins into a dedicated class. Because of the Registrar, the Registry does not need to be involved in code generation itself. That means the registry can be implemented like any other C++ class. In contrast, changes to the Registrar, which involve  adding two lines of code for a new internal plugin, need to be applied to the `.in` file so that when the Registrar is generated, the new internal plugins are also generated. 
+Each registry has its own Registrar. The registrar is defined in an `.in` file. The `.in` file contains all internal plugins and no external plugins:
 ```c++
+/// .in file example
+
 #ifndef GeneratedTypeRegistrar_HPP
 #define GeneratedTypeRegistrar_HPP
 
@@ -231,7 +233,7 @@ class GeneratedTypeRegistrar {
 };
 #endif //GeneratedTypeRegistrar_HPP
 ```
-When an external plugin is registered using the custom cmake function `add_plugin_library(Type plugin_uint32 "RegisterUInt32" UInt32Type.cpp)`, it is added to two lists. First, the `REGISTER_FUNCTIONS_HEADER` list and second, the `REGISTER_FUNCTIONS` list. The first list is inserted into the `.in` file for the placeholder `@REGISTER_FUNCTIONS_HEADER@` the latter is inserted is inserted in the `@REGISTER_FUNCTIONS` placeholder. The generated registrar (e.g. `GeneratedTypeRegistrar`) is created using cmake's `configure_file()`. The resulting `GeneratedTypeRegistrar` class then looks like this:
+When an external plugin is registered using the custom cmake function `add_plugin_library(Type plugin_uint32 "RegisterUInt32" UInt32Type.cpp)`, it is added to two lists. First, the `REGISTER_FUNCTIONS_HEADER` list and second, the `REGISTER_FUNCTIONS` list. The first list is inserted into the `.in` file for the placeholder `@REGISTER_FUNCTIONS_HEADER@` the latter is inserted into the `@REGISTER_FUNCTIONS` placeholder. The generated registrar (e.g. `GeneratedTypeRegistrar`) is created using cmake's `configure_file()`. The resulting `GeneratedTypeRegistrar` class then looks like this:
 ```c++
 #ifndef GeneratedTypeRegistrar_HPP
 #define GeneratedTypeRegistrar_HPP
@@ -285,6 +287,8 @@ TypeRegistry::TypeRegistry() {
 Internal plugins must be added to the `.in` file. The example for `GeneratedTypeRegistrar.h.in` contains the following line:
 `static void RegisterUint8(TypeRegistry& registry);`. This line, and the `RegisterUint8(registry);` line in `registerAllPlugins()` must be added by a developer that creates a new internal plugin. Lastly, a developer of an internal plugin must implement the `RegisterUInt8()` function, e.g. the following way:
 ```c++
+#include <Types/DataType.h>
+
 void GeneratedTypeRegistrar::RegisterUInt8(TypeRegistry & typeRegistry) {
     const std::function func = [] () -> std::unique_ptr<DataType> {
         return std::make_unique<Uint8Type>();
@@ -300,7 +304,7 @@ Second, the developer needs to register the plugin using the cmake function `add
 ```cmake
 add_plugin_library(Type plugin_uint32 "RegisterUInt32" UInt32Type.cpp)
 ```
-Here, a plugin for the Type registry is added. The plugin is created as the plugin_uint32 library, the register function will be called "RegisterUInt32" and the source file that contains the register function is in `UInt32Type.tpp`.
+Here, a plugin for the Type registry is added. The plugin is created as the plugin_uint32 library, the register function will be called "RegisterUInt32" and the source file that contains the register function is in `UInt32Type.cpp`.
 Third, the `ExternalPlugins` directory contains a `PluginConfig.cmake` file. The developer of the external plugin needs to activate the plugin here. The config looks the following way:
 ```c++
 include(${PROJECT_SOURCE_DIR}/cmake/PluginRegistrationUtil.cmake)
@@ -347,7 +351,7 @@ In the following we check wether we reached the goals defined in the [Goals](#go
 - G5: Our solution avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins by entirely avoiding static initialization of plugins before the `main()` function is executed.
 - G6: Our solution is only instantiated if it is used, because it is constructed the first time `instance()` is called
 - G7: We provide a prototype that demonstrates all the above capabilities.
-- G8: Our solution allows to disable a plugin by simply turning it to OFF in a config file
+- G8: Our solution allows to disable a plugin by simply turning it to OFF in a cmake config file
 - G9: it is possible to write tests in the directory of the external plugin itself. The prototype demonstrates this for a plugin that additionally has a dependency on grpc. To build the test, the external plugin must be activated in the config first.
 
 Additionally, we checked that our solution supports external plugins with external dependencies and plugin-specific tests.
