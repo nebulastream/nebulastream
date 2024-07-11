@@ -10,7 +10,7 @@ Overall, PR quality is enforced very differently from reviewer to reviewer due t
 
 (**G1**): Lift the burden of the reviewer by eliminating minor or trivially detectable problems before the review even starts.
 
-(**G2**): Remove the need for the reviewer to call out *bad* code or missing test coverage: good Cop, bad Bot.
+(**G2**): Remove the need for the reviewer to call out trivial code changes (e.g., using const) or missing test coverage: good Cop, bad Bot.
 
 (**G3**): Enforce equal requirements for all PR: `Definition of Done`, if you pass all these checks, the PR will be merged, no more, no less.
 
