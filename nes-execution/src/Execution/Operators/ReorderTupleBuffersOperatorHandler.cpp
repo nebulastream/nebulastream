@@ -39,6 +39,7 @@ void ReorderTupleBuffersOperatorHandler::processBuffer(PipelineExecutionContext*
 
     bufferStorage.wlock()->emplace(bufferSeqNumber, inputBuffer);
 
+    // TODO: #5033 check this logic
     // check if top value in the queue has changed after adding new sequence number
     if (currentSeqNumberBeforeAdding != currentSeqNumberAfterAdding) {
         // write all tuple buffers with sequence numbers in (lastWritten; currentSeqNumberAfterAdding]

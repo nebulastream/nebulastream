@@ -75,6 +75,28 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
     std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override;
 
     /**
+     * @brief Retrieve window info as a vector of tuple buffers
+     * Format of data buffers:
+     * -----------------------------------------
+     * number of windows (n) | start ts of 0 window |  end ts of 0 window | windowInfoState of 0 window | ... | start ts of n-th window |  end ts of n-th window | windowInfoState of n-th window
+     * uint64_t | uint64_t | uint64_t | uint64_t | ....
+     * -----------------------------------------
+     * @return vector of tuple buffers
+     */
+    std::vector<Runtime::TupleBuffer> getWindowInfoToMigrate();
+
+    /**
+     * @brief Restores window info from vector of tuple buffers
+     * Expected format of data buffers:
+     * -----------------------------------------
+     * number of windows (n) | start ts of 0 window |  end ts of 0 window | windowInfoState of 0 window | ... | start ts of n-th window |  end ts of n-th window | windowInfoState of n-th window
+     * uint64_t | uint64_t | uint64_t | uint64_t | ....
+     * -----------------------------------------
+     * @param buffers with the data for recreation
+     */
+    void restoreWindowInfo(std::vector<Runtime::TupleBuffer>& buffers);
+
+    /**
      * @brief Restores the state from vector of tuple buffers
      * Expected format of buffers:
      * start buffers contain metadata in format:
@@ -83,7 +105,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
      * uint64_t | uint64_t | uint64_t | ... | uint64_t
      *-----------------------------------------
      * all other buffers are: 1st buffer of 1st slice | .... | m_0 buffer of 1 slice | ... | 1 buffer of n-th slice | m_n buffer of n-th slice
-     * @param buffers
+     * @param buffers with the state
      */
     void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
 
@@ -222,7 +244,7 @@ class StreamJoinOperatorHandler : public virtual OperatorHandler {
   protected:
     uint64_t numberOfWorkerThreads = 1;
     folly::Synchronized<std::list<StreamSlicePtr>> slices;
-    uint64_t lastMigratedSlicesSeqNumber = 1;
+    uint64_t lastMigratedSeqNumber = 0;
     SliceAssigner sliceAssigner;
     uint64_t windowSize;
     uint64_t windowSlide;

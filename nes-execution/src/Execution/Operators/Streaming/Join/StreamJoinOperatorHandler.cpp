@@ -50,8 +50,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
     // metadata buffer
     auto mainMetadata = bufferManager->getBufferBlocking();
-    buffersToTransfer.insert(buffersToTransfer.begin(), mainMetadata);
-    auto metadataBuffersCount = 1;
+    auto metadataBuffersCount = 0;
 
     // check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t))) {
@@ -99,25 +98,158 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
         writeToMetadata(sliceBuffers.size());
     }
 
-    // set number of metadata buffers to the first metadata buffer
-    mainMetadata.getBuffer<uint64_t>()[0] = metadataBuffersCount;
+    // 3. set number of metadata buffers with the main to the first metadata buffer
+    mainMetadata.getBuffer<uint64_t>()[0] = ++metadataBuffersCount;
+    // insert first metadata buffer
+    buffersToTransfer.emplace(buffersToTransfer.begin(), mainMetadata);
 
     // set order of tuple buffers
     // TODO: #5027 change if getStateToMigrate will be used by several threads
     for (auto i = 0ULL; i < buffersToTransfer.size(); i++) {
-        buffersToTransfer[i].setSequenceNumber(lastMigratedSlicesSeqNumber + i);
+        buffersToTransfer[i].setSequenceNumber(++lastMigratedSeqNumber);
     }
 
-    lastMigratedSlicesSeqNumber += buffersToTransfer.size();
+    return buffersToTransfer;
+}
+
+std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getWindowInfoToMigrate() {
+    auto windowToSliceLocked = windowToSlices.rlock();
+    auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
+
+    // metadata buffer
+    auto dataBuffer = bufferManager->getBufferBlocking();
+    auto dataBuffersCount = 0;
+
+    // check that tuple buffer size is more than uint64_t to write number of metadata buffers
+    if (!dataBuffer.hasSpaceLeft(0, sizeof(uint64_t))) {
+        NES_THROW_RUNTIME_ERROR("Buffer is too small");
+    }
+
+    // get buffer data pointer
+    auto dataInBufferPtr = dataBuffer.getBuffer<uint64_t>();
+    // starting from 1st index to later write number of windows to the 0 place in the buffer
+    auto dataInBufferIdx = 1ULL;
+
+    /** @brief Lambda to write to data buffers
+     * captured variables:
+     * dataBuffer - generic metadata buffer, used for checking space left
+     * dataPtr - pointer to the start of current metadata buffer
+     * metadataIdx - index of size64_t data inside metadata buffer
+     * metadataBuffersCount - number of metadata buffers
+     * buffersToTransfer - vector of buffers
+     * @param dataToWrite - value to write to the buffer
+    */
+    auto serializeNextValue =
+        [&dataBuffer, &dataInBufferPtr, &dataInBufferIdx, this, &dataBuffersCount, &buffersToTransfer](uint64_t dataToWrite) {
+            // check that current metadata buffer has enough space, by sending used space and space needed
+            if (!dataBuffer.hasSpaceLeft(dataInBufferIdx * sizeof(uint64_t), sizeof(uint64_t))) {
+                // if current buffer does not contain enough space then
+                // get new buffer and insert to vector of buffers
+                auto newBuffer = bufferManager->getBufferBlocking();
+                buffersToTransfer.emplace(buffersToTransfer.begin() + dataBuffersCount++, newBuffer);
+                // update pointer and index
+                dataInBufferPtr = newBuffer.getBuffer<uint64_t>();
+                dataInBufferIdx = 0;
+            }
+            dataInBufferPtr[dataInBufferIdx++] = dataToWrite;
+        };
+
+    // counter for number of windows
+    auto numOfWindowsToMigrate = 0;
+
+    // go over windows and write its data to buffer
+    for (const auto& window : *windowToSliceLocked) {
+        // not serializing windows that are emitted to probe
+        switch (window.second.windowState) {
+            case WindowInfoState::EMITTED_TO_PROBE: continue;
+            case WindowInfoState::BOTH_SIDES_FILLING:
+            case WindowInfoState::ONCE_SEEN_DURING_TERMINATION:
+                auto windowInfo = window.first;
+                // 1. Write window start to buffer
+                serializeNextValue(windowInfo.windowStart);
+                // 2. Write window end to buffer
+                serializeNextValue(windowInfo.windowEnd);
+
+                auto slicesInfo = window.second;
+                // 3. Write state info to buffer
+                serializeNextValue(magic_enum::enum_integer(slicesInfo.windowState));
+                // update windows counter
+                numOfWindowsToMigrate++;
+        }
+    }
+
+    // 4. Write number of windows
+    dataBuffer.getBuffer<uint64_t>()[0] = numOfWindowsToMigrate;
+    // insert first data buffer
+    buffersToTransfer.emplace(buffersToTransfer.begin(), dataBuffer);
+
+    // 5. set sequence numbers, starting from 1
+    // TODO: #5027 change if getStateToMigrate will be used by several threads
+    for (auto i = 0ULL; i < buffersToTransfer.size(); i++) {
+        buffersToTransfer[i].setSequenceNumber(++lastMigratedSeqNumber);
+    }
 
     return buffersToTransfer;
+}
+
+void StreamJoinOperatorHandler::restoreWindowInfo(std::vector<Runtime::TupleBuffer>& buffers) {
+    // get data buffer
+    auto dataBuffersIdx = 0;
+    auto dataPtr = buffers[dataBuffersIdx].getBuffer<uint64_t>();
+    auto dataIdx = 0;
+
+    /** @brief Lambda to read from data buffers
+     * captured variables:
+     * dataPtr - pointer to the start of current metadata buffer
+     * dataIdx - index of size64_t data inside metadata buffer
+     * dataBuffersIdx - index of current buffer to read
+     * buffers - vector of buffers
+    */
+    auto deserializeNextValue = [&dataPtr, &dataIdx, &dataBuffersIdx, &buffers]() -> uint64_t {
+        // check left space in metadata buffer
+        if (!buffers[dataBuffersIdx].hasSpaceLeft(dataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
+            // update metadata pointer and index
+            dataPtr = buffers[++dataBuffersIdx].getBuffer<uint64_t>();
+            dataIdx = 0;
+        }
+        return dataPtr[dataIdx++];
+    };
+
+    // NOTE: Do not change the order of reads from data buffers(order is documented in function declaration)
+    // 1. Retrieve number of windows
+    auto numberOfWindows = deserializeNextValue();
+    for (auto i = 0ULL; i < numberOfWindows; i++) {
+        // 2. Retrieve window start
+        auto windowStart = deserializeNextValue();
+        // 3. Retrieve window end
+        auto windowEnd = deserializeNextValue();
+        // 4. Retrieve window status
+        auto windowInfoState = magic_enum::enum_cast<WindowInfoState>(deserializeNextValue()).value();
+
+        auto slicesLocked = this->slices.rlock();
+
+        // slices that belongs to current window
+        std::vector<StreamSlicePtr> slicesInWindow;
+        std::copy_if(slicesLocked->begin(),
+                     slicesLocked->end(),
+                     std::back_inserter(slicesInWindow),
+                     [&windowStart, &windowEnd](const StreamSlicePtr& slice) {
+                         uint64_t sliceStartTS = slice->getSliceStart();
+                         uint64_t sliceEndTS = slice->getSliceEnd();
+                         return (sliceStartTS >= windowStart && sliceStartTS < windowEnd)
+                             || (sliceEndTS > windowStart && sliceEndTS < windowEnd);
+                     });
+
+        auto windowToSlicesLocked = this->windowToSlices.wlock();
+        windowToSlicesLocked->emplace(WindowInfo(windowStart, windowEnd), SlicesAndState(slicesInWindow, windowInfoState));
+    }
 }
 
 void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers) {
 
     // get main metadata buffer
     auto metadataBuffersIdx = 0;
-    auto metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
+    auto metadataPtr = buffers[metadataBuffersIdx].getBuffer<uint64_t>();
     auto metadataIdx = 0;
 
     // read number of metadata buffers
@@ -134,7 +266,7 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
         // check left space in metadata buffer
         if (!buffers[metadataBuffersIdx].hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t))) {
             // update metadata pointer and index
-            metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
+            metadataPtr = buffers[++metadataBuffersIdx].getBuffer<uint64_t>();
             metadataIdx = 0;
         }
         return metadataPtr[metadataIdx++];

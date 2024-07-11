@@ -191,10 +191,10 @@ TEST_F(SinkTest, testRawBufferSink) {
     deser_file.read(reinterpret_cast<char*>(newBuffer.getBuffer()), size);
 
     // compare buffers before writing and after reading
-    auto rowLayoutDeserealized = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
-    auto testTupleBufferDeserealized = Runtime::MemoryLayouts::TestTupleBuffer(rowLayoutExpected, buffer);
-    auto bufferContentDeserealized = testTupleBufferExpected.toString(test_schema);
-    EXPECT_EQ(bufferContentDeserealized, bufferContentExpected);
+    auto rowLayoutDeserialized = Runtime::MemoryLayouts::RowLayout::create(test_schema, buffer.getBufferSize());
+    auto testTupleBufferDeserialized = Runtime::MemoryLayouts::TestTupleBuffer(rowLayoutDeserialized, buffer);
+    auto bufferContentDeserialized = testTupleBufferExpected.toString(test_schema);
+    EXPECT_EQ(bufferContentDeserialized, bufferContentExpected);
     deser_file.close();
 }
 

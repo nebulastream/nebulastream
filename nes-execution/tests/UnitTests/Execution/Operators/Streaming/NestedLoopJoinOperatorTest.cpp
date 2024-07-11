@@ -527,7 +527,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
      * @param start - slice start timestamp
      * @param end - slice end timestamp
      */
-    void checkNumberOfBuffers(uint64_t start, uint64_t end) {
+    void checkNumberOfStateBuffers(uint64_t start, uint64_t end) {
         auto sliceStartId = start / windowSize;
         auto sliceEndId = std::ceil((double) end / windowSize);
         auto expectedNumberOfSlice = sliceEndId - sliceStartId;
@@ -569,6 +569,26 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         uint64_t sliceEnd = endMetadataPtr[sliceEndIdxInBuffer];
         ASSERT_EQ(sliceEnd, sliceEndId * windowSize);
     }
+
+    /**
+     * @brief Counts number of expected windows info buffers
+     * @param maxTs of created records
+     */
+    void checkNumberOfWindowsInfoBuffers(uint64_t maxTs) {
+        auto expectedNumberOfWindows = std::ceil((double) (maxTs - 0) / windowSize);
+
+        auto buffers = nljOperatorHandler->getWindowInfoToMigrate();
+        // 1 for number of windows and 3 for every window: start, end, status
+        auto sizeOfWrittenData = 1 + expectedNumberOfWindows * 3 * sizeof(uint64_t);
+        auto expectedNumberOfDataBuffers = std::ceil((double) sizeOfWrittenData / sizeOfWrittenData);
+
+        ASSERT_EQ(buffers.size(), expectedNumberOfDataBuffers);
+
+        auto startDataPtr = buffers[0].getBuffer<uint64_t>();
+        // Second uint64_t in metadata is sliceStart
+        uint64_t numberOfWindows = startDataPtr[0];
+        ASSERT_EQ(expectedNumberOfWindows, numberOfWindows);
+    }
 };
 
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord) {
@@ -607,7 +627,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTest) {
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     // checking corner case when stopTS is equal to end timestamp of slice.
-    checkNumberOfBuffers(2000, 4000);
+    checkNumberOfStateBuffers(2000, 4000);
 }
 /**
  * Check getting the state from NestedLoopJoinOperatorHandler, when tuple buffer size is small and metadata should be written to several buffers.
@@ -621,7 +641,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTestWithSmallBufferSize)
     bm = std::make_shared<BufferManager>(20, 10000);
     nljOperatorHandler->setBufferManager(bm);
     // Checking corner case when stopTS is equal to end timestamp of slice.
-    checkNumberOfBuffers(2000, 4000);
+    checkNumberOfStateBuffers(2000, 4000);
 }
 /**
  * Check getting the state from NestedLoopJoinOperatorHandler,when startTS and stopTS are in the middle of slices timestamps.
@@ -632,7 +652,20 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesMiddleBordersTest) {
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     // Checking case when startTS and stopTS are in the middle of slices timestamps.
-    checkNumberOfBuffers(1500, 3500);
+    checkNumberOfStateBuffers(1500, 3500);
+}
+/**
+ * Check getting the window info from NestedLoopJoinOperatorHandler
+ */
+TEST_F(NestedLoopJoinOperatorTest, gettingWindowInfo) {
+    const auto numberOfRecordsLeft = 5000;
+    const auto numberOfRecordsRight = 5000;
+
+    uint64_t maxTimestamp;
+    tie(std::ignore, std::ignore, maxTimestamp) = insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
+    // Checking case when startTS and stopTS are in the middle of slices timestamps.
+    auto windowToSliceBuffers = nljOperatorHandler->getWindowInfoToMigrate();
+    checkNumberOfWindowsInfoBuffers(maxTimestamp);
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows) {
