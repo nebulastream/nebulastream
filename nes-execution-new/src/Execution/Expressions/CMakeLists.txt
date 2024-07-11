@@ -16,7 +16,8 @@ add_source_files(nes-execution
         ConstantValueExpression.cpp
         )
 
-add_subdirectory(ArithmeticExpressions)
 add_subdirectory(LogicalExpressions)
+# for now, we do not want to include the below expressions, as they are not ported to the new nautilus API yet.
+add_subdirectory(ArithmeticExpressions)
 add_subdirectory(Functions)
 add_subdirectory(TextFunctions)

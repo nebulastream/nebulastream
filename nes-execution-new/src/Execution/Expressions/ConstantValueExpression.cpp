@@ -20,8 +20,8 @@ ConstantValueExpression<T>::ConstantValueExpression(T value) : value(value) {}
 
 template<typename T>
     requires std::is_integral_v<T> || std::is_floating_point_v<T>
-Value<> ConstantValueExpression<T>::execute(Record&) const {
-    return Value<>(value);
+ExecDataType ConstantValueExpression<T>::execute(Record&) const {
+    return ExecutableDataType<T>::create(value);
 }
 
 template class ConstantValueExpression<int8_t>;
