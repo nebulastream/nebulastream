@@ -16,6 +16,7 @@
 #define NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
 
 #include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <ostream>
 
 namespace NES::Nautilus {
@@ -31,19 +32,30 @@ class AbstractDataType {
   protected:
     [[nodiscard]] virtual std::string toString() const = 0;
 };
-using DataType = std::shared_ptr<AbstractDataType>;
+using ExecDataType = std::shared_ptr<AbstractDataType>;
 
 template<typename ValueType>
 class ExecutableDataType : public AbstractDataType {
   public:
     explicit ExecutableDataType(const nautilus::val<ValueType> &value, const nautilus::val<bool> &null) : rawValue(value), null(null) {}
+    static ExecDataType create(nautilus::val<ValueType> value, bool null = false) {
+        return std::make_shared<ExecutableDataType<ValueType>>(value, null);
+    }
 
     [[nodiscard]] const nautilus::val<bool> &isNull() const{
         return null;
     }
 
+    void write(const nautilus::val<ValueType> &value) {
+        rawValue = value;
+    }
+
+    [[nodiscard]] const nautilus::val<ValueType> &read() const {
+        return rawValue;
+    }
+
   protected:
-    std::string toString() const override {
+    [[nodiscard]] std::string toString() const override {
         std::ostringstream oss;
         oss << " rawValue: " << rawValue << " null: " << null;
         return oss.str();
