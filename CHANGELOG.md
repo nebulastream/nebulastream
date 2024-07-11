@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.169](https://github.com/nebulastream/nebulastream/tree/v0.6.169) (2024-07-11)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.168...v0.6.169)
+
+**Implemented enhancements:**
+
+- Ability to get the window info from NLJ Operator Handler and recreate it from the file [\#4983](https://github.com/nebulastream/nebulastream/issues/4983)
+
 ## [v0.6.168](https://github.com/nebulastream/nebulastream/tree/v0.6.168) (2024-07-08)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.167...v0.6.168)
