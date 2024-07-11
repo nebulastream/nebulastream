@@ -13,7 +13,7 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EMIT_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EMIT_HPP_
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
@@ -29,18 +29,18 @@ class Emit : public ExecutableOperator {
      * @brief Constructor for the emit operator.
      * @param resultMemoryLayout memory layout.
      */
-    Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider);
+    Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider);
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void emitRecordBuffer(ExecutionContext& ctx,
                           RecordBuffer& recordBuffer,
-                          const Value<UInt64>& numRecords,
-                          const Value<Boolean>& lastChunk) const;
+                          const nautilus::val<uint64_t>& numRecords,
+                          const nautilus::val<bool>& lastChunk) const;
 
   private:
     uint64_t maxRecordsPerBuffer;
-    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+    std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
 };
 
 }// namespace NES::Runtime::Execution::Operators

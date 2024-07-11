@@ -64,8 +64,8 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
 
 void Emit::emitRecordBuffer(ExecutionContext& ctx,
                             RecordBuffer& recordBuffer,
-                            const Value<UInt64>& numRecords,
-                            const Value<Boolean>& lastChunk) const {
+                            const val<uint64_t>& numRecords,
+                            const val<bool>& lastChunk) const {
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
     recordBuffer.setOriginId(ctx.getOriginId());
@@ -81,7 +81,7 @@ void Emit::emitRecordBuffer(ExecutionContext& ctx,
     }
 }
 
-Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
+Emit::Emit(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider)
     : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider)) {}
 
 }// namespace NES::Runtime::Execution::Operators
