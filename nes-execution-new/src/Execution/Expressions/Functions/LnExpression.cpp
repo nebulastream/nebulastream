@@ -30,7 +30,7 @@ LnExpression::LnExpression(const NES::Runtime::Execution::Expressions::Expressio
 */
 double calculateLn(double x) { return std::log(x); }
 
-Value<> LnExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType LnExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the  expression and retrieve the value.
     Value subValue = subExpression->execute(record);
 

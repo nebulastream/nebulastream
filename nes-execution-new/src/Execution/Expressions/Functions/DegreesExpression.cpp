@@ -21,7 +21,7 @@ DegreesExpression::DegreesExpression(const NES::Runtime::Execution::Expressions:
     : SubExpression(SubExpression) {}
 double calculateDegrees(double x) { return (x * 180.0) / M_PI; }
 
-Value<> DegreesExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType DegreesExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value subValue = SubExpression->execute(record);
     //check the type and then call the function.

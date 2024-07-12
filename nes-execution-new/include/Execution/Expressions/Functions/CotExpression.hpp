@@ -17,7 +17,7 @@
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 #include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Expressions {
 class CotExpression : public Expression {
   public:
     CotExpression(const ExpressionPtr& radians);
-    Value<> execute(Record& record) const override;
+    ExecDataType execute(Record& record) const override;
 
   private:
     const ExpressionPtr radians;

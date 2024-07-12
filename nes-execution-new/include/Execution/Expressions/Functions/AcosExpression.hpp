@@ -16,7 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ACOSEXPRESSION_HPP_
 
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 
 namespace NES::Runtime::Execution::Expressions {
 /**
@@ -24,11 +24,11 @@ namespace NES::Runtime::Execution::Expressions {
 */
 class AcosExpression : public Expression {
   public:
-    explicit AcosExpression(const ExpressionPtr& Expression);
-    Value<> execute(Record& record) const override;
+    explicit AcosExpression(const ExpressionPtr& expression);
+    ExecDataType execute(Record& record) const override;
 
   private:
-    const ExpressionPtr Expression;
+    const ExpressionPtr expression;
 };
 }// namespace NES::Runtime::Execution::Expressions
 

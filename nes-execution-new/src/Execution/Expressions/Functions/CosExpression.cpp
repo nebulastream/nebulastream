@@ -29,7 +29,7 @@ CosExpression::CosExpression(const NES::Runtime::Execution::Expressions::Express
  */
 double calculateCos(double x) { return std::cos(x); }
 
-Value<> CosExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType CosExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the  expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
 

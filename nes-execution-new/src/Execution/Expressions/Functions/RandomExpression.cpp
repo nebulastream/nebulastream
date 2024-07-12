@@ -28,7 +28,7 @@ double random(uint32_t seed) {
     return (double) std::rand() / RAND_MAX;
 }
 
-Value<> RandomExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType RandomExpression::execute(NES::Nautilus::Record& record) const {
     //Evaluate the sub expression and retrieve the value.
     Value subValue = subExpression->execute(record);
     //check the type and then call the function.

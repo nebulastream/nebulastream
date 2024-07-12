@@ -15,7 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RANDOMEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RANDOMEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 namespace NES::Runtime::Execution::Expressions {
 /**
  * @brief This expression creates a random Number between 0 and 1 with a given seed.
@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Expressions {
 class RandomExpression : public Expression {
   public:
     RandomExpression(ExpressionPtr subExpression);
-    Value<> execute(NES::Nautilus::Record& record) const override;
+    ExecDataType execute(NES::Nautilus::Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

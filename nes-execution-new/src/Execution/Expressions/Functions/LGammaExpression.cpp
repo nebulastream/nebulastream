@@ -28,7 +28,7 @@ LGammaExpression::LGammaExpression(const NES::Runtime::Execution::Expressions::E
  */
 double calculateLGamma(double x) { return std::lgamma(x); }
 
-Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType LGammaExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = SubExpression->execute(record);
 

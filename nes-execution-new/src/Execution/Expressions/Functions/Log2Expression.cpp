@@ -30,7 +30,7 @@ Log2Expression::Log2Expression(const NES::Runtime::Execution::Expressions::Expre
  */
 double calculateLog2(double x) { return std::log2(x); }
 
-Value<> Log2Expression::execute(NES::Nautilus::Record& record) const {
+ExecDataType Log2Expression::execute(NES::Nautilus::Record& record) const {
     Value subValue = subExpression->execute(record);
 
     if (subValue->isType<Int8>()) {

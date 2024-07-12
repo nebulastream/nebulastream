@@ -32,7 +32,7 @@ Atan2Expression::Atan2Expression(const NES::Runtime::Execution::Expressions::Exp
  */
 double calculateAtan2(double x, double y) { return std::atan2(x, y); }
 
-Value<> Atan2Expression::execute(NES::Nautilus::Record& record) const {
+ExecDataType Atan2Expression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.

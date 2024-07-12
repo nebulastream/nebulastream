@@ -14,15 +14,16 @@
 
 #include <Execution/Expressions/LogicalExpressions/AndExpression.hpp>
 
+
 namespace NES::Runtime::Execution::Expressions {
 
 AndExpression::AndExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression){};
 
-Value<> AndExpression::execute(Record& record) const {
-    Value<> leftValue = leftSubExpression->execute(record);
-    Value<> rightValue = rightSubExpression->execute(record);
-    return leftValue && rightValue;
+ExecDataType AndExpression::execute(Record& record) const {
+    ExecDataType leftValue = leftSubExpression->execute(record);
+    ExecDataType rightValue = rightSubExpression->execute(record);
+    return *leftValue && *rightValue;
 }
 
 }// namespace NES::Runtime::Execution::Expressions

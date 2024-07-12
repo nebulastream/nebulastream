@@ -15,7 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ABSEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Expressions {
 class AbsExpression : public Expression {
   public:
     explicit AbsExpression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+    ExecDataType execute(Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

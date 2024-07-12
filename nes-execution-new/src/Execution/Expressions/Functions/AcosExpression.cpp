@@ -15,12 +15,12 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AcosExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <nautilus/std/cmath.h>
 #include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
 
-AcosExpression::AcosExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& Expression) : Expression(Expression) {}
+AcosExpression::AcosExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : Expression(expression) {}
 
 /**
 * @brief This method calculates the acosinus of x.
@@ -30,32 +30,20 @@ AcosExpression::AcosExpression(const NES::Runtime::Execution::Expressions::Expre
 */
 double calculateAcos(double x) { return std::acos(x); }
 
-Value<> AcosExpression::execute(NES::Nautilus::Record& record) const {
-    // Evaluate the  expression and retrieve the value.
-    Value Value = Expression->execute(record);
+ExecDataType AcosExpression::execute(NES::Nautilus::Record& record) const {
+    auto subValue = expression->execute(record);
 
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-    // Value.as<Int8>() makes an explicit cast from Value to Value<Int8>.
-    // In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
-    // primitive integer types to the double argument.
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (Value->isType<Int8>()) {
-        // call the calculateAcos function with the correct type
-        return FunctionCall<>("calculateAcos", calculateAcos, Value.as<Int8>());
-    } else if (Value->isType<Int16>()) {
-        return FunctionCall<>("calculateAcos", calculateAcos, Value.as<Int16>());
-    } else if (Value->isType<Int32>()) {
-        return FunctionCall<>("calculateAcos", calculateAcos, Value.as<Int32>());
-    } else if (Value->isType<Int64>()) {
-        return FunctionCall<>("calculateAcos", calculateAcos, Value.as<Int64>());
-    } else if (Value->isType<Float>()) {
-        return FunctionCall<>("calculateAcos", calculateAcos, Value.as<Float>());
-    } else if (Value->isType<Double>()) {
-        return FunctionCall<>("calculateAcos", calculateAcos, Value.as<Double>());
+    if (subValue->isType<float>()) {
+        return ExecutableDataType<float>::create(acos(subValue->as<float>()));
+    } else if  (subValue->isType<double>()) {
+        return ExecutableDataType<double>::create(acos(subValue->as<double>()));
+    } else if (subValue->isType<uint64_t>() || subValue->isType<uint32_t>() || subValue->isType<uint16_t>()
+               || subValue->isType<uint8_t>() || subValue->isType<int64_t>() || subValue->isType<int32_t>()
+               || subValue->isType<int16_t>() || subValue->isType<int8_t>()) {
+        return ExecutableDataType<double>::create(acos(subValue->as<double>()));
     } else {
-        // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
+            "This expression is only defined on a numeric input argument that is ether Float or Double.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AcosExpression>> acosFunction("acos");

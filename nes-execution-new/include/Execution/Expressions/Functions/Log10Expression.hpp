@@ -16,7 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_LOG10EXPRESSION_HPP_
 
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class Log10Expression : public Expression {
   public:
     explicit Log10Expression(const ExpressionPtr& subExpression);
-    Value<> execute(Record& record) const override;
+    ExecDataType execute(Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

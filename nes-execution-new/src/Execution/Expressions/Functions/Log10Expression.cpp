@@ -30,7 +30,7 @@ Log10Expression::Log10Expression(const NES::Runtime::Execution::Expressions::Exp
  */
 double calculateLog10(double x) { return std::log10(x); }
 
-Value<> Log10Expression::execute(NES::Nautilus::Record& record) const {
+ExecDataType Log10Expression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     Value subValue = subExpression->execute(record);
 

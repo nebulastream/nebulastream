@@ -34,7 +34,7 @@ double calculateSign(double x) {
     return 0;
 }
 
-Value<> SignExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType SignExpression::execute(NES::Nautilus::Record& record) const {
     Value subValue = subExpression->execute(record);
 
     if (subValue->isType<Int8>()) {
