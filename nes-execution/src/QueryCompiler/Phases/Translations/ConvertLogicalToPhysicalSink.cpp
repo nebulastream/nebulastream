@@ -217,24 +217,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
             networkSinkDescriptor->getNumberOfOrigins(),
             networkSinkDescriptor->getRetryTimes());
     }
-    else if (sinkDescriptor->instanceOf<Statistic::StatisticSinkDescriptor>())
-    {
-        const auto statisticSinkDescriptor = sinkDescriptor->as<Statistic::StatisticSinkDescriptor>();
-        return createStatisticSink(
-            schema,
-            nodeEngine,
-            numOfProducers,
-            pipelineQueryPlan->getQueryId(),
-            pipelineQueryPlan->getQuerySubPlanId(),
-            statisticSinkDescriptor->getNumberOfOrigins(),
-            statisticSinkDescriptor->getSinkFormatType(),
-            statisticSinkDescriptor->getSinkDataCodec());
-    }
-    else
-    {
-        NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
-        throw std::invalid_argument("Unknown Sink Descriptor Type");
-    }
+    NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
+    throw std::invalid_argument("Unknown Sink Descriptor Type");
 }
-
 } // namespace NES

@@ -20,8 +20,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -68,8 +66,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowSinkOperator.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
-#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
