@@ -58,7 +58,7 @@ AbstractQueryManager::AbstractQueryManager(
 {
     tempCounterTasksCompleted.resize(numThreads);
 
-    asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>(this->hardwareManager, 1);
+    asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>(1);
 }
 
 DynamicQueryManager::DynamicQueryManager(
