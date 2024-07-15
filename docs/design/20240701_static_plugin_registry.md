@@ -39,7 +39,7 @@ A registry that:
 
 
 # Solution Background
-The proposed solution uses a slightly adapted version of the registries used by ClickHouse and DuckDB, since they cover our goals. The ClickHouse implementation covers G2, G3, G4, G5, G6, G9. The DuckDB implementation additionally covers, G1 and G8.
+The proposed solution uses a slightly adapted version of the registries used by ClickHouse and DuckDB, since they cover our goals. The ClickHouse implementation covers G2, G3, G4, G5, G6, G9. The DuckDB implementation additionally covers, G1 and G8. The arguments made for ClickHouse and DuckDB also apply to NebulaStream.
 
 ## ClickHouse Approach
 ClickHouse uses many different registries (called factories) throughout their codebase. An example is the [DataTypeFactory](https://github.com/ClickHouse/ClickHouse/blob/master/src/DataTypes/DataTypeFactory.h). The DataTypeFactory publicly inherits from IFactoryWithAliases:
@@ -97,7 +97,7 @@ The constructor is called the first time when DataTypeFactory::instance() is cal
   - registration can be debugged like any other code
 ### Disadvantages
 - no self-registering possible since the register function for a new plugin must exist in the registry already
-- static registration functions could lead to violations of the one definition rule
+- static registration functions could lead to violations of the one definition rule, for a better solution, see [Proposed Solution](#proposed-solution) below.
 
 ## DuckDB Approach
 DuckDB has a very similar [approach](https://github.com/duckdb/duckdb/blob/main/src/include/duckdb/function/built_in_functions.hpp), but it enables auto-registering of statically compiled plugins and activating/deactivating plugins via CMake configurations (G4, G8). The implementation has three main differences:
@@ -153,7 +153,7 @@ This approach keeps achieves the same goals that the ClickHouse registry approac
 - requires code generation via CMake which adds complexity
 
 
-# Our Proposed Solution
+# Proposed Solution
 Our solution closely resembles the [DuckDB Approach](#duckdb-approach) with two small differences. First, we don't register with a central catalog, but with multiple purpose-built registries. TypeRegistry, see diagram below, could be one such registry that is able to create all data types. If a plugin was successfully registered, a user can create a data type using the registry.
 ```mermaid
 ---
