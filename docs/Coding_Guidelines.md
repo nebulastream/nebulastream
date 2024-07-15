@@ -11,7 +11,7 @@ The style can be imported into Clion by following the steps below:
 
 
 # Naming Conventions and Position of Operators
-- Classes and struct start with uppercase: `MyClass`
+- Classes and structs start with uppercase: `MyClass`
 - Functions and variables start with lowercase: `myMethod`
 - Constants are all upper case: `const double PI=3.14159265358979323;`
 - instead of magic numbers, we use constexpr: `constexpr auto MAGIC_NUMBER = 42`
@@ -28,10 +28,10 @@ We never use `using namespace` in the global scope of header files, as they get 
 ```cpp
 
 // Correct
-include <DataStructe/SomeDataStructue.hpp>
+include <DataStructure/SomeDataStructue.hpp>
     
 // Wrong 
-include "../DataStructe/SomeDataStructue.hpp"
+include "../DataStructure/SomeDataStructue.hpp"
 ```
 
 
@@ -83,7 +83,7 @@ struct BufferMetaData {
     const OriginId originId;
 };
 
-static constexpr auto fortyTwo = 42;
+static constexpr auto FORTY_TWO = 42;
 
 class SomeFancyClass {
   public:
@@ -172,6 +172,4 @@ class SomeClass {
 
 
 # Exceptions and Error Handling
-We use exceptions together with exceptions for handling errors or user input for error handling and avoid error codes [Stroustrup Exceptions](https://www.stroustrup.com/bs_faq2.html#exceptions-why).
-
-TODO once DD is done: (Link to the design document of the error handling).
+TODO once DD is done, we will add the guidelines here.
