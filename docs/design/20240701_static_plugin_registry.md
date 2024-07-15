@@ -13,17 +13,21 @@ We cannot rely on the current implementation of the plugin registry, because it 
 
 # Goals
 Creating a registry that:
-- G1: is flexible enough to be used in various scenarios (sources, sinks, operators, data types, query rewrite rules, query compilation backends, expressions/functions, etc.)
+- G1: enables self-registering plugins that are **statically** linked
+  - statically linking plugins allows us to link our entire project statically, mitigating dependency problems that we encountered using dynamic linking
 - G2: allows us to separate between internal and external plugins
-  - internal plugins are core plugins that are always active and therefore fully supported
-  - external plugins are plugins that are deactivated by default, that are not guaranteed to be maintained, and that may have dependencies that are not shipped with main repository
-- G3: enables self-registering plugins that are statically linked
+  - internal plugins are active by default, fully supported by the maintainers, and live in the main code tree
+  - external plugins are plugins that are deactivated by default, not guaranteed to be maintained, live in the a specific directory for external plugins and that may have dependencies that are not shipped with main repository
+- G3: is flexible enough to be used in various scenarios (sources, sinks, operators, data types, query rewrite rules, query compilation backends, expressions/functions, etc.)
+  - the plugin registry might be used in many different ways and we should therefore not overfit the implementation to one specific use case
 - G4: guarantees that specified plugins are registered (optimizer & linker cannot eliminate code essential to registering plugins)
 - G5: avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins
 - G6: is only instantiated if it is used
 - G7: has a prototype that demonstrates all the above capabilities (see 'Proposed Solution')
 - G8: disabling a plugin is as simple as turning it to OFF, in contrast to having multiple `#ifdefs` scattered across the codebase
 - G9: it must be possible to create tests for external plugins in the directory of the external plugin itself
+  - the tests (and dependencies) of an external plugin are only picked up if the plugin is activated (G8)
+  - thus, it is possible to test an external plugin independently of other external plugins
 
 # Non-Goals
 A registry that:
@@ -35,7 +39,7 @@ A registry that:
 
 
 # Solution Background
-The proposed solution uses a slightly adapted version of the registries used by ClickHouse and DuckDB, since they cover our goals. The ClickHouse implementation covers G1, G2, G4, G5, G6, G9. The DuckDB implementation additionally covers, G3 and G8.
+The proposed solution uses a slightly adapted version of the registries used by ClickHouse and DuckDB, since they cover our goals. The ClickHouse implementation covers G2, G3, G4, G5, G6, G9. The DuckDB implementation additionally covers, G1 and G8.
 
 ## ClickHouse Approach
 ClickHouse uses many different registries (called factories) throughout their codebase. An example is the [DataTypeFactory](https://github.com/ClickHouse/ClickHouse/blob/master/src/DataTypes/DataTypeFactory.h). The DataTypeFactory publicly inherits from IFactoryWithAliases:
@@ -344,9 +348,9 @@ set(final_plugin_types
 ## Solution vs Goals 
 In the following we check wether we reached the goals defined in the [Goals](#goals) section.
 
-- G1: we did not create a single registry implementation that is flexible enough to handle various scenarios. An explanation can be found in [Alternative 3](#a3---one-templated-registry). It is still simple to create a new registry using an existing one as a template.
+- G1: Our solution supports self-registering plugins that are statically linked by using CMake code generation
+- G3: we did not create a single registry implementation that is flexible enough to handle various scenarios. An explanation can be found in [Alternative 3](#a3---one-templated-registry). It is still simple to create a new registry using an existing one as a template.
 - G2: Our solution clearly allows us to separate internal and external plugins. We can deactivate all external plugins and therefore limit support. In contrast, internal plugins cannot be deactivated and must be supported
-- G3: Our solution supports self-registering plugins that are statically linked by using CMake code generation
 - G4: Our solution guarantees that specified plugins are registered (optimizer & linker cannot eliminate code essential to registering plugins) by making registration explicit using function calls that are executed during runtime.
 - G5: Our solution avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins by entirely avoiding static initialization of plugins before the `main()` function is executed.
 - G6: Our solution is only instantiated if it is used, because it is constructed the first time `instance()` is called
