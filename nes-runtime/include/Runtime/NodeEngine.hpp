@@ -72,6 +72,9 @@ public:
      */
     void stopQuery(QueryId queryId, QueryTerminationType terminationType = QueryTerminationType::HardStop);
 
+    BufferManagerPtr getBufferManager() { return bufferManagers[0]; }
+    QueryManagerPtr getQueryManager() { return queryManager; }
+
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool

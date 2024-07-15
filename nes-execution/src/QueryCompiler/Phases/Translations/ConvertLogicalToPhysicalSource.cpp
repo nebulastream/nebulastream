@@ -68,9 +68,8 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
         }
     }
 #endif
-    auto bufferManager = nodeEngine->getBufferManager(numaNodeIndex);
+    auto bufferManager = nodeEngine->getBufferManager();
     auto queryManager = nodeEngine->getQueryManager();
-    auto networkManager = nodeEngine->getNetworkManager();
 
     if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>())
     {
@@ -217,25 +216,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             sourceDescriptor->getPhysicalSourceName(),
             successors);
     }
-    else if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>())
-    {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating network source");
-        const Network::NetworkSourceDescriptorPtr networkSourceDescriptor = sourceDescriptor->as<Network::NetworkSourceDescriptor>();
-        return createNetworkSource(
-            networkSourceDescriptor->getSchema(),
-            bufferManager,
-            queryManager,
-            networkManager,
-            networkSourceDescriptor->getNesPartition(),
-            networkSourceDescriptor->getNodeLocation(),
-            numSourceLocalBuffers,
-            networkSourceDescriptor->getWaitTime(),
-            networkSourceDescriptor->getRetryTimes(),
-            sourceDescriptor->getPhysicalSourceName(),
-            networkSourceDescriptor->getVersion(),
-            successors,
-            networkSourceDescriptor->getUniqueId());
-    }
     else if (sourceDescriptor->instanceOf<MemorySourceDescriptor>())
     {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
@@ -255,25 +235,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             memorySourceDescriptor->getGatheringMode(),
             memorySourceDescriptor->getSourceAffinity(),
             memorySourceDescriptor->getTaskQueueId(),
-            sourceDescriptor->getPhysicalSourceName(),
-            successors);
-    }
-    else if (sourceDescriptor->instanceOf<MonitoringSourceDescriptor>())
-    {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating monitoring source");
-        auto monitoringSourceDescriptor = sourceDescriptor->as<MonitoringSourceDescriptor>();
-        auto metricCollector
-            = Monitoring::MetricUtils::createCollectorFromCollectorType(monitoringSourceDescriptor->getMetricCollectorType());
-        metricCollector->setNodeId(nodeEngine->getNodeId());
-        return createMonitoringSource(
-            metricCollector,
-            monitoringSourceDescriptor->getWaitTime(),
-            bufferManager,
-            queryManager,
-            operatorId,
-            originId,
-            statisticId,
-            numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);
     }

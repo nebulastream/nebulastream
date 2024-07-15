@@ -55,7 +55,7 @@ NetworkSink::NetworkSink(
         numberOfOrigins)
     , uniqueNetworkSinkDescriptorId(uniqueNetworkSinkDescriptorId)
     , nodeEngine(nodeEngine)
-    , networkManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getNetworkManager())
+    , networkManager(nullptr)
     , queryManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getQueryManager())
     , receiverLocation(destination)
     , bufferManager(Util::checkNonNull(nodeEngine, "Invalid Node Engine")->getBufferManager())
@@ -81,7 +81,7 @@ bool NetworkSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerCo
         "context {} writing data at sink {} on node {} for originId {} and seqNumber {}",
         workerContext.getId(),
         getUniqueNetworkSinkDescriptorId(),
-        nodeEngine->getNodeId(),
+        WorkerId(0),
         inputBuffer.getOriginId(),
         inputBuffer.getSequenceNumber());
 
