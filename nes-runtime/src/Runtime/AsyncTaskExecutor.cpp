@@ -22,10 +22,8 @@
 namespace NES::Runtime
 {
 
-AsyncTaskExecutor::AsyncTaskExecutor(const HardwareManagerPtr& hardwareManager, uint32_t numOfThreads)
-    : running(true), hardwareManager(hardwareManager)
+AsyncTaskExecutor::AsyncTaskExecutor(uint32_t numOfThreads) : running(true)
 {
-    NES_ASSERT(this->hardwareManager, "Invalid hardware manager");
     for (uint32_t i = 0; i < numOfThreads; ++i)
     {
         auto promise = std::make_shared<std::promise<bool>>();
@@ -55,12 +53,12 @@ AsyncTaskExecutor::~AsyncTaskExecutor()
 
 void* AsyncTaskExecutor::allocateAsyncTask(size_t taskSize)
 {
-    return hardwareManager->getGlobalAllocator()->allocate(taskSize);
+    return malloc(taskSize);
 }
 
-void AsyncTaskExecutor::deallocateAsyncTask(void* task, size_t size)
+void AsyncTaskExecutor::deallocateAsyncTask(void* task, size_t)
 {
-    hardwareManager->getGlobalAllocator()->deallocate(task, size);
+    free(task);
 }
 
 void AsyncTaskExecutor::runningRoutine()

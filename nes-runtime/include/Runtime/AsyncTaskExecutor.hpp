@@ -192,7 +192,7 @@ public:
      * @brief Creates an AsyncTaskExecutor using `numOfThreads` threads
      * @param numOfThreads the number of threads to use for the executor
      */
-    explicit AsyncTaskExecutor(const HardwareManagerPtr& hardwareMananger, uint32_t numOfThreads = 1);
+    explicit AsyncTaskExecutor(uint32_t numOfThreads = 1);
 
     /// destructor to clean up inner resources
     ~AsyncTaskExecutor();
@@ -257,8 +257,6 @@ private:
     std::vector<std::shared_ptr<std::promise<bool>>> completionPromises;
 
     std::deque<AsyncTaskWrapper> asyncTaskQueue;
-
-    HardwareManagerPtr hardwareManager;
 };
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
