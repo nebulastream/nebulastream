@@ -275,28 +275,6 @@ DataSinkPtr createMonitoringSink(
     DecomposedQueryPlanId decomposedQueryPlanId,
     uint64_t numberOfOrigins = 1);
 
-/**
- * @brief Creates a StatisticSink
- * @param schema
- * @param nodeEngine
- * @param numOfProducers
- * @param sharedQueryId
- * @param decomposedQueryPlanId
- * @param numberOfOrigins
- * @param sinkFormatType
- * @param sinkDataCodec
- * @return DataSinkPtr
- */
-DataSinkPtr createStatisticSink(
-    const SchemaPtr& schema,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    size_t numOfProducers,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    uint64_t numberOfOrigins,
-    Statistic::StatisticSynopsisType sinkFormatType,
-    Statistic::StatisticDataCodec sinkDataCodec);
-
 #ifdef ENABLE_KAFKA_BUILD
 /**
  * @brief create kafka sink

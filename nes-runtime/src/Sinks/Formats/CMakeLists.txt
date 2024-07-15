@@ -24,4 +24,3 @@ if (NES_USE_ARROW)
 endif ()
 
 add_subdirectory(FormatIterators)
-add_subdirectory(StatisticCollection)

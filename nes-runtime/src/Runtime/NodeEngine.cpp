@@ -25,8 +25,6 @@
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <StatisticCollection/StatisticManager.hpp>
-#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 
 #include <QueryCompiler/QueryCompilationRequest.hpp> // request = QueryCompilation::QueryCompilationRequest::create(..)
 #include <QueryCompiler/QueryCompilationResult.hpp> // result = queryCompiler->compileQuery(request);
@@ -899,11 +897,6 @@ void NodeEngine::updatePhysicalSources(const std::vector<PhysicalSourceTypePtr>&
 const OpenCLManagerPtr NodeEngine::getOpenCLManager() const
 {
     return openCLManager;
-}
-
-const Statistic::StatisticManagerPtr NodeEngine::getStatisticManager() const
-{
-    return statisticManager;
 }
 
 } // namespace NES::Runtime

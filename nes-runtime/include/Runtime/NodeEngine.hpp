@@ -15,21 +15,12 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
-#include <iostream>
-#include <map>
-#include <mutex>
-#include <string>
-#include <unordered_set>
 #include <vector>
-#include <pthread.h>
-#include <unistd.h>
 #include <Exceptions/ErrorListener.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <StatisticCollection/StatisticManager.hpp>
-#include <Util/VirtualEnableSharedFromThis.hpp>
 
 namespace NES
 {

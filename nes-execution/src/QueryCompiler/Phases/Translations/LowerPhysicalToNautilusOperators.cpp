@@ -59,10 +59,6 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogBuild.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
@@ -103,10 +99,6 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
-#include <Sinks/Formats/StatisticCollection/CountMinStatisticFormat.hpp>
-#include <Sinks/Formats/StatisticCollection/HyperLogLogStatisticFormat.hpp>
-#include <Sinks/Formats/StatisticCollection/StatisticFormatFactory.hpp>
-#include <StatisticCollection/StatisticStorage/DefaultStatisticStore.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
@@ -485,20 +477,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         parentOperator->setChild(joinBuildNautilus);
         return joinBuildNautilus;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalCountMinBuildOperator>())
-    {
-        const auto physicalCountMinBuild = operatorNode->as<const PhysicalOperators::PhysicalCountMinBuildOperator>();
-        auto countMinBuildOperator = lowerCountMinBuildOperator(*physicalCountMinBuild, operatorHandlers, bufferSize);
-        parentOperator->setChild(countMinBuildOperator);
-        return countMinBuildOperator;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHyperLogLogBuildOperator>())
-    {
-        const auto physicalHyperLogLog = operatorNode->as<const PhysicalOperators::PhysicalHyperLogLogBuildOperator>();
-        auto hyperLogLogBuildOperator = lowerHyperLogLogBuildOperator(*physicalHyperLogLog, operatorHandlers, bufferSize);
-        parentOperator->setChild(hyperLogLogBuildOperator);
-        return hyperLogLogBuildOperator;
-    }
 
     // Check if a plugin is registered that handles this physical operator
     for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins())
@@ -512,83 +490,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
 
     NES_NOT_IMPLEMENTED();
-}
-
-Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(
-    const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-    uint64_t bufferSize)
-{
-    using namespace Runtime::Execution::Operators;
-
-    // 1. Getting all the necessary variables for the operator and its handler
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    const auto fieldToTrackFieldName = physicalCountMinBuild.getNameOfFieldToTrack();
-    const auto numberOfBitsInKey = 8
-        * defaultPhysicalTypeFactory
-              .getPhysicalType(physicalCountMinBuild.getInputSchema()->getField(fieldToTrackFieldName)->getDataType())
-              ->size();
-    const auto width = physicalCountMinBuild.getWidth();
-    const auto depth = physicalCountMinBuild.getDepth();
-    const auto metricHash = physicalCountMinBuild.getMetricHash();
-    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
-    const auto inputOriginIds = physicalCountMinBuild.getInputOriginIds();
-    const auto sendingPolicy = physicalCountMinBuild.getSendingPolicy();
-    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
-    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(
-        physicalCountMinBuild.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::COUNT_MIN, sinkDataCodec);
-
-    // 2. Getting the windowSize, windowSlide, and timestampFieldName.
-    const auto windowType = physicalCountMinBuild.getWindowType()->as<Windowing::TimeBasedWindowType>();
-    NES_ASSERT(
-        windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-        "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
-    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
-
-    // 3. Create operator handler
-    auto countMinBuildOperatorHandler = CountMinOperatorHandler::create(
-        windowSize, windowSlide, sendingPolicy, width, depth, statisticFormat, inputOriginIds, numberOfBitsInKey);
-    operatorHandlers.push_back(countMinBuildOperatorHandler);
-    auto handlerIndex = operatorHandlers.size() - 1;
-
-    // 4. Creating the operator
-    return std::make_shared<CountMinBuild>(
-        handlerIndex, fieldToTrackFieldName, numberOfBitsInKey, width, depth, metricHash, std::move(timeFunction));
-}
-
-Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(
-    const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-    uint64_t bufferSize)
-{
-    using namespace Runtime::Execution::Operators;
-
-    // 1. Getting all the necessary variables for the operator and its handler
-    const auto fieldToTrackFieldName = physicalHLLBuildOperator.getNameOfFieldToTrack();
-    const auto width = physicalHLLBuildOperator.getWidth();
-    const auto metricHash = physicalHLLBuildOperator.getMetricHash();
-    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalHLLBuildOperator.getOutputSchema(), bufferSize);
-    const auto inputOriginIds = physicalHLLBuildOperator.getInputOriginIds();
-    const auto sendingPolicy = physicalHLLBuildOperator.getSendingPolicy();
-    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
-    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(
-        physicalHLLBuildOperator.getOutputSchema(), bufferSize, Statistic::StatisticSynopsisType::HLL, sinkDataCodec);
-
-    // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
-    const auto windowType = physicalHLLBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
-    NES_ASSERT(
-        windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-        "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
-    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
-
-    // 3. Create operator handler
-    auto hyperLogLogBuildOperatorHandler
-        = HyperLogLogOperatorHandler::create(windowSize, windowSlide, sendingPolicy, statisticFormat, width, inputOriginIds);
-    operatorHandlers.push_back(hyperLogLogBuildOperatorHandler);
-    auto handlerIndex = operatorHandlers.size() - 1;
-
-    // 4. Creating the operator
-    return std::make_shared<HyperLogLogBuild>(handlerIndex, fieldToTrackFieldName, metricHash, std::move(timeFunction));
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
