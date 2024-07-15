@@ -308,8 +308,7 @@ TEST_F(NLJSliceSerializationTest, nljSliceSerialization)
     // create mocked configuration for sink
     SinkFormatPtr format = std::make_shared<CsvFormat>(leftSchema, bm, false);
     auto workerConfigurations = Configurations::WorkerConfiguration::create();
-    this->nodeEngine
-        = Runtime::NodeEngineBuilder::create(workerConfigurations).setQueryStatusListener(std::make_shared<DummyQueryListener>()).build();
+    this->nodeEngine = Runtime::NodeEngineBuilder(*workerConfigurations).build();
     // create sink, which is used to write buffers to the file
     auto fileSink = RawBufferSink(nodeEngine, 1, filePath, false, INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, 1);
     fileSink.setup();
