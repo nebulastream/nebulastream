@@ -636,13 +636,6 @@ add_subdirectory(nes-window-types)
 # Add targets for plugins
 add_subdirectory(nes-plugins)
 
-
-# Add targets for benchmarks
-if (NES_BUILD_BENCHMARKS)
-    add_subdirectory(nes-benchmark)
-endif (NES_BUILD_BENCHMARKS)
-
-
 # Documentation
 add_subdirectory(cmake/docs)
 
