@@ -144,28 +144,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
     if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>())
     {
-        //Fetch logical and physical source name in the descriptor
-        auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
-        auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
-        //Iterate over all available physical sources
-        bool foundPhysicalSource = false;
-        for (const auto& physicalSourceType : nodeEngine->getPhysicalSourceTypes())
-        {
-            //Check if logical and physical source name matches with any of the physical source provided by the node
-            if (physicalSourceType->getLogicalSourceName() == logicalSourceName
-                && physicalSourceType->getPhysicalSourceName() == physicalSourceName)
-            {
-                sourceDescriptor = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSourceType);
-                foundPhysicalSource = true;
-                break;
-            }
-        }
-        if (!foundPhysicalSource)
-        {
-            throw QueryCompilationException(
-                "Unable to find the Physical source with logical source name " + logicalSourceName + " and physical source name "
-                + physicalSourceName);
-        }
+        NES_THROW_RUNTIME_ERROR("Logical source name lookup is not supported");
     }
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
