@@ -623,12 +623,6 @@ add_subdirectory(nes-catalogs)
 add_subdirectory(nes-configurations)
 # Add target for operators
 add_subdirectory(nes-operators)
-# Add target for optimizer
-add_subdirectory(nes-optimizer)
-# Add target and executable for nes worker
-add_subdirectory(nes-worker)
-# Add target for for nes-coordinator
-add_subdirectory(nes-coordinator)
 # Add target for client
 add_subdirectory(nes-client)
 # Add targets for execution
