@@ -14,10 +14,12 @@
 
 #ifndef NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
 #define NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
-
+//#include <Nautilus/DataTypes/Identifier.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <ostream>
+#include <sstream>
 
 namespace NES::Nautilus {
 
@@ -123,6 +125,11 @@ class ExecutableDataType : public AbstractDataType {
   protected:
     nautilus::val<ValueType> rawValue;
 };
+
+// Alias for Identifier Values. Otherwise, user need to type Value<Identifier<WorkerId>>
+//template<NESIdentifier IdentifierType>
+//using ValueId = ExecutableDataType<IdentifierImpl<IdentifierType>>;
+
 
 // Define common data types
 using Int8 = ExecutableDataType<int8_t>;

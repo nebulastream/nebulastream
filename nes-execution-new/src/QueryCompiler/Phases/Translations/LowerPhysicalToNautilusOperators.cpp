@@ -24,7 +24,7 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
@@ -1012,8 +1012,8 @@ LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperator
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
-        std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider =
+        std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
 }
 
@@ -1025,8 +1025,8 @@ LowerPhysicalToNautilusOperators::lowerEmit(Runtime::Execution::PhysicalOperator
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
-        std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider =
+        std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));
 }
 

@@ -15,7 +15,6 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/IR/Types/StampFactory.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -24,8 +23,8 @@ NautilusExecutablePipelineStage::NautilusExecutablePipelineStage(
     : physicalOperatorPipeline(physicalOperatorPipeline) {}
 
 uint32_t NautilusExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext) {
-    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) &pipelineExecutionContext);
-    auto workerContextRef = Value<MemRef>((int8_t*) nullptr);
+    auto pipelineExecutionContextRef = nautilus::val<int8_t*>((int8_t*)&pipelineExecutionContext);
+    auto workerContextRef = nautilus::val<int8_t*>(nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->setup(ctx);
     return 0;
@@ -34,10 +33,10 @@ uint32_t NautilusExecutablePipelineStage::setup(PipelineExecutionContext& pipeli
 ExecutionResult NautilusExecutablePipelineStage::execute(TupleBuffer& inputTupleBuffer,
                                                          PipelineExecutionContext& pipelineExecutionContext,
                                                          WorkerContext& workerContext) {
-    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) &pipelineExecutionContext);
-    auto workerContextRef = Value<MemRef>((int8_t*) &workerContext);
+    auto pipelineExecutionContextRef = nautilus::val<int8_t*>((int8_t*) &pipelineExecutionContext);
+    auto workerContextRef = nautilus::val<int8_t*>((int8_t*) &workerContext);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
-    auto bufferRef = Value<MemRef>((int8_t*) std::addressof(inputTupleBuffer));
+    auto bufferRef = nautilus::val<int8_t*>((int8_t*) std::addressof(inputTupleBuffer));
     auto recordBuffer = RecordBuffer(bufferRef);
     physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
     physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
@@ -59,8 +58,8 @@ uint32_t NautilusExecutablePipelineStage::close(PipelineExecutionContext&, Worke
 }
 
 uint32_t NautilusExecutablePipelineStage::stop(PipelineExecutionContext& pipelineExecutionContext) {
-    auto pipelineExecutionContextRef = Value<MemRef>((int8_t*) &pipelineExecutionContext);
-    auto workerContextRef = Value<MemRef>((int8_t*) nullptr);
+    auto pipelineExecutionContextRef = nautilus::val<int8_t*>((int8_t*) &pipelineExecutionContext);
+    auto workerContextRef = nautilus::val<int8_t*>((int8_t*) nullptr);
     auto ctx = ExecutionContext(workerContextRef, pipelineExecutionContextRef);
     physicalOperatorPipeline->getRootOperator()->terminate(ctx);
     return 0;

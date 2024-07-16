@@ -37,7 +37,7 @@ class RecordBuffer {
      * @brief Creates a new record buffer with a reference to a tuple buffer
      * @param tupleBufferRef
      */
-    explicit RecordBuffer(const val<void*>& tupleBufferRef);
+    explicit RecordBuffer(const val<int8_t*>& tupleBufferRef);
 
     /**
      * @brief Read number of record that are currently stored in the record buffer.

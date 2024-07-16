@@ -14,9 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Nautilus/Backends/Executable.hpp>
-#include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
+#include <nautilus/Engine.hpp>
 #include <Util/Timer.hpp>
 #include <future>
 namespace NES {
@@ -38,19 +36,18 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
   public:
     CompiledExecutablePipelineStage(const std::shared_ptr<PhysicalOperatorPipeline>& physicalOperatorPipeline,
                                     const std::string& compilationBackend,
-                                    const Nautilus::CompilationOptions& options);
+                                    const nautilus::engine::Options& options);
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
     ExecutionResult execute(TupleBuffer& inputTupleBuffer,
                             PipelineExecutionContext& pipelineExecutionContext,
                             WorkerContext& workerContext) override;
-    std::shared_ptr<NES::Nautilus::IR::IRGraph> createIR(DumpHelper& dumpHelper, Timer<>& timer);
 
   private:
-    std::unique_ptr<Nautilus::Backends::Executable> compilePipeline();
+    nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> compilePipeline();
     std::string compilationBackend;
-    const Nautilus::CompilationOptions options;
-    std::shared_future<std::unique_ptr<Nautilus::Backends::Executable>> executablePipeline;
-    Nautilus::Backends::Executable::Invocable<void, void*, void*, void*> pipelineFunction;
+    const nautilus::engine::Options options;
+    nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> pipelineFunction;
+    std::shared_ptr<nautilus::engine::NautilusEngine> engine;
 };
 
 }// namespace NES::Runtime::Execution

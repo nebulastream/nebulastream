@@ -13,7 +13,7 @@
 */
 #include <API/TestSchemas.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
