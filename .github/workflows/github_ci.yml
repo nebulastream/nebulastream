@@ -280,15 +280,6 @@ jobs:
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v3.16.2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
 
 
   build-macos:
@@ -321,15 +312,6 @@ jobs:
           echo $build_dir
           mkdir -p $build_dir
           $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh "$build_dir"
-      - name: Notify Slack
-        uses: 8398a7/action-slack@v3.16.2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
 
 
 #  infer-static-analysis:
@@ -488,12 +470,3 @@ jobs:
           publish_dir: ./build/cmake/docs/html
           external_repository: nebulastream/nebulastream-docs
           publish_branch: master
-      - name: "Notify Slack"
-        uses: 8398a7/action-slack@v3.16.2
-        with:
-          status: ${{ job.status }}
-          author_name: ${{ github.actor }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
-          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-        if: always()
