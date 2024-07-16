@@ -191,12 +191,12 @@ try {
 At the level in the stack where we want/can resume the exceution:
 ``` C++
 try {
-   /* code from above that throws CannotConnectToCoordinator */ 
-} catch (const Exception& e) {    
-	if (e.code() == CannotConnectToCoordinator) {
-	    /* handle exception, e.g. restore state, try to reconnect, etc. */
-	    tryLogCurrentException();
-	}
+    /* code from above that throws CannotConnectToCoordinator */ 
+} catch (const Exception& e) {
+    if (e.code() == CannotConnectToCoordinator) {
+        /* handle exception, e.g. restore state, try to reconnect, etc. */
+        tryLogCurrentException();
+    }
 }
 ```
 
@@ -223,7 +223,7 @@ When handling errors, the following guidelines should be followed:
 *How to use exceptions?*
 - Throw exceptions by value.
     ```C++
-        throw CannotConnectToCoordinator();
+    throw CannotConnectToCoordinator();
     ```
 - Catch exceptions by const reference.
 - Rethrow with throw without arguments.
@@ -307,23 +307,27 @@ Analog to exception handling classes that inherit from `ErrorListener` implement
 
 ### General
 
-[Exceptionally Bad: The Misuse of Exceptions in C++ & How to Do Better - Peter Muldoon - CppCon 2023
+- [Exceptionally Bad: The Misuse of Exceptions in C++ & How to Do Better - Peter Muldoon - CppCon 2023
 ](https://www.youtube.com/watch?v=Oy-VTqz1_58&ab_channel=CppCon)
 
-[DuckDB Exception Handling Guidelines](https://github.com/duckdb/duckdb/blob/7b276746f772e036474e80f19195a0f5af8891a0/CONTRIBUTING.md?plain=1#L57)
+- [DuckDB Exception Handling Guidelines](https://github.com/duckdb/duckdb/blob/7b276746f772e036474e80f19195a0f5af8891a0/CONTRIBUTING.md?plain=1#L57)
 
-[Clickhouse Exception Handling Guidelines](https://clickhouse.com/docs/en/development/style#how-to-write-code)
+- [Clickhouse Exception Handling Guidelines](https://clickhouse.com/docs/en/development/style#how-to-write-code)
 
-[CppCoreGuidelines Exception Handling](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#e15-throw-by-value-catch-exceptions-from-a-hierarchy-by-reference)
+- [CppCoreGuidelines Exception Handling](https://isocpp.github.io/CppCoreGuidelines/CppCoreGuidelines#e15-throw-by-value-catch-exceptions-from-a-hierarchy-by-reference)
 
-[Fail Fast - Jim Shore](https://martinfowler.com/ieeeSoftware/failFast.pdf)
+- [Fail Fast - Jim Shore](https://martinfowler.com/ieeeSoftware/failFast.pdf)
 
-[Avoid exception throwing in performance-sensitive code - Daniel Lemire](https://lemire.me/blog/2022/05/13/avoid-exception-throwing-in-performance-sensitive-code/)
+- [Avoid exception throwing in performance-sensitive code - Daniel Lemire](https://lemire.me/blog/2022/05/13/avoid-exception-throwing-in-performance-sensitive-code/)
+
+- [Making exceptions more affordable and useable](https://accu.org/conf-docs/PDFs_2019/herb_sutter_-_de-fragmenting_cpp__making_exceptions_more_affordable_and_usable.pdf)
+
+- [C++ exceptions are becoming more and more problematic - Thomas Neumann](ttps://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2544r0.html)
 
 ### Error Codes
 
-[Postgres Error Style Guide](https://www.postgresql.org/docs/current/error-style-guide.html)
+- [Postgres Error Style Guide](https://www.postgresql.org/docs/current/error-style-guide.html)
 
-[SQLSTATE Defintion](https://www.ibm.com/docs/de/db2/11.1?topic=messages-sqlstate)
+- [SQLSTATE Defintion](https://www.ibm.com/docs/de/db2/11.1?topic=messages-sqlstate)
 
-[ClickHouse Error Tables](https://clickhouse.com/docs/en/operations/system-tables/errors)
+- [ClickHouse Error Tables](https://clickhouse.com/docs/en/operations/system-tables/errors)
