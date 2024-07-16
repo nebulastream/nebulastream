@@ -15,14 +15,14 @@ include(ExternalProject)
 
 # QueryPlanIteratorTest
 add_nes_unit_test(plan-iterator-test "UnitTests/Plans/Util/PlanIteratorTest.cpp")
+target_link_libraries(plan-iterator-test nes-client nes-operators)
+
 ### Query Plan Tests ###
 add_nes_unit_test(query-plan-tests "UnitTests/Plans/Query/QueryPlanTest.cpp")
+target_link_libraries(query-plan-tests nes-client nes-operators)
+
 ### Query Plan Builder Tests ###
 add_nes_unit_test(query-plan-builder-tests "UnitTests/Plans/Query/QueryPlanBuilderTest.cpp")
+target_link_libraries(query-plan-builder-tests nes-client nes-operators)
 
 set_tests_properties(${Tests} PROPERTIES TIMEOUT 35)
-
-add_library(nes-operators-test-util SHARED
-        "src/Util/JavaUdfDescriptorBuilder.cpp")
-target_link_libraries(nes-operators-test-util PRIVATE nes-operators)
-target_include_directories(nes-operators-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
