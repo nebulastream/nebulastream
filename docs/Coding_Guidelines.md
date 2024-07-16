@@ -212,4 +212,53 @@ class Derived {
 
 
 # Exceptions and Error Handling
-TODO once the [error handling design document](https://github.com/nebulastream/nebulastream-public/pull/109) is done, we will add the guidelines here.
+
+When handling errors, the following guidelines should be followed:
+
+*How to handle errors?*
+- Generally, check first if an exception is needed (*exceptional cases*). Throwing and catching exceptions is [expensive](https://lemire.me/blog/2022/05/13/avoid-exception-throwing-in-performance-sensitive-code/).
+    - Throw if the function cannot do what is advertised.
+    - Throw if the function cannot handle the error properly by its own because it needs more context.
+    - In performance sensitive code paths, ask yourself: can your error be resolved by returning a `std::optional` or a `std::expected` instead?
+- Use asserts to check pre- and post-invariants of functions. If compiled with `DEBUG` mode, we include asserts in our code.
+-  Write test cases that trigger exceptions. If an exception cannot be easily triggered by an test case it should probably be an assert.
+    ```C++
+    try {
+        sendMessage(someWrongNetworkConfiguration, msg);
+    } catch (CannotConnectToCoordinator & e) {
+        SUCCEED();
+    }
+    FAIL();
+    ```
+
+*How to use exceptions?*
+- Throw exceptions by value.
+    ```C++
+    throw CannotConnectToCoordinator();
+    ```
+- Catch exceptions by const reference.
+- Rethrow with throw without arguments.
+- Add context to exception messages if possible. Sometimes it makes sense to rethrow an exeption and catch it where one can add more context to it. To modify the exception message later, append to the mutable string:
+    ```C++
+    catch (CannotConnectToCoordinator& e) {
+        e.what += "for query id " + queryId;
+        throw;
+    }
+    ```
+- Before creating a new error type, check if an existing type can handle it.
+- Use the `main()` function return value to return the error code.
+
+    ```C++
+    int main () {
+        /* ... */
+        catch (...) {
+            tryLogCurrentException();
+            return getCurrentExceptionCode();
+        }
+    }
+    ```
+
+*How to define new exceptions?*
+-  A new exception type should only be defined if there is a situation in which code could catch and react specifically to that situation.
+-  The exception name and description should very concisely describe i) which condition lead to the error ("UnknownSourceType") or ii) which operation failed ("CannotConnectToCoordinator"). The former is preferred to the latter.
+-  When writing error messages (which is the description and optional context) we follow the [Postgres Error Message Style Guide](https://www.postgresql.org/docs/current/error-style-guide.html).
