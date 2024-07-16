@@ -17,20 +17,12 @@ get_source(nes-client NES_CLIENT_SOURCE_FILES)
 # Add Library
 add_library(nes-client ${NES_CLIENT_SOURCE_FILES})
 target_link_libraries(nes-client PRIVATE nes-operators)
-target_link_libraries(nes-client PRIVATE cpr::cpr ${CURL_LIBRARIES} nes-grpc nes-common)
+target_link_libraries(nes-client PRIVATE nes-grpc nes-common)
 target_include_directories(nes-client PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 register_public_header_dir(nes-client ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
-
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
 
 #Add the nes client and headers to cpack
 install(TARGETS nes-client
