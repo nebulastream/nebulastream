@@ -15,11 +15,7 @@ The style can be imported into Clion by following the steps below:
 - Functions and variables start with lowercase and use camelcase: `myMethod`
 - Constants are all upper case: `const double PI=3.14159265358979323;`
 - for magic numbers, we use constexpr: `constexpr auto MAGIC_NUMBER = 42;`
-
-[///]: # (What do we do with the position of operators? Please leave feedback what you think is better)
 - `*` and `&` next to the type not the name, e.g., `void* p` instead of `void *p` or `void& p` instead of `void &p`.
-  - another idea would be to put the `*` and `&`, e.g., `void * p` or `void & p` (Clickhouse style)
-
 
 # Includes and Forward Declaration
 We use `include <>` for all includes and avoid [forward declaration wherever possible](https:///github.com/nebulastream/nebulastream-public/discussions/19).
