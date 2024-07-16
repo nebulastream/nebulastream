@@ -83,13 +83,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - osversion: ubuntu-20_04
-            arch: "X64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "16"
-            test_parallelism: "4"
-            runner_group: "default"
           - osversion: ubuntu-22_04
             arch: "X64"
             require_build: "true"
