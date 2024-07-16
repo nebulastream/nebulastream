@@ -1,4 +1,8 @@
-name: NES CI
+name: NES PR CI
+
+# The following pipeline is meant to run for every PR. It will not call any other workflow / pipeline.
+# It will also check for the format and the guard checks. If these steps are successful, it will try to build the PR and run the tests.
+# In the future, we will add more automated checks to this pipeline, e.g., clang-tidy for our codebase or code coverage checks.
 
 on:
   pull_request:
