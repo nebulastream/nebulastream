@@ -1,7 +1,7 @@
 # What is the Purpose of a Design Document
 We create design documents for problems that require changes that are too complex or severe to be handled in a simple issue, requiring in-depth analysis and synchronization with the team.
-In essence, the design document review process is a synchronization phase during which every team member can asynchronously discuss the document until we reach a consensus. 
-When [we accept the design document](#how-is-a-design-document-accepted), we reach the synchronization point and merge the design document into the main. 
+In essence, the design document review process is a synchronization phase during which every team member can asynchronously discuss the document until we reach a consensus.
+When [we accept the design document](#how-is-a-design-document-accepted), we reach the synchronization point and merge the design document into the main.
 
 Design documents live in our codebase and record significant problems that we faced, our goals when dealing with these problems, the degree to which our solution reached these goals, the alternatives to our solution we considered, and why we did not choose them. In contrast to technical documentation, which only describes the final state of our design decisions, design documents document the path that leads to making the specific design decisions. As a result, design documents explain the rationale behind our design decisions.
 
@@ -10,7 +10,7 @@ Design documents live in our codebase and record significant problems that we fa
 We use Github discussions to draft designs with whoever wants to participate in the discussion. In contrast to a design document, a Github discussion can be used to brainstorm ideas and does not need to be formal.
 
 ## Design Documents
-Design documents organically grow out of Github discussions that conclude. A discussion concludes if it is possible to formalize at least the [The Problem](#the-problem), the [Goals](#goals), the [Non-Goals](#non-goals), the [Proposed Solution](#proposed-solution), and the [Alternatives](#alternatives) sections of the design document. When creating the design document, the GitHub discussion should be condensed to contain only the relevant information. Additionally, we formalize the content of potentially colloquial discussions.
+Design documents organically grow out of Github discussions that conclude. A discussion concludes if it is possible to formalize at least [The Problem](#the-problem), the [Goals](#goals), the [Non-Goals](#non-goals), the [Proposed Solution](#proposed-solution), and the [Alternatives](#alternatives) sections of the design document. When creating the design document, the GitHub discussion should be condensed to contain only the relevant information. Additionally, we formalize the content of potentially colloquial discussions.
 
 Since a design document claims time from multiple people from our team, we propose to consider the following before creating a design document:
 - A design document should be written with a reader-first mindset. Carefully consider if the design document is worth the time of other team members. Carefully consider if it is worth your time.
@@ -25,7 +25,7 @@ Since a design document claims time from multiple people from our team, we propo
 6. Collect feedback from the reviewers.
 7. Address the feedback of the reviewers.
 8. If possible, and not already done, create a [Minimal Viable Prototype](#minimal-viable-prototype) for the [Proposed Solution](#proposed-solution)
-9. The design document is accepted if two code owners and one additional maintainer accept the PR. 
+9. The design document is accepted if two code owners and one additional maintainer accept the PR.
 10. Ask one of the code owners to merge the PR.
 
 # Design Document Template
@@ -52,17 +52,20 @@ Furthermore, addressing the individual [Goals](#goals) and showing why the propo
 A minimal viable prototype should demonstrate that the solution generally works. It is acceptable to create a prototype after creating an initial [Draft](#draft) for the design document.
 
 ## Alternatives
-In this section, alternatives to the proposed solution need to be discussed. Each alternative should be tagged, e.g., A1, A2, and A3, to enable precise and consistent references during PR discussions.
-It should be clear what the advantages and the disadvantages of each alternative it must be clear why the proposed solution was preferred over the respective alternative. If possible, argue why the alternatives do not achieve certain [Goals](#goals) in contrast to [Proposed solution](#proposed-solution).
+In this section, alternatives to the proposed solution need to be discussed.
+Each alternative should be tagged, e.g., A1, A2, and A3, to enable precise and consistent references during PR discussions.
+One should discuss the advantages and disadvantages of each alternative.
+It must be clear why the proposed solution was preferred over the alternatives.
+If possible, argue why the alternatives do not achieve certain [Goals](#goals) in contrast to the [Proposed solution](#proposed-solution).
 
 ## (Optional) Open Questions
-All questions that are relevant for the design document, but that cannot and do not need to be answered before merging the design document. We might create issues from these questions or revisit them regularly.
+All questions that are relevant for the design document but that cannot and do not need to be answered before merging the design document. We might create issues from these questions or revisit them regularly.
 
 ## (Optional) Sources and Further Reading
 The design document should provide links to resources that cover the topic. This has three advantages:
-1. It shows that the author of the design document performed research on the topic. 
+1. It shows that the author of the design document performed research on the topic.
 2. It provides additional reading material for reviewers to better understand the topic covered by the design document. 
-3. it provides more in-depth documentation for future readers of the design document. 
+3. It provides more in-depth documentation for future readers of the design document.
 We should keep the sources that went into creating the design documents.
 
 ## (Optional) Appendix
