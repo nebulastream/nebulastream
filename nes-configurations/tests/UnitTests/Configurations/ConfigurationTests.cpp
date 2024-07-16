@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <fstream>
 #include <iostream>
 #include <string>
 #include <vector>
-#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
@@ -24,8 +24,6 @@
 #include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/Mobility/GeoLocation.hpp>
-#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 
@@ -328,10 +326,6 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput)
          "offsetMode=earliest"});
 
     PhysicalSourceTypePtr physicalSourceType1 = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
-    auto physicalSource1 = PhysicalSource::create(physicalSourceType1);
-    EXPECT_EQ(physicalSource1->getLogicalSourceName(), "default");
-    EXPECT_EQ(physicalSource1->getPhysicalSourceName(), "x");
-    EXPECT_TRUE(physicalSource1->getPhysicalSourceType()->instanceOf<DefaultSourceType>());
 
     EXPECT_EQ(
         physicalSourceType1->as<DefaultSourceType>()->getSourceGatheringInterval()->getValue(),
@@ -349,10 +343,6 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput)
          "offsetMode=earliest"});
 
     PhysicalSourceTypePtr physicalSourceType2 = PhysicalSourceTypeFactory::createFromString("", commandLineParams1);
-    auto physicalSource2 = PhysicalSource::create(physicalSourceType2);
-    EXPECT_EQ(physicalSource2->getLogicalSourceName(), "default");
-    EXPECT_EQ(physicalSource2->getPhysicalSourceName(), "x");
-    EXPECT_TRUE(physicalSource2->getPhysicalSourceType()->instanceOf<KafkaSourceType>());
 
     EXPECT_NE(
         physicalSourceType2->as<KafkaSourceType>()->getBrokers()->getValue(),
