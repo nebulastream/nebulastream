@@ -60,10 +60,10 @@ jobs:
         run: |
           echo "Found changes done to buildImage"
           cd docker/buildImage
-          #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
-          #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
+          # When we have decided whether to use the version as a tag, we can use the command below to extract the current version.
+          # grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
+          docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-public-build-image:latest --platform=linux/amd64,linux/arm64 --push
           echo "Pushed the build image"        
           docker logout
       - name: "Build and Release NES Dev Image"
@@ -72,7 +72,7 @@ jobs:
           echo "Found changes done to devImage"
           cd docker/devImage/
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
+          docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-public-dev-image:latest --platform=linux/amd64,linux/arm64 --push
           echo "Pushed the dev image"          
           docker logout
       - name: "Generate ChangeLogs"
@@ -90,20 +90,6 @@ jobs:
           futureRelease: v${{ env.NES_VERSION }}
           bugsLabel: "### Bug Fixes 🐛"
           issuesLabel: "### Miscellaneous Issues ✌️"
-          addSections: '{"optimizer":{"prefix":"### Query Optimizer 🔧","labels":["Query Optimizer", "QueryMerge"]},
-          "Spatial": {"prefix": "#### Spatial Query Processing 🌇", "labels":["Spatial Query Processing"]}, 
-          "monitoring": {"prefix": "#### Monitoring 🚥", "labels":["Monitoring"]},
-          "cep": {"prefix": "#### Complex Event Processing", "labels":["Complex Event Processing"]},
-          "runtime": {"prefix": "#### Runtime ", "labels":["Runtime"]},
-          "udf": {"prefix": "#### User Defined Functions", "labels":["User Defined Functions"]},
-          "query compiler": {"prefix": "#### Query Compiler", "labels":["Query Compiler"]},
-          "fault tolerance": {"prefix": "#### Fault Tolerance", "labels":["Fault Tolerance"]},
-          "build management": {"prefix": "#### Build Management", "labels":["Build Management"]},
-          "operators": {"prefix": "#### Operators ", "labels":["Operators"]},
-          "state management": {"prefix": "#### State Management ", "labels":["State Management"]},
-          "rest": {"prefix": "#### REST API ", "labels":["REST"]},
-          "documentation": {"prefix": "#### Documentation ", "labels":["Documentation"]}
-          }'
       - name: "Commit Updated Changelog File"
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
@@ -115,17 +101,10 @@ jobs:
         run: |
           echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt     
           if [[ $EVENT == 'workflow_dispatch' ]]; then
-            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=$NEXT_VERSION --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=$NEXT_VERSION --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-public-build-image:latest
           else
-            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
+            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-public-build-image:latest
           fi
-      - name: "Push Docs To Pages"
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          personal_token: ${{ secrets.CI_TOKEN }}
-          publish_dir: ./build/cmake/docs/html
-          external_repository: nebulastream/nebulastream-docs
-          publish_branch: master
 
   create-tag:
     runs-on: [self-hosted, linux, X64, Build]
@@ -254,7 +233,7 @@ jobs:
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
           wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-$UBUNTU_VERSION-Linux.X64.deb
           wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-$UBUNTU_VERSION-Linux.arm64.deb
-          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-executable-image:$nes_version --tag nebulastream/nes-executable-image:latest --push
+          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-public-executable-image:$nes_version --tag nebulastream/nes-public-executable-image:latest --push
           rm -rf nes-amd64.deb nes-arm64.deb
           echo "Pushed the execution image"
           docker logout

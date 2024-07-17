@@ -26,13 +26,6 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: [ self-hosted, linux, X64, Build ]
     steps:
-      - name: verify-user
-        uses: tspascoal/get-user-teams-membership@v3
-        id: checkUserMember
-        with:
-          username: ${{ github.actor }}
-          team: 'NebulaStream-Admins'
-          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
       - uses: AutoModality/action-clean@v1
       - name: Checkout
         uses: actions/checkout@v4
@@ -45,7 +38,6 @@ jobs:
 
   pre-build-checks:
     name: "Pre-Build-Checks"
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [ validateTrigger ]
     steps:
@@ -61,13 +53,13 @@ jobs:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: preamble-check
         run: |
-          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nebulastream/nes-public-build-image:latest
       - name: format-check
         run: |
-          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-public-build-image:latest
       - name: guard-check
         run: |
-          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-public-build-image:latest
       - name: docker cleanup
         if: ${{ always() }}
         run: |
