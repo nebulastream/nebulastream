@@ -73,3 +73,9 @@ nes-onnx-->nes-execution
 nes-benchmark-->nes-coordinator
 nes-worker-->nes-execution
 ```
+
+
+# Clang-Format, Clang-Tidy, and IWYU
+We use clang-format, clang-tidy, and include-what-you-use (IWYU) to ensure code quality and consistency.
+To run these tools, you need to use the cmake option: `-DNES_SELF_HOSTING=ON`.
+Afterward, there is a new target in the makefile called `format` that runs clang-format and clang-tidy.
