@@ -4,8 +4,23 @@
 #   refactoring
 # - Implicit conversions sometimes make the code more readable
 # - readability-named-parameter does not improve readability
-Checks:          '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion,-readability-named-parameter,-readability-implicit-bool-conversion,-readability-magic-numbers,-hicpp-named-parameter,-readability-magic-numbers,-readability-uppercase-literal-suffix'
-WarningsAsErrors: ''
+
+Checks:
+  '*,'
+  '-abseil-*,'
+  '-fuchsia-*,'
+  '-google-*,'
+  '-zircon-*,'
+  '-llvm*,'
+  '-modernize-use-trailing-return-type,'
+  '-readability-implicit-conversion,'
+  '-readability-named-parameter,'
+  '-readability-implicit-bool-conversion,'
+  '-readability-magic-numbers,'
+  '-hicpp-named-parameter,'
+  '-readability-magic-numbers,'
+  '-readability-uppercase-literal-suffix'
+
+WarningsAsErrors: '*'
 HeaderFilterRegex: ''
-FormatStyle:     none
 IgnoreClassesWithAllMemberVariablesBeingPublic: true
