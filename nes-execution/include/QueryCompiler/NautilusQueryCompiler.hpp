@@ -37,12 +37,13 @@ public:
      * @param sourceSharing indicates if source sharing should be used
      * @return QueryCompilerPtr
      */
+    NautilusQueryCompiler(
+        QueryCompilation::QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing);
+
     static QueryCompilerPtr
     create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing = false);
 
 protected:
-    NautilusQueryCompiler(
-        QueryCompilation::QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing);
     QueryCompilation::LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
     QueryCompilation::LowerPhysicalToNautilusOperatorsPtr lowerPhysicalToNautilusOperatorsPhase;
     QueryCompilation::NautilusCompilationPhasePtr compileNautilusPlanPhase;
