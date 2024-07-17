@@ -94,9 +94,9 @@ class SourceCatalogController : public oatpp::web::server::api::ApiController {
             nlohmann::json result;
             nlohmann::json::array_t allSource = {};
             for (auto const& physicalSource : std::as_const(allPhysicalSource)) {
-                allSource.push_back(physicalSource->toString());
+                allSource.push_back(physicalSource->toJson());
             }
-            result["Physical Sources"] = allSource;
+            result["physicalSources"] = allSource;
             return createResponse(Status::CODE_200, result.dump());
         } catch (const MapEntryNotFoundException& e) {
             return errorHandler->handleError(Status::CODE_404,

@@ -125,9 +125,22 @@ TEST_F(SourceCatalogControllerTest, testGetPhysicalSource) {
     future.wait();
     cpr::Response r = future.get();
     EXPECT_EQ(r.status_code, 200l);
+    nlohmann::json expectedResponse;
+    expectedResponse = R"(
+        {
+            "physicalSources":[
+                {
+                     "logicalSourceName":"default_logical",
+                     "nodeId":2,
+                     "physicalSourceName":"physical_test",
+                     "physicalSourceType":"CSV_SOURCE"
+                }
+            ]
+        }
+    )"_json;
     nlohmann::json response;
     ASSERT_NO_THROW(response = nlohmann::json::parse(r.text));
-    ASSERT_TRUE(response.contains("Physical Sources") && response["Physical Sources"].size() != 0);
+    EXPECT_THAT(response, testing::Eq(expectedResponse));
     bool retStopWrk = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk);
     stopCoordinator();

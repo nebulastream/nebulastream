@@ -178,7 +178,8 @@ Status CoordinatorRPCServer::RegisterPhysicalSource(ServerContext*,
 
         auto [success, errorMessage] = sourceCatalogService->registerPhysicalSource(physicalSourceDefinition.physicalsourcename(),
                                                                                     physicalSourceDefinition.logicalsourcename(),
-                                                                                    WorkerId(request->workerid()));
+                                                                                    WorkerId(request->workerid()),
+                                                                                    physicalSourceDefinition.sourcetype());
         auto result = reply->add_results();
         result->set_physicalsourcename(physicalSourceDefinition.physicalsourcename());
         result->set_success(success);

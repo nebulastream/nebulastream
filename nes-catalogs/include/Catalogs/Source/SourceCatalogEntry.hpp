@@ -17,6 +17,7 @@
 
 #include <Identifiers/Identifiers.hpp>
 #include <memory>
+#include <nlohmann/json.hpp>
 #include <sstream>
 #include <string>
 
@@ -77,6 +78,17 @@ class SourceCatalogEntry {
      * @return string rep of the source catalog entry
      */
     std::string toString();
+
+    /**
+     * @brief Return SourceCatalogEntry as JSON
+     * Includes attributes:
+     *  - physicalSourceName
+     *  - logicalSourceName
+     *  - physicalSourceType
+     *  - nodeId
+     * @return JSON object representing source information
+     */
+    nlohmann::json toJson();
 
   private:
     /**

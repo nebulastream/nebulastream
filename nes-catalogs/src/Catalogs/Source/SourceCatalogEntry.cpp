@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
+#include <Util/magicenum/magic_enum.hpp>
 #include <utility>
 
 namespace NES::Catalogs::Source {
@@ -34,7 +37,20 @@ WorkerId SourceCatalogEntry::getTopologyNodeId() const { return topologyNodeId; 
 
 std::string SourceCatalogEntry::toString() {
     std::stringstream ss;
-    ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
+    ss << "physicalSource=" << physicalSource->getPhysicalSourceName()
+       << " logicalSource=" << logicalSource->getLogicalSourceName() << " on node=" << topologyNodeId;
     return ss.str();
 }
+
+nlohmann::json SourceCatalogEntry::toJson() {
+    nlohmann::json sourceEntryJson{};
+
+    sourceEntryJson["physicalSourceName"] = physicalSource->getPhysicalSourceName();
+    sourceEntryJson["logicalSourceName"] = logicalSource->getLogicalSourceName();
+    sourceEntryJson["physicalSourceType"] = physicalSource->getPhysicalSourceTypeName();
+    sourceEntryJson["nodeId"] = topologyNodeId.getRawValue();
+
+    return sourceEntryJson;
+}
+
 }// namespace NES::Catalogs::Source

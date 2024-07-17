@@ -51,6 +51,19 @@ class SourceCatalogService {
      * @param logicalSourceName: logical source name
      * @param physicalSourceName: physical source name
      * @param topologyNodeId : the topology node id
+     * @param physicalSourceTypeName : string representation of the Physical Source Type
+     * @return first element indicates success, second element is a error message in case of a failure
+     */
+    std::pair<bool, std::string> registerPhysicalSource(const std::string& physicalSourceName,
+                                                        const std::string& logicalSourceName,
+                                                        WorkerId topologyNodeId,
+                                                        const std::string& physicalSourceTypeName);
+
+    /**
+     * @brief method to register a physical source
+     * @param logicalSourceName: logical source name
+     * @param physicalSourceName: physical source name
+     * @param topologyNodeId : the topology node id
      * @return first element indicates success, second element is a error message in case of a failure
      */
     std::pair<bool, std::string>

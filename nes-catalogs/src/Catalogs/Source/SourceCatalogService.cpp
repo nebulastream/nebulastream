@@ -30,7 +30,8 @@ SourceCatalogService::SourceCatalogService(Catalogs::Source::SourceCatalogPtr so
 
 std::pair<bool, std::string> SourceCatalogService::registerPhysicalSource(const std::string& physicalSourceName,
                                                                           const std::string& logicalSourceName,
-                                                                          WorkerId topologyNodeId) {
+                                                                          WorkerId topologyNodeId,
+                                                                          const std::string& physicalSourceTypeName) {
 
     std::unique_lock<std::mutex> lock(sourceCatalogMutex);
 
@@ -44,15 +45,22 @@ std::pair<bool, std::string> SourceCatalogService::registerPhysicalSource(const 
               topologyNodeId,
               physicalSourceName,
               logicalSourceName);
-    auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName);
+    auto physicalSource = PhysicalSource::create(logicalSourceName, physicalSourceName, physicalSourceTypeName);
     auto logicalSource = sourceCatalog->getLogicalSource(logicalSourceName);
-    auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, topologyNodeId);
-    bool success = sourceCatalog->addPhysicalSource(logicalSourceName, sce);
+    auto sourceCatalogEntry = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, topologyNodeId);
+    bool success = sourceCatalog->addPhysicalSource(logicalSourceName, sourceCatalogEntry);
     if (!success) {
         NES_ERROR("SourceCatalogService::RegisterPhysicalSource: adding physical source was not successful.");
         return {false, "RegisterPhysicalSource: adding physical source was not successful."};
     }
     return {success, ""};
+}
+
+std::pair<bool, std::string> SourceCatalogService::registerPhysicalSource(const std::string& physicalSourceName,
+                                                                          const std::string& logicalSourceName,
+                                                                          WorkerId topologyNodeId) {
+
+    return SourceCatalogService::registerPhysicalSource(physicalSourceName, logicalSourceName, topologyNodeId, "");
 }
 
 bool SourceCatalogService::unregisterPhysicalSource(const std::string& physicalSourceName,

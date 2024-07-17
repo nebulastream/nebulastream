@@ -22,18 +22,28 @@ namespace NES {
 
 PhysicalSource::PhysicalSource(std::string logicalSourceName,
                                std::string physicalSourceName,
-                               PhysicalSourceTypePtr physicalSourceType)
+                               PhysicalSourceTypePtr physicalSourceType,
+                               std::string physicalSourceTypeName)
     : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-      physicalSourceType(std::move(physicalSourceType)), statisticId(getNextStatisticId()) {}
+      physicalSourceType(std::move(physicalSourceType)), physicalSourceTypeName(std::move(physicalSourceTypeName)),
+      statisticId(getNextStatisticId()) {}
 
 PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType) {
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
     auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
-    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, physicalSourceName, std::move(physicalSourceType)));
+    return std::make_shared<PhysicalSource>(
+        PhysicalSource(logicalSourceName, physicalSourceName, std::move(physicalSourceType), ""));
 }
 
 PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName) {
-    return std::make_shared<PhysicalSource>(PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), nullptr));
+    return std::make_shared<PhysicalSource>(
+        PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), nullptr, ""));
+}
+
+PhysicalSourcePtr
+PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName, std::string physicalSourceTypeName) {
+    return std::make_shared<PhysicalSource>(
+        PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), nullptr, std::move(physicalSourceTypeName)));
 }
 
 StatisticId PhysicalSource::getStatisticId() const { return statisticId; }
@@ -51,4 +61,6 @@ const std::string& PhysicalSource::getLogicalSourceName() const { return logical
 const std::string& PhysicalSource::getPhysicalSourceName() const { return physicalSourceName; }
 
 const PhysicalSourceTypePtr& PhysicalSource::getPhysicalSourceType() const { return physicalSourceType; }
+
+const std::string& PhysicalSource::getPhysicalSourceTypeName() const { return physicalSourceTypeName; }
 }// namespace NES
