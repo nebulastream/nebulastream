@@ -9,3 +9,29 @@ WarningsAsErrors: ''
 HeaderFilterRegex: ''
 FormatStyle:     none
 IgnoreClassesWithAllMemberVariablesBeingPublic: true
+
+
+CheckOptions:
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.LocalVariableCase: camelBack
+  readability-identifier-naming.StaticConstantCase: CamelCase
+  readability-identifier-naming.MemberCase: camelBack
+  readability-identifier-naming.PrivateMemberPrefix: ''
+  readability-identifier-naming.ProtectedMemberPrefix: ''
+  readability-identifier-naming.PublicMemberCase: camelBack
+  readability-identifier-naming.MethodCase: camelBack
+  readability-identifier-naming.PrivateMethodPrefix: ''
+  readability-identifier-naming.ProtectedMethodPrefix: ''
+  readability-identifier-naming.ParameterPackCase: camelBack
+  readability-identifier-naming.TemplateTemplateParameterCase: CamelCase
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  readability-identifier-naming.TypeTemplateParameterCase: CamelCase
+  readability-identifier-naming.TypedefCase: CamelCase
+  readability-identifier-naming.UnionCase: CamelCase
+  modernize-loop-convert.UseCxx20ReverseRanges: false
+  performance-move-const-arg.CheckTriviallyCopyableMove: false
+  # Workaround clang-tidy bug: https://github.com/llvm/llvm-project/issues/46097
+  readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
+  cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'
