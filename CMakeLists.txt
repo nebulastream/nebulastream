@@ -60,11 +60,6 @@ option(NES_USE_OPENCL "Build with OpenCL support" OFF)
 #toggle GPU runtime and test
 option(NES_USE_GPU "Build with GPU acceleration" OFF)
 
-# Plugins
-option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
-option(NES_BUILD_PLUGIN_TENSORFLOW "Build Tensorflow Plugin support" OFF)
-option(NES_BUILD_PLUGIN_ONNX "Build ONNX Plugin support" OFF)
-option(NES_BUILD_PLUGIN_CUDA "Build CUDA Plugin" OFF)
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
@@ -631,8 +626,6 @@ add_subdirectory(nes-nautilus)
 add_subdirectory(nes-expressions)
 # Add targets nes-window-types
 add_subdirectory(nes-window-types)
-# Add targets for plugins
-add_subdirectory(nes-plugins)
 
 # Documentation
 add_subdirectory(cmake/docs)
