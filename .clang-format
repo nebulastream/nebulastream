@@ -1,5 +1,6 @@
 # Quite similar to Clickhouse's .clang-format (https://github.com/ClickHouse/ClickHouse/blob/master/.clang-format), but with some minor changes.
 # Most notably is the default Cpp version (we use C++20) and the poison of the `*` and `&` operator for pointers and references.
+
 BasedOnStyle: WebKit
 Language: Cpp
 AlignAfterOpenBracket: AlwaysBreak
@@ -23,12 +24,12 @@ ConstructorInitializerAllOnOneLineOrOnePerLine: true
 ExperimentalAutoDetectBinPacking: true
 UseTab: Never
 TabWidth: 4
-Standard: Cpp11
-PointerAlignment: Middle
+Standard: c++20
+PointerAlignment: Left
 MaxEmptyLinesToKeep: 2
 KeepEmptyLinesAtTheStartOfBlocks: false
 AllowShortFunctionsOnASingleLine: InlineOnly
-AlwaysBreakTemplateDeclarations: true
+AlwaysBreakTemplateDeclarations: Yes
 IndentCaseLabels: true
 SpaceAfterTemplateKeyword: true
 SpaceBeforeCpp11BracedList: false
