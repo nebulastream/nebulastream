@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
 
+#include <unordered_map>
 #include <vector>
 #include <Network/ExchangeProtocolListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
