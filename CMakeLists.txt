@@ -627,6 +627,8 @@ add_subdirectory(nes-expressions)
 # Add targets nes-window-types
 add_subdirectory(nes-window-types)
 
+add_subdirectory(nes-single-node-worker)
+
 # Documentation
 add_subdirectory(cmake/docs)
 
