@@ -1,7 +1,7 @@
 # What is the Purpose of a Design Document
 We create design documents for problems that require changes that are too complex or severe to be handled in a simple issue, requiring in-depth analysis and synchronization with the team.
 In essence, the design document review process is a synchronization phase during which every team member can asynchronously discuss the document until we reach a consensus.
-When [we accept the design document](#how-is-a-design-document-accepted), we reach the synchronization point and merge the design document into the main.
+When [we accept the design document](#how-is-a-design-document-accepted), we reach the synchronization point and merge the design document into the main branch.
 
 Design documents live in our codebase and record significant problems that we faced, our goals when dealing with these problems, the degree to which our solution reached these goals, the alternatives to our solution we considered, and why we did not choose them. In contrast to technical documentation, which only describes the final state of our design decisions, design documents document the path that leads to making the specific design decisions. As a result, design documents explain the rationale behind our design decisions.
 
@@ -39,6 +39,7 @@ This section should precisely state all goals. Furthermore, the goals should add
 
 ## Non-Goals
 This section should list everything related to the design document that is out of the scope of the design document. For every non-goal, explain why it is out of the scope of the design document.
+Enumerate non-goals as NG1, NG2, ..., so we can reference them distinctly.
 
 ## (Optional) Solution Background
 If the proposed solution builds upon prior work, such as issues and PRs, by the author of the design document or by colleagues, or if it strongly builds on top of designs used by other (open source) projects, then a solution background chapter can provide the necessary link to the prior work, without interfering with the description of the actual solution.
@@ -52,11 +53,11 @@ Furthermore, addressing the individual [Goals](#goals) and showing why the propo
 A minimal viable prototype should demonstrate that the solution generally works. It is acceptable to create a prototype after creating an initial [Draft](#draft) for the design document.
 
 ## Alternatives
-In this section, alternatives to the proposed solution need to be discussed.
-Each alternative should be tagged, e.g., A1, A2, and A3, to enable precise and consistent references during PR discussions.
-One should discuss the advantages and disadvantages of each alternative.
+In this section, we discuss alternatives to the proposed solution.
+We enumerate each alternative, e.g., A1, A2, and A3, to enable precise and consistent references during PR discussions.
+We discuss the advantages and disadvantages of each alternative.
 It must be clear why the proposed solution was preferred over the alternatives.
-If possible, argue why the alternatives do not achieve certain [Goals](#goals) in contrast to the [Proposed solution](#proposed-solution).
+If possible, we argue why the alternatives do not achieve specific [Goals](#goals) in contrast to the [Proposed solution](#proposed-solution).
 
 ## (Optional) Open Questions
 All questions that are relevant for the design document but that cannot and do not need to be answered before merging the design document. We might create issues from these questions or revisit them regularly.
