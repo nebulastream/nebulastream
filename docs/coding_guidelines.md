@@ -209,45 +209,100 @@ class Derived {
 };
 ```
 
+# Error Handling
 
+Following Herb Sutter, we differentiate between abstract machine corruption and programming bugs, recoverable errors:
+1) **Corruptions** (e.g., stack overflow) cause a corrupted state that cannot be recovered programmatically. We use:
+    - Signal handlers: handle the termination gracefully.
+2) **Bugs** (e.g., out-of-bounds, null dereference) cannot be recovered either. We prevent them by using:
+    - Preconditions asserts: check whether a function was correctly called.
+    - Invariant asserts: check for bugs in function.
+3) **Errors** occur when the function cannot do what was advertised, i.e., could not reach a successful return postcondition. We prevent them by using:
+    - Exceptions: throw and catch to communicate an error to the calling code that can recover to a valid state. This is an elegant way if the error source and handling code are separated by multiple function calls (keyword: stack unwinding).
+    - std::expected & std::optional: error handling in performance-critical code where errors are likely to occur frequently.
 
-# Exceptions and Error Handling
+## Flow Chart
+For each new function, the following flow chart should be followed:
 
-When handling errors, the following guidelines should be followed:
+``` mermaid
+%%{init: {"flowchart": {"htmlLabels": false}} }%%
+flowchart TD
+    A(["`**POV: You have implemented a new function.**`"])
+    G{{"`Are there calls of the function that we must not make, specifically,  certain combinations of function arguments/system states?`"}}
+    H("`**Add asserts for preconditions. Document them.** They notify bugs in the caller - it should not make the call.`")
+    Z{{"`Are there places in your function where you can add checks if its logic works correctly?`"}}
+    U("`**Add asserts for invariants.** They notify about bugs in the function code.`")
+    X{{"`Are there cases where preconditions and invariants are met, but the function cannot do what was promised? An error condition that must be reported to the calling code path in order to resolve it?`"}}
+    C["`You have to add error handling to recover from that error. Is it a performance critical code path?`"]
+    O["`**Throw the exception in your function.** Check if it is catched and handled appropriately.`"]
+    P["`**Add a new exception type.** Throw the exception in your function and catch and handle it appropriately.`"]
+    D{{"`Can you recover from that error at the caller? Can you use std::optional or std::expected as return values?`"}}
+    K["`**Return std::optional or std::expected. Handle the return value appropriately.**`"]
+    F{{"`Use exceptions. Check the coding guidelines and the exception list: Do you need to create a new exception type?`"}}
+    S["`**Implement test cases that trigger the exception.**`"]
 
-*How to handle errors?*
-- Generally, check first if an exception is needed (*exceptional cases*). Throwing and catching exceptions is [expensive](https://lemire.me/blog/2022/05/13/avoid-exception-throwing-in-performance-sensitive-code/).
+    A --> i
+    subgraph i ["`**1. Preconditions**`"]
+    G
+    G -->|Yes|H
+    end
+    H --> j
+    G --> |No| j
+    subgraph j ["`**2. Invariants**`"]
+    Z
+    Z --> |Yes| U
+    end
+    U --> u
+    Z --> |No| u
+    subgraph u ["`**3. Recoverable Errors**`"]
+    X
+    X --> |Yes| C
+    C -->|No|F
+    C -->|Yes| D
+    D --> |No|F
+    D --> |Yes| K
+    F --> |Yes| P
+    F --> |No| O
+    O --> S
+    P --> S
+    end
+```
+
+## How to handle errors?
+- NebulaStream follows the approach of using a system-wide exception model. We support multiple exception types, and they are defined in a central file system-wide.
+- All currently supported exceptions are in `ExceptionDefinitions.hpp`. Reuse existing exceptions to handle your error.
+- Generally, check if an exception is needed (*exceptional cases*). Throwing and catching exceptions is [very](https://www.open-std.org/jtc1/sc22/wg21/docs/papers/2022/p2544r0.html) [expensive](https://lemire.me/blog/2022/05/13/avoid-exception-throwing-in-performance-sensitive-code/).
     - Throw if the function cannot do what is advertised.
-    - Throw if the function cannot handle the error properly by its own because it needs more context.
-    - In performance sensitive code paths, ask yourself: can your error be resolved by returning a `std::optional` or a `std::expected` instead?
-- Use asserts to check pre- and post-invariants of functions. If compiled with `DEBUG` mode, we include asserts in our code.
--  Write test cases that trigger exceptions. If an exception cannot be easily triggered by an test case it should probably be an assert.
+    - Throw if the function cannot handle the error properly on its own because it needs more context.
+    - In performance-sensitive code paths, ask yourself: Can your error be resolved by returning a `std::optional` or a `std::expected` instead?
+- Use asserts to check preconditions and invariants of functions. We include asserts in our code if compiled with `DEBUG` mode.
+- Write test cases that trigger exceptions.
     ```C++
     try {
         sendMessage(someWrongNetworkConfiguration, msg);
     } catch (CannotConnectToCoordinator & e) {
+        // We successfully caught the error, as expected.
         SUCCEED();
     }
+    // We did not catch the error, even though we should have.
     FAIL();
     ```
 
-*How to use exceptions?*
+## How to use exceptions?
 - Throw exceptions by value.
     ```C++
     throw CannotConnectToCoordinator();
     ```
-- Catch exceptions by const reference.
-- Rethrow with throw without arguments.
-- Add context to exception messages if possible. Sometimes it makes sense to rethrow an exeption and catch it where one can add more context to it. To modify the exception message later, append to the mutable string:
+- Catch exceptions using the `const` reference.
+- Rethrow with `throw;` without arguments.
+- Add context to exception messages if possible. Sometimes, it makes sense to rethrow an exception and catch it where one can add more context to it. To modify the exception message later, append to the mutable string:
     ```C++
     catch (CannotConnectToCoordinator& e) {
-        e.what += "for query id " + queryId;
+        e.what += " for query id " + queryId;
         throw;
     }
     ```
-- Before creating a new error type, check if an existing type can handle it.
-- Use the `main()` function return value to return the error code.
-
+- If a fatal error occurs, use the `main()` function return value to return the error code:
     ```C++
     int main () {
         /* ... */
@@ -258,7 +313,9 @@ When handling errors, the following guidelines should be followed:
     }
     ```
 
-*How to define new exceptions?*
--  A new exception type should only be defined if there is a situation in which code could catch and react specifically to that situation.
--  The exception name and description should very concisely describe i) which condition lead to the error ("UnknownSourceType") or ii) which operation failed ("CannotConnectToCoordinator"). The former is preferred to the latter.
--  When writing error messages (which is the description and optional context) we follow the [Postgres Error Message Style Guide](https://www.postgresql.org/docs/current/error-style-guide.html).
+## How to define new exceptions?
+- All our exceptions are in a central file, `ExceptionDefinitions.hpp`. Do not define them somewhere else.
+- An exception type represents an 'error source' that needs to be handled in a specific way. Each exception type should represent a unique error requiring a specific handling approach. Thus, a new exception type should only be created if the error must be handled differently than all existing exceptions. This enables the reuse of handling methods.
+- The exception name and description should very concisely describe i) which condition led to the error ("UnknownSourceType") or ii) which operation failed ("CannotConnectToCoordinator"). The former is preferred to the latter.
+- When writing error messages (which are `description` and optional context), we follow the [Postgres Error Message Style Guide](https://www.postgresql.org/docs/current/error-style-guide.html).
+
