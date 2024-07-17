@@ -63,33 +63,30 @@ macro(get_header_nes_client HEADER_FILES)
     file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
 endmacro()
 
+macro(get_nes_folders output_var)
+    file(GLOB NES_FOLDERS
+            "${CMAKE_CURRENT_SOURCE_DIR}/nes-*")
+    # Create a semicolon-separated list of folder names
+    set(NES_FOLDER_NAMES "")
+    foreach(FOLDER ${NES_FOLDERS})
+        get_filename_component(FOLDER_NAME ${FOLDER} NAME)
+        list(APPEND NES_FOLDER_NAMES ${CMAKE_CURRENT_SOURCE_DIR}/${FOLDER_NAME})
+    endforeach()
+    # Join the folder names with a comma
+    string(REPLACE ";" "," NES_FOLDER_NAMES_COMMA_SEPARATED "${NES_FOLDER_NAMES}")
+
+    # Set the output variable
+    set(${output_var} "${NES_FOLDER_NAMES_COMMA_SEPARATED}")
+endmacro(get_nes_folders)
+
 macro(project_enable_clang_format)
-    string(CONCAT FORMAT_DIRS
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-benchmark,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-catalogs,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-client,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-common,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-compiler,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-configurations,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-coordinator,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-data-types,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-execution,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-expressions,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-nautilus,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-operators,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-optimizer,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-plugins,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-runtime,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-statistics,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-window-types,"
-            "${CMAKE_CURRENT_SOURCE_DIR}/nes-worker"
-    )
+    get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
     if (NOT NES_SELF_HOSTING)
         message(WARNING "Not using self-hosting compiler, thus 'format' is disabled")
     elseif (CLANG_FORMAT_EXECUTABLE)
         message(STATUS "clang-format found, whole source formatting enabled through 'format' target.")
-        add_custom_target(format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} --fix USES_TERMINAL)
-        add_custom_target(format-check COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${FORMAT_DIRS} USES_TERMINAL)
+        add_custom_target(format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} --fix USES_TERMINAL)
+        add_custom_target(format-check COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} USES_TERMINAL)
     else ()
         message(FATAL_ERROR "clang-format is not installed.")
     endif ()
