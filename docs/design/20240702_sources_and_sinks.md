@@ -1,29 +1,74 @@
 # The Problem
-A core idea of NebulaStream is that it supports millions of sources.
-Therefore, supporting a large number of heterogeneous data sources and sinks and making it easy to add new ones is vital to the usability of NebulaStream. A good example for a system that supports a large number of data sources and makes adding new ones easy is [Telegraf](https://github.com/influxdata/telegraf).
 
-The specific problems are the following:
-- P1: the implementation of data sources are scattered across an enormous number of classes
-  - LogicalSource and PhysicalSource
-  - SourceLogicalOperator (that shares a directory with LogicalSourceDescriptor)
-  - source/sink implementations (inherit from DataSource/SinkMedium)
-  - descriptors for every single source and sink (inherit from SourceDescriptor/SinkDescriptor) (think 200+ sources/sinks)
-  - types for every single source (inherit from PhysicalSourceType) (think 200+ sources)
-  - a file with ~2000 lines that handles serialization of operators, including sources and sinks
-  - proto files for sources and sinks
-  - many places where sources and sinks are lowered (LowerToExecutableQueryPlan, ConvertLogicalToPhysicalSource, ConvertLogicalToPhysicalSink, DefaultPhysicalOperatorProvider, DefaultPhysicalOperatorProvider)
-  - different factories (DefaultDataSourceProvider, DataSinkProvider, PhysicalOperatorProvider, LogicalSourceTypeFactory, LogicalOperatorFactory, PhysicalSourceTypeFactory)
-  - additional implementations for plugins (DataSourcePlugin, DataSinkPlugin, PhysicalSourceFactoryPlugin, SourceDescriptorPlugin, ..)
-- P2: The DataSource interface forces all sources to use the TestTupleBuffer and it mixes reading data from sources and starting and stopping queries in a single class
+## Motivation and Vision
+A core idea of NebulaStream is that it supports millions of sources.
+Therefore, supporting a large number of heterogeneous data sources and sinks and making it easy to add new ones is vital to the usability of NebulaStream.\
+A good example for a system that supports a large number of data sources and makes adding new ones easy is [Telegraf](https://github.com/influxdata/telegraf). Telegraf utilizes a modular setup with *inputs* (sources), *processors* (operators), *aggregators* (aggregations), and *outputs* (sinks). The modular design facilitates adding a new input/processor/aggregator/sink. As a result, the Telegraf community (including the core developers) created 300+ plugins.
+Telegraf shows us that different users require different plugins (including data sources) and that users are willing to add these plugins, if the system facilitates it.
+
+## Problems with NebulaStream
+Currently, NebulaStream does not support the above [vision](#motivation-and-vision) because of the following problems:
+- P1: the implementation of sources and sinks is unnecessarily complex
+  - the implementation of sources and sinks grew over time, was never refactored and is scattered across an enormous number of classes
+    - LogicalSource and PhysicalSource
+      - `nes-catalogs/include/Catalogs/Source/LogicalSource.hpp`
+      - `nes-catalogs/include/Catalogs/Source/SourceCatalog.hpp`
+    - SourceLogicalOperator (that shares a directory with LogicalSourceDescriptor)
+      - `nes-operators/include/Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp`
+      - `nes-operators/include/Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp`
+    - source/sink implementations (inherit from DataSource, SinkMedium, Reconfigurable, DataEmitter, RuntimeEventListener)
+      - `nes-runtime/include/Sources/MQTTSource.hpp`
+      - ... (source implementations, think 200+ sources)
+      - `nes-runtime/include/Sinks/Mediums/MQTTSink.hpp`
+      - ... (sink implementations, think 200+ sources)
+      - `nes-runtime/include/Sources/DataSource.hpp`
+      - `nes-runtime/include/Sinks/Mediums/SinkMedium.hpp`
+      - `nes-runtime/include/Runtime/Reconfigurable.hpp`
+      - `nes-runtime/include/Runtime/Execution/DataEmitter.hpp`
+      - `nes-runtime/include/Runtime/RuntimeEventListener.hpp`
+    - descriptors for every single source and sink (inherit from SourceDescriptor/SinkDescriptor)
+      - `nes-operators/include/Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp`
+      - ... (source descriptors, think 200+ sources)
+      - `nes-operators/include/Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp`
+      - ... (sink descriptors, think 200+ sources)
+    - types for every single source (inherit from PhysicalSourceType)
+      - `nes-configurations/include/Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp`
+      - ... (source types, think 200+ sources)
+    - a file with ~2000 lines that handles serialization of operators, including sources and sinks
+      - `nes-operators/src/Operators/Serialization/OperatorSerializationUtil.cpp`
+    - proto files for sources and sinks
+      - `grpc/SerializableOperator.proto`
+    - many places where sources and sinks are lowered 
+      - `nes-execution/include/QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp`
+      - `nes-runtime/include/Runtime/Execution/ExecutableQueryPlan.hpp`
+      - `nes-execution/include/QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp`
+      - `nes-execution/include/QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp`
+      - `nes-execution/include/QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp`
+      - ...
+    - different factories 
+      - `nes-execution/include/QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp`
+      - `nes-execution/include/QueryCompiler/Phases/Translations/DataSinkProvider.hpp`
+      - `nes-execution/include/QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp`
+      - `nes-configurations/include/Configurations/Coordinator/LogicalSourceTypeFactory.hpp`
+      - `nes-operators/include/Operators/LogicalOperators/LogicalOperatorFactory.hpp`
+      - `nes-configurations/include/Configurations/Worker/PhysicalSourceTypeFactory.hpp`
+      - ...
+    - additional implementations for semi-supported plugins 
+      - `nes-runtime/include/Sources/DataSourcePlugin.hpp`
+      - `nes-runtime/include/Sinks/DataSinkPlugin.hpp`
+      - `nes-configurations/include/Configurations/Worker/PhysicalSourceFactoryPlugin.hpp`
+      - `nes-operators/include/Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp`
+      - ...
+- P2: The DataSource interface forces all sources to use the TestTupleBuffer and it mixes reading data from sources, formatting/parsing sources, and starting and stopping queries in a single class
   - DataSource provides the allocateBuffer() function which returns a TestTupleBuffer
     - as a result, all sources use the TestTupleBuffer
-- P3: adding a single source and sink requires changing/touching 20+ files
-- P4: the process of setting up a source and a sink and querying requires defining logical sources in the coordinator config, physical sources in the worker config, using the correct logical source name in a query and defining a physical sink descriptor in the same query
-Todo: adapt P5, make more concrete
-- P5: the process of going from a logical source name in a query to an implementation for that source is unnecessarily complex
-- P6: the process of specifying a sink is different from the process of specifying a source and it mixes data query language (DQL) and data definition language (DDL) syntax in our queries
-Todo: adapt P7, make more concrete
-- P7: the process of going from a physical source definition in a query to an implementation for that sink is unnecessarily complex
+- P3: adding a single source and sink requires changing/touching 20+ files (partially a result of P1)
+- P4: setting up sources and sinks for querying is complex
+  -  define logical sources in the coordinator YAML config
+  -  define a physical source in the worker YAML config
+  -  use the correct logical source name (string) in an analytical query
+  -  *define* a physical sink descriptor in the same (analytical) query
+- P5: the process of specifying a sink is different from the process of specifying a source and it mixes data query language (DQL) and data definition language (DDL) syntax in our queries (see last bullet point in P4)
 
 
 # Goals
@@ -32,29 +77,33 @@ Todo: adapt P7, make more concrete
 - G2: Starting a query should be handled by a separate class that simply uses a Source implementation.
   - addresses P2
 - G3: Handle formatting/parsing separate from ingesting data. A data source simply ingests data. A formatter/parser formats/parses the raw data according to a specific format.
-  - addresses P1
-- G4: Create a plugin registry that enables us to easily create a new source as an internal or external plugin and that returns a constructor given a source name (or enum if feasible).
-  - mainly addresses P3
+  - addresses P2
+- G4: Create source/sink registries that enable us to easily create a new source/sik as an internal or external plugin and that returns a constructor given a source/sink name (or enum if feasible).
+  - mainly addresses P1 and P3
 - G5: unify the process of creating data sources and sinks
-  - addresses P4 and P6
+  - addresses P1, P3, and P5
   - keep the process of creating sinks as similar as possible to that of creating sources
-- G6: Simplify the process of going from a logical source name or a sink name to the implementation of the source(s) or sink(s) as much as possible, especially on the worker side
-  - addresses P1,P3, P5, and P7
-  - builds on top of prior goals and addresses minimizing the code required to implement source/sink support end to end
+- G6: provide a concept for simplifying (includes unifying) the process of configuring sources and sinks for queries
+  - addresses P4 and P5
 
 # Non-Goals
 - refactoring the coordinator side of source/sink handling
   - we allow ourselves to make reasonable [assumptions](#assumptions), which must be part of this design document, of how the coordinator will handle sources and sinks in the future
-    - this affects P4 in particular
+    - this affects P4 and P5 in particular
+    - we address this problem specifically in the discussion #10
+- a complete vision or even implementation of how to separate formatting from sources and how to enable compilation of the formatting process
+  - we address this problem specifically in the discussion #133
+- a complete vision or even implementation on how to decouple sources from a dedicated thread, enabling us to scale out concerning the number of sources on a single worker
+- we address this problem specifically in the discussion #133
 
 # Proposed Solution
 ## Fully Specified Source/Sink Descriptor
-Currently, we are creating physical sources from source types. Source types are configured using either a `YAML::Node` as input or a `std::map<std::string, std::string>`. Therefore, all current configurations are possible to represent as a map from string to string. We also observe that most configurations use scalar values from the following set {uint32_t, uint64_t, bool, float, char}. Therefore, we conclude that we can model all current source configurations as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>`.
+Currently, we are creating physical sources from source types. Source types are configured using either a `YAML::Node` as input or a `std::map<std::string, std::string>`. Therefore, all current configurations are possible to represent as a map from string to string. We also observe that most configurations use scalar values from the following set {uint32_t, uint64_t, bool, float, char}. Therefore, we conclude that we can model all current source configurations as a `std::unordered_map<std::string, std::variant<int64_t, std::string, bool, double>>`.
 Given that everything that a worker needs to know to create a source/sink is the type, and potentially the configuration and meta information, we define the following:
 
 The fully specified source descriptor contains:
   - the distinct type of the source/sink (one to one mapping from type to source/sink implementation)
-  - (optional) the configuration of the source/sink, represented as a `std::unordered_map<std::string, std::variant<uint32_t, uint64_t, std::string, bool, float, char>>`
+  - (optional) the configuration of the source/sink, represented as a `std::unordered_map<std::string, std::variant<int64_t, std::string, bool, double>>`
   - (optional) meta data, such as whether a source allows source sharing, represented as class member variables of the SourceDescriptor and the SinkDescriptor respectively.
 
 Thus, there is only one source descriptor implementation and one sink descriptor implementation. The distinct type identifies which type of source the descriptor describes. The configuration is general enough to handle all source/sink configurations and the meta information are part of the source/sink descriptor. Furthermore, this descriptor is attached to queries and it contains all information to construct a fully specified source/sink, allowing for 'RESTful queries', i.e., the worker does not require to maintain state concerning sources and sinks to execute queries.
@@ -121,10 +170,10 @@ Todo: provide implementation details on starting stopping (will follow with prot
 The source itself does not handle the formatting/parsing of the ingested data anymore. The first, observation is that formatting/parsing is tied to formats that may be shared by different sources. For example it is possible to read a JSON file, or to receive JSON via MQTT or TCP or Kafka. The second observation is that formatting is performance-critical. Our current CSV formatting/parsing is so slow that it is a major bottleneck in many experiments. 
 By separating formatting/parsing from the source entirely, it becomes possible to make formatting/parsing part of the compiled query. This allows for interesting optimizations such as generating formatting/parsing code for a specific schema and a specific query. For example, a projection could be handled during formatting/parsing already.
 
-For the initial implementation of sources and sinks we use simple runtime implementations (non-compiled) for sources and sinks. We will support CSV and JSON. However, since formatting/parsing is executed separately from the data ingestion it becomes easily possible to create formatting/parsing operators that are compiled to query code in the future.
+For the initial implementation of sources and sinks we use simple runtime implementations (non-compiled) for sources and sinks. We will support CSV and JSON. In a later design document based on discussion #133, we develop a concrete idea for how to support compilation of data formatters/parsers.
 
 
-Todo: provide implementation details on interaction between source and formatter/parser and how the formatter/parser is represented in the query and when it is constructed (will follow with prototype)
+Todo: provide implementation details on interaction between source and formatter/parser and how the formatter/parser is represented in the query and when it is constructed (will follow with prototype). The process of 
 
 ## G4
 In PR [#48](https://github.com/nebulastream/nebulastream-public/pull/48) we introduced the design of a static plugin registry. This registry allows to auto-register source and sinks constructors using a string key. In [Assumptions](#assumptions) we described that the worker receives fully specified query plans, were all sink and source names were already resolved to [fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor). Thus, on the worker, after compiling the query, we can construct a source/sink in the following way using a fully specified source/sink descriptor and the source plugin registry:
@@ -171,7 +220,7 @@ This is our current approach. We configure physical sources using YAML files. Co
   - similar to REST, our queries contain the state needed to execute the query ([fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor))
 
 ### A1.2 - Binding Physical Sources to Workers on the Coordinator
-Same as A1.1, but register physical sources via queries on the coordinator. Could potentially combine A1.1 and A1.2, but that would mean managing more registering logic.
+Same as A1.1, but register physical sources via queries on the coordinator. Could potentially combine A1.1 and A1.2, but that would mean managing more registering logic. Requires keeping state on the worker.
 #### Advantages
 - makes adding sources and sinks after set up possible
 - makes a zero configuration NebulaStream a possibility
@@ -218,7 +267,10 @@ For the most part, sources and sinks exist as descriptors (see [fully specified 
   - less verbose code paths (logic is in (external) plugins)
 
 # Open Questions
-Currently, all open questions are contained in the individual sections.
+- is there a way to allow users to issue queries worker-agnostic?
+  - in particular, the above assumptions state that a user needs to define a query that contains a specific worker ID to bind a physical source to a logical source
+  - we should discuss this topic in discussion #10
+
 
 # (Optional) Sources and Further Reading
 - [Influx Telegraf webpage](https://www.influxdata.com/time-series-platform/telegraf/)
