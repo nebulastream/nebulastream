@@ -103,16 +103,11 @@ Given that everything that a worker needs to know to create a source/sink is the
 
 The fully specified source descriptor contains:
   - the distinct type of the source/sink (one to one mapping from type to source/sink implementation)
+  - the format of the inbound data (e.g., JSON, XML, etc.)
   - (optional) the configuration of the source/sink, represented as a `std::unordered_map<std::string, std::variant<int64_t, std::string, bool, double>>`
   - (optional) meta data, such as whether a source allows source sharing, represented as class member variables of the SourceDescriptor and the SinkDescriptor respectively.
 
 Thus, there is only one source descriptor implementation and one sink descriptor implementation. The distinct type identifies which type of source the descriptor describes. The configuration is general enough to handle all source/sink configurations and the meta information are part of the source/sink descriptor. Furthermore, this descriptor is attached to queries and it contains all information to construct a fully specified source/sink, allowing for 'RESTful queries', i.e., the worker does not require to maintain state concerning sources and sinks to execute queries.
-
-*Open question: does it make sense to only have one descriptor, both for sources and sinks? Intuitively, it seems better to separate both, so that the object type is descriptive (SourceDescriptor vs SinkDescriptor). Additionally, some meta information such as 'source sharing' are exclusive to sources or sinks (in this case sources).*
-
-*Open question: should we simply use 'int' in the variant, instead of uint32_t and uint64_t.*
-
-*Open question: we could also support enums and objects with the variant. However, we will parse the enums/classes from a string anyway, so it might make more sense to resolve the string in respective source/sink.*
 
 ## Assumptions
 We make the following assumptions:
@@ -163,9 +158,6 @@ We propose that DataSource becomes a purely virtual interface with two functions
     ```
 Both types of data sources start a thread and regularly check if they have been requested to stop.
 
-Todo: provide implementation details on starting stopping (will follow with prototype)
-
-
 ## G3
 The source itself does not handle the formatting/parsing of the ingested data anymore. The first, observation is that formatting/parsing is tied to formats that may be shared by different sources. For example it is possible to read a JSON file, or to receive JSON via MQTT or TCP or Kafka. The second observation is that formatting is performance-critical. Our current CSV formatting/parsing is so slow that it is a major bottleneck in many experiments. 
 By separating formatting/parsing from the source entirely, it becomes possible to make formatting/parsing part of the compiled query. This allows for interesting optimizations such as generating formatting/parsing code for a specific schema and a specific query. For example, a projection could be handled during formatting/parsing already.
@@ -173,7 +165,7 @@ By separating formatting/parsing from the source entirely, it becomes possible t
 For the initial implementation of sources and sinks we use simple runtime implementations (non-compiled) for sources and sinks. We will support CSV and JSON. In a later design document based on discussion #133, we develop a concrete idea for how to support compilation of data formatters/parsers.
 
 
-Todo: provide implementation details on interaction between source and formatter/parser and how the formatter/parser is represented in the query and when it is constructed (will follow with prototype). The process of 
+Todo: provide implementation details on interaction between source and formatter/parser and how the formatter/parser is represented in the query and when it is constructed (will follow with prototype).
 
 ## G4
 In PR [#48](https://github.com/nebulastream/nebulastream-public/pull/48) we introduced the design of a static plugin registry. This registry allows to auto-register source and sinks constructors using a string key. In [Assumptions](#assumptions) we described that the worker receives fully specified query plans, were all sink and source names were already resolved to [fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor). Thus, on the worker, after compiling the query, we can construct a source/sink in the following way using a fully specified source/sink descriptor and the source plugin registry:
@@ -232,6 +224,9 @@ Same as A1.1, but register physical sources via queries on the coordinator. Coul
 #### vs Proposed Solution
 - the [Proposed Solution](#proposed-solution) goes one step further, by not registering the physical sources and sinks on the worker, enabling the worker to be stateless concerning sources and sinks
   - similar to REST, our queries contain the state needed to execute the query ([fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor))
+  - however, this stateless approach might not be best-suited for **source sharing** for queries
+    - we can (and probably should) determine whether to share sources on the coordinator, but we still need to modify running sources on the worker to enable source sharing
+    - the coordinator could provide the query id and the origin id of the source that should now now share its data with at least two queries, but we still somehow need to find the source belonging to the query id and the origin id on the worker, which requires some sort of state
 
 ### A1.3 - Broadcasting
 Configure a physical source and attach it to a logical source on the worker using DDL queries. Use the logical source name in a query. The coordinator then sends a broadcast message to all workers inquiring whether they support the specified physical source. The workers respond. All workers that support the physical source become part of the query.
