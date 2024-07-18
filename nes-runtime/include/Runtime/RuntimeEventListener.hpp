@@ -42,4 +42,4 @@ protected:
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 } // namespace NES::Runtime
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_

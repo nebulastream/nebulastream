@@ -294,4 +294,4 @@ PhysicalTypePtr getPhysicalTypePtr()
 
 } // namespace NES::Runtime::Execution::Util
 
-#endif // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_
+#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_

@@ -35,4 +35,4 @@ struct adl_serializer<NES::NESStrongType<T, Tag, invalid, initial>>
 };
 } // namespace nlohmann
 
-#endif // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEJSON_HPP_
+#endif// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEJSON_HPP_

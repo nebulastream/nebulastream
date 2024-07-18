@@ -184,4 +184,4 @@ std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func)
 
 } // namespace NES::Nautilus::Tracing
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_

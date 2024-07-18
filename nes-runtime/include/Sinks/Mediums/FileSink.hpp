@@ -100,4 +100,4 @@ protected:
 using FileSinkPtr = std::shared_ptr<FileSink>;
 } // namespace NES
 
-#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
+#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_

@@ -161,4 +161,4 @@ public:
 
 } // namespace NES::jni
 
-#endif // NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_
+#endif// NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_

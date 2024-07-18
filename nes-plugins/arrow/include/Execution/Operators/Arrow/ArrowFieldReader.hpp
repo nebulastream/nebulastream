@@ -65,4 +65,4 @@ public:
 std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFromSchema(const SchemaPtr& schema);
 } // namespace NES::Runtime::Execution::Operators
 
-#endif // NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
+#endif// NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_

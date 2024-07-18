@@ -347,4 +347,4 @@ struct LogCaller<LogLevel::LOG_WARNING>
 
 } // namespace NES
 
-#endif // NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_

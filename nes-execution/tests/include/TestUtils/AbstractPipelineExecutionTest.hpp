@@ -38,4 +38,4 @@ class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::
 };
 } // namespace NES::Runtime
 
-#endif // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_
+#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_

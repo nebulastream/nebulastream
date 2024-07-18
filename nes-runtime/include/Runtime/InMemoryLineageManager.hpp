@@ -72,4 +72,4 @@ using LineageManagerPtr = std::shared_ptr<Runtime::InMemoryLineageManager>;
 
 } // namespace NES::Runtime
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
+#endif// NES_RUNTIME_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_

@@ -47,4 +47,4 @@ enum class OpCode : uint8_t
     CAST
 };
 } // namespace NES::Nautilus::Tracing
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_

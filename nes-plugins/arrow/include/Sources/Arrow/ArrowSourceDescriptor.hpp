@@ -54,4 +54,4 @@ using ArrowSourceDescriptorPtr = std::shared_ptr<ArrowSourceDescriptor>;
 
 } // namespace NES
 
-#endif // NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCEDESCRIPTOR_HPP_
+#endif// NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCEDESCRIPTOR_HPP_

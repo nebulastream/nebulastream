@@ -102,4 +102,4 @@ private:
     std::map<OperatorPtr, OperatorPtr> areOperatorEqual(const OperatorPtr& targetOperator, const OperatorPtr& hostOperator);
 };
 } // namespace NES::Optimizer
-#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_
+#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_SYNTAXBASEDPARTIALQUERYMERGERRULE_HPP_

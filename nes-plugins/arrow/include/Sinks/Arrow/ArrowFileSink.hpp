@@ -131,4 +131,4 @@ protected:
 using ArrowFileSinkPtr = std::shared_ptr<ArrowFileSink>;
 } // namespace NES
 
-#endif // NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_
+#endif// NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_

@@ -41,4 +41,4 @@ enum class OperatorState : uint8_t
 
 } // namespace NES
 
-#endif // NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_

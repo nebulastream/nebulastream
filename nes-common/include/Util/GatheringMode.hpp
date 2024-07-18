@@ -29,4 +29,4 @@ enum class GatheringMode : uint8_t
 
 } // namespace NES
 
-#endif // NES_COMMON_INCLUDE_UTIL_GATHERINGMODE_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_GATHERINGMODE_HPP_

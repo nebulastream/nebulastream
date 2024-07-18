@@ -43,4 +43,4 @@ using VectorizableOperatorPtr = std::shared_ptr<const VectorizableOperator>;
 
 } // namespace NES::Runtime::Execution::Operators
 
-#endif // NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZABLEOPERATOR_HPP_
+#endif// NES_PLUGINS_CUDA_INCLUDE_EXECUTION_OPERATORS_VECTORIZATION_VECTORIZABLEOPERATOR_HPP_

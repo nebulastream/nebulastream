@@ -70,4 +70,4 @@ inline bool instanceOf(const TypeCastable& y)
 
 } // namespace NES
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTING_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTING_HPP_

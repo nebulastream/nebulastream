@@ -52,4 +52,4 @@ public:
 } // namespace Util
 } // namespace NES::Spatial
 #endif
-#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_S2UTILITIES_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_S2UTILITIES_HPP_
