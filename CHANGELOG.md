@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.6.171](https://github.com/nebulastream/nebulastream/tree/v0.6.171) (2024-07-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.170...v0.6.171)
+
+**Implemented enhancements:**
+
+- \[TASK\] Remove Topology/Prediction folder and the contained classes [\#5038](https://github.com/nebulastream/nebulastream/issues/5038)
+
 ## [v0.6.170](https://github.com/nebulastream/nebulastream/tree/v0.6.170) (2024-07-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.169...v0.6.170)
