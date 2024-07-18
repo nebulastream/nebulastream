@@ -92,6 +92,17 @@ macro(project_enable_clang_format)
     endif ()
 endmacro(project_enable_clang_format)
 
+macro(project_enable_clang_tidy)
+    if (NOT NES_SELF_HOSTING)
+        message(WARNING "Not using self-hosting compiler, thus 'tidy' is disabled")
+    elseif (CLANG_TIDY_EXECUTABLE AND CLANG_APPLY_REPLACEMENTS_EXECUTABLE)
+        message(STATUS "clang-tidy found, static analysis enabled through 'tidy' target.")
+        add_custom_target(tidy COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_tidy.py -clang-tidy-binary ${CLANG_TIDY_EXECUTABLE} -clang-apply-replacements-binary ${CLANG_APPLY_REPLACEMENTS_EXECUTABLE} -j 4 -fix USES_TERMINAL)
+    else ()
+        message(FATAL_ERROR "clang-tidy and/or clang-apply-replacements is not installed.")
+    endif ()
+endmacro(project_enable_clang_tidy)
+
 macro(project_enable_emulated_tests)
     find_program(QEMU_EMULATOR qemu-aarch64)
     string(CONCAT SYSROOT_DIR
