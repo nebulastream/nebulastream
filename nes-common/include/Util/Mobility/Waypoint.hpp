@@ -67,4 +67,4 @@ private:
 };
 } // namespace NES::Spatial::DataTypes::Experimental
 
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_WAYPOINT_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_WAYPOINT_HPP_

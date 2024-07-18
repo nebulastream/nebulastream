@@ -31,4 +31,4 @@
 #include <vector>
 #include <gtest/gtest.h>
 
-#endif// NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_
+#endif // NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_

@@ -46,4 +46,4 @@ public:
         std::vector<OptimizationPass> optimizationPasses);
 };
 } // namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRPASSMANAGER_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRPASSMANAGER_HPP_

@@ -58,4 +58,4 @@ PortDispatcher& getPortDispatcher();
 } // namespace detail
 } // namespace NES::Testing
 
-#endif// NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_

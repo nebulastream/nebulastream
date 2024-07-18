@@ -269,4 +269,4 @@ public:
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
 } // namespace NES
-#endif// NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
+#endif // NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_

@@ -83,4 +83,4 @@ private:
 
 } // namespace NES::Windowing
 
-#endif// NES_DATA_TYPES_INCLUDE_API_TIMEUNIT_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_API_TIMEUNIT_HPP_

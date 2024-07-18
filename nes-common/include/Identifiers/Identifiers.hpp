@@ -79,4 +79,4 @@ inline size_t operator%(const WorkerThreadId id, const size_t containerSize)
 
 } // namespace NES
 
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_IDENTIFIERS_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_IDENTIFIERS_HPP_

@@ -91,4 +91,4 @@ protected:
 };
 } // namespace NES::Benchmark::DataProvision
 
-#endif// NES_BENCHMARK_INCLUDE_DATAPROVIDER_DATAPROVIDER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAPROVIDER_DATAPROVIDER_HPP_

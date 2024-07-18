@@ -54,4 +54,4 @@ private:
     BaseQueryMergerRulePtr queryMergerRule;
 };
 } // namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYMERGERPHASE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYMERGERPHASE_HPP_

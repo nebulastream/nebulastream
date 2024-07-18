@@ -39,4 +39,4 @@ public:
 
 using LinkPropertyPtr = std::shared_ptr<LinkProperty>;
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_LINKPROPERTY_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_LINKPROPERTY_HPP_

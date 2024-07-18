@@ -87,4 +87,4 @@ static void createRangeVectorPowerOfTwo(std::vector<T>& vector, T start, T stop)
 }
 
 } // namespace NES::Benchmark::Util
-#endif// NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_
+#endif // NES_BENCHMARK_INCLUDE_UTIL_BENCHMARKUTILS_HPP_

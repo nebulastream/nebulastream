@@ -110,4 +110,4 @@ struct hash<const NES::Compiler::SourceCode>
 
 } // namespace std
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_SOURCECODE_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_SOURCECODE_HPP_

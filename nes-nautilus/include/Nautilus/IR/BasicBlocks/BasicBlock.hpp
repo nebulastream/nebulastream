@@ -88,4 +88,4 @@ private:
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 
 } // namespace NES::Nautilus::IR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_

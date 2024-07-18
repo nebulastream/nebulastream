@@ -94,4 +94,4 @@ private:
     absl::btree_map<Timestamp, ChangeLogEntryPtr> changeLogEntries;
 };
 } // namespace NES::Optimizer::Experimental
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_

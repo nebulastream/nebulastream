@@ -178,4 +178,4 @@ private:
 };
 } // namespace NES::Benchmark
 
-#endif// NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_
+#endif // NES_BENCHMARK_INCLUDE_E2E_E2ESINGLERUN_HPP_

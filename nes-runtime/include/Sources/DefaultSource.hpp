@@ -60,4 +60,4 @@ public:
 using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
 } // namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_

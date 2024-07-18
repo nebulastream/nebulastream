@@ -36,4 +36,4 @@ private:
     OperationWPtr address;
 };
 } // namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_

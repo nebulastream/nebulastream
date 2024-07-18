@@ -221,4 +221,4 @@ typename EncoderTraits<T>::EncodedType encodeData(T value, bool descending = fal
 }
 
 } // namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTENCODE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTENCODE_HPP_

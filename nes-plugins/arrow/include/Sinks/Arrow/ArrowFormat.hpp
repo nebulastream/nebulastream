@@ -82,4 +82,4 @@ private:
     std::vector<std::shared_ptr<arrow::Array>> buildArrowArrays();
 };
 } // namespace NES
-#endif// NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFORMAT_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFORMAT_HPP_

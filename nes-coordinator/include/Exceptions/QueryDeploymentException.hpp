@@ -37,4 +37,4 @@ public:
     explicit QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message);
 };
 } // namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_

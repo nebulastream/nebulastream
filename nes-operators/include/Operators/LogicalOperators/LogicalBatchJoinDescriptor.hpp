@@ -108,4 +108,4 @@ private:
 
 using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
 } // namespace NES::Join::Experimental
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_

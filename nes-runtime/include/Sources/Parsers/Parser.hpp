@@ -87,4 +87,4 @@ private:
     std::vector<PhysicalTypePtr> physicalTypes;
 };
 } //namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_

@@ -936,4 +936,4 @@ void writeWaypointsToCsv(const std::string& csvPath, const std::vector<NES::Spat
 uint64_t countOccurrences(const std::string& searchString, const std::string& targetString);
 
 } // namespace NES
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTUTILS_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTUTILS_HPP_
