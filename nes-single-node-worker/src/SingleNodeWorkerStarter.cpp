@@ -11,7 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <iostream>
 #include <Configurations/BaseConfiguration.hpp>
 #include <grpcpp/server_builder.h>
 #include <Configuration.hpp>

@@ -52,6 +52,27 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
     return *this;
 }
 
+class SimpleQueryStatusListener : public AbstractQueryStatusListener
+{
+public:
+    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
+    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override
+    {
+        NES_INFO("Source has terminated");
+        return true;
+    }
+    bool notifyQueryFailure(SharedQueryId, DecomposedQueryPlanId, std::string errorMsg) override
+    {
+        NES_FATAL_ERROR("Query Failure: {}", errorMsg);
+        return true;
+    }
+    bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override
+    {
+        return true;
+    }
+    bool notifyEpochTermination(uint64_t, uint64_t) override { return true; }
+};
+
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
     try
@@ -95,7 +116,13 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
             {
                 case QueryExecutionMode::Dynamic: {
                     queryManager = std::make_shared<DynamicQueryManager>(
-                        nullptr, bufferManagers, WorkerId(0), numOfThreads, nullptr, numberOfBuffersPerEpoch, workerToCoreMappingVec);
+                        std::make_shared<SimpleQueryStatusListener>(),
+                        bufferManagers,
+                        WorkerId(0),
+                        numOfThreads,
+                        nullptr,
+                        numberOfBuffersPerEpoch,
+                        workerToCoreMappingVec);
                     break;
                 }
                 case QueryExecutionMode::Static: {

@@ -34,23 +34,33 @@ NodeEngine::NodeEngine(std::vector<BufferManagerPtr>&& bufferManagers, QueryMana
 QueryId NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan)
 {
     // TODO(#123): Query Instantiation
+    static std::atomic counter = INITIAL<QueryId>.getRawValue();
     queryManager->registerQuery(queryExecutionPlan);
-    return QueryId(1);
+
+    const auto nextQueryId = QueryId(counter++);
+    registeredQueries[nextQueryId] = queryExecutionPlan;
+    return nextQueryId;
 }
 
-void NodeEngine::startQuery(QueryId)
+void NodeEngine::startQuery(QueryId queryId)
 {
-    NES_NOT_IMPLEMENTED();
+    if (!queryManager->startQuery(registeredQueries[queryId]))
+    {
+        NES_THROW_RUNTIME_ERROR("Could not start the query");
+    }
 }
 
-void NodeEngine::unregisterQuery(QueryId)
+void NodeEngine::unregisterQuery(QueryId queryId)
 {
-    NES_NOT_IMPLEMENTED();
+    registeredQueries.erase(queryId);
 }
 
-void NodeEngine::stopQuery(QueryId, QueryTerminationType)
+void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType type)
 {
-    NES_NOT_IMPLEMENTED();
+    if (!queryManager->stopQuery(registeredQueries[queryId], type))
+    {
+        NES_THROW_RUNTIME_ERROR("Could not stop the query");
+    }
 }
 
 } // namespace NES::Runtime

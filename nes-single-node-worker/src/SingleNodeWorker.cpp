@@ -105,14 +105,17 @@ QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
 
     return nodeEngine->registerExecutableQueryPlan(compilationResult->getExecutableQueryPlan());
 }
-void SingleNodeWorker::startQuery(QueryId)
+void SingleNodeWorker::startQuery(QueryId queryId)
 {
+    nodeEngine->startQuery(queryId);
 }
-void SingleNodeWorker::stopQuery(QueryId, Runtime::QueryTerminationType)
+void SingleNodeWorker::stopQuery(QueryId queryId, Runtime::QueryTerminationType type)
 {
+    nodeEngine->stopQuery(queryId, type);
 }
-void SingleNodeWorker::unregisterQuery(QueryId)
+void SingleNodeWorker::unregisterQuery(QueryId queryId)
 {
+    nodeEngine->unregisterQuery(queryId);
 }
 QueryStatus SingleNodeWorker::queryStatus(QueryId) const
 {

@@ -84,6 +84,7 @@ public:
 
 private:
     std::vector<BufferManagerPtr> bufferManagers;
+    std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> registeredQueries;
     QueryManagerPtr queryManager;
 };
 
