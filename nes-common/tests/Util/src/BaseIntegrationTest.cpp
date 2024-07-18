@@ -82,18 +82,11 @@ void BaseIntegrationTest::SetUp()
             std::filesystem::remove_all(testResourcePath);
             std::filesystem::create_directories(testResourcePath);
         }
-        restPort = detail::getPortDispatcher().getNextPort();
-        rpcCoordinatorPort = detail::getPortDispatcher().getNextPort();
     }
     else
     {
         NES_ERROR("SetUp called twice in {}", typeid(*this).name());
     }
-}
-
-BorrowedPortPtr BaseIntegrationTest::getAvailablePort()
-{
-    return detail::getPortDispatcher().getNextPort();
 }
 
 std::filesystem::path BaseIntegrationTest::getTestResourceFolder() const
@@ -112,8 +105,6 @@ void BaseIntegrationTest::TearDown()
     auto expected = false;
     if (tearDownCalled.compare_exchange_strong(expected, true))
     {
-        restPort.reset();
-        rpcCoordinatorPort.reset();
         std::filesystem::remove_all(testResourcePath);
         NES::Testing::BaseUnitTest::TearDown();
         completeTest();

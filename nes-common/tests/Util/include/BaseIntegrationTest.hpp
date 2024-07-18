@@ -19,7 +19,6 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <BaseUnitTest.hpp>
-#include <BorrowedPort.hpp>
 
 #define ASSERT_INSTANCE_OF(node, instance) \
     if (!(node)->instanceOf<instance>()) \
@@ -31,17 +30,8 @@
 namespace NES::Testing
 {
 
-class BorrowedPort;
-using BorrowedPortPtr = std::shared_ptr<BorrowedPort>;
-
 class BaseIntegrationTest : public Testing::BaseUnitTest
 {
-    friend class BorrowedPort;
-
-protected:
-    BorrowedPortPtr rpcCoordinatorPort{nullptr};
-    BorrowedPortPtr restPort{nullptr};
-
 public:
     /**
      * @brief the base test class ctor that creates the internal test resources
@@ -65,12 +55,6 @@ public:
     void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
 
 protected:
-    /**
-     * @brief Retrieve another free port
-     * @return a free port
-     */
-    BorrowedPortPtr getAvailablePort();
-
     /**
      * @brief returns the test resource folder to write files
      * @return the test folder
