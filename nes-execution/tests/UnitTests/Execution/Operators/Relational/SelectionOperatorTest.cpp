@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -20,14 +20,17 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class SelectionOperatorTest : public Testing::BaseUnitTest {
-  public:
+class SelectionOperatorTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SelectionOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SelectionOperatorTest test class.");
     }
@@ -39,7 +42,8 @@ class SelectionOperatorTest : public Testing::BaseUnitTest {
 /**
  * @brief Tests the selection operator with qualifying record.
  */
-TEST_F(SelectionOperatorTest, qualifingRecordTest) {
+TEST_F(SelectionOperatorTest, qualifingRecordTest)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
@@ -59,7 +63,8 @@ TEST_F(SelectionOperatorTest, qualifingRecordTest) {
 /**
  * @brief Tests the selection operator with non qualifying record.
  */
-TEST_F(SelectionOperatorTest, nonqualifingRecordTest) {
+TEST_F(SelectionOperatorTest, nonqualifingRecordTest)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
@@ -75,7 +80,8 @@ TEST_F(SelectionOperatorTest, nonqualifingRecordTest) {
 /**
  * @brief Tests selection on non boolean field -> expect exception
  */
-TEST_F(SelectionOperatorTest, wrongSelectionTypeTest) {
+TEST_F(SelectionOperatorTest, wrongSelectionTypeTest)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto selectionOperator = Selection(readF1);
     auto collector = std::make_shared<CollectOperator>();
@@ -85,4 +91,4 @@ TEST_F(SelectionOperatorTest, wrongSelectionTypeTest) {
     ASSERT_ANY_THROW(selectionOperator.execute(ctx, record));
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

@@ -17,12 +17,14 @@
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES::Experimental {
+namespace NES::Experimental
+{
 /**
  * @brief Descriptor defining properties used for creating physical table source
  */
-class StaticDataSourceDescriptor : public SourceDescriptor {
-  public:
+class StaticDataSourceDescriptor : public SourceDescriptor
+{
+public:
     /**
      * @brief Ctor of a StaticDataSourceDescriptor
      * @param schema the schema of the source
@@ -65,9 +67,9 @@ class StaticDataSourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorPtr copy() override;
 
-  private:
+private:
     std::string pathTableFile;
     bool lateStart;
 };
-}// namespace NES::Experimental
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_
+} // namespace NES::Experimental
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_

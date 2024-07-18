@@ -17,12 +17,14 @@
 
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 
-namespace NES::Benchmark::IngestionRateGeneration {
+namespace NES::Benchmark::IngestionRateGeneration
+{
 /**
  * @brief This class inherits from IngestionRateGenerator and allows for the generation of M1, M2, D1 and D2 distributed ingestion rates.
  */
-class CustomIngestionRateGenerator : public IngestionRateGenerator {
-  public:
+class CustomIngestionRateGenerator : public IngestionRateGenerator
+{
+public:
     /**
      * @brief constructor for a uniform ingestion rate generator
      * @param ingestionRateDistribution
@@ -36,10 +38,10 @@ class CustomIngestionRateGenerator : public IngestionRateGenerator {
       */
     std::vector<std::uint64_t> generateIngestionRates() override;
 
-  private:
+private:
     std::vector<uint64_t> customValues;
     std::vector<uint64_t> predefinedIngestionRates;
 };
-}// namespace NES::Benchmark::IngestionRateGeneration
+} // namespace NES::Benchmark::IngestionRateGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_CUSTOMINGESTIONRATEGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_INGESTIONRATEGENERATION_CUSTOMINGESTIONRATEGENERATOR_HPP_

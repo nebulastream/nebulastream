@@ -19,24 +19,24 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
   * @brief Compares two text object and returns their Jaro Similarity as Double.
   */
-class JaroSimilarity : public Expression {
-  public:
-    JaroSimilarity(const ExpressionPtr& leftSubExpression,
-                   const ExpressionPtr& rightSubExpression,
-                   const ExpressionPtr& flagExpression);
+class JaroSimilarity : public Expression
+{
+public:
+    JaroSimilarity(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression, const ExpressionPtr& flagExpression);
     Value<> execute(Record& record) const override;
 
-  private:
+private:
     const ExpressionPtr leftSubExpression;
     const ExpressionPtr rightSubExpression;
     const ExpressionPtr flagExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_JAROSIMILARITY_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_JAROSIMILARITY_HPP_

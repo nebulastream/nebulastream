@@ -12,23 +12,27 @@
     limitations under the License.
 */
 #include <Sinks/Mediums/WatermarkProcessor.hpp>
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 WatermarkProcessor::WatermarkProcessor() = default;
 
-void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber) {
+void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber)
+{
     std::unique_lock lock(watermarkLatch);
 
     // emplace current watermark barrier in the update log
     transactionLog.emplace(ts, sequenceNumber);
     // process all outstanding updates from the queue
-    while (!transactionLog.empty()) {
+    while (!transactionLog.empty())
+    {
         auto nextWatermarkUpdate = transactionLog.top();
         // the update log is sorted by the sequence number.
         // Thus, we only check if the next update is the one, which we expect.
         // This implies, that each watermark barrier has to be received.
         // If the system looses a watermark barrier, the watermark processor will make no progress.
-        if (currentSequenceNumber + 1 != std::get<1>(nextWatermarkUpdate)) {
+        if (currentSequenceNumber + 1 != std::get<1>(nextWatermarkUpdate))
+        {
             // It is not the correct update, so we terminate here and can't further apply the next transaction.
             break;
         }
@@ -39,8 +43,14 @@ void WatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequence
     }
 }
 
-WatermarkTs WatermarkProcessor::getCurrentWatermark() const { return currentWatermark; }
+WatermarkTs WatermarkProcessor::getCurrentWatermark() const
+{
+    return currentWatermark;
+}
 
-bool WatermarkProcessor::isWatermarkSynchronized() const { return transactionLog.empty(); }
+bool WatermarkProcessor::isWatermarkSynchronized() const
+{
+    return transactionLog.empty();
+}
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing

@@ -13,24 +13,33 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_
-#include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
+#include <Nautilus/IR/Types/Stamp.hpp>
 
-namespace NES::Nautilus::IR::Types {
+namespace NES::Nautilus::IR::Types
+{
 
 /**
  * @brief A integer stamp represents the type of an integer value.
  * It is defined by of a bit width and a signedness.
  */
-class IntegerStamp : public Stamp {
-  public:
+class IntegerStamp : public Stamp
+{
+public:
     // Bit width for the integer
-    enum class BitWidth : uint8_t { I8, I16, I32, I64 };
+    enum class BitWidth : uint8_t
+    {
+        I8,
+        I16,
+        I32,
+        I64
+    };
 
     // Signedness semantics.
-    enum class SignednessSemantics : uint8_t {
-        Signed,  /// Signed integer
-        Unsigned,/// Unsigned integer
+    enum class SignednessSemantics : uint8_t
+    {
+        Signed, /// Signed integer
+        Unsigned, /// Unsigned integer
     };
 
     static const inline auto type = TypeIdentifier::create<IntegerStamp>();
@@ -71,11 +80,11 @@ class IntegerStamp : public Stamp {
     bool isUnsigned() const;
     const std::string toString() const override;
 
-  private:
+private:
     const BitWidth bitWidth;
     const SignednessSemantics signedness;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_

@@ -17,13 +17,13 @@
 
 #include <Common/ValueTypes/ValueType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class [[nodiscard]] BasicValue final : public ValueType {
-
-  public:
-    [[nodiscard]] inline BasicValue(const DataTypePtr& type, std::string&& value) noexcept
-        : ValueType(type), value(std::move(value)) {}
+class [[nodiscard]] BasicValue final : public ValueType
+{
+public:
+    [[nodiscard]] inline BasicValue(const DataTypePtr& type, std::string&& value) noexcept : ValueType(type), value(std::move(value)) { }
 
     ~BasicValue() override = default;
 
@@ -36,6 +36,6 @@ class [[nodiscard]] BasicValue final : public ValueType {
     std::string value;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_BASICVALUE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_VALUETYPES_BASICVALUE_HPP_

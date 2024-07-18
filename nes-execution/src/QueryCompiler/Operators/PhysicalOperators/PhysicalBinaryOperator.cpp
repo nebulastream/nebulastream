@@ -11,27 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 #include <sstream>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalBinaryOperator::PhysicalBinaryOperator(OperatorId id,
-                                               StatisticId statisticId,
-                                               SchemaPtr leftSchema,
-                                               SchemaPtr rightSchema,
-                                               SchemaPtr outputSchema)
-    : Operator(id, statisticId), PhysicalOperator(id, statisticId), BinaryOperator(id) {
+PhysicalBinaryOperator::PhysicalBinaryOperator(
+    OperatorId id, StatisticId statisticId, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema)
+    : Operator(id, statisticId), PhysicalOperator(id, statisticId), BinaryOperator(id)
+{
     BinaryOperator::setLeftInputSchema(std::move(leftSchema));
     BinaryOperator::setRightInputSchema(std::move(rightSchema));
     BinaryOperator::setOutputSchema(std::move(outputSchema));
 }
 
-std::string PhysicalBinaryOperator::toString() const {
+std::string PhysicalBinaryOperator::toString() const
+{
     std::stringstream out;
     out << BinaryOperator::toString();
     return out.str();
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

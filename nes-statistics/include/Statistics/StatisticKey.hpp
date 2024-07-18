@@ -17,7 +17,8 @@
 
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /*
  * We use this as a way to not having to send the characteristic and window to all workers.
@@ -34,8 +35,9 @@ constexpr auto goldenRatio = 0x9e3779b97f4a7c15;
  * By combining them, we can specify what metric is being tracked for what component. One example might be tracking
  * the selectivity over the physical source `car_1`.
  */
-class StatisticKey {
-  public:
+class StatisticKey
+{
+public:
     /**
      * @brief Constructor for a StatisticKey
      * @param metric
@@ -79,7 +81,7 @@ class StatisticKey {
      */
     [[nodiscard]] std::string toString() const;
 
-  private:
+private:
     const MetricPtr metric;
     const StatisticId statisticId;
 };
@@ -87,10 +89,11 @@ class StatisticKey {
 /**
  * @brief Necessary for unordered_map with StatisticKey as the key
  */
-struct StatisticKeyHash {
+struct StatisticKeyHash
+{
     StatisticHash operator()(const StatisticKey& key) const { return key.hash(); }
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICS_STATISTICKEY_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_STATISTICKEY_HPP_

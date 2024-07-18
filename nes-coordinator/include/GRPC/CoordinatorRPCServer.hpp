@@ -15,16 +15,17 @@
 #ifndef NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 #define NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
 
-#include <CoordinatorRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <CoordinatorRPCService.grpc.pb.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-namespace NES {
+namespace NES
+{
 
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
@@ -41,15 +42,17 @@ using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
 class CoordinatorHealthCheckService;
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
 
-namespace Monitoring {
+namespace Monitoring
+{
 class MonitoringManager;
 using MonitoringManagerPtr = std::shared_ptr<MonitoringManager>;
-}// namespace Monitoring
+} // namespace Monitoring
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
@@ -57,8 +60,9 @@ using LocationServicePtr = std::shared_ptr<LocationService>;
 /**
  * @brief Coordinator RPC server responsible for receiving requests over GRPC interface
  */
-class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
-  public:
+class CoordinatorRPCServer final : public CoordinatorRPCService::Service
+{
+public:
     /**
      * @brief Create coordinator RPC server
      * @param requestHandlerService: the instance of Query Service
@@ -68,13 +72,14 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param monitoringService : the instance of monitoring service
      * @param coordinatorHealthCheckService : coordinator health check service
      */
-    explicit CoordinatorRPCServer(RequestHandlerServicePtr requestHandlerService,
-                                  TopologyPtr topology,
-                                  SourceCatalogServicePtr sourceCatalogService,
-                                  Catalogs::Query::QueryCatalogPtr queryCatalog,
-                                  Monitoring::MonitoringManagerPtr monitoringManager,
-                                  QueryParsingServicePtr queryParsingService,
-                                  CoordinatorHealthCheckServicePtr coordinatorHealthCheckService);
+    explicit CoordinatorRPCServer(
+        RequestHandlerServicePtr requestHandlerService,
+        TopologyPtr topology,
+        SourceCatalogServicePtr sourceCatalogService,
+        Catalogs::Query::QueryCatalogPtr queryCatalog,
+        Monitoring::MonitoringManagerPtr monitoringManager,
+        QueryParsingServicePtr queryParsingService,
+        CoordinatorHealthCheckServicePtr coordinatorHealthCheckService);
     /**
      * @brief RPC Call to register a node
      * @param context: the server context
@@ -82,8 +87,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: the node registration reply
      * @return success
      */
-    Status
-    RegisterWorker(ServerContext* context, const RegisterWorkerRequest* registrationRequest, RegisterWorkerReply* reply) override;
+    Status RegisterWorker(ServerContext* context, const RegisterWorkerRequest* registrationRequest, RegisterWorkerReply* reply) override;
 
     /**
      * @brief RPC Call to unregister a node
@@ -92,8 +96,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: the node unregistration reply
      * @return success
      */
-    Status
-    UnregisterWorker(ServerContext* context, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) override;
+    Status UnregisterWorker(ServerContext* context, const UnregisterWorkerRequest* request, UnregisterWorkerReply* reply) override;
 
     /**
      * @brief RPC Call to register physical source
@@ -102,9 +105,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: register physical source response
      * @return success
      */
-    Status RegisterPhysicalSource(ServerContext* context,
-                                  const RegisterPhysicalSourcesRequest* request,
-                                  RegisterPhysicalSourcesReply* reply) override;
+    Status RegisterPhysicalSource(
+        ServerContext* context, const RegisterPhysicalSourcesRequest* request, RegisterPhysicalSourcesReply* reply) override;
 
     /**
      * @brief RPC Call to unregister physical source
@@ -113,9 +115,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: unregister physical source reply
      * @return success
      */
-    Status UnregisterPhysicalSource(ServerContext* context,
-                                    const UnregisterPhysicalSourceRequest* request,
-                                    UnregisterPhysicalSourceReply* reply) override;
+    Status UnregisterPhysicalSource(
+        ServerContext* context, const UnregisterPhysicalSourceRequest* request, UnregisterPhysicalSourceReply* reply) override;
 
     /**
      * @brief RPC Call to register logical source
@@ -124,9 +125,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: register logical source response
      * @return success
      */
-    Status RegisterLogicalSource(ServerContext* context,
-                                 const RegisterLogicalSourceRequest* request,
-                                 RegisterLogicalSourceReply* reply) override;
+    Status
+    RegisterLogicalSource(ServerContext* context, const RegisterLogicalSourceRequest* request, RegisterLogicalSourceReply* reply) override;
 
     /**
      * @brief RPC Call to unregister logical source
@@ -135,9 +135,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply: unregister logical source response
      * @return success
      */
-    Status UnregisterLogicalSource(ServerContext* context,
-                                   const UnregisterLogicalSourceRequest* request,
-                                   UnregisterLogicalSourceReply* reply) override;
+    Status UnregisterLogicalSource(
+        ServerContext* context, const UnregisterLogicalSourceRequest* request, UnregisterLogicalSourceReply* reply) override;
 
     /**
      * @brief RPC Call to add parent
@@ -173,9 +172,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply that is sent back from the coordinator to the worker to confirm that notification was successful
      * @return success
      */
-    Status NotifyQueryFailure(ServerContext* context,
-                              const QueryFailureNotification* request,
-                              QueryFailureNotificationReply* reply) override;
+    Status
+    NotifyQueryFailure(ServerContext* context, const QueryFailureNotification* request, QueryFailureNotificationReply* reply) override;
 
     /**
      * @brief RPC Call to get a list of field nodes within a defined radius around a geographical location
@@ -202,9 +200,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param response : that is sent back from the coordinator to the worker if soft stop can be processed or not
      * @return true if soft stop can be performed else false
      */
-    Status RequestSoftStop(::grpc::ServerContext* context,
-                           const ::RequestSoftStopMessage* request,
-                           ::StopRequestReply* response) override;
+    Status RequestSoftStop(::grpc::ServerContext* context, const ::RequestSoftStopMessage* request, ::StopRequestReply* response) override;
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is triggered or not
@@ -213,9 +209,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param response : that is sent back from the coordinator to the worker if request is processed
      * @return true if coordinator successfully recorded the information else false
      */
-    Status notifySourceStopTriggered(::grpc::ServerContext* context,
-                                     const ::SoftStopTriggeredMessage* request,
-                                     ::SoftStopTriggeredReply* response) override;
+    Status notifySourceStopTriggered(
+        ::grpc::ServerContext* context, const ::SoftStopTriggeredMessage* request, ::SoftStopTriggeredReply* response) override;
 
     /**
      * Notify coordinator that for a subquery plan the soft stop is completed or not
@@ -224,9 +219,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param response : that is sent back from the coordinator to the worker if request is processed
      * @return true if the request is acknowledged
      */
-    Status NotifySoftStopCompleted(::grpc::ServerContext* context,
-                                   const ::SoftStopCompletionMessage* request,
-                                   ::SoftStopCompletionReply* response) override;
+    Status NotifySoftStopCompleted(
+        ::grpc::ServerContext* context, const ::SoftStopCompletionMessage* request, ::SoftStopCompletionReply* response) override;
 
     /**
      * @brief inform the coordinator that a mobile devices reconnect prediction has changed
@@ -237,9 +231,8 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      * @param reply : sent from coordinator to worker not containing any data
      * @return OK if the coordinator succesfully recorded the data, CANCELLED otherwise
      */
-    Status SendScheduledReconnect(ServerContext*,
-                                  const SendScheduledReconnectRequest* request,
-                                  SendScheduledReconnectReply* reply) override;
+    Status
+    SendScheduledReconnect(ServerContext*, const SendScheduledReconnectRequest* request, SendScheduledReconnectReply* reply) override;
 
     /**
      * @brief inform the coordinator that the devices location has changed
@@ -261,7 +254,7 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
      */
     Status RelocateTopologyNode(ServerContext*, const NodeRelocationRequest* request, NodeRelocationReply* reply) override;
 
-  private:
+private:
     RequestHandlerServicePtr requestHandlerService;
     TopologyPtr topology;
     SourceCatalogServicePtr sourceCatalogService;
@@ -270,6 +263,6 @@ class CoordinatorRPCServer final : public CoordinatorRPCService::Service {
     QueryParsingServicePtr queryParsingService;
     CoordinatorHealthCheckServicePtr coordinatorHealthCheckService;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_GRPC_COORDINATORRPCSERVER_HPP_

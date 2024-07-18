@@ -19,13 +19,15 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Batch operator for keyed aggregations.
  */
-class BatchKeyedAggregation : public ExecutableOperator {
-  public:
+class BatchKeyedAggregation : public ExecutableOperator
+{
+public:
     /**
      * @brief Creates a keyed batch aggregation operator.
      * @param operatorHandlerIndex operator handler index.
@@ -35,16 +37,17 @@ class BatchKeyedAggregation : public ExecutableOperator {
      * @param aggregationFunctions aggregation functions
      * @param hashFunction hash function
      */
-    BatchKeyedAggregation(uint64_t operatorHandlerIndex,
-                          const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                          const std::vector<PhysicalTypePtr>& keyDataTypes,
-                          const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                          std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+    BatchKeyedAggregation(
+        uint64_t operatorHandlerIndex,
+        const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+        const std::vector<PhysicalTypePtr>& keyDataTypes,
+        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;
@@ -53,5 +56,5 @@ class BatchKeyedAggregation : public ExecutableOperator {
     uint64_t keySize;
     uint64_t valueSize;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATION_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATION_HPP_

@@ -12,31 +12,51 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema) { this->schema = schema->copy(); }
+SourceDescriptor::SourceDescriptor(SchemaPtr schema)
+{
+    this->schema = schema->copy();
+}
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName)
-    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)) {}
+    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName))
+{
+}
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string physicalSourceName)
-    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)),
-      physicalSourceName(std::move(physicalSourceName)) {}
+    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName))
+{
+}
 
-SchemaPtr SourceDescriptor::getSchema() const { return schema; }
+SchemaPtr SourceDescriptor::getSchema() const
+{
+    return schema;
+}
 
-std::string SourceDescriptor::getLogicalSourceName() const { return logicalSourceName; }
+std::string SourceDescriptor::getLogicalSourceName() const
+{
+    return logicalSourceName;
+}
 
-std::string SourceDescriptor::getPhysicalSourceName() const { return physicalSourceName; }
+std::string SourceDescriptor::getPhysicalSourceName() const
+{
+    return physicalSourceName;
+}
 
-void SourceDescriptor::setSchema(const SchemaPtr& schema) { this->schema = schema; }
+void SourceDescriptor::setSchema(const SchemaPtr& schema)
+{
+    this->schema = schema;
+}
 
-void SourceDescriptor::setPhysicalSourceName(std::string_view physicalSourceName) {
+void SourceDescriptor::setPhysicalSourceName(std::string_view physicalSourceName)
+{
     this->physicalSourceName = physicalSourceName;
 }
 
-}// namespace NES
+} // namespace NES

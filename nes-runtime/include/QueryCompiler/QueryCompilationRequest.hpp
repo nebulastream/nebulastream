@@ -16,14 +16,16 @@
 
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Represents a query compilation request.
  * The request encapsulates the decomposed query plan and addition properties.
  */
-class QueryCompilationRequest {
-  public:
+class QueryCompilationRequest
+{
+public:
     static QueryCompilationRequestPtr create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine);
 
     /**
@@ -71,7 +73,7 @@ class QueryCompilationRequest {
      */
     Runtime::NodeEnginePtr getNodeEngine();
 
-  private:
+private:
     QueryCompilationRequest(DecomposedQueryPlanPtr queryPlan, Runtime::NodeEnginePtr nodeEngine);
     DecomposedQueryPlanPtr decomposedQueryPlan;
     Runtime::NodeEnginePtr nodeEngine;
@@ -79,6 +81,6 @@ class QueryCompilationRequest {
     bool optimize;
     bool dumpQueryPlans;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_
+#endif // NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_

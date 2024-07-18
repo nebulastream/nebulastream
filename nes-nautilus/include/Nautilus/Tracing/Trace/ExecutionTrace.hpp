@@ -14,17 +14,19 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
 
-#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
-#include <Nautilus/Tracing/Trace/Block.hpp>
 #include <memory>
 #include <unordered_map>
-namespace NES::Nautilus::Tracing {
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
+#include <Nautilus/Tracing/Trace/Block.hpp>
+namespace NES::Nautilus::Tracing
+{
 
 /**
  * @brief The execution trace captures the trace of a program
  */
-class ExecutionTrace {
-  public:
+class ExecutionTrace
+{
+public:
     ExecutionTrace();
     ~ExecutionTrace() = default;
     /**
@@ -99,13 +101,13 @@ class ExecutionTrace {
     std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const ExecutionTrace& tag);
 
-  private:
+private:
     uint32_t currentBlock;
     std::vector<Block> blocks;
     std::vector<ValueRef> arguments;
     std::shared_ptr<OperationRef> returnRef;
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_EXECUTIONTRACE_HPP_

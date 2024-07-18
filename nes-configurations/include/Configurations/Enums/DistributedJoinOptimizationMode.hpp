@@ -17,12 +17,14 @@
 
 #include <cstdint>
 
-namespace NES::Optimizer {
-enum class DistributedJoinOptimizationMode : uint8_t {
-    NONE,  // distributed join optimization disabled
-    MATRIX,// uses distributed matrix join approach
-    NEMO   // uses distributed nemo join
+namespace NES::Optimizer
+{
+enum class DistributedJoinOptimizationMode : uint8_t
+{
+    NONE, // distributed join optimization disabled
+    MATRIX, // uses distributed matrix join approach
+    NEMO // uses distributed nemo join
 };
 }
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DISTRIBUTEDJOINOPTIMIZATIONMODE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DISTRIBUTEDJOINOPTIMIZATIONMODE_HPP_

@@ -17,24 +17,26 @@
 
 #include <Common/DataTypes/Numeric.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Float precision are inexact, variable-precision numeric types.
  * Inexact means that some values cannot be converted exactly to the internal format and are stored as approximations,
  * so that storing and retrieving a value might show slight discrepancies.
  */
-class Float final : public Numeric {
-
-  public:
+class Float final : public Numeric
+{
+public:
     /**
      * @brief Constructs a new Float type.
      * @param bits the number of bits in which this type is represented.
      * @param lowerBound the lower bound, which is contained in that float.
      * @param upperBound the upper bound, which is contained in that float.
      */
-    inline Float(int8_t bits, double lowerBound, double upperBound) noexcept
-        : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
+    inline Float(int8_t bits, double lowerBound, double upperBound) noexcept : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound)
+    {
+    }
 
     ~Float() override = default;
 
@@ -69,6 +71,6 @@ class Float final : public Numeric {
     double const upperBound;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_

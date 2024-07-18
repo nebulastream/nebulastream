@@ -11,28 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseUnitTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <RequestProcessor/StorageHandles/UnlockDeleter.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 
-namespace NES::RequestProcessor::Experimental {
-class UnlockDeleterTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES::RequestProcessor::Experimental
+{
+class UnlockDeleterTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("UnlockDeleterTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup UnlockDeleter test class.");
     }
 };
 
-TEST_F(UnlockDeleterTest, TestNoLocking) {
+TEST_F(UnlockDeleterTest, TestNoLocking)
+{
     UnlockDeleter unlockDeleter;
     EXPECT_NO_THROW(unlockDeleter = UnlockDeleter());
 }
 
-TEST_F(UnlockDeleterTest, TestBlocking) {
+TEST_F(UnlockDeleterTest, TestBlocking)
+{
     std::mutex mtx;
     std::shared_ptr<std::thread> thread;
 
@@ -40,9 +45,7 @@ TEST_F(UnlockDeleterTest, TestBlocking) {
     {
         //constructor acquires lock
         std::unique_ptr<std::vector<int>, UnlockDeleter> handle({}, UnlockDeleter(mtx));
-        thread = std::make_shared<std::thread>([&mtx]() {
-            ASSERT_FALSE((mtx.try_lock()));
-        });
+        thread = std::make_shared<std::thread>([&mtx]() { ASSERT_FALSE((mtx.try_lock())); });
         thread->join();
         //destructor releases lock
     }
@@ -55,37 +58,37 @@ TEST_F(UnlockDeleterTest, TestBlocking) {
     {
         //constructor acquires lock
         std::unique_ptr<std::vector<int>, UnlockDeleter> handle({}, UnlockDeleter(mtx));
-        thread = std::make_shared<std::thread>([&mtx]() {
-            ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx))));
-        });
+        thread = std::make_shared<std::thread>(
+            [&mtx]() { ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx)))); });
         //destructor releases lock
     }
     thread->join();
 }
 
-TEST_F(UnlockDeleterTest, TestLocking) {
+TEST_F(UnlockDeleterTest, TestLocking)
+{
     std::mutex mtx;
 
     //check that try lock will throw an exception if mutex is already locked
     {
         //constructor acquires lock
         std::unique_ptr<std::vector<int>, UnlockDeleter> handle({}, UnlockDeleter(mtx));
-        auto thread = std::make_shared<std::thread>([&mtx]() {
-            ASSERT_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock))),
-                         std::exception);
-        });
+        auto thread = std::make_shared<std::thread>(
+            [&mtx]() {
+                ASSERT_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock))), std::exception);
+            });
         thread->join();
         //destructor releases lock
     }
 
     //check that try lock will not throw an exception if mutex is not locked
-    auto thread = std::make_shared<std::thread>([&mtx]() {
-        ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock))));
-    });
+    auto thread = std::make_shared<std::thread>(
+        [&mtx]() { ASSERT_NO_THROW((std::unique_ptr<std::vector<int>, UnlockDeleter>({}, UnlockDeleter(mtx, std::try_to_lock)))); });
     thread->join();
 }
 
-TEST_F(UnlockDeleterTest, TestTakingOwnershipOfLock) {
+TEST_F(UnlockDeleterTest, TestTakingOwnershipOfLock)
+{
     std::mutex mtx;
     auto lock = std::unique_lock(mtx);
     UnlockDeleter deleter;
@@ -93,10 +96,11 @@ TEST_F(UnlockDeleterTest, TestTakingOwnershipOfLock) {
     ASSERT_FALSE(mtx.try_lock());
 }
 
-TEST_F(UnlockDeleterTest, TestTakingOwnershipNotLocked) {
+TEST_F(UnlockDeleterTest, TestTakingOwnershipNotLocked)
+{
     std::mutex mtx;
     auto lock = std::unique_lock(mtx, std::defer_lock);
     UnlockDeleter deleter;
     ASSERT_THROW(deleter = UnlockDeleter(std::move(lock)), std::exception);
 }
-}// namespace NES::RequestProcessor::Experimental
+} // namespace NES::RequestProcessor::Experimental

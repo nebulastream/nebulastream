@@ -12,28 +12,39 @@
     limitations under the License.
 */
 
+#include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
-#include <vector>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 TumblingWindow::TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
-    : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size)) {}
+    : TimeBasedWindowType(std::move(timeCharacteristic)), size(std::move(size))
+{
+}
 
-WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size) {
+WindowTypePtr TumblingWindow::of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size)
+{
     return std::dynamic_pointer_cast<WindowType>(
         std::make_shared<TumblingWindow>(TumblingWindow(std::move(timeCharacteristic), std::move(size))));
 }
 
-TimeMeasure TumblingWindow::getSize() { return size; }
+TimeMeasure TumblingWindow::getSize()
+{
+    return size;
+}
 
-TimeMeasure TumblingWindow::getSlide() { return getSize(); }
+TimeMeasure TumblingWindow::getSlide()
+{
+    return getSize();
+}
 
-std::string TumblingWindow::toString() const {
+std::string TumblingWindow::toString() const
+{
     std::stringstream ss;
     ss << "TumblingWindow: size=" << size.getTime();
     ss << " timeCharacteristic=" << timeCharacteristic->toString();
@@ -41,18 +52,20 @@ std::string TumblingWindow::toString() const {
     return ss.str();
 }
 
-bool TumblingWindow::equal(WindowTypePtr otherWindowType) {
-    if (auto otherTumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType)) {
-        return this->size.equals(otherTumblingWindow->size)
-            && this->timeCharacteristic->equals(*otherTumblingWindow->timeCharacteristic);
+bool TumblingWindow::equal(WindowTypePtr otherWindowType)
+{
+    if (auto otherTumblingWindow = std::dynamic_pointer_cast<TumblingWindow>(otherWindowType))
+    {
+        return this->size.equals(otherTumblingWindow->size) && this->timeCharacteristic->equals(*otherTumblingWindow->timeCharacteristic);
     }
     return false;
 }
 
-uint64_t TumblingWindow::hash() const {
+uint64_t TumblingWindow::hash() const
+{
     uint64_t hashValue = 0;
     hashValue = hashValue * 0x9e3779b1 + std::hash<uint64_t>{}(size.getTime());
     hashValue = hashValue * 0x9e3779b1 + std::hash<size_t>{}(timeCharacteristic->hash());
     return hashValue;
 }
-}// namespace NES::Windowing
+} // namespace NES::Windowing

@@ -20,15 +20,26 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext,
-                                   const Value<NES::Nautilus::MemRef>& pipelineContext)
-    : workerContext(workerContext), pipelineContext(pipelineContext), origin(0_u64), statisticId(INVALID_STATISTIC_ID),
-      watermarkTs(0_u64), currentTs(0_u64), sequenceNumber(0_u64), chunkNumber(0_u64), lastChunk(true) {}
+ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerContext, const Value<NES::Nautilus::MemRef>& pipelineContext)
+    : workerContext(workerContext)
+    , pipelineContext(pipelineContext)
+    , origin(0_u64)
+    , statisticId(INVALID_STATISTIC_ID)
+    , watermarkTs(0_u64)
+    , currentTs(0_u64)
+    , sequenceNumber(0_u64)
+    , chunkNumber(0_u64)
+    , lastChunk(true)
+{
+}
 
-void* allocateBufferProxy(void* workerContextPtr) {
-    if (workerContextPtr == nullptr) {
+void* allocateBufferProxy(void* workerContextPtr)
+{
+    if (workerContextPtr == nullptr)
+    {
         NES_THROW_RUNTIME_ERROR("worker context should not be null");
     }
     auto wkrCtx = static_cast<Runtime::WorkerContext*>(workerContextPtr);
@@ -41,13 +52,15 @@ void* allocateBufferProxy(void* workerContextPtr) {
     return tb;
 }
 
-Value<MemRef> ExecutionContext::allocateBuffer() {
+Value<MemRef> ExecutionContext::allocateBuffer()
+{
     auto bufferPtr = Nautilus::FunctionCall("allocateBufferProxy", allocateBufferProxy, workerContext);
     return bufferPtr;
 }
 
-void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
-    auto* tb = (Runtime::TupleBuffer*) tupleBuffer;
+void emitBufferProxy(void* wc, void* pc, void* tupleBuffer)
+{
+    auto* tb = (Runtime::TupleBuffer*)tupleBuffer;
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto workerCtx = static_cast<WorkerContext*>(wc);
 
@@ -63,122 +76,181 @@ void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
     delete tb;
 }
 
-void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& buffer) {
+void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& buffer)
+{
     FunctionCall<>("emitBufferProxy", emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
 }
 
-WorkerThreadId getWorkerThreadIdProxy(void* workerContext) {
+WorkerThreadId getWorkerThreadIdProxy(void* workerContext)
+{
     auto* wc = static_cast<Runtime::WorkerContext*>(workerContext);
     return wc->getId();
 }
 
-ValueId<WorkerThreadId> ExecutionContext::getWorkerThreadId() {
+ValueId<WorkerThreadId> ExecutionContext::getWorkerThreadId()
+{
     return FunctionCall("getWorkerThreadIdProxy", getWorkerThreadIdProxy, workerContext);
 }
 
-Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op) {
+Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op)
+{
     auto stateEntry = localStateMap.find(op);
-    if (stateEntry == localStateMap.end()) {
+    if (stateEntry == localStateMap.end())
+    {
         NES_THROW_RUNTIME_ERROR("No local state registered for operator: " << op);
     }
     return stateEntry->second.get();
 }
 
-void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state) {
-    if (localStateMap.contains(op)) {
+void ExecutionContext::setLocalOperatorState(const Operators::Operator* op, std::unique_ptr<Operators::OperatorState> state)
+{
+    if (localStateMap.contains(op))
+    {
         NES_THROW_RUNTIME_ERROR("Operators state already registered for operator: " << op);
     }
     localStateMap.emplace(op, std::move(state));
 }
 
-void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index) {
+void* getGlobalOperatorHandlerProxy(void* pc, uint64_t index)
+{
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto handlers = pipelineCtx->getOperatorHandlers();
     auto size = handlers.size();
-    if (index >= size) {
+    if (index >= size)
+    {
         NES_THROW_RUNTIME_ERROR("operator handler at index " + std::to_string(index) + " is not registered");
     }
     return handlers[index].get();
 }
 
-Value<MemRef> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex) {
+Value<MemRef> ExecutionContext::getGlobalOperatorHandler(uint64_t handlerIndex)
+{
     Value<UInt64> handlerIndexValue = Value<UInt64>(handlerIndex);
     return FunctionCall<>("getGlobalOperatorHandlerProxy", getGlobalOperatorHandlerProxy, pipelineContext, handlerIndexValue);
 }
 
-const Value<MemRef>& ExecutionContext::getWorkerContext() const { return workerContext; }
-const Value<MemRef>& ExecutionContext::getPipelineContext() const { return pipelineContext; }
+const Value<MemRef>& ExecutionContext::getWorkerContext() const
+{
+    return workerContext;
+}
+const Value<MemRef>& ExecutionContext::getPipelineContext() const
+{
+    return pipelineContext;
+}
 
-const Value<UInt64>& ExecutionContext::getWatermarkTs() const { return watermarkTs; }
+const Value<UInt64>& ExecutionContext::getWatermarkTs() const
+{
+    return watermarkTs;
+}
 
-void ExecutionContext::setWatermarkTs(Value<UInt64> watermarkTs) { this->watermarkTs = watermarkTs; }
+void ExecutionContext::setWatermarkTs(Value<UInt64> watermarkTs)
+{
+    this->watermarkTs = watermarkTs;
+}
 
-const Value<UInt64>& ExecutionContext::getSequenceNumber() const { return sequenceNumber; }
+const Value<UInt64>& ExecutionContext::getSequenceNumber() const
+{
+    return sequenceNumber;
+}
 
-void ExecutionContext::setSequenceNumber(Value<UInt64> sequenceNumber) { this->sequenceNumber = sequenceNumber; }
+void ExecutionContext::setSequenceNumber(Value<UInt64> sequenceNumber)
+{
+    this->sequenceNumber = sequenceNumber;
+}
 
-const Value<UInt64>& ExecutionContext::getOriginId() const { return origin; }
+const Value<UInt64>& ExecutionContext::getOriginId() const
+{
+    return origin;
+}
 
-const Value<UInt64>& ExecutionContext::getCurrentStatisticId() const { return statisticId; }
+const Value<UInt64>& ExecutionContext::getCurrentStatisticId() const
+{
+    return statisticId;
+}
 
-void ExecutionContext::setOrigin(Value<UInt64> origin) { this->origin = origin; }
+void ExecutionContext::setOrigin(Value<UInt64> origin)
+{
+    this->origin = origin;
+}
 
-void ExecutionContext::setCurrentStatisticId(Value<UInt64> statisticId) { this->statisticId = statisticId; }
+void ExecutionContext::setCurrentStatisticId(Value<UInt64> statisticId)
+{
+    this->statisticId = statisticId;
+}
 
-const Value<UInt64>& ExecutionContext::getCurrentTs() const { return currentTs; }
+const Value<UInt64>& ExecutionContext::getCurrentTs() const
+{
+    return currentTs;
+}
 
-void ExecutionContext::setCurrentTs(Value<UInt64> currentTs) { this->currentTs = currentTs; }
+void ExecutionContext::setCurrentTs(Value<UInt64> currentTs)
+{
+    this->currentTs = currentTs;
+}
 
-const Value<UInt64>& ExecutionContext::getChunkNumber() const { return chunkNumber; }
+const Value<UInt64>& ExecutionContext::getChunkNumber() const
+{
+    return chunkNumber;
+}
 
-void ExecutionContext::setChunkNumber(Value<UInt64> chunkNumber) { this->chunkNumber = chunkNumber; }
+void ExecutionContext::setChunkNumber(Value<UInt64> chunkNumber)
+{
+    this->chunkNumber = chunkNumber;
+}
 
-const Value<Boolean>& ExecutionContext::getLastChunk() const { return lastChunk; }
+const Value<Boolean>& ExecutionContext::getLastChunk() const
+{
+    return lastChunk;
+}
 
-void ExecutionContext::setLastChunk(Value<Boolean> lastChunk) { this->lastChunk = lastChunk; }
+void ExecutionContext::setLastChunk(Value<Boolean> lastChunk)
+{
+    this->lastChunk = lastChunk;
+}
 
-uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber) {
+uint64_t getNextChunkNumberProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber)
+{
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     return pipelineCtx->getNextChunkNumber({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 
-bool isLastChunkProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber, uint64_t chunkNumber, bool isLastChunk) {
+bool isLastChunkProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber, uint64_t chunkNumber, bool isLastChunk)
+{
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     return pipelineCtx->isLastChunk({SequenceNumber(sequenceNumber), OriginId(originId)}, ChunkNumber(chunkNumber), isLastChunk);
 }
 
-void removeSequenceStateProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber) {
+void removeSequenceStateProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t sequenceNumber)
+{
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "operator handler should not be null");
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     pipelineCtx->removeSequenceState({SequenceNumber(sequenceNumber), OriginId(originId)});
 }
 
-Value<Boolean> ExecutionContext::isLastChunk() const {
-    return Nautilus::FunctionCall("isLastChunkProxy",
-                                  isLastChunkProxy,
-                                  this->getPipelineContext(),
-                                  this->getOriginId(),
-                                  this->getSequenceNumber(),
-                                  this->getChunkNumber(),
-                                  this->getLastChunk());
+Value<Boolean> ExecutionContext::isLastChunk() const
+{
+    return Nautilus::FunctionCall(
+        "isLastChunkProxy",
+        isLastChunkProxy,
+        this->getPipelineContext(),
+        this->getOriginId(),
+        this->getSequenceNumber(),
+        this->getChunkNumber(),
+        this->getLastChunk());
 }
 
-Value<UInt64> ExecutionContext::getNextChunkNr() const {
-    return Nautilus::FunctionCall("getNextChunkNumberProxy",
-                                  getNextChunkNumberProxy,
-                                  this->getPipelineContext(),
-                                  this->getOriginId(),
-                                  this->getSequenceNumber());
+Value<UInt64> ExecutionContext::getNextChunkNr() const
+{
+    return Nautilus::FunctionCall(
+        "getNextChunkNumberProxy", getNextChunkNumberProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
 }
 
-void ExecutionContext::removeSequenceState() const {
-    Nautilus::FunctionCall("removeSequenceStateProxy",
-                           removeSequenceStateProxy,
-                           this->getPipelineContext(),
-                           this->getOriginId(),
-                           this->getSequenceNumber());
+void ExecutionContext::removeSequenceState() const
+{
+    Nautilus::FunctionCall(
+        "removeSequenceStateProxy", removeSequenceStateProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
 }
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

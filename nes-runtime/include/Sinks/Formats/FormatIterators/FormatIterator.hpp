@@ -14,16 +14,18 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_
-#include <Sinks/Formats/FormatIterators/Iterator.hpp>
 #include <utility>
+#include <Sinks/Formats/FormatIterators/Iterator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this class is used for iterating over a single buffer and extracting out the tuples
  */
-class FormatIterator {
-  public:
+class FormatIterator
+{
+public:
     explicit FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer, FormatTypes sinkFormatType);
 
     /**
@@ -38,10 +40,10 @@ class FormatIterator {
     */
     Iterator end() { return Iterator(buffer.getNumberOfTuples(), buffer, schema, sinkFormatType); };
 
-  private:
+private:
     SchemaPtr schema;
     Runtime::TupleBuffer buffer;
     FormatTypes sinkFormatType;
 };
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_

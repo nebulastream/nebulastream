@@ -19,12 +19,14 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 /**
  * @brief Provider to transform a sink descriptor to executable DataSink
  */
-class DataSinkProvider {
-  public:
+class DataSinkProvider
+{
+public:
     /**
      * @brief Factory method for creating a DataSinkProvider
      * @return DataSinkProvider
@@ -40,15 +42,16 @@ class DataSinkProvider {
      * @param querySubPlanId
      * @return DataSinkPtr
      */
-    virtual DataSinkPtr lower(OperatorId sinkId,
-                              SinkDescriptorPtr sinkDescriptor,
-                              SchemaPtr schema,
-                              Runtime::NodeEnginePtr nodeEngine,
-                              const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                              size_t numOfProducers);
+    virtual DataSinkPtr lower(
+        OperatorId sinkId,
+        SinkDescriptorPtr sinkDescriptor,
+        SchemaPtr schema,
+        Runtime::NodeEnginePtr nodeEngine,
+        const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+        size_t numOfProducers);
 
     virtual ~DataSinkProvider() = default;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DATASINKPROVIDER_HPP_

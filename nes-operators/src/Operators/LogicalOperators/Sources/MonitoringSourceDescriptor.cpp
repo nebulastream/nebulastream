@@ -16,37 +16,51 @@
 #include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES {
+namespace NES
+{
 
-MonitoringSourceDescriptor::MonitoringSourceDescriptor(std::chrono::milliseconds waitTime,
-                                                       Monitoring::MetricCollectorType metricCollectorType)
-    : SourceDescriptor(Schema::create()), waitTime(waitTime), metricCollectorType(metricCollectorType) {}
+MonitoringSourceDescriptor::MonitoringSourceDescriptor(
+    std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType)
+    : SourceDescriptor(Schema::create()), waitTime(waitTime), metricCollectorType(metricCollectorType)
+{
+}
 
-SourceDescriptorPtr MonitoringSourceDescriptor::create(std::chrono::milliseconds waitTime,
-                                                       Monitoring::MetricCollectorType metricCollectorType) {
+SourceDescriptorPtr
+MonitoringSourceDescriptor::create(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType)
+{
     return std::make_shared<MonitoringSourceDescriptor>(MonitoringSourceDescriptor(waitTime, metricCollectorType));
 }
 
-bool MonitoringSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-    if (!other->instanceOf<const MonitoringSourceDescriptor>()) {
+bool MonitoringSourceDescriptor::equal(SourceDescriptorPtr const& other) const
+{
+    if (!other->instanceOf<const MonitoringSourceDescriptor>())
+    {
         return false;
     }
     auto otherNetworkSource = other->as<const MonitoringSourceDescriptor>();
     return waitTime == otherNetworkSource->getWaitTime() && metricCollectorType == otherNetworkSource->getMetricCollectorType();
 }
 
-std::string MonitoringSourceDescriptor::toString() const {
+std::string MonitoringSourceDescriptor::toString() const
+{
     return "MonitoringSourceDescriptor(" + std::string(magic_enum::enum_name(metricCollectorType)) + ")";
 }
 
-SourceDescriptorPtr MonitoringSourceDescriptor::copy() {
+SourceDescriptorPtr MonitoringSourceDescriptor::copy()
+{
     auto copy = MonitoringSourceDescriptor::create(waitTime, metricCollectorType);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
 
-std::chrono::milliseconds MonitoringSourceDescriptor::getWaitTime() const { return waitTime; }
+std::chrono::milliseconds MonitoringSourceDescriptor::getWaitTime() const
+{
+    return waitTime;
+}
 
-Monitoring::MetricCollectorType MonitoringSourceDescriptor::getMetricCollectorType() const { return metricCollectorType; }
+Monitoring::MetricCollectorType MonitoringSourceDescriptor::getMetricCollectorType() const
+{
+    return metricCollectorType;
+}
 
-}// namespace NES
+} // namespace NES

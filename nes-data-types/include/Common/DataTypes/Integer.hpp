@@ -17,7 +17,8 @@
 
 #include <Common/DataTypes/Numeric.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The Integer type represents whole numbers, that is,
@@ -25,9 +26,9 @@ namespace NES {
  * The internal Integer type is parameterised by its bit size, and its lower and upper bound
  * Integer(bitSize, lowerBound, upperBound)
  */
-class Integer final : public Numeric {
-
-  public:
+class Integer final : public Numeric
+{
+public:
     /**
      * @brief Constructs a new Integer type.
      * @param bits the number of bits in which this type is represented.
@@ -35,7 +36,9 @@ class Integer final : public Numeric {
      * @param upperBound the upper bound, which is contained in that integer.
      */
     inline Integer(int8_t bits, int64_t lowerBound, int64_t upperBound) noexcept
-        : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound) {}
+        : Numeric(bits), lowerBound(lowerBound), upperBound(upperBound)
+    {
+    }
 
     ~Integer() override = default;
 
@@ -70,6 +73,6 @@ class Integer final : public Numeric {
     int64_t const upperBound;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_

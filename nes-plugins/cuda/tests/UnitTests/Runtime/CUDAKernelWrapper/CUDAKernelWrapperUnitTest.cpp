@@ -12,15 +12,18 @@
     limitations under the License.
 */
 
-#include <BaseUnitTest.hpp>
 #include <Runtime/GPURuntime/CUDAKernelWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
-namespace NES::Runtime::CUDAKernelWrapper {
-class CUDAKernelWrapperUnitTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES::Runtime::CUDAKernelWrapper
+{
+class CUDAKernelWrapperUnitTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("CUDAKernelWrapperUnitTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup CUDAKernelWrapperUnitTest test class.");
     }
@@ -29,17 +32,17 @@ class CUDAKernelWrapperUnitTest : public Testing::BaseUnitTest {
 };
 
 // Test cuda wrapper in compiling and executing a simple CUDA Kernel processing a single integer field
-TEST_F(CUDAKernelWrapperUnitTest, CUDAKernelWrapperOnSimpleAddition__GPU) {
+TEST_F(CUDAKernelWrapperUnitTest, CUDAKernelWrapperOnSimpleAddition__GPU)
+{
     // Prepare a simple CUDA kernel which adds 42 to the recordValue and then write it to the result
-    const char* const SimpleKernel_cu =
-        "SimpleKernel.cu\n"
-        "__global__ void simpleAdditionKernel(const int* recordValue, const int count, int* result) {\n"
-        "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
-        "\n"
-        "    if (i < count) {\n"
-        "        result[i] = recordValue[i] + 42;\n"
-        "    }\n"
-        "}\n";
+    const char* const SimpleKernel_cu = "SimpleKernel.cu\n"
+                                        "__global__ void simpleAdditionKernel(const int* recordValue, const int count, int* result) {\n"
+                                        "    auto i = blockIdx.x * blockDim.x + threadIdx.x;\n"
+                                        "\n"
+                                        "    if (i < count) {\n"
+                                        "        result[i] = recordValue[i] + 42;\n"
+                                        "    }\n"
+                                        "}\n";
 
     uint32_t numberOfTuples = 10;
 
@@ -57,4 +60,4 @@ TEST_F(CUDAKernelWrapperUnitTest, CUDAKernelWrapperOnSimpleAddition__GPU) {
     std::free(outputTuples);
 }
 
-}// namespace NES::Runtime::CUDAKernelWrapper
+} // namespace NES::Runtime::CUDAKernelWrapper

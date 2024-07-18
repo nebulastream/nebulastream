@@ -43,7 +43,8 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 /**
  * @brief Namespace wrapping mini-yaml classes.
  */
-namespace Yaml {
+namespace Yaml
+{
 
 constexpr uint32_t YAML_UNSPECIFIED_INTEGER = 32759;
 
@@ -55,55 +56,67 @@ class Node;
 /**
  * @brief Helper classes and functions
  */
-namespace impl {
+namespace impl
+{
 
 /**
  * @brief Helper functionality, converting string to any data type.
  *        Strings are left untouched.
  */
-template<typename T>
-struct StringConverter {
-    static T Get(const std::string& data) {
+template <typename T>
+struct StringConverter
+{
+    static T Get(const std::string& data)
+    {
         T type;
         std::stringstream ss(data);
         ss >> type;
         return type;
     }
 
-    static T Get(const std::string& data, const T& defaultValue) {
+    static T Get(const std::string& data, const T& defaultValue)
+    {
         T type;
         std::stringstream ss(data);
         ss >> type;
 
-        if (ss.fail()) {
+        if (ss.fail())
+        {
             return defaultValue;
         }
 
         return type;
     }
 };
-template<>
-struct StringConverter<std::string> {
+template <>
+struct StringConverter<std::string>
+{
     static std::string Get(const std::string& data) { return data; }
 
-    static std::string Get(const std::string& data, const std::string& defaultValue) {
-        if (data.empty()) {
+    static std::string Get(const std::string& data, const std::string& defaultValue)
+    {
+        if (data.empty())
+        {
             return defaultValue;
         }
         return data;
     }
 };
 
-template<>
-struct StringConverter<bool> {
-    static bool Get(const std::string& data) {
+template <>
+struct StringConverter<bool>
+{
+    static bool Get(const std::string& data)
+    {
         std::string tmpData = data;
         std::transform(tmpData.begin(), tmpData.end(), tmpData.begin(), ::tolower);
         return tmpData == "true" || tmpData == "yes" || tmpData == "1";
     }
 
-    static bool Get(const std::string& data, const bool& defaultValue) {
-        if (data.empty()) {
+    static bool Get(const std::string& data, const bool& defaultValue)
+    {
+        if (data.empty())
+        {
             return defaultValue;
         }
 
@@ -111,23 +124,24 @@ struct StringConverter<bool> {
     }
 };
 
-}// namespace impl
+} // namespace impl
 
 /**
     * @brief Exception class.
     *
     */
-class Exception : public std::runtime_error {
-
-  public:
+class Exception : public std::runtime_error
+{
+public:
     /**
         * @brief Enumeration of exception types.
         *
         */
-    enum class eType : uint8_t {
-        InternalError,///< Internal error.
+    enum class eType : uint8_t
+    {
+        InternalError, ///< Internal error.
         ParsingError, ///< Invalid parsing data.
-        OperationError///< User operation error.
+        OperationError ///< User operation error.
     };
 
     /**
@@ -151,8 +165,8 @@ class Exception : public std::runtime_error {
         */
     [[nodiscard]] const char* Message() const;
 
-  private:
-    eType m_Type;///< Type of exception.
+private:
+    eType m_Type; ///< Type of exception.
 };
 
 /**
@@ -161,9 +175,9 @@ class Exception : public std::runtime_error {
     * @see Exception
     *
     */
-class InternalException : public Exception {
-
-  public:
+class InternalException : public Exception
+{
+public:
     /**
         * @brief Constructor.
         *
@@ -179,9 +193,9 @@ class InternalException : public Exception {
     * @see Exception
     *
     */
-class ParsingException : public Exception {
-
-  public:
+class ParsingException : public Exception
+{
+public:
     /**
         * @brief Constructor.
         *
@@ -197,9 +211,9 @@ class ParsingException : public Exception {
     * @see Exception
     *
     */
-class OperationFatalException : public Exception {
-
-  public:
+class OperationFatalException : public Exception
+{
+public:
     /**
         * @brief Constructor.
         *
@@ -213,9 +227,9 @@ class OperationFatalException : public Exception {
     * @brief Iterator class.
     *
     */
-class Iterator {
-
-  public:
+class Iterator
+{
+public:
     friend class Node;
 
     /**
@@ -273,20 +287,25 @@ class Iterator {
         */
     bool operator!=(const Iterator& it) const;
 
-  private:
-    enum class eType : int8_t { None, SequenceType, MapType };
+private:
+    enum class eType : int8_t
+    {
+        None,
+        SequenceType,
+        MapType
+    };
 
-    eType m_Type{eType::None};///< Type of iterator.
-    void* m_pImp{nullptr};    ///< Implementation of iterator class.
+    eType m_Type{eType::None}; ///< Type of iterator.
+    void* m_pImp{nullptr}; ///< Implementation of iterator class.
 };
 
 /**
     * @brief Constant iterator class.
     *
     */
-class ConstIterator {
-
-  public:
+class ConstIterator
+{
+public:
     friend class Node;
 
     /**
@@ -344,27 +363,38 @@ class ConstIterator {
         */
     friend bool operator!=(const ConstIterator& lhs, const ConstIterator& rhs);
 
-  private:
-    enum class eType : int8_t { None, SequenceType, MapType };
+private:
+    enum class eType : int8_t
+    {
+        None,
+        SequenceType,
+        MapType
+    };
 
-    eType m_Type{eType::None};///< Type of iterator.
-    void* m_pImp{nullptr};    ///< Implementation of constant iterator class.
+    eType m_Type{eType::None}; ///< Type of iterator.
+    void* m_pImp{nullptr}; ///< Implementation of constant iterator class.
 };
 
 /**
     * @brief Node class.
     *
     */
-class Node {
-
-  public:
+class Node
+{
+public:
     friend class Iterator;
 
     /**
         * @brief Enumeration of node types.
         *
         */
-    enum class eType : int8_t { None, SequenceType, MapType, ScalarType };
+    enum class eType : int8_t
+    {
+        None,
+        SequenceType,
+        MapType,
+        ScalarType
+    };
 
     /**
         * @brief Default constructor.
@@ -412,8 +442,9 @@ class Node {
         * @brief Get node as given template type.
         *
         */
-    template<typename T>
-    [[nodiscard]] T As() const {
+    template <typename T>
+    [[nodiscard]] T As() const
+    {
         return impl::StringConverter<T>::Get(AsString());
     }
 
@@ -421,8 +452,9 @@ class Node {
         * @brief Get node as given template type.
         *
         */
-    template<typename T>
-    T As(const T& defaultValue) const {
+    template <typename T>
+    T As(const T& defaultValue) const
+    {
         return impl::StringConverter<T>::Get(AsString(), defaultValue);
     }
 
@@ -498,14 +530,14 @@ class Node {
     Iterator End();
     [[nodiscard]] ConstIterator End() const;
 
-  private:
+private:
     /**
         * @brief Get as string. If type is scalar, else empty.
         *
         */
     [[nodiscard]] const std::string& AsString() const;
 
-    void* m_pImp;///< Implementation of node class.
+    void* m_pImp; ///< Implementation of node class.
 };
 
 /**
@@ -534,8 +566,8 @@ void Parse(Node& root, const char* buffer, size_t size);
     *           describing output behavior.
     *
     */
-struct SerializeConfig {
-
+struct SerializeConfig
+{
     /**
         * @brief Constructor.
         *
@@ -546,15 +578,13 @@ struct SerializeConfig {
         * @param mapScalarNewline       Put scalars on a new line if parent node is a map.
         *
         */
-    explicit SerializeConfig(size_t spaceIndentation = 2,
-                             size_t scalarMaxLength = 64,
-                             bool sequenceMapNewline = false,
-                             bool mapScalarNewline = false);
+    explicit SerializeConfig(
+        size_t spaceIndentation = 2, size_t scalarMaxLength = 64, bool sequenceMapNewline = false, bool mapScalarNewline = false);
 
-    size_t SpaceIndentation;///< Number of spaces per indentation.
+    size_t SpaceIndentation; ///< Number of spaces per indentation.
     size_t ScalarMaxLength; ///< Maximum length of scalars. Serialized as folder scalars if exceeded.
-    bool SequenceMapNewline;///< Put maps on a new line if parent node is a sequence.
-    bool MapScalarNewline;  ///< Put scalars on a new line if parent node is a map.
+    bool SequenceMapNewline; ///< Put maps on a new line if parent node is a sequence.
+    bool MapScalarNewline; ///< Put scalars on a new line if parent node is a map.
 };
 
 /**
@@ -575,5 +605,5 @@ void Serialize(Node const& root, char const* filename, SerializeConfig const& co
 void Serialize(Node const& root, std::iostream& stream, SerializeConfig const& config);
 void Serialize(Node const& root, std::string& string, SerializeConfig const& config);
 
-}// namespace Yaml
-#endif// NES_COMMON_INCLUDE_UTIL_YAML_YAML_HPP_
+} // namespace Yaml
+#endif // NES_COMMON_INCLUDE_UTIL_YAML_YAML_HPP_

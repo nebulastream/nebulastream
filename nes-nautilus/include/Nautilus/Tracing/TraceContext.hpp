@@ -14,21 +14,23 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#include <functional>
+#include <memory>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Tag/Tag.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/Trace/InputVariant.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
-#include <functional>
-#include <memory>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 class Any;
 typedef std::shared_ptr<Any> AnyPtr;
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 class OperationRef;
 class ExecutionTrace;
 
@@ -36,11 +38,12 @@ class ExecutionTrace;
  * @brief The trace context manages a thread local instance to record a symbolic execution trace of a given Nautilus function.
  * Tracing will be initialized with ether traceFunction or traceFunctionWithReturn.
  */
-class TraceContext {
-  public:
-    template<typename Functor>
+class TraceContext
+{
+public:
+    template <typename Functor>
     friend std::shared_ptr<ExecutionTrace> traceFunction(const Functor&& func);
-    template<typename Functor>
+    template <typename Functor>
     friend std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func);
 
     /**
@@ -128,7 +131,7 @@ class TraceContext {
     void pause() { active = false; }
     void resume() { active = true; }
 
-  private:
+private:
     TraceContext(TagRecorder& tagRecorder);
     static TraceContext* initialize(TagRecorder& tagRecorder);
     static void terminate();
@@ -138,7 +141,7 @@ class TraceContext {
     std::shared_ptr<OperationRef> checkTag(const Tag* tag);
     void incrementOperationCounter();
     void initializeTraceIteration();
-    template<typename Functor>
+    template <typename Functor>
     void trace(const OpCode& opCode, Functor initFunction);
     bool active = false;
     TagRecorder& tagRecorder;
@@ -149,30 +152,36 @@ class TraceContext {
     std::unordered_map<const Tag*, std::shared_ptr<OperationRef>> localTagMap;
 };
 
-template<typename Functor>
-std::shared_ptr<ExecutionTrace> traceFunction(const Functor&& func) {
+template <typename Functor>
+std::shared_ptr<ExecutionTrace> traceFunction(const Functor&& func)
+{
     auto tr = TagRecorder::createTagRecorder();
     auto ctx = TraceContext::initialize(tr);
-    auto result = ctx->apply([&func] {
-        func();
-        return createNextRef(Nautilus::IR::Types::StampFactory::createVoidStamp());
-    });
+    auto result = ctx->apply(
+        [&func]
+        {
+            func();
+            return createNextRef(Nautilus::IR::Types::StampFactory::createVoidStamp());
+        });
     TraceContext::terminate();
     return result;
 }
 
-template<typename Functor>
-std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func) {
+template <typename Functor>
+std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func)
+{
     auto tr = TagRecorder::createTagRecorder();
     auto ctx = TraceContext::initialize(tr);
-    auto result = ctx->apply([&func] {
-        auto res = func();
-        return res.ref;
-    });
+    auto result = ctx->apply(
+        [&func]
+        {
+            auto res = func();
+            return res.ref;
+        });
     TraceContext::terminate();
     return result;
 }
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_

@@ -15,36 +15,44 @@
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES
+{
 
 WatermarkAssignerLogicalOperator::WatermarkAssignerLogicalOperator(
-    Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor,
-    OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor) {}
+    Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), watermarkStrategyDescriptor(watermarkStrategyDescriptor)
+{
+}
 
-Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperator::getWatermarkStrategyDescriptor() const {
+Windowing::WatermarkStrategyDescriptorPtr WatermarkAssignerLogicalOperator::getWatermarkStrategyDescriptor() const
+{
     return watermarkStrategyDescriptor;
 }
 
-std::string WatermarkAssignerLogicalOperator::toString() const {
+std::string WatermarkAssignerLogicalOperator::toString() const
+{
     std::stringstream ss;
     ss << "WATERMARKASSIGNER(" << id << ")";
     return ss.str();
 }
 
-bool WatermarkAssignerLogicalOperator::isIdentical(NodePtr const& rhs) const {
+bool WatermarkAssignerLogicalOperator::isIdentical(NodePtr const& rhs) const
+{
     return equal(rhs) && rhs->as<WatermarkAssignerLogicalOperator>()->getId() == id;
 }
 
-bool WatermarkAssignerLogicalOperator::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<WatermarkAssignerLogicalOperator>()) {
+bool WatermarkAssignerLogicalOperator::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<WatermarkAssignerLogicalOperator>())
+    {
         auto watermarkAssignerOperator = rhs->as<WatermarkAssignerLogicalOperator>();
         return watermarkStrategyDescriptor->equal(watermarkAssignerOperator->getWatermarkStrategyDescriptor());
     }
     return false;
 }
 
-OperatorPtr WatermarkAssignerLogicalOperator::copy() {
+OperatorPtr WatermarkAssignerLogicalOperator::copy()
+{
     auto copy = LogicalOperatorFactory::createWatermarkAssignerOperator(watermarkStrategyDescriptor, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -53,26 +61,31 @@ OperatorPtr WatermarkAssignerLogicalOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (const auto& pair : properties) {
+    for (const auto& pair : properties)
+    {
         copy->addProperty(pair.first, pair.second);
     }
     return copy;
 }
 
-bool WatermarkAssignerLogicalOperator::inferSchema() {
-    if (!LogicalUnaryOperator::inferSchema()) {
+bool WatermarkAssignerLogicalOperator::inferSchema()
+{
+    if (!LogicalUnaryOperator::inferSchema())
+    {
         return false;
     }
     watermarkStrategyDescriptor->inferStamp(inputSchema);
     return true;
 }
 
-void WatermarkAssignerLogicalOperator::inferStringSignature() {
+void WatermarkAssignerLogicalOperator::inferStringSignature()
+{
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
     //Infer query signatures for child operators
-    for (const auto& child : children) {
+    for (const auto& child : children)
+    {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
@@ -87,4 +100,4 @@ void WatermarkAssignerLogicalOperator::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-}// namespace NES
+} // namespace NES

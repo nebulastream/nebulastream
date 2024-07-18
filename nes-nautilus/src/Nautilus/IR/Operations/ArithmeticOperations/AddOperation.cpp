@@ -13,20 +13,31 @@
 */
 
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
 AddOperation::AddOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::AddOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {
+    : Operation(OperationType::AddOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)), rightInput(std::move(rightInput))
+{
     leftInput->addUsage(this);
     rightInput->addUsage(this);
 }
 
-std::string AddOperation::toString() {
+std::string AddOperation::toString()
+{
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " + " + getRightInput()->getIdentifier();
 }
-bool AddOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
+bool AddOperation::classof(const Operation* Op)
+{
+    return Op->getOperationType() == OperationType::AddOp;
+}
 
-OperationPtr AddOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr AddOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::Nautilus::IR::Operations
+OperationPtr AddOperation::getLeftInput()
+{
+    return leftInput.lock();
+}
+OperationPtr AddOperation::getRightInput()
+{
+    return rightInput.lock();
+}
+} // namespace NES::Nautilus::IR::Operations

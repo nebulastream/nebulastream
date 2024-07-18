@@ -13,14 +13,16 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
+#include <optional>
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/PluginRegistry.hpp>
-#include <optional>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-class InvocationPlugin {
-  public:
+class InvocationPlugin
+{
+public:
     InvocationPlugin() = default;
     virtual ~InvocationPlugin() = default;
     virtual std::optional<Value<>> Add(const Value<>& left, const Value<>& right) const;
@@ -47,6 +49,6 @@ class InvocationPlugin {
 
 using InvocationPluginRegistry = Util::PluginRegistry<InvocationPlugin>;
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_

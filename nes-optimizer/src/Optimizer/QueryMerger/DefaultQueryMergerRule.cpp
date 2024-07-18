@@ -15,20 +15,23 @@
 #include <Optimizer/QueryMerger/DefaultQueryMergerRule.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-DefaultQueryMergerRulePtr DefaultQueryMergerRule::create() {
+DefaultQueryMergerRulePtr DefaultQueryMergerRule::create()
+{
     return std::make_shared<DefaultQueryMergerRule>(DefaultQueryMergerRule());
 }
 
-bool DefaultQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan) {
-
+bool DefaultQueryMergerRule::apply(GlobalQueryPlanPtr globalQueryPlan)
+{
     //For each query plan to add we compute a new SharedQueryPlan and add it to the global query plan
     auto queryPlansToAdd = globalQueryPlan->getQueryPlansToAdd();
-    for (auto queryPlan : queryPlansToAdd) {
+    for (auto queryPlan : queryPlansToAdd)
+    {
         globalQueryPlan->createNewSharedQueryPlan(queryPlan);
     }
     return globalQueryPlan->clearQueryPlansToAdd();
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

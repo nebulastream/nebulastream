@@ -18,11 +18,19 @@
 #include <cstdint>
 #include <string>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 // Necessary for choosing the correct statistic format
-enum class StatisticSynopsisType : uint8_t { COUNT_MIN, HLL };
-enum class StatisticDataCodec : uint8_t { DEFAULT };
+enum class StatisticSynopsisType : uint8_t
+{
+    COUNT_MIN,
+    HLL
+};
+enum class StatisticDataCodec : uint8_t
+{
+    DEFAULT
+};
 
 /* Names for the field an infrastructure data source is writing the value into. As we could have multiple
  * infrastructure metrics per node, we must have unique identifying field names.
@@ -44,6 +52,6 @@ static const std::string WIDTH_FIELD_NAME = "WIDTH_FIELD_NAME";
 static const std::string ESTIMATE_FIELD_NAME = "ESTIMATE_FIELD_NAME";
 static const std::string DEPTH_FIELD_NAME = "DEPTH_FIELD_NAME";
 static const std::string NUMBER_OF_BITS_IN_KEY = "NUMBER_OF_BITS_IN_KEY";
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_
+#endif // NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_

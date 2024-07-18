@@ -14,20 +14,22 @@
 
 #include <Runtime/Allocator/NumaRegionMemoryAllocator.hpp>
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-#if defined(__linux__)
-#include <numaif.h>
-#include <sys/mman.h>
-#endif
-#include <cstring>
-#include <errno.h>
+#    if defined(__linux__)
+#        include <numaif.h>
+#        include <sys/mman.h>
+#    endif
+#    include <cstring>
+#    include <errno.h>
 
 // The above code requires `--privileged` to be executed on a docker container.
 // Furthermore, OS limits for mmapping and memory locking should be configured appropriately
 // to allow memory allocations
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
-void* NumaRegionMemoryAllocator::do_allocate(size_t sizeInBytes, size_t) {
+void* NumaRegionMemoryAllocator::do_allocate(size_t sizeInBytes, size_t)
+{
     const int mmapFlags = MAP_PRIVATE | MAP_ANONYMOUS | MAP_LOCKED;
     const int prot = PROT_READ | PROT_WRITE;
     unsigned long mask = 1ul << static_cast<unsigned long>(numaNodeIndex);
@@ -45,11 +47,12 @@ void* NumaRegionMemoryAllocator::do_allocate(size_t sizeInBytes, size_t) {
     return reinterpret_cast<uint8_t*>(mem);
 }
 
-void NumaRegionMemoryAllocator::do_deallocate(void* pointer, size_t sizeInBytes, size_t) {
+void NumaRegionMemoryAllocator::do_deallocate(void* pointer, size_t sizeInBytes, size_t)
+{
     NES_ASSERT2_FMT(pointer != nullptr, "invalid pointer");
     munlock(pointer, sizeInBytes);
     munmap(pointer, sizeInBytes);
 }
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 #endif

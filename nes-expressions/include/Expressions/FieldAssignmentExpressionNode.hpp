@@ -16,22 +16,24 @@
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDASSIGNMENTEXPRESSIONNODE_HPP_
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 /**
  * @brief A FieldAssignmentExpression represents the assignment of an expression result to a specific field.
  */
-class FieldAssignmentExpressionNode : public BinaryExpressionNode {
-  public:
+class FieldAssignmentExpressionNode : public BinaryExpressionNode
+{
+public:
     explicit FieldAssignmentExpressionNode(DataTypePtr stamp);
 
     /**
      * @brief Create untyped field read.
      */
-    static FieldAssignmentExpressionNodePtr create(const FieldAccessExpressionNodePtr& fieldAccess,
-                                                   const ExpressionNodePtr& expressionNodePtr);
+    static FieldAssignmentExpressionNodePtr
+    create(const FieldAccessExpressionNodePtr& fieldAccess, const ExpressionNodePtr& expressionNodePtr);
 
     [[nodiscard]] std::string toString() const override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -61,9 +63,9 @@ class FieldAssignmentExpressionNode : public BinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+protected:
     explicit FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDASSIGNMENTEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDASSIGNMENTEXPRESSIONNODE_HPP_

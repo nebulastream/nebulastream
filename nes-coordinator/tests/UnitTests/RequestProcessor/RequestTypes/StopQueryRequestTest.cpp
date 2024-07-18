@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
@@ -25,17 +24,22 @@
 #include <RequestProcessor/RequestTypes/StopQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-class StopQueryRequestTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class StopQueryRequestTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("StopQueryRequestTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup StopQueryRequestTest test class.");
     }
@@ -43,11 +47,12 @@ class StopQueryRequestTest : public Testing::BaseIntegrationTest {
 /**
  * @brief Test that the constructor of StopQueryRequest works as expected
  */
-TEST_F(StopQueryRequestTest, createSimpleStopRequest) {
+TEST_F(StopQueryRequestTest, createSimpleStopRequest)
+{
     constexpr auto queryId = QueryId(1);
     const uint8_t retries = 0;
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
     auto stopQueryRequest = StopQueryRequest::create(queryId, retries);
     EXPECT_EQ(stopQueryRequest->toString(), "StopQueryRequest { QueryId: " + queryId.toString() + "}");
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

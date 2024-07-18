@@ -17,20 +17,24 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES {
-namespace Catalogs::UDF {
+namespace NES
+{
+namespace Catalogs::UDF
+{
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
-namespace QueryCompilation::PhysicalOperators {
+namespace QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical Map Udf operator.
  */
-class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
-  public:
+class PhysicalMapUDFOperator : public PhysicalUnaryOperator
+{
+public:
     /**
      * @brief Constructor for PhysicalMapUDFOperator
      * @param id The identifier of this operator
@@ -39,11 +43,12 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      * @param outputSchema The schema of the output data
      * @param udfDescriptor The UDF descriptor
      */
-    PhysicalMapUDFOperator(OperatorId id,
-                           StatisticId statisticId,
-                           const SchemaPtr& inputSchema,
-                           const SchemaPtr& outputSchema,
-                           const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
+    PhysicalMapUDFOperator(
+        OperatorId id,
+        StatisticId statisticId,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
     /**
      * @brief Creates a new instance of PhysicalMapUDFOperator
      * @param id The identifier of this operator
@@ -53,11 +58,12 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalMapUDFOperator
      */
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
+    static PhysicalOperatorPtr create(
+        OperatorId id,
+        StatisticId statisticId,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor);
 
     /**
      * @brief Creates a new instance of PhysicalMapUDFOperator with no specified operator ID
@@ -67,10 +73,11 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      * @param udfDescriptor The UDF descriptor
      * @return A new instance of PhysicalMapUDFOperator
      */
-    static PhysicalOperatorPtr create(StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
+    static PhysicalOperatorPtr create(
+        StatisticId statisticId,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        const Catalogs::UDF::UDFDescriptorPtr udfDescriptor);
 
     /**
      * @brief Returns a string representation of this operator
@@ -90,10 +97,10 @@ class PhysicalMapUDFOperator : public PhysicalUnaryOperator {
      */
     Catalogs::UDF::UDFDescriptorPtr getUDFDescriptor();
 
-  protected:
+protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;
 };
-}// namespace QueryCompilation::PhysicalOperators
-}// namespace NES
+} // namespace QueryCompilation::PhysicalOperators
+} // namespace NES
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPUDFOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPUDFOPERATOR_HPP_

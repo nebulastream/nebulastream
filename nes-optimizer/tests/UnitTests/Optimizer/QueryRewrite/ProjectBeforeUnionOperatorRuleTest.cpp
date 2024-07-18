@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include <iostream>
 #include <API/Query.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -31,31 +32,34 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <iostream>
 
-namespace NES {
+namespace NES
+{
 
-class ProjectBeforeUnionOperatorRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class ProjectBeforeUnionOperatorRuleTest : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ProjectBeforeUnionOperatorRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ProjectBeforeUnionOperatorRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         schema = Schema::create()->addField("a", BasicType::UINT32)->addField("b", BasicType::UINT32);
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) const
+    {
         NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -79,8 +83,8 @@ class ProjectBeforeUnionOperatorRuleTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferentSchemas) {
-
+TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferentSchemas)
+{
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
@@ -108,8 +112,8 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithDifferen
     EXPECT_TRUE(projectOutputSchema->getField("y$b"));
 }
 
-TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSchemas) {
-
+TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSchemas)
+{
     // Prepare
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
@@ -132,4 +136,4 @@ TEST_F(ProjectBeforeUnionOperatorRuleTest, testAddingProjectForUnionWithSameSche
     projectionOperators = updatedQueryPlan->getOperatorByType<LogicalProjectionOperator>();
     EXPECT_TRUE(projectionOperators.empty());
 }
-}// namespace NES
+} // namespace NES

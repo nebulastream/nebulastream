@@ -15,24 +15,27 @@
 #ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_
 
+#include <vector>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <vector>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
 class DataGenerator;
 using DataGeneratorPtr = std::unique_ptr<DataGenerator>;
 
-class DataGenerator {
-  public:
+class DataGenerator
+{
+public:
     /**
      * @brief constructor for a data generator
      */
@@ -95,16 +98,16 @@ class DataGenerator {
      */
     Runtime::MemoryLayouts::MemoryLayoutPtr getMemoryLayout(size_t bufferSize);
 
-  protected:
+protected:
     /**
      * @brief allocates a buffer from the bufferManager
      * @return TupleBuffer
      */
     Runtime::TupleBuffer allocateBuffer();
 
-  private:
+private:
     Runtime::BufferManagerPtr bufferManager;
 };
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_DATAGENERATOR_HPP_

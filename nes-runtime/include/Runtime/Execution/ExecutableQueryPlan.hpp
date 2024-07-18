@@ -15,6 +15,10 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
 
+#include <atomic>
+#include <future>
+#include <map>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -23,21 +27,21 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwardedRefs.hpp>
-#include <atomic>
-#include <future>
-#include <map>
-#include <vector>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class ReconfigurationMessage;
 }
-namespace NES::Network {
+namespace NES::Network
+{
 class NetworkSink;
 }
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-enum class ExecutableQueryPlanResult : uint8_t {
+enum class ExecutableQueryPlanResult : uint8_t
+{
     /// query was completed successfully
     Ok,
     /// query failed
@@ -50,10 +54,11 @@ enum class ExecutableQueryPlanResult : uint8_t {
  * A valid query plan should contain at least one source and sink.
  * This class is thread-safe.
  */
-class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
+class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener
+{
     friend class NES::Network::NetworkSink;
 
-  public:
+public:
     /**
      * @brief Constructor for an executable query plan.
      * @param sharedQueryId id of the overall query
@@ -64,13 +69,14 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @param queryManager shared pointer to the query manager
      * @param bufferManager shared pointer to the buffer manager
      */
-    explicit ExecutableQueryPlan(SharedQueryId sharedQueryId,
-                                 DecomposedQueryPlanId decomposedQueryPlanId,
-                                 std::vector<DataSourcePtr>&& sources,
-                                 std::vector<DataSinkPtr>&& sinks,
-                                 std::vector<ExecutablePipelinePtr>&& pipelines,
-                                 QueryManagerPtr&& queryManager,
-                                 BufferManagerPtr&& bufferManager);
+    explicit ExecutableQueryPlan(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        std::vector<DataSourcePtr>&& sources,
+        std::vector<DataSinkPtr>&& sinks,
+        std::vector<ExecutablePipelinePtr>&& pipelines,
+        QueryManagerPtr&& queryManager,
+        BufferManagerPtr&& bufferManager);
 
     /**
      * @brief Factory to create an new executable query plan.
@@ -82,13 +88,14 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      * @param queryManager shared pointer to the query manager
      * @param bufferManager shared pointer to the buffer manager
      */
-    static ExecutableQueryPlanPtr create(SharedQueryId sharedQueryId,
-                                         DecomposedQueryPlanId decomposedQueryPlanId,
-                                         std::vector<DataSourcePtr> sources,
-                                         std::vector<DataSinkPtr> sinks,
-                                         std::vector<ExecutablePipelinePtr> pipelines,
-                                         QueryManagerPtr queryManager,
-                                         BufferManagerPtr bufferManager);
+    static ExecutableQueryPlanPtr create(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        std::vector<DataSourcePtr> sources,
+        std::vector<DataSinkPtr> sinks,
+        std::vector<ExecutablePipelinePtr> pipelines,
+        QueryManagerPtr queryManager,
+        BufferManagerPtr bufferManager);
     ~ExecutableQueryPlan() override;
 
     /**
@@ -192,7 +199,7 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     void destroy();
 
-  protected:
+protected:
     /**
      * @brief API method called upon receiving an event.
      * @note Add handling for different event types here.
@@ -200,18 +207,19 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
      */
     void onEvent(BaseEvent& event) override;
 
-  private:
+private:
     /**
      * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
      * @tparam Derived the class type that we want to cast the shared ptr
      * @return this instance casted to the desired shared_ptr<Derived> type
      */
-    template<typename Derived>
-    std::shared_ptr<Derived> shared_from_base() {
+    template <typename Derived>
+    std::shared_ptr<Derived> shared_from_base()
+    {
         return std::static_pointer_cast<Derived>(Reconfigurable::shared_from_this());
     }
 
-  private:
+private:
     const SharedQueryId sharedQueryId;
     const DecomposedQueryPlanId decomposedQueryPlanId;
     std::vector<DataSourcePtr> sources;
@@ -228,6 +236,6 @@ class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener {
     std::future<ExecutableQueryPlanResult> qepTerminationStatusFuture;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLAN_HPP_

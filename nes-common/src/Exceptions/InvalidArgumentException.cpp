@@ -14,11 +14,16 @@
 
 #include <Exceptions/InvalidArgumentException.hpp>
 
-namespace NES {
+namespace NES
+{
 
-InvalidArgumentException::InvalidArgumentException(const std::string& name, const std::string& value) {
+InvalidArgumentException::InvalidArgumentException(const std::string& name, const std::string& value)
+{
     message = "Received invalid value " + value + " for input argument " + name;
 }
 
-const char* InvalidArgumentException::what() const noexcept { return message.c_str(); }
-}// namespace NES
+const char* InvalidArgumentException::what() const noexcept
+{
+    return message.c_str();
+}
+} // namespace NES

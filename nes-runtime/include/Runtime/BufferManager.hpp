@@ -15,10 +15,6 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
 
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <Runtime/BufferRecycler.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <atomic>
 #include <condition_variable>
 #include <deque>
@@ -27,15 +23,21 @@
 #include <mutex>
 #include <optional>
 #include <vector>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+#include <Runtime/BufferRecycler.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-#include <folly/MPMCQueue.h>
-#include <folly/concurrency/UnboundedQueue.h>
+#    include <folly/MPMCQueue.h>
+#    include <folly/concurrency/UnboundedQueue.h>
 #endif
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 class TupleBuffer;
-namespace detail {
+namespace detail
+{
 class MemorySegment;
 }
 /**
@@ -61,13 +63,15 @@ class MemorySegment;
 class BufferManager : public std::enable_shared_from_this<BufferManager>,
                       public BufferRecycler,
                       public AbstractBufferProvider,
-                      public AbstractPoolProvider {
+                      public AbstractPoolProvider
+{
     friend class TupleBuffer;
     friend class detail::MemorySegment;
 
-  private:
-    class UnpooledBufferHolder {
-      public:
+private:
+    class UnpooledBufferHolder
+    {
+    public:
         std::unique_ptr<detail::MemorySegment> segment;
         uint32_t size{0};
         bool free{false};
@@ -87,7 +91,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
     static constexpr auto DEFAULT_NUMBER_OF_BUFFERS = 1024;
     static constexpr auto DEFAULT_ALIGNMENT = 64;
 
-  public:
+public:
     /**
      * @brief Creates a new global buffer manager
      * @param bufferSize the size of each buffer in bytes
@@ -106,7 +110,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
 
     BufferManagerType getBufferManagerType() const override;
 
-  private:
+private:
     /**
      * @brief Configure the BufferManager to use numOfBuffers buffers of size bufferSize bytes.
      * This is a one shot call. A second invocation of this call will fail
@@ -114,7 +118,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
      */
     void initialize(uint32_t withAlignment);
 
-  public:
+public:
     /**
      * @brief Provides a new TupleBuffer. This blocks until a buffer is available.
      * @return a new buffer
@@ -199,7 +203,7 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
      */
     void destroy() override;
 
-  private:
+private:
     std::vector<detail::MemorySegment> allBuffers;
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::deque<detail::MemorySegment*> availableBuffers;
@@ -226,6 +230,6 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
     std::atomic<bool> isDestroyed{false};
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_

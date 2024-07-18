@@ -16,13 +16,15 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Abstract integer data type.
  */
-class Int : public TraceableType {
-  public:
+class Int : public TraceableType
+{
+public:
     explicit Int(const TypeIdentifier* identifier);
     virtual ~Int();
     virtual const std::shared_ptr<Int> add(const Int&) const = 0;
@@ -45,8 +47,9 @@ class Int : public TraceableType {
 /**
  * @brief Int8 data type.
  */
-class Int8 : public Int {
-  public:
+class Int8 : public Int
+{
+public:
     using RawType = int8_t;
     static const inline auto type = TypeIdentifier::create<Int8>();
     Int8(int8_t value);
@@ -69,15 +72,16 @@ class Int8 : public Int {
     int64_t getRawInt() const override;
     std::string toString() override;
 
-  private:
+private:
     int8_t value;
 };
 
 /**
  * @brief Int16 data type.
  */
-class Int16 : public Int {
-  public:
+class Int16 : public Int
+{
+public:
     using RawType = int16_t;
     static const inline auto type = TypeIdentifier::create<Int16>();
     Int16(int16_t value);
@@ -100,15 +104,16 @@ class Int16 : public Int {
     int64_t getRawInt() const override;
     std::string toString() override;
 
-  private:
+private:
     int16_t value;
 };
 
 /**
  * @brief Int32 data type.
  */
-class Int32 : public Int {
-  public:
+class Int32 : public Int
+{
+public:
     using RawType = int32_t;
     static const inline auto type = TypeIdentifier::create<Int32>();
     Int32(int32_t value);
@@ -131,15 +136,16 @@ class Int32 : public Int {
     int64_t getRawInt() const override;
     std::string toString() override;
 
-  private:
+private:
     int32_t value;
 };
 
 /**
  * @brief Int64 data type.
  */
-class Int64 : public Int {
-  public:
+class Int64 : public Int
+{
+public:
     using RawType = int64_t;
     static const inline auto type = TypeIdentifier::create<Int64>();
     Int64(int64_t value);
@@ -162,15 +168,16 @@ class Int64 : public Int {
     int64_t getRawInt() const override;
     std::string toString() override;
 
-  private:
+private:
     int64_t value;
 };
 
 /**
  * @brief UInt8 data type.
  */
-class UInt8 : public Int {
-  public:
+class UInt8 : public Int
+{
+public:
     using RawType = uint8_t;
     static const inline auto type = TypeIdentifier::create<UInt8>();
     UInt8(uint8_t value);
@@ -193,15 +200,16 @@ class UInt8 : public Int {
     int64_t getRawInt() const override;
     std::string toString() override;
 
-  private:
+private:
     uint8_t value;
 };
 
 /**
  * @brief UInt16 data type.
  */
-class UInt16 : public Int {
-  public:
+class UInt16 : public Int
+{
+public:
     using RawType = uint16_t;
     static const inline auto type = TypeIdentifier::create<UInt16>();
     UInt16(uint16_t value);
@@ -224,15 +232,16 @@ class UInt16 : public Int {
     int64_t getRawInt() const override;
     std::string toString() override;
 
-  private:
+private:
     uint16_t value;
 };
 
 /**
  * @brief UInt32 data type.
  */
-class UInt32 : public Int {
-  public:
+class UInt32 : public Int
+{
+public:
     using RawType = uint32_t;
     static const inline auto type = TypeIdentifier::create<UInt32>();
     UInt32(uint32_t value);
@@ -255,15 +264,16 @@ class UInt32 : public Int {
     int64_t getRawInt() const override;
     std::string toString() override;
 
-  private:
+private:
     uint32_t value;
 };
 
 /**
  * @brief UInt64 data type.
  */
-class UInt64 : public Int {
-  public:
+class UInt64 : public Int
+{
+public:
     using RawType = uint64_t;
     static const inline auto type = TypeIdentifier::create<UInt64>();
     UInt64(uint64_t value);
@@ -286,10 +296,10 @@ class UInt64 : public Int {
     int64_t getRawInt() const override;
     std::string toString() override;
 
-  private:
+private:
     uint64_t value;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_

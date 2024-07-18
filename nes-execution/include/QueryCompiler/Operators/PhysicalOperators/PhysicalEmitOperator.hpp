@@ -17,13 +17,15 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical Emit operator.
  */
-class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOperator {
-  public:
+class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOperator
+{
+public:
     /**
      * @brief Constructor for the physical emit operator
      * @param id operator id
@@ -53,6 +55,6 @@ class PhysicalEmitOperator : public PhysicalUnaryOperator, public AbstractEmitOp
 
     OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEMITOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEMITOPERATOR_HPP_

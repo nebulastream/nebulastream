@@ -13,13 +13,14 @@
 */
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTSUBREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTSUBREQUEST_HPP_
-#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 #include <any>
 #include <future>
 #include <memory>
 #include <vector>
+#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 class AbstractRequest;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
@@ -36,8 +37,9 @@ using StorageHandlerPtr = std::shared_ptr<StorageHandler>;
  * This class encapsulates parts of a coordinator side requests logic that are to be executed concurrently.
  * Subrequests are scheduled and executed as part of the execution of a MultiRequest
  */
-class AbstractSubRequest : public StorageResourceLocker {
-  public:
+class AbstractSubRequest : public StorageResourceLocker
+{
+public:
     /**
      * @brief Constructor
      * @param requiredResources the resources required to be locked by this request.
@@ -73,7 +75,7 @@ class AbstractSubRequest : public StorageResourceLocker {
      */
     bool executionHasStarted();
 
-  protected:
+protected:
     /**
      * @brief Execute this sub request's logic
      * @param storageHandler the storage handler to be used for resource access
@@ -91,6 +93,6 @@ class AbstractSubRequest : public StorageResourceLocker {
     std::atomic<bool> executionStarted{false};
     RequestId requestId{INVALID_REQUEST_ID};
 };
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTSUBREQUEST_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTSUBREQUEST_HPP_

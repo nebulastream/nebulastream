@@ -15,22 +15,25 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_THREADBARRIER_HPP_
 #define NES_COMMON_INCLUDE_UTIL_THREADBARRIER_HPP_
 
-#include <Runtime/NesThread.hpp>
 #include <condition_variable>
 #include <mutex>
-namespace NES {
+#include <Runtime/NesThread.hpp>
+namespace NES
+{
 
 /**
  * @brief Utility class that introduce a barrier for N threads.
  * The barrier resets when N threads call wait().
  */
-class ThreadBarrier {
-  public:
+class ThreadBarrier
+{
+public:
     /**
      * @brief Create a Barrier for size threads
      * @param size
      */
-    explicit ThreadBarrier(uint32_t size) : size(size), count(0) {
+    explicit ThreadBarrier(uint32_t size) : size(size), count(0)
+    {
         NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
     }
 
@@ -40,7 +43,8 @@ class ThreadBarrier {
 
     ThreadBarrier& operator=(const ThreadBarrier&) = delete;
 
-    ~ThreadBarrier() {
+    ~ThreadBarrier()
+    {
         std::unique_lock<std::mutex> lock(mutex);
         NES_ASSERT2_FMT(count >= size, "destroying not completed thread barrier count=" << count << " size=" << size);
         NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
@@ -49,25 +53,30 @@ class ThreadBarrier {
     /**
      * @brief This method will block the calling thread until N threads have invoke wait().
      */
-    void wait() {
+    void wait()
+    {
         std::unique_lock<std::mutex> lock(mutex);
         NES_ASSERT2_FMT(size <= NES::Runtime::NesThread::MaxNumThreads, "Invalid thread count " << size);
-        if (++count >= size) {
+        if (++count >= size)
+        {
             cvar.notify_all();
-        } else {
+        }
+        else
+        {
             // while loop to avoid spurious wakeup
-            while (count < size) {
+            while (count < size)
+            {
                 cvar.wait(lock);
             }
         }
     }
 
-  private:
+private:
     const uint32_t size;
     uint32_t count;
     std::mutex mutex;
     std::condition_variable cvar;
 };
 using ThreadBarrierPtr = std::shared_ptr<ThreadBarrier>;
-}// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_THREADBARRIER_HPP_
+} // namespace NES
+#endif // NES_COMMON_INCLUDE_UTIL_THREADBARRIER_HPP_

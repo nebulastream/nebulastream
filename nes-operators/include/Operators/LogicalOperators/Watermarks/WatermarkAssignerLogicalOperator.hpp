@@ -19,13 +19,15 @@
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Watermark assignment operator, creates a watermark timestamp per input buffer.
  */
-class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator {
-  public:
+class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator
+{
+public:
     WatermarkAssignerLogicalOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id);
     /**
     * @brief Returns the watermark strategy.
@@ -43,12 +45,12 @@ class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator {
     bool inferSchema() override;
     void inferStringSignature() override;
 
-  private:
+private:
     Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
 };
 
 using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_

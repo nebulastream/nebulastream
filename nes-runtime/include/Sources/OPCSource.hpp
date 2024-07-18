@@ -16,23 +16,24 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_OPCSOURCE_HPP_
 #ifdef ENABLE_OPC_BUILD
 
-#include <Sources/DataSource.hpp>
-#include <cstdint>
-#include <memory>
-#include <open62541/client_config_default.h>
-#include <open62541/client_highlevel.h>
-#include <open62541/plugin/log_stdout.h>
-#include <string>
+#    include <cstdint>
+#    include <memory>
+#    include <string>
+#    include <Sources/DataSource.hpp>
+#    include <open62541/client_config_default.h>
+#    include <open62541/client_highlevel.h>
+#    include <open62541/plugin/log_stdout.h>
 
-namespace NES {
+namespace NES
+{
 class TupleBuffer;
 
 /**
  * @brief this class provide a zmq as data source
  */
-class OPCSource : public DataSource {
-
-  public:
+class OPCSource : public DataSource
+{
+public:
     /**
      * @brief constructor for the opc source
      * @param schema schema of the elements
@@ -50,20 +51,21 @@ class OPCSource : public DataSource {
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param executableSuccessors the subsequent operators in the pipeline to which the data is pushed
      */
-    explicit OPCSource(const SchemaPtr& schema,
-                       Runtime::BufferManagerPtr bufferManager,
-                       Runtime::QueryManagerPtr queryManager,
-                       const std::string& url,
-                       UA_NodeId nodeId,
-                       std::string password,
-                       std::string user,
-                       OperatorId operatorId,
-                       OriginId originId,
-                       StatisticId statisticId,
-                       size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
-                       const std::string& physicalSourceName,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
+    explicit OPCSource(
+        const SchemaPtr& schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        const std::string& url,
+        UA_NodeId nodeId,
+        std::string password,
+        std::string user,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        const std::string& physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief destructor of OPC source that disconnects the queue before deconstruction
@@ -112,7 +114,7 @@ class OPCSource : public DataSource {
      */
     SourceType getType() const override;
 
-  private:
+private:
     /**
      * @brief method to connect opc using the url specified before
      * check if already connected, if not connect try to connect, if already connected return
@@ -133,7 +135,7 @@ class OPCSource : public DataSource {
      */
     friend class DataSource;
 
-  private:
+private:
     bool connected;
     const std::string url;
     UA_NodeId nodeId;
@@ -144,7 +146,7 @@ class OPCSource : public DataSource {
 };
 
 using OPCSourcePtr = std::shared_ptr<OPCSource>;
-}// namespace NES
+} // namespace NES
 
 #endif
-#endif// NES_RUNTIME_INCLUDE_SOURCES_OPCSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_OPCSOURCE_HPP_

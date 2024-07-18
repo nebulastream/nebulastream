@@ -22,7 +22,6 @@
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -39,6 +38,7 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
@@ -46,9 +46,9 @@
 
 using namespace NES;
 
-class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
     SchemaPtr schemaHouseholds;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
@@ -56,13 +56,15 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
     Optimizer::SyntacticQueryValidationPtr syntacticQueryValidation;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup Z3SignatureBasedBottomUpQueryContainmentRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)
@@ -92,7 +94,8 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
     /* Will be called after a test is executed. */
     void TearDown() override { NES_DEBUG("Tear down Z3SignatureBasedBottomUpQueryContainmentRuleTest test case."); }
 
-    void setupSensorNodeAndSourceCatalog() {
+    void setupSensorNodeAndSourceCatalog()
+    {
         NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -102,33 +105,28 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
         auto csvSourceWindTurbine = CSVSourceType::create("windTurbines", "windTurbines");
         LogicalSourcePtr windTurbinesLogicalSource = LogicalSource::create("windTurbines", schema);
         PhysicalSourcePtr windTurbinesPhysicalSource = PhysicalSource::create(csvSourceWindTurbine);
-        auto sce1 = Catalogs::Source::SourceCatalogEntry::create(windTurbinesPhysicalSource,
-                                                                 windTurbinesLogicalSource,
-                                                                 physicalNode->getId());
+        auto sce1
+            = Catalogs::Source::SourceCatalogEntry::create(windTurbinesPhysicalSource, windTurbinesLogicalSource, physicalNode->getId());
         sourceCatalog->addPhysicalSource("windTurbines", sce1);
 
         auto csvSourceSolarPanel1 = CSVSourceType::create("solarPanels1", "solarPanels1");
         LogicalSourcePtr solarPanels1LogicalSource = LogicalSource::create("solarPanels1", schema);
         PhysicalSourcePtr solarPanels1PhysicalSource = PhysicalSource::create(csvSourceSolarPanel1);
-        auto sce2 = Catalogs::Source::SourceCatalogEntry::create(solarPanels1PhysicalSource,
-                                                                 solarPanels1LogicalSource,
-                                                                 physicalNode->getId());
+        auto sce2
+            = Catalogs::Source::SourceCatalogEntry::create(solarPanels1PhysicalSource, solarPanels1LogicalSource, physicalNode->getId());
         sourceCatalog->addPhysicalSource("solarPanels2", sce2);
 
         LogicalSourcePtr solarPanels2LogicalSource = LogicalSource::create("solarPanels2", schema);
         auto csvSourceSolarPanel2 = CSVSourceType::create("solarPanels2", "solarPanels2");
         PhysicalSourcePtr solarPanels2PhysicalSource = PhysicalSource::create(csvSourceSolarPanel2);
-        auto sce3 = Catalogs::Source::SourceCatalogEntry::create(solarPanels2PhysicalSource,
-                                                                 solarPanels2LogicalSource,
-                                                                 physicalNode->getId());
+        auto sce3
+            = Catalogs::Source::SourceCatalogEntry::create(solarPanels2PhysicalSource, solarPanels2LogicalSource, physicalNode->getId());
         sourceCatalog->addPhysicalSource("solarPanels2", sce3);
 
         auto csvSourceHouseHolds = CSVSourceType::create("households", "households");
         LogicalSourcePtr householdsLogicalSource = LogicalSource::create("households", schemaHouseholds);
         PhysicalSourcePtr householdsPhysicalSource = PhysicalSource::create(csvSourceHouseHolds);
-        auto sce4 = Catalogs::Source::SourceCatalogEntry::create(householdsPhysicalSource,
-                                                                 householdsLogicalSource,
-                                                                 physicalNode->getId());
+        auto sce4 = Catalogs::Source::SourceCatalogEntry::create(householdsPhysicalSource, householdsLogicalSource, physicalNode->getId());
         sourceCatalog->addPhysicalSource("households", sce4);
     }
 };
@@ -136,7 +134,8 @@ class Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest : public Testing::
 /**
  * @brief Test that TD-CQM correctly identifies the equivalent filter and map operations here and merges them.
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testMultipleEqualFilters) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testMultipleEqualFilters)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -184,9 +183,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testMultipleEqua
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -197,8 +195,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testMultipleEqua
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -255,7 +252,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testMultipleEqua
  * Source -> Map1 -> Map2 -> Sink
  *              \-> Sink
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testPartialEqualityWithMaps) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testPartialEqualityWithMaps)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -290,9 +288,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testPartialEqual
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -303,8 +300,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testPartialEqual
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -351,7 +347,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testPartialEqual
  * Source -> Filter1 -> Window1 -> Sink
  *     \-> Window2 -> Sink
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourceOperationsDistinctQueries) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourceOperationsDistinctQueries)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -396,9 +393,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourceO
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -409,8 +405,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourceO
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -448,7 +443,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourceO
     EXPECT_TRUE(query1SrcOperator->equal((*itrSecondSink)));
 }
 
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testContainedFilterOperation) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testContainedFilterOperation)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -492,9 +488,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testContainedFil
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -505,8 +500,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testContainedFil
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -557,7 +551,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testContainedFil
  * Source1 -> (Source2) -> Join1 -> Filter -> Sink
  *                 \-> Join2 -> Sink
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourcesDifferentJoins) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourcesDifferentJoins)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -614,9 +609,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -627,8 +621,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -687,7 +680,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
  * Source1 -> (Source2) -> Join -> Filter -> Sink
  *                          \-> Sink
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourcesWithEqualJoinsAndFilterContainment) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSourcesWithEqualJoinsAndFilterContainment)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -744,9 +738,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -757,8 +750,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -817,7 +809,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEqualSources
  * Source -> Window1 -> Window2 -> Sink
  *                \-> Sink
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testDifferentNumberOfWindows) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testDifferentNumberOfWindows)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -867,9 +860,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testDifferentNum
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -880,8 +872,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testDifferentNum
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -933,7 +924,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testDifferentNum
  * Source -> Window1 ->Window2 -> Sink
  *                  \-> Window3 -> Window4 -> Sink
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testSameNumberOfWindowsTwoContainmentRelationships) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testSameNumberOfWindowsTwoContainmentRelationships)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -989,9 +981,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testSameNumberOf
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1002,8 +993,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testSameNumberOf
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -1063,7 +1053,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testSameNumberOf
  * Source1 -> (Source2) -> Union1 -> Window1 -> Sink
  *                              \-> Window2 -> Sink
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEquivalentUnionDifferentWindows) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEquivalentUnionDifferentWindows)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
@@ -1117,9 +1108,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEquivalentUn
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1130,8 +1120,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEquivalentUn
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();
@@ -1187,33 +1176,34 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testEquivalentUn
  * Source1 -> (Source2) -> Union1 -> Filter1 -> Project1 -> Join1 -> (Source3) -> Sink1
  *                                                              \-> Project2 -> Sink
  */
-TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testProjectionContainment) {
+TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testProjectionContainment)
+{
     setupSensorNodeAndSourceCatalog();
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query1 =
-        Query::from("windTurbines")
-            .unionWith(Query::from("solarPanels1"))
-            .filter(Attribute("value") > 4)
-            .project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts"))
-            .joinWith(
-                Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
-            .where(Attribute("windTurbines$id1") == Attribute("households$id"))
-            .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
-            .sink(PrintSinkDescriptor::create());
+    Query query1
+        = Query::from("windTurbines")
+              .unionWith(Query::from("solarPanels1"))
+              .filter(Attribute("value") > 4)
+              .project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts"))
+              .joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
+              .where(Attribute("windTurbines$id1") == Attribute("households$id"))
+              .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
+              .sink(PrintSinkDescriptor::create());
     Query query2 = Query::from("windTurbines")
                        .unionWith(Query::from("solarPanels1"))
                        .joinWith(Query::from("households"))
                        .where(Attribute("id1") == Attribute("id"))
                        .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                        .filter(Attribute("value") > 4)
-                       .project(Attribute("windTurbines$value"),
-                                Attribute("windTurbines$id1"),
-                                Attribute("households$value"),
-                                Attribute("households$id"),
-                                Attribute("windTurbines$ts"),
-                                Attribute("households$ts"))
+                       .project(
+                           Attribute("windTurbines$value"),
+                           Attribute("windTurbines$id1"),
+                           Attribute("households$value"),
+                           Attribute("households$id"),
+                           Attribute("windTurbines$ts"),
+                           Attribute("households$ts"))
                        .sink(PrintSinkDescriptor::create());
     const QueryPlanPtr queryPlan1 = query1.getQueryPlan();
     const QueryPlanPtr queryPlan2 = query2.getQueryPlan();
@@ -1256,9 +1246,8 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testProjectionCo
     typeInferencePhase->execute(queryPlan2);
 
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto z3InferencePhase =
-        Optimizer::SignatureInferencePhase::create(context,
-                                                   Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
+    auto z3InferencePhase = Optimizer::SignatureInferencePhase::create(
+        context, Optimizer::QueryMergerRule::Z3SignatureBasedTopDownQueryContainmentMergerRule);
     z3InferencePhase->execute(queryPlan1);
     z3InferencePhase->execute(queryPlan2);
 
@@ -1269,8 +1258,7 @@ TEST_F(Z3SignatureBasedTreeBasedQueryContainmentMergerRuleTest, testProjectionCo
     globalQueryPlan->addQueryPlan(queryPlan1);
     globalQueryPlan->addQueryPlan(queryPlan2);
 
-    auto signatureBasedEqualQueryMergerRule =
-        Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
+    auto signatureBasedEqualQueryMergerRule = Optimizer::Z3SignatureBasedTreeBasedQueryContainmentMergerRule::create(context, true);
     signatureBasedEqualQueryMergerRule->apply(globalQueryPlan);
 
     auto updatedSharedQMToDeploy = globalQueryPlan->getSharedQueryPlansToDeploy();

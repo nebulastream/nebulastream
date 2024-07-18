@@ -15,22 +15,23 @@
 #ifndef NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_
 #define NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_
 
-#include <Common/ExecutableType/NESType.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
-#include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <ostream>
 #include <string>
 #include <variant>
+#include <Runtime/MemoryLayout/BufferAccessException.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Common/ExecutableType/NESType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 
 class MemoryLayoutTupleBuffer;
 using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
@@ -41,8 +42,9 @@ using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
  * For all field accesses we check that the template type is the same as the selected physical field type.
  * If the type is not compatible accesses result in a BufferAccessException.
  */
-class DynamicField {
-  public:
+class DynamicField
+{
+public:
     /**
      * @brief Constructor to create a DynamicField
      * @param address for the field
@@ -55,12 +57,14 @@ class DynamicField {
      * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
      * @return Pointer type
      */
-    template<class Type>
-        requires IsNesType<Type> && std::is_pointer<Type>::value
-    inline Type read() const {
-        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
-            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
-                                        + " but accessed as " + typeid(Type).name());
+    template <class Type>
+    requires IsNesType<Type> && std::is_pointer<Type>::value
+    inline Type read() const
+    {
+        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
+        {
+            throw BufferAccessException(
+                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
         }
         return reinterpret_cast<Type>(const_cast<uint8_t*>(address));
     };
@@ -71,12 +75,14 @@ class DynamicField {
      * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
      * @return Value of the field.
      */
-    template<class Type>
-        requires(IsNesType<Type> && not std::is_pointer<Type>::value)
-    inline Type& read() const {
-        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
-            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
-                                        + " but accessed as " + typeid(Type).name());
+    template <class Type>
+    requires(IsNesType<Type> && not std::is_pointer<Type>::value)
+    inline Type& read() const
+    {
+        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
+        {
+            throw BufferAccessException(
+                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
         }
         return *reinterpret_cast<Type*>(const_cast<uint8_t*>(address));
     };
@@ -87,12 +93,14 @@ class DynamicField {
      * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
      * @return Value of the field.
      */
-    template<class Type>
-        requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
-    inline Type read() const {
-        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType)) {
-            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
-                                        + " but accessed as " + typeid(Type).name());
+    template <class Type>
+    requires(NESIdentifier<Type> && not std::is_pointer<Type>::value)
+    inline Type read() const
+    {
+        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
+        {
+            throw BufferAccessException(
+                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
         }
         return Type(*reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)));
     };
@@ -103,12 +111,14 @@ class DynamicField {
      * @param value of the field.
      * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
      */
-    template<class Type>
-        requires(IsNesType<Type>)
-    inline void write(Type value) {
-        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType)) {
-            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
-                                        + " but accessed as " + typeid(Type).name());
+    template <class Type>
+    requires(IsNesType<Type>)
+    inline void write(Type value)
+    {
+        if (!PhysicalTypes::isSamePhysicalType<Type>(physicalType))
+        {
+            throw BufferAccessException(
+                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
         }
         *reinterpret_cast<Type*>(const_cast<uint8_t*>(address)) = value;
     };
@@ -119,12 +129,14 @@ class DynamicField {
      * @param value of the field.
      * @throws BufferAccessException if the passed Type is not the same as the physicalType of the field.
      */
-    template<class Type>
-        requires(NESIdentifier<Type>)
-    inline void write(Type value) {
-        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType)) {
-            throw BufferAccessException("Wrong field type passed. Field is of type " + physicalType->toString()
-                                        + " but accessed as " + typeid(Type).name());
+    template <class Type>
+    requires(NESIdentifier<Type>)
+    inline void write(Type value)
+    {
+        if (!PhysicalTypes::isSamePhysicalType<typename Type::Underlying>(physicalType))
+        {
+            throw BufferAccessException(
+                "Wrong field type passed. Field is of type " + physicalType->toString() + " but accessed as " + typeid(Type).name());
         }
         *reinterpret_cast<typename Type::Underlying*>(const_cast<uint8_t*>(address)) = value.getRawValue();
     };
@@ -168,7 +180,7 @@ class DynamicField {
      */
     [[nodiscard]] const uint8_t* getAddressPointer() const;
 
-  private:
+private:
     const uint8_t* address;
     const PhysicalTypePtr physicalType;
 };
@@ -177,8 +189,9 @@ class DynamicField {
  * @brief The DynamicRecords allows to read individual fields of a tuple.
  * Field accesses are safe in the sense that if is checked the field exists.
  */
-class DynamicTuple {
-  public:
+class DynamicTuple
+{
+public:
     /**
      * @brief Constructor for the DynamicTuple.
      * Each tuple contains the index, to the memory layout and to the tuple buffer.
@@ -232,7 +245,7 @@ class DynamicTuple {
     bool operator==(const DynamicTuple& other) const;
     bool operator!=(const DynamicTuple& other) const;
 
-  private:
+private:
     const uint64_t tupleIndex;
     const MemoryLayoutPtr memoryLayout;
     const TupleBuffer buffer;
@@ -276,8 +289,9 @@ class DynamicTuple {
  * @caution This class is non-thread safe, i.e. multiple threads can manipulate the same tuple buffer at the same time.
  * @caution Do NOT use this class in performance critical code, as it is designed for testing and not for performance.
  */
-class TestTupleBuffer {
-  public:
+class TestTupleBuffer
+{
+public:
     /**
      * @brief Constructor for TestTupleBuffer
      * @param memoryLayout memory layout to calculate field offset
@@ -334,13 +348,15 @@ class TestTupleBuffer {
      *    }
      *    ```
      */
-    class TupleIterator : public std::iterator<std::input_iterator_tag,// iterator_category
-                                               DynamicTuple,           // value_type
-                                               DynamicTuple,           // difference_type
-                                               DynamicTuple*,          // pointer
-                                               DynamicTuple            // reference
-                                               > {
-      public:
+    class TupleIterator : public std::iterator<
+                              std::input_iterator_tag, // iterator_category
+                              DynamicTuple, // value_type
+                              DynamicTuple, // difference_type
+                              DynamicTuple*, // pointer
+                              DynamicTuple // reference
+                              >
+    {
+    public:
         /**
          * @brief Constructor to create a new TupleIterator
          * @param buffer the TestTupleBuffer that we want to process
@@ -366,7 +382,7 @@ class TestTupleBuffer {
         bool operator!=(TupleIterator other) const;
         reference operator*() const;
 
-      private:
+    private:
         const TestTupleBuffer& buffer;
         uint64_t currentIndex;
     };
@@ -404,9 +420,10 @@ class TestTupleBuffer {
      *       Thus, a record with more than 1024 fields might not be supported.
      * @param record: The record to be pushed to the buffer.
      */
-    template<typename... Types>
-        requires(!ContainsString<Types> && ...)
-    void pushRecordToBuffer(std::tuple<Types...> record) {
+    template <typename... Types>
+    requires(!ContainsString<Types> && ...)
+    void pushRecordToBuffer(std::tuple<Types...> record)
+    {
         pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples());
     }
 
@@ -418,9 +435,10 @@ class TestTupleBuffer {
      * @param record: The record to be pushed to the buffer.
      * @param bufferManager: BufferManager required for storing the variable sized data in the child buffers
      */
-    template<typename... Types>
-        requires(ContainsString<Types> || ...)
-    void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager) {
+    template <typename... Types>
+    requires(ContainsString<Types> || ...)
+    void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager)
+    {
         pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), bufferManager);
     }
 
@@ -434,31 +452,41 @@ class TestTupleBuffer {
      * @param recordIndex: The index at which the record should be pushed to the buffer.
      * @return true if the record was pushed successfully, false otherwise.
      */
-    template<typename... Types>
-    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, BufferManager* bufferManager = nullptr) {
+    template <typename... Types>
+    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, BufferManager* bufferManager = nullptr)
+    {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
-        if (recordIndex >= buffer.getBufferSize()) {
-            throw BufferAccessException("Current buffer is not big enough for index. Current buffer size: "
-                                        + std::to_string(buffer.getBufferSize()) + ", Index: " + std::to_string(recordIndex));
+        if (recordIndex >= buffer.getBufferSize())
+        {
+            throw BufferAccessException(
+                "Current buffer is not big enough for index. Current buffer size: " + std::to_string(buffer.getBufferSize())
+                + ", Index: " + std::to_string(recordIndex));
         }
         // std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
         // On each iteration, the lambda function is called with the current field value, and the field index is increased.
         // If the value is a std::string, we call writeVarSized() instead of write().
         std::apply(
-            [&](auto&&... fieldValue) {
-                (([&]() {
-                     if constexpr (IsString<decltype(fieldValue)>) {
-                         NES_ASSERT(bufferManager != nullptr, "BufferManager can not be null while using variable sized data!");
-                         (*this)[recordIndex].writeVarSized(fieldIndex++, fieldValue, bufferManager);
-                     } else {
-                         (*this)[recordIndex][fieldIndex++].write(fieldValue);
-                     }
-                 }()),
+            [&](auto&&... fieldValue)
+            {
+                ((
+                     [&]()
+                     {
+                         if constexpr (IsString<decltype(fieldValue)>)
+                         {
+                             NES_ASSERT(bufferManager != nullptr, "BufferManager can not be null while using variable sized data!");
+                             (*this)[recordIndex].writeVarSized(fieldIndex++, fieldValue, bufferManager);
+                         }
+                         else
+                         {
+                             (*this)[recordIndex][fieldIndex++].write(fieldValue);
+                         }
+                     }()),
                  ...);
             },
             record);
-        if (recordIndex + 1 > numberOfRecords) {
+        if (recordIndex + 1 > numberOfRecords)
+        {
             this->setNumberOfTuples(recordIndex + 1);
         }
     }
@@ -471,11 +499,13 @@ class TestTupleBuffer {
      * @return std::tuple<Types...> The indexed record represented as a std:tuple.
      * @return true if the record was read from the TupleBuffer successfully, false otherwise.
      */
-    template<typename... Types>
-    std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex) {
-        NES_ASSERT((sizeof...(Types)) == memoryLayout->getFieldSizes().size(),
-                   "Provided tuple types: " << sizeof...(Types) << " do not match the number of fields in the memory layout: "
-                                            << memoryLayout->getFieldSizes().size() << '\n');
+    template <typename... Types>
+    std::tuple<Types...> readRecordFromBuffer(uint64_t recordIndex)
+    {
+        NES_ASSERT(
+            (sizeof...(Types)) == memoryLayout->getFieldSizes().size(),
+            "Provided tuple types: " << sizeof...(Types) << " do not match the number of fields in the memory layout: "
+                                     << memoryLayout->getFieldSizes().size() << '\n');
         std::tuple<Types...> retTuple;
         copyRecordFromBufferToTuple(retTuple, recordIndex);
         return retTuple;
@@ -494,7 +524,7 @@ class TestTupleBuffer {
      */
     MemoryLayoutPtr getMemoryLayout() const;
 
-  private:
+private:
     /**
      * @brief Takes a tuple as a reference and a recordIndex. Copies the record in the TupleBuffer at the given 
                 recordIndex to the tuple.
@@ -505,17 +535,21 @@ class TestTupleBuffer {
      * @param recordIndex: The index at which the record should be pushed to the buffer.
      * @return true if the record was read from the TupleBuffer successfully, false otherwise.
      */
-    template<size_t I = 0, typename... Types>
-    void copyRecordFromBufferToTuple(std::tuple<Types...>& record, uint64_t recordIndex) {
+    template <size_t I = 0, typename... Types>
+    void copyRecordFromBufferToTuple(std::tuple<Types...>& record, uint64_t recordIndex)
+    {
         // Check if I matches the size of the tuple, which means that all fields of the record have been processed.
-        if constexpr (I != sizeof...(Types)) {
-            if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>) {
+        if constexpr (I != sizeof...(Types))
+        {
+            if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
+            {
                 auto childBufferIdx = (*this)[recordIndex][I].read<TupleBuffer::NestedTupleBufferKey>();
                 std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
-            } else {
+            }
+            else
+            {
                 // Get type of current tuple element and cast field value to this type. Add value to return tuple.
-                std::get<I>(record) =
-                    ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
+                std::get<I>(record) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
             }
 
             // Recursive call to copyRecordFromBufferToTuple with the field index (I) increased by 1.
@@ -523,11 +557,11 @@ class TestTupleBuffer {
         }
     }
 
-  private:
+private:
     const MemoryLayoutPtr memoryLayout;
     mutable TupleBuffer buffer;
 };
 
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_
+#endif // NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_

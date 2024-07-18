@@ -16,19 +16,21 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expressions returns a Boolean values that is the negation of subExpression.
  */
-class NegateExpression : public Expression {
-  public:
+class NegateExpression : public Expression
+{
+public:
     NegateExpression(ExpressionPtr subExpression);
     Value<> execute(Record& record) const override;
 
-  private:
+private:
     const ExpressionPtr subExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSION_HPP_

@@ -17,13 +17,15 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical Scan operator.
  */
-class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOperator {
-  public:
+class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOperator
+{
+public:
     /**
      * @brief Constructor for the physical scan operator
      * @param id operator id
@@ -49,6 +51,6 @@ class PhysicalScanOperator : public PhysicalUnaryOperator, public AbstractScanOp
     std::string toString() const override;
     OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSCANOPERATOR_HPP_

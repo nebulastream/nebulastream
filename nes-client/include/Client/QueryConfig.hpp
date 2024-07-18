@@ -15,16 +15,18 @@
 #ifndef NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 #define NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
 
-#include <Util/Placement/PlacementStrategy.hpp>
 #include <ostream>
+#include <Util/Placement/PlacementStrategy.hpp>
 
-namespace NES::Client {
+namespace NES::Client
+{
 
 /**
  * @brief Interface to set configuration parameters for a query.
  */
-class QueryConfig {
-  public:
+class QueryConfig
+{
+public:
     explicit QueryConfig(Optimizer::PlacementStrategy placementType = Optimizer::PlacementStrategy::BottomUp);
 
     /**
@@ -39,9 +41,9 @@ class QueryConfig {
      */
     void setPlacementType(Optimizer::PlacementStrategy placementType);
 
-  private:
+private:
     Optimizer::PlacementStrategy placementType;
 };
-}// namespace NES::Client
+} // namespace NES::Client
 
-#endif// NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
+#endif // NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_

@@ -14,8 +14,9 @@
 
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 AbstractStatisticCache::~AbstractStatisticCache() = default;
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

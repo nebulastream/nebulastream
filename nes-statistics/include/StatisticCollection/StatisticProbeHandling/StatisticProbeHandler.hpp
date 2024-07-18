@@ -21,21 +21,25 @@
 #include <StatisticCollection/StatisticProbeHandling/gRPC/WorkerStatisticRPCClient.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
 
-class StatisticProbeHandler : public StatisticProbeInterface {
-  public:
-    static StatisticProbeHandlerPtr create(const StatisticRegistryPtr& statisticRegistry,
-                                           const StatisticProbeGeneratorPtr& statisticProbeGenerator,
-                                           const StatisticCachePtr& statisticCache,
-                                           const TopologyPtr& topology);
+class StatisticProbeHandler : public StatisticProbeInterface
+{
+public:
+    static StatisticProbeHandlerPtr create(
+        const StatisticRegistryPtr& statisticRegistry,
+        const StatisticProbeGeneratorPtr& statisticProbeGenerator,
+        const StatisticCachePtr& statisticCache,
+        const TopologyPtr& topology);
 
-    ProbeResult<> probeStatistic(const StatisticProbeRequest& probeRequest,
-                                 const bool& estimationAllowed,
-                                 std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) override;
+    ProbeResult<> probeStatistic(
+        const StatisticProbeRequest& probeRequest,
+        const bool& estimationAllowed,
+        std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) override;
 
     /**
      * @brief Calls the probeStatistic function with estimationAllowed set to false
@@ -51,11 +55,12 @@ class StatisticProbeHandler : public StatisticProbeInterface {
      */
     QueryId getStatisticQueryId(const StatisticKey& statisticKey) const;
 
-  private:
-    StatisticProbeHandler(const StatisticRegistryPtr statisticRegistry,
-                          const StatisticProbeGeneratorPtr statisticProbeGenerator,
-                          const StatisticCachePtr statisticCache,
-                          const TopologyPtr topology);
+private:
+    StatisticProbeHandler(
+        const StatisticRegistryPtr statisticRegistry,
+        const StatisticProbeGeneratorPtr statisticProbeGenerator,
+        const StatisticCachePtr statisticCache,
+        const TopologyPtr topology);
 
     StatisticRegistryPtr statisticRegistry;
     StatisticProbeGeneratorPtr statisticProbeGenerator;
@@ -64,6 +69,6 @@ class StatisticProbeHandler : public StatisticProbeInterface {
     WorkerStatisticRPCClientPtr workerRpcClientPtr;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEHANDLER_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEHANDLER_HPP_

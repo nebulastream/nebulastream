@@ -13,26 +13,29 @@
 */
 
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
-#include <API/Schema.hpp>
-#include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
-#include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
-#include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <TestUtils/RecordCollectOperator.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-#include <memory>
+#    include <memory>
+#    include <API/Schema.hpp>
+#    include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
+#    include <Execution/Expressions/ReadFieldExpression.hpp>
+#    include <Execution/Operators/ExecutionContext.hpp>
+#    include <Execution/Operators/Relational/PythonUDF/MapPythonUDF.hpp>
+#    include <Execution/Operators/Relational/PythonUDF/PythonUDFOperatorHandler.hpp>
+#    include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#    include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#    include <Runtime/Execution/PipelineExecutionContext.hpp>
+#    include <TestUtils/MockedPipelineExecutionContext.hpp>
+#    include <TestUtils/RecordCollectOperator.hpp>
+#    include <Util/Logger/Logger.hpp>
+#    include <gtest/gtest.h>
 
-namespace NES::Runtime::Execution::Operators {
-class MapPythonUdfOperatorTest : public testing::Test {
-  public:
+namespace NES::Runtime::Execution::Operators
+{
+class MapPythonUdfOperatorTest : public testing::Test
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MapPythonUdfOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup MapPythonUdfOperatorTest test class." << std::endl;
     }
@@ -46,7 +49,8 @@ std::string function, functionName;
 * @brief Test simple UDF with integer objects as input and output
 * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest) {
+TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest)
+{
     inputSchema = Schema::create()->addField("id", BasicType::INT32);
     outputSchema = Schema::create()->addField("id", BasicType::INT32);
     function = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
@@ -58,7 +62,7 @@ TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Int32>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
@@ -68,7 +72,8 @@ TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest) {
 * @brief Test simple UDF with long objects as input and output
 * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapPythonUdfOperatorTest, LongUDFTest) {
+TEST_F(MapPythonUdfOperatorTest, LongUDFTest)
+{
     inputSchema = Schema::create()->addField("id", BasicType::INT64);
     outputSchema = Schema::create()->addField("id", BasicType::INT64);
     function = "def long_test(x):\n\ty = x + 10\n\treturn y\n";
@@ -80,7 +85,7 @@ TEST_F(MapPythonUdfOperatorTest, LongUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Int64>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
@@ -90,7 +95,8 @@ TEST_F(MapPythonUdfOperatorTest, LongUDFTest) {
 * @brief Test simple UDF with double objects as input and output
 * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest) {
+TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest)
+{
     inputSchema = Schema::create()->addField("id", BasicType::FLOAT64);
     outputSchema = Schema::create()->addField("id", BasicType::FLOAT64);
     function = "def double_test(x):\n\ty = x + 10.0\n\treturn y\n";
@@ -102,7 +108,7 @@ TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Double>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10.0);
@@ -112,7 +118,8 @@ TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest) {
 * @brief Test simple UDF with float objects as input and output
 * The UDF increments incoming tuples by 10.
 */
-TEST_F(MapPythonUdfOperatorTest, FloatUDFTest) {
+TEST_F(MapPythonUdfOperatorTest, FloatUDFTest)
+{
     inputSchema = Schema::create()->addField("id", BasicType::FLOAT32);
     outputSchema = Schema::create()->addField("id", BasicType::FLOAT32);
     function = "def float_test(x):\n\ty = x + 10.0\n\treturn y\n";
@@ -124,7 +131,7 @@ TEST_F(MapPythonUdfOperatorTest, FloatUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Float>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10.0);
@@ -134,7 +141,8 @@ TEST_F(MapPythonUdfOperatorTest, FloatUDFTest) {
 * @brief Test simple UDF with boolean objects as input and output
 * The UDF sets incoming tuples to false.
 */
-TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
+TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest)
+{
     inputSchema = Schema::create()->addField("id", BasicType::BOOLEAN);
     outputSchema = Schema::create()->addField("id", BasicType::BOOLEAN);
     function = "def boolean_test(x):\n\tx = False\n\treturn x\n";
@@ -146,7 +154,7 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Boolean>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), false);
@@ -156,7 +164,8 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
 * @brief Test simple UDF with loaded java classes as input and output
 * The UDF sets the bool to false, numerics +10 and appends to strings the postfix 'appended'.
 */
-TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
+TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction)
+{
     auto bm = std::make_shared<Runtime::BufferManager>();
     auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bm, 1024);
     inputSchema = Schema::create()
@@ -198,14 +207,15 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"byteVariable", Value<Int8>(initialByte)},
-                          {"shortVariable", Value<Int16>(initialShort)},
-                          {"intVariable", Value<Int32>(initialInt)},
-                          {"longVariable", Value<Int64>(initialLong)},
-                          {"floatVariable", Value<Float>(initialFloat)},
-                          {"doubleVariable", Value<Double>(initialDouble)},
-                          {"booleanVariable", Value<Boolean>(initialBool)}});
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
+    auto record = Record(
+        {{"byteVariable", Value<Int8>(initialByte)},
+         {"shortVariable", Value<Int16>(initialShort)},
+         {"intVariable", Value<Int32>(initialInt)},
+         {"longVariable", Value<Int64>(initialLong)},
+         {"floatVariable", Value<Float>(initialFloat)},
+         {"doubleVariable", Value<Double>(initialDouble)},
+         {"booleanVariable", Value<Boolean>(initialBool)}});
     map.execute(ctx, record);
 
     EXPECT_EQ(record.read("byteVariable"), initialByte + 10);
@@ -217,5 +227,5 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     EXPECT_EQ(record.read("booleanVariable"), false);
 }
 
-}// namespace NES::Runtime::Execution::Operators
-#endif//NAUTILUS_PYTHON_UDF_ENABLED
+} // namespace NES::Runtime::Execution::Operators
+#endif //NAUTILUS_PYTHON_UDF_ENABLED

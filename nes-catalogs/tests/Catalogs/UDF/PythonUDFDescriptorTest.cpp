@@ -12,21 +12,23 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 using namespace std::string_literals;
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PythonUDFDescriptorBuilder.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
-class PythonUDFDescriptorTest : public Testing::BaseUnitTest {
-  protected:
+class PythonUDFDescriptorTest : public Testing::BaseUnitTest
+{
+protected:
     static void SetUpTestCase() { NES::Logger::setupLogging("UdfTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
@@ -40,51 +42,60 @@ const std::string functionString = "def udf_function(x):\n\ty = x + 10\n\treturn
 const SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
 const SchemaPtr outputSchema = std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createUInt64());
 
-TEST_F(PythonUDFDescriptorTest, NoExceptionIsThrownForValidData) {
+TEST_F(PythonUDFDescriptorTest, NoExceptionIsThrownForValidData)
+{
     EXPECT_NO_THROW(PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor());
 }
 
-TEST_F(PythonUDFDescriptorTest, TheFunctionNameMustNotBeEmtpy) {
-    EXPECT_THROW(PythonUDFDescriptorBuilder{}
-                     .setFunctionName("")
-                     .setFunctionString(functionString)
-                     .setInputSchema(inputSchema)
-                     .setOutputSchema(outputSchema)
-                     .build(),
-                 UDFException);
+TEST_F(PythonUDFDescriptorTest, TheFunctionNameMustNotBeEmtpy)
+{
+    EXPECT_THROW(
+        PythonUDFDescriptorBuilder{}
+            .setFunctionName("")
+            .setFunctionString(functionString)
+            .setInputSchema(inputSchema)
+            .setOutputSchema(outputSchema)
+            .build(),
+        UDFException);
 }
 
-TEST_F(PythonUDFDescriptorTest, TheOutputSchemaMustNotBeEmpty) {
-    EXPECT_THROW(PythonUDFDescriptorBuilder{}
-                     .setFunctionName(functionName)
-                     .setFunctionString(functionString)
-                     .setInputSchema(inputSchema)
-                     .setOutputSchema(std::make_shared<Schema>())// empty list
-                     .build(),
-                 UDFException);
+TEST_F(PythonUDFDescriptorTest, TheOutputSchemaMustNotBeEmpty)
+{
+    EXPECT_THROW(
+        PythonUDFDescriptorBuilder{}
+            .setFunctionName(functionName)
+            .setFunctionString(functionString)
+            .setInputSchema(inputSchema)
+            .setOutputSchema(std::make_shared<Schema>()) // empty list
+            .build(),
+        UDFException);
 }
 
-TEST_F(PythonUDFDescriptorTest, TheFunctionStringMustNotBeEmpty) {
-    EXPECT_THROW(PythonUDFDescriptorBuilder{}
-                     .setFunctionName(functionName)
-                     .setFunctionString("")
-                     .setInputSchema(inputSchema)
-                     .setOutputSchema(outputSchema)
-                     .build(),
-                 UDFException);
+TEST_F(PythonUDFDescriptorTest, TheFunctionStringMustNotBeEmpty)
+{
+    EXPECT_THROW(
+        PythonUDFDescriptorBuilder{}
+            .setFunctionName(functionName)
+            .setFunctionString("")
+            .setInputSchema(inputSchema)
+            .setOutputSchema(outputSchema)
+            .build(),
+        UDFException);
 }
 
 // The following tests verify the equality logic of the Python UDF descriptor.
 
-TEST_F(PythonUDFDescriptorTest, Equality) {
+TEST_F(PythonUDFDescriptorTest, Equality)
+{
     // when
     auto descriptor1 = PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
     auto descriptor2 = PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
     // then
-    ASSERT_TRUE(*descriptor1 == *descriptor2);// Compare pointed-to variables, not the pointers.
+    ASSERT_TRUE(*descriptor1 == *descriptor2); // Compare pointed-to variables, not the pointers.
 }
 
-TEST_F(PythonUDFDescriptorTest, InEquality) {
+TEST_F(PythonUDFDescriptorTest, InEquality)
+{
     // when
     auto descriptor = PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor();
     // Check a different function name
@@ -108,4 +119,4 @@ TEST_F(PythonUDFDescriptorTest, InEquality) {
     EXPECT_FALSE(*descriptor == *descriptorWithDifferentFunctionString);
 }
 
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF

@@ -11,19 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /*
 * Defines the radians function and registers it to the FunctionRegistry.
 */
-class RadiansFunction : public UnaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (!input->isNumeric()) {
+class RadiansFunction : public UnaryLogicalFunction
+{
+public:
+    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override
+    {
+        if (!input->isNumeric())
+        {
             NES_THROW_RUNTIME_ERROR("RadiansExpressions can only be evaluated on numeric values.");
         }
         return DataTypeFactory::createDouble();
@@ -32,4 +36,4 @@ class RadiansFunction : public UnaryLogicalFunction {
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<RadiansFunction> RadiansFunction("radians");
 
-}// namespace NES
+} // namespace NES

@@ -17,28 +17,30 @@
 #include <filesystem>
 #include <list>
 #include <string_view>
-namespace NES::Util {
+namespace NES::Util
+{
 
-class LoadedPlugin {
-  public:
+class LoadedPlugin
+{
+public:
     LoadedPlugin(void* handle);
     ~LoadedPlugin();
 
-  private:
+private:
     void* handle;
 };
 
-class PluginLoader {
-
-  public:
+class PluginLoader
+{
+public:
     void loadDefaultPlugins();
     void loadPlugins(const std::filesystem::path& dirPath);
     void loadPlugin(const std::string_view& path);
 
-  private:
+private:
     std::list<LoadedPlugin> loadedPlugins;
 };
 
-}// namespace NES::Util
+} // namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_PLUGINLOADER_HPP_

@@ -14,16 +14,18 @@
 #ifndef NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
 #include <Exceptions/RuntimeException.hpp>
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief Represents an wrapper for all compilation related exceptions.
  */
-class CompilerException : public Exceptions::RuntimeException {
-  public:
+class CompilerException : public Exceptions::RuntimeException
+{
+public:
     explicit CompilerException(const std::string& message, const std::source_location location = std::source_location::current());
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_

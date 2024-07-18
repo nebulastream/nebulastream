@@ -30,45 +30,55 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
-bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t i) {
-    if (i >= bufferSchema->getSize()) {
+bool MetricUtils::validateFieldsInSchema(SchemaPtr metricSchema, SchemaPtr bufferSchema, uint64_t i)
+{
+    if (i >= bufferSchema->getSize())
+    {
         return false;
     }
 
     auto hasName = NES::Util::endsWith(bufferSchema->fields[i]->getName(), metricSchema->get(0)->getName());
-    auto hasLastField = NES::Util::endsWith(bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(),
-                                            metricSchema->get(metricSchema->getSize() - 1)->getName());
+    auto hasLastField = NES::Util::endsWith(
+        bufferSchema->fields[i + metricSchema->getSize() - 1]->getName(), metricSchema->get(metricSchema->getSize() - 1)->getName());
 
     return hasName && hasLastField;
 }
 
-nlohmann::json MetricUtils::toJson(std::vector<MetricPtr> metrics) {
+nlohmann::json MetricUtils::toJson(std::vector<MetricPtr> metrics)
+{
     nlohmann::json metricsJson{};
-    for (const auto& metric : metrics) {
+    for (const auto& metric : metrics)
+    {
         auto jMetric = asJson(metric);
         metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] = jMetric;
     }
     return metricsJson;
 }
 
-nlohmann::json MetricUtils::toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics) {
+nlohmann::json MetricUtils::toJson(std::unordered_map<MetricType, std::shared_ptr<Metric>> metrics)
+{
     nlohmann::json metricsJson{};
-    for (const auto& metric : metrics) {
+    for (const auto& metric : metrics)
+    {
         nlohmann::json jMetric = asJson(metric.second);
         metricsJson[std::string(magic_enum::enum_name(metric.second->getMetricType()))] = jMetric;
     }
     return metricsJson;
 }
 
-nlohmann::json MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
+nlohmann::json MetricUtils::toJson(StoredNodeMetricsPtr metrics)
+{
     nlohmann::json metricsJson{};
-    for (auto metricTypeEntry : *metrics.get()) {
+    for (auto metricTypeEntry : *metrics.get())
+    {
         std::shared_ptr<std::vector<TimestampMetricPtr>> metricVec = metricTypeEntry.second;
         nlohmann::json arr{};
         int i = 0;
-        for (const auto& metric : *metricTypeEntry.second.get()) {
+        for (const auto& metric : *metricTypeEntry.second.get())
+        {
             nlohmann::json jsonMetricVal{};
             uint64_t timestamp = metric->first;
             MetricPtr metricVal = metric->second;
@@ -82,23 +92,34 @@ nlohmann::json MetricUtils::toJson(StoredNodeMetricsPtr metrics) {
     return metricsJson;
 }
 
-MetricCollectorPtr MetricUtils::createCollectorFromCollectorType(MetricCollectorType type) {
-    switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return std::make_shared<CpuCollector>();
-        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<DiskCollector>();
-        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<MemoryCollector>();
-        case MetricCollectorType::NETWORK_COLLECTOR: return std::make_shared<NetworkCollector>();
-        default: NES_FATAL_ERROR("MetricUtils: Not supported collector type {}", std::string(magic_enum::enum_name(type)));
+MetricCollectorPtr MetricUtils::createCollectorFromCollectorType(MetricCollectorType type)
+{
+    switch (type)
+    {
+        case MetricCollectorType::CPU_COLLECTOR:
+            return std::make_shared<CpuCollector>();
+        case MetricCollectorType::DISK_COLLECTOR:
+            return std::make_shared<DiskCollector>();
+        case MetricCollectorType::MEMORY_COLLECTOR:
+            return std::make_shared<MemoryCollector>();
+        case MetricCollectorType::NETWORK_COLLECTOR:
+            return std::make_shared<NetworkCollector>();
+        default:
+            NES_FATAL_ERROR("MetricUtils: Not supported collector type {}", std::string(magic_enum::enum_name(type)));
     }
     return nullptr;
 }
 
-MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
-    switch (type) {
+MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type)
+{
+    switch (type)
+    {
         case MetricCollectorType::CPU_COLLECTOR:
             return std::make_shared<Metric>(CpuMetricsWrapper{}, MetricType::WrappedCpuMetrics);
-        case MetricCollectorType::DISK_COLLECTOR: return std::make_shared<Metric>(DiskMetrics{}, MetricType::DiskMetric);
-        case MetricCollectorType::MEMORY_COLLECTOR: return std::make_shared<Metric>(MemoryMetrics{}, MetricType::MemoryMetric);
+        case MetricCollectorType::DISK_COLLECTOR:
+            return std::make_shared<Metric>(DiskMetrics{}, MetricType::DiskMetric);
+        case MetricCollectorType::MEMORY_COLLECTOR:
+            return std::make_shared<Metric>(MemoryMetrics{}, MetricType::MemoryMetric);
         case MetricCollectorType::NETWORK_COLLECTOR:
             return std::make_shared<Metric>(NetworkMetricsWrapper{}, MetricType::WrappedNetworkMetrics);
         default: {
@@ -108,12 +129,18 @@ MetricPtr MetricUtils::createMetricFromCollectorType(MetricCollectorType type) {
     return nullptr;
 }
 
-Configurations::SchemaTypePtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type) {
-    switch (type) {
-        case MetricCollectorType::CPU_COLLECTOR: return CpuMetrics::getSchemaType("");
-        case MetricCollectorType::DISK_COLLECTOR: return DiskMetrics::getSchemaType("");
-        case MetricCollectorType::MEMORY_COLLECTOR: return MemoryMetrics::getSchemaType("");
-        case MetricCollectorType::NETWORK_COLLECTOR: return NetworkMetrics::getSchemaType("");
+Configurations::SchemaTypePtr MetricUtils::getSchemaFromCollectorType(MetricCollectorType type)
+{
+    switch (type)
+    {
+        case MetricCollectorType::CPU_COLLECTOR:
+            return CpuMetrics::getSchemaType("");
+        case MetricCollectorType::DISK_COLLECTOR:
+            return DiskMetrics::getSchemaType("");
+        case MetricCollectorType::MEMORY_COLLECTOR:
+            return MemoryMetrics::getSchemaType("");
+        case MetricCollectorType::NETWORK_COLLECTOR:
+            return NetworkMetrics::getSchemaType("");
         default: {
             NES_FATAL_ERROR("MetricUtils: Collector type not supported {}", std::string(magic_enum::enum_name(type)));
         }
@@ -121,14 +148,22 @@ Configurations::SchemaTypePtr MetricUtils::getSchemaFromCollectorType(MetricColl
     return nullptr;
 }
 
-MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType type) {
-    switch (type) {
-        case MetricType::CpuMetric: return MetricCollectorType::CPU_COLLECTOR;
-        case MetricType::WrappedCpuMetrics: return MetricCollectorType::CPU_COLLECTOR;
-        case MetricType::DiskMetric: return MetricCollectorType::DISK_COLLECTOR;
-        case MetricType::MemoryMetric: return MetricCollectorType::MEMORY_COLLECTOR;
-        case MetricType::NetworkMetric: return MetricCollectorType::NETWORK_COLLECTOR;
-        case MetricType::WrappedNetworkMetrics: return MetricCollectorType::NETWORK_COLLECTOR;
+MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType type)
+{
+    switch (type)
+    {
+        case MetricType::CpuMetric:
+            return MetricCollectorType::CPU_COLLECTOR;
+        case MetricType::WrappedCpuMetrics:
+            return MetricCollectorType::CPU_COLLECTOR;
+        case MetricType::DiskMetric:
+            return MetricCollectorType::DISK_COLLECTOR;
+        case MetricType::MemoryMetric:
+            return MetricCollectorType::MEMORY_COLLECTOR;
+        case MetricType::NetworkMetric:
+            return MetricCollectorType::NETWORK_COLLECTOR;
+        case MetricType::WrappedNetworkMetrics:
+            return MetricCollectorType::NETWORK_COLLECTOR;
         default: {
             NES_ERROR("MetricUtils: Metric type not supported {}", std::string(magic_enum::enum_name(type)));
             return MetricCollectorType::INVALID;
@@ -136,4 +171,4 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
     }
 }
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

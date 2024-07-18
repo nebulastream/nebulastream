@@ -16,10 +16,12 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-class BasicBlockInvocation : public Operation {
-  public:
+class BasicBlockInvocation : public Operation
+{
+public:
     BasicBlockInvocation();
     void setBlock(BasicBlockPtr block);
     BasicBlockPtr getBlock() const;
@@ -41,10 +43,10 @@ class BasicBlockInvocation : public Operation {
     std::vector<OperationPtr> getArguments() const;
     std::string toString() override;
 
-  private:
+private:
     BasicBlockPtr basicBlock;
     std::vector<OperationWPtr> operations;
 };
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKINVOCATION_HPP_

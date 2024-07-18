@@ -15,13 +15,14 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_JAVAUDFDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_JAVAUDFDESCRIPTOR_HPP_
 
-#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <memory>
 #include <optional>
 #include <string>
 #include <vector>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 
-namespace NES::jni {
+namespace NES::jni
+{
 // Utility types
 using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
@@ -29,9 +30,10 @@ using JavaByteCode = std::vector<char>;
 // that is provided by the Java client.
 using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
 using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
-}// namespace NES::jni
+} // namespace NES::jni
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
 class JavaUDFDescriptor;
 using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
@@ -39,8 +41,9 @@ using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 /**
  * @brief Container for all the data required to execute a Java UDF inside an embedded JVM.
  */
-class JavaUDFDescriptor : public UDFDescriptor {
-  public:
+class JavaUDFDescriptor : public UDFDescriptor
+{
+public:
     /**
      * @brief Construct a container of the data required to execute a Java UDF inside an embedded JVM.
      * @param className The fully-qualified class name of the UDF implementing the UDF.
@@ -58,14 +61,15 @@ class JavaUDFDescriptor : public UDFDescriptor {
      * @throws UdfException If serializedInstance or any of the bytecode entries in byteCodeList are a 0-size byte array.
      * @throws UdfException If outputSchema is empty.
      */
-    JavaUDFDescriptor(const std::string& className,
-                      const std::string& methodName,
-                      const jni::JavaSerializedInstance& serializedInstance,
-                      const jni::JavaUDFByteCodeList& byteCodeList,
-                      const SchemaPtr inputSchema,
-                      const SchemaPtr outputSchema,
-                      const std::string& inputClassName,
-                      const std::string& outputClassName);
+    JavaUDFDescriptor(
+        const std::string& className,
+        const std::string& methodName,
+        const jni::JavaSerializedInstance& serializedInstance,
+        const jni::JavaUDFByteCodeList& byteCodeList,
+        const SchemaPtr inputSchema,
+        const SchemaPtr outputSchema,
+        const std::string& inputClassName,
+        const std::string& outputClassName);
 
     /**
      * @brief Factory method to create a JavaUdfDescriptorPtr instance.
@@ -85,22 +89,18 @@ class JavaUDFDescriptor : public UDFDescriptor {
      * @throws UdfException If outputSchema is empty.
      * @return A std::shared_ptr pointing to the newly constructed Java UDF descriptor.
      */
-    static JavaUDFDescriptorPtr create(const std::string& className,
-                                       const std::string& methodName,
-                                       const jni::JavaSerializedInstance& serializedInstance,
-                                       const jni::JavaUDFByteCodeList& byteCodeList,
-                                       const SchemaPtr inputSchema,
-                                       const SchemaPtr outputSchema,
-                                       const std::string& inputClassName,
-                                       const std::string& outputClassName) {
-        return std::make_shared<JavaUDFDescriptor>(className,
-                                                   methodName,
-                                                   serializedInstance,
-                                                   byteCodeList,
-                                                   inputSchema,
-                                                   outputSchema,
-                                                   inputClassName,
-                                                   outputClassName);
+    static JavaUDFDescriptorPtr create(
+        const std::string& className,
+        const std::string& methodName,
+        const jni::JavaSerializedInstance& serializedInstance,
+        const jni::JavaUDFByteCodeList& byteCodeList,
+        const SchemaPtr inputSchema,
+        const SchemaPtr outputSchema,
+        const std::string& inputClassName,
+        const std::string& outputClassName)
+    {
+        return std::make_shared<JavaUDFDescriptor>(
+            className, methodName, serializedInstance, byteCodeList, inputSchema, outputSchema, inputClassName, outputClassName);
     }
 
     /**
@@ -159,7 +159,7 @@ class JavaUDFDescriptor : public UDFDescriptor {
      */
     bool operator==(const JavaUDFDescriptor& other) const;
 
-  private:
+private:
     const std::string className;
     const jni::JavaSerializedInstance serializedInstance;
     const jni::JavaUDFByteCodeList byteCodeList;
@@ -167,5 +167,5 @@ class JavaUDFDescriptor : public UDFDescriptor {
     const std::string outputClassName;
 };
 
-}// namespace NES::Catalogs::UDF
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_JAVAUDFDESCRIPTOR_HPP_
+} // namespace NES::Catalogs::UDF
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_JAVAUDFDESCRIPTOR_HPP_

@@ -16,13 +16,15 @@
 
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Identifiers/Identifiers.hpp>
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
 /**
  * @brief This exception indicates, that a lookup for an execution node in the global execution plan failed
  */
-class ExecutionNodeNotFoundException : public RequestExecutionException {
-  public:
+class ExecutionNodeNotFoundException : public RequestExecutionException
+{
+public:
     /**
      * @brief construct an exception containing a human readable message
      * @param message: A string to indicate to the user what caused the exception
@@ -42,8 +44,8 @@ class ExecutionNodeNotFoundException : public RequestExecutionException {
      */
     [[nodiscard]] WorkerId getWorkerId() const;
 
-  private:
+private:
     WorkerId id;
 };
-}// namespace NES::Exceptions
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONNODENOTFOUNDEXCEPTION_HPP_

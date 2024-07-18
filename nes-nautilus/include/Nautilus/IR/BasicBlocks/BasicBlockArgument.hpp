@@ -15,18 +15,20 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKARGUMENT_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKARGUMENT_HPP_
 
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <ostream>
-namespace NES::Nautilus::IR::Operations {
+#include <Nautilus/IR/Operations/Operation.hpp>
+namespace NES::Nautilus::IR::Operations
+{
 
-class BasicBlockArgument : public Operation {
-  public:
+class BasicBlockArgument : public Operation
+{
+public:
     explicit BasicBlockArgument(const std::string identifier, Types::StampPtr stamp);
     ~BasicBlockArgument() override = default;
     friend std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument);
     std::string toString() override;
 };
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKARGUMENT_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCKARGUMENT_HPP_

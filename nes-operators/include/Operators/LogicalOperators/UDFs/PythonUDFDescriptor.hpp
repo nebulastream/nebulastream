@@ -15,27 +15,26 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_PYTHONUDFDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_PYTHONUDFDESCRIPTOR_HPP_
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <memory>
 #include <string>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
 class PythonUDFDescriptor;
 using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 
-class PythonUDFDescriptor : public UDFDescriptor {
-  public:
-    PythonUDFDescriptor(const std::string& functionName,
-                        const std::string& functionString,
-                        const SchemaPtr& inputSchema,
-                        const SchemaPtr& outputSchema);
+class PythonUDFDescriptor : public UDFDescriptor
+{
+public:
+    PythonUDFDescriptor(
+        const std::string& functionName, const std::string& functionString, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema);
 
-    static PythonUDFDescriptorPtr create(const std::string& functionName,
-                                         const std::string& functionString,
-                                         const SchemaPtr inputSchema,
-                                         const SchemaPtr outputSchema) {
+    static PythonUDFDescriptorPtr
+    create(const std::string& functionName, const std::string& functionString, const SchemaPtr inputSchema, const SchemaPtr outputSchema)
+    {
         return std::make_shared<PythonUDFDescriptor>(functionName, functionString, inputSchema, outputSchema);
     }
 
@@ -60,8 +59,8 @@ class PythonUDFDescriptor : public UDFDescriptor {
      */
     bool operator==(const PythonUDFDescriptor& other) const;
 
-  private:
+private:
     const std::string functionString;
 };
-}// namespace NES::Catalogs::UDF
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_PYTHONUDFDESCRIPTOR_HPP_
+} // namespace NES::Catalogs::UDF
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_PYTHONUDFDESCRIPTOR_HPP_

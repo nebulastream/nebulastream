@@ -15,16 +15,26 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicyAdaptive.hpp>
 #include <StatisticIdentifiers.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-std::string SendingPolicyAdaptive::toString() const { return "ADAPTIVE"; }
+std::string SendingPolicyAdaptive::toString() const
+{
+    return "ADAPTIVE";
+}
 
-SendingPolicyPtr SendingPolicyAdaptive::create(StatisticDataCodec sinkDataCodec) {
+SendingPolicyPtr SendingPolicyAdaptive::create(StatisticDataCodec sinkDataCodec)
+{
     return std::make_shared<SendingPolicyAdaptive>(SendingPolicyAdaptive(sinkDataCodec));
 }
 
-bool SendingPolicyAdaptive::operator==(const SendingPolicy& rhs) const { return rhs.instanceOf<const SendingPolicyAdaptive>(); }
+bool SendingPolicyAdaptive::operator==(const SendingPolicy& rhs) const
+{
+    return rhs.instanceOf<const SendingPolicyAdaptive>();
+}
 
-SendingPolicyAdaptive::SendingPolicyAdaptive(StatisticDataCodec sinkDataCodec) : SendingPolicy(sinkDataCodec) {}
+SendingPolicyAdaptive::SendingPolicyAdaptive(StatisticDataCodec sinkDataCodec) : SendingPolicy(sinkDataCodec)
+{
+}
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

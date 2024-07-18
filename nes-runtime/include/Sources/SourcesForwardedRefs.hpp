@@ -15,7 +15,8 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_
 
 #include <memory>
-namespace NES {
+namespace NES
+{
 
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
@@ -29,15 +30,17 @@ using MetricGroupPtr = std::shared_ptr<MetricGroup>;
 class MetricCatalog;
 using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
 
-namespace Runtime {
+namespace Runtime
+{
 
 class TupleBuffer;
 
-namespace detail {
+namespace detail
+{
 class MemorySegment;
-}// namespace detail
-}// namespace Runtime
+} // namespace detail
+} // namespace Runtime
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_

@@ -15,15 +15,16 @@
 #ifndef NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGPERRUN_HPP_
 #define NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGPERRUN_HPP_
 
+#include <vector>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <vector>
 
-namespace NES::Benchmark {
+namespace NES::Benchmark
+{
 
-class E2EBenchmarkConfigPerRun {
-
-  public:
+class E2EBenchmarkConfigPerRun
+{
+public:
     /**
      * @brief creates a E2EBenchmarkConfigPerRun object and sets the default values
      */
@@ -67,6 +68,6 @@ class E2EBenchmarkConfigPerRun {
     Configurations::IntConfigOption numberOfPartitions;
     Configurations::LongConfigOption maxHashTableSize;
 };
-}// namespace NES::Benchmark
+} // namespace NES::Benchmark
 
-#endif// NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGPERRUN_HPP_
+#endif // NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGPERRUN_HPP_

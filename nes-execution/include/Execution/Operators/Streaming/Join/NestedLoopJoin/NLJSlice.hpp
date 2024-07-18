@@ -15,15 +15,16 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_
 
-#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <cstdint>
 #include <mutex>
 #include <ostream>
 #include <span>
 #include <vector>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
 using StreamSlicePtr = std::shared_ptr<StreamSlice>;
 
@@ -31,8 +32,9 @@ using StreamSlicePtr = std::shared_ptr<StreamSlice>;
  * @brief This class represents a single slice for the nested loop join. It stores all values for the left and right stream.
  * Later on this class can be reused for a slice.
  */
-class NLJSlice : public StreamSlice {
-  public:
+class NLJSlice : public StreamSlice
+{
+public:
     /**
      * @brief Constructor for creating a slice
      * @param sliceStart: Start timestamp of this slice
@@ -44,14 +46,15 @@ class NLJSlice : public StreamSlice {
      * @param leftPageSize: Size of a single page for the left paged vectors
      * @param rightPageSize: Size of a singe page for the right paged vectors
      */
-    explicit NLJSlice(uint64_t sliceStart,
-                      uint64_t sliceEnd,
-                      uint64_t numWorkerThreads,
-                      BufferManagerPtr& bufferManager,
-                      SchemaPtr& leftSchema,
-                      uint64_t leftPageSize,
-                      SchemaPtr& rightSchema,
-                      uint64_t rightPageSize);
+    explicit NLJSlice(
+        uint64_t sliceStart,
+        uint64_t sliceEnd,
+        uint64_t numWorkerThreads,
+        BufferManagerPtr& bufferManager,
+        SchemaPtr& leftSchema,
+        uint64_t leftPageSize,
+        SchemaPtr& rightSchema,
+        uint64_t rightPageSize);
 
     ~NLJSlice() override = default;
 
@@ -123,17 +126,18 @@ class NLJSlice : public StreamSlice {
      * @param rightPageSize: Size of a singe page for the right paged vectors
      * @param buffers List of tuple buffers to recreate the state of slice
      */
-    static StreamSlicePtr deserialize(BufferManagerPtr& bufferManager,
-                                      SchemaPtr& leftSchema,
-                                      uint64_t leftPageSize,
-                                      SchemaPtr& rightSchema,
-                                      uint64_t rightPageSize,
-                                      std::span<const Runtime::TupleBuffer> buffers);
+    static StreamSlicePtr deserialize(
+        BufferManagerPtr& bufferManager,
+        SchemaPtr& leftSchema,
+        uint64_t leftPageSize,
+        SchemaPtr& rightSchema,
+        uint64_t rightPageSize,
+        std::span<const Runtime::TupleBuffer> buffers);
 
-  private:
+private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> rightPagedVectors;
 };
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_

@@ -14,20 +14,22 @@
 #ifndef NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
 #define NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <exception>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
 /**
  * @brief This is the base class for exceptions thrown during the execution of coordinator side requests which
  * indicate an error that possibly require a rollback or other kinds of specific error handling
  */
-class RequestExecutionException : public std::enable_shared_from_this<RequestExecutionException>, public std::runtime_error {
-  public:
+class RequestExecutionException : public std::enable_shared_from_this<RequestExecutionException>, public std::runtime_error
+{
+public:
     explicit RequestExecutionException(const std::string& message);
     explicit RequestExecutionException(QueryId queryId, const std::string& message);
 
@@ -36,12 +38,14 @@ class RequestExecutionException : public std::enable_shared_from_this<RequestExe
      * @tparam ExceptionType: a subclass ob RequestExecutionException
      * @return bool true if object is of type ExceptionType
      */
-    template<class ExceptionType>
-    bool instanceOf() {
-        if (dynamic_cast<ExceptionType*>(this)) {
-            return true;
+    template <class ExceptionType>
+    bool instanceOf()
+    {
+        if (!dynamic_cast<ExceptionType*>(this))
+        {
+            return false;
         }
-        return false;
+        return true;
     };
 
     /**
@@ -49,9 +53,11 @@ class RequestExecutionException : public std::enable_shared_from_this<RequestExe
     * @tparam ExceptionType: a subclass ob RequestExecutionException
     * @return returns a shared pointer of the given type
     */
-    template<class ExceptionType>
-    std::shared_ptr<ExceptionType> as() {
-        if (instanceOf<ExceptionType>()) {
+    template <class ExceptionType>
+    std::shared_ptr<ExceptionType> as()
+    {
+        if (instanceOf<ExceptionType>())
+        {
             return std::dynamic_pointer_cast<ExceptionType>(this->shared_from_this());
         }
         throw std::logic_error("Exception:: we performed an invalid cast of exception");
@@ -59,9 +65,9 @@ class RequestExecutionException : public std::enable_shared_from_this<RequestExe
 
     QueryId getQueryId() const;
 
-  private:
+private:
     QueryId queryId;
 };
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions
 
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_

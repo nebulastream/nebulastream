@@ -16,13 +16,15 @@
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_WORKLOADCHARACTERISTIC_HPP_
 #include <Identifiers/Identifiers.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Represents a workload characteristic that results in collecting statistics for an operator in a query
  */
-class WorkloadCharacteristic : public Characteristic {
-  public:
+class WorkloadCharacteristic : public Characteristic
+{
+public:
     /**
      * @brief Creates a WorkloadCharacteristic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
@@ -63,7 +65,7 @@ class WorkloadCharacteristic : public Characteristic {
      */
     std::string toString() const override;
 
-  private:
+private:
     /**
      * @brief Creates a WorkloadCharacteristic
      * @param type
@@ -75,6 +77,6 @@ class WorkloadCharacteristic : public Characteristic {
     QueryId queryId;
     OperatorId operatorId;
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_WORKLOADCHARACTERISTIC_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_WORKLOADCHARACTERISTIC_HPP_

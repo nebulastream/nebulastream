@@ -22,83 +22,87 @@
 #include <Util/QueryState.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-PlacementAmendmentInstancePtr
-PlacementAmendmentInstance::create(SharedQueryPlanPtr sharedQueryPlan,
-                                   Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                   TopologyPtr topology,
-                                   Optimizer::TypeInferencePhasePtr typeInferencePhase,
-                                   Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                   Catalogs::Query::QueryCatalogPtr queryCatalog) {
-    return std::make_unique<PlacementAmendmentInstance>(sharedQueryPlan,
-                                                        globalExecutionPlan,
-                                                        topology,
-                                                        typeInferencePhase,
-                                                        coordinatorConfiguration,
-                                                        queryCatalog);
+PlacementAmendmentInstancePtr PlacementAmendmentInstance::create(
+    SharedQueryPlanPtr sharedQueryPlan,
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+    TopologyPtr topology,
+    Optimizer::TypeInferencePhasePtr typeInferencePhase,
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+    Catalogs::Query::QueryCatalogPtr queryCatalog)
+{
+    return std::make_unique<PlacementAmendmentInstance>(
+        sharedQueryPlan, globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration, queryCatalog);
 }
 
-PlacementAmendmentInstance::PlacementAmendmentInstance(SharedQueryPlanPtr sharedQueryPlan,
-                                                       GlobalExecutionPlanPtr globalExecutionPlan,
-                                                       TopologyPtr topology,
-                                                       TypeInferencePhasePtr typeInferencePhase,
-                                                       Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                                       Catalogs::Query::QueryCatalogPtr queryCatalog)
-    : sharedQueryPlan(sharedQueryPlan), globalExecutionPlan(globalExecutionPlan), topology(topology),
-      typeInferencePhase(typeInferencePhase), coordinatorConfiguration(coordinatorConfiguration), queryCatalog(queryCatalog){};
+PlacementAmendmentInstance::PlacementAmendmentInstance(
+    SharedQueryPlanPtr sharedQueryPlan,
+    GlobalExecutionPlanPtr globalExecutionPlan,
+    TopologyPtr topology,
+    TypeInferencePhasePtr typeInferencePhase,
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+    Catalogs::Query::QueryCatalogPtr queryCatalog)
+    : sharedQueryPlan(sharedQueryPlan)
+    , globalExecutionPlan(globalExecutionPlan)
+    , topology(topology)
+    , typeInferencePhase(typeInferencePhase)
+    , coordinatorConfiguration(coordinatorConfiguration)
+    , queryCatalog(queryCatalog){};
 
-void PlacementAmendmentInstance::execute() {
-    auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                        topology,
-                                                                                        typeInferencePhase,
-                                                                                        coordinatorConfiguration);
+void PlacementAmendmentInstance::execute()
+{
+    auto queryPlacementAmendmentPhase
+        = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
 
     auto sharedQueryId = sharedQueryPlan->getId();
     auto deploymentContexts = queryPlacementAmendmentPhase->execute(sharedQueryPlan);
 
     // Iterate over deployment context and update execution plan
-    for (const auto& deploymentContext : deploymentContexts) {
+    for (const auto& deploymentContext : deploymentContexts)
+    {
         auto workerId = deploymentContext->getWorkerId();
         auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
         auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
         auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-        switch (decomposedQueryPlanState) {
+        switch (decomposedQueryPlanState)
+        {
             case QueryState::MARKED_FOR_REDEPLOYMENT:
             case QueryState::MARKED_FOR_DEPLOYMENT: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
-                                                                    sharedQueryId,
-                                                                    decomposedQueryPlanId,
-                                                                    decomposedQueryPlanVersion,
-                                                                    QueryState::RUNNING);
+                globalExecutionPlan->updateDecomposedQueryPlanState(
+                    workerId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion, QueryState::RUNNING);
                 break;
             }
             case QueryState::MARKED_FOR_MIGRATION: {
-                globalExecutionPlan->updateDecomposedQueryPlanState(workerId,
-                                                                    sharedQueryId,
-                                                                    decomposedQueryPlanId,
-                                                                    decomposedQueryPlanVersion,
-                                                                    QueryState::STOPPED);
-                globalExecutionPlan->removeDecomposedQueryPlan(workerId,
-                                                               sharedQueryId,
-                                                               decomposedQueryPlanId,
-                                                               decomposedQueryPlanVersion);
+                globalExecutionPlan->updateDecomposedQueryPlanState(
+                    workerId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion, QueryState::STOPPED);
+                globalExecutionPlan->removeDecomposedQueryPlan(workerId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion);
                 break;
             }
-            default: NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
+            default:
+                NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
         }
     }
-    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::PROCESSED) {
+    if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::PROCESSED)
+    {
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
         queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::RUNNING, "");
-    } else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::PARTIALLY_PROCESSED) {
+    }
+    else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::PARTIALLY_PROCESSED)
+    {
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::UPDATED);
-    } else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::STOPPED) {
+    }
+    else if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::STOPPED)
+    {
         queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::STOPPED, "");
     }
     //Mark as completed
     completionPromise.set_value(true);
 }
 
-std::future<bool> PlacementAmendmentInstance::getFuture() { return completionPromise.get_future(); }
-}// namespace NES::Optimizer
+std::future<bool> PlacementAmendmentInstance::getFuture()
+{
+    return completionPromise.get_future();
+}
+} // namespace NES::Optimizer

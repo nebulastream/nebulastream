@@ -15,20 +15,22 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
 
+#include <string>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/IR/MLIRContext.h>
 #include <mlir/IR/OwningOpRef.h>
-#include <string>
 
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
 /**
  * @brief Provides utility functions for the MLIR backend.
  */
-class MLIRUtility {
-  public:
+class MLIRUtility
+{
+public:
     MLIRUtility();
     ~MLIRUtility();
 
@@ -55,5 +57,5 @@ class MLIRUtility {
     static std::unique_ptr<mlir::ExecutionEngine> compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir);
 };
 
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_

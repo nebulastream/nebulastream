@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
@@ -34,19 +34,22 @@
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-#include <string>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace NES::API;
 using namespace NES::Windowing;
 
-namespace NES {
+namespace NES
+{
 
-class QueryRewritePhaseTest : public Testing::BaseUnitTest {
-  public:
+class QueryRewritePhaseTest : public Testing::BaseUnitTest
+{
+public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("QueryRewritePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryRewritePhaseTest test class.");
     }
@@ -55,7 +58,8 @@ class QueryRewritePhaseTest : public Testing::BaseUnitTest {
 /**
  * @brief In this test we try to apply rewrite phase to filter dominated query.
  */
-TEST_F(QueryRewritePhaseTest, applyRewritePhaseToFilterDominatedQuery) {
+TEST_F(QueryRewritePhaseTest, applyRewritePhaseToFilterDominatedQuery)
+{
     auto inputSchema = NES::Schema::create()
                            ->addField("m", BasicType::UINT64)
                            ->addField("n", BasicType::UINT64)
@@ -94,8 +98,9 @@ TEST_F(QueryRewritePhaseTest, applyRewritePhaseToFilterDominatedQuery) {
     EXPECT_EQ(filters.size(), 1);
 
     auto actualFilter = filters[0];
-    auto expectedPredicate = (10 * Attribute("m") < 33 && Attribute("n") <= 57 && Attribute("m") <= 84
-                              && Attribute("r") > Attribute("q") && Attribute("m") > Attribute("m") - 4);
+    auto expectedPredicate
+        = (10 * Attribute("m") < 33 && Attribute("n") <= 57 && Attribute("m") <= 84 && Attribute("r") > Attribute("q")
+           && Attribute("m") > Attribute("m") - 4);
     inputSchema->updateSourceName(sourceName);
     expectedPredicate->inferStamp(inputSchema);
     EXPECT_EQ(actualFilter->getPredicate()->toString(), expectedPredicate->toString());
@@ -104,8 +109,8 @@ TEST_F(QueryRewritePhaseTest, applyRewritePhaseToFilterDominatedQuery) {
 /**
  * @brief In this test we try to apply rewrite phase to same query multiple time.
  */
-TEST_F(QueryRewritePhaseTest, applyRewritePhaseToSameQueryMultipleTime) {
-
+TEST_F(QueryRewritePhaseTest, applyRewritePhaseToSameQueryMultipleTime)
+{
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto cordConfig = Configurations::CoordinatorConfiguration::createDefault();
@@ -145,8 +150,9 @@ TEST_F(QueryRewritePhaseTest, applyRewritePhaseToSameQueryMultipleTime) {
     auto filters = resultPlan->getOperatorByType<LogicalFilterOperator>();
     EXPECT_EQ(filters.size(), 1);
     auto actualFilter = filters[0];
-    auto expectedPredicate = (10 * Attribute("m") < 33 && Attribute("n") <= 57 && Attribute("m") <= 84
-                              && Attribute("r") > Attribute("q") && Attribute("m") > Attribute("m") - 4);
+    auto expectedPredicate
+        = (10 * Attribute("m") < 33 && Attribute("n") <= 57 && Attribute("m") <= 84 && Attribute("r") > Attribute("q")
+           && Attribute("m") > Attribute("m") - 4);
     inputSchema->updateSourceName(sourceName);
     expectedPredicate->inferStamp(inputSchema);
     EXPECT_EQ(actualFilter->getPredicate()->toString(), expectedPredicate->toString());
@@ -162,4 +168,4 @@ TEST_F(QueryRewritePhaseTest, applyRewritePhaseToSameQueryMultipleTime) {
     EXPECT_EQ(actualFilter->getPredicate()->toString(), expectedPredicate->toString());
 }
 
-}// namespace NES
+} // namespace NES

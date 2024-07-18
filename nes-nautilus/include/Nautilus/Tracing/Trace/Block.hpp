@@ -13,21 +13,27 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_
-#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
 #include <cinttypes>
 #include <ostream>
 #include <vector>
-namespace NES::Nautilus::Tracing {
+#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
+namespace NES::Nautilus::Tracing
+{
 
 /**
  * @brief Represents a basic block in a trace
  */
-class Block {
-  public:
+class Block
+{
+public:
     /**
      * @brief Indicates if this is a control flow merge block -> such blocks could be loop headers.
      */
-    enum class Type : uint8_t { Default, ControlFlowMerge };
+    enum class Type : uint8_t
+    {
+        Default,
+        ControlFlowMerge
+    };
 
     /**
      * @brief creates a new block with a specific block id.
@@ -74,6 +80,6 @@ class Block {
     std::vector<uint32_t> predecessors;
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_

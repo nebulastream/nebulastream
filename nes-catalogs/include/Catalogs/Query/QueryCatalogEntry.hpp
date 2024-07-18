@@ -15,17 +15,18 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
-#include <Util/QueryState.hpp>
-#include <Util/QueryStateHistory.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <string>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
+#include <Util/QueryState.hpp>
+#include <Util/QueryStateHistory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -33,7 +34,8 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class DecomposedQueryPlanMetaData;
 using DecomposedQueryPlanMetaDataPtr = std::shared_ptr<DecomposedQueryPlanMetaData>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 
 /**
  * @brief class to handle the entry in the query catalog
@@ -43,13 +45,15 @@ namespace Catalogs::Query {
  * @param schema: the schema of this query
  * @param running: bool indicating if the query is running (has been deployed)
  */
-class QueryCatalogEntry {
-  public:
-    explicit QueryCatalogEntry(QueryId queryId,
-                               std::string queryString,
-                               Optimizer::PlacementStrategy queryPlacementStrategy,
-                               QueryPlanPtr inputQueryPlan,
-                               QueryState queryStatus);
+class QueryCatalogEntry
+{
+public:
+    explicit QueryCatalogEntry(
+        QueryId queryId,
+        std::string queryString,
+        Optimizer::PlacementStrategy queryPlacementStrategy,
+        QueryPlanPtr inputQueryPlan,
+        QueryState queryStatus);
 
     /**
      * @brief method to get the id of the query
@@ -139,7 +143,7 @@ class QueryCatalogEntry {
      */
     void setSharedQueryId(SharedQueryId sharedQueryId);
 
-  private:
+private:
     QueryId queryId;
     SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
     std::string queryString;
@@ -152,7 +156,7 @@ class QueryCatalogEntry {
     QueryStateHistory history;
 };
 using QueryCatalogEntryPtr = std::shared_ptr<QueryCatalogEntry>;
-}// namespace Catalogs::Query
-}// namespace NES
+} // namespace Catalogs::Query
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_QUERY_QUERYCATALOGENTRY_HPP_

@@ -6,11 +6,14 @@
 
 #include <antlr4-runtime.h>
 
-namespace NES::Parsers {
+namespace NES::Parsers
+{
 
-class NesCEPLexer : public antlr4::Lexer {
-  public:
-    enum {
+class NesCEPLexer : public antlr4::Lexer
+{
+public:
+    enum
+    {
         T__0 = 1,
         T__1 = 2,
         T__2 = 3,
@@ -97,13 +100,13 @@ class NesCEPLexer : public antlr4::Lexer {
 
     virtual const std::vector<std::string>& getChannelNames() const override;
     virtual const std::vector<std::string>& getModeNames() const override;
-    virtual const std::vector<std::string>& getTokenNames() const override;// deprecated, use vocabulary instead
+    virtual const std::vector<std::string>& getTokenNames() const override; // deprecated, use vocabulary instead
     virtual antlr4::dfa::Vocabulary& getVocabulary() const override;
 
     virtual const std::vector<uint16_t> getSerializedATN() const override;
     virtual const antlr4::atn::ATN& getATN() const override;
 
-  private:
+private:
     static std::vector<antlr4::dfa::DFA> _decisionToDFA;
     static antlr4::atn::PredictionContextCache _sharedContextCache;
     static std::vector<std::string> _ruleNames;
@@ -121,11 +124,12 @@ class NesCEPLexer : public antlr4::Lexer {
 
     // Individual semantic predicate functions triggered by sempred() above.
 
-    struct Initializer {
+    struct Initializer
+    {
         Initializer();
     };
     static Initializer _init;
 };
 
-}// namespace NES::Parsers
-#endif// NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_
+} // namespace NES::Parsers
+#endif // NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLEXER_H_

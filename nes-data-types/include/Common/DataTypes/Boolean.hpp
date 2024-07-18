@@ -16,13 +16,15 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_BOOLEAN_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The boolean type can have two states: true, and false.
  */
-class Boolean final : public DataType {
-  public:
+class Boolean final : public DataType
+{
+public:
     ~Boolean() override = default;
 
     /**
@@ -52,5 +54,5 @@ class Boolean final : public DataType {
     std::string toString() override;
 };
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_BOOLEAN_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_BOOLEAN_HPP_

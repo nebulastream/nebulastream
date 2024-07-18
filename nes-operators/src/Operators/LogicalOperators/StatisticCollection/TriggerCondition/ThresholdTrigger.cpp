@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/ThresholdTrigger.hpp>
 #include <string>
+#include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/ThresholdTrigger.hpp>
 
-namespace NES::Statistic {
-template<typename T>
-std::string ThresholdTrigger<T>::toString() const {
+namespace NES::Statistic
+{
+template <typename T>
+std::string ThresholdTrigger<T>::toString() const
+{
     return "ThresholdTrigger(" << threshold << ")";
 }
-}// namespace NES::Statistic
+} // namespace NES::Statistic

@@ -15,12 +15,14 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
 
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <vector>
+#include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
-class StoreOperation : public Operation {
-  public:
+namespace NES::Nautilus::IR::Operations
+{
+class StoreOperation : public Operation
+{
+public:
     explicit StoreOperation(OperationPtr value, OperationPtr address);
     ~StoreOperation() override = default;
 
@@ -29,9 +31,9 @@ class StoreOperation : public Operation {
 
     std::string toString() override;
 
-  private:
+private:
     OperationWPtr value;
     OperationWPtr address;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_STOREOPERATION_HPP_

@@ -14,23 +14,25 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_MERGINGHASHTABLE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_MERGINGHASHTABLE_HPP_
 
+#include <atomic>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Runtime/BloomFilter.hpp>
-#include <atomic>
 #include <folly/Synchronized.h>
-#include <vector>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class represents a hash map that is thread safe. It consists of multiple buckets each
  * consisting of a linked list of FixedPages
  */
-class MergingHashTable {
-  public:
+class MergingHashTable
+{
+public:
     /**
      * @brief Constructor for a hash table that supports insertion simultaneously  of multiple threads
      * @param numBuckets
@@ -82,10 +84,10 @@ class MergingHashTable {
      */
     std::string getContentAsString(SchemaPtr schema) const;
 
-  private:
+private:
     std::vector<folly::Synchronized<std::vector<Nautilus::Interface::FixedPagePtr>>> bucketHeads;
     std::vector<std::atomic<size_t>> bucketNumItems;
     std::vector<std::atomic<size_t>> bucketNumPages;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_MERGINGHASHTABLE_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_MERGINGHASHTABLE_HPP_

@@ -18,10 +18,11 @@
 #include <random>
 
 // Inspired by https://github.com/brianfrankcooper/YCSB/blob/master/core/src/main/java/site/ycsb/generator/ZipfianGenerator.java
-class ZipfianGenerator {
+class ZipfianGenerator
+{
     static constexpr auto DEFAULT_ZIPFIAN_GENERATOR = .99;
 
-  public:
+public:
     /**
      * @brief Constructs a ZipfianGenerator
      * @param min
@@ -29,9 +30,12 @@ class ZipfianGenerator {
      * @param zipfianFactor
      */
     explicit ZipfianGenerator(uint64_t min, uint64_t max, double zipfianFactor = DEFAULT_ZIPFIAN_GENERATOR)
-        : ZipfianGenerator(min, max, zipfianFactor, computeZeta(0, max - min + 1, zipfianFactor, 0)) {}
+        : ZipfianGenerator(min, max, zipfianFactor, computeZeta(0, max - min + 1, zipfianFactor, 0))
+    {
+    }
 
-    explicit ZipfianGenerator(uint64_t min, uint64_t max, double zipfianConstant, double zetan_) : dist(0.0, 1.0) {
+    explicit ZipfianGenerator(uint64_t min, uint64_t max, double zipfianConstant, double zetan_) : dist(0.0, 1.0)
+    {
         numItems = max - min + 1;
         this->min = min;
         this->zipfianConstant = zipfianConstant;
@@ -57,8 +61,10 @@ class ZipfianGenerator {
      * @param rng
      * @return random value
      */
-    uint64_t operator()(std::mt19937& rng, uint64_t newItemCount) {
-        if (newItemCount > countForZeta) {
+    uint64_t operator()(std::mt19937& rng, uint64_t newItemCount)
+    {
+        if (newItemCount > countForZeta)
+        {
             // we have added more items. can compute zetan incrementally, which is cheaper
             numItems = newItemCount;
             zetan = zeta(countForZeta, numItems, theta, zetan);
@@ -66,19 +72,21 @@ class ZipfianGenerator {
         }
         double u = dist(rng);
         double uz = u * zetan;
-        if (uz < 1.0) {
+        if (uz < 1.0)
+        {
             return min;
         }
 
-        if (uz < 1.0 + std::pow(0.5, theta)) {
+        if (uz < 1.0 + std::pow(0.5, theta))
+        {
             return min + 1;
         }
 
-        uint64_t ret = min + (long) ((numItems) *std::pow(eta * u - eta + 1, alpha));
+        uint64_t ret = min + (long)((numItems)*std::pow(eta * u - eta + 1, alpha));
         return ret;
     }
 
-  private:
+private:
     /**
      * @brief this function calculates the zeta constant needed for the distribution
      * @param st
@@ -87,7 +95,8 @@ class ZipfianGenerator {
      * @param initialSum
      * @return newly computed zeta constant
      */
-    double zeta(uint64_t st, uint64_t n, double thetaVal, double initialSum) {
+    double zeta(uint64_t st, uint64_t n, double thetaVal, double initialSum)
+    {
         countForZeta = n;
         return computeZeta(st, n, thetaVal, initialSum);
     }
@@ -100,15 +109,17 @@ class ZipfianGenerator {
      * @param initialSum
      * @return newly computed zeta function
      */
-    static double computeZeta(uint64_t st, uint64_t n, double theta, double initialSum) {
+    static double computeZeta(uint64_t st, uint64_t n, double theta, double initialSum)
+    {
         double sum = initialSum;
-        for (auto i = st; i < n; i++) {
+        for (auto i = st; i < n; i++)
+        {
             sum += 1 / (std::pow(i + 1, theta));
         }
         return sum;
     }
 
-  private:
+private:
     uint64_t numItems;
     uint64_t min;
     double zipfianConstant;
@@ -116,4 +127,4 @@ class ZipfianGenerator {
     uint64_t countForZeta;
     std::uniform_real_distribution<double> dist;
 };
-#endif// NES_BENCHMARK_INCLUDE_UTIL_ZIPFIANGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_UTIL_ZIPFIANGENERATOR_HPP_

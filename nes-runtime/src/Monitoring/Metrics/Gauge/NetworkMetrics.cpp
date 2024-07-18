@@ -14,7 +14,6 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/FixedChar.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp>
 #include <Monitoring/Metrics/Gauge/NetworkMetrics.hpp>
@@ -23,15 +22,36 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <nlohmann/json.hpp>
+#include <Common/DataTypes/FixedChar.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 NetworkMetrics::NetworkMetrics()
-    : nodeId(0), timestamp(0), interfaceName(0), rBytes(0), rPackets(0), rErrs(0), rDrop(0), rFifo(0), rFrame(0), rCompressed(0),
-      rMulticast(0), tBytes(0), tPackets(0), tErrs(0), tDrop(0), tFifo(0), tColls(0), tCarrier(0), tCompressed(0) {}
+    : nodeId(0)
+    , timestamp(0)
+    , interfaceName(0)
+    , rBytes(0)
+    , rPackets(0)
+    , rErrs(0)
+    , rDrop(0)
+    , rFifo(0)
+    , rFrame(0)
+    , rCompressed(0)
+    , rMulticast(0)
+    , tBytes(0)
+    , tPackets(0)
+    , tErrs(0)
+    , tDrop(0)
+    , tFifo(0)
+    , tColls(0)
+    , tCarrier(0)
+    , tCompressed(0)
+{
+}
 
-Configurations::SchemaTypePtr NetworkMetrics::getSchemaType(const std::string& prefix) {
-
+Configurations::SchemaTypePtr NetworkMetrics::getSchemaType(const std::string& prefix)
+{
     std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
     const char* length = "0";
     const char* dataType = "UINT64";
@@ -57,13 +77,18 @@ Configurations::SchemaTypePtr NetworkMetrics::getSchemaType(const std::string& p
     return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
-SchemaPtr NetworkMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
+SchemaPtr NetworkMetrics::getSchema(const std::string& prefix)
+{
+    return Schema::createFromSchemaType(getSchemaType(prefix));
+}
 
-void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
+void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const
+{
     auto totalSize = NetworkMetrics::getSchema("")->getSchemaSizeInBytes();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "NetworkMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+    NES_ASSERT(
+        totalSize <= buf.getBufferSize(),
+        "NetworkMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+            + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     auto layout = Runtime::MemoryLayouts::RowLayout::create(NetworkMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
@@ -94,7 +119,8 @@ void NetworkMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(NetworkMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
@@ -122,7 +148,8 @@ void NetworkMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInd
     tCompressed = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
-nlohmann::json NetworkMetrics::toJson() const {
+nlohmann::json NetworkMetrics::toJson() const
+{
     nlohmann::json metricsJson{};
 
     metricsJson["NODE_ID"] = nodeId;
@@ -149,23 +176,32 @@ nlohmann::json NetworkMetrics::toJson() const {
     return metricsJson;
 }
 
-bool NetworkMetrics::operator==(const NetworkMetrics& rhs) const {
+bool NetworkMetrics::operator==(const NetworkMetrics& rhs) const
+{
     return nodeId == rhs.nodeId && timestamp == rhs.timestamp && interfaceName == rhs.interfaceName && rBytes == rhs.rBytes
         && rPackets == rhs.rPackets && rErrs == rhs.rErrs && rDrop == rhs.rDrop && rFifo == rhs.rFifo && rFrame == rhs.rFrame
         && rCompressed == rhs.rCompressed && rMulticast == rhs.rMulticast && tBytes == rhs.tBytes && tPackets == rhs.tPackets
         && tErrs == rhs.tErrs && tDrop == rhs.tDrop && tFifo == rhs.tFifo && tColls == rhs.tColls && tCarrier == rhs.tCarrier
         && tCompressed == rhs.tCompressed;
 }
-bool NetworkMetrics::operator!=(const NetworkMetrics& rhs) const { return !(rhs == *this); }
+bool NetworkMetrics::operator!=(const NetworkMetrics& rhs) const
+{
+    return !(rhs == *this);
+}
 
-void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void writeToBuffer(const NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+{
     metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+{
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-nlohmann::json asJson(const NetworkMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const NetworkMetrics& metrics)
+{
+    return metrics.toJson();
+}
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

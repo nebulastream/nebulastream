@@ -16,13 +16,15 @@
 
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Boolean data type.
  */
-class Boolean : public TraceableType {
-  public:
+class Boolean : public TraceableType
+{
+public:
     using RawType = bool;
     static const inline auto type = TypeIdentifier::create<Boolean>();
 
@@ -34,14 +36,14 @@ class Boolean : public TraceableType {
 
     bool getValue() const;
 
-    ~Boolean() {}
+    ~Boolean() { }
     Nautilus::IR::Types::StampPtr getType() const override;
     std::string toString() override;
 
-  private:
+private:
     const bool value;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BOOLEAN_HPP_

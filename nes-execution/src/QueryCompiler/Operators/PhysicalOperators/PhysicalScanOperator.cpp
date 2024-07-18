@@ -11,23 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <sstream>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 PhysicalScanOperator::PhysicalScanOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, outputSchema, outputSchema) {}
+    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, outputSchema, outputSchema)
+{
+}
 
-PhysicalOperatorPtr PhysicalScanOperator::create(StatisticId statisticId, SchemaPtr outputSchema) {
+PhysicalOperatorPtr PhysicalScanOperator::create(StatisticId statisticId, SchemaPtr outputSchema)
+{
     return create(getNextOperatorId(), statisticId, std::move(outputSchema));
 }
-PhysicalOperatorPtr PhysicalScanOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema) {
+PhysicalOperatorPtr PhysicalScanOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema)
+{
     return std::make_shared<PhysicalScanOperator>(id, statisticId, outputSchema);
 }
 
-std::string PhysicalScanOperator::toString() const {
+std::string PhysicalScanOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalScanOperator:\n";
@@ -35,10 +41,11 @@ std::string PhysicalScanOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalScanOperator::copy() {
+OperatorPtr PhysicalScanOperator::copy()
+{
     auto result = create(id, statisticId, outputSchema);
     result->addAllProperties(properties);
     return result;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

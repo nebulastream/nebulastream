@@ -19,36 +19,42 @@
 #include <Optimizer/QueryPlacementAddition/BasePlacementAdditionStrategy.hpp>
 #include <z3++.h>
 
-namespace z3 {
+namespace z3
+{
 class expr;
 class model;
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES::Catalogs::Source {
+namespace NES::Catalogs::Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace NES::Catalogs::Source
+} // namespace NES::Catalogs::Source
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 /**
  * @brief This class implements Integer Linear Programming strategy to perform the operator placement
  */
-class ILPStrategy : public BasePlacementAdditionStrategy {
-  public:
+class ILPStrategy : public BasePlacementAdditionStrategy
+{
+public:
     ~ILPStrategy() override = default;
 
-    static BasePlacementStrategyPtr create(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                           const TopologyPtr& topology,
-                                           const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmendmentMode placementAmendmentMode);
+    static BasePlacementStrategyPtr create(
+        const GlobalExecutionPlanPtr& globalExecutionPlan,
+        const TopologyPtr& topology,
+        const TypeInferencePhasePtr& typeInferencePhase,
+        PlacementAmendmentMode placementAmendmentMode);
 
-    PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                                      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
+    PlacementAdditionResult updateGlobalExecutionPlan(
+        SharedQueryId sharedQueryId,
+        const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+        DecomposedQueryPlanVersion querySubPlanVersion) override;
 
     /**
      * @brief set the relative weight for the overutilization cost to be used when computing weighted sum in the final cost
@@ -74,7 +80,7 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      */
     double getNetworkCostWeight() const;
 
-  private:
+private:
     // default weights for over utilization and network cost
     double overUtilizationCostWeight = 1.0;
     double networkCostWeight = 1.0;
@@ -84,11 +90,12 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
     std::map<OperatorId, LogicalOperatorPtr> operatorMap;
     const char* const KEY_SEPARATOR = ",";
 
-    explicit ILPStrategy(const GlobalExecutionPlanPtr& globalExecutionPlan,
-                         const TopologyPtr& topology,
-                         const TypeInferencePhasePtr& typeInferencePhase,
-                         const z3::ContextPtr& z3Context,
-                         PlacementAmendmentMode placementAmendmentMode);
+    explicit ILPStrategy(
+        const GlobalExecutionPlanPtr& globalExecutionPlan,
+        const TopologyPtr& topology,
+        const TypeInferencePhasePtr& typeInferencePhase,
+        const z3::ContextPtr& z3Context,
+        PlacementAmendmentMode placementAmendmentMode);
     /**
      * @brief assigns operators to topology nodes based on ILP solution
      * @param z3Model a Z3 z3Model from the Z3 Optimize
@@ -106,14 +113,15 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
      * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
      */
-    void identifyPinningLocation(const LogicalOperatorPtr& logicalOperator,
-                                 z3::optimize& opt,
-                                 std::unordered_map<OperatorId, std::vector<WorkerId>> potentialOperatorPinningLocation,
-                                 std::map<std::string, z3::expr>& placementVariable,
-                                 const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                 std::map<OperatorId, z3::expr>& operatorDistanceMap,
-                                 std::map<WorkerId, z3::expr>& nodeUtilizationMap,
-                                 std::map<WorkerId, double>& nodeMileageMap);
+    void identifyPinningLocation(
+        const LogicalOperatorPtr& logicalOperator,
+        z3::optimize& opt,
+        std::unordered_map<OperatorId, std::vector<WorkerId>> potentialOperatorPinningLocation,
+        std::map<std::string, z3::expr>& placementVariable,
+        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+        std::map<OperatorId, z3::expr>& operatorDistanceMap,
+        std::map<WorkerId, z3::expr>& nodeUtilizationMap,
+        std::map<WorkerId, double>& nodeMileageMap);
 
     /**
      * @brief Populate the placement variables and adds constraints to the optimizer
@@ -125,13 +133,14 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      * @param nodeUtilizationMap a mapping of topology nodes and their node utilization
      * @param nodeMileageMap a mapping of topology node (represented by string id) and their distance to the root node
      */
-    void addConstraints(z3::optimize& opt,
-                        const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                        std::map<std::string, z3::expr>& placementVariable,
-                        std::map<OperatorId, z3::expr>& operatorDistanceMap,
-                        std::map<WorkerId, z3::expr>& nodeUtilizationMap,
-                        std::map<WorkerId, double>& nodeMileageMap);
+    void addConstraints(
+        z3::optimize& opt,
+        const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+        std::map<std::string, z3::expr>& placementVariable,
+        std::map<OperatorId, z3::expr>& operatorDistanceMap,
+        std::map<WorkerId, z3::expr>& nodeUtilizationMap,
+        std::map<WorkerId, double>& nodeMileageMap);
 
     /**
      * @brief computes heuristics for distance
@@ -153,6 +162,6 @@ class ILPStrategy : public BasePlacementAdditionStrategy {
      */
     void assignOperatorDefaultProperties(const LogicalOperatorPtr& operatorNode);
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ILPSTRATEGY_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ILPSTRATEGY_HPP_

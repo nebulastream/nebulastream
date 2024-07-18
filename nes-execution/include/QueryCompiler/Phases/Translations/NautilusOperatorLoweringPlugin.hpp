@@ -13,22 +13,25 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_
+#include <optional>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/PluginRegistry.hpp>
-#include <optional>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class ExecutableOperator;
 using ExecutableOperatorPtr = std::shared_ptr<ExecutableOperator>;
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Plugin interface to lower a physical operator to an nautilus implementation.
  */
-class NautilusOperatorLoweringPlugin {
-  public:
+class NautilusOperatorLoweringPlugin
+{
+public:
     NautilusOperatorLoweringPlugin() = default;
 
     /**
@@ -37,14 +40,15 @@ class NautilusOperatorLoweringPlugin {
      * @param operatorHandlers operator handlers.
      * @return
      */
-    virtual std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
-    lower(const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) = 0;
+    virtual std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr> lower(
+        const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+        std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
+        = 0;
 
     virtual ~NautilusOperatorLoweringPlugin() = default;
 };
 
 using NautilusOperatorLoweringPluginRegistry = Util::PluginRegistry<NautilusOperatorLoweringPlugin>;
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_

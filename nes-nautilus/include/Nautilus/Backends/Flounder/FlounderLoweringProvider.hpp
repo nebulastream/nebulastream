@@ -14,6 +14,7 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
 
+#include <set>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
@@ -36,22 +37,25 @@
 #include <flounder/compilation/compiler.h>
 #include <flounder/ir/instructions.h>
 #include <flounder/ir/register.h>
-#include <set>
 
-namespace flounder {
+namespace flounder
+{
 class Executable;
 }
-namespace NES::Nautilus::Backends::Flounder {
+namespace NES::Nautilus::Backends::Flounder
+{
 
-class FlounderLoweringProvider {
-  public:
+class FlounderLoweringProvider
+{
+public:
     FlounderLoweringProvider();
     std::unique_ptr<flounder::Executable> lower(std::shared_ptr<IR::IRGraph> ir, const NES::DumpHelper& helper);
 
-  private:
+private:
     using FlounderFrame = Frame<std::string, flounder::Register>;
-    class LoweringContext {
-      public:
+    class LoweringContext
+    {
+    public:
         LoweringContext(std::shared_ptr<IR::IRGraph> ir);
         std::unique_ptr<flounder::Executable> process(flounder::Compiler& compiler, const NES::DumpHelper&);
         void process(const std::shared_ptr<IR::Operations::FunctionOperation>&);
@@ -63,7 +67,7 @@ class FlounderLoweringProvider {
         flounder::Register createVreg(IR::Operations::OperationIdentifier id, IR::Types::StampPtr stamp, FlounderFrame& frame);
         flounder::VregInstruction requestVreg(flounder::Register& reg, const IR::Types::StampPtr& stamp);
 
-      private:
+    private:
         flounder::Program program;
         std::shared_ptr<IR::IRGraph> ir;
         std::set<std::string> activeBlocks;
@@ -77,24 +81,25 @@ class FlounderLoweringProvider {
         void process(const std::shared_ptr<IR::Operations::LoadOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::StoreOperation>& opt, FlounderFrame& frame);
         void process(const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, FlounderFrame& frame);
-        void processAnd(const std::shared_ptr<IR::Operations::AndOperation>& opt,
-                        FlounderFrame& frame,
-                        flounder::Label& trueCase,
-                        flounder::Label& falseCase);
-        void processOr(const std::shared_ptr<IR::Operations::OrOperation>& opt,
-                       FlounderFrame& frame,
-                       flounder::Label& trueCase,
-                       flounder::Label& falseCase);
-        void processCmp(const std::shared_ptr<IR::Operations::Operation>& opt,
-                        FlounderFrame& frame,
-                        flounder::Label& trueCase,
-                        flounder::Label& falseCase);
-        void processCmp(const std::shared_ptr<IR::Operations::CompareOperation>& opt,
-                        FlounderFrame& frame,
-                        flounder::Label& falseCase);
+        void processAnd(
+            const std::shared_ptr<IR::Operations::AndOperation>& opt,
+            FlounderFrame& frame,
+            flounder::Label& trueCase,
+            flounder::Label& falseCase);
+        void processOr(
+            const std::shared_ptr<IR::Operations::OrOperation>& opt,
+            FlounderFrame& frame,
+            flounder::Label& trueCase,
+            flounder::Label& falseCase);
+        void processCmp(
+            const std::shared_ptr<IR::Operations::Operation>& opt,
+            FlounderFrame& frame,
+            flounder::Label& trueCase,
+            flounder::Label& falseCase);
+        void processCmp(const std::shared_ptr<IR::Operations::CompareOperation>& opt, FlounderFrame& frame, flounder::Label& falseCase);
     };
 };
 
-}// namespace NES::Nautilus::Backends::Flounder
+} // namespace NES::Nautilus::Backends::Flounder
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_

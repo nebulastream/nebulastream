@@ -16,24 +16,26 @@
 
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 
-#include <Execution/Aggregation/AggregationValue.hpp>
-#include <Python.h>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <mutex>
-#include <utility>
+#    include <mutex>
+#    include <utility>
+#    include <Python.h>
+#    include <Execution/Aggregation/AggregationValue.hpp>
+#    include <Runtime/Execution/OperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
 * @brief This handler stores states of a MapPythonUDF operator during its execution.
 */
-class PythonUDFOperatorHandler : public OperatorHandler {
-  public:
-    explicit PythonUDFOperatorHandler(const std::string& function,
-                                      const std::string& functionName,
-                                      SchemaPtr inputSchema,
-                                      SchemaPtr outputSchema)
-        : function(function), functionName(functionName), inputSchema(inputSchema), outputSchema(outputSchema) {}
+class PythonUDFOperatorHandler : public OperatorHandler
+{
+public:
+    explicit PythonUDFOperatorHandler(
+        const std::string& function, const std::string& functionName, SchemaPtr inputSchema, SchemaPtr outputSchema)
+        : function(function), functionName(functionName), inputSchema(inputSchema), outputSchema(outputSchema)
+    {
+    }
 
     /**
      * @brief This method returns the udf as a string
@@ -110,21 +112,21 @@ class PythonUDFOperatorHandler : public OperatorHandler {
      */
     void finalize();
 
-    void start(PipelineExecutionContextPtr, uint32_t) override {}
-    void stop(QueryTerminationType, PipelineExecutionContextPtr) override {}
+    void start(PipelineExecutionContextPtr, uint32_t) override { }
+    void stop(QueryTerminationType, PipelineExecutionContextPtr) override { }
 
-  private:
+private:
     const std::string function;
     const std::string functionName;
     const SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
     std::string moduleName;
-    PyObject* pythonArguments;// arguments of python user defined function
+    PyObject* pythonArguments; // arguments of python user defined function
     PyObject* pythonFunction; // python function object
-    PyObject* pythonModule;   // python module object
+    PyObject* pythonModule; // python module object
     PyObject* pythonVariable; // temp python variable for setting arguments
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFOPERATORHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NAUTILUS_PYTHON_UDF_ENABLED
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFOPERATORHANDLER_HPP_

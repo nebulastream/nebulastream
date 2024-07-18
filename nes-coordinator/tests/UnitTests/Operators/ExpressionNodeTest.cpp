@@ -12,14 +12,13 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <memory>
+#include <stdint.h>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
@@ -37,20 +36,24 @@
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <memory>
-#include <stdint.h>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class ExpressionNodeTest : public Testing::BaseUnitTest {
-  public:
+class ExpressionNodeTest : public Testing::BaseUnitTest
+{
+public:
     std::shared_ptr<QueryParsingService> queryParsingService;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         auto cppCompiler = Compiler::CPPCompiler::create();
         jitCompiler = Compiler::JITCompilerBuilder().registerLanguageCompiler(cppCompiler).build();
@@ -61,14 +64,16 @@ class ExpressionNodeTest : public Testing::BaseUnitTest {
 
     static void SetUpTestCase() { setupLogging(); }
 
-  protected:
-    static void setupLogging() {
+protected:
+    static void setupLogging()
+    {
         NES::Logger::setupLogging("ExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup ExpressionNodeTest test class.");
     }
 };
 
-TEST_F(ExpressionNodeTest, predicateConstruction) {
+TEST_F(ExpressionNodeTest, predicateConstruction)
+{
     auto left = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "10"));
     ASSERT_FALSE(left->isPredicate());
     auto right = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(BasicType::INT64, "11"));
@@ -87,7 +92,8 @@ TEST_F(ExpressionNodeTest, predicateConstruction) {
     EXPECT_TRUE(andExpression->isPredicate());
 }
 
-TEST_F(ExpressionNodeTest, attributeStampInference) {
+TEST_F(ExpressionNodeTest, attributeStampInference)
+{
     auto schema = Schema::create()->addField("test$f1", BasicType::INT8);
 
     auto attribute = Attribute("f1").getExpressionNode();
@@ -106,7 +112,8 @@ TEST_F(ExpressionNodeTest, attributeStampInference) {
     ASSERT_ANY_THROW(notValidAttribute->inferStamp(schema));
 }
 
-TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
+TEST_F(ExpressionNodeTest, inferenceExpressionTest)
+{
     auto schema = Schema::create()
                       ->addField("test$f1", BasicType::INT8)
                       ->addField("test$f2", BasicType::INT64)
@@ -134,7 +141,8 @@ TEST_F(ExpressionNodeTest, inferenceExpressionTest) {
     ASSERT_ANY_THROW(incrementArray->inferStamp(schema));
 }
 
-TEST_F(ExpressionNodeTest, inferPredicateTest) {
+TEST_F(ExpressionNodeTest, inferPredicateTest)
+{
     auto schema = Schema::create()
                       ->addField("test$f1", BasicType::INT8)
                       ->addField("test$f2", BasicType::INT64)
@@ -169,7 +177,8 @@ TEST_F(ExpressionNodeTest, inferPredicateTest) {
     ASSERT_ANY_THROW(negateInteger->inferStamp(schema));
 }
 
-TEST_F(ExpressionNodeTest, inferAssertionTest) {
+TEST_F(ExpressionNodeTest, inferAssertionTest)
+{
     auto schema = Schema::create()
                       ->addField("test$f1", BasicType::INT8)
                       ->addField("test$f2", BasicType::INT64)
@@ -181,7 +190,8 @@ TEST_F(ExpressionNodeTest, inferAssertionTest) {
     EXPECT_TRUE(assertion->getField()->getStamp()->equals(DataTypeFactory::createType(BasicType::INT8)));
 }
 
-TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
+TEST_F(ExpressionNodeTest, multiplicationInferStampTest)
+{
     auto schema = Schema::create()->addField("test$left", BasicType::UINT32)->addField("test$right", BasicType::INT16);
 
     auto multiplicationNode = Attribute("left") * Attribute("right");
@@ -200,7 +210,8 @@ TEST_F(ExpressionNodeTest, multiplicationInferStampTest) {
 /**
  * @brief Test behaviour of special ModExpressionNode::inferStamp function. (integers)
  */
-TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
+TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest)
+{
     auto schema = Schema::create()->addField("test$left", BasicType::UINT32)->addField("test$right", BasicType::INT16);
 
     auto moduloNode = MOD(Attribute("left"), Attribute("right"));
@@ -217,14 +228,15 @@ TEST_F(ExpressionNodeTest, moduloIntegerInferStampTest) {
     EXPECT_EQ(
         upperBound,
         -INT16_MIN
-            - 1);// e.g. when calculating MOD(..., -128) the result will always be in range [-127, 127]. And no other INT8 divisor will yield a wider range than -128 (=INT8_MIN).
-    EXPECT_EQ(upperBound, INT16_MAX);// equivalent to above
+            - 1); // e.g. when calculating MOD(..., -128) the result will always be in range [-127, 127]. And no other INT8 divisor will yield a wider range than -128 (=INT8_MIN).
+    EXPECT_EQ(upperBound, INT16_MAX); // equivalent to above
 };
 
 /**
  * @brief Test behaviour of special ModExpressionNode::inferStamp function. (float)
  */
-TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
+TEST_F(ExpressionNodeTest, moduloFloatInferStampTest)
+{
     auto schema = Schema::create()->addField("test$left", BasicType::UINT32)->addField("test$right", BasicType::FLOAT32);
 
     auto moduloNode = MOD(Attribute("left"), Attribute("right"));
@@ -237,14 +249,15 @@ TEST_F(ExpressionNodeTest, moduloFloatInferStampTest) {
     int64_t upperBound = floatStamp->upperBound;
     NES_INFO("{}", upperBound);
     EXPECT_EQ(bits, 32);
-    EXPECT_EQ(lowerBound, 0);         // == lower bound of UINT32, as it is is higher than range spanned by Float divisor
-    EXPECT_EQ(upperBound, UINT32_MAX);// == upper bound of UINT32, as it  is lower than range spanned by Float divisor
+    EXPECT_EQ(lowerBound, 0); // == lower bound of UINT32, as it is is higher than range spanned by Float divisor
+    EXPECT_EQ(upperBound, UINT32_MAX); // == upper bound of UINT32, as it  is lower than range spanned by Float divisor
 }
 
 /**
  * @brief Test behaviour of special WhenExpressionNode::inferStamp function. (float)
  */
-TEST_F(ExpressionNodeTest, whenInferStampTest) {
+TEST_F(ExpressionNodeTest, whenInferStampTest)
+{
     auto schema = Schema::create()->addField("test$bool", BasicType::BOOLEAN)->addField("test$float", BasicType::FLOAT32);
     auto whenNode = WHEN(Attribute("bool"), Attribute("float"));
     ASSERT_TRUE(whenNode->getStamp()->isUndefined());
@@ -255,7 +268,8 @@ TEST_F(ExpressionNodeTest, whenInferStampTest) {
 /**
  * @brief Test behaviour of special CaseExpressionNode::inferStamp function.
  */
-TEST_F(ExpressionNodeTest, caseInfereStampTest) {
+TEST_F(ExpressionNodeTest, caseInfereStampTest)
+{
     auto schema = Schema::create()
                       ->addField("test$bool1", BasicType::BOOLEAN)
                       ->addField("test$bool2", BasicType::BOOLEAN)
@@ -285,7 +299,8 @@ TEST_F(ExpressionNodeTest, caseInfereStampTest) {
     ASSERT_ANY_THROW(badCaseNode2->inferStamp(schema));
 }
 
-TEST_F(ExpressionNodeTest, testOrExpressionNodeEqual) {
+TEST_F(ExpressionNodeTest, testOrExpressionNodeEqual)
+{
     auto expr1 = Attribute("f1") < 10 || Attribute("f2") > 12;
     auto expr2 = expr1->copy();
     auto expr3 = Attribute("f1") < 10 || Attribute("f2") > 13;
@@ -299,7 +314,8 @@ TEST_F(ExpressionNodeTest, testOrExpressionNodeEqual) {
     ASSERT_FALSE(expr1->equal(expr4));
 }
 
-TEST_F(ExpressionNodeTest, testAndExpressionNodeEqual) {
+TEST_F(ExpressionNodeTest, testAndExpressionNodeEqual)
+{
     auto expr1 = Attribute("f1") > 10 && Attribute("f2") < 12;
     auto expr2 = expr1->copy();
     auto expr3 = Attribute("f1") > 10 && Attribute("f2") < 13;
@@ -313,7 +329,8 @@ TEST_F(ExpressionNodeTest, testAndExpressionNodeEqual) {
     ASSERT_FALSE(expr1->equal(expr4));
 }
 
-TEST_F(ExpressionNodeTest, testEqualsExpressionNodeEqual) {
+TEST_F(ExpressionNodeTest, testEqualsExpressionNodeEqual)
+{
     auto expr1 = Attribute("f1") == 10;
     auto expr2 = expr1->copy();
     auto expr3 = Attribute("f1") == 12;
@@ -327,7 +344,8 @@ TEST_F(ExpressionNodeTest, testEqualsExpressionNodeEqual) {
     ASSERT_FALSE(expr1->equal(expr4));
 }
 
-TEST_F(ExpressionNodeTest, testNegateExpressionNodeEqual) {
+TEST_F(ExpressionNodeTest, testNegateExpressionNodeEqual)
+{
     auto expr1 = Attribute("f1") != 10;
     auto expr2 = expr1->copy();
     auto expr3 = Attribute("f1") != 12;
@@ -341,7 +359,8 @@ TEST_F(ExpressionNodeTest, testNegateExpressionNodeEqual) {
     ASSERT_FALSE(expr1->equal(expr4));
 }
 
-TEST_F(ExpressionNodeTest, testLessEqualsExpressionNodeEqual) {
+TEST_F(ExpressionNodeTest, testLessEqualsExpressionNodeEqual)
+{
     auto expr1 = Attribute("f1") <= 10;
     auto expr2 = expr1->copy();
     auto expr3 = Attribute("f1") <= 12;
@@ -355,7 +374,8 @@ TEST_F(ExpressionNodeTest, testLessEqualsExpressionNodeEqual) {
     ASSERT_FALSE(expr1->equal(expr4));
 }
 
-TEST_F(ExpressionNodeTest, testLessExpressionNodeEqual) {
+TEST_F(ExpressionNodeTest, testLessExpressionNodeEqual)
+{
     auto expr1 = Attribute("f1") < 10;
     auto expr2 = expr1->copy();
     auto expr3 = Attribute("f1") < 12;
@@ -369,7 +389,8 @@ TEST_F(ExpressionNodeTest, testLessExpressionNodeEqual) {
     ASSERT_FALSE(expr1->equal(expr4));
 }
 
-TEST_F(ExpressionNodeTest, testGreaterEqualsExpressionNodeEqual) {
+TEST_F(ExpressionNodeTest, testGreaterEqualsExpressionNodeEqual)
+{
     auto expr1 = Attribute("f1") >= 10;
     auto expr2 = expr1->copy();
     auto expr3 = Attribute("f1") >= 12;
@@ -383,7 +404,8 @@ TEST_F(ExpressionNodeTest, testGreaterEqualsExpressionNodeEqual) {
     ASSERT_FALSE(expr1->equal(expr4));
 }
 
-TEST_F(ExpressionNodeTest, testGreaterExpressionNodeEqual) {
+TEST_F(ExpressionNodeTest, testGreaterExpressionNodeEqual)
+{
     auto expr1 = Attribute("f1") > 10;
     auto expr2 = expr1->copy();
     auto expr3 = Attribute("f1") > 12;
@@ -397,4 +419,4 @@ TEST_F(ExpressionNodeTest, testGreaterExpressionNodeEqual) {
     ASSERT_FALSE(expr1->equal(expr4));
 }
 
-}// namespace NES
+} // namespace NES

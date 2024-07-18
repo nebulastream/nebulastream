@@ -14,25 +14,28 @@
 #ifndef NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
 #define NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
 
+#include <concepts>
+#include <type_traits>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/Operator.hpp>
 #include <arrow/type_fwd.h>
-#include <concepts>
-#include <type_traits>
 
-namespace NES {
+namespace NES
+{
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Abstract field reader for arrow.
  * The field reader accesses a column in an RecordBatch and provides access to individual fields.
  */
-class AbstractArrowFieldReader {
-  public:
+class AbstractArrowFieldReader
+{
+public:
     AbstractArrowFieldReader(const uint64_t fieldIndex, const Record::RecordFieldIdentifier& fieldName);
     virtual Value<> getColumn(const Value<MemRef>& recordBatch) = 0;
     virtual Value<> getValue(const Value<MemRef>& column, const Value<UInt64>& index) = 0;
@@ -42,12 +45,13 @@ class AbstractArrowFieldReader {
     const Record::RecordFieldIdentifier fieldName;
 };
 
-template<typename T>
+template <typename T>
 concept HasRawValues = requires(T* t) { t->raw_values(); };
 
-template<typename ArrowType>
-class ArrowFieldReader : public AbstractArrowFieldReader {
-  public:
+template <typename ArrowType>
+class ArrowFieldReader : public AbstractArrowFieldReader
+{
+public:
     ArrowFieldReader(const uint64_t fieldIndex, const Record::RecordFieldIdentifier& fieldName);
     Value<> getColumn(const Value<MemRef>& recordBatch) override;
     Value<> getValue(const Value<MemRef>& column, const Value<UInt64>& index) override;
@@ -59,6 +63,6 @@ class ArrowFieldReader : public AbstractArrowFieldReader {
  * @return std::vector<std::shared_ptr<AbstractArrowFieldReader>>
  */
 std::vector<std::shared_ptr<AbstractArrowFieldReader>> createArrowFieldReaderFromSchema(const SchemaPtr& schema);
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_EXECUTION_OPERATORS_ARROW_ARROWFIELDREADER_HPP_

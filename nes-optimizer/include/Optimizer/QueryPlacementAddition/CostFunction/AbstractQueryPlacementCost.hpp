@@ -18,7 +18,8 @@
 #include <memory>
 #include <vector>
 
-namespace NES {
+namespace NES
+{
 
 class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
@@ -33,9 +34,11 @@ using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
  */
 using PlacementMatrix = std::vector<std::vector<bool>>;
 
-namespace Optimizer {
-class AbstractQueryPlacementCost {
-  public:
+namespace Optimizer
+{
+class AbstractQueryPlacementCost
+{
+public:
     AbstractQueryPlacementCost();
 
     /**
@@ -44,7 +47,7 @@ class AbstractQueryPlacementCost {
      */
     virtual float getCost(PlacementMatrix candidate) = 0;
 };
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTFUNCTION_ABSTRACTQUERYPLACEMENTCOST_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTFUNCTION_ABSTRACTQUERYPLACEMENTCOST_HPP_

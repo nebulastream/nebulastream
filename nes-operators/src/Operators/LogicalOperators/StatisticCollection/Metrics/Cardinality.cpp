@@ -15,14 +15,18 @@
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Cardinality.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-MetricPtr Cardinality::create(const FieldAccessExpressionNodePtr& field) {
+MetricPtr Cardinality::create(const FieldAccessExpressionNodePtr& field)
+{
     return std::make_shared<Cardinality>(Cardinality(field));
 }
 
-bool Cardinality::operator==(const StatisticMetric& rhs) const {
-    if (rhs.instanceOf<Cardinality>()) {
+bool Cardinality::operator==(const StatisticMetric& rhs) const
+{
+    if (rhs.instanceOf<Cardinality>())
+    {
         // We assume that if the field has the same name, the metric is equal
         auto rhsCardinality = dynamic_cast<const Cardinality&>(rhs);
         return field->getFieldName() == rhsCardinality.field->getFieldName();
@@ -30,7 +34,12 @@ bool Cardinality::operator==(const StatisticMetric& rhs) const {
     return false;
 }
 
-std::string Cardinality::toString() const { return "Cardinality over " + field->toString(); }
+std::string Cardinality::toString() const
+{
+    return "Cardinality over " + field->toString();
+}
 
-Cardinality::Cardinality(const FieldAccessExpressionNodePtr& field) : StatisticMetric(field) {}
-}// namespace NES::Statistic
+Cardinality::Cardinality(const FieldAccessExpressionNodePtr& field) : StatisticMetric(field)
+{
+}
+} // namespace NES::Statistic

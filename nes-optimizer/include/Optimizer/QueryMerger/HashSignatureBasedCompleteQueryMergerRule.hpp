@@ -17,7 +17,8 @@
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
@@ -64,18 +65,18 @@ using HashSignatureBasedCompleteQueryMergerRulePtr = std::shared_ptr<HashSignatu
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class HashSignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule {
-
-  public:
+class HashSignatureBasedCompleteQueryMergerRule final : public BaseQueryMergerRule
+{
+public:
     static HashSignatureBasedCompleteQueryMergerRulePtr create();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
     ~HashSignatureBasedCompleteQueryMergerRule() final = default;
 
-  private:
+private:
     SignatureEqualityUtilPtr signatureEqualityUtil{nullptr};
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_HASHSIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_HASHSIGNATUREBASEDCOMPLETEQUERYMERGERRULE_HPP_

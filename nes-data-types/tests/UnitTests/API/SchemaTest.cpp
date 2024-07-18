@@ -11,29 +11,34 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <random>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <BaseUnitTest.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <fmt/core.h>
-#include <random>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES {
-class SchemaTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES
+{
+class SchemaTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SchemaTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SchemaTest test class SetUpTestCase.");
     }
     static void TearDownTestCase() { NES_INFO("SchemaTest test class TearDownTestCase."); }
 
-    auto getRandomFields(const auto numberOfFields) {
-        auto getRandomBasicType = [](const unsigned long rndPos) {
+    auto getRandomFields(const auto numberOfFields)
+    {
+        auto getRandomBasicType = [](const unsigned long rndPos)
+        {
             const auto& values = magic_enum::enum_values<BasicType>();
             std::uniform_int_distribution<unsigned long>(0, values.size() - 1);
             return values[rndPos % values.size()];
@@ -43,7 +48,8 @@ class SchemaTest : public Testing::BaseUnitTest {
         std::mt19937 mt(RND_SEED);
 
         std::vector<AttributeFieldPtr> rndFields;
-        for (auto fieldCnt = 0_u64; fieldCnt < numberOfFields; ++fieldCnt) {
+        for (auto fieldCnt = 0_u64; fieldCnt < numberOfFields; ++fieldCnt)
+        {
             const auto fieldName = fmt::format("field{}", fieldCnt);
             const auto basicType = getRandomBasicType(mt());
             rndFields.emplace_back(AttributeField::create(fieldName, DataTypeFactory::createType(basicType)));
@@ -53,7 +59,8 @@ class SchemaTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(SchemaTest, createTest) {
+TEST_F(SchemaTest, createTest)
+{
     {
         // Checking for default values
         SchemaPtr testSchema;
@@ -79,10 +86,12 @@ TEST_F(SchemaTest, createTest) {
     }
 }
 
-TEST_F(SchemaTest, addFieldTest) {
+TEST_F(SchemaTest, addFieldTest)
+{
     {
         // Adding one field
-        for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>()) {
+        for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
+        {
             SchemaPtr testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
@@ -98,12 +107,14 @@ TEST_F(SchemaTest, addFieldTest) {
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
         auto testSchema = Schema::create();
-        for (const auto& field : rndFields) {
+        for (const auto& field : rndFields)
+        {
             ASSERT_TRUE(testSchema->addField(field));
         }
 
         ASSERT_EQ(testSchema->fields.size(), rndFields.size());
-        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt) {
+        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
+        {
             const auto& curField = rndFields[fieldCnt];
             EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
             EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
@@ -112,16 +123,19 @@ TEST_F(SchemaTest, addFieldTest) {
     }
 }
 
-TEST_F(SchemaTest, removeFieldsTest) {
+TEST_F(SchemaTest, removeFieldsTest)
+{
     constexpr auto NUM_FIELDS = 10_u64;
     auto rndFields = getRandomFields(NUM_FIELDS);
     auto testSchema = Schema::create();
-    for (const auto& field : rndFields) {
+    for (const auto& field : rndFields)
+    {
         ASSERT_TRUE(testSchema->addField(field));
     }
 
     ASSERT_EQ(testSchema->fields.size(), rndFields.size());
-    for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt) {
+    for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
+    {
         const auto& curField = rndFields[fieldCnt];
         EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
         EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
@@ -129,7 +143,8 @@ TEST_F(SchemaTest, removeFieldsTest) {
     }
 
     // Removing fields while we still have one field
-    while (testSchema->getSize() > 0) {
+    while (testSchema->getSize() > 0)
+    {
         const auto rndPos = rand() % testSchema->getSize();
         const auto& fieldToRemove = rndFields[rndPos];
         EXPECT_NO_THROW(testSchema->removeField(fieldToRemove));
@@ -139,10 +154,12 @@ TEST_F(SchemaTest, removeFieldsTest) {
     }
 }
 
-TEST_F(SchemaTest, replaceFieldTest) {
+TEST_F(SchemaTest, replaceFieldTest)
+{
     {
         // Replacing one field with a random one
-        for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>()) {
+        for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
+        {
             SchemaPtr testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
@@ -163,12 +180,14 @@ TEST_F(SchemaTest, replaceFieldTest) {
         constexpr auto NUM_FIELDS = 10_u64;
         auto rndFields = getRandomFields(NUM_FIELDS);
         auto testSchema = Schema::create();
-        for (const auto& field : rndFields) {
+        for (const auto& field : rndFields)
+        {
             ASSERT_TRUE(testSchema->addField(field));
         }
 
         ASSERT_EQ(testSchema->fields.size(), rndFields.size());
-        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt) {
+        for (auto fieldCnt = 0_u64; fieldCnt < rndFields.size(); ++fieldCnt)
+        {
             const auto& curField = rndFields[fieldCnt];
             EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
             EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
@@ -177,11 +196,13 @@ TEST_F(SchemaTest, replaceFieldTest) {
 
         // Replacing multiple fields with new data types
         auto replacingFields = getRandomFields(NUM_FIELDS);
-        for (const auto& replaceField : replacingFields) {
+        for (const auto& replaceField : replacingFields)
+        {
             testSchema->replaceField(replaceField->getName(), replaceField->getDataType());
         }
 
-        for (auto fieldCnt = 0_u64; fieldCnt < replacingFields.size(); ++fieldCnt) {
+        for (auto fieldCnt = 0_u64; fieldCnt < replacingFields.size(); ++fieldCnt)
+        {
             const auto& curField = replacingFields[fieldCnt];
             EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
             EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
@@ -190,11 +211,13 @@ TEST_F(SchemaTest, replaceFieldTest) {
     }
 }
 
-TEST_F(SchemaTest, getSchemaSizeInBytesTest) {
+TEST_F(SchemaTest, getSchemaSizeInBytesTest)
+{
     {
         // Calculating the schema size for each data type
         DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-        for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>()) {
+        for (const auto& basicTypeVal : magic_enum::enum_values<BasicType>())
+        {
             SchemaPtr testSchema;
             ASSERT_NO_THROW(testSchema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT));
             ASSERT_EQ(testSchema->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
@@ -202,8 +225,9 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest) {
             ASSERT_EQ(testSchema->fields.size(), 1);
             ASSERT_EQ(testSchema->fields[0]->getName(), "field");
             ASSERT_TRUE(testSchema->fields[0]->getDataType()->equals(DataTypeFactory::createType(basicTypeVal)));
-            ASSERT_EQ(testSchema->getSchemaSizeInBytes(),
-                      defaultPhysicalTypeFactory.getPhysicalType(DataTypeFactory::createType(basicTypeVal))->size());
+            ASSERT_EQ(
+                testSchema->getSchemaSizeInBytes(),
+                defaultPhysicalTypeFactory.getPhysicalType(DataTypeFactory::createType(basicTypeVal))->size());
         }
     }
 
@@ -220,7 +244,8 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest) {
     }
 }
 
-TEST_F(SchemaTest, containsTest) {
+TEST_F(SchemaTest, containsTest)
+{
     using enum NES::BasicType;
     {
         // Checking contains for one fieldName
@@ -246,7 +271,8 @@ TEST_F(SchemaTest, containsTest) {
     }
 }
 
-TEST_F(SchemaTest, getSourceNameQualifierTest) {
+TEST_F(SchemaTest, getSourceNameQualifierTest)
+{
     using enum NES::BasicType;
     // TODO once #4355 is done, we can use updateSourceName(source1) here
     const auto sourceName = std::string("source1");
@@ -260,7 +286,8 @@ TEST_F(SchemaTest, getSourceNameQualifierTest) {
     EXPECT_EQ(testSchema->getSourceNameQualifier(), sourceName);
 }
 
-TEST_F(SchemaTest, copyTest) {
+TEST_F(SchemaTest, copyTest)
+{
     auto testSchema = Schema::create()->addField("field1", BasicType::UINT8)->addField("field2", BasicType::UINT16);
     auto testSchemaCopy = testSchema->copy();
 
@@ -269,7 +296,8 @@ TEST_F(SchemaTest, copyTest) {
     ASSERT_EQ(testSchema->fields.size(), testSchemaCopy->fields.size());
 
     // Comparing fields
-    for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy->fields.size(); ++fieldCnt) {
+    for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy->fields.size(); ++fieldCnt)
+    {
         const auto& curField = testSchemaCopy->get(fieldCnt);
         EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
         EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
@@ -277,8 +305,9 @@ TEST_F(SchemaTest, copyTest) {
     }
 }
 
-TEST_F(SchemaTest, updateSourceNameTest) {
+TEST_F(SchemaTest, updateSourceNameTest)
+{
     // TODO once #4355 is done, we can test updateSourceName(source1) here
 }
 
-}// namespace NES
+} // namespace NES

@@ -13,22 +13,24 @@
 */
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_
-#include "Configurations/TypedBaseOption.hpp"
-#include "Util/yaml/Yaml.hpp"
 #include <string>
 #include <type_traits>
+#include "Configurations/TypedBaseOption.hpp"
+#include "Util/yaml/Yaml.hpp"
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
-template<class T>
+template <class T>
 concept IsEnum = std::is_enum<T>::value;
 /**
  * @brief This class defines an option, which has only the member of an enum as possible values.
  * @tparam T
  */
-template<IsEnum T>
-class EnumOption : public TypedBaseOption<T> {
-  public:
+template <IsEnum T>
+class EnumOption : public TypedBaseOption<T>
+{
+public:
     /**
      * @brief Constructor to define a EnumOption with a specific default value.
      * @param name of the EnumOption.
@@ -45,11 +47,11 @@ class EnumOption : public TypedBaseOption<T> {
     EnumOption<T>& operator=(const T& value);
     std::string toString() override;
 
-  protected:
+protected:
     void parseFromYAMLNode(Yaml::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 };
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_

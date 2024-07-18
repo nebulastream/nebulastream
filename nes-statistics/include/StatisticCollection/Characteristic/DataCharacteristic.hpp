@@ -14,17 +14,19 @@
 
 #ifndef NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_DATACHARACTERISTIC_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_DATACHARACTERISTIC_HPP_
-#include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <string>
 #include <vector>
-namespace NES::Statistic {
+#include <StatisticCollection/Characteristic/Characteristic.hpp>
+namespace NES::Statistic
+{
 
 /**
  * @brief Represents a data characteristic that results in collecting statistics over a given logical stream and
  * all or a subset of the physical source
  */
-class DataCharacteristic : public Characteristic {
-  public:
+class DataCharacteristic : public Characteristic
+{
+public:
     /**
      * @brief Creates a DataCharacteristic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
@@ -65,7 +67,7 @@ class DataCharacteristic : public Characteristic {
      */
     size_t hash() const override;
 
-  private:
+private:
     /**
      * @brief Creates a DataCharacteristic
      * @param type: What type of metric, i.e., selectivity, cardinality, data distribution, ...
@@ -77,6 +79,6 @@ class DataCharacteristic : public Characteristic {
     std::string logicalSourceName;
     std::string physicalSourceName;
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_DATACHARACTERISTIC_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_CHARACTERISTIC_DATACHARACTERISTIC_HPP_

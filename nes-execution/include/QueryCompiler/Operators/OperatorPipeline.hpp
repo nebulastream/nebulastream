@@ -14,13 +14,14 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
 
+#include <memory>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <memory>
-#include <vector>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
 * @brief Returns the next free pipeline id
@@ -32,14 +33,20 @@ PipelineId getNextPipelineId();
  * @brief Defines a single pipeline, which contains of a query plan of operators.
  * Each pipeline can have N successor and predecessor pipelines.
  */
-class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
-  public:
+class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline>
+{
+public:
     /**
      * @brief The type of a pipeline.
      * Source/Sink pipelines only have a single source and sink operator.
      * Operator pipelines consist of arbitrary operators, except sources and sinks.
      */
-    enum class Type : uint8_t { SourcePipelineType, SinkPipelineType, OperatorPipelineType };
+    enum class Type : uint8_t
+    {
+        SourcePipelineType,
+        SinkPipelineType,
+        OperatorPipelineType
+    };
 
     /**
      * @brief Creates a new operator pipeline
@@ -160,10 +167,10 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
      */
     std::string toString() const;
 
-  protected:
+protected:
     OperatorPipeline(PipelineId pipelineId, Type pipelineType);
 
-  private:
+private:
     PipelineId id;
     std::vector<std::shared_ptr<OperatorPipeline>> successorPipelines;
     std::vector<std::weak_ptr<OperatorPipeline>> predecessorPipelines;
@@ -171,6 +178,6 @@ class OperatorPipeline : public std::enable_shared_from_this<OperatorPipeline> {
     std::vector<OperatorId> operatorIds;
     Type pipelineType;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_

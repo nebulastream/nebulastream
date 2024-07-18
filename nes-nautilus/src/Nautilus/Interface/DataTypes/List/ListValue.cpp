@@ -11,21 +11,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstring>
+#include <iostream>
+#include <string>
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstring>
-#include <iostream>
-#include <string>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-template<typename T>
-ListValue<T>* ListValue<T>::create(uint32_t size) {
+template <typename T>
+ListValue<T>* ListValue<T>::create(uint32_t size)
+{
     auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
     auto optBuffer = provider->getUnpooledBuffer(size * FIELD_SIZE + DATA_FIELD_OFFSET);
-    if (!optBuffer.has_value()) {
+    if (!optBuffer.has_value())
+    {
         NES_THROW_RUNTIME_ERROR("Buffer allocation failed for text");
     }
     auto buffer = optBuffer.value();
@@ -33,55 +36,66 @@ ListValue<T>* ListValue<T>::create(uint32_t size) {
     return new (buffer.getBuffer()) ListValue<T>(size);
 }
 
-template<typename T>
-ListValue<T>* ListValue<T>::create(const T* data, uint32_t size) {
+template <typename T>
+ListValue<T>* ListValue<T>::create(const T* data, uint32_t size)
+{
     auto* list = create(size);
     std::memcpy(list->data(), data, size * FIELD_SIZE);
     return list;
 }
 
-template<typename T>
-ListValue<T>::ListValue(uint32_t size) : size(size) {}
+template <typename T>
+ListValue<T>::ListValue(uint32_t size) : size(size)
+{
+}
 
-template<typename T>
-T* ListValue<T>::data() {
+template <typename T>
+T* ListValue<T>::data()
+{
     return reinterpret_cast<T*>(this + DATA_FIELD_OFFSET);
 }
 
-template<typename T>
-const T* ListValue<T>::c_data() const {
+template <typename T>
+const T* ListValue<T>::c_data() const
+{
     return reinterpret_cast<const T*>(this + DATA_FIELD_OFFSET);
 }
 
-template<typename T>
-uint32_t ListValue<T>::length() const {
+template <typename T>
+uint32_t ListValue<T>::length() const
+{
     return size;
 }
 
-template<typename T>
-ListValue<T>* ListValue<T>::load(Runtime::TupleBuffer& buffer) {
+template <typename T>
+ListValue<T>* ListValue<T>::load(Runtime::TupleBuffer& buffer)
+{
     buffer.retain();
     return reinterpret_cast<ListValue*>(buffer.getBuffer());
 }
 
-template<class T>
-bool ListValue<T>::equals(const ListValue<T>* other) const {
-    if (length() != other->length()) {
+template <class T>
+bool ListValue<T>::equals(const ListValue<T>* other) const
+{
+    if (length() != other->length())
+    {
         return false;
     }
     // compare of both underling arrays.
     return std::equal(c_data(), c_data() + length(), other->c_data());
 }
 
-template<typename T>
-ListValue<T>::~ListValue() {
+template <typename T>
+ListValue<T>::~ListValue()
+{
     // A list value always is backed by the data region of a tuple buffer.
     // In the following, we recycle the tuple buffer and return it to the buffer pool.
     Runtime::recycleTupleBuffer(this);
 }
 
-template<class T>
-ListValue<T>* ListValue<T>::concat(const ListValue<T>* other) const {
+template <class T>
+ListValue<T>* ListValue<T>::concat(const ListValue<T>* other) const
+{
     auto leftListSize = length();
     auto rightListSize = other->length();
     // create the result list, which is the current list length + the other list length
@@ -96,8 +110,9 @@ ListValue<T>* ListValue<T>::concat(const ListValue<T>* other) const {
     return resultList;
 }
 
-template<class T>
-ListValue<T>* ListValue<T>::append(T element) const {
+template <class T>
+ListValue<T>* ListValue<T>::append(T element) const
+{
     // create result list
     auto resultList = ListValue<T>::create(length() + 1);
     // copy content
@@ -107,8 +122,9 @@ ListValue<T>* ListValue<T>::append(T element) const {
     return resultList;
 }
 
-template<class T>
-ListValue<T>* ListValue<T>::prepend(T element) const {
+template <class T>
+ListValue<T>* ListValue<T>::prepend(T element) const
+{
     // create result list
     auto resultList = ListValue<T>::create(length() + 1);
     auto resultDataPtr = resultList->data();
@@ -119,29 +135,36 @@ ListValue<T>* ListValue<T>::prepend(T element) const {
     return resultList;
 }
 
-template<class T>
-bool ListValue<T>::contains(T element) const {
-    for (uint32_t i = 0; i < length(); i++) {
-        if (c_data()[i] == element) {
+template <class T>
+bool ListValue<T>::contains(T element) const
+{
+    for (uint32_t i = 0; i < length(); i++)
+    {
+        if (c_data()[i] == element)
+        {
             return true;
         }
     }
     return false;
 }
 
-template<class T>
-int32_t ListValue<T>::listPosition(T element) const {
+template <class T>
+int32_t ListValue<T>::listPosition(T element) const
+{
     auto leftListSize = length();
-    for (uint32_t i = 0; i < length(); i++) {
-        if (c_data()[i] == element) {
+    for (uint32_t i = 0; i < length(); i++)
+    {
+        if (c_data()[i] == element)
+        {
             return i;
         }
     }
     return -1;
 }
 
-template<class T>
-ListValue<T>* ListValue<T>::sort() const {
+template <class T>
+ListValue<T>* ListValue<T>::sort() const
+{
     // create copy of list
     auto resultList = ListValue<T>::create(length());
     auto resultDataPtr = resultList->data();
@@ -150,8 +173,9 @@ ListValue<T>* ListValue<T>::sort() const {
     return resultList;
 }
 
-template<class T>
-ListValue<T>* ListValue<T>::revers() const {
+template <class T>
+ListValue<T>* ListValue<T>::revers() const
+{
     // create reverse copy of list
     auto resultList = ListValue<T>::create(length());
     std::reverse_copy(c_data(), c_data() + length(), resultList->data());
@@ -170,4 +194,4 @@ template class ListValue<uint64_t>;
 template class ListValue<float>;
 template class ListValue<double>;
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

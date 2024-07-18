@@ -15,6 +15,7 @@
 #ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_
 
+#include <chrono>
 #include <API/Schema.hpp>
 #include <Monitoring/Metrics/Gauge/DiskMetrics.hpp>
 #include <Monitoring/Metrics/Gauge/MemoryMetrics.hpp>
@@ -28,16 +29,17 @@
 #include <Monitoring/ResourcesReader/SystemResourcesReaderType.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 #include <Util/TestUtils.hpp>
-#include <chrono>
 #include <nlohmann/json.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This class is responsible for verifying the content of metrics read by the SystemResourcesReader.
  */
-class MetricValidator {
-  public:
+class MetricValidator
+{
+public:
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::MetricPtr metric);
 
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::RuntimeMetrics metrics);
@@ -52,11 +54,12 @@ class MetricValidator {
 
     static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader, Monitoring::DiskMetrics diskMetrics);
 
-    static bool isValid(Monitoring::AbstractSystemResourcesReaderPtr reader,
-                        Monitoring::StoredNodeMetricsPtr storedMetrics,
-                        Monitoring::MetricType expectedType,
-                        WorkerId expectedNodeId,
-                        uint64_t expectedSize);
+    static bool isValid(
+        Monitoring::AbstractSystemResourcesReaderPtr reader,
+        Monitoring::StoredNodeMetricsPtr storedMetrics,
+        Monitoring::MetricType expectedType,
+        WorkerId expectedNodeId,
+        uint64_t expectedSize);
 
     static bool isValidAll(Monitoring::AbstractSystemResourcesReaderPtr reader, nlohmann::json json);
 
@@ -72,11 +75,10 @@ class MetricValidator {
 
     static bool checkNodeIds(Monitoring::MetricPtr metric, WorkerId nodeId);
 
-    static bool waitForMonitoringStreamsOrTimeout(const std::set<Monitoring::MetricType>& monitoringStreams,
-                                                  uint16_t maxTimeout,
-                                                  uint64_t restPort);
+    static bool
+    waitForMonitoringStreamsOrTimeout(const std::set<Monitoring::MetricType>& monitoringStreams, uint16_t maxTimeout, uint64_t restPort);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_METRICVALIDATOR_HPP_

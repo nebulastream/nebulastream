@@ -11,9 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
+#include <iostream>
+#include <utility>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestExecutionEngine.hpp>
@@ -21,29 +23,30 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <cstdint>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <utility>
+#include <BaseIntegrationTest.hpp>
 
 // Dump IR
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
-class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
-                                   public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
-  public:
-    static void SetUpTestCase() {
+class DemoCityQueryExecutionTest : public Testing::BaseUnitTest, public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType>
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("FilterQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("FilterQueryExecutionTest: Setup FilterQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_DEBUG("FilterQueryExecutionTest: Tear down FilterQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::BaseUnitTest::TearDown();
@@ -54,16 +57,18 @@ class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
 
     /* Generates an input buffer for each source schema, using the inputDataGenerators, creates a source and emits the 
        buffer using the newly created source. */
-    void
-    generateAndEmitInputBuffers(const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
-                                const std::vector<SchemaPtr>& sourceSchemas,
-                                std::vector<std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&)>> inputDataGenerators) {
+    void generateAndEmitInputBuffers(
+        const std::shared_ptr<Runtime::Execution::ExecutableQueryPlan>& queryPlan,
+        const std::vector<SchemaPtr>& sourceSchemas,
+        std::vector<std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&)>> inputDataGenerators)
+    {
         // Make sure that each source schema has one corresponding input data generator.
         EXPECT_EQ(sourceSchemas.size(), inputDataGenerators.size());
 
         // For each source schema, create a source and an input buffer. Fill the input buffer using the corresponding
         // input data generator and finally use the source to emit the input buffer.
-        for (size_t sourceSchemaIdx = 0; sourceSchemaIdx < sourceSchemas.size(); ++sourceSchemaIdx) {
+        for (size_t sourceSchemaIdx = 0; sourceSchemaIdx < sourceSchemas.size(); ++sourceSchemaIdx)
+        {
             auto source = executionEngine->getDataSource(queryPlan, sourceSchemaIdx);
             auto inputBuffer = executionEngine->getBuffer(sourceSchemas.at(sourceSchemaIdx));
 
@@ -79,7 +84,8 @@ class DemoCityQueryExecutionTest : public Testing::BaseUnitTest,
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 
-TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
+TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions)
+{
     //==---------------------------------------==//
     //==-------- SETUP TEST PARAMETERS --------==//
     //==---------------------------------------==//
@@ -90,8 +96,10 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
 
     // Define the input data generator functions.
     std::function<void(Runtime::MemoryLayouts::TestTupleBuffer&)> windTurbineDataGenerator;
-    windTurbineDataGenerator = [](Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
-        for (size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx) {
+    windTurbineDataGenerator = [](Runtime::MemoryLayouts::TestTupleBuffer& buffer)
+    {
+        for (size_t recordIdx = 0; recordIdx < numInputRecords; ++recordIdx)
+        {
             buffer[recordIdx][0].write<int64_t>(1);
             buffer[recordIdx][1].write<int64_t>(recordIdx);
             buffer[recordIdx][2].write<uint64_t>(milliSecondsToHours * recordIdx);
@@ -102,7 +110,8 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     auto consumersDataGenerator = windTurbineDataGenerator;
 
     // Declare the structure of the result records.
-    struct __attribute__((packed)) ResultRecord {
+    struct __attribute__((packed)) ResultRecord
+    {
         int64_t difference;
         int64_t produced;
         int64_t consumed;
@@ -136,38 +145,35 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==---------------------------------------==//
     //==-------- DEFINE THE DEMO QUERY --------==//
     //==---------------------------------------==//
-    const auto query =
-        TestQuery::from(windTurbines)
-            .unionWith(TestQuery::from(solarPanels))
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1UL)))
-            .byKey(Attribute("producerId"))
-            .apply(Sum(Attribute("producedPower")))
-            .joinWith(TestQuery::from(consumers)
-                          .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1UL)))
-                          .byKey(Attribute("producerId"))
-                          .apply(Sum(Attribute("consumedPower"))))
-            .where(Attribute("producerId") == Attribute("producerId"))
-            .window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1)))
-            .map(Attribute("DifferenceProducedConsumedPower") = Attribute("producedPower") - Attribute("consumedPower"))
-            //Todo: #4068: Use 'Attribute("start").as("timestamp")' instead of 'Attribute("start")'
-            //              -> Currently not possible, because renaming and reducing the number of fields leads to an error.
-            .project(Attribute("DifferenceProducedConsumedPower"),
-                     Attribute("producedPower"),
-                     Attribute("consumedPower"),
-                     Attribute("start"))
-            .sink(testSinkDescriptor);
+    const auto query
+        = TestQuery::from(windTurbines)
+              .unionWith(TestQuery::from(solarPanels))
+              .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1UL)))
+              .byKey(Attribute("producerId"))
+              .apply(Sum(Attribute("producedPower")))
+              .joinWith(TestQuery::from(consumers)
+                            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Hours(1UL)))
+                            .byKey(Attribute("producerId"))
+                            .apply(Sum(Attribute("consumedPower"))))
+              .where(Attribute("producerId") == Attribute("producerId"))
+              .window(TumblingWindow::of(EventTime(Attribute("start")), Hours(1)))
+              .map(Attribute("DifferenceProducedConsumedPower") = Attribute("producedPower") - Attribute("consumedPower"))
+              //Todo: #4068: Use 'Attribute("start").as("timestamp")' instead of 'Attribute("start")'
+              //              -> Currently not possible, because renaming and reducing the number of fields leads to an error.
+              .project(
+                  Attribute("DifferenceProducedConsumedPower"), Attribute("producedPower"), Attribute("consumedPower"), Attribute("start"))
+              .sink(testSinkDescriptor);
 
     //==-------------------------------------------------------==//
     //==-------- GENERATE INPUT DATA AND RUN THE QUERY --------==//
     //==-------------------------------------------------------==//
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
-    generateAndEmitInputBuffers(plan,
-                                {producerSchema, producerSchema, consumerSchema},
-                                {solarPanelDataGenerator, windTurbineDataGenerator, consumersDataGenerator});
+    generateAndEmitInputBuffers(
+        plan,
+        {producerSchema, producerSchema, consumerSchema},
+        {solarPanelDataGenerator, windTurbineDataGenerator, consumersDataGenerator});
 
     // Wait until the sink processed all records or timeout is reached.
     testSink->waitTillCompletedOrTimeout(numResultRecords, timeoutInMilliseconds);
@@ -177,7 +183,8 @@ TEST_F(DemoCityQueryExecutionTest, demoQueryWithUnions) {
     //==-------- COMPARE TEST RESULTS --------==//
     //==--------------------------------------==//
     EXPECT_EQ(resultRecords.size(), numResultRecords);
-    for (size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx) {
+    for (size_t recordIdx = 0; recordIdx < resultRecords.size(); ++recordIdx)
+    {
         EXPECT_EQ(resultRecords.at(recordIdx).difference, recordIdx);
         EXPECT_EQ(resultRecords.at(recordIdx).produced, recordIdx * 2);
         EXPECT_EQ(resultRecords.at(recordIdx).consumed, recordIdx);

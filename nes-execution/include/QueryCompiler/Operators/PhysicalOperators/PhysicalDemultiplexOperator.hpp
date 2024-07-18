@@ -15,7 +15,8 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief The physical demultiplex operator
@@ -28,14 +29,15 @@ namespace NES::QueryCompilation::PhysicalOperators {
  *                                           \
  *                                            --- Sink
  */
-class PhysicalDemultiplexOperator : public PhysicalUnaryOperator {
-  public:
+class PhysicalDemultiplexOperator : public PhysicalUnaryOperator
+{
+public:
     PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId, SchemaPtr const& inputSchema);
     static PhysicalOperatorPtr create(OperatorId id, StatisticId statisticId, SchemaPtr const& inputSchema);
     static PhysicalOperatorPtr create(StatisticId statisticId, SchemaPtr inputSchema);
     [[nodiscard]] std::string toString() const override;
     OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALDEMULTIPLEXOPERATOR_HPP_

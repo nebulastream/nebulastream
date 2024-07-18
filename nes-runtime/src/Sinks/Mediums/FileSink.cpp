@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include <filesystem>
+#include <iostream>
+#include <string>
+#include <utility>
 #include <Exceptions/TaskExecutionException.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -19,27 +23,32 @@
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <filesystem>
-#include <iostream>
-#include <string>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-SinkMediumTypes FileSink::getSinkMediumType() { return SinkMediumTypes::FILE_SINK; }
+SinkMediumTypes FileSink::getSinkMediumType()
+{
+    return SinkMediumTypes::FILE_SINK;
+}
 
-FileSink::FileSink(SinkFormatPtr format,
-                   Runtime::NodeEnginePtr nodeEngine,
-                   uint32_t numOfProducers,
-                   const std::string& filePath,
-                   bool append,
-                   SharedQueryId sharedQueryId,
-                   DecomposedQueryPlanId decomposedQueryPlanId,
-                   uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins),
-      filePath(filePath), append(append) {}
+FileSink::FileSink(
+    SinkFormatPtr format,
+    Runtime::NodeEnginePtr nodeEngine,
+    uint32_t numOfProducers,
+    const std::string& filePath,
+    bool append,
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    uint64_t numberOfOrigins)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins)
+    , filePath(filePath)
+    , append(append)
+{
+}
 
-std::string FileSink::toString() const {
+std::string FileSink::toString() const
+{
     std::stringstream ss;
     ss << "FileSink(";
     ss << "SCHEMA(" << sinkFormat->getSchemaPtr()->toString() << ")";
@@ -47,17 +56,22 @@ std::string FileSink::toString() const {
     return ss.str();
 }
 
-void FileSink::setup() {
-    NES_DEBUG("Setting up file sink; filePath={}, schema={}, sinkFormat={}, append={}",
-              filePath,
-              sinkFormat->getSchemaPtr()->toString(),
-              sinkFormat->toString(),
-              append);
+void FileSink::setup()
+{
+    NES_DEBUG(
+        "Setting up file sink; filePath={}, schema={}, sinkFormat={}, append={}",
+        filePath,
+        sinkFormat->getSchemaPtr()->toString(),
+        sinkFormat->toString(),
+        append);
     // Remove an existing file unless the append mode is APPEND.
-    if (!append) {
-        if (std::filesystem::exists(filePath.c_str())) {
+    if (!append)
+    {
+        if (std::filesystem::exists(filePath.c_str()))
+        {
             std::error_code ec;
-            if (!std::filesystem::remove(filePath.c_str(), ec)) {
+            if (!std::filesystem::remove(filePath.c_str(), ec))
+            {
                 NES_ERROR("Could not remove existing output file: filePath={} ", filePath);
                 isOpen = false;
                 return;
@@ -66,48 +80,57 @@ void FileSink::setup() {
     }
 
     // Open the file stream
-    if (!outputFile.is_open()) {
+    if (!outputFile.is_open())
+    {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
     }
     isOpen = outputFile.is_open() && outputFile.good();
-    if (!isOpen) {
-        NES_ERROR("Could not open output file; filePath={}, is_open()={}, good={}",
-                  filePath,
-                  outputFile.is_open(),
-                  outputFile.good());
+    if (!isOpen)
+    {
+        NES_ERROR("Could not open output file; filePath={}, is_open()={}, good={}", filePath, outputFile.is_open(), outputFile.good());
     }
 }
 
-void FileSink::shutdown() {
+void FileSink::shutdown()
+{
     NES_DEBUG("Closing file sink, filePath={}", filePath);
     outputFile.close();
 }
 
-bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) {
+bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
+{
     // Stop execution if the file could not be opened during setup.
     // This results in ExecutionResult::Error for the task.
-    if (!isOpen) {
+    if (!isOpen)
+    {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
         return false;
     }
     std::unique_lock lock(writeMutex);
 
-    if (!inputBuffer) {
+    if (!inputBuffer)
+    {
         NES_ERROR("Invalid input buffer");
         return false;
     }
 
-    if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT) {
-        NES_DEBUG("Writing schema to file sink; filePath = {}, schema = {}, sinkFormat = {}",
-                  filePath,
-                  sinkFormat->getSchemaPtr()->toString(),
-                  sinkFormat->toString());
+    if (!schemaWritten && sinkFormat->getSinkFormat() != FormatTypes::NES_FORMAT)
+    {
+        NES_DEBUG(
+            "Writing schema to file sink; filePath = {}, schema = {}, sinkFormat = {}",
+            filePath,
+            sinkFormat->getSchemaPtr()->toString(),
+            sinkFormat->toString());
         auto schemaStr = sinkFormat->getFormattedSchema();
-        outputFile.write(schemaStr.c_str(), (int64_t) schemaStr.length());
+        outputFile.write(schemaStr.c_str(), (int64_t)schemaStr.length());
         schemaWritten = true;
-    } else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT) {
+    }
+    else if (sinkFormat->getSinkFormat() == FormatTypes::NES_FORMAT)
+    {
         NES_DEBUG("Writing the schema is not supported for NES_FORMAT");
-    } else {
+    }
+    else
+    {
         NES_DEBUG("Schema already written");
     }
 
@@ -118,4 +141,4 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     return true;
 }
 
-}// namespace NES
+} // namespace NES

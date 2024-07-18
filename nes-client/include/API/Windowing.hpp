@@ -15,17 +15,19 @@
 #ifndef NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
 #define NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
 
-#include <API/TimeUnit.hpp>
 #include <memory>
+#include <API/TimeUnit.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class ExpressionItem;
 
-namespace Windowing {
+namespace Windowing
+{
 
 class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
@@ -39,17 +41,19 @@ using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-}// namespace Windowing
-}// namespace NES
+} // namespace Windowing
+} // namespace NES
 /**
  * @brief The following declares API functions for windowing.
  */
-namespace NES::API {
+namespace NES::API
+{
 
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-class WindowAggregation {
-  public:
+class WindowAggregation
+{
+public:
     WindowAggregation(Windowing::WindowAggregationDescriptorPtr windowAggregationDescriptor);
     API::WindowAggregationPtr as(const ExpressionItem& asField);
     const Windowing::WindowAggregationDescriptorPtr aggregation;
@@ -183,6 +187,6 @@ Windowing::TimeUnit Days();
  */
 [[maybe_unused]] ExpressionNodePtr RecordCreationTs();
 
-}// namespace NES::API
+} // namespace NES::API
 
-#endif// NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
+#endif // NES_CLIENT_INCLUDE_API_WINDOWING_HPP_

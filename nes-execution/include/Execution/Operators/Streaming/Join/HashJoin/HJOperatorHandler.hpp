@@ -17,7 +17,8 @@
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class HJOperatorHandler;
 using HJOperatorHandlerPtr = std::shared_ptr<HJOperatorHandler>;
@@ -25,8 +26,9 @@ using HJOperatorHandlerPtr = std::shared_ptr<HJOperatorHandler>;
 /**
  * @brief This class provides methods that are common for slicing and bucketing HJOperatorHandlers but not common for all join strategies.
  */
-class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
-  public:
+class HJOperatorHandler : virtual public StreamJoinOperatorHandler
+{
+public:
     /**
      * @brief Constructor for a HJOperatorHandler
      * @param inputOrigins
@@ -41,23 +43,22 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
      * @param pageSize
      * @param numPartitions
      */
-    HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
-                      const OriginId outputOriginId,
-                      const uint64_t windowSize,
-                      const uint64_t windowSlide,
-                      const SchemaPtr& leftSchema,
-                      const SchemaPtr& rightSchema,
-                      const QueryCompilation::StreamJoinStrategy joinStrategy,
-                      uint64_t totalSizeForDataStructures,
-                      uint64_t preAllocPageSizeCnt,
-                      uint64_t pageSize,
-                      uint64_t numPartitions);
+    HJOperatorHandler(
+        const std::vector<OriginId>& inputOrigins,
+        const OriginId outputOriginId,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const SchemaPtr& leftSchema,
+        const SchemaPtr& rightSchema,
+        const QueryCompilation::StreamJoinStrategy joinStrategy,
+        uint64_t totalSizeForDataStructures,
+        uint64_t preAllocPageSizeCnt,
+        uint64_t pageSize,
+        uint64_t numPartitions);
 
     StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
-    void emitSliceIdsToProbe(StreamSlice& sliceLeft,
-                             StreamSlice& sliceRight,
-                             const WindowInfo& windowInfo,
-                             PipelineExecutionContext* pipelineCtx) override;
+    void emitSliceIdsToProbe(
+        StreamSlice& sliceLeft, StreamSlice& sliceRight, const WindowInfo& windowInfo, PipelineExecutionContext* pipelineCtx) override;
 
     /**
      * @brief get the number of pre-allocated pages per bucket
@@ -83,10 +84,10 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
      */
     uint64_t getTotalSizeForDataStructures() const;
 
-  private:
+private:
     StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer>) override;
 
-  protected:
+protected:
     QueryCompilation::StreamJoinStrategy joinStrategy;
     uint64_t totalSizeForDataStructures;
     uint64_t preAllocPageSizeCnt;
@@ -101,6 +102,6 @@ class HJOperatorHandler : virtual public StreamJoinOperatorHandler {
  * @return void* / MemRef
  */
 void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key);
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_

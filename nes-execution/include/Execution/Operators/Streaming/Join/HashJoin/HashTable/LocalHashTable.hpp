@@ -25,15 +25,16 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class represents a hash map that is not thread safe. It consists of multiple buckets each
  * consisting of a FixedPagesLinkedList.
  */
-class LocalHashTable : public StreamJoinHashTable {
-
-  public:
+class LocalHashTable : public StreamJoinHashTable
+{
+public:
     /**
      * @brief Constructor for a LocalHashTable
      * @param sizeOfRecord
@@ -42,11 +43,8 @@ class LocalHashTable : public StreamJoinHashTable {
      * @param pageSize
      * @param preAllocPageSizeCnt
      */
-    explicit LocalHashTable(size_t sizeOfRecord,
-                            size_t numPartitions,
-                            FixedPagesAllocator& fixedPagesAllocator,
-                            size_t pageSize,
-                            size_t preAllocPageSizeCnt);
+    explicit LocalHashTable(
+        size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize, size_t preAllocPageSizeCnt);
 
     LocalHashTable(const LocalHashTable&) = delete;
 
@@ -61,5 +59,5 @@ class LocalHashTable : public StreamJoinHashTable {
      */
     virtual uint8_t* insert(uint64_t key) const override;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_LOCALHASHTABLE_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_LOCALHASHTABLE_HPP_

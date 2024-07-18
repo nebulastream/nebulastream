@@ -16,61 +16,81 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
-namespace NES::PhysicalTypes {
-bool isChar(PhysicalTypePtr physicalType) {
+namespace NES::PhysicalTypes
+{
+bool isChar(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::CHAR;
 }
-bool isBool(PhysicalTypePtr physicalType) {
+bool isBool(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::BOOLEAN;
 }
-bool isUInt8(PhysicalTypePtr physicalType) {
+bool isUInt8(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::UINT_8;
 }
-bool isUInt16(PhysicalTypePtr physicalType) {
+bool isUInt16(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::UINT_16;
 }
-bool isUInt32(PhysicalTypePtr physicalType) {
+bool isUInt32(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::UINT_32;
 }
-bool isUInt64(PhysicalTypePtr physicalType) {
+bool isUInt64(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::UINT_64;
 }
-bool isInt8(PhysicalTypePtr physicalType) {
+bool isInt8(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::INT_8;
 }
-bool isInt16(PhysicalTypePtr physicalType) {
+bool isInt16(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::INT_16;
 }
-bool isInt32(PhysicalTypePtr physicalType) {
+bool isInt32(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::INT_32;
 }
-bool isInt64(PhysicalTypePtr physicalType) {
+bool isInt64(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::INT_64;
 }
-bool isFloat(PhysicalTypePtr physicalType) {
+bool isFloat(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::FLOAT;
 }
-bool isDouble(PhysicalTypePtr physicalType) {
+bool isDouble(PhysicalTypePtr physicalType)
+{
     return physicalType->isBasicType()
         && std::dynamic_pointer_cast<BasicPhysicalType>(physicalType)->nativeType == BasicPhysicalType::NativeType::DOUBLE;
 }
 
-bool isArray(PhysicalTypePtr physicalType) { return physicalType->isArrayType(); }
-PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType) {
+bool isArray(PhysicalTypePtr physicalType)
+{
+    return physicalType->isArrayType();
+}
+PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType)
+{
     return std::dynamic_pointer_cast<ArrayPhysicalType>(physicalType)->physicalComponentType;
 }
 
-bool isText(PhysicalTypePtr physicalType) { return physicalType->isTextType(); }
+bool isText(PhysicalTypePtr physicalType)
+{
+    return physicalType->isTextType();
+}
 
-}// namespace NES::PhysicalTypes
+} // namespace NES::PhysicalTypes

@@ -15,21 +15,23 @@
 #ifndef NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICINFO_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICINFO_HPP_
 
+#include <functional>
 #include <Identifiers/Identifiers.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Types/WindowType.hpp>
 #include <folly/Synchronized.h>
-#include <functional>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Combines together a triggerCondition, callback function and a queryId for a specific StatisticKey
  */
-class StatisticInfo {
-  public:
+class StatisticInfo
+{
+public:
     StatisticInfo() = default;
 
     /**
@@ -40,11 +42,12 @@ class StatisticInfo {
      * @param queryId: Id of the StatisticQuery
      * @param metric: Metric for this statistic
      */
-    StatisticInfo(const Windowing::WindowTypePtr window,
-                  const TriggerConditionPtr triggerCondition,
-                  const std::function<void(CharacteristicPtr)> callBack,
-                  const QueryId& queryId,
-                  const MetricPtr metric);
+    StatisticInfo(
+        const Windowing::WindowTypePtr window,
+        const TriggerConditionPtr triggerCondition,
+        const std::function<void(CharacteristicPtr)> callBack,
+        const QueryId& queryId,
+        const MetricPtr metric);
 
     /**
      * @brief Gets the TriggerCondition
@@ -113,7 +116,7 @@ class StatisticInfo {
      */
     [[nodiscard]] std::string toString() const;
 
-  private:
+private:
     Windowing::WindowTypePtr window;
     TriggerConditionPtr triggerCondition;
     std::function<void(CharacteristicPtr)> callBack;
@@ -122,6 +125,6 @@ class StatisticInfo {
 };
 using StatisticInfoWLock = std::shared_ptr<folly::Synchronized<StatisticInfo>::WLockedPtr>;
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICINFO_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICREGISTRY_STATISTICINFO_HPP_

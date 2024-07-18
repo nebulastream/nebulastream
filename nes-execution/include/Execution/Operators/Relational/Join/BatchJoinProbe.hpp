@@ -18,14 +18,16 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Batch join probe operator.
  * The operator receives input records and uses their key to probe a global hash table.
  */
-class BatchJoinProbe : public ExecutableOperator {
-  public:
+class BatchJoinProbe : public ExecutableOperator
+{
+public:
     /**
      * @brief Creates a batch join probe operator.
      * @param operatorHandlerIndex index of the operator handler.
@@ -35,17 +37,18 @@ class BatchJoinProbe : public ExecutableOperator {
      * @param valueDataTypes data types of the value fields
      * @param hashFunction hash function
      */
-    BatchJoinProbe(uint64_t operatorHandlerIndex,
-                   const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                   const std::vector<PhysicalTypePtr>& keyDataTypes,
-                   const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                   const std::vector<PhysicalTypePtr>& valueDataTypes,
-                   std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+    BatchJoinProbe(
+        uint64_t operatorHandlerIndex,
+        const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+        const std::vector<PhysicalTypePtr>& keyDataTypes,
+        const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
+        const std::vector<PhysicalTypePtr>& valueDataTypes,
+        std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
     const std::vector<PhysicalTypePtr> keyDataTypes;
@@ -55,5 +58,5 @@ class BatchJoinProbe : public ExecutableOperator {
     uint64_t keySize;
     uint64_t valueSize;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINPROBE_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINPROBE_HPP_

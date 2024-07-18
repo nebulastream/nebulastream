@@ -14,14 +14,19 @@
 #include <API/Schema.hpp>
 #include <Util/OperatorsUtil.hpp>
 
-namespace Util {
+namespace Util
+{
 
-std::string detail::concatenateFunctionHelper(uint64_t value) {
+std::string detail::concatenateFunctionHelper(uint64_t value)
+{
     std::ostringstream ss;
     ss << value;
     return ss.str();
 }
 
-std::string detail::concatenateFunctionHelper(const NES::SchemaPtr& schema) { return schema->toString(); }
+std::string detail::concatenateFunctionHelper(const NES::SchemaPtr& schema)
+{
+    return schema->toString();
+}
 
-}// namespace Util
+} // namespace Util

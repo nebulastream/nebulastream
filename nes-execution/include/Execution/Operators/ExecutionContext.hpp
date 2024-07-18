@@ -14,21 +14,23 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
-#include <Execution/Operators/OperatorState.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
+#include <Execution/Operators/OperatorState.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 using namespace Nautilus;
 class RecordBuffer;
 
-namespace Operators {
+namespace Operators
+{
 class Operator;
 class OperatorState;
-}// namespace Operators
+} // namespace Operators
 
 /**
  * The execution context manages state of operators within a pipeline and provides access to some global functionality.
@@ -36,8 +38,9 @@ class OperatorState;
  * Local operator state lives throughout one pipeline invocation. It gets initialized in the open call and cleared in the close call.
  * Global operator state lives throughout the whole existence of the pipeline. It gets initialized in the setup call and cleared in the terminate call.
  */
-class ExecutionContext final {
-  public:
+class ExecutionContext final
+{
+public:
     /**
      * @brief Create new execution context with mem refs to the worker context and the pipeline context.
      * @param workerContext reference to the worker context.
@@ -196,7 +199,7 @@ class ExecutionContext final {
      */
     void setCurrentTs(Value<UInt64> ts);
 
-  private:
+private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
     Value<MemRef> workerContext;
     Value<MemRef> pipelineContext;
@@ -209,6 +212,6 @@ class ExecutionContext final {
     Value<Boolean> lastChunk;
 };
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_

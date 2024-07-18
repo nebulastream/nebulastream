@@ -12,4 +12,6 @@
     limitations under the License.
 */
 
-namespace NES::Sequencing {}
+namespace NES::Sequencing
+{
+}

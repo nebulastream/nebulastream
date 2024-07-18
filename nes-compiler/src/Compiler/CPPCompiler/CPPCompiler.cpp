@@ -11,6 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <filesystem>
+#include <iostream>
+#include <sstream>
+#include <string>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CPPCompiler/CPPCompilerFlags.hpp>
 #include <Compiler/CompilationRequest.hpp>
@@ -23,28 +27,36 @@
 #include <Compiler/Util/SharedLibrary.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
-#include <filesystem>
-#include <iostream>
-#include <sstream>
-#include <string>
 
 using namespace std::string_literals;
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 const std::string NESCoreIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-core/include/";
 const std::string NESCommonIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-common/include/";
 const std::string DEBSIncludePath = PATH_TO_DEB_SOURCE_CODE "/include/";
 
-std::shared_ptr<LanguageCompiler> CPPCompiler::create() { return std::make_shared<CPPCompiler>(); }
+std::shared_ptr<LanguageCompiler> CPPCompiler::create()
+{
+    return std::make_shared<CPPCompiler>();
+}
 
-CPPCompiler::CPPCompiler()
-    : format(std::make_unique<ClangFormat>("cpp")), runtimePathConfig(ExecutablePath::loadRuntimePathConfig()) {}
+CPPCompiler::CPPCompiler() : format(std::make_unique<ClangFormat>("cpp")), runtimePathConfig(ExecutablePath::loadRuntimePathConfig())
+{
+}
 
-CPPCompiler::~CPPCompiler() noexcept { NES_DEBUG("~CPPCompiler"); }
+CPPCompiler::~CPPCompiler() noexcept
+{
+    NES_DEBUG("~CPPCompiler");
+}
 
-Language CPPCompiler::getLanguage() const { return Language::CPP; }
+Language CPPCompiler::getLanguage() const
+{
+    return Language::CPP;
+}
 
-CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const {
+CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const
+{
     // Compile and load shared library.
     Timer timer("CPPCompiler");
     timer.start();
@@ -57,7 +69,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 #elif defined(__APPLE__)
         ".dylib";
 #else
-#error "Unknown platform"
+#    error "Unknown platform"
 #endif
     auto& sourceCode = request->getSourceCode()->getCode();
     NES_ASSERT2_FMT(sourceCode.size(), "empty source code for " << sourceFileName);
@@ -67,32 +79,38 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addDefaultCompilerFlags();
     compilationFlags.addSharedLibraryFlag();
 
-    if (request->enableOptimizations()) {
+    if (request->enableOptimizations())
+    {
         compilationFlags.enableOptimizationFlags();
     }
 
-    if (request->enableDebugging()) {
+    if (request->enableDebugging())
+    {
         compilationFlags.enableDebugFlags();
         format->formatFile(file);
         file->print();
     }
 
-    if (request->enableCompilationProfiling()) {
+    if (request->enableCompilationProfiling())
+    {
         compilationFlags.enableProfilingFlags();
     }
 
     // add header
-    for (auto libPaths : runtimePathConfig.libPaths) {
+    for (auto libPaths : runtimePathConfig.libPaths)
+    {
         compilationFlags.addFlag(std::string("-L") + libPaths);
     }
 
     // add libs
-    for (auto libs : runtimePathConfig.libs) {
+    for (auto libs : runtimePathConfig.libs)
+    {
         compilationFlags.addFlag(libs);
     }
 
     // add includes
-    for (auto includePath : runtimePathConfig.includePaths) {
+    for (auto includePath : runtimePathConfig.includePaths)
+    {
         compilationFlags.addFlag("-I" + includePath);
     }
 
@@ -103,7 +121,8 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilationFlags.addFlag("-DFMT_HEADER_ONLY"s);
     compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
 
-    for (auto api : request->getExternalAPIs()) {
+    for (auto api : request->getExternalAPIs())
+    {
         compilationFlags.mergeFlags(api->getCompilerFlags());
     }
 
@@ -112,7 +131,8 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     std::stringstream compilerCall;
     compilerCall << runtimePathConfig.clangBinaryPath << " ";
-    for (const auto& arg : compilationFlags.getFlags()) {
+    for (const auto& arg : compilationFlags.getFlags())
+    {
         compilerCall << arg << " ";
     }
 
@@ -129,14 +149,16 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     // Calling the compiler in a new process
     fp = popen(compilerCall.str().c_str(), "r");
 
-    if (fp == nullptr) {
+    if (fp == nullptr)
+    {
         NES_ERROR("Compiler: failed to run command\n");
         throw std::runtime_error("Compiler: failed to run command");
     }
 
     // Collecting the output of the compiler to a string stream
     std::ostringstream strstream;
-    while (fgets(buffer, sizeof(buffer), fp) != nullptr) {
+    while (fgets(buffer, sizeof(buffer), fp) != nullptr)
+    {
         strstream << buffer;
     }
 
@@ -144,12 +166,14 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     auto ret = pclose(fp);
 
     // If the compilation didn't return with 0, we throw an exception containing the compiler output
-    if (ret != 0) {
+    if (ret != 0)
+    {
         NES_ERROR("Compiler: compilation of {} failed.", libraryFileName);
         throw std::runtime_error(strstream.str());
     }
 
-    if (!request->enableDebugging()) {
+    if (!request->enableDebugging())
+    {
         std::filesystem::remove(sourceFileName);
     }
     auto sharedLibrary = SharedLibrary::load(libraryFileName);
@@ -157,9 +181,9 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     std::filesystem::remove(libraryFileName);
 
     timer.pause();
-    NES_INFO("[CPPCompiler] Compilation time: {}ms", (double) timer.getRuntime() / (double) 1000000);
+    NES_INFO("[CPPCompiler] Compilation time: {}ms", (double)timer.getRuntime() / (double)1000000);
 
     return CompilationResult(sharedLibrary, std::move(timer));
 }
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

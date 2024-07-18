@@ -16,13 +16,15 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical limit operator.
  */
-class PhysicalLimitOperator : public PhysicalUnaryOperator {
-  public:
+class PhysicalLimitOperator : public PhysicalUnaryOperator
+{
+public:
     PhysicalLimitOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, uint64_t limit);
     static PhysicalOperatorPtr
     create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, uint64_t limit);
@@ -36,10 +38,10 @@ class PhysicalLimitOperator : public PhysicalUnaryOperator {
    */
     uint64_t getLimit();
 
-  private:
+private:
     uint64_t limit;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALLIMITOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALLIMITOPERATOR_HPP_

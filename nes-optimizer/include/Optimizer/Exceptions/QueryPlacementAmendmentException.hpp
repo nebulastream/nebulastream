@@ -15,23 +15,24 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTAMENDMENTEXCEPTION_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTAMENDMENTEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
+#include <Exceptions/RequestExecutionException.hpp>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
 /**
  * @brief Exception indicating problem during operator placement addition phase
  */
-class QueryPlacementAmendmentException : public Exceptions::RequestExecutionException {
-
-  public:
+class QueryPlacementAmendmentException : public Exceptions::RequestExecutionException
+{
+public:
     explicit QueryPlacementAmendmentException(SharedQueryId sharedQueryId, const std::string& message);
 
     const char* what() const noexcept override;
 };
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTAMENDMENTEXCEPTION_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_EXCEPTIONS_QUERYPLACEMENTAMENDMENTEXCEPTION_HPP_

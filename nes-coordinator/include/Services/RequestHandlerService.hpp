@@ -15,27 +15,31 @@
 #ifndef NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_
 #define NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_
 
+#include <future>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <StatisticCollection/QueryGeneration/StatisticIdsExtractor.hpp>
 #include <Statistics/StatisticKey.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
-#include <future>
 #include <nlohmann/json.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 
-namespace Windowing {
+namespace Windowing
+{
 class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
-}// namespace Windowing
+} // namespace Windowing
 
-namespace Statistic {
+namespace Statistic
+{
 class Characteristic;
 class TriggerCondition;
 class SendingPolicy;
@@ -47,9 +51,10 @@ using TriggerConditionPtr = std::shared_ptr<TriggerCondition>;
 using SendingPolicyPtr = std::shared_ptr<SendingPolicy>;
 using AbstractStatisticQueryGeneratorPtr = std::shared_ptr<AbstractStatisticQueryGenerator>;
 using StatisticRegistryPtr = std::shared_ptr<StatisticRegistry>;
-}// namespace Statistic
+} // namespace Statistic
 
-namespace Optimizer {
+namespace Optimizer
+{
 class SyntacticQueryValidation;
 using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
 
@@ -58,7 +63,7 @@ using SemanticQueryValidationPtr = std::shared_ptr<SemanticQueryValidation>;
 
 class PlacementAmendmentHandler;
 using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -71,24 +76,29 @@ using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
 class TopologyLinkInformation;
 
-namespace Catalogs {
-namespace Source {
+namespace Catalogs
+{
+namespace Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
-namespace UDF {
+namespace UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+} // namespace UDF
 
-namespace Query {
+namespace Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Query
-}// namespace Catalogs
+} // namespace Query
+} // namespace Catalogs
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 class AsyncRequestProcessor;
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
 
@@ -98,25 +108,26 @@ using ISQPRequestResponsePtr = std::shared_ptr<ISQPRequestResponse>;
 class ISQPEvent;
 using ISQPEventPtr = std::shared_ptr<ISQPEvent>;
 
-}// namespace RequestProcessor
+} // namespace RequestProcessor
 
 /**
  * @brief: This class is responsible for handling requests related to submitting, fetching information, and deleting different queryIdAndCatalogEntryMapping,
  * as well as modifying the topology.
  */
-class RequestHandlerService {
-
-  public:
-    explicit RequestHandlerService(Configurations::OptimizerConfiguration optimizerConfiguration,
-                                   const QueryParsingServicePtr& queryParsingService,
-                                   const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                   const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
-                                   const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
-                                   const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
-                                   const z3::ContextPtr& z3Context,
-                                   const Statistic::AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
-                                   const Statistic::StatisticRegistryPtr& statisticRegistry,
-                                   const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
+class RequestHandlerService
+{
+public:
+    explicit RequestHandlerService(
+        Configurations::OptimizerConfiguration optimizerConfiguration,
+        const QueryParsingServicePtr& queryParsingService,
+        const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+        const Catalogs::Source::SourceCatalogPtr& sourceCatalog,
+        const Catalogs::UDF::UDFCatalogPtr& udfCatalog,
+        const NES::RequestProcessor::AsyncRequestProcessorPtr& asyncRequestExecutor,
+        const z3::ContextPtr& z3Context,
+        const Statistic::AbstractStatisticQueryGeneratorPtr& statisticQueryGenerator,
+        const Statistic::StatisticRegistryPtr& statisticRegistry,
+        const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler);
 
     /**
      * @brief Register the incoming query in the system by add it to the scheduling queue for further processing, and return the query Id assigned.
@@ -144,8 +155,7 @@ class RequestHandlerService {
      * @param lineage : lineage type for the given query.
      * @return query id
      */
-    nlohmann::json validateAndQueueExplainQueryRequest(const QueryPlanPtr& queryPlan,
-                                                       const Optimizer::PlacementStrategy placementStrategy);
+    nlohmann::json validateAndQueueExplainQueryRequest(const QueryPlanPtr& queryPlan, const Optimizer::PlacementStrategy placementStrategy);
 
     /**
      * Register the incoming stop query request in the system by add it to the scheduling queue for further processing.
@@ -166,9 +176,8 @@ class RequestHandlerService {
      * @param failureReason : reason for shared query plan failure.
      * @returns: true if successful
      */
-    bool validateAndQueueFailQueryRequest(SharedQueryId sharedQueryId,
-                                          DecomposedQueryPlanId decomposedQueryPlanId,
-                                          const std::string& failureReason);
+    bool validateAndQueueFailQueryRequest(
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, const std::string& failureReason);
 
     /**
      * @brief modify the topology by removing and adding links and then rerun an incremental placement for queries that were
@@ -177,8 +186,8 @@ class RequestHandlerService {
      * @param addedLinks a list or topology links to add
      * @return true on success
      */
-    bool queueNodeRelocationRequest(const std::vector<TopologyLinkInformation>& removedLinks,
-                                    const std::vector<TopologyLinkInformation>& addedLinks);
+    bool queueNodeRelocationRequest(
+        const std::vector<TopologyLinkInformation>& removedLinks, const std::vector<TopologyLinkInformation>& addedLinks);
 
     /**
      * @brief Process multiple query and topology change request represented by isqp events in a batch
@@ -196,11 +205,12 @@ class RequestHandlerService {
      * @param callBack: Function that should be called, if triggerCondition evaluates to true
      * @return: Vector of StatisticKeys
      */
-    std::vector<Statistic::StatisticKey> trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic,
-                                                               const Windowing::WindowTypePtr& window,
-                                                               const Statistic::TriggerConditionPtr& triggerCondition,
-                                                               const Statistic::SendingPolicyPtr& sendingPolicy,
-                                                               std::function<void(Statistic::CharacteristicPtr)> callBack);
+    std::vector<Statistic::StatisticKey> trackStatisticRequest(
+        const Statistic::CharacteristicPtr& characteristic,
+        const Windowing::WindowTypePtr& window,
+        const Statistic::TriggerConditionPtr& triggerCondition,
+        const Statistic::SendingPolicyPtr& sendingPolicy,
+        std::function<void(Statistic::CharacteristicPtr)> callBack);
 
     /**
      * @brief Processes a track requests by mapping it to a statistic query and returning the statistic keys
@@ -208,10 +218,10 @@ class RequestHandlerService {
      * @param window: Over what window to track the statistics over
      * @return Vector of StatisticKeys
      */
-    std::vector<Statistic::StatisticKey> trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic,
-                                                               const Windowing::WindowTypePtr& window);
+    std::vector<Statistic::StatisticKey>
+    trackStatisticRequest(const Statistic::CharacteristicPtr& characteristic, const Windowing::WindowTypePtr& window);
 
-  private:
+private:
     /**
      * Assign unique operator ids to the incoming query plan from a client.
      * @param queryPlan : query plan to process
@@ -231,6 +241,6 @@ class RequestHandlerService {
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_SERVICES_REQUESTHANDLERSERVICE_HPP_

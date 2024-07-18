@@ -11,21 +11,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalWindowOperator::PhysicalWindowOperator(OperatorId id,
-                                               StatisticId statisticId,
-                                               SchemaPtr inputSchema,
-                                               SchemaPtr outputSchema,
-                                               Windowing::LogicalWindowDescriptorPtr windowDefinition)
-    : Operator(id), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
-      windowDefinition(std::move(windowDefinition)) {}
+PhysicalWindowOperator::PhysicalWindowOperator(
+    OperatorId id,
+    StatisticId statisticId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::LogicalWindowDescriptorPtr windowDefinition)
+    : Operator(id)
+    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
+    , windowDefinition(std::move(windowDefinition))
+{
+}
 
-const Windowing::LogicalWindowDescriptorPtr& PhysicalWindowOperator::getWindowDefinition() const { return windowDefinition; };
+const Windowing::LogicalWindowDescriptorPtr& PhysicalWindowOperator::getWindowDefinition() const
+{
+    return windowDefinition;
+};
 
-std::string PhysicalWindowOperator::toString() const { return PhysicalUnaryOperator::toString(); }
+std::string PhysicalWindowOperator::toString() const
+{
+    return PhysicalUnaryOperator::toString();
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

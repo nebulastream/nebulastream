@@ -16,20 +16,26 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-uint8_t* FixedPagesLinkedList::appendLocal(const uint64_t hash) {
+uint8_t* FixedPagesLinkedList::appendLocal(const uint64_t hash)
+{
     //try to insert on current Page
     uint8_t* retPointer = pages[pos]->append(hash);
     //check page is full
-    if (retPointer == nullptr) {
+    if (retPointer == nullptr)
+    {
         pageFullCnt++;
-        if (++pos >= pages.size()) {
+        if (++pos >= pages.size())
+        {
             //we need a new page
             allocateNewPageCnt++;
             auto ptr = fixedPagesAllocator.getNewPage(pageSize);
             pages.emplace_back(std::make_unique<Nautilus::Interface::FixedPage>(ptr, sizeOfRecord, pageSize));
-        } else {
+        }
+        else
+        {
             //we still have an empty page left
             emptyPageStillExistsCnt++;
         }
@@ -39,37 +45,45 @@ uint8_t* FixedPagesLinkedList::appendLocal(const uint64_t hash) {
     return retPointer;
 }
 
-uint8_t* FixedPagesLinkedList::appendConcurrentUsingLocking(const uint64_t hash) {
+uint8_t* FixedPagesLinkedList::appendConcurrentUsingLocking(const uint64_t hash)
+{
     const std::lock_guard<std::mutex> lock(pageAddMutex);
     return appendLocal(hash);
 }
 
-uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
+uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash)
+{
     size_t oldPos = pos;
     //try to insert on current Page
     auto retPointer = currentPage.load()->append(hash);
-    if (retPointer != nullptr) {
+    if (retPointer != nullptr)
+    {
         return retPointer;
     }
 
     //Insert was not successful so exactly one thread have to add a page
     bool expected = false;
-    if (insertInProgress.compare_exchange_strong(expected, true, std::memory_order::release, std::memory_order::relaxed)) {
+    if (insertInProgress.compare_exchange_strong(expected, true, std::memory_order::release, std::memory_order::relaxed))
+    {
         // check if in the meantime somebody else already inserts a page. if so, return
-        if (pos != oldPos) {
+        if (pos != oldPos)
+        {
             insertInProgress = false;
             return nullptr;
         }
 
         //check if there are pre-allocated pages left
-        if (pos + 1 >= pages.size()) {
+        if (pos + 1 >= pages.size())
+        {
             //we need a new page
             auto ptr = fixedPagesAllocator.getNewPage(pageSize);
             pages.emplace_back(std::make_unique<Nautilus::Interface::FixedPage>(ptr, sizeOfRecord, pageSize));
             std::stringstream idAsString;
             idAsString << std::this_thread::get_id();
             NES_TRACE("Adding a new page for {} thread={}", hash, idAsString.str());
-        } else {
+        }
+        else
+        {
             //there is a free page left
             std::stringstream idString;
             idString << std::this_thread::get_id();
@@ -82,7 +96,8 @@ uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
         //Make the new page the current page where threads try to insert
         auto oldPtr = pages[pos - 1].get();
         auto newPtr = pages[pos].get();
-        while (!currentPage.compare_exchange_strong(oldPtr, newPtr, std::memory_order::release, std::memory_order::relaxed)) {
+        while (!currentPage.compare_exchange_strong(oldPtr, newPtr, std::memory_order::release, std::memory_order::relaxed))
+        {
         }
 
         insertInProgress = false;
@@ -90,17 +105,19 @@ uint8_t* FixedPagesLinkedList::appendConcurrentLockFree(const uint64_t hash) {
     return nullptr;
 }
 
-const std::vector<Nautilus::Interface::FixedPagePtr>& FixedPagesLinkedList::getPages() const { return pages; }
+const std::vector<Nautilus::Interface::FixedPagePtr>& FixedPagesLinkedList::getPages() const
+{
+    return pages;
+}
 
-FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator,
-                                           size_t sizeOfRecord,
-                                           size_t pageSize,
-                                           size_t preAllocPageSizeCnt)
-    : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize), insertInProgress(false) {
-
+FixedPagesLinkedList::FixedPagesLinkedList(
+    FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize, size_t preAllocPageSizeCnt)
+    : pos(0), fixedPagesAllocator(fixedPagesAllocator), sizeOfRecord(sizeOfRecord), pageSize(pageSize), insertInProgress(false)
+{
     NES_ASSERT2_FMT(preAllocPageSizeCnt >= 1, "We need at least one page preallocated");
     //pre allocate pages
-    for (auto i = 0UL; i < preAllocPageSizeCnt; ++i) {
+    for (auto i = 0UL; i < preAllocPageSizeCnt; ++i)
+    {
         auto ptr = fixedPagesAllocator.getNewPage(pageSize);
         //        pages.emplace_back(new FixedPage(ptr, sizeOfRecord, pageSize));
         pages.emplace_back(std::make_unique<Nautilus::Interface::FixedPage>(ptr, sizeOfRecord, pageSize));
@@ -108,11 +125,12 @@ FixedPagesLinkedList::FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAlloca
     currentPage = pages[0].get();
 }
 
-std::string FixedPagesLinkedList::getStatistics() {
+std::string FixedPagesLinkedList::getStatistics()
+{
     std::stringstream ss;
     ss << "FixPagesLinkedList reports pageFullCnt=" << pageFullCnt << " allocateNewPageCnt=" << allocateNewPageCnt
        << " emptyPageStillExistsCnt=" << emptyPageStillExistsCnt;
     return ss.str();
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

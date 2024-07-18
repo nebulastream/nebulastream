@@ -19,14 +19,16 @@
 #include <memory>
 #include <vector>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief Represents a request to compile a specific source code artifact.
  * A compilation request consists of a unique identifier, a source code artifact and a set of compilation options.
  */
-class CompilationRequest {
-  public:
+class CompilationRequest
+{
+public:
     /**
      * @brief Creates a new @CompilationRequest.
      * @param sourceCode The source code artifact that should be compiled
@@ -38,13 +40,14 @@ class CompilationRequest {
      * @param externalApis a vector of external APIs to add to the compilation process (empty by default)
      * @return std::unique_ptr<CompilationRequest>
      */
-    CompilationRequest(std::unique_ptr<SourceCode> sourceCode,
-                       std::string name,
-                       bool profileCompilation,
-                       bool profileExecution,
-                       bool optimizeCompilation,
-                       bool debug,
-                       std::vector<std::shared_ptr<ExternalAPI>> externalApis = {});
+    CompilationRequest(
+        std::unique_ptr<SourceCode> sourceCode,
+        std::string name,
+        bool profileCompilation,
+        bool profileExecution,
+        bool optimizeCompilation,
+        bool debug,
+        std::vector<std::shared_ptr<ExternalAPI>> externalApis = {});
     bool operator==(const CompilationRequest& rhs) const;
     bool operator!=(const CompilationRequest& rhs) const;
 
@@ -59,13 +62,14 @@ class CompilationRequest {
      * @param externalApis a vector of external APIs to add to the compilation process (empty by default)
      * @return std::unique_ptr<CompilationRequest>
      */
-    static std::shared_ptr<CompilationRequest> create(std::unique_ptr<SourceCode> sourceCode,
-                                                      std::string name,
-                                                      bool profileCompilation,
-                                                      bool profileExecution,
-                                                      bool optimizeCompilation,
-                                                      bool debug,
-                                                      std::vector<std::shared_ptr<ExternalAPI>> externalApis = {});
+    static std::shared_ptr<CompilationRequest> create(
+        std::unique_ptr<SourceCode> sourceCode,
+        std::string name,
+        bool profileCompilation,
+        bool profileExecution,
+        bool optimizeCompilation,
+        bool debug,
+        std::vector<std::shared_ptr<ExternalAPI>> externalApis = {});
 
     /**
      * @brief Returns the source code artifact
@@ -109,7 +113,7 @@ class CompilationRequest {
      */
     [[nodiscard]] std::vector<std::shared_ptr<ExternalAPI>> getExternalAPIs() const;
 
-  private:
+private:
     const std::shared_ptr<SourceCode> sourceCode;
     const std::string name;
     const bool profileCompilation;
@@ -119,6 +123,6 @@ class CompilationRequest {
     const std::vector<std::shared_ptr<ExternalAPI>> externalApis;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_

@@ -11,54 +11,62 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <sstream>
 #include <utility>
+#include <Expressions/FieldAssignmentExpressionNode.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalMapOperator::PhysicalMapOperator(OperatorId id,
-                                         StatisticId statisticId,
-                                         SchemaPtr inputSchema,
-                                         SchemaPtr outputSchema,
-                                         FieldAssignmentExpressionNodePtr mapExpression)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema)),
-      mapExpression(std::move(mapExpression)) {}
+PhysicalMapOperator::PhysicalMapOperator(
+    OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression)
+    : Operator(id, statisticId)
+    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
+    , mapExpression(std::move(mapExpression))
+{
+}
 
-FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression() { return mapExpression; }
+FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression()
+{
+    return mapExpression;
+}
 
-PhysicalOperatorPtr PhysicalMapOperator::create(OperatorId id,
-                                                StatisticId statisticId,
-                                                const SchemaPtr& inputSchema,
-                                                const SchemaPtr& outputSchema,
-                                                const FieldAssignmentExpressionNodePtr& mapExpression) {
+PhysicalOperatorPtr PhysicalMapOperator::create(
+    OperatorId id,
+    StatisticId statisticId,
+    const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema,
+    const FieldAssignmentExpressionNodePtr& mapExpression)
+{
     return std::make_shared<PhysicalMapOperator>(id, statisticId, inputSchema, outputSchema, mapExpression);
 }
 
-PhysicalOperatorPtr PhysicalMapOperator::create(StatisticId statisticId,
-                                                SchemaPtr inputSchema,
-                                                SchemaPtr outputSchema,
-                                                FieldAssignmentExpressionNodePtr mapExpression) {
+PhysicalOperatorPtr PhysicalMapOperator::create(
+    StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression)
+{
     return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
 }
 
-std::string PhysicalMapOperator::toString() const {
+std::string PhysicalMapOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalMapOperator:\n";
     out << PhysicalUnaryOperator::toString();
-    if (mapExpression != nullptr) {
+    if (mapExpression != nullptr)
+    {
         out << "mapExpression: " << mapExpression->toString();
     }
     out << std::endl;
     return out.str();
 }
 
-OperatorPtr PhysicalMapOperator::copy() {
+OperatorPtr PhysicalMapOperator::copy()
+{
     auto result = create(id, statisticId, inputSchema, outputSchema, getMapExpression());
     result->addAllProperties(properties);
     return result;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

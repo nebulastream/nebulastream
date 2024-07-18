@@ -16,13 +16,17 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 WriteFieldExpression::WriteFieldExpression(Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression)
-    : field(field), subExpression(subExpression) {}
-Value<> WriteFieldExpression::execute(Record& record) const {
+    : field(field), subExpression(subExpression)
+{
+}
+Value<> WriteFieldExpression::execute(Record& record) const
+{
     Value<> newValue = subExpression->execute(record);
     record.write(field, newValue);
     return newValue;
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

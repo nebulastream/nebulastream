@@ -15,24 +15,26 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
 
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/BufferRecycler.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
 #include <optional>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferRecycler.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-#include <folly/MPMCQueue.h>
-#include <folly/concurrency/UnboundedQueue.h>
+#    include <folly/MPMCQueue.h>
+#    include <folly/concurrency/UnboundedQueue.h>
 #endif
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 class TupleBuffer;
-namespace detail {
+namespace detail
+{
 class MemorySegment;
 }
 
@@ -41,17 +43,17 @@ const std::chrono::seconds DEFAULT_BUFFER_TIMEOUT = std::chrono::seconds(10);
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
  */
-class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider {
-  public:
+class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
+{
+public:
     /**
      * @brief Construct a new LocalBufferPool
      * @param bufferManager the global buffer manager
      * @param availableBuffers deque of exclusive buffers
      * @param numberOfReservedBuffers number of exclusive buffers
      */
-    explicit FixedSizeBufferPool(const BufferManagerPtr& bufferManager,
-                                 std::deque<detail::MemorySegment*>&& availableBuffers,
-                                 size_t numberOfReservedBuffers);
+    explicit FixedSizeBufferPool(
+        const BufferManagerPtr& bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers, size_t numberOfReservedBuffers);
 
     ~FixedSizeBufferPool() override;
 
@@ -100,7 +102,7 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
 
     BufferManagerPtr getParentBufferManager() const { return bufferManager; }
 
-  private:
+private:
     BufferManagerPtr bufferManager;
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::deque<detail::MemorySegment*> exclusiveBuffers;
@@ -113,6 +115,6 @@ class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
     std::atomic<bool> isDestroyed;
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_

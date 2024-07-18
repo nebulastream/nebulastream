@@ -16,11 +16,12 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_
 
 #if __has_include(<memory_resource>)
-#include <memory_resource>
+#    include <memory_resource>
 #elif __has_include(<experimental/memory_resource>)
-#include <experimental/memory_resource>
-namespace std::pmr {
+#    include <experimental/memory_resource>
+namespace std::pmr
+{
 using memory_resource = std::experimental::pmr::memory_resource;
-}// namespace std::pmr
+} // namespace std::pmr
 #endif
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_

@@ -20,17 +20,21 @@
 #include <spdlog/sinks/stdout_color_sinks.h>
 #include <spdlog/spdlog.h>
 
-namespace NES {
+namespace NES
+{
 
-namespace detail {
+namespace detail
+{
 
 static constexpr auto SPDLOG_NES_LOGGER_NAME = "nes_logger";
 static constexpr auto DEV_NULL = "/dev/null";
 static constexpr auto SPDLOG_PATTERN = "%^[%H:%M:%S.%f] [%L] [thread %t] [%s:%#] [%!] %v%$";
 
-auto toSpdlogLevel(LogLevel level) {
+auto toSpdlogLevel(LogLevel level)
+{
     auto spdlogLevel = spdlog::level::info;
-    switch (level) {
+    switch (level)
+    {
         case LogLevel::LOG_DEBUG: {
             spdlogLevel = spdlog::level::debug;
             break;
@@ -66,11 +70,13 @@ auto toSpdlogLevel(LogLevel level) {
     return spdlogLevel;
 }
 
-auto createEmptyLogger() -> std::shared_ptr<spdlog::logger> {
+auto createEmptyLogger() -> std::shared_ptr<spdlog::logger>
+{
     return std::make_shared<spdlog::logger>("null", std::make_shared<spdlog::sinks::basic_file_sink_st>(DEV_NULL));
 }
 
-Logger::Logger(const std::string& logFileName, LogLevel level) {
+Logger::Logger(const std::string& logFileName, LogLevel level)
+{
     static constexpr auto QUEUE_SIZE = 8 * 1024;
     static constexpr auto THREADS = 1;
     loggerThreadPool = std::make_shared<spdlog::details::thread_pool>(QUEUE_SIZE, THREADS);
@@ -89,76 +95,88 @@ Logger::Logger(const std::string& logFileName, LogLevel level) {
 
     std::vector<spdlog::sink_ptr> sinks = {consoleSink, fileSink};
 
-    impl = std::make_shared<spdlog::async_logger>(SPDLOG_NES_LOGGER_NAME,
-                                                  sinks.begin(),
-                                                  sinks.end(),
-                                                  loggerThreadPool,
-                                                  spdlog::async_overflow_policy::block);
+    impl = std::make_shared<spdlog::async_logger>(
+        SPDLOG_NES_LOGGER_NAME, sinks.begin(), sinks.end(), loggerThreadPool, spdlog::async_overflow_policy::block);
 
     impl->flush_on(spdlog::level::debug);
 
     changeLogLevel(level);
 
-    flusher = std::make_unique<spdlog::details::periodic_worker>(
-        [this]() {
-            impl->flush();
-        },
-        std::chrono::seconds(1));
+    flusher = std::make_unique<spdlog::details::periodic_worker>([this]() { impl->flush(); }, std::chrono::seconds(1));
 }
 
-Logger::Logger() : impl(detail::createEmptyLogger()) {}
+Logger::Logger() : impl(detail::createEmptyLogger())
+{
+}
 
-Logger::~Logger() { shutdown(); }
+Logger::~Logger()
+{
+    shutdown();
+}
 
-void Logger::forceFlush() {
-    if (impl) {
-        for (auto& sink : impl->sinks()) {
+void Logger::forceFlush()
+{
+    if (impl)
+    {
+        for (auto& sink : impl->sinks())
+        {
             sink->flush();
         }
         impl->flush();
     }
 }
 
-void Logger::shutdown() {
+void Logger::shutdown()
+{
     bool expected = false;
-    if (isShutdown.compare_exchange_strong(expected, true)) {
+    if (isShutdown.compare_exchange_strong(expected, true))
+    {
         flusher.reset();
         impl.reset();
         loggerThreadPool.reset();
     }
 }
 
-void Logger::changeLogLevel(LogLevel newLevel) {
+void Logger::changeLogLevel(LogLevel newLevel)
+{
     auto spdNewLogLevel = detail::toSpdlogLevel(newLevel);
-    for (auto& sink : impl->sinks()) {
+    for (auto& sink : impl->sinks())
+    {
         sink->set_level(spdNewLogLevel);
     }
     impl->set_level(spdNewLogLevel);
     std::swap(newLevel, currentLogLevel);
 }
 
-struct LoggerHolder {
+struct LoggerHolder
+{
     static std::shared_ptr<Logger> singleton;
-    ~LoggerHolder() {
+    ~LoggerHolder()
+    {
         singleton.reset();
         spdlog::shutdown();
     }
 };
 std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
 
-}// namespace detail
+} // namespace detail
 
-namespace Logger {
+namespace Logger
+{
 
 static detail::LoggerHolder helper;
 
-void setupLogging(const std::string& logFileName, LogLevel level) {
+void setupLogging(const std::string& logFileName, LogLevel level)
+{
     auto newLogger = std::make_shared<detail::Logger>(logFileName, level);
     std::swap(detail::LoggerHolder::singleton, newLogger);
 }
 
-std::shared_ptr<detail::Logger> getInstance() { return detail::LoggerHolder::singleton; }
+std::shared_ptr<detail::Logger> getInstance()
+{
+    return detail::LoggerHolder::singleton;
+}
 
-}// namespace Logger
+} // namespace Logger
 
-}// namespace NES
+} // namespace NES

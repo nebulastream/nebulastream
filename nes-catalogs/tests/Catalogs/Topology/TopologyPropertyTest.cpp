@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -20,22 +19,27 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class TopologyPropertiesTest : public Testing::BaseUnitTest {
-  public:
+class TopologyPropertiesTest : public Testing::BaseUnitTest
+{
+public:
     static void SetUpTestCase() { setupLogging(); }
 
-  protected:
-    static void setupLogging() {
+protected:
+    static void setupLogging()
+    {
         NES::Logger::setupLogging("TopologyPropertiesTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup TopologyPropertiesTest test class.");
     }
 };
 
 // test assigning topology properties
-TEST_F(TopologyPropertiesTest, testAssignTopologyNodeProperties) {
+TEST_F(TopologyPropertiesTest, testAssignTopologyNodeProperties)
+{
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -60,7 +64,8 @@ TEST_F(TopologyPropertiesTest, testAssignTopologyNodeProperties) {
 }
 
 // test removing a topology properties
-TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
+TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty)
+{
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -80,7 +85,8 @@ TEST_F(TopologyPropertiesTest, testRemoveTopologyNodeProperty) {
 }
 
 // test assigning link properties
-TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
+TEST_F(TopologyPropertiesTest, testAssignLinkProperty)
+{
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -115,7 +121,8 @@ TEST_F(TopologyPropertiesTest, testAssignLinkProperty) {
 }
 
 // test removing link properties
-TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
+TEST_F(TopologyPropertiesTest, testRemovingLinkProperty)
+{
     TopologyPtr topology = Topology::create();
     uint32_t grpcPort = 4000;
     uint32_t dataPort = 5000;
@@ -156,4 +163,4 @@ TEST_F(TopologyPropertiesTest, testRemovingLinkProperty) {
     EXPECT_FALSE(destinationNode->getLinkProperty(sourceWorkerId));
 }
 
-}// namespace NES
+} // namespace NES

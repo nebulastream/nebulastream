@@ -15,32 +15,35 @@
 #ifndef NES_STATISTICS_INCLUDE_STATISTICS_SYNOPSES_HYPERLOGLOGSTATISTIC_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICS_SYNOPSES_HYPERLOGLOGSTATISTIC_HPP_
 
-#include <Statistics/Synopses/SynopsesStatistic.hpp>
 #include <cmath>
 #include <optional>
+#include <Statistics/Synopses/SynopsesStatistic.hpp>
 
 #if defined(__has_builtin) && (defined(__GNUC__) || defined(__clang__))
-#define _GET_CLZ(x, b) (uint8_t)(std::min(b, (uint64_t)::__builtin_clz(x)) + 1)
+#    define _GET_CLZ(x, b) (uint8_t)(std::min(b, (uint64_t)::__builtin_clz(x)) + 1)
 #else
-inline uint8_t _get_leading_zero_count(uint32_t x, uint8_t b) {
-#if defined(_MSC_VER)
+inline uint8_t _get_leading_zero_count(uint32_t x, uint8_t b)
+{
+#    if defined(_MSC_VER)
     uint32_t leading_zero_len = 32;
     ::_BitScanReverse(&leading_zero_len, x);
     --leading_zero_len;
-    return std::min(b, (uint8_t) leading_zero_len);
-#else
+    return std::min(b, (uint8_t)leading_zero_len);
+#    else
     uint8_t v = 1;
-    while (v <= b && !(x & 0x80000000)) {
+    while (v <= b && !(x & 0x80000000))
+    {
         v++;
         x <<= 1;
     }
     return v;
-#endif
+#    endif
 }
-#define _GET_CLZ(x, b) _get_leading_zero_count(x, b)
+#    define _GET_CLZ(x, b) _get_leading_zero_count(x, b)
 #endif /* defined(__GNUC__) */
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief This class represents a hyper log log statistic, i.e., https://en.wikipedia.org/wiki/HyperLogLog.
@@ -52,14 +55,16 @@ namespace NES::Statistic {
  * to permit persons to whom the Software is furnished to do so, subject to the following conditions:
  * The above copyright notice and this permission notice shall be included in all copies or substantial portions of the Software.
  */
-class HyperLogLogStatistic : public SynopsesStatistic {
-  public:
-    static StatisticPtr create(const Windowing::TimeMeasure& startTs,
-                               const Windowing::TimeMeasure& endTs,
-                               uint64_t observedTuples,
-                               uint64_t bitWidth,
-                               const std::string_view hyperLogLogDataString,
-                               double estimate);
+class HyperLogLogStatistic : public SynopsesStatistic
+{
+public:
+    static StatisticPtr create(
+        const Windowing::TimeMeasure& startTs,
+        const Windowing::TimeMeasure& endTs,
+        uint64_t observedTuples,
+        uint64_t bitWidth,
+        const std::string_view hyperLogLogDataString,
+        double estimate);
 
     static StatisticPtr createInit(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t bitWidth);
 
@@ -82,13 +87,14 @@ class HyperLogLogStatistic : public SynopsesStatistic {
      */
     void performEstimation();
 
-  private:
-    HyperLogLogStatistic(const Windowing::TimeMeasure& startTs,
-                         const Windowing::TimeMeasure& endTs,
-                         uint64_t observedTuples,
-                         uint64_t bitWidth,
-                         const std::vector<uint8_t>& registers,
-                         double estimate = std::numeric_limits<double>::quiet_NaN());
+private:
+    HyperLogLogStatistic(
+        const Windowing::TimeMeasure& startTs,
+        const Windowing::TimeMeasure& endTs,
+        uint64_t observedTuples,
+        uint64_t bitWidth,
+        const std::vector<uint8_t>& registers,
+        double estimate = std::numeric_limits<double>::quiet_NaN());
 
     uint64_t bitWidth;
     double_t estimate;
@@ -97,6 +103,6 @@ class HyperLogLogStatistic : public SynopsesStatistic {
     std::vector<uint8_t> registers;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICS_SYNOPSES_HYPERLOGLOGSTATISTIC_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_SYNOPSES_HYPERLOGLOGSTATISTIC_HPP_

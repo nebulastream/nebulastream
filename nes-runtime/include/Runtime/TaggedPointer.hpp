@@ -16,17 +16,19 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
 #include <cstdint>
 #if !(defined(__x86_64__) || defined(_M_X64)) && !(defined(__powerpc64__)) && !(defined(__aarch64__))
-#error "TaggedPointer is x64, arm64 and ppc64 specific code."
+#    error "TaggedPointer is x64, arm64 and ppc64 specific code."
 #endif
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief This class represents a mutable pointer that stores a tag in the 16 msb bits
  * @tparam T
  */
-template<typename T>
-class TaggedPointer {
-  public:
+template <typename T>
+class TaggedPointer
+{
+public:
     /**
      * @brief Creates a TaggedPointer from a pointer and a tag
      * @param ptr
@@ -107,10 +109,10 @@ class TaggedPointer {
      */
     void reset(T* ptr = nullptr, uint16_t tag = 0);
 
-  private:
+private:
     uintptr_t data = 0;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_

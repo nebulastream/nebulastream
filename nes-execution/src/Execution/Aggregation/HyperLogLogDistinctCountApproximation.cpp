@@ -18,23 +18,28 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 
-namespace NES::Runtime::Execution::Aggregation {
+namespace NES::Runtime::Execution::Aggregation
+{
 
 HyperLogLogDistinctCountApproximation::HyperLogLogDistinctCountApproximation(
     const PhysicalTypePtr& inputType,
     const PhysicalTypePtr& finalType,
     const Expressions::ExpressionPtr& inputExpression,
     const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
-    : AggregationFunction(inputType, finalType, inputExpression, resultFieldIdentifier) {}
+    : AggregationFunction(inputType, finalType, inputExpression, resultFieldIdentifier)
+{
+}
 
-void hlladd(void* memrefPtr, uint64_t hash) {
+void hlladd(void* memrefPtr, uint64_t hash)
+{
     //get the HyperLogLog instance
     HyperLogLogDistinctCountApproximationValue* obj = static_cast<HyperLogLogDistinctCountApproximationValue*>(memrefPtr);
     // pass the hash value
     obj->hyperLogLog.add(hash);
 }
 
-void HyperLogLogDistinctCountApproximation::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) {
+void HyperLogLogDistinctCountApproximation::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record)
+{
     // create instance of Murmur3HashFunction and hash the income value
     NES::Nautilus::Interface::MurMur3HashFunction murMur3HashFunction;
     auto inputValue = inputExpression->execute(record);
@@ -42,36 +47,44 @@ void HyperLogLogDistinctCountApproximation::lift(Nautilus::Value<Nautilus::MemRe
     FunctionCall<>("hlladd", hlladd, memref, hashValueNautilus);
 }
 
-void mergeHLL(void* memref1Ptr, void* memref2Ptr) {
+void mergeHLL(void* memref1Ptr, void* memref2Ptr)
+{
     HyperLogLogDistinctCountApproximationValue* obj1 = static_cast<HyperLogLogDistinctCountApproximationValue*>(memref1Ptr);
     HyperLogLogDistinctCountApproximationValue* obj2 = static_cast<HyperLogLogDistinctCountApproximationValue*>(memref2Ptr);
     obj1->hyperLogLog.merge(obj2->hyperLogLog);
 }
 
-void HyperLogLogDistinctCountApproximation::combine(Nautilus::Value<Nautilus::MemRef> memref1,
-                                                    Nautilus::Value<Nautilus::MemRef> memref2) {
+void HyperLogLogDistinctCountApproximation::combine(Nautilus::Value<Nautilus::MemRef> memref1, Nautilus::Value<Nautilus::MemRef> memref2)
+{
     FunctionCall<>("mergeHLL", mergeHLL, memref1, memref2);
 }
 
-double estimateHLL(void* memrefPtr) {
+double estimateHLL(void* memrefPtr)
+{
     HyperLogLogDistinctCountApproximationValue* obj = static_cast<HyperLogLogDistinctCountApproximationValue*>(memrefPtr);
     return obj->hyperLogLog.estimate();
 }
 
-void HyperLogLogDistinctCountApproximation::lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord) {
+void HyperLogLogDistinctCountApproximation::lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord)
+{
     auto result = Nautilus::FunctionCall<>("estimateHLL", estimateHLL, memref);
     resultRecord.write(resultFieldIdentifier, result);
 }
 
-uint64_t HyperLogLogDistinctCountApproximation::getSize() { return inputType->size(); }
+uint64_t HyperLogLogDistinctCountApproximation::getSize()
+{
+    return inputType->size();
+}
 
-void clearHLL(void* memrefPtr) {
+void clearHLL(void* memrefPtr)
+{
     HyperLogLogDistinctCountApproximationValue* obj = static_cast<HyperLogLogDistinctCountApproximationValue*>(memrefPtr);
     obj->hyperLogLog.clear();
 }
 
-void HyperLogLogDistinctCountApproximation::reset(Nautilus::Value<Nautilus::MemRef> memref) {
+void HyperLogLogDistinctCountApproximation::reset(Nautilus::Value<Nautilus::MemRef> memref)
+{
     Nautilus::FunctionCall<>("clearHLL", clearHLL, memref);
 }
 
-}// namespace NES::Runtime::Execution::Aggregation
+} // namespace NES::Runtime::Execution::Aggregation

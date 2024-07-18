@@ -17,8 +17,10 @@
 
 #include <cstdint>
 
-namespace NES::QueryCompilation {
-enum class NautilusBackend : uint8_t {
+namespace NES::QueryCompilation
+{
+enum class NautilusBackend : uint8_t
+{
     // Uses the interpretation based nautilus backend.
     INTERPRETER,
     // Uses the mlir based nautilus backend.
@@ -31,4 +33,4 @@ enum class NautilusBackend : uint8_t {
     CPP_COMPILER_BACKEND
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_NAUTILUSBACKEND_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_NAUTILUSBACKEND_HPP_

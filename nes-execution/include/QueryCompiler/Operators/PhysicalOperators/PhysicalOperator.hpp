@@ -17,7 +17,8 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief General abstraction for all physical operators.
@@ -27,11 +28,12 @@ namespace NES::QueryCompilation::PhysicalOperators {
  * e.g., CentralWindowOperator results in a SlicePreAggregation and a WindowSinkOperator.
  * This mapping is called lowering and is defined in a PhysicalOperatorProvider.
  */
-class PhysicalOperator : public virtual Operator {
-  protected:
+class PhysicalOperator : public virtual Operator
+{
+protected:
     explicit PhysicalOperator(OperatorId id, StatisticId statisticId);
 
-  public:
+public:
     ~PhysicalOperator() noexcept = default;
 
     /**
@@ -41,6 +43,6 @@ class PhysicalOperator : public virtual Operator {
     std::string toString() const;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATOR_HPP_

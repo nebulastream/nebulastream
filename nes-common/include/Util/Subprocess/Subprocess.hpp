@@ -18,17 +18,19 @@
 #include <cstdio>
 #include <iostream>
 #include <thread>
-#include <unistd.h>
 #include <vector>
+#include <unistd.h>
 
-namespace NES::Util {
+namespace NES::Util
+{
 
 /**
  * @brief This class spawns a new subprocess and executes a specific command.
  * As soon as the subprocess object goes out of scope the subprocess is terminated.
  */
-class Subprocess {
-  public:
+class Subprocess
+{
+public:
     /**
      * @brief Spawns a new subprocess with a specific cmd command and arguments.
      * @param cmd that should be executed
@@ -49,7 +51,7 @@ class Subprocess {
      */
     uint64_t getPid();
 
-  private:
+private:
     /**
      * @brief read a _IO_FILE and pipe the content to an output stream
      * @param file _IO_FILE
@@ -69,6 +71,6 @@ class Subprocess {
     std::thread logThread;
 };
 
-}// namespace NES::Util
+} // namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_

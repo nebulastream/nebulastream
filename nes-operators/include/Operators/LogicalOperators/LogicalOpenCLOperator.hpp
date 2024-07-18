@@ -17,11 +17,12 @@
 
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class LogicalOpenCLOperator : public UDFLogicalOperator {
-
-  public:
+class LogicalOpenCLOperator : public UDFLogicalOperator
+{
+public:
     LogicalOpenCLOperator(Catalogs::UDF::JavaUdfDescriptorPtr javaUDFDescriptor, OperatorId id);
 
     /**
@@ -60,9 +61,9 @@ class LogicalOpenCLOperator : public UDFLogicalOperator {
      */
     Catalogs::UDF::JavaUDFDescriptorPtr getJavaUDFDescriptor() const;
 
-  private:
+private:
     std::string openCLCode;
     size_t deviceId;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPENCLOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPENCLOPERATOR_HPP_

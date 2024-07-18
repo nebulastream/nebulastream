@@ -15,28 +15,32 @@
 #ifndef NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 #define NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
 
+#include <future>
+#include <string>
+#include <thread>
+#include <vector>
 #include <Catalogs/Source/SourceCatalogService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <folly/concurrency/UnboundedQueue.h>
-#include <future>
-#include <string>
-#include <thread>
-#include <vector>
 
-namespace grpc {
+namespace grpc
+{
 class Server;
 }
-namespace NES {
+namespace NES
+{
 
-namespace Statistic {
+namespace Statistic
+{
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-}// namespace Statistic
+} // namespace Statistic
 
-namespace Runtime {
+namespace Runtime
+{
 
 class QueryStatistics;
 using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
@@ -44,7 +48,7 @@ using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
-}// namespace Runtime
+} // namespace Runtime
 using namespace Configurations;
 
 class RequestQueue;
@@ -83,38 +87,44 @@ using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckS
 class LocationService;
 using LocationServicePtr = std::shared_ptr<LocationService>;
 
-namespace Catalogs {
+namespace Catalogs
+{
 
-namespace Source {
+namespace Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
-namespace Query {
+namespace Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Query
+} // namespace Query
 
-namespace UDF {
+namespace UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
-}// namespace Catalogs
+} // namespace UDF
+} // namespace Catalogs
 
-namespace Optimizer {
+namespace Optimizer
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class PlacementAmendmentHandler;
 using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
-}// namespace Optimizer
+} // namespace Optimizer
 
-class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener {
+class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordinator>, public Exceptions::ErrorListener
+{
     // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
     using inherited0 = detail::virtual_enable_shared_from_this<NesCoordinator>;
     using inherited1 = ErrorListener;
 
-  public:
+public:
     explicit NesCoordinator(CoordinatorConfigurationPtr coordinatorConfig);
 
     /**
@@ -219,7 +229,7 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
 
     Statistic::StatisticProbeHandlerPtr getStatisticProbeHandler() const;
 
-  private:
+private:
     /**
      * @brief this method will start the GRPC Coordinator server which is responsible for reacting to calls from the CoordinatorRPCClient
      */
@@ -253,10 +263,10 @@ class NesCoordinator : public detail::virtual_enable_shared_from_this<NesCoordin
     Optimizer::PlacementAmendmentHandlerPtr placementAmendmentHandler;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
-  public:
+public:
     constexpr static uint64_t NES_COORDINATOR_ID = 1;
 };
 using NesCoordinatorPtr = std::shared_ptr<NesCoordinator>;
 
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_COMPONENTS_NESCOORDINATOR_HPP_

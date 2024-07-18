@@ -12,36 +12,44 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
 LogicalSourceDescriptor::LogicalSourceDescriptor(std::string logicalSourceName)
-    : SourceDescriptor(Schema::create(), std::move(logicalSourceName)) {}
+    : SourceDescriptor(Schema::create(), std::move(logicalSourceName))
+{
+}
 
-SourceDescriptorPtr LogicalSourceDescriptor::create(std::string logicalSourceName) {
+SourceDescriptorPtr LogicalSourceDescriptor::create(std::string logicalSourceName)
+{
     return std::make_shared<LogicalSourceDescriptor>(LogicalSourceDescriptor(std::move(logicalSourceName)));
 }
 
-bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-    if (!other->instanceOf<LogicalSourceDescriptor>()) {
+bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) const
+{
+    if (!other->instanceOf<LogicalSourceDescriptor>())
+    {
         return false;
     }
     auto otherLogicalSource = other->as<LogicalSourceDescriptor>();
     return getLogicalSourceName() == otherLogicalSource->getLogicalSourceName();
 }
 
-std::string LogicalSourceDescriptor::toString() const {
+std::string LogicalSourceDescriptor::toString() const
+{
     return "LogicalSourceDescriptor(" + logicalSourceName + ", " + physicalSourceName + ")";
 }
 
-SourceDescriptorPtr LogicalSourceDescriptor::copy() {
+SourceDescriptorPtr LogicalSourceDescriptor::copy()
+{
     auto copy = LogicalSourceDescriptor::create(logicalSourceName);
     copy->setPhysicalSourceName(physicalSourceName);
     copy->setSchema(schema->copy());
     return copy;
 }
 
-}// namespace NES
+} // namespace NES

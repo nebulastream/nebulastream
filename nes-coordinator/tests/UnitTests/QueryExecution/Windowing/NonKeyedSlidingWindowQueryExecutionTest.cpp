@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <utility>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -22,8 +23,7 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <iostream>
-#include <utility>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -32,41 +32,43 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class NonKeyedSlidingWindowQueryExecutionTest : public Testing::BaseUnitTest,
-                                                public ::testing::WithParamInterface<QueryCompilation::WindowingStrategy> {
-  public:
-    static void SetUpTestCase() {
+                                                public ::testing::WithParamInterface<QueryCompilation::WindowingStrategy>
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("NonKeyedTumblingWindowQueryExecutionTest.cpp.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("QueryExecutionTest: Setup NonKeyedTumblingWindowQueryExecutionTest.cpp test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         auto windowStrategy = this->GetParam();
-        executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode,
-                                                                         1,
-                                                                         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-                                                                         windowStrategy);
+        executionEngine = std::make_shared<Testing::TestExecutionEngine>(
+            dumpMode, 1, QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL, windowStrategy);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_DEBUG("QueryExecutionTest: Tear down NonKeyedTumblingWindowQueryExecutionTest.cpp test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_DEBUG("QueryExecutionTest: Tear down NonKeyedTumblingWindowQueryExecutionTest.cpp test class.");
-    }
+    static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down NonKeyedTumblingWindowQueryExecutionTest.cpp test class."); }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 
-void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < 30; recordIndex++) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf)
+{
+    for (int recordIndex = 0; recordIndex < 30; recordIndex++)
+    {
         buf[recordIndex][0].write<uint64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(1);
     }
@@ -74,7 +76,8 @@ void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     buf.getBuffer().setSequenceData({1, 1, true});
 }
 
-TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {
+TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow)
+{
     auto sourceSchema = Schema::create()->addField("test$f1", BasicType::UINT64)->addField("test$f2", BasicType::INT64);
     auto testSourceDescriptor = executionEngine->createDataSource(sourceSchema);
 
@@ -88,10 +91,8 @@ TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -105,16 +106,15 @@ TEST_P(NonKeyedSlidingWindowQueryExecutionTest, testSimpleSlidingWindow) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1u);
-    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 10);// sum
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 10); // sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-INSTANTIATE_TEST_CASE_P(testNonKeyedSlidingWindow,
-                        NonKeyedSlidingWindowQueryExecutionTest,
-                        ::testing::Values(QueryCompilation::WindowingStrategy::SLICING,
-                                          QueryCompilation::WindowingStrategy::BUCKETING),
-                        [](const testing::TestParamInfo<NonKeyedSlidingWindowQueryExecutionTest::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testNonKeyedSlidingWindow,
+    NonKeyedSlidingWindowQueryExecutionTest,
+    ::testing::Values(QueryCompilation::WindowingStrategy::SLICING, QueryCompilation::WindowingStrategy::BUCKETING),
+    [](const testing::TestParamInfo<NonKeyedSlidingWindowQueryExecutionTest::ParamType>& info)
+    { return std::string(magic_enum::enum_name(info.param)); });

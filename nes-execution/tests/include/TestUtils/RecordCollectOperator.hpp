@@ -15,18 +15,20 @@
 #ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
 #define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class CollectOperator;
 using CollectOperatorPtr = std::shared_ptr<CollectOperator>;
 
-class CollectOperator : public ExecutableOperator {
-  public:
+class CollectOperator : public ExecutableOperator
+{
+public:
     CollectOperator() = default;
     void execute(ExecutionContext&, Record& record) const override;
     mutable std::vector<Record> records;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_

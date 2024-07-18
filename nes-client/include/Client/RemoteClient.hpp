@@ -15,22 +15,26 @@
 #ifndef NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_
 #define NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_
 
+#include <chrono>
 #include <API/Query.hpp>
 #include <Client/QueryConfig.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/QueryState.hpp>
-#include <chrono>
 
-namespace NES {
+namespace NES
+{
 class Query;
 }
-namespace NES::Client {
+namespace NES::Client
+{
 /**
  * @brief Remote client to deploy queryIdAndCatalogEntryMapping over the REST API
  */
-class RemoteClient {
-  public:
-    struct QueryStopResult {
+class RemoteClient
+{
+public:
+    struct QueryStopResult
+    {
         QueryId queryId = INVALID_QUERY_ID;
         bool withError;
         std::string errorMessage;
@@ -39,17 +43,18 @@ class RemoteClient {
         operator bool() const { return !withError; }
     };
 
-  public:
+public:
     /**
      * @brief constructor of the client
      * @param string coordinator host e.g. 127.0.0.1
      * @param uint16_t coordinator REST port e.g. 8081
      * @param seconds request timeout
      */
-    explicit RemoteClient(const std::string& coordinatorHost = "127.0.0.1",
-                          uint16_t coordinatorPort = 8081,
-                          std::chrono::seconds requestTimeout = std::chrono::seconds(20),
-                          bool disableLogging = false);
+    explicit RemoteClient(
+        const std::string& coordinatorHost = "127.0.0.1",
+        uint16_t coordinatorPort = 8081,
+        std::chrono::seconds requestTimeout = std::chrono::seconds(20),
+        bool disableLogging = false);
 
     /**
      * @brief test if a connection to the coordinator can be established
@@ -133,7 +138,7 @@ class RemoteClient {
      */
     std::string getPhysicalSources(std::string logicalSourceName);
 
-  private:
+private:
     const std::string coordinatorHost;
     const uint16_t coordinatorRESTPort;
     const std::chrono::seconds requestTimeout;
@@ -141,6 +146,6 @@ class RemoteClient {
     std::string getHostName();
 };
 using RemoteClientPtr = std::shared_ptr<RemoteClient>;
-}// namespace NES::Client
+} // namespace NES::Client
 
-#endif// NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_
+#endif // NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_

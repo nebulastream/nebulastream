@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <API/AttributeField.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
@@ -49,19 +49,22 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-#include <string>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace NES::API;
 using namespace NES::Windowing;
 
-namespace NES {
+namespace NES
+{
 
-class TypeInferencePhaseTest : public Testing::BaseUnitTest {
-  public:
+class TypeInferencePhaseTest : public Testing::BaseUnitTest
+{
+public:
     Catalogs::UDF::UDFCatalogPtr udfCatalog = Catalogs::UDF::UDFCatalog::create();
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TypeInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TypeInferencePhaseTest test class.");
     }
@@ -70,7 +73,8 @@ class TypeInferencePhaseTest : public Testing::BaseUnitTest {
 /**
  * @brief In this test we infer the output and input schemas of each operator in a query.
  */
-TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
+TEST_F(TypeInferencePhaseTest, inferQueryPlan)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -110,8 +114,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlan) {
 /**
  * @brief In this test we infer the output and input schemas of each operator in a query.
  */
-TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
-
+TEST_F(TypeInferencePhaseTest, inferWindowQuery)
+{
     auto query = Query::from("default_logical")
                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
                      .byKey(Attribute("id"))
@@ -130,8 +134,8 @@ TEST_F(TypeInferencePhaseTest, inferWindowQuery) {
 /**
  * @brief In this test we try to infer the output and input scheas of an invalid query. This should fail.
  */
-TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryPlanError)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -152,8 +156,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryPlanError) {
 /**
  * @brief In this test we ensure that the source descriptor is correctly replaced, such that the schema can be propagated.
  */
-TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
-
+TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace)
+{
     auto query = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
@@ -175,13 +179,11 @@ TEST_F(TypeInferencePhaseTest, inferQuerySourceReplace) {
 /**
  * @brief In this test we ensure that the schema can be propagated properly when unionWith operator is present.
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator)
+{
     Query subQuery = Query::from("default_logical");
-    auto query = Query::from("default_logical")
-                     .unionWith(subQuery)
-                     .map(Attribute("f3") = Attribute("id")++)
-                     .sink(FileSinkDescriptor::create(""));
+    auto query
+        = Query::from("default_logical").unionWith(subQuery).map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan = query.getQueryPlan();
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
@@ -201,8 +203,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithMergeOperator) {
 /**
  * @brief In this test we test the rename operator
  */
-TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes)
+{
     auto inputSchema = Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8);
 
     auto query = Query::from("default_logical")
@@ -231,8 +233,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameBothAttributes) {
 /**
  * @brief In this test we test the as operator
  */
-TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -263,8 +265,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryRenameOneAttribute) {
 /**
      * @brief In this test we test the as operator
      */
-TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -289,8 +291,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryMapAssignment) {
 /**
  * @brief In this test we test the rename operator inside a project operator
  */
-TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
-
+TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -335,8 +337,8 @@ TEST_F(TypeInferencePhaseTest, inferTypeForSimpleQuery) {
 /**
  * @brief In this test we test the power operator
  */
-TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
-
+TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::FLOAT64);
@@ -400,8 +402,8 @@ TEST_F(TypeInferencePhaseTest, inferTypeForPowerOperatorQuery) {
 /**
  * @brief In this test we test the type inference for query with Project operator
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryWithProject)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -453,8 +455,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithProject) {
 /**
  * @brief In this test we test the type inference for query with Source Rename operator
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSource) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSource)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -506,8 +508,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSource) {
 /**
  * @brief In this test we test the type inference for query with Source Rename and Project operators
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProject) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProject)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -566,8 +568,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProject) {
 /**
  * @brief In this test we test the type inference for query with fully qualified attribute names
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -612,8 +614,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithPartlyOrFullyQualifiedAttributes) {
 /**
  * @brief In this test we test the type inference for query with Source Rename and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNames) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNames)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -672,8 +674,8 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 /**
  * @brief In this test we test the type inference for query with Merge, Source Rename and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNamesAndMergeOperator) {
-
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNamesAndMergeOperator)
+{
     auto inputSchema = Schema::create();
     inputSchema->addField("f1", BasicType::INT32);
     inputSchema->addField("f2", BasicType::INT8);
@@ -741,9 +743,10 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 /**
  * @brief In this test we test the type inference for query with Join, Source Rename and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNamesAndJoinOperator) {
-    auto inputSchema =
-        Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
+TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQualifiedNamesAndJoinOperator)
+{
+    auto inputSchema
+        = Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
@@ -813,19 +816,20 @@ TEST_F(TypeInferencePhaseTest, inferQueryWithRenameSourceAndProjectWithFullyQual
 /**
  * @brief In this test we test the type inference for query with two Joins, Source Rename, map, and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
-    auto inputSchema =
-        Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
+TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins)
+{
+    auto inputSchema
+        = Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
-    auto inputSchema2 =
-        Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
+    auto inputSchema2
+        = Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
     sourceCatalog->addLogicalSource("default_logical2", inputSchema2);
 
-    auto inputSchema3 =
-        Schema::create()->addField("f5", BasicType::INT32)->addField("f6", BasicType::INT8)->addField("ts", BasicType::INT64);
+    auto inputSchema3
+        = Schema::create()->addField("f5", BasicType::INT32)->addField("f6", BasicType::INT8)->addField("ts", BasicType::INT64);
     sourceCatalog->addLogicalSource("default_logical3", inputSchema3);
 
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -913,7 +917,8 @@ TEST_F(TypeInferencePhaseTest, testInferQueryWithMultipleJoins) {
 /**
  * @brief In this test we infer the output and input schemas of each operator in a multi window query
  */
-TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
+TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery)
+{
     auto query = Query::from("default_logical")
                      .window(TumblingWindow::of(TimeCharacteristic::createIngestionTime(), Seconds(10)))
                      .byKey(Attribute("id"))
@@ -956,15 +961,16 @@ TEST_F(TypeInferencePhaseTest, inferMultiWindowQuery) {
 /**
  * @brief In this test we infer the output and input schemas of each operator window join query
  */
-TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
+TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto inputSchema =
-        Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
+    auto inputSchema
+        = Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
-    auto inputSchema2 =
-        Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
+    auto inputSchema2
+        = Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
     sourceCatalog->addLogicalSource("default_logical2", inputSchema2);
 
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -999,24 +1005,27 @@ TEST_F(TypeInferencePhaseTest, inferWindowJoinQuery) {
 /**
  * @brief Inference test for query with manually inserted batch Join.
  */
-TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
+TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
 
-    SchemaPtr schemaProbeSide =
-        Schema::create()
-            ->addField("id1", BasicType::INT64)
-            ->addField("one", BasicType::INT64)
-            ->addField("timestamp",
-                       BasicType::INT64)// todo should be called value. only called timestamp for watermark operator to work.
+    SchemaPtr schemaProbeSide
+        = Schema::create()
+              ->addField("id1", BasicType::INT64)
+              ->addField("one", BasicType::INT64)
+              ->addField(
+                  "timestamp",
+                  BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
         ;
     sourceCatalog->addLogicalSource("probe", schemaProbeSide);
 
-    SchemaPtr schemaBuildSide =
-        Schema::create()
-            ->addField("id2", BasicType::INT64)
-            ->addField("timestamp",
-                       BasicType::INT64)// todo should be called value. only called timestamp for watermark operator to work.
+    SchemaPtr schemaBuildSide
+        = Schema::create()
+              ->addField("id2", BasicType::INT64)
+              ->addField(
+                  "timestamp",
+                  BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
         ;
     sourceCatalog->addLogicalSource("build", schemaBuildSide);
 
@@ -1045,7 +1054,8 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
     joinOp->replace(batchJoinOp);
     ASSERT_TRUE(batchJoinOp->inferSchema());
 
-    for (auto wmaOp : queryPlan->getOperatorByType<WatermarkAssignerLogicalOperator>()) {
+    for (auto wmaOp : queryPlan->getOperatorByType<WatermarkAssignerLogicalOperator>())
+    {
         ASSERT_TRUE(wmaOp->removeAndJoinParentAndChildren());
     }
 
@@ -1066,33 +1076,34 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQueryManuallyInserted) {
 /**
  * @brief Inference test for query with batch Join.
  */
-TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
+TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
 
-    SchemaPtr schemaProbeSide =
-        Schema::create()
-            ->addField("id1", BasicType::INT64)
-            ->addField("one", BasicType::INT64)
-            ->addField("timestamp",
-                       BasicType::INT64)// todo should be called value. only called timestamp for watermark operator to work.
+    SchemaPtr schemaProbeSide
+        = Schema::create()
+              ->addField("id1", BasicType::INT64)
+              ->addField("one", BasicType::INT64)
+              ->addField(
+                  "timestamp",
+                  BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
         ;
     sourceCatalog->addLogicalSource("probe", schemaProbeSide);
 
-    SchemaPtr schemaBuildSide =
-        Schema::create()
-            ->addField("id2", BasicType::INT64)
-            ->addField("timestamp",
-                       BasicType::INT64)// todo should be called value. only called timestamp for watermark operator to work.
+    SchemaPtr schemaBuildSide
+        = Schema::create()
+              ->addField("id2", BasicType::INT64)
+              ->addField(
+                  "timestamp",
+                  BasicType::INT64) // todo should be called value. only called timestamp for watermark operator to work.
         ;
     sourceCatalog->addLogicalSource("build", schemaBuildSide);
 
     auto subQuery = Query::from("build");
 
-    auto query = Query::from("probe")
-                     .batchJoinWith(subQuery)
-                     .where(Attribute("id1") == Attribute("id2"))
-                     .sink(FileSinkDescriptor::create(""));
+    auto query
+        = Query::from("probe").batchJoinWith(subQuery).where(Attribute("id1") == Attribute("id2")).sink(FileSinkDescriptor::create(""));
 
     auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
     auto queryPlan = typeInferencePhase->execute(query.getQueryPlan());
@@ -1111,23 +1122,24 @@ TEST_F(TypeInferencePhaseTest, inferBatchJoinQuery) {
 /**
  * @brief In this test we test the type inference for query with two Joins, Source Rename, map, and Project operators with fully qualified source name
  */
-TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
-    auto inputSchema =
-        Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
+TEST_F(TypeInferencePhaseTest, testJoinOnFourSources)
+{
+    auto inputSchema
+        = Schema::create()->addField("f1", BasicType::INT32)->addField("f2", BasicType::INT8)->addField("ts", BasicType::INT64);
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     sourceCatalog->removeLogicalSource("default_logical");
     sourceCatalog->addLogicalSource("default_logical", inputSchema);
 
-    auto inputSchema2 =
-        Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
+    auto inputSchema2
+        = Schema::create()->addField("f3", BasicType::INT32)->addField("f4", BasicType::INT8)->addField("ts", BasicType::INT64);
     sourceCatalog->addLogicalSource("default_logical2", inputSchema2);
 
-    auto inputSchema3 =
-        Schema::create()->addField("f5", BasicType::INT32)->addField("f6", BasicType::INT8)->addField("ts", BasicType::INT64);
+    auto inputSchema3
+        = Schema::create()->addField("f5", BasicType::INT32)->addField("f6", BasicType::INT8)->addField("ts", BasicType::INT64);
     sourceCatalog->addLogicalSource("default_logical3", inputSchema3);
 
-    auto inputSchema4 =
-        Schema::create()->addField("f7", BasicType::INT32)->addField("f8", BasicType::INT8)->addField("ts", BasicType::INT64);
+    auto inputSchema4
+        = Schema::create()->addField("f7", BasicType::INT32)->addField("f8", BasicType::INT8)->addField("ts", BasicType::INT64);
     sourceCatalog->addLogicalSource("default_logical4", inputSchema4);
 
     auto windowType1 = TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(4));
@@ -1136,8 +1148,7 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
     auto subQuery = Query::from("default_logical2");
     auto subQuery3 = Query::from("default_logical4");
 
-    auto subQuery2 =
-        Query::from("default_logical3").joinWith(subQuery3).where(Attribute("f5") == Attribute("f7")).window(windowType3);
+    auto subQuery2 = Query::from("default_logical3").joinWith(subQuery3).where(Attribute("f5") == Attribute("f7")).window(windowType3);
     auto query = Query::from("default_logical")
                      .joinWith(subQuery)
                      .where(Attribute("f1") == Attribute("f3"))
@@ -1248,7 +1259,8 @@ TEST_F(TypeInferencePhaseTest, testJoinOnFourSources) {
 /**
  * @brief In this test we infer the output schemas of multiple orWith Operators (equivalent to union)
  */
-TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
+TEST_F(TypeInferencePhaseTest, inferOrwithQuery)
+{
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
@@ -1260,12 +1272,11 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
     streamCatalog->addLogicalSource("QnV2", inputSchema);
     streamCatalog->addLogicalSource("QnV3", inputSchema);
 
-    auto query = Query::from("QnV1")
-                     .filter(Attribute("velocity") > 50)
-                     .orWith(Query::from("QnV2")
-                                 .filter(Attribute("quantity") > 5)
-                                 .orWith(Query::from("QnV3").filter(Attribute("quantity") > 7)))
-                     .sink(FileSinkDescriptor::create(""));
+    auto query
+        = Query::from("QnV1")
+              .filter(Attribute("velocity") > 50)
+              .orWith(Query::from("QnV2").filter(Attribute("quantity") > 5).orWith(Query::from("QnV3").filter(Attribute("quantity") > 7)))
+              .sink(FileSinkDescriptor::create(""));
 
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
     auto resultPlan = phase->execute(query.getQueryPlan());
@@ -1287,7 +1298,8 @@ TEST_F(TypeInferencePhaseTest, inferOrwithQuery) {
 /**
  * @brief In this test we infer the output schemas of multiple andWith Operators
  */
-TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
+TEST_F(TypeInferencePhaseTest, inferAndwithQuery)
+{
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
@@ -1342,7 +1354,8 @@ TEST_F(TypeInferencePhaseTest, inferAndwithQuery) {
 /**
  * @brief In this test we infer the output schemas of multiple seqWith Operators
  */
-TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
+TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery)
+{
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
@@ -1394,7 +1407,8 @@ TEST_F(TypeInferencePhaseTest, inferMultiSeqwithQuery) {
 /**
  * @brief In this test we infer the output schemas of a single seqWith Operators
  */
-TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
+TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery)
+{
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto inputSchema = Schema::create()
                            ->addField("sensor_id", DataTypeFactory::createFixedChar(8))
@@ -1437,24 +1451,23 @@ TEST_F(TypeInferencePhaseTest, inferSingleSeqwithQuery) {
 /**
  * @brief In this test we infer schema for a query with mapudf defined
  */
-TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
+TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF)
+{
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto sourceSchema = Schema::create()
-                            ->addField(createField("s$input1", BasicType::FLOAT32))
-                            ->addField(createField("s$input2", BasicType::UINT64));
+    auto sourceSchema
+        = Schema::create()->addField(createField("s$input1", BasicType::FLOAT32))->addField(createField("s$input2", BasicType::UINT64));
 
-    auto udfInputSchema =
-        Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
+    auto udfInputSchema
+        = Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource", sourceSchema);
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
-    auto javaUdfDescriptor =
-        Catalogs::UDF::JavaUDFDescriptorBuilder{}
-            .setInputSchema(udfInputSchema)
-            .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
-            .build();
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
+                                 .setInputSchema(udfInputSchema)
+                                 .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
+                                 .build();
     auto mapUdfLogicalOperator = std::make_shared<MapUDFLogicalOperator>(javaUdfDescriptor, getNextOperatorId());
 
     auto descriptor = LogicalSourceDescriptor::create("logicalSource");
@@ -1477,25 +1490,24 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDF) {
 /**
  * @brief In this test we infer schema for a query with mapudf defined
  */
-TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
+TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator)
+{
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto sourceSchema = Schema::create()
-                            ->addField(createField("s$input1", BasicType::FLOAT32))
-                            ->addField(createField("s$input2", BasicType::UINT64));
+    auto sourceSchema
+        = Schema::create()->addField(createField("s$input1", BasicType::FLOAT32))->addField(createField("s$input2", BasicType::UINT64));
 
-    auto udfInputSchema =
-        Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
+    auto udfInputSchema
+        = Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource1", sourceSchema);
     streamCatalog->addLogicalSource("logicalSource2", sourceSchema);
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
-    auto javaUdfDescriptor =
-        Catalogs::UDF::JavaUDFDescriptorBuilder{}
-            .setInputSchema(udfInputSchema)
-            .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
-            .build();
+    auto javaUdfDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder{}
+                                 .setInputSchema(udfInputSchema)
+                                 .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute", DataTypeFactory::createBoolean()))
+                                 .build();
     auto mapUdfLogicalOperator = std::make_shared<MapUDFLogicalOperator>(javaUdfDescriptor, getNextOperatorId());
 
     auto descriptor1 = LogicalSourceDescriptor::create("logicalSource1");
@@ -1526,31 +1538,31 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFAfterBinaryOperator) {
 /**
  * @brief In this test we infer schema for a query with mapudf defined
  */
-TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) {
+TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator)
+{
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto sourceSchema = Schema::create()
-                            ->addField(createField("s$input1", BasicType::FLOAT32))
-                            ->addField(createField("s$input2", BasicType::UINT64));
+    auto sourceSchema
+        = Schema::create()->addField(createField("s$input1", BasicType::FLOAT32))->addField(createField("s$input2", BasicType::UINT64));
 
-    auto udfInputSchema =
-        Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
+    auto udfInputSchema
+        = Schema::create()->addField(createField("input1", BasicType::FLOAT32))->addField(createField("input2", BasicType::UINT64));
 
     streamCatalog->addLogicalSource("logicalSource1", sourceSchema);
     streamCatalog->addLogicalSource("logicalSource2", sourceSchema);
 
     auto sinkOperator = LogicalOperatorFactory::createSinkOperator(NullOutputSinkDescriptor::create());
 
-    auto javaUdfDescriptor1 =
-        Catalogs::UDF::JavaUDFDescriptorBuilder{}
-            .setInputSchema(udfInputSchema)
-            .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute1", DataTypeFactory::createBoolean()))
-            .build();
+    auto javaUdfDescriptor1
+        = Catalogs::UDF::JavaUDFDescriptorBuilder{}
+              .setInputSchema(udfInputSchema)
+              .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute1", DataTypeFactory::createBoolean()))
+              .build();
     auto mapUdfLogicalOperator1 = std::make_shared<MapUDFLogicalOperator>(javaUdfDescriptor1, getNextOperatorId());
 
-    auto javaUdfDescriptor2 =
-        Catalogs::UDF::JavaUDFDescriptorBuilder{}
-            .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute2", DataTypeFactory::createBoolean()))
-            .build();
+    auto javaUdfDescriptor2
+        = Catalogs::UDF::JavaUDFDescriptorBuilder{}
+              .setOutputSchema(std::make_shared<Schema>()->addField("outputAttribute2", DataTypeFactory::createBoolean()))
+              .build();
     auto mapUdfLogicalOperator2 = std::make_shared<MapUDFLogicalOperator>(javaUdfDescriptor1, getNextOperatorId());
 
     auto descriptor1 = LogicalSourceDescriptor::create("logicalSource1");
@@ -1583,12 +1595,12 @@ TEST_F(TypeInferencePhaseTest, inferTypeForQueryWithMapUDFBeforeBinaryOperator) 
  * @brief We test that the datatype of a event time field is always an integer. We create a query with a window that has
  * a timestamp field with a wrong datatype and run the type inference phase. We expect an exception to be thrown.
  */
-TEST_F(TypeInferencePhaseTest, windowDataTypeForTimestamp) {
+TEST_F(TypeInferencePhaseTest, windowDataTypeForTimestamp)
+{
     // Creating necessary objects for running the type inference phase
     Catalogs::Source::SourceCatalogPtr streamCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
-    auto sourceSchema = TestSchemas::getSchemaTemplate("id_time_u64")
-                            ->addField("wrongDataTypeTimeStamp", BasicType::BOOLEAN)
-                            ->updateSourceName("source");
+    auto sourceSchema
+        = TestSchemas::getSchemaTemplate("id_time_u64")->addField("wrongDataTypeTimeStamp", BasicType::BOOLEAN)->updateSourceName("source");
     streamCatalog->addLogicalSource("source", sourceSchema);
     auto phase = Optimizer::TypeInferencePhase::create(streamCatalog, udfCatalog);
 
@@ -1607,4 +1619,4 @@ TEST_F(TypeInferencePhaseTest, windowDataTypeForTimestamp) {
     ASSERT_ANY_THROW(phase->execute(queryWrong.getQueryPlan()));
 }
 
-}// namespace NES
+} // namespace NES

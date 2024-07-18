@@ -15,12 +15,14 @@
 #ifndef NES_COORDINATOR_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_
 #define NES_COORDINATOR_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_
 
-namespace NES {
-class GrpcLibraryInizializer {
-  public:
+namespace NES
+{
+class GrpcLibraryInizializer
+{
+public:
     GrpcLibraryInizializer();
     ~GrpcLibraryInizializer();
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_GRPC_GRPCLIBRARYINITIALIZER_HPP_

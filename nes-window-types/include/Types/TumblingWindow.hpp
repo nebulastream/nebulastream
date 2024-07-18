@@ -18,12 +18,14 @@
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 /**
  * A TumblingWindow assigns records to non-overlapping windows.
  */
-class TumblingWindow : public TimeBasedWindowType {
-  public:
+class TumblingWindow : public TimeBasedWindowType
+{
+public:
     /**
     * Creates a new TumblingWindow that assigns
     * elements to time windows based on the element timestamp and multiplier.
@@ -49,11 +51,11 @@ class TumblingWindow : public TimeBasedWindowType {
 
     uint64_t hash() const override;
 
-  private:
+private:
     TumblingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size);
     const TimeMeasure size;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_TUMBLINGWINDOW_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_TUMBLINGWINDOW_HPP_

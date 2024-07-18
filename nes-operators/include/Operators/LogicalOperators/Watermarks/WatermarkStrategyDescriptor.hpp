@@ -17,19 +17,22 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-}// namespace NES
+} // namespace NES
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 
-class WatermarkStrategyDescriptor : public std::enable_shared_from_this<WatermarkStrategyDescriptor> {
-  public:
+class WatermarkStrategyDescriptor : public std::enable_shared_from_this<WatermarkStrategyDescriptor>
+{
+public:
     WatermarkStrategyDescriptor();
     virtual ~WatermarkStrategyDescriptor() = default;
     virtual bool equal(WatermarkStrategyDescriptorPtr other) = 0;
@@ -41,17 +44,21 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     * @tparam WatermarkStrategyType
     * @return bool true if node is of WatermarkStrategyDescriptor
     */
-    template<class WatermarkStrategyType>
-    bool instanceOf() const {
-        if (dynamic_cast<WatermarkStrategyType*>(this)) {
+    template <class WatermarkStrategyType>
+    bool instanceOf() const
+    {
+        if (dynamic_cast<WatermarkStrategyType*>(this))
+        {
             return true;
         }
         return false;
     };
 
-    template<class WatermarkStrategyType>
-    bool instanceOf() {
-        if (dynamic_cast<WatermarkStrategyType*>(this)) {
+    template <class WatermarkStrategyType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<WatermarkStrategyType*>(this))
+        {
             return true;
         }
         return false;
@@ -62,16 +69,20 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
     * @tparam WatermarkStrategyType
     * @return returns a shared pointer of the WatermarkStrategyType
     */
-    template<class WatermarkStrategyType>
-    std::shared_ptr<WatermarkStrategyType> as() const {
-        if (instanceOf<const WatermarkStrategyType>()) {
+    template <class WatermarkStrategyType>
+    std::shared_ptr<WatermarkStrategyType> as() const
+    {
+        if (instanceOf<const WatermarkStrategyType>())
+        {
             return std::dynamic_pointer_cast<const WatermarkStrategyType>(this->shared_from_this());
         }
         throw std::bad_cast();
     }
-    template<class WatermarkStrategyType>
-    std::shared_ptr<WatermarkStrategyType> as() {
-        if (instanceOf<WatermarkStrategyType>()) {
+    template <class WatermarkStrategyType>
+    std::shared_ptr<WatermarkStrategyType> as()
+    {
+        if (instanceOf<WatermarkStrategyType>())
+        {
             return std::dynamic_pointer_cast<WatermarkStrategyType>(this->shared_from_this());
         }
         throw std::bad_cast();
@@ -79,6 +90,6 @@ class WatermarkStrategyDescriptor : public std::enable_shared_from_this<Watermar
 
     virtual bool inferStamp(SchemaPtr schema) = 0;
 };
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKSTRATEGYDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKSTRATEGYDESCRIPTOR_HPP_

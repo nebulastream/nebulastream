@@ -17,7 +17,8 @@
 
 #include <Compiler/CompilerFlags.hpp>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief A class which inherits from `ExternalAPI` can be passed to a `CompilationRequest` to augment the
@@ -27,8 +28,9 @@ namespace NES::Compiler {
  * An example for an external API would be CUDA, as we need to give the clang compiler CUDA-specific flags
  * that are not part of the default compiler call mechanism.
  */
-class ExternalAPI {
-  public:
+class ExternalAPI
+{
+public:
     /**
      * @brief Get the compiler flags specific to the external API.
      * @return CompilerFlags
@@ -38,6 +40,6 @@ class ExternalAPI {
     virtual ~ExternalAPI() = default;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_

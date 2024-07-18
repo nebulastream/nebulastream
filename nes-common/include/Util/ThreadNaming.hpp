@@ -15,7 +15,8 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_THREADNAMING_HPP_
 #define NES_COMMON_INCLUDE_UTIL_THREADNAMING_HPP_
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief Sets the calling thread's name using the supplied
  * formattable string. For example, setThreadName("helper") will
@@ -27,6 +28,6 @@ namespace NES {
  * @param ... variadic arguments
  */
 void setThreadName(const char* threadNameFmt, ...);
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_THREADNAMING_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_THREADNAMING_HPP_

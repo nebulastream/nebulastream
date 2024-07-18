@@ -15,17 +15,19 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_
 
-#include <Runtime/BloomFilter.hpp>
 #include <atomic>
 #include <cstddef>
 #include <memory>
+#include <Runtime/BloomFilter.hpp>
 
-namespace NES {
+namespace NES
+{
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 class FixedPageRef;
 
 class FixedPage;
@@ -35,8 +37,9 @@ using FixedPagePtr = std::shared_ptr<FixedPage>;
  * @brief class that stores the tuples on a page.
  * It also contains a bloom filter to have a quick check if a tuple is not on the page
  */
-class FixedPage {
-  public:
+class FixedPage
+{
+public:
     static constexpr double BLOOM_FALSE_POSITIVE_RATE = 1e-2;
     static constexpr uint64_t PAGE_SIZE = 4096;
 
@@ -47,10 +50,8 @@ class FixedPage {
      * @param pageSize
      * @param bloomFalsePosRate
      */
-    explicit FixedPage(uint8_t* dataPtr,
-                       size_t sizeOfRecord,
-                       size_t pageSize = PAGE_SIZE,
-                       double bloomFalsePosRate = BLOOM_FALSE_POSITIVE_RATE);
+    explicit FixedPage(
+        uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize = PAGE_SIZE, double bloomFalsePosRate = BLOOM_FALSE_POSITIVE_RATE);
 
     /**
      * @brief Constructor for a FixedPage from another FixedPage
@@ -109,7 +110,7 @@ class FixedPage {
      */
     std::string getContentAsString(SchemaPtr schema) const;
 
-  private:
+private:
     friend FixedPageRef;
 
     /**
@@ -127,5 +128,5 @@ class FixedPage {
     double bloomFalsePosRate;
 };
 
-}// namespace NES::Nautilus::Interface
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_
+} // namespace NES::Nautilus::Interface
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_

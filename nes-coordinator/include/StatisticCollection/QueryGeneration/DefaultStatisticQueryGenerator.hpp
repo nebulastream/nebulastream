@@ -17,14 +17,16 @@
 
 #include <StatisticCollection/QueryGeneration/AbstractStatisticQueryGenerator.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Generates a statistic query by a simple mapping strategy of
  * metric types ----> Synopsis
  */
-class DefaultStatisticQueryGenerator : public AbstractStatisticQueryGenerator {
-  public:
+class DefaultStatisticQueryGenerator : public AbstractStatisticQueryGenerator
+{
+public:
     /**
      * @brief Creates a DefaultStatisticQueryGenerator
      * @return AbstractStatisticQueryGeneratorPtr
@@ -40,11 +42,12 @@ class DefaultStatisticQueryGenerator : public AbstractStatisticQueryGenerator {
      * @param queryCatalog
      * @return Query
      */
-    Query createStatisticQuery(const Characteristic& characteristic,
-                               const Windowing::WindowTypePtr& window,
-                               const SendingPolicyPtr& sendingPolicy,
-                               const TriggerConditionPtr& triggerCondition,
-                               const Catalogs::Query::QueryCatalog& queryCatalog) override;
+    Query createStatisticQuery(
+        const Characteristic& characteristic,
+        const Windowing::WindowTypePtr& window,
+        const SendingPolicyPtr& sendingPolicy,
+        const TriggerConditionPtr& triggerCondition,
+        const Catalogs::Query::QueryCatalog& queryCatalog) override;
 
     /**
      * @brief Virtual destructor
@@ -52,6 +55,6 @@ class DefaultStatisticQueryGenerator : public AbstractStatisticQueryGenerator {
     virtual ~DefaultStatisticQueryGenerator();
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_DEFAULTSTATISTICQUERYGENERATOR_HPP_
+#endif // NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_QUERYGENERATION_DEFAULTSTATISTICQUERYGENERATOR_HPP_

@@ -14,20 +14,22 @@
 #ifndef NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
 #define NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
 
+#include <memory>
+#include <vector>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/ReconnectPoint.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <memory>
-#include <vector>
 
-namespace NES::Spatial::Mobility::Experimental {
+namespace NES::Spatial::Mobility::Experimental
+{
 
 /**
  * @brief contains the predicted reconnect points along the trajectory of this worker.
  * Note: As the current location of this worker changes, the ReconnectSchedulePredictor can potentially re-compute all previous predictions.
  */
-class ReconnectSchedule {
-  public:
+class ReconnectSchedule
+{
+public:
     /**
      * Constructor
      * @param reconnectVector a vector containing times, locations and new parent ids for the expected reconnects
@@ -51,9 +53,9 @@ class ReconnectSchedule {
      */
     static ReconnectSchedule Empty();
 
-  private:
+private:
     std::vector<ReconnectPoint> reconnectVector;
 };
-}// namespace NES::Spatial::Mobility::Experimental
+} // namespace NES::Spatial::Mobility::Experimental
 
-#endif// NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_
+#endif // NES_WORKER_INCLUDE_MOBILITY_RECONNECTSCHEDULEPREDICTORS_RECONNECTSCHEDULE_HPP_

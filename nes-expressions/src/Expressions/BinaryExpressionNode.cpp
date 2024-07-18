@@ -12,35 +12,44 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES {
-BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp)) {}
+namespace NES
+{
+BinaryExpressionNode::BinaryExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp))
+{
+}
 
-BinaryExpressionNode::BinaryExpressionNode(BinaryExpressionNode* other) : ExpressionNode(other) {
+BinaryExpressionNode::BinaryExpressionNode(BinaryExpressionNode* other) : ExpressionNode(other)
+{
     addChildWithEqual(getLeft()->copy());
     addChildWithEqual(getRight()->copy());
 }
 
-void BinaryExpressionNode::setChildren(ExpressionNodePtr const& left, ExpressionNodePtr const& right) {
+void BinaryExpressionNode::setChildren(ExpressionNodePtr const& left, ExpressionNodePtr const& right)
+{
     addChildWithEqual(left);
     addChildWithEqual(right);
 }
 
-ExpressionNodePtr BinaryExpressionNode::getLeft() const {
-    if (children.size() != 2) {
+ExpressionNodePtr BinaryExpressionNode::getLeft() const
+{
+    if (children.size() != 2)
+    {
         NES_FATAL_ERROR("A binary expression always should have two children, but it had: {}", children.size());
     }
     return children[0]->as<ExpressionNode>();
 }
 
-ExpressionNodePtr BinaryExpressionNode::getRight() const {
-    if (children.size() != 2) {
+ExpressionNodePtr BinaryExpressionNode::getRight() const
+{
+    if (children.size() != 2)
+    {
         NES_FATAL_ERROR("A binary expression always should have two children, but it had: {}", children.size());
     }
     return children[1]->as<ExpressionNode>();
 }
 
-}// namespace NES
+} // namespace NES

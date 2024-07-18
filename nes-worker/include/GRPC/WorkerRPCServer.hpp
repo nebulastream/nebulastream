@@ -15,43 +15,49 @@
 #ifndef NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
 #define NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
 
-#include <CoordinatorRPCService.grpc.pb.h>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <WorkerRPCService.grpc.pb.h>
 #include <grpcpp/grpcpp.h>
 #include <grpcpp/health_check_service_interface.h>
+#include <CoordinatorRPCService.grpc.pb.h>
+#include <WorkerRPCService.grpc.pb.h>
 
 using grpc::Server;
 using grpc::ServerBuilder;
 using grpc::ServerContext;
 using grpc::Status;
 
-namespace NES {
+namespace NES
+{
 
-namespace Monitoring {
+namespace Monitoring
+{
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
-}// namespace Monitoring
+} // namespace Monitoring
 
-namespace Statistic {
+namespace Statistic
+{
 class StatisticManager;
 using StatisticManagerPtr = std::shared_ptr<StatisticManager>;
-}// namespace Statistic
+} // namespace Statistic
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 class ReconnectSchedulePredictor;
 using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
-}// namespace Spatial::Mobility::Experimental
+} // namespace Spatial::Mobility::Experimental
 
-class WorkerRPCServer final : public WorkerRPCService::Service {
-  public:
-    WorkerRPCServer(Runtime::NodeEnginePtr nodeEngine,
-                    Monitoring::MonitoringAgentPtr monitoringAgent,
-                    NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
-                    NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor);
+class WorkerRPCServer final : public WorkerRPCService::Service
+{
+public:
+    WorkerRPCServer(
+        Runtime::NodeEnginePtr nodeEngine,
+        Monitoring::MonitoringAgentPtr monitoringAgent,
+        NES::Spatial::Mobility::Experimental::LocationProviderPtr locationProvider,
+        NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor);
 
     Status RegisterQuery(ServerContext* context, const RegisterQueryRequest* request, RegisterQueryReply* reply) override;
 
@@ -61,8 +67,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status StopQuery(ServerContext* context, const StopQueryRequest* request, StopQueryReply* reply) override;
 
-    Status
-    RegisterMonitoringPlan(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) override;
+    Status RegisterMonitoringPlan(ServerContext*, const MonitoringRegistrationRequest* request, MonitoringRegistrationReply*) override;
 
     Status GetMonitoringData(ServerContext* context, const MonitoringDataRequest* request, MonitoringDataReply* reply) override;
 
@@ -74,7 +79,7 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
 
     Status ProbeStatistics(ServerContext*, const ProbeStatisticsRequest* request, ProbeStatisticsReply* reply) override;
 
-  private:
+private:
     Runtime::NodeEnginePtr nodeEngine;
     Statistic::StatisticManagerPtr statisticManager;
     Monitoring::MonitoringAgentPtr monitoringAgent;
@@ -82,6 +87,6 @@ class WorkerRPCServer final : public WorkerRPCService::Service {
     NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictorPtr trajectoryPredictor;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_
+#endif // NES_WORKER_INCLUDE_GRPC_WORKERRPCSERVER_HPP_

@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <BaseUnitTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/Topology.hpp>
@@ -27,17 +26,22 @@
 #include <StatisticCollection/StatisticProbeHandling/DefaultStatisticProbeGenerator.hpp>
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
+#include <BaseUnitTest.hpp>
 
-namespace NES::RequestProcessor::Experimental {
-class SerialStorageHandlerTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES::RequestProcessor::Experimental
+{
+class SerialStorageHandlerTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SerialStorageHandlerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SerialAccessHandle test class.");
     }
 };
 
-TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
+TEST_F(SerialStorageHandlerTest, TestResourceAccess)
+{
     constexpr auto requestId = RequestId(1);
     //create access handle
     auto coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
@@ -47,18 +51,20 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     auto globalQueryPlan = GlobalQueryPlan::create();
     auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     auto udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
-    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                          Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                          Statistic::DefaultStatisticCache::create(),
-                                                                          topology);
-    StorageDataStructures storageDataStructures = {coordinatorConfiguration,
-                                                   topology,
-                                                   globalExecutionPlan,
-                                                   globalQueryPlan,
-                                                   queryCatalog,
-                                                   sourceCatalog,
-                                                   udfCatalog,
-                                                   statisticProbeHandler};
+    auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+        Statistic::StatisticRegistry::create(),
+        Statistic::DefaultStatisticProbeGenerator::create(),
+        Statistic::DefaultStatisticCache::create(),
+        topology);
+    StorageDataStructures storageDataStructures
+        = {coordinatorConfiguration,
+           topology,
+           globalExecutionPlan,
+           globalQueryPlan,
+           queryCatalog,
+           sourceCatalog,
+           udfCatalog,
+           statisticProbeHandler};
     auto serialAccessHandle = SerialStorageHandler::create(storageDataStructures);
 
     //test if we can obtain the resource we passed to the constructor
@@ -71,4 +77,4 @@ TEST_F(SerialStorageHandlerTest, TestResourceAccess) {
     ASSERT_EQ(statisticProbeHandler.get(), serialAccessHandle->getStatisticProbeHandler(requestId).get());
 }
 
-}// namespace NES::RequestProcessor::Experimental
+} // namespace NES::RequestProcessor::Experimental

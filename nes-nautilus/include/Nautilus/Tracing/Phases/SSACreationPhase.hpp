@@ -17,7 +17,8 @@
 #include <memory>
 #include <set>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
 class ExecutionTrace;
 class Block;
@@ -28,8 +29,9 @@ class BlockRef;
  * @brief This phase converts a execution trace to SSA form.
  * This implies that, each value is only assigned and that all parameters to a basic block are passed by block arguments.
  */
-class SSACreationPhase {
-  public:
+class SSACreationPhase
+{
+public:
     /**
      * @brief Applies the phase on a execution trace
      * @param trace
@@ -37,19 +39,20 @@ class SSACreationPhase {
      */
     std::shared_ptr<ExecutionTrace> apply(std::shared_ptr<ExecutionTrace> trace);
 
-  private:
+private:
     /**
      * @brief The SSACreationPhaseContext maintains local state, which is required to calculate the ssa from.
      */
-    class SSACreationPhaseContext {
-      public:
+    class SSACreationPhaseContext
+    {
+    public:
         SSACreationPhaseContext(std::shared_ptr<ExecutionTrace> trace);
         /*
          * Starts the conversion of the trace to SSA from
          */
         std::shared_ptr<ExecutionTrace> process();
 
-      private:
+    private:
         /**
          * @brief Converts a single basic block to SSA form
          * @param block reference to the basic block
@@ -78,11 +81,11 @@ class SSACreationPhase {
          */
         void makeBlockArgumentsUnique();
 
-      private:
+    private:
         std::shared_ptr<ExecutionTrace> trace;
         std::set<uint32_t> processedBlocks;
     };
 };
 
-}// namespace NES::Nautilus::Tracing
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_PHASES_SSACREATIONPHASE_HPP_
+} // namespace NES::Nautilus::Tracing
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_PHASES_SSACREATIONPHASE_HPP_

@@ -18,11 +18,17 @@
 
 using namespace std::string_literals;
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 /**
  * @brief input format enum gives information whether a JSON or CSV was used to transfer data
  */
-enum class InputFormat : uint8_t { JSON, CSV, NES_BINARY };
+enum class InputFormat : uint8_t
+{
+    JSON,
+    CSV,
+    NES_BINARY
+};
 
 /**
  * NOTE: this is not related to the network stack at all. Do not mix it up.
@@ -32,11 +38,16 @@ enum class InputFormat : uint8_t { JSON, CSV, NES_BINARY };
  * BUFFER_SIZE_FROM_SOCKET: Between each message you also obtain a fixed amount of bytes with the size of the next message,
  * bytesUsedForSocketBufferSizeTransfer needs to be set
  */
-enum class TCPDecideMessageSize : uint8_t { TUPLE_SEPARATOR, USER_SPECIFIED_BUFFER_SIZE, BUFFER_SIZE_FROM_SOCKET };
+enum class TCPDecideMessageSize : uint8_t
+{
+    TUPLE_SEPARATOR,
+    USER_SPECIFIED_BUFFER_SIZE,
+    BUFFER_SIZE_FROM_SOCKET
+};
 
 //Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";
-const std::string RPC_PORT_CONFIG = "rpcPort";//used to be coordinator port, renamed to uniform naming
+const std::string RPC_PORT_CONFIG = "rpcPort"; //used to be coordinator port, renamed to uniform naming
 const std::string DATA_PORT_CONFIG = "dataPort";
 const std::string REST_IP_CONFIG = "restIp";
 const std::string COORDINATOR_HOST_CONFIG = "coordinatorHost";
@@ -89,15 +100,15 @@ const std::string PERFORM_ADVANCE_SEMANTIC_VALIDATION = "advanceSemanticValidati
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
 //Elegant Configurations
-const auto ELEGANT = "elegant"s;                                // elegant configurations are initialize with this constant
-const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s;        // accelerate java udfs supplied in Map UDF operator
-const auto PLANNER_SERVICE_URL = "plannerServiceURL"s;          // URL for ELEGANT planner
-const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s;// URL for acceleration service
-const auto TRANSFER_RATE = "transferRate"s;                     // Fake transfer rate between two workers
+const auto ELEGANT = "elegant"s; // elegant configurations are initialize with this constant
+const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s; // accelerate java udfs supplied in Map UDF operator
+const auto PLANNER_SERVICE_URL = "plannerServiceURL"s; // URL for ELEGANT planner
+const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; // URL for acceleration service
+const auto TRANSFER_RATE = "transferRate"s; // Fake transfer rate between two workers
 
 //Worker Configuration Names
 const std::string WORKER_ID = "workerId";
-const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort";//needs to be same as RPC Port of Coordinator
+const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; //needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_HOST_CONFIG = "localWorkerHost";
 const std::string PARENT_ID_CONFIG = "parentId";
 const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
@@ -221,5 +232,5 @@ const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
 const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
-}// namespace NES::Configurations
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
+} // namespace NES::Configurations
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

@@ -15,7 +15,8 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
 #include <Expressions/ExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 class LogicalFunction;
 class ValueType;
@@ -25,8 +26,9 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
  * @brief This expression node represents a function with a specific name.
  * Internally it stores a LogicalFunction, which is used for inference.
  */
-class FunctionExpression final : public ExpressionNode {
-  public:
+class FunctionExpression final : public ExpressionNode
+{
+public:
     /**
      * @brief Factory method to create a ConstantValueExpressionNode.
      */
@@ -75,10 +77,10 @@ class FunctionExpression final : public ExpressionNode {
 
     explicit FunctionExpression(DataTypePtr stamp, std::string functionName, std::unique_ptr<LogicalFunction> function);
 
-  private:
+private:
     const std::string functionName;
     const std::unique_ptr<LogicalFunction> function;
 };
 
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_
+} // namespace NES
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_

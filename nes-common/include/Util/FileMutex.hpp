@@ -17,14 +17,16 @@
 
 #include <string>
 
-namespace NES::Util {
+namespace NES::Util
+{
 
 /**
  * @brief This is a mutex that uses files to perform locking.
  * It implements the Mutex named requirements
  */
-class FileMutex {
-  public:
+class FileMutex
+{
+public:
     /**
      * @brief Creates a FileMutex using a file specified as filePath
      * @param filePath that path to a file
@@ -62,11 +64,11 @@ class FileMutex {
      */
     void unlock();
 
-  private:
+private:
     int fd;
     std::string fileName;
 };
 
-}// namespace NES::Util
+} // namespace NES::Util
 
-#endif// NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_

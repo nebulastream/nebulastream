@@ -17,7 +17,8 @@
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief An operator, which creates an initializes a new origin id.
  * This are usually operators that create and emit new data records,
@@ -25,8 +26,9 @@ namespace NES {
  * Operators that only modify or select an already existing record, e.g.,
  * Filter or Map, dont need to assign new origin ids.
  */
-class OriginIdAssignmentOperator : public virtual Operator {
-  public:
+class OriginIdAssignmentOperator : public virtual Operator
+{
+public:
     /**
      * @brief Constructor for the origin id operator
      * @param operatorId OperatorId
@@ -52,9 +54,9 @@ class OriginIdAssignmentOperator : public virtual Operator {
      */
     OriginId getOriginId() const;
 
-  protected:
+protected:
     OriginId originId;
 };
-}// namespace NES
+} // namespace NES
 // namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_

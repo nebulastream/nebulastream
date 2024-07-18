@@ -23,21 +23,23 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class ZmqSink : public SinkMedium {
-
-  public:
+class ZmqSink : public SinkMedium
+{
+public:
     //TODO: remove internal flag once the new network stack is in place
-    ZmqSink(SinkFormatPtr format,
-            Runtime::NodeEnginePtr nodeEngine,
-            uint32_t numOfProducers,
-            const std::string& host,
-            uint16_t port,
-            bool internal,
-            SharedQueryId sharedQueryId,
-            DecomposedQueryPlanId decomposedQueryPlanId,
-            uint64_t numberOfOrigins = 1);
+    ZmqSink(
+        SinkFormatPtr format,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        const std::string& host,
+        uint16_t port,
+        bool internal,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins = 1);
     ~ZmqSink() override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
@@ -61,7 +63,7 @@ class ZmqSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  private:
+private:
     std::string host;
     uint16_t port;
 
@@ -74,15 +76,18 @@ class ZmqSink : public SinkMedium {
     bool disconnect();
 };
 using ZmqSinkPtr = std::shared_ptr<ZmqSink>;
-}// namespace NES
+} // namespace NES
 
-namespace fmt {
-template<>
-struct formatter<NES::ZmqSink> : formatter<std::string> {
-    auto format(const NES::ZmqSink& zmq_sink, format_context& ctx) -> decltype(ctx.out()) {
+namespace fmt
+{
+template <>
+struct formatter<NES::ZmqSink> : formatter<std::string>
+{
+    auto format(const NES::ZmqSink& zmq_sink, format_context& ctx) -> decltype(ctx.out())
+    {
         return fmt::format_to(ctx.out(), "{} {}", zmq_sink.getHost(), zmq_sink.getPort());
     }
 };
-}//namespace fmt
+} //namespace fmt
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_

@@ -18,20 +18,24 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Util/MetricCollectorType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Monitoring {
+namespace Monitoring
+{
 
 /**
 * @brief Pre-defined metrics used for NES internally.
 */
-class MetricUtils {
-  public:
+class MetricUtils
+{
+public:
     /**
     *
     * @param metricSchema
@@ -91,7 +95,7 @@ class MetricUtils {
     static MetricCollectorType createCollectorTypeFromMetricType(MetricType type);
 };
 
-}// namespace Monitoring
-}// namespace NES
+} // namespace Monitoring
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_

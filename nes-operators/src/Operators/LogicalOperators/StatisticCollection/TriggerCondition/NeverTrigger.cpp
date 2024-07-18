@@ -14,14 +14,27 @@
 
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-TriggerConditionPtr NeverTrigger::create() { return std::make_shared<NeverTrigger>(); }
+TriggerConditionPtr NeverTrigger::create()
+{
+    return std::make_shared<NeverTrigger>();
+}
 
-bool NeverTrigger::operator==(const TriggerCondition& rhs) const { return rhs.instanceOf<NeverTrigger>(); }
+bool NeverTrigger::operator==(const TriggerCondition& rhs) const
+{
+    return rhs.instanceOf<NeverTrigger>();
+}
 
-std::string NeverTrigger::toString() const { return "NeverTrigger"; }
+std::string NeverTrigger::toString() const
+{
+    return "NeverTrigger";
+}
 
-bool NeverTrigger::shallTrigger(const ExpressionNode&) { return false; }
+bool NeverTrigger::shallTrigger(const ExpressionNode&)
+{
+    return false;
+}
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

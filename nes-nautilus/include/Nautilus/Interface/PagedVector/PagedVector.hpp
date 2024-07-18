@@ -13,12 +13,13 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
-#include <API/Schema.hpp>
-#include <Runtime/Allocator/MemoryResource.hpp>
 #include <cstdint>
 #include <memory>
 #include <vector>
-namespace NES::Nautilus::Interface {
+#include <API/Schema.hpp>
+#include <Runtime/Allocator/MemoryResource.hpp>
+namespace NES::Nautilus::Interface
+{
 class PagedVectorRef;
 
 /**
@@ -28,8 +29,9 @@ class PagedVectorRef;
  * Each page can contain page_size/entry_size entries.
  * TODO check if we should use FixedPage.cpp or introduce specific page class #3968
  */
-class PagedVector {
-  public:
+class PagedVector
+{
+public:
     static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
@@ -118,7 +120,7 @@ class PagedVector {
      */
     ~PagedVector();
 
-  private:
+private:
     friend PagedVectorRef;
     std::unique_ptr<std::pmr::memory_resource> allocator;
     uint64_t entrySize;
@@ -130,6 +132,6 @@ class PagedVector {
     uint64_t totalNumberOfEntries;
 };
 
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_

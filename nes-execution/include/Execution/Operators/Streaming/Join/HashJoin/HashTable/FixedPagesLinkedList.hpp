@@ -15,27 +15,27 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_
 
+#include <vector>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
-#include <vector>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class implements a LinkedList consisting of FixedPages
  */
-class FixedPagesLinkedList {
-  public:
+class FixedPagesLinkedList
+{
+public:
     /**
      * @brief Constructor for a FixedPagesLinkedList
      * @param fixedPagesAllocator
      * @param sizeOfRecord
      * @param pageSize
      */
-    explicit FixedPagesLinkedList(FixedPagesAllocator& fixedPagesAllocator,
-                                  size_t sizeOfRecord,
-                                  size_t pageSize,
-                                  size_t preAllocPageSizeCnt);
+    explicit FixedPagesLinkedList(
+        FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize, size_t preAllocPageSizeCnt);
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is NOT thread safe
@@ -69,7 +69,7 @@ class FixedPagesLinkedList {
      */
     std::string getStatistics();
 
-  private:
+private:
     std::atomic<uint64_t> pos;
     FixedPagesAllocator& fixedPagesAllocator;
     std::vector<Nautilus::Interface::FixedPagePtr> pages;
@@ -84,6 +84,6 @@ class FixedPagesLinkedList {
     std::atomic<bool> insertInProgress;
     std::atomic<Nautilus::Interface::FixedPage*> currentPage;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_

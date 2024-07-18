@@ -23,17 +23,20 @@
 
 #include OATPP_CODEGEN_BEGIN(ApiController)
 
-namespace NES::REST::Controller {
-class ConnectivityController : public oatpp::web::server::api::ApiController {
-
-  public:
+namespace NES::REST::Controller
+{
+class ConnectivityController : public oatpp::web::server::api::ApiController
+{
+public:
     /**
      * Constructor with object mapper.
      * @param objectMapper - default object mapper used to serialize/deserialize DTOs.
      * @param completeRouterPrefix - url consisting of base router prefix (e.g "v1/nes/") and controller specific router prefix (e.g "connectivityController")
      */
     ConnectivityController(const std::shared_ptr<ObjectMapper>& objectMapper, const oatpp::String& completeRouterPrefix)
-        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix) {}
+        : oatpp::web::server::api::ApiController(objectMapper, completeRouterPrefix)
+    {
+    }
 
     /**
      * Create a shared object of the API controller
@@ -41,21 +44,23 @@ class ConnectivityController : public oatpp::web::server::api::ApiController {
      * @param routerPrefixAddition - controller specific router prefix (e.g "connectivityController/")
      * @return
      */
-    static std::shared_ptr<ConnectivityController> create(const std::shared_ptr<ObjectMapper>& objectMapper,
-                                                          const std::string& routerPrefixAddition) {
+    static std::shared_ptr<ConnectivityController>
+    create(const std::shared_ptr<ObjectMapper>& objectMapper, const std::string& routerPrefixAddition)
+    {
         oatpp::String completeRouterPrefix = BASE_ROUTER_PREFIX + routerPrefixAddition;
         return std::make_shared<ConnectivityController>(objectMapper, completeRouterPrefix);
     }
 
-    ENDPOINT("GET", "/check", root) {
+    ENDPOINT("GET", "/check", root)
+    {
         nlohmann::json response;
         response["statusCode"] = 200;
         response["success"] = true;
         return createResponse(Status::CODE_200, response.dump());
     }
 };
-}// namespace NES::REST::Controller
+} // namespace NES::REST::Controller
 
 #include OATPP_CODEGEN_END(ApiController)
 
-#endif// NES_COORDINATOR_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REST_CONTROLLER_CONNECTIVITYCONTROLLER_HPP_

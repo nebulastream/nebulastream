@@ -16,7 +16,8 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_JOINFORWARDREFS_HPP_
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class FieldAccessExpressionNode;
 using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
@@ -24,14 +25,16 @@ using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-namespace Join {
+namespace Join
+{
 class LogicalJoinDescriptor;
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
-namespace Experimental {
+namespace Experimental
+{
 class LogicalBatchJoinDescriptor;
 using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
-}// namespace Experimental
+} // namespace Experimental
 class JoinActionDescriptor;
 using JoinActionDescriptorPtr = std::shared_ptr<JoinActionDescriptor>;
 
@@ -41,13 +44,14 @@ using AbstractJoinHandlerPtr = std::shared_ptr<AbstractJoinHandler>;
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-namespace Experimental {
+namespace Experimental
+{
 class AbstractBatchJoinHandler;
 using AbstractBatchJoinHandlerPtr = std::shared_ptr<AbstractBatchJoinHandler>;
 
 class BatchJoinOperatorHandler;
 using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
-}// namespace Experimental
-}// namespace Join
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_JOINFORWARDREFS_HPP_
+} // namespace Experimental
+} // namespace Join
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_JOINFORWARDREFS_HPP_

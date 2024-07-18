@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <utility>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -22,8 +23,7 @@
 #include <Util/TestSinkDescriptor.hpp>
 #include <Util/TestSourceDescriptor.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <iostream>
-#include <utility>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 using Runtime::TupleBuffer;
@@ -32,37 +32,41 @@ using Runtime::TupleBuffer;
 constexpr auto dumpMode = NES::QueryCompilation::DumpMode::NONE;
 
 class KeyedTumblingWindowQueryExecutionTest : public Testing::BaseUnitTest,
-                                              public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType> {
-  public:
-    static void SetUpTestCase() {
+                                              public ::testing::WithParamInterface<QueryCompilation::QueryCompilerType>
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("KeyedTumblingWindowQueryExecutionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("QueryExecutionTest: Setup KeyedTumblingWindowQueryExecutionTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         executionEngine = std::make_shared<Testing::TestExecutionEngine>(dumpMode);
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_DEBUG("QueryExecutionTest: Tear down KeyedTumblingWindowQueryExecutionTest test case.");
         ASSERT_TRUE(executionEngine->stop());
         Testing::BaseUnitTest::TearDown();
     }
 
     /* Will be called after all tests in this class are finished. */
-    static void TearDownTestCase() {
-        NES_DEBUG("QueryExecutionTest: Tear down KeyedTumblingWindowQueryExecutionTest test class.");
-    }
+    static void TearDownTestCase() { NES_DEBUG("QueryExecutionTest: Tear down KeyedTumblingWindowQueryExecutionTest test class."); }
 
     std::shared_ptr<Testing::TestExecutionEngine> executionEngine;
     static constexpr DecomposedQueryPlanId defaultDecomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     static constexpr SharedQueryId defaultSharedQueryId = INVALID_SHARED_QUERY_ID;
 };
 
-void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
-    for (int recordIndex = 0; recordIndex < 9; recordIndex++) {
+void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf)
+{
+    for (int recordIndex = 0; recordIndex < 9; recordIndex++)
+    {
         buf[recordIndex][0].write<uint64_t>(recordIndex);
         buf[recordIndex][1].write<int64_t>(recordIndex % 2);
         buf[recordIndex][2].write<int64_t>(recordIndex * 10);
@@ -74,7 +78,8 @@ void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buf) {
     buf.getBuffer().setSequenceData({1, 1, true});
 }
 
-TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
+TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow)
+{
     const auto expectedNumberOfTuples = 2;
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
@@ -93,10 +98,8 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
                      .project(Attribute("test$sum"))
                      .sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -110,14 +113,15 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindow) {
     auto resultBuffer = testSink->getResultBuffer(0);
 
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), expectedNumberOfTuples);
-    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 60LL);// sum
-    EXPECT_EQ(resultBuffer[1][0].read<int64_t>(), 40LL);// sum
+    EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 60LL); // sum
+    EXPECT_EQ(resultBuffer[1][0].read<int64_t>(), 40LL); // sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjection) {
+TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjection)
+{
     const auto expectedNumberOfTuples = 2;
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
@@ -139,10 +143,8 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
                      .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -159,18 +161,19 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, singleKeyTumblingWindowNoProjectio
     EXPECT_EQ(resultBuffer[0][0].read<int64_t>(), 0LL); // start
     EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL); // end
     EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 0LL); // key
-    EXPECT_EQ(resultBuffer[0][3].read<int64_t>(), 60LL);// sum
+    EXPECT_EQ(resultBuffer[0][3].read<int64_t>(), 60LL); // sum
 
     EXPECT_EQ(resultBuffer[1][0].read<int64_t>(), 0LL); // start
     EXPECT_EQ(resultBuffer[1][1].read<int64_t>(), 5LL); // end
     EXPECT_EQ(resultBuffer[1][2].read<int64_t>(), 1LL); // key
-    EXPECT_EQ(resultBuffer[1][3].read<int64_t>(), 40LL);// sum
+    EXPECT_EQ(resultBuffer[1][3].read<int64_t>(), 40LL); // sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
+TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow)
+{
     const auto expectedNumberOfTuples = 2;
     auto sourceSchema = Schema::create()
                             ->addField("test$ts", BasicType::UINT64)
@@ -194,10 +197,8 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
                      .apply(Sum(Attribute("test$value", BasicType::INT64))->as(Attribute("test$sum")))
                      .sink(testSinkDescriptor);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           query.getQueryPlan()->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, query.getQueryPlan()->getRootOperators());
     auto plan = executionEngine->submitQuery(decomposedQueryPlan);
 
     auto source = executionEngine->getDataSource(plan, 0);
@@ -215,13 +216,13 @@ TEST_F(KeyedTumblingWindowQueryExecutionTest, multiKeyTumblingWindow) {
     EXPECT_EQ(resultBuffer[0][1].read<int64_t>(), 5LL); // end
     EXPECT_EQ(resultBuffer[0][2].read<int64_t>(), 0LL); // key
     EXPECT_EQ(resultBuffer[0][3].read<int64_t>(), 0LL); // key
-    EXPECT_EQ(resultBuffer[0][4].read<int64_t>(), 60LL);// sum
+    EXPECT_EQ(resultBuffer[0][4].read<int64_t>(), 60LL); // sum
 
     EXPECT_EQ(resultBuffer[1][0].read<int64_t>(), 0LL); // start
     EXPECT_EQ(resultBuffer[1][1].read<int64_t>(), 5LL); // end
     EXPECT_EQ(resultBuffer[1][2].read<int64_t>(), 1LL); // key
     EXPECT_EQ(resultBuffer[1][3].read<int64_t>(), 1LL); // key
-    EXPECT_EQ(resultBuffer[1][4].read<int64_t>(), 40LL);// sum
+    EXPECT_EQ(resultBuffer[1][4].read<int64_t>(), 40LL); // sum
 
     ASSERT_TRUE(executionEngine->stopQuery(plan));
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);

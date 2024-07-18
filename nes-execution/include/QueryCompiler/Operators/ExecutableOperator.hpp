@@ -16,23 +16,26 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief A executable operator, represents an executable version of one or more operators in a query plan.
  * It is currently used to represent compiled executable pipeline stages in a query plan.
  * Based on this query plan we then create the executable query plan.
  */
-class ExecutableOperator : public UnaryOperator {
-  public:
+class ExecutableOperator : public UnaryOperator
+{
+public:
     /**
      * @brief Creates a new executable operator, which captures a pipeline stage and a set of operator handlers.
      * @param executablePipelineStage the executable pipeline stage
      * @param operatorHandlers a list of operator handlers
      * @return OperatorPtr
      */
-    static OperatorPtr create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                              std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
+    static OperatorPtr create(
+        Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
 
     /**
      * @brief Gets the executable pipeline stage.
@@ -48,14 +51,15 @@ class ExecutableOperator : public UnaryOperator {
     std::string toString() const override;
     OperatorPtr copy() override;
 
-  private:
-    ExecutableOperator(OperatorId id,
-                       Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                       std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
+private:
+    ExecutableOperator(
+        OperatorId id,
+        Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+        std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers);
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_EXECUTABLEOPERATOR_HPP_

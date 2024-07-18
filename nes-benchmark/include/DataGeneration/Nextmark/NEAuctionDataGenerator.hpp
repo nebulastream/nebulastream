@@ -15,10 +15,12 @@
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEAUCTIONDATAGENERATOR_HPP_
 #include <DataGeneration/DataGenerator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-class NEAuctionDataGenerator : public DataGenerator {
-  public:
+class NEAuctionDataGenerator : public DataGenerator
+{
+public:
     explicit NEAuctionDataGenerator();
 
     std::string getName() override;
@@ -28,6 +30,6 @@ class NEAuctionDataGenerator : public DataGenerator {
     std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEAUCTIONDATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEAUCTIONDATAGENERATOR_HPP_

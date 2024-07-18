@@ -12,27 +12,25 @@
     limitations under the License.
 */
 
-#include <Util/JavaUDFDescriptorBuilder.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <algorithm>
 #include <filesystem>
 #include <fstream>
+#include <Util/JavaUDFDescriptorBuilder.hpp>
+#include <Util/Logger/Logger.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
-JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::build() const {
-    return JavaUDFDescriptor::create(className,
-                                     methodName,
-                                     instance,
-                                     byteCodeList,
-                                     inputSchema,
-                                     outputSchema,
-                                     inputClassName,
-                                     outputClassName);
+JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::build() const
+{
+    return JavaUDFDescriptor::create(
+        className, methodName, instance, byteCodeList, inputSchema, outputSchema, inputClassName, outputClassName);
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(std::string_view classFilePath) {
-    for (auto& [className, byteCode] : byteCodeList) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(std::string_view classFilePath)
+{
+    for (auto& [className, byteCode] : byteCodeList)
+    {
         std::string copy = className;
         std::replace(copy.begin(), copy.end(), '.', '/');
         const auto fileName = std::filesystem::path(classFilePath) / fmt::format("{}.class", copy);
@@ -48,41 +46,51 @@ JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::loadByteCodeFrom(std::string
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setClassName(std::string_view newClassName) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setClassName(std::string_view newClassName)
+{
     this->className = newClassName;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setMethodName(std::string_view newMethodName) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setMethodName(std::string_view newMethodName)
+{
     this->methodName = newMethodName;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInstance(const jni::JavaSerializedInstance& newInstance) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInstance(const jni::JavaSerializedInstance& newInstance)
+{
     this->instance = newInstance;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setByteCodeList(const jni::JavaUDFByteCodeList& newByteCodeList) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setByteCodeList(const jni::JavaUDFByteCodeList& newByteCodeList)
+{
     this->byteCodeList = newByteCodeList;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema)
+{
     this->outputSchema = newOutputSchema;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInputClassName(std::string_view newInputClassName) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setInputClassName(std::string_view newInputClassName)
+{
     this->inputClassName = newInputClassName;
     return *this;
 }
 
-JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputClassName(std::string_view newOutputClassName) {
+JavaUDFDescriptorBuilder& JavaUDFDescriptorBuilder::setOutputClassName(std::string_view newOutputClassName)
+{
     this->outputClassName = newOutputClassName;
     return *this;
 }
 
-JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor() { return JavaUDFDescriptorBuilder().build(); }
+JavaUDFDescriptorPtr JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor()
+{
+    return JavaUDFDescriptorBuilder().build();
+}
 
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF

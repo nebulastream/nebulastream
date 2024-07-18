@@ -15,16 +15,18 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALEXPRESSIONNODE_HPP_
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief This class just indicates that a node is an arithmetical expression.
  */
-class ArithmeticalExpressionNode {
-  protected:
+class ArithmeticalExpressionNode
+{
+protected:
     ArithmeticalExpressionNode() = default;
     virtual ~ArithmeticalExpressionNode() noexcept = default;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALEXPRESSIONNODE_HPP_

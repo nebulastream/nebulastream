@@ -14,28 +14,34 @@
 
 #ifndef NES_STATISTICS_INCLUDE_STATISTICS_STATISTICVALUE_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICS_STATISTICVALUE_HPP_
-#include <Measures/TimeMeasure.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <vector>
-namespace NES::Statistic {
+#include <Measures/TimeMeasure.hpp>
+namespace NES::Statistic
+{
 
 /**
  * @brief This class acts as an abstract class for all possible statistic values, e.g., a specific cardinality of 25
  */
-template<typename StatType = double>
-class StatisticValue {
-  public:
+template <typename StatType = double>
+class StatisticValue
+{
+public:
     /**
      * @brief Constructor
      * @param value
      */
-    explicit StatisticValue(StatType value) : StatisticValue(value, 0, 0) {}
+    explicit StatisticValue(StatType value) : StatisticValue(value, 0, 0) { }
     StatisticValue(StatType value, uint64_t startTs, uint64_t endTs)
-        : StatisticValue(value, Windowing::TimeMeasure(startTs), Windowing::TimeMeasure(endTs)) {}
+        : StatisticValue(value, Windowing::TimeMeasure(startTs), Windowing::TimeMeasure(endTs))
+    {
+    }
     explicit StatisticValue(StatType value, const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs)
-        : value(value), startTs(startTs), endTs(endTs) {}
+        : value(value), startTs(startTs), endTs(endTs)
+    {
+    }
 
     /**
      * @brief Getter for the underlying value
@@ -51,7 +57,7 @@ class StatisticValue {
      */
     virtual ~StatisticValue() = default;
 
-  private:
+private:
     StatType value;
     Windowing::TimeMeasure startTs;
     Windowing::TimeMeasure endTs;
@@ -61,9 +67,10 @@ using StatisticValuePtr = std::shared_ptr<StatisticValue<>>;
 /**
  * @brief This class acts as a container for multiple probe items
  */
-template<typename StatType = double>
-class ProbeResult {
-  public:
+template <typename StatType = double>
+class ProbeResult
+{
+public:
     void addStatisticValue(StatisticValue<StatType> statisticValue) { probeItems.emplace_back(statisticValue); }
 
     /**
@@ -72,17 +79,19 @@ class ProbeResult {
      */
     const std::vector<StatisticValue<StatType>>& getProbeItems() const { return probeItems; }
 
-    std::string toString() const {
+    std::string toString() const
+    {
         std::stringstream result;
-        for (const auto& probeItem : probeItems) {
+        for (const auto& probeItem : probeItems)
+        {
             result << std::to_string(probeItem.getValue()) + ", ";
         }
         return result.str();
     }
 
-  private:
+private:
     std::vector<StatisticValue<StatType>> probeItems;
 };
 
-}// namespace NES::Statistic
-#endif// NES_STATISTICS_INCLUDE_STATISTICS_STATISTICVALUE_HPP_
+} // namespace NES::Statistic
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_STATISTICVALUE_HPP_

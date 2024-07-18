@@ -15,21 +15,22 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
 
-#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/IRGraph.hpp>
 #include <memory>
 #include <unordered_set>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
 
-namespace NES::Nautilus::IR {
+namespace NES::Nautilus::IR
+{
 
 // class Operation;
 using OperationPtr = std::shared_ptr<Operations::Operation>;
 /**
  * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
  */
-class NESIRDumpHandler {
-
-  public:
+class NESIRDumpHandler
+{
+public:
     virtual ~NESIRDumpHandler() = default;
     static std::shared_ptr<NESIRDumpHandler> create(std::ostream& out);
     explicit NESIRDumpHandler(std::ostream& out);
@@ -40,9 +41,9 @@ class NESIRDumpHandler {
     */
     void dump(const std::shared_ptr<Operations::FunctionOperation> funcOp);
 
-  private:
+private:
     std::ostream& out;
-    std::unordered_set<std::string> visitedBlocks;//We keep track of visited blocks to avoid multi or infinite dumping.
+    std::unordered_set<std::string> visitedBlocks; //We keep track of visited blocks to avoid multi or infinite dumping.
 
     /**
      * @brief Traverses the NESIR to find a BB that is on the same or higher 'blockScopeLevel' compared to the initial 'basicBlock'.
@@ -69,6 +70,6 @@ class NESIRDumpHandler {
     void dumpHelper(BasicBlockPtr const& basicBlock);
 };
 
-}// namespace NES::Nautilus::IR
+} // namespace NES::Nautilus::IR
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_

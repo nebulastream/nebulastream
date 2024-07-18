@@ -17,13 +17,14 @@
 
 #include <string>
 
-namespace NES::Worker::Properties {
+namespace NES::Worker::Properties
+{
 const std::string SLOTS = "SLOTS";
 const std::string LOCATION = "LOCATION";
 const std::string DATA_PORT = "DATA_PORT";
 const std::string GRPC_PORT = "GRPC_PORT";
 const std::string ADDRESS = "ADDRESS";
 const std::string MAINTENANCE = "MAINTENANCE";
-}// namespace NES::Worker::Properties
+} // namespace NES::Worker::Properties
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKERPROPERTYKEYS_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKERPROPERTYKEYS_HPP_

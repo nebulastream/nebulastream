@@ -15,16 +15,18 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCINTERPRETERBACKEND_HPP_
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
-namespace NES::Nautilus::Backends::BC {
+namespace NES::Nautilus::Backends::BC
+{
 
 /**
  * @brief Compilation backend that uses a byte code interpreter.
  */
-class BCInterpreterBackend : public CompilationBackend {
-  public:
+class BCInterpreterBackend : public CompilationBackend
+{
+public:
     std::unique_ptr<Executable>
     compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
 };
 
-}// namespace NES::Nautilus::Backends::BC
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCINTERPRETERBACKEND_HPP_
+} // namespace NES::Nautilus::Backends::BC
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCINTERPRETERBACKEND_HPP_

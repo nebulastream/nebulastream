@@ -11,19 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
+#include <cmath>
 #include <Execution/Expressions/Functions/PiExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class PiExpressionTest : public Testing::BaseUnitTest {
-  public:
+class PiExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("PiExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PiExpressionTest test class.");
     }
@@ -32,7 +35,8 @@ class PiExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down PiExpressionTest test class."); }
 };
 
-TEST_F(PiExpressionTest, evaluatePiExpressionInteger) {
+TEST_F(PiExpressionTest, evaluatePiExpressionInteger)
+{
     auto expression = UnaryExpressionWrapper<PiExpression>();
     // Int8
     {
@@ -60,19 +64,20 @@ TEST_F(PiExpressionTest, evaluatePiExpressionInteger) {
     }
 }
 
-TEST_F(PiExpressionTest, evaluatePiExpressionFloat) {
+TEST_F(PiExpressionTest, evaluatePiExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<PiExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 5));
+        auto resultValue = expression.eval(Value<Float>((float)5));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 6));
+        auto resultValue = expression.eval(Value<Double>((double)6));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

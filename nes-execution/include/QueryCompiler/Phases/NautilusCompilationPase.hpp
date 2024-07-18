@@ -13,17 +13,19 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_
+#include <functional>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <functional>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Compilation phase, which generates executable machine code for pipelines of nautilus operators.
  */
-class NautilusCompilationPhase {
-  public:
+class NautilusCompilationPhase
+{
+public:
     /**
      * @brief Constructor to create a new NautilusCompilationPhase with a set of compilerOptions
      * @param compilerOptions
@@ -50,9 +52,9 @@ class NautilusCompilationPhase {
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
-  private:
+private:
     const QueryCompilation::QueryCompilerOptionsPtr compilerOptions;
 };
-};// namespace NES::QueryCompilation
+}; // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_

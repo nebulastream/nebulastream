@@ -23,7 +23,8 @@
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
 /**
  * @brief The UDF catalog stores all the data required to execute a Java UDF inside an embedded JVM.
@@ -32,8 +33,9 @@ namespace NES::Catalogs::UDF {
  * to retrieve the implementation data during query rewrite,
  * and to retrieve a list of registered UDFs for visualization.
  */
-class UDFCatalog {
-  public:
+class UDFCatalog
+{
+public:
     /**
      * @brief Create a UDFCatalog instance.
      * @return UDFCatalog instance.
@@ -77,9 +79,9 @@ class UDFCatalog {
     // but that's not needed right now.
     std::vector<std::string> listUDFs() const;
 
-  private:
+private:
     std::unordered_map<std::string, UDFDescriptorPtr> udfStore;
 };
 
-}// namespace NES::Catalogs::UDF
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_UDF_UDFCATALOG_HPP_
+} // namespace NES::Catalogs::UDF
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_UDF_UDFCATALOG_HPP_

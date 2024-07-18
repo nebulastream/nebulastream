@@ -7,13 +7,15 @@
 #include <Parsers/NebulaPSL/gen/NesCEPParser.h>
 #include <antlr4-runtime.h>
 
-namespace NES::Parsers {
+namespace NES::Parsers
+{
 
 /**
  * This interface defines an abstract listener for a parse tree produced by NesCEPParser.
  */
-class NesCEPListener : public antlr4::tree::ParseTreeListener {
-  public:
+class NesCEPListener : public antlr4::tree::ParseTreeListener
+{
+public:
     virtual void enterQuery(NesCEPParser::QueryContext* ctx) = 0;
     virtual void exitQuery(NesCEPParser::QueryContext* ctx) = 0;
 
@@ -183,5 +185,5 @@ class NesCEPListener : public antlr4::tree::ParseTreeListener {
     virtual void exitMathOperator(NesCEPParser::MathOperatorContext* ctx) = 0;
 };
 
-}// namespace NES::Parsers
-#endif// NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLISTENER_H_
+} // namespace NES::Parsers
+#endif // NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPLISTENER_H_

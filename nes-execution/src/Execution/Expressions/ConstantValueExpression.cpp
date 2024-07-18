@@ -12,15 +12,19 @@
     limitations under the License.
 */
 #include <Execution/Expressions/ConstantValueExpression.hpp>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-template<typename T>
-    requires std::is_integral_v<T> || std::is_floating_point_v<T>
-ConstantValueExpression<T>::ConstantValueExpression(T value) : value(value) {}
+template <typename T>
+requires std::is_integral_v<T> || std::is_floating_point_v<T>
+ConstantValueExpression<T>::ConstantValueExpression(T value) : value(value)
+{
+}
 
-template<typename T>
-    requires std::is_integral_v<T> || std::is_floating_point_v<T>
-Value<> ConstantValueExpression<T>::execute(Record&) const {
+template <typename T>
+requires std::is_integral_v<T> || std::is_floating_point_v<T>
+Value<> ConstantValueExpression<T>::execute(Record&) const
+{
     return Value<>(value);
 }
 
@@ -36,4 +40,4 @@ template class ConstantValueExpression<float>;
 template class ConstantValueExpression<bool>;
 template class ConstantValueExpression<double>;
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

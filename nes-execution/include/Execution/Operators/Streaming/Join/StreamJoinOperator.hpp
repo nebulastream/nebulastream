@@ -25,15 +25,17 @@
 #include <Util/Common.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class acts as the parent class for our stream join. It stores the join strategy and the window strategy.
  * Furthermore, it provides a static method for casting from a void* to any given StreamJoinOperatorHandler.
  * #4184 investigates, if magic_enum is necessary here
  */
-class StreamJoinOperator {
-  public:
+class StreamJoinOperator
+{
+public:
     StreamJoinOperator(QueryCompilation::StreamJoinStrategy joinStrategy, QueryCompilation::WindowingStrategy windowingStrategy);
 
     /**
@@ -45,37 +47,49 @@ class StreamJoinOperator {
      * @param windowingStrategyInt
      * @return OutputClass*
      */
-    template<typename OutputClass = StreamJoinOperatorHandler>
-    static OutputClass* getSpecificOperatorHandler(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
-
+    template <typename OutputClass = StreamJoinOperatorHandler>
+    static OutputClass* getSpecificOperatorHandler(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+    {
         auto joinStrategy = magic_enum::enum_value<QueryCompilation::StreamJoinStrategy>(joinStrategyInt);
         auto windowingStrategy = magic_enum::enum_value<QueryCompilation::WindowingStrategy>(windowingStrategyInt);
-        switch (joinStrategy) {
+        switch (joinStrategy)
+        {
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-                if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+                if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+                {
                     NES_THROW_RUNTIME_ERROR("Windowing strategy was used that is not supported with this compiler!");
                 }
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
             case QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL: {
-                if (windowingStrategy == QueryCompilation::WindowingStrategy::SLICING) {
+                if (windowingStrategy == QueryCompilation::WindowingStrategy::SLICING)
+                {
                     auto* tmpOpHandler = static_cast<HJOperatorHandlerSlicing*>(ptrOpHandler);
                     return dynamic_cast<OutputClass*>(tmpOpHandler);
-                } else if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+                }
+                else if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+                {
                     auto* tmpOpHandler = static_cast<HJOperatorHandlerBucketing*>(ptrOpHandler);
                     return dynamic_cast<OutputClass*>(tmpOpHandler);
-                } else {
+                }
+                else
+                {
                     NES_THROW_RUNTIME_ERROR("Windowing strategy was used that is not supported with this compiler!");
                 }
             }
             case QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN: {
-                if (windowingStrategy == QueryCompilation::WindowingStrategy::SLICING) {
+                if (windowingStrategy == QueryCompilation::WindowingStrategy::SLICING)
+                {
                     auto* tmpOpHandler = static_cast<NLJOperatorHandlerSlicing*>(ptrOpHandler);
                     return dynamic_cast<OutputClass*>(tmpOpHandler);
-                } else if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
+                }
+                else if (windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING)
+                {
                     auto* tmpOpHandler = static_cast<NLJOperatorHandlerBucketing*>(ptrOpHandler);
                     return dynamic_cast<OutputClass*>(tmpOpHandler);
-                } else {
+                }
+                else
+                {
                     NES_THROW_RUNTIME_ERROR("Windowing strategy was used that is not supported with this compiler!");
                 }
             }
@@ -85,5 +99,5 @@ class StreamJoinOperator {
     QueryCompilation::StreamJoinStrategy joinStrategy;
     QueryCompilation::WindowingStrategy windowingStrategy;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_

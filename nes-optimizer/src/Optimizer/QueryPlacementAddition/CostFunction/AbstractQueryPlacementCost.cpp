@@ -13,4 +13,6 @@
 */
 
 #include <Optimizer/QueryPlacementAddition/CostFunction/AbstractQueryPlacementCost.hpp>
-NES::Optimizer::AbstractQueryPlacementCost::AbstractQueryPlacementCost() {}
+NES::Optimizer::AbstractQueryPlacementCost::AbstractQueryPlacementCost()
+{
+}

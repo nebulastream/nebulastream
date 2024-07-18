@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/TextFunctions/PatternMatching/ExtractingRegex.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -20,19 +20,23 @@
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class ExtractingRegexTest : public Testing::BaseUnitTest {
-  public:
+class ExtractingRegexTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ExtractingRegexTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ExtractingRegexTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
@@ -44,7 +48,8 @@ class ExtractingRegexTest : public Testing::BaseUnitTest {
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
-TEST_F(ExtractingRegexTest, evaluateExtractingRegex1) {
+TEST_F(ExtractingRegexTest, evaluateExtractingRegex1)
+{
     auto expression = TernaryExpressionWrapper<ExtractingRegex>();
     // Simple Replace
     {
@@ -56,7 +61,8 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex1) {
         EXPECT_EQ(resultValue, Value<Text>("abc"));
     }
 }
-TEST_F(ExtractingRegexTest, evaluateExtractingRegex2) {
+TEST_F(ExtractingRegexTest, evaluateExtractingRegex2)
+{
     auto expression = TernaryExpressionWrapper<ExtractingRegex>();
     // Replacement notation for groups
     {
@@ -67,7 +73,8 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex2) {
         EXPECT_EQ(resultValue, Value<Text>(""));
     }
 }
-TEST_F(ExtractingRegexTest, evaluateExtractingRegex3) {
+TEST_F(ExtractingRegexTest, evaluateExtractingRegex3)
+{
     auto expression = TernaryExpressionWrapper<ExtractingRegex>();
     // Regex string correction
     {
@@ -78,7 +85,8 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex3) {
         EXPECT_EQ(resultValue, Value<Text>("a"));
     }
 }
-TEST_F(ExtractingRegexTest, evaluateExtractingRegex4) {
+TEST_F(ExtractingRegexTest, evaluateExtractingRegex4)
+{
     auto expression = TernaryExpressionWrapper<ExtractingRegex>();
     // Regex swap
     {
@@ -89,4 +97,4 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex4) {
         EXPECT_EQ(resultValue, Value<Text>("b"));
     }
 }
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

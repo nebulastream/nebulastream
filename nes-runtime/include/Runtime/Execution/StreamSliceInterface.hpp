@@ -14,17 +14,19 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <cstdint>
 #include <span>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 /**
  * @brief Basic Slice Interface with necessary methods and variables for migration
  */
-class StreamSliceInterface {
-  public:
+class StreamSliceInterface
+{
+public:
     /**
      * @brief Getter for the start ts of the slice
      * @return uint64_t
@@ -46,5 +48,5 @@ class StreamSliceInterface {
 
     virtual ~StreamSliceInterface() = default;
 };
-}// namespace NES::Runtime::Execution
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
+} // namespace NES::Runtime::Execution
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_

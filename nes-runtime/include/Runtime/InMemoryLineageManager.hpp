@@ -15,21 +15,23 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
 
-#include <Runtime/AbstractLineageManager.hpp>
-#include <Util/BufferSequenceNumber.hpp>
 #include <memory>
 #include <mutex>
 #include <unordered_map>
 #include <vector>
+#include <Runtime/AbstractLineageManager.hpp>
+#include <Util/BufferSequenceNumber.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief The Lineage Manager class stores map of all tuples that got their sequence number changed
  * by stateful operators
  */
-class InMemoryLineageManager : public AbstractLineageManager {
-  public:
+class InMemoryLineageManager : public AbstractLineageManager
+{
+public:
     InMemoryLineageManager() = default;
 
     /**
@@ -59,7 +61,7 @@ class InMemoryLineageManager : public AbstractLineageManager {
      */
     size_t getLineageSize() const override;
 
-  private:
+private:
     ///this unordered map maps new buffer sequence numbers to old ones, which tuple buffer had before a statefull operator
 
     std::unordered_map<BufferSequenceNumber, std::vector<BufferSequenceNumber>> bufferAncestorMapping;
@@ -68,6 +70,6 @@ class InMemoryLineageManager : public AbstractLineageManager {
 
 using LineageManagerPtr = std::shared_ptr<Runtime::InMemoryLineageManager>;
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_INMEMORYLINEAGEMANAGER_HPP_

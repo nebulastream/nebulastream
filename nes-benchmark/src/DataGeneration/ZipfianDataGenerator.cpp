@@ -13,19 +13,23 @@
 */
 
 #include <API/Schema.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/ZipfianDataGenerator.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/ZipfianGenerator.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
 ZipfianDataGenerator::ZipfianDataGenerator(double alpha, uint64_t minValue, uint64_t maxValue)
-    : DataGenerator(), alpha(alpha), minValue(minValue), maxValue(maxValue) {}
+    : DataGenerator(), alpha(alpha), minValue(minValue), maxValue(maxValue)
+{
+}
 
-NES::SchemaPtr ZipfianDataGenerator::getSchema() {
+NES::SchemaPtr ZipfianDataGenerator::getSchema()
+{
     return Schema::create()
         ->addField(createField("id", BasicType::UINT64))
         ->addField(createField("value", BasicType::UINT64))
@@ -33,7 +37,8 @@ NES::SchemaPtr ZipfianDataGenerator::getSchema() {
         ->addField(createField("timestamp", BasicType::UINT64));
 }
 
-Configurations::SchemaTypePtr ZipfianDataGenerator::getSchemaType() {
+Configurations::SchemaTypePtr ZipfianDataGenerator::getSchemaType()
+{
     const char* dataType = "UINT64";
     std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
     schemaFiledDetails.emplace_back("id", dataType);
@@ -43,9 +48,13 @@ Configurations::SchemaTypePtr ZipfianDataGenerator::getSchemaType() {
     return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
-std::string ZipfianDataGenerator::getName() { return "Zipfian"; }
+std::string ZipfianDataGenerator::getName()
+{
+    return "Zipfian";
+}
 
-std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize)
+{
     std::vector<Runtime::TupleBuffer> createdBuffers;
     createdBuffers.reserve(numberOfBuffers);
 
@@ -54,8 +63,8 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
 
     // Prints every five percent the current progress
     uint64_t noTuplesInFivePercent = std::max(1UL, (numberOfBuffers * 5) / 100);
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
-
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = allocateBuffer();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
@@ -65,7 +74,8 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
 
         /* This branch is solely for performance reasons.
              It still works with all layouts, for a RowLayout it is just magnitudes faster with this branch */
-        if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        if (memoryLayout->getSchema()->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+        {
             auto rowLayout = Runtime::MemoryLayouts::RowLayout::create(memoryLayout->getSchema(), bufferSize);
             auto testBuffer = std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, bufferRef);
 
@@ -74,20 +84,21 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
                  * The value is drawn from the zipfianGenerator and thus has a zipfian shape.
                  * As we do know the memory layout, we can use the custom pushRecord() method to
                  */
-            for (uint64_t curRecord = 0; curRecord < testBuffer->getCapacity(); ++curRecord) {
+            for (uint64_t curRecord = 0; curRecord < testBuffer->getCapacity(); ++curRecord)
+            {
                 uint64_t value = zipfianGenerator(generator);
-                testBuffer->pushRecordToBuffer(
-                    std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord, value, curRecord, curRecord));
+                testBuffer->pushRecordToBuffer(std::tuple<uint64_t, uint64_t, uint64_t, uint64_t>(curRecord, value, curRecord, curRecord));
             }
-
-        } else {
-
+        }
+        else
+        {
             /*
                  * Iterating over all tuples of the current buffer and insert the tuples according to the schema.
                  * The value is drawn from the zipfianGenerator and thus has a zipfian shape.
                  * As we do not know the memory layout, we use dynamic field handlers
                  */
-            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+            for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+            {
                 auto value = zipfianGenerator(generator);
                 testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
                 testBuffer[curRecord]["value"].write<uint64_t>(value);
@@ -96,8 +107,9 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
             }
         }
 
-        if (curBuffer % noTuplesInFivePercent == 0) {
-            NES_INFO("ZipfianDataGenerator: currently at {}%", (((double) curBuffer / numberOfBuffers) * 100));
+        if (curBuffer % noTuplesInFivePercent == 0)
+        {
+            NES_INFO("ZipfianDataGenerator: currently at {}%", (((double)curBuffer / numberOfBuffers) * 100));
         }
 
         testBuffer.setNumberOfTuples(testBuffer.getCapacity());
@@ -108,9 +120,10 @@ std::vector<Runtime::TupleBuffer> ZipfianDataGenerator::createData(size_t number
     return createdBuffers;
 }
 
-std::string ZipfianDataGenerator::toString() {
+std::string ZipfianDataGenerator::toString()
+{
     std::ostringstream oss;
     oss << getName() << " (" << minValue << ", " << maxValue << ", " << alpha << ")";
     return oss.str();
 }
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration

@@ -15,18 +15,20 @@
 #ifndef NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICINTERFACE_HPP_
 #define NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICINTERFACE_HPP_
 
+#include <functional>
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <StatisticCollection/Characteristic/Characteristic.hpp>
 #include <Statistics/StatisticKey.hpp>
 #include <Statistics/StatisticValue.hpp>
-#include <functional>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-class StatisticInterface {
-  public:
+class StatisticInterface
+{
+public:
     /**
      * @brief Creates a request to track a specific statistic characteristic, e.g., Cardinality over car_1 in a
      * tumbling window fashion of 5 minutes
@@ -36,11 +38,13 @@ class StatisticInterface {
      * @param sendingPolicy
      * @param callBack
      */
-    virtual std::vector<StatisticKey> trackStatistic(const CharacteristicPtr& characteristic,
-                                                     const Windowing::WindowTypePtr& window,
-                                                     const TriggerConditionPtr& triggerCondition,
-                                                     const SendingPolicyPtr& sendingPolicy,
-                                                     std::function<void(CharacteristicPtr)>&& callBack) = 0;
+    virtual std::vector<StatisticKey> trackStatistic(
+        const CharacteristicPtr& characteristic,
+        const Windowing::WindowTypePtr& window,
+        const TriggerConditionPtr& triggerCondition,
+        const SendingPolicyPtr& sendingPolicy,
+        std::function<void(CharacteristicPtr)>&& callBack)
+        = 0;
 
     /**
      * @brief Creates a request to probe a specific statistic and returns the statistic in a ProbeResult
@@ -53,13 +57,15 @@ class StatisticInterface {
      * @param aggFunction
      * @return ProbeResult<> containing at least one StatisticValue
      */
-    virtual ProbeResult<> probeStatistic(const StatisticKey& statisticKey,
-                                         const Windowing::TimeMeasure& startTs,
-                                         const Windowing::TimeMeasure& endTs,
-                                         const Windowing::TimeMeasure& granularity,
-                                         const ProbeExpression& probeExpression,
-                                         const bool& estimationAllowed,
-                                         std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) = 0;
+    virtual ProbeResult<> probeStatistic(
+        const StatisticKey& statisticKey,
+        const Windowing::TimeMeasure& startTs,
+        const Windowing::TimeMeasure& endTs,
+        const Windowing::TimeMeasure& granularity,
+        const ProbeExpression& probeExpression,
+        const bool& estimationAllowed,
+        std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction)
+        = 0;
 
     /**
      * @brief Virtual destructor
@@ -67,6 +73,6 @@ class StatisticInterface {
     virtual ~StatisticInterface() = default;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICINTERFACE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_STATISTICCOLLECTION_STATISTICINTERFACE_HPP_

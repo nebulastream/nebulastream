@@ -14,10 +14,11 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
 
-#include <Common/ExecutableType/BaseVariableSizeType.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <string>
-namespace NES::Nautilus {
+#include <Runtime/TupleBuffer.hpp>
+#include <Common/ExecutableType/BaseVariableSizeType.hpp>
+namespace NES::Nautilus
+{
 
 /**
  * @brief Physical data type that represents a TextValue.
@@ -27,8 +28,9 @@ namespace NES::Nautilus {
  * @note that the char* may have no null termination.
  * Thus when reading char values, we have to check the length attribute. 
  */
-class TextValue final : public BaseVariableSizeType {
-  public:
+class TextValue final : public BaseVariableSizeType
+{
+public:
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
     /**
      * @brief Create a new TextValue with a specific size in characters.
@@ -105,7 +107,7 @@ class TextValue final : public BaseVariableSizeType {
      */
     ~TextValue();
 
-  private:
+private:
     static Runtime::TupleBuffer allocateBuffer(uint32_t size);
     /**
      * @brief Private constructor to initialize a new text
@@ -114,5 +116,5 @@ class TextValue final : public BaseVariableSizeType {
     TextValue(uint32_t size);
     const uint32_t size;
 };
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_

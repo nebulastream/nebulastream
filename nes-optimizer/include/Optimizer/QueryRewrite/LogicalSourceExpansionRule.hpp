@@ -15,13 +15,14 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 #include <memory>
 #include <set>
 #include <unordered_map>
+#include <Identifiers/Identifiers.hpp>
+#include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -32,14 +33,16 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
+} // namespace Catalogs::Source
 
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 class LogicalSourceExpansionRule;
 using LogicalSourceExpansionRulePtr = std::shared_ptr<LogicalSourceExpansionRule>;
 
@@ -98,8 +101,9 @@ const std::string LIST_OF_SIBLING_STATISTIC_IDS = "ListOfSiblingStatisticIds";
  * logical source truck has two physical sources: i.e. truck1 and truck2
  *
  */
-class LogicalSourceExpansionRule : public BaseRewriteRule {
-  public:
+class LogicalSourceExpansionRule : public BaseRewriteRule
+{
+public:
     static LogicalSourceExpansionRulePtr create(const Catalogs::Source::SourceCatalogPtr&, bool expandSourceOnly);
 
     /**
@@ -111,7 +115,7 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
 
     virtual ~LogicalSourceExpansionRule() = default;
 
-  private:
+private:
     explicit LogicalSourceExpansionRule(const Catalogs::Source::SourceCatalogPtr&, bool expandSourceOnly);
 
     /**
@@ -143,11 +147,10 @@ class LogicalSourceExpansionRule : public BaseRewriteRule {
      * @param siblingStatisticIdToNewStatisticIds: Stores for each sibling id their new statistic ids.
      */
     void distributeSiblingStatisticId(
-        QueryPlan& queryPlan,
-        std::unordered_map<StatisticId, std::vector<StatisticId>>& siblingStatisticIdToNewStatisticIds) const;
+        QueryPlan& queryPlan, std::unordered_map<StatisticId, std::vector<StatisticId>>& siblingStatisticIdToNewStatisticIds) const;
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     bool expandSourceOnly;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_LOGICALSOURCEEXPANSIONRULE_HPP_

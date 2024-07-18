@@ -18,13 +18,15 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Union operator that Union two sources together. This operator behaves similar to the unionWith operator in RDBMS.
  */
-class LogicalUnionOperator : public LogicalBinaryOperator {
-  public:
+class LogicalUnionOperator : public LogicalBinaryOperator
+{
+public:
     explicit LogicalUnionOperator(OperatorId id);
     ~LogicalUnionOperator() override = default;
 
@@ -37,5 +39,5 @@ class LogicalUnionOperator : public LogicalBinaryOperator {
     OperatorPtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNIONOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNIONOPERATOR_HPP_

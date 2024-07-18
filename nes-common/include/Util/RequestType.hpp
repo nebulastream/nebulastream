@@ -16,7 +16,8 @@
 #define NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_
 #include <cstdint>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Represents various request types.
@@ -28,7 +29,8 @@ namespace NES {
  * Migrate: Migrate query.
  * Update: Update running query.
  */
-enum class RequestType : uint8_t {
+enum class RequestType : uint8_t
+{
     AddQuery = 0,
     StopQuery,
     RestartQuery,
@@ -42,6 +44,6 @@ enum class RequestType : uint8_t {
     RemoveTopologyLink
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_

@@ -14,25 +14,28 @@
 
 #include <iostream>
 
-#include <BaseIntegrationTest.hpp>
+#include <fstream>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class MultiWorkerTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class MultiWorkerTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MultiWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MultiWorkerTest test class.");
     }
@@ -40,7 +43,8 @@ class MultiWorkerTest : public Testing::BaseIntegrationTest {
     static void TearDownTestCase() { NES_INFO("Tear down MultiWorkerTest class."); }
 };
 
-TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
+TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -67,7 +71,8 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinatorSingle) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
+TEST_F(MultiWorkerTest, startStopWorkerCoordinator)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -106,7 +111,8 @@ TEST_F(MultiWorkerTest, startStopWorkerCoordinator) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
+TEST_F(MultiWorkerTest, startStopCoordinatorWorker)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -145,7 +151,8 @@ TEST_F(MultiWorkerTest, startStopCoordinatorWorker) {
     EXPECT_TRUE(retStopWrk2);
 }
 
-TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
+TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -192,7 +199,8 @@ TEST_F(MultiWorkerTest, startConnectStopWorkerCoordinator) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
+TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -228,7 +236,8 @@ TEST_F(MultiWorkerTest, startWithConnectStopWorkerCoordinator) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
+TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -272,7 +281,8 @@ TEST_F(MultiWorkerTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
     EXPECT_TRUE(retStopWrk2);
 }
 
-TEST_F(MultiWorkerTest, testMultipleWorker) {
+TEST_F(MultiWorkerTest, testMultipleWorker)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -284,7 +294,8 @@ TEST_F(MultiWorkerTest, testMultipleWorker) {
 
     uint64_t numWorkers = 3;
     std::vector<NesWorkerPtr> wPtrs;
-    for (uint64_t i = 0; i < numWorkers; i++) {
+    for (uint64_t i = 0; i < numWorkers; i++)
+    {
         cout << "start worker" << i << endl;
         auto wrkConf = WorkerConfiguration::create();
         wrkConf->coordinatorPort = port;
@@ -294,21 +305,24 @@ TEST_F(MultiWorkerTest, testMultipleWorker) {
     }
 
     //connect 10 worker
-    for (uint64_t i = 0; i < numWorkers; i++) {
+    for (uint64_t i = 0; i < numWorkers; i++)
+    {
         cout << "connect worker" << i << endl;
         bool retConWrk = wPtrs[i]->connect();
         EXPECT_TRUE(retConWrk);
     }
 
     //disconnect 10 worker
-    for (uint64_t i = 0; i < numWorkers; i++) {
+    for (uint64_t i = 0; i < numWorkers; i++)
+    {
         cout << "disconnect worker" << i << endl;
         bool retConWrk = wPtrs[i]->disconnect();
         EXPECT_TRUE(retConWrk);
     }
 
     //stop 10 worker
-    for (uint64_t i = 0; i < numWorkers; i++) {
+    for (uint64_t i = 0; i < numWorkers; i++)
+    {
         cout << "stop worker" << i << endl;
         bool retConWrk = wPtrs[i]->stop(false);
         EXPECT_TRUE(retConWrk);
@@ -318,7 +332,8 @@ TEST_F(MultiWorkerTest, testMultipleWorker) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
+TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId)
+{
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -366,7 +381,8 @@ TEST_F(MultiWorkerTest, startWorkersWithoutWorkerId) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
+TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker)
+{
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -416,7 +432,8 @@ TEST_F(MultiWorkerTest, startWorkerWithWorkerIdBelongingToActiveWorker) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
+TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId)
+{
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -448,7 +465,8 @@ TEST_F(MultiWorkerTest, startWorkerWithMisconfiguredWorkerId) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
+TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId)
+{
     // make sure that even if the given workerId is the next available one, the counter is still increased
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
@@ -496,7 +514,8 @@ TEST_F(MultiWorkerTest, startWorkerWithCorrectNextWorkerId) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml) {
+TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml)
+{
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -536,7 +555,8 @@ TEST_F(MultiWorkerTest, checkPersistenceOfNewWorkerIdInYaml) {
     ASSERT_TRUE(retStopCord);
 }
 
-TEST_F(MultiWorkerTest, checkPersistenceOfWorkerIdWithNonExistingConfigFile) {
+TEST_F(MultiWorkerTest, checkPersistenceOfWorkerIdWithNonExistingConfigFile)
+{
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -580,7 +600,8 @@ TEST_F(MultiWorkerTest, checkPersistenceOfWorkerIdWithNonExistingConfigFile) {
 /*
  * Test fails randomly on ARM node issue #4710
  */
-TEST_F(MultiWorkerTest, DISABLED_checkPersistenceOfOverwrittenWorkerIdInYaml) {
+TEST_F(MultiWorkerTest, DISABLED_checkPersistenceOfOverwrittenWorkerIdInYaml)
+{
     // start the coordinator
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -621,4 +642,4 @@ TEST_F(MultiWorkerTest, DISABLED_checkPersistenceOfOverwrittenWorkerIdInYaml) {
     EXPECT_TRUE(retStopCord);
 }
 
-}// namespace NES
+} // namespace NES

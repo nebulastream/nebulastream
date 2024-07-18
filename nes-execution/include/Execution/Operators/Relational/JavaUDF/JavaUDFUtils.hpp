@@ -22,7 +22,8 @@
 #include <Util/JNI/JNI.hpp>
 #include <Util/SourceLocation.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * Finds the input class in the JVM and returns a jclass object pointer.
@@ -164,7 +165,7 @@ Nautilus::TextValue* getStringObjectValue(void* object);
  * @param signature signature of the field
  * @return T value of the field
  */
-template<typename T>
+template <typename T>
 T getField(void* state, void* classPtr, void* objectPtr, int fieldIndex, std::string signature);
 
 /**
@@ -257,7 +258,7 @@ Nautilus::TextValue* getStringField(void* state, void* classPtr, void* objectPtr
  * @param value value to set the field to
  * @param signature signature of the field
  */
-template<typename T>
+template <typename T>
 void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T value, std::string signature);
 
 /**
@@ -340,6 +341,6 @@ void setByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex, 
  */
 void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const Nautilus::TextValue* value);
 
-};// namespace NES::Runtime::Execution::Operators
+}; // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_

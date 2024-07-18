@@ -11,17 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
 #include <utility>
+#include <Execution/Expressions/ArithmeticalExpressions/DivExpression.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-Value<> DivExpression::execute(Record& record) const {
+Value<> DivExpression::execute(Record& record) const
+{
     Value leftValue = leftSubExpression->execute(record);
     Value rightValue = rightSubExpression->execute(record);
     return leftValue / rightValue;
 }
 DivExpression::DivExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}
+    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression))
+{
+}
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

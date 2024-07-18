@@ -20,9 +20,11 @@
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
 
-namespace NES::Nautilus::IR::Operations {
-class IfOperation : public Operation {
-  public:
+namespace NES::Nautilus::IR::Operations
+{
+class IfOperation : public Operation
+{
+public:
     IfOperation(OperationPtr booleanValue);
     ~IfOperation() override = default;
 
@@ -39,12 +41,12 @@ class IfOperation : public Operation {
 
     std::string toString() override;
 
-  private:
+private:
     OperationWPtr booleanValue;
     BasicBlockInvocation trueBlockInvocation;
     BasicBlockInvocation falseBlockInvocation;
     std::weak_ptr<BasicBlock> mergeBlock;
     std::unique_ptr<CountedLoopInfo> countedLoopInfo;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_IFOPERATION_HPP_

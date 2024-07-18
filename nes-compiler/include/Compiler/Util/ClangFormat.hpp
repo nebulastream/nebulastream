@@ -13,16 +13,18 @@
 */
 #ifndef NES_COMPILER_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_
-#include <Compiler/Util/File.hpp>
 #include <mutex>
+#include <Compiler/Util/File.hpp>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief Utility, which leverages clang format to
  */
-class ClangFormat {
-  public:
+class ClangFormat
+{
+public:
     /**
      * @brief Create a new clang format instance for a specific language
      * @param language
@@ -34,11 +36,11 @@ class ClangFormat {
      */
     void formatFile(std::shared_ptr<File> file);
 
-  private:
+private:
     const std::string language;
     std::mutex clangFormatMutex;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_

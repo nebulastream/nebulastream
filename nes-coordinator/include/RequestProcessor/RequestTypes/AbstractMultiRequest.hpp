@@ -13,11 +13,12 @@
 */
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_
-#include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 #include <any>
 #include <deque>
+#include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 class AbstractSubRequest;
 using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
 
@@ -27,9 +28,9 @@ class SubRequestFuture;
  * A multi request can acquire multiple threads and has its own internal sub-request queue which it uses to schedule the
  * concurrent execution of of sub-requests
  */
-class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRequest>, public AbstractRequest {
-
-  public:
+class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRequest>, public AbstractRequest
+{
+public:
     /**
      * @brief Constructor
      * @param maxRetries The maximum amount of retries in case of an error
@@ -51,7 +52,7 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
      */
     bool isDone();
 
-  protected:
+protected:
     /**
      * @brief schedule a sub-request to be executed
      * @param subRequest the request to be executed
@@ -66,7 +67,7 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
      */
     virtual std::vector<AbstractRequestPtr> executeRequestLogic() = 0;
 
-  private:
+private:
     /**
      * @brief Execute a sub-request. If the request queue is empty, this function will block until a request is scheduled
      * @param storageHandle the storage handle used to lock and access resources
@@ -83,5 +84,5 @@ class AbstractMultiRequest : public std::enable_shared_from_this<AbstractMultiRe
     std::condition_variable cv;
     StorageHandlerPtr storageHandle;
 };
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTMULTIREQUEST_HPP_

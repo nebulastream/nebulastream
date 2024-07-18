@@ -21,7 +21,8 @@
 #include <Sources/DataSource.hpp>
 #include <Util/CircularBuffer.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Parser;
 using ParserPtr = std::shared_ptr<Parser>;
@@ -29,9 +30,9 @@ using ParserPtr = std::shared_ptr<Parser>;
 /**
  * @brief source to receive data via TCP connection
  */
-class TCPSource : public DataSource {
-
-  public:
+class TCPSource : public DataSource
+{
+public:
     /**
      * @brief constructor of a TCP Source
      * @param schema the schema of the data
@@ -47,16 +48,17 @@ class TCPSource : public DataSource {
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param executableSuccessors executable operators coming after this source
      */
-    explicit TCPSource(SchemaPtr schema,
-                       Runtime::BufferManagerPtr bufferManager,
-                       Runtime::QueryManagerPtr queryManager,
-                       TCPSourceTypePtr tcpSourceType,
-                       OperatorId operatorId,
-                       OriginId originId,
-                       size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
-                       const std::string& physicalSourceName,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
+    explicit TCPSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        TCPSourceTypePtr tcpSourceType,
+        OperatorId operatorId,
+        OriginId originId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        const std::string& physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief override the receiveData method for the csv source
@@ -113,7 +115,7 @@ class TCPSource : public DataSource {
      */
     void close() override;
 
-  private:
+private:
     std::vector<PhysicalTypePtr> physicalTypes;
     ParserPtr inputParser;
     int connection = -1;
@@ -125,5 +127,5 @@ class TCPSource : public DataSource {
     char* messageBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_TPCSOURCE_OLD_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_TPCSOURCE_OLD_HPP_

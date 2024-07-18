@@ -15,12 +15,13 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_THREADPOOL_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_THREADPOOL_HPP_
 
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <iostream>
 #include <thread>
 #include <vector>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief the tread pool handles the dynamic scheduling of tasks during Runtime
@@ -29,8 +30,9 @@ namespace NES::Runtime {
  *    - not using std::thread::hardware_concurrency() to run with max threads
  *    - no statistics are gathered
  */
-class ThreadPool {
-  public:
+class ThreadPool
+{
+public:
     /**
      * @brief default constructor
      * @param nodeId the id of this node
@@ -38,20 +40,21 @@ class ThreadPool {
      * @param number of threads to use
      * @param sourcePinningPositionList, a list of where to pin the
      */
-    explicit ThreadPool(WorkerId nodeId,
-                        QueryManagerPtr queryManager,
-                        uint32_t numThreads,
-                        std::vector<BufferManagerPtr> bufferManagers,
-                        uint64_t numberOfBuffersPerWorker,
-                        HardwareManagerPtr hardwareManager,
-                        std::vector<uint64_t> workerPinningPositionList);
+    explicit ThreadPool(
+        WorkerId nodeId,
+        QueryManagerPtr queryManager,
+        uint32_t numThreads,
+        std::vector<BufferManagerPtr> bufferManagers,
+        uint64_t numberOfBuffersPerWorker,
+        HardwareManagerPtr hardwareManager,
+        std::vector<uint64_t> workerPinningPositionList);
 
     /**
      * @brief default destructor
      */
     ~ThreadPool();
 
-  public:
+public:
     /**
        * @brief stop the Thread pool
        * 1.) check if thread pool is already running,
@@ -85,14 +88,14 @@ class ThreadPool {
        */
     void runningRoutine(WorkerContext&& workerContext);
 
-  public:
+public:
     /**
      * @brief get the current number of threads in thread pool
      * @return number of current threads
      */
     uint32_t getNumberOfThreads() const;
 
-  private:
+private:
     //indicating if the thread pool is running, used for multi-thread execution
     const WorkerId nodeId;
     std::atomic<bool> running{false};
@@ -111,6 +114,6 @@ class ThreadPool {
 
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>;
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_THREADPOOL_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_THREADPOOL_HPP_

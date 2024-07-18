@@ -19,29 +19,34 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
-namespace Compiler {
+namespace NES
+{
+namespace Compiler
+{
 class LanguageCompiler;
 
 class JITCompiler;
 using JITCompilerPtr = std::shared_ptr<JITCompiler>;
-}// namespace Compiler
-namespace Experimental::MaterializedView {
+} // namespace Compiler
+namespace Experimental::MaterializedView
+{
 class MaterializedViewManager;
 using MaterializedViewManagerPtr = std::shared_ptr<MaterializedViewManager>;
-}// namespace Experimental::MaterializedView
+} // namespace Experimental::MaterializedView
 
-namespace Configurations {
+namespace Configurations
+{
 class QueryCompilerConfiguration;
 }
 
-namespace Runtime {
+namespace Runtime
+{
 /**
  * This class is used to create instances of NodeEngine using the builder pattern.
  */
-class NodeEngineBuilder {
-
-  public:
+class NodeEngineBuilder
+{
+public:
     NodeEngineBuilder() = delete;
     /**
      * Creates a default NodeEngineBuilder
@@ -124,7 +129,7 @@ class NodeEngineBuilder {
      */
     NodeEnginePtr build();
 
-  private:
+private:
     explicit NodeEngineBuilder(Configurations::WorkerConfigurationPtr workerConfiguration);
 
     std::shared_ptr<AbstractQueryStatusListener> nesWorker;
@@ -155,6 +160,6 @@ class NodeEngineBuilder {
      */
     static WorkerId getNextWorkerId();
 };
-}// namespace Runtime
-}// namespace NES
-#endif// NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+} // namespace Runtime
+} // namespace NES
+#endif // NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

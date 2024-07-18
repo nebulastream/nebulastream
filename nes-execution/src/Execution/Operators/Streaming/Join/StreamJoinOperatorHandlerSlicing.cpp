@@ -14,9 +14,11 @@
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerSlicing.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(uint64_t timestamp) {
+StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(uint64_t timestamp)
+{
     auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
 
     // Checking, if we maybe already have this slice
@@ -24,7 +26,8 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
     auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
     auto sliceId = StreamSlice::getSliceIdentifier(sliceStart, sliceEnd);
     auto slice = getSliceBySliceIdentifier(slicesWriteLocked, sliceId);
-    if (slice.has_value()) {
+    if (slice.has_value())
+    {
         return slice.value();
     }
 
@@ -34,7 +37,8 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
     slicesWriteLocked->emplace_back(newSlice);
 
     // For all possible slices in their respective windows, reset the state
-    for (auto windowInfo : getAllWindowsForSlice(*newSlice)) {
+    for (auto windowInfo : getAllWindowsForSlice(*newSlice))
+    {
         NES_DEBUG("reset the state for window {}", windowInfo.toString());
         auto& window = (*windowToSlicesLocked)[windowInfo];
         window.windowState = WindowInfoState::BOTH_SIDES_FILLING;
@@ -44,14 +48,17 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
     return newSlice;
 }
 
-StreamSlice* StreamJoinOperatorHandlerSlicing::getCurrentSliceOrCreate() {
-    if (slices.rlock()->empty()) {
+StreamSlice* StreamJoinOperatorHandlerSlicing::getCurrentSliceOrCreate()
+{
+    if (slices.rlock()->empty())
+    {
         return StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(0).get();
     }
     return slices.rlock()->back().get();
 }
 
-std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(StreamSlice& slice) {
+std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(StreamSlice& slice)
+{
     std::vector<WindowInfo> allWindows;
 
     const auto sliceStart = slice.getSliceStart();
@@ -64,11 +71,12 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(
      */
     const auto firstWindowEnd = sliceEnd;
     const auto lastWindowEnd = sliceStart + windowSize;
-    for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide) {
+    for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
+    {
         // For now, we expect the windowEnd to be the windowId
         allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
     }
 
     return allWindows;
 }
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

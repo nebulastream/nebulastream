@@ -16,22 +16,23 @@
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_OPCSINK_HPP_
 #ifdef ENABLE_OPC_BUILD
 
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <cstdint>
-#include <memory>
-#include <open62541/client_config_default.h>
-#include <open62541/client_highlevel.h>
-#include <open62541/plugin/log_stdout.h>
-#include <string>
+#    include <cstdint>
+#    include <memory>
+#    include <string>
+#    include <Sinks/Mediums/SinkMedium.hpp>
+#    include <open62541/client_config_default.h>
+#    include <open62541/client_highlevel.h>
+#    include <open62541/plugin/log_stdout.h>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief class that allows writing a node to an OPC Server
  */
-class OPCSink : public SinkMedium {
-
-  public:
+class OPCSink : public SinkMedium
+{
+public:
     /**
      * @brief constructor that saves data inside a node id on the server reached via provided url
      * @param format of the data
@@ -40,14 +41,15 @@ class OPCSink : public SinkMedium {
      * @param user name to access the server
      * @param password to access the server
      */
-    explicit OPCSink(SinkFormatPtr format,
-                     Runtime::NodeEnginePtr nodeEngine,
-                     const std::string& url,
-                     UA_NodeId nodeId,
-                     std::string user,
-                     std::string password,
-                     QueryId queryId,
-                     QuerySubPlanId querySubPlanId);
+    explicit OPCSink(
+        SinkFormatPtr format,
+        Runtime::NodeEnginePtr nodeEngine,
+        const std::string& url,
+        UA_NodeId nodeId,
+        std::string user,
+        std::string password,
+        QueryId queryId,
+        QuerySubPlanId querySubPlanId);
 
     /**
      * @brief dtor
@@ -113,7 +115,7 @@ class OPCSink : public SinkMedium {
      */
     UA_StatusCode getRetval() const;
 
-  private:
+private:
     /**
      * @brief method to connect opc using the url specified before
      * check if already connected, if not connect try to connect, if already connected return
@@ -133,7 +135,7 @@ class OPCSink : public SinkMedium {
      * serialization/deserialization process
      */
 
-  private:
+private:
     bool connected;
     const std::string url;
     UA_NodeId nodeId;
@@ -143,7 +145,7 @@ class OPCSink : public SinkMedium {
     UA_Client* client;
 };
 using OPCSinkPtr = std::shared_ptr<OPCSink>;
-}// namespace NES
+} // namespace NES
 
 #endif
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_OPCSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_OPCSINK_HPP_

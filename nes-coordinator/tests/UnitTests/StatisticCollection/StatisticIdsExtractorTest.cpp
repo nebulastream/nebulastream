@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <vector>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -33,19 +33,23 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <vector>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
 constexpr auto expandAlsoOperators = false;
 
-class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::WithParamInterface<uint64_t> {
-  public:
-    static void SetUpTestCase() {
+class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::WithParamInterface<uint64_t>
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("StatisticIdsExtractorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup StatisticIdsExtractorTest test class.");
     }
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseUnitTest::SetUp();
         window = TumblingWindow::of(IngestionTime(), Minutes(30));
         const auto metric = Statistic::IngestionRate::create();
@@ -63,7 +67,8 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
      * @param numberOfSources
      * @return SourceCatalog
      */
-    Catalogs::Source::SourceCatalogPtr setUpSourceCatalog(const int numberOfSources) {
+    Catalogs::Source::SourceCatalogPtr setUpSourceCatalog(const int numberOfSources)
+    {
         NES_DEBUG("Creating SourceCatalog...");
         auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         std::map<std::string, std::any> properties;
@@ -71,7 +76,8 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
         properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
         auto logicalSource = LogicalSource::create("default_logical", Schema::create());
-        for (auto i = 0; i < numberOfSources; ++i) {
+        for (auto i = 0; i < numberOfSources; ++i)
+        {
             auto physicalNode = TopologyNode::create(WorkerId(i), "localhost", 4000, 4002, 4, properties);
             auto csvSourceType = CSVSourceType::create("default_logical", "default_physical_" + std::to_string(i));
             auto physicalSource = PhysicalSource::create(csvSourceType);
@@ -94,7 +100,8 @@ class StatisticIdsExtractorTest : public Testing::BaseUnitTest, public testing::
 /**
  * @brief Tests if we extract the correct statistic ids for a query containing one operator
  */
-TEST_P(StatisticIdsExtractorTest, oneOperator) {
+TEST_P(StatisticIdsExtractorTest, oneOperator)
+{
     auto query = Query::from("default_logical")
                      .map(Attribute("f1") = Attribute("f1"))
                      .buildStatistic(window, statisticDescriptor, metricHash, sendingPolicy, triggerCondition)
@@ -111,12 +118,11 @@ TEST_P(StatisticIdsExtractorTest, oneOperator) {
     // 2. Checking if the newStatisticIds contain the statisticId of the map operator
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     std::vector<StatisticId> expectedStatisticIds;
-    std::transform(mapOperators.begin(),
-                   mapOperators.end(),
-                   std::back_inserter(expectedStatisticIds),
-                   [](const LogicalMapOperatorPtr& op) {
-                       return op->getStatisticId();
-                   });
+    std::transform(
+        mapOperators.begin(),
+        mapOperators.end(),
+        std::back_inserter(expectedStatisticIds),
+        [](const LogicalMapOperatorPtr& op) { return op->getStatisticId(); });
 
     EXPECT_THAT(newStatisticIds, ::testing::UnorderedElementsAreArray(expectedStatisticIds));
 }
@@ -125,7 +131,8 @@ TEST_P(StatisticIdsExtractorTest, oneOperator) {
  * @brief Tests if we extract the correct statistic ids for a query containing two physical sources and no operator.
  *  With this test case, we simulate a data or workload characteristic
  */
-TEST_P(StatisticIdsExtractorTest, noOperators) {
+TEST_P(StatisticIdsExtractorTest, noOperators)
+{
     auto query = Query::from("default_logical")
                      .buildStatistic(window, statisticDescriptor, metricHash, sendingPolicy, triggerCondition)
                      .sink(FileSinkDescriptor::create(""));
@@ -141,12 +148,12 @@ TEST_P(StatisticIdsExtractorTest, noOperators) {
     // 2. Checking if the newStatisticIds contain the statisticId of the physical source
     auto allPhysicalSources = sourceCatalog->getPhysicalSources("default_logical");
     std::vector<StatisticId> expectedStatisticIds;
-    std::transform(allPhysicalSources.begin(),
-                   allPhysicalSources.end(),
-                   std::back_inserter(expectedStatisticIds),
-                   [](const Catalogs::Source::SourceCatalogEntryPtr& sourceCatalogEntry) {
-                       return sourceCatalogEntry->getPhysicalSource()->getStatisticId();
-                   });
+    std::transform(
+        allPhysicalSources.begin(),
+        allPhysicalSources.end(),
+        std::back_inserter(expectedStatisticIds),
+        [](const Catalogs::Source::SourceCatalogEntryPtr& sourceCatalogEntry)
+        { return sourceCatalogEntry->getPhysicalSource()->getStatisticId(); });
 
     EXPECT_THAT(newStatisticIds, ::testing::UnorderedElementsAreArray(expectedStatisticIds));
 }
@@ -154,7 +161,8 @@ TEST_P(StatisticIdsExtractorTest, noOperators) {
 /**
  * @brief Tests if we extract the correct statistic ids for a query containing two operators
  */
-TEST_P(StatisticIdsExtractorTest, twoOperators) {
+TEST_P(StatisticIdsExtractorTest, twoOperators)
+{
     auto query = Query::from("default_logical")
                      .filter(Attribute("f1") < 10)
                      .map(Attribute("f1") = Attribute("f1"))
@@ -172,12 +180,11 @@ TEST_P(StatisticIdsExtractorTest, twoOperators) {
     // 2. Checking if the newStatisticIds contain the statisticId of the map operator
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     std::vector<StatisticId> expectedStatisticIds;
-    std::transform(mapOperators.begin(),
-                   mapOperators.end(),
-                   std::back_inserter(expectedStatisticIds),
-                   [](const LogicalMapOperatorPtr& op) {
-                       return op->getStatisticId();
-                   });
+    std::transform(
+        mapOperators.begin(),
+        mapOperators.end(),
+        std::back_inserter(expectedStatisticIds),
+        [](const LogicalMapOperatorPtr& op) { return op->getStatisticId(); });
 
     EXPECT_THAT(newStatisticIds, ::testing::UnorderedElementsAreArray(expectedStatisticIds));
 }
@@ -186,7 +193,8 @@ TEST_P(StatisticIdsExtractorTest, twoOperators) {
  * @brief Tests if we extract the correct statistic ids for a query containing two operators that already contains a
  * watermark assignment operator
  */
-TEST_P(StatisticIdsExtractorTest, twoOperatorsAlreadyContainingWatermark) {
+TEST_P(StatisticIdsExtractorTest, twoOperatorsAlreadyContainingWatermark)
+{
     auto query = Query::from("default_logical")
                      .assignWatermark(Windowing::IngestionTimeWatermarkStrategyDescriptor::create())
                      .filter(Attribute("f1") < 10)
@@ -205,21 +213,20 @@ TEST_P(StatisticIdsExtractorTest, twoOperatorsAlreadyContainingWatermark) {
     // 2. Checking if the newStatisticIds contain the statisticId of the map operator
     auto mapOperators = queryPlan->getOperatorByType<LogicalMapOperator>();
     std::vector<StatisticId> expectedStatisticIds;
-    std::transform(mapOperators.begin(),
-                   mapOperators.end(),
-                   std::back_inserter(expectedStatisticIds),
-                   [](const LogicalMapOperatorPtr& op) {
-                       return op->getStatisticId();
-                   });
+    std::transform(
+        mapOperators.begin(),
+        mapOperators.end(),
+        std::back_inserter(expectedStatisticIds),
+        [](const LogicalMapOperatorPtr& op) { return op->getStatisticId(); });
 
     EXPECT_THAT(newStatisticIds, ::testing::UnorderedElementsAreArray(expectedStatisticIds));
 }
 
-INSTANTIATE_TEST_CASE_P(TestInputs,
-                        StatisticIdsExtractorTest,
-                        ::testing::Values(1, 2, 3, 4, 8),
-                        [](const testing::TestParamInfo<StatisticIdsExtractorTest::ParamType>& info) {
-                            return std::to_string(info.param) + "_PhysicalSources";
-                        });
+INSTANTIATE_TEST_CASE_P(
+    TestInputs,
+    StatisticIdsExtractorTest,
+    ::testing::Values(1, 2, 3, 4, 8),
+    [](const testing::TestParamInfo<StatisticIdsExtractorTest::ParamType>& info)
+    { return std::to_string(info.param) + "_PhysicalSources"; });
 
-}// namespace NES
+} // namespace NES

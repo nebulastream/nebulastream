@@ -12,20 +12,23 @@
     limitations under the License.
 */
 #ifdef S2DEF
-#include <Util/Mobility/GeoLocation.hpp>
-#include <Util/Mobility/S2Utilities.hpp>
-#include <s2/s2latlng.h>
-#include <s2/s2point.h>
+#    include <Util/Mobility/GeoLocation.hpp>
+#    include <Util/Mobility/S2Utilities.hpp>
+#    include <s2/s2latlng.h>
+#    include <s2/s2point.h>
 
-namespace NES::Spatial::Util {
+namespace NES::Spatial::Util
+{
 
-S2Point S2Utilities::geoLocationToS2Point(DataTypes::Experimental::GeoLocation location) {
+S2Point S2Utilities::geoLocationToS2Point(DataTypes::Experimental::GeoLocation location)
+{
     return {S2LatLng::FromDegrees(location.getLatitude(), location.getLongitude())};
 }
 
-NES::Spatial::DataTypes::Experimental::GeoLocation S2Utilities::s2pointToLocation(S2Point point) {
+NES::Spatial::DataTypes::Experimental::GeoLocation S2Utilities::s2pointToLocation(S2Point point)
+{
     S2LatLng latLng(point);
     return {latLng.lat().degrees(), latLng.lng().degrees()};
 }
-}// namespace NES::Spatial::Util
+} // namespace NES::Spatial::Util
 #endif

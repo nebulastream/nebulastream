@@ -16,12 +16,14 @@
 #define NES_WINDOW_TYPES_INCLUDE_TYPES_SLIDINGWINDOW_HPP_
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TimeBasedWindowType.hpp>
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 /**
  * A SlidingWindow assigns records to multiple overlapping windows.
  */
-class SlidingWindow : public TimeBasedWindowType {
-  public:
+class SlidingWindow : public TimeBasedWindowType
+{
+public:
     static WindowTypePtr of(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
 
     /**
@@ -42,12 +44,12 @@ class SlidingWindow : public TimeBasedWindowType {
 
     uint64_t hash() const override;
 
-  private:
+private:
     SlidingWindow(TimeCharacteristicPtr timeCharacteristic, TimeMeasure size, TimeMeasure slide);
     const TimeMeasure size;
     const TimeMeasure slide;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_SLIDINGWINDOW_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_SLIDINGWINDOW_HPP_

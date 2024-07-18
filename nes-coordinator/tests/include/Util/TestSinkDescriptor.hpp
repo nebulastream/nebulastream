@@ -28,13 +28,15 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/TestPhaseProvider.hpp>
 
-namespace NES::TestUtils {
+namespace NES::TestUtils
+{
 
 /**
  * @brief This class is used for representing the description of a test sink operator
  */
-class TestSinkDescriptor : public SinkDescriptor {
-  public:
+class TestSinkDescriptor : public SinkDescriptor
+{
+public:
     /**
      * @brief Constructor for a TestSinkDescriptor
      * @param dataSink
@@ -64,9 +66,9 @@ class TestSinkDescriptor : public SinkDescriptor {
      */
     bool equal(SinkDescriptorPtr const&) override;
 
-  private:
+private:
     DataSinkPtr sink;
 };
-}// namespace NES::TestUtils
+} // namespace NES::TestUtils
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKDESCRIPTOR_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKDESCRIPTOR_HPP_

@@ -15,14 +15,20 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-Int::Int(const TypeIdentifier* identifier) : TraceableType(identifier) {}
-Int::~Int() {}
+Int::Int(const TypeIdentifier* identifier) : TraceableType(identifier)
+{
+}
+Int::~Int()
+{
+}
 
-bool Int::isInteger(const Any& val) {
+bool Int::isInteger(const Any& val)
+{
     return isa<Int8>(val) || isa<Int16>(val) || isa<Int32>(val) || isa<Int64>(val) || isa<UInt8>(val) || isa<UInt16>(val)
         || isa<UInt32>(val) || isa<UInt64>(val);
 }
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

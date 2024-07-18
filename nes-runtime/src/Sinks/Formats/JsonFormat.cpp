@@ -12,27 +12,42 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <utility>
 #include <API/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-std::string JsonFormat::getFormattedSchema() { NES_NOT_IMPLEMENTED(); }
+std::string JsonFormat::getFormattedSchema()
+{
+    NES_NOT_IMPLEMENTED();
+}
 
-JsonFormat::JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
-    : SinkFormat(std::move(schema), std::move(bufferManager)) {}
+JsonFormat::JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager))
+{
+}
 
-std::string JsonFormat::getFormattedBuffer(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+std::string JsonFormat::getFormattedBuffer(Runtime::TupleBuffer&)
+{
+    NES_NOT_IMPLEMENTED();
+}
 
-std::string JsonFormat::toString() { return "JSON_FORMAT"; }
-FormatTypes JsonFormat::getSinkFormat() { return FormatTypes::JSON_FORMAT; }
+std::string JsonFormat::toString()
+{
+    return "JSON_FORMAT";
+}
+FormatTypes JsonFormat::getSinkFormat()
+{
+    return FormatTypes::JSON_FORMAT;
+}
 
-FormatIterator JsonFormat::getTupleIterator(Runtime::TupleBuffer& inputBuffer) {
+FormatIterator JsonFormat::getTupleIterator(Runtime::TupleBuffer& inputBuffer)
+{
     return FormatIterator(schema, inputBuffer, FormatTypes::JSON_FORMAT);
 }
 
-}// namespace NES
+} // namespace NES

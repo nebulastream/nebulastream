@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/CompilationCache.hpp>
 #include <Compiler/CompilationResult.hpp>
@@ -22,19 +22,23 @@
 #include <Compiler/SourceCode.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-namespace NES::Compiler {
+#include <BaseIntegrationTest.hpp>
+namespace NES::Compiler
+{
 
-class CompilationCacheTest : public Testing::BaseUnitTest {
-  public:
+class CompilationCacheTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("CompilationCacheTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup CompilationCacheTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("Setup CompilationCacheTest test case.");
         auto cppCompiler = CPPCompiler::create();
@@ -49,7 +53,8 @@ class CompilationCacheTest : public Testing::BaseUnitTest {
 /**
  * @brief This test compiles a test CPP File
  */
-TEST_F(CompilationCacheTest, cacheSource) {
+TEST_F(CompilationCacheTest, cacheSource)
+{
     CompilationCache compilationCache;
     auto sourceCode = SourceCode(Language::CPP, "TestSource");
     ASSERT_FALSE(compilationCache.contains(sourceCode));
@@ -58,4 +63,4 @@ TEST_F(CompilationCacheTest, cacheSource) {
     ASSERT_TRUE(compilationCache.contains(sourceCode));
 }
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

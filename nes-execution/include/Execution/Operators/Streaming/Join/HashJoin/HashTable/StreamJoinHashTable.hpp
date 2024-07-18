@@ -15,23 +15,24 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_STREAMJOINHASHTABLE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_STREAMJOINHASHTABLE_HPP_
 
+#include <atomic>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
-#include <atomic>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class represents a hash map that is not thread safe. It consists of multiple buckets each
  * consisting of a FixedPagesLinkedList.
  */
-class StreamJoinHashTable {
-
-  public:
+class StreamJoinHashTable
+{
+public:
     /**
      * @brief Constructor for a StreamJoinHashTable that
      * @param sizeOfRecord
@@ -40,11 +41,8 @@ class StreamJoinHashTable {
      * @param pageSize
      * @param preAllocPageSizeCnt
      */
-    explicit StreamJoinHashTable(size_t sizeOfRecord,
-                                 size_t numPartitions,
-                                 FixedPagesAllocator& fixedPagesAllocator,
-                                 size_t pageSize,
-                                 size_t preAllocPageSizeCnt);
+    explicit StreamJoinHashTable(
+        size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize, size_t preAllocPageSizeCnt);
 
     StreamJoinHashTable(const StreamJoinHashTable&) = delete;
 
@@ -118,10 +116,10 @@ class StreamJoinHashTable {
      */
     std::string getContentAsString(SchemaPtr schema) const;
 
-  protected:
+protected:
     std::vector<std::unique_ptr<FixedPagesLinkedList>> buckets;
     size_t mask;
     size_t numPartitions;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_STREAMJOINHASHTABLE_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_STREAMJOINHASHTABLE_HPP_

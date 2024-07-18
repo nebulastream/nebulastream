@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/Timer.hpp>
 #include <chrono>
-#include <gtest/gtest.h>
 #include <thread>
 #include <unistd.h>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Timer.hpp>
+#include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
-class TimerTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES
+{
+class TimerTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TimerTest.log", NES::LogLevel::LOG_DEBUG);
 
         NES_INFO("TimerTest test class SetUpTestCase.");
@@ -35,7 +38,8 @@ class TimerTest : public Testing::BaseUnitTest {
  * @brief Test if start and stop commands work properly.
  * @result Measured runtime is 2 sec with 0.1 sec slack
  */
-TEST(UtilFunctionTest, startAndPause) {
+TEST(UtilFunctionTest, startAndPause)
+{
     Timer timer = Timer("testComponent");
     timer.start();
     sleep(1);
@@ -52,7 +56,8 @@ TEST(UtilFunctionTest, startAndPause) {
  * @brief Test if snapshot taking works properly.
  * @result Measured runtime and snapshot runtime is 1 sec with 0.05 sec slack
  */
-TEST(UtilFunctionTest, snapshotTaking) {
+TEST(UtilFunctionTest, snapshotTaking)
+{
     Timer timer = Timer("testComponent");
     timer.start();
     sleep(1);
@@ -70,7 +75,8 @@ TEST(UtilFunctionTest, snapshotTaking) {
  * @brief Test if timer merging works properly.
  * @result Measured runtime is 2 sec with 0.1 sec slack. Snapshot runtime is 1 sec with 0.05 sec slack
  */
-TEST(UtilFunctionTest, mergeTimers) {
+TEST(UtilFunctionTest, mergeTimers)
+{
     Timer timer1 = Timer("testComponent1");
     timer1.start();
     sleep(1);
@@ -100,7 +106,8 @@ TEST(UtilFunctionTest, mergeTimers) {
  * @brief Test if sec and millisec measures work properly.
  * @result Measured runtime is 1.3003 sec with 0.05 sec slack
  */
-TEST(UtilFunctionTest, differentTimeUnits) {
+TEST(UtilFunctionTest, differentTimeUnits)
+{
     Timer timer1 = Timer<std::chrono::seconds>("testComponent");
     timer1.start();
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -126,7 +133,8 @@ TEST(UtilFunctionTest, differentTimeUnits) {
  * @brief Test if sec measures work properly with precision of double.
  * @result Measured runtime is 1.3003 sec with 0.05 sec slack
  */
-TEST(UtilFunctionTest, differentMeasurePrecision) {
+TEST(UtilFunctionTest, differentMeasurePrecision)
+{
     Timer timer1 = Timer<std::chrono::duration<double>, std::ratio<1>>("testComponent");
     timer1.start();
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -143,7 +151,8 @@ TEST(UtilFunctionTest, differentMeasurePrecision) {
  * @brief Test if print conversions work properly, when set on initialization.
  * @result Measured runtime is 1.3 sec with 0.05 sec slack
  */
-TEST(UtilFunctionTest, differentPrintPrecision) {
+TEST(UtilFunctionTest, differentPrintPrecision)
+{
     Timer timer1 = Timer<std::chrono::seconds, std::ratio<1, 1>, int64_t>("testComponent");
     timer1.start();
     std::this_thread::sleep_for(std::chrono::seconds(1));
@@ -162,4 +171,4 @@ TEST(UtilFunctionTest, differentPrintPrecision) {
     EXPECT_NEAR(timer2.getPrintTime(), 1.3, 0.1);
 }
 
-}// namespace NES
+} // namespace NES

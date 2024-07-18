@@ -18,44 +18,56 @@
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
-void writeToBuffer(const uint64_t& metrics, Runtime::TupleBuffer&, uint64_t) {
+void writeToBuffer(const uint64_t& metrics, Runtime::TupleBuffer&, uint64_t)
+{
     NES_THROW_RUNTIME_ERROR("Metric: Serialization for uint64_t not possible for metric " << metrics);
 }
 
-void writeToBuffer(const std::string& metrics, Runtime::TupleBuffer&, uint64_t) {
+void writeToBuffer(const std::string& metrics, Runtime::TupleBuffer&, uint64_t)
+{
     NES_THROW_RUNTIME_ERROR("Metric: Serialization for std::string not possible for metric " << metrics);
 }
 
-void writeToBuffer(const std::shared_ptr<Metric> metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void writeToBuffer(const std::shared_ptr<Metric> metric, Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+{
     writeToBuffer(*metric, buf, tupleIndex);
 }
 
-void readFromBuffer(uint64_t&, Runtime::TupleBuffer&, uint64_t) {
+void readFromBuffer(uint64_t&, Runtime::TupleBuffer&, uint64_t)
+{
     NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
 }
 
-void readFromBuffer(std::string&, Runtime::TupleBuffer&, uint64_t) {
+void readFromBuffer(std::string&, Runtime::TupleBuffer&, uint64_t)
+{
     NES_THROW_RUNTIME_ERROR("Metric: Deserialization for uint64_t not possible");
 }
 
-void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void readFromBuffer(std::shared_ptr<Metric> metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+{
     readFromBuffer(*metrics, buf, tupleIndex);
 }
 
-nlohmann::json asJson(uint64_t intMetric) {
+nlohmann::json asJson(uint64_t intMetric)
+{
     nlohmann::json metricsJson{};
     metricsJson["intMetric"] = intMetric;
     return metricsJson;
 }
 
-nlohmann::json asJson(std::string stringMetric) {
+nlohmann::json asJson(std::string stringMetric)
+{
     nlohmann::json metricsJson{};
     metricsJson["stringMetric"] = stringMetric;
     return metricsJson;
 }
 
-nlohmann::json asJson(std::shared_ptr<Metric> ptrMetric) { return asJson(*ptrMetric); }
+nlohmann::json asJson(std::shared_ptr<Metric> ptrMetric)
+{
+    return asJson(*ptrMetric);
+}
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

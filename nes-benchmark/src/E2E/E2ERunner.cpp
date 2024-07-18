@@ -12,35 +12,39 @@
     limitations under the License.
 */
 
-#include <E2E/E2ERunner.hpp>
 #include <fstream>
+#include <E2E/E2ERunner.hpp>
 
-namespace NES::Benchmark {
+namespace NES::Benchmark
+{
 
-E2EBenchmarkConfig parseYamlConfig(std::string configPath, std::string logPath) {
+E2EBenchmarkConfig parseYamlConfig(std::string configPath, std::string logPath)
+{
     NES::Logger::setupLogging(logPath, E2EBenchmarkConfig::getLogLevel(configPath));
     E2EBenchmarkConfig e2EBenchmarkConfig;
 
-    try {
+    try
+    {
         e2EBenchmarkConfig = E2EBenchmarkConfig::createBenchmarks(configPath);
         NES_INFO("E2ERunner: Created the following experiments: {}", e2EBenchmarkConfig.toString());
-    } catch (std::exception& e) {
+    }
+    catch (std::exception& e)
+    {
         NES_THROW_RUNTIME_ERROR("E2ERunner: Error while creating benchmarks!");
     }
 
     return e2EBenchmarkConfig;
 }
 
-void executeSingleRun(E2EBenchmarkConfigPerRun& configPerRun,
-                      E2EBenchmarkConfigOverAllRuns& configOverallRuns,
-                      int rpcPort,
-                      int restPort) {
+void executeSingleRun(E2EBenchmarkConfigPerRun& configPerRun, E2EBenchmarkConfigOverAllRuns& configOverallRuns, int rpcPort, int restPort)
+{
     E2ESingleRun singleRun(configPerRun, configOverallRuns, rpcPort, restPort);
     singleRun.run();
     NES_INFO("Done with single experiment!");
 }
 
-void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
+void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns)
+{
     std::ofstream ofs;
     ofs.open(configOverAllRuns.outputFile->getValue(), std::ofstream::out | std::ofstream::app);
     ofs << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
@@ -51,4 +55,4 @@ void writeHeaderToCsvFile(E2EBenchmarkConfigOverAllRuns& configOverAllRuns) {
         << std::endl;
     ofs.close();
 }
-}// namespace NES::Benchmark
+} // namespace NES::Benchmark

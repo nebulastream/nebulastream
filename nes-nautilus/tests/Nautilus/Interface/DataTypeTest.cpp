@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -21,13 +21,16 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-namespace NES::Nautilus {
+#include <BaseIntegrationTest.hpp>
+namespace NES::Nautilus
+{
 
-class DataTypeTest : public Testing::BaseUnitTest {
-  public:
+class DataTypeTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("DataTypeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DataTypeTest test class.");
     }
@@ -36,7 +39,8 @@ class DataTypeTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down DataTypeTest test class."); }
 };
 
-TEST_F(DataTypeTest, ConstructValueTest) {
+TEST_F(DataTypeTest, ConstructValueTest)
+{
     // construct primitive
     auto f1 = Value<Int8>(42_s8);
     ASSERT_EQ(f1, 42_s8);
@@ -69,8 +73,8 @@ TEST_F(DataTypeTest, ConstructValueTest) {
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(f6.value->getType())->getNumberOfBits(), 8);
 }
 
-TEST_F(DataTypeTest, AssignmentValueTest) {
-
+TEST_F(DataTypeTest, AssignmentValueTest)
+{
     {
         // Assign same type
         Value<Int8> a(0_s8);
@@ -94,14 +98,15 @@ TEST_F(DataTypeTest, AssignmentValueTest) {
         Value<> a = 32;
         Value<> b = 42.0f;
         a = b;
-        ASSERT_EQ(a.as<Float>(), (float) 42.0);
+        ASSERT_EQ(a.as<Float>(), (float)42.0);
     }
 }
 
 using TestIdentifier = NESStrongType<int32_t, struct TestIdentifier_, 0, 1>;
 using TestIdentifierOther = NESStrongType<int32_t, struct TestIdentifierOther_, 0, 1>;
 
-TEST_F(DataTypeTest, IsIdentifierTest) {
+TEST_F(DataTypeTest, IsIdentifierTest)
+{
     auto f1 = Value<Int8>(42_s8);
     auto f2 = ValueId<TestIdentifier>(TestIdentifier(42));
     auto f3 = ValueId<TestIdentifierOther>(TestIdentifierOther(41));
@@ -111,7 +116,8 @@ TEST_F(DataTypeTest, IsIdentifierTest) {
     ASSERT_TRUE(Identifier::isIdentifier(f3.getValue()));
 }
 
-TEST_F(DataTypeTest, IdentifierTest) {
+TEST_F(DataTypeTest, IdentifierTest)
+{
     auto f1 = ValueId<TestIdentifier>(TestIdentifier(42));
     ASSERT_EQ(f1.value->getValue(), TestIdentifier(42));
     auto stamp = f1.value->getType();
@@ -131,7 +137,8 @@ TEST_F(DataTypeTest, IdentifierTest) {
     ASSERT_EQ(f6.as<Boolean>().value->getValue(), false);
 }
 
-TEST_F(DataTypeTest, PreventArithmeticOperationsOnIdentifiers) {
+TEST_F(DataTypeTest, PreventArithmeticOperationsOnIdentifiers)
+{
     auto f1 = ValueId<TestIdentifier>(TestIdentifier(42));
     auto f2 = ValueId<TestIdentifier>(TestIdentifier(41));
 
@@ -142,7 +149,8 @@ TEST_F(DataTypeTest, PreventArithmeticOperationsOnIdentifiers) {
     ASSERT_ANY_THROW(f1 % f2);
 }
 
-TEST_F(DataTypeTest, PreventOperationsOnDifferentIdentifiers) {
+TEST_F(DataTypeTest, PreventOperationsOnDifferentIdentifiers)
+{
     auto f1 = ValueId<TestIdentifier>(TestIdentifier(42));
     auto f2 = ValueId<TestIdentifierOther>(TestIdentifierOther(41));
     auto f3 = Value<Int32>(41);
@@ -154,7 +162,8 @@ TEST_F(DataTypeTest, PreventOperationsOnDifferentIdentifiers) {
     ASSERT_ANY_THROW(auto _ = f1 < f3);
 }
 
-TEST_F(DataTypeTest, Int8Test) {
+TEST_F(DataTypeTest, Int8Test)
+{
     auto f1 = Value<Int8>(42_s8);
     ASSERT_EQ(f1.value->getValue(), 42_s8);
     ASSERT_TRUE(f1.value->getType()->isInteger());
@@ -171,7 +180,8 @@ TEST_F(DataTypeTest, Int8Test) {
     ASSERT_EQ(f3.as<Int8>().value->getValue(), 74_s8);
 }
 
-TEST_F(DataTypeTest, Int16Test) {
+TEST_F(DataTypeTest, Int16Test)
+{
     auto f1 = Value<Int16>(42_s16);
     ASSERT_EQ(f1.value->getValue(), 42_s16);
     ASSERT_TRUE(f1.value->getType()->isInteger());
@@ -187,7 +197,8 @@ TEST_F(DataTypeTest, Int16Test) {
     ASSERT_EQ(f3.as<Int16>().value->getValue(), 74_s16);
 }
 
-TEST_F(DataTypeTest, Int64Test) {
+TEST_F(DataTypeTest, Int64Test)
+{
     auto f1 = Value<Int64>(42_s64);
     ASSERT_EQ(f1.value->getValue(), 42_s64);
     ASSERT_TRUE(f1.value->getType()->isInteger());
@@ -203,7 +214,8 @@ TEST_F(DataTypeTest, Int64Test) {
     ASSERT_EQ(f3.as<Int64>().value->getValue(), 74_s64);
 }
 
-TEST_F(DataTypeTest, UInt8Test) {
+TEST_F(DataTypeTest, UInt8Test)
+{
     auto f1 = Value<UInt8>(42_u8);
     ASSERT_EQ(f1.value->getValue(), 42_u8);
     ASSERT_TRUE(f1.value->getType()->isInteger());
@@ -219,7 +231,8 @@ TEST_F(DataTypeTest, UInt8Test) {
     ASSERT_EQ(f3.as<UInt8>().value->getValue(), 74_u8);
 }
 
-TEST_F(DataTypeTest, UInt16Test) {
+TEST_F(DataTypeTest, UInt16Test)
+{
     auto f1 = Value<UInt16>(42_u16);
     ASSERT_EQ(f1.value->getValue(), 42_u16);
     ASSERT_TRUE(f1.value->getType()->isInteger());
@@ -235,7 +248,8 @@ TEST_F(DataTypeTest, UInt16Test) {
     ASSERT_EQ(f3.as<UInt16>().value->getValue(), 74_u16);
 }
 
-TEST_F(DataTypeTest, UInt64Test) {
+TEST_F(DataTypeTest, UInt64Test)
+{
     auto f1 = Value<UInt64>(42_u64);
     ASSERT_EQ(f1.value->getValue(), 42_u64);
     ASSERT_TRUE(f1.value->getType()->isInteger());
@@ -251,8 +265,8 @@ TEST_F(DataTypeTest, UInt64Test) {
     ASSERT_EQ(f3.as<UInt64>().value->getValue(), 74_u64);
 }
 
-TEST_F(DataTypeTest, IntCastTest) {
-
+TEST_F(DataTypeTest, IntCastTest)
+{
     Value<Int8> i8(32_s8);
     Value<Int16> i16(32_s16);
     Value<Int32> i32(32_s32);
@@ -301,7 +315,8 @@ TEST_F(DataTypeTest, IntCastTest) {
     }
 }
 
-TEST_F(DataTypeTest, UIntCastTest) {
+TEST_F(DataTypeTest, UIntCastTest)
+{
     Value<UInt8> ui8 = 32_u8;
     Value<UInt16> ui16 = 32_u16;
     Value<UInt32> ui32 = 32_u32;
@@ -350,7 +365,8 @@ TEST_F(DataTypeTest, UIntCastTest) {
     }
 }
 
-TEST_F(DataTypeTest, UIntAndIntCastTest) {
+TEST_F(DataTypeTest, UIntAndIntCastTest)
+{
     Value<UInt8> ui8 = 32_u8;
     Value<UInt16> ui16 = 32_u16;
     Value<UInt32> ui32 = 32_u32;
@@ -451,7 +467,8 @@ TEST_F(DataTypeTest, UIntAndIntCastTest) {
     }
 }
 
-TEST_F(DataTypeTest, FloatTest) {
+TEST_F(DataTypeTest, FloatTest)
+{
     auto f1 = Value<Float>(0.1f);
     ASSERT_EQ(f1.value->getValue(), 0.1f);
     ASSERT_TRUE(f1.value->getType()->isFloat());
@@ -461,7 +478,8 @@ TEST_F(DataTypeTest, FloatTest) {
     ASSERT_TRUE(f2.value->getType()->isFloat());
 }
 
-TEST_F(DataTypeTest, FloatCastTest) {
+TEST_F(DataTypeTest, FloatCastTest)
+{
     auto i16 = Value<Int16>(42_s16);
     auto i32 = Value<Int32>(42_s32);
     auto i64 = Value<Int64>(42_s64);
@@ -472,57 +490,59 @@ TEST_F(DataTypeTest, FloatCastTest) {
         // cast i16 to floatV
         auto v1 = i16 + floatV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Float::type);
-        ASSERT_EQ(v1.as<Float>()->getValue(), (float) 43);
+        ASSERT_EQ(v1.as<Float>()->getValue(), (float)43);
     }
 
     {
         // cast i32 to floatV
         auto v1 = i32 + floatV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Float::type);
-        ASSERT_EQ(v1.as<Float>()->getValue(), (float) 43);
+        ASSERT_EQ(v1.as<Float>()->getValue(), (float)43);
     }
 
     {
         // cast i64 to floatV
         auto v1 = i64 + floatV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Float::type);
-        ASSERT_EQ(v1.as<Float>()->getValue(), (float) 43);
+        ASSERT_EQ(v1.as<Float>()->getValue(), (float)43);
     }
 
     {
         // cast i16 to doubleV
         auto v1 = i16 + doubleV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Double::type);
-        ASSERT_EQ(v1.as<Double>()->getValue(), (double) 43);
+        ASSERT_EQ(v1.as<Double>()->getValue(), (double)43);
     }
 
     {
         // cast i32 to doubleV
         auto v1 = i32 + doubleV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Double::type);
-        ASSERT_EQ(v1.as<Double>()->getValue(), (double) 43);
+        ASSERT_EQ(v1.as<Double>()->getValue(), (double)43);
     }
 
     {
         // cast i64 to doubleV
         auto v1 = i64 + doubleV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Double::type);
-        ASSERT_EQ(v1.as<Double>()->getValue(), (double) 43);
+        ASSERT_EQ(v1.as<Double>()->getValue(), (double)43);
     }
 }
 
-struct TestS {
+struct TestS
+{
     uint64_t x;
     uint64_t y;
     uint64_t z;
 };
 
-TEST_F(DataTypeTest, LoadMemberTest) {
+TEST_F(DataTypeTest, LoadMemberTest)
+{
     auto test = TestS{10, 20, 30};
-    Value<MemRef> ref = Value<MemRef>((int8_t*) &test);
+    Value<MemRef> ref = Value<MemRef>((int8_t*)&test);
     ASSERT_EQ(getMember(ref, TestS, x).load<UInt64>(), 10_u64);
     ASSERT_EQ(getMember(ref, TestS, y).load<UInt64>(), 20_u64);
     ASSERT_EQ(getMember(ref, TestS, z).load<UInt64>(), 30_u64);
 }
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

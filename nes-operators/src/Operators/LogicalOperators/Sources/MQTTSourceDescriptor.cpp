@@ -14,39 +14,51 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
-#include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <utility>
+#    include <utility>
+#    include <API/Schema.hpp>
+#    include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
+#    include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
-SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, MQTTSourceTypePtr sourceConfig) {
+SourceDescriptorPtr MQTTSourceDescriptor::create(SchemaPtr schema, MQTTSourceTypePtr sourceConfig)
+{
     return std::make_shared<MQTTSourceDescriptor>(MQTTSourceDescriptor(std::move(schema), std::move(sourceConfig)));
 }
 
 MQTTSourceDescriptor::MQTTSourceDescriptor(SchemaPtr schema, MQTTSourceTypePtr mqttSourceType)
-    : SourceDescriptor(std::move(schema)), mqttSourceType(std::move(mqttSourceType)) {}
+    : SourceDescriptor(std::move(schema)), mqttSourceType(std::move(mqttSourceType))
+{
+}
 
-MQTTSourceTypePtr MQTTSourceDescriptor::getSourceConfigPtr() const { return mqttSourceType; }
+MQTTSourceTypePtr MQTTSourceDescriptor::getSourceConfigPtr() const
+{
+    return mqttSourceType;
+}
 
-std::string MQTTSourceDescriptor::toString() const { return "MQTTSourceDescriptor(" + mqttSourceType->toString() + ")"; }
+std::string MQTTSourceDescriptor::toString() const
+{
+    return "MQTTSourceDescriptor(" + mqttSourceType->toString() + ")";
+}
 
-bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-
-    if (!other->instanceOf<MQTTSourceDescriptor>()) {
+bool MQTTSourceDescriptor::equal(SourceDescriptorPtr const& other) const
+{
+    if (!other->instanceOf<MQTTSourceDescriptor>())
+    {
         return false;
     }
     auto otherMQTTSource = other->as<MQTTSourceDescriptor>();
     return mqttSourceType->equal(otherMQTTSource->mqttSourceType);
 }
 
-SourceDescriptorPtr MQTTSourceDescriptor::copy() {
+SourceDescriptorPtr MQTTSourceDescriptor::copy()
+{
     auto copy = MQTTSourceDescriptor::create(schema->copy(), mqttSourceType);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
 
-}// namespace NES
+} // namespace NES
 
 #endif

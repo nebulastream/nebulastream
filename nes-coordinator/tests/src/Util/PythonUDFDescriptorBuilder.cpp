@@ -14,32 +14,39 @@
 
 #include <Util/PythonUDFDescriptorBuilder.hpp>
 
-namespace NES::Catalogs::UDF {
-PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::build() {
+namespace NES::Catalogs::UDF
+{
+PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::build()
+{
     return PythonUDFDescriptor::create(functionName, functionString, inputSchema, outputSchema);
 }
 
-PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionName(const std::string& newFunctionName) {
+PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionName(const std::string& newFunctionName)
+{
     this->functionName = newFunctionName;
     return *this;
 }
 
-PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionString(const std::string& newFunctionString) {
+PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setFunctionString(const std::string& newFunctionString)
+{
     this->functionString = newFunctionString;
     return *this;
 }
 
-PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setInputSchema(const SchemaPtr& newInputSchema) {
+PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setInputSchema(const SchemaPtr& newInputSchema)
+{
     this->inputSchema = newInputSchema;
     return *this;
 }
 
-PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema) {
+PythonUDFDescriptorBuilder& PythonUDFDescriptorBuilder::setOutputSchema(const SchemaPtr& newOutputSchema)
+{
     this->outputSchema = newOutputSchema;
     return *this;
 }
 
-PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor() {
+PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::createDefaultPythonUDFDescriptor()
+{
     std::string functionName = "udf_function";
     std::string functionString = "def udf_function(x):\n\ty = x + 10\n\treturn y\n";
     SchemaPtr inputSchema = std::make_shared<Schema>()->addField("inputAttribute", DataTypeFactory::createUInt64());
@@ -52,4 +59,4 @@ PythonUDFDescriptorPtr PythonUDFDescriptorBuilder::createDefaultPythonUDFDescrip
         .build();
 }
 
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF

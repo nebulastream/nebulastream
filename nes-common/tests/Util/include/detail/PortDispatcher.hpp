@@ -14,25 +14,29 @@
 
 #ifndef NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_
 #define NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_
-#include <Util/FileMutex.hpp>
 #include <atomic>
-#include <detail/SharedMemoryFixedVector.hpp>
 #include <memory>
-namespace NES::Testing {
+#include <Util/FileMutex.hpp>
+#include <detail/SharedMemoryFixedVector.hpp>
+namespace NES::Testing
+{
 class BorrowedPort;
 using BorrowedPortPtr = std::shared_ptr<BorrowedPort>;
-namespace detail {
+namespace detail
+{
 
-class PortDispatcher {
-  private:
+class PortDispatcher
+{
+private:
     static constexpr uint32_t CHECKSUM = 0x30011991;
-    struct PortHolder {
+    struct PortHolder
+    {
         std::atomic<uint16_t> port;
         std::atomic<bool> free;
         std::atomic<uint32_t> checksum;
     };
 
-  public:
+public:
     explicit PortDispatcher(uint16_t startPort, uint32_t numberOfPorts);
 
     ~PortDispatcher();
@@ -43,7 +47,7 @@ class PortDispatcher {
 
     void recyclePort(uint32_t portIndex);
 
-  private:
+private:
     Util::FileMutex mutex;
     detail::SharedMemoryFixedVector<PortHolder> data;
     std::atomic<size_t> numOfBorrowedPorts{0};
@@ -51,7 +55,7 @@ class PortDispatcher {
 
 PortDispatcher& getPortDispatcher();
 
-}// namespace detail
-}// namespace NES::Testing
+} // namespace detail
+} // namespace NES::Testing
 
-#endif// NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_PORTDISPATCHER_HPP_

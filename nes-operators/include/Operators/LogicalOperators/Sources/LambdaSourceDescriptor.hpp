@@ -15,21 +15,24 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_
 
+#include <functional>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Util/GatheringMode.hpp>
-#include <functional>
 
-namespace NES {
+namespace NES
+{
 
-namespace Runtime {
+namespace Runtime
+{
 class TupleBuffer;
 }
 
 /**
  * @brief Descriptor defining properties used for creating physical memory source
  */
-class LambdaSourceDescriptor : public SourceDescriptor {
-  public:
+class LambdaSourceDescriptor : public SourceDescriptor
+{
+public:
     /**
      * @brief Constructor for a LambdaSourceDescriptor
      * @param schema the schema of the source
@@ -59,16 +62,16 @@ class LambdaSourceDescriptor : public SourceDescriptor {
      * @param frequency
      * @return a correctly initialized shared ptr to LambdaSourceDescriptor
      */
-    static std::shared_ptr<LambdaSourceDescriptor>
-    create(const SchemaPtr& schema,
-           std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-           uint64_t numBuffersToProcess,
-           uint64_t gatheringValue,
-           GatheringMode gatheringMode,
-           uint64_t sourceAffinity = 0,
-           uint64_t taskQueueId = 0,
-           const std::string& logicalSourceName = "",
-           const std::string& physicalSourceName = "");
+    static std::shared_ptr<LambdaSourceDescriptor> create(
+        const SchemaPtr& schema,
+        std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+        uint64_t numBuffersToProcess,
+        uint64_t gatheringValue,
+        GatheringMode gatheringMode,
+        uint64_t sourceAffinity = 0,
+        uint64_t taskQueueId = 0,
+        const std::string& logicalSourceName = "",
+        const std::string& physicalSourceName = "");
 
     /**
      * @brief Provides the string representation of the memory source
@@ -121,7 +124,7 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     */
     uint64_t getTaskQueueId() const;
 
-  private:
+private:
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)> generationFunction;
     uint64_t numBuffersToProcess;
     uint64_t gatheringValue;
@@ -129,6 +132,6 @@ class LambdaSourceDescriptor : public SourceDescriptor {
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LAMBDASOURCEDESCRIPTOR_HPP_

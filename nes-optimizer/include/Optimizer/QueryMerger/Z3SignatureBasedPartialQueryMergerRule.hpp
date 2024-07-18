@@ -17,7 +17,8 @@
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
@@ -61,18 +62,18 @@ using Z3SignatureBasedPartialQueryMergerRulePtr = std::shared_ptr<Z3SignatureBas
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class Z3SignatureBasedPartialQueryMergerRule final : public BaseQueryMergerRule {
-
-  public:
+class Z3SignatureBasedPartialQueryMergerRule final : public BaseQueryMergerRule
+{
+public:
     static Z3SignatureBasedPartialQueryMergerRulePtr create(z3::ContextPtr context);
     ~Z3SignatureBasedPartialQueryMergerRule() noexcept final = default;
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
-  private:
+private:
     explicit Z3SignatureBasedPartialQueryMergerRule(z3::ContextPtr context);
     SignatureEqualityUtilPtr signatureEqualityUtil;
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP_

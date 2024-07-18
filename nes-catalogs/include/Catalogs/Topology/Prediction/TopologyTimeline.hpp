@@ -13,15 +13,17 @@
 */
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYTIMELINE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYTIMELINE_HPP_
+#include <memory>
 #include <Catalogs/Topology/Prediction/TopologyChangeLog.hpp>
 #include <absl/container/btree_map.h>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Experimental::TopologyPrediction {
+namespace Experimental::TopologyPrediction
+{
 using Timestamp = uint64_t;
 class TopologyDelta;
 class TopologyChangeLog;
@@ -35,8 +37,9 @@ using TopologyTimelinePtr = std::shared_ptr<TopologyTimeline>;
  * a specified time are created by making a copy of the existing topology and applying all changes expected to happen before the
  * specified time onto the copy.
  */
-class TopologyTimeline {
-  public:
+class TopologyTimeline
+{
+public:
     /**
      * @brief constructor
      * @param originalTopology a pointer to the original topology
@@ -72,7 +75,7 @@ class TopologyTimeline {
      */
     bool removeTopologyDelta(Timestamp predictedTime, const TopologyDelta& delta);
 
-  private:
+private:
     /**
      * @brief create a new topology representing the state which would result if all changes in the changelog were applied onto
      * the original topology
@@ -98,6 +101,6 @@ class TopologyTimeline {
     TopologyPtr originalTopology;
     absl::btree_map<Timestamp, TopologyChangeLog> changeMap;
 };
-}// namespace Experimental::TopologyPrediction
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYTIMELINE_HPP_
+} // namespace Experimental::TopologyPrediction
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_PREDICTION_TOPOLOGYTIMELINE_HPP_

@@ -15,11 +15,12 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
 
-#include <Monitoring/Metrics/MetricType.hpp>
 #include <memory>
 #include <unordered_map>
+#include <Monitoring/Metrics/MetricType.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 class MetricCollector;
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 class MonitoringCatalog;
@@ -28,8 +29,9 @@ using MonitoringCatalogPtr = std::shared_ptr<MonitoringCatalog>;
 /**
  * The MonitoringCatalog which is responsible for mapping MetricTypes to the corresponding MetricCollector.
  */
-class MonitoringCatalog {
-  public:
+class MonitoringCatalog
+{
+public:
     /**
      * Creates a catalog based on a given map.
      * @param metricCollectors a map from MetricType to MetricCollector
@@ -50,11 +52,11 @@ class MonitoringCatalog {
      */
     MetricCollectorPtr getMetricCollector(MetricType metricType);
 
-  private:
+private:
     explicit MonitoringCatalog(const std::unordered_map<MetricType, MetricCollectorPtr>&);
     std::unordered_map<MetricType, MetricCollectorPtr> metricMap;
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_

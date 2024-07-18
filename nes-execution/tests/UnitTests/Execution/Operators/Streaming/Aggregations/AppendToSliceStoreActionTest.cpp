@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <memory>
+#include <vector>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
@@ -31,13 +30,16 @@
 #include <Util/StdInt.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <memory>
-#include <vector>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class AppendToSliceStoreActionTest : public Testing::BaseUnitTest {
-  public:
+class AppendToSliceStoreActionTest : public Testing::BaseUnitTest
+{
+public:
     std::shared_ptr<BufferManager> bufferManager;
     std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -46,12 +48,14 @@ class AppendToSliceStoreActionTest : public Testing::BaseUnitTest {
     static void SetUpTestCase() { NES::Logger::setupLogging("AppendToSliceStoreActionTest.log", NES::LogLevel::LOG_DEBUG); }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<BufferManager>();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
-    std::shared_ptr<NonKeyedSlice> createNonKeyedSlice(size_t start, size_t end, int64_t value) {
+    std::shared_ptr<NonKeyedSlice> createNonKeyedSlice(size_t start, size_t end, int64_t value)
+    {
         auto integer = DataTypeFactory::createInt64();
         PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
         auto state = std::make_unique<State>(integerType->size());
@@ -61,19 +65,17 @@ class AppendToSliceStoreActionTest : public Testing::BaseUnitTest {
         return std::make_shared<NonKeyedSlice>(8, start, end, std::move(state));
     }
 
-    std::shared_ptr<KeyedSlice>
-    createKeyedSlice(size_t start, size_t end, const std::vector<std::pair<uint64_t, uint64_t>>& values) {
+    std::shared_ptr<KeyedSlice> createKeyedSlice(size_t start, size_t end, const std::vector<std::pair<uint64_t, uint64_t>>& values)
+    {
         auto integer = DataTypeFactory::createInt64();
         PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
         auto map = std::make_unique<Interface::ChainedHashMap>(8, 8, 1000, std::move(allocator));
-        Interface::ChainedHashMapRef ref(Value<MemRef>(reinterpret_cast<int8_t*>(map.get())),
-                                         {integerType},
-                                         integerType->size(),
-                                         8);
+        Interface::ChainedHashMapRef ref(Value<MemRef>(reinterpret_cast<int8_t*>(map.get())), {integerType}, integerType->size(), 8);
 
-        for (uint64_t hash = 0; const auto& [k, v] : values) {
+        for (uint64_t hash = 0; const auto& [k, v] : values)
+        {
             std::memcpy(ref.insert(Value<UInt64>(hash), {k}).getValuePtr().getValue().value, std::addressof(v), sizeof(v));
             hash++;
         }
@@ -81,18 +83,20 @@ class AppendToSliceStoreActionTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice) {
+TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice)
+{
     using namespace ::testing;
     using namespace std::literals;
 
     auto handler = std::make_shared<AppendToSliceStoreHandler<NonKeyedSlice>>(600, 200);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto context = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                    Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto context = ExecutionContext(
+        Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto action = AppendToSliceStoreAction<NonKeyedSlice>(0);
-    auto emitSlice = [&action, &context](auto slice) {
+    auto emitSlice = [&action, &context](auto slice)
+    {
         ExecuteOperatorPtr child = nullptr;
         Value<UInt64> start(slice->getStart());
         Value<UInt64> end(slice->getEnd());
@@ -137,18 +141,20 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice) {
     }
 }
 
-TEST_F(AppendToSliceStoreActionTest, KeyedSlice) {
+TEST_F(AppendToSliceStoreActionTest, KeyedSlice)
+{
     using namespace ::testing;
     using namespace std::literals;
     auto handler = std::make_shared<AppendToSliceStoreHandler<KeyedSlice>>(600, 200);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx = ExecutionContext(
+        Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto action = AppendToSliceStoreAction<KeyedSlice>(0);
 
-    auto emitSlice = [&action, &ctx](auto slice) {
+    auto emitSlice = [&action, &ctx](auto slice)
+    {
         ExecuteOperatorPtr child = nullptr;
         Value<UInt64> start(slice->getStart());
         Value<UInt64> end(slice->getEnd());
@@ -195,4 +201,4 @@ TEST_F(AppendToSliceStoreActionTest, KeyedSlice) {
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
