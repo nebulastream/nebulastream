@@ -16,5 +16,4 @@ add_source_files(nes-catalogs
         TopologyNode.cpp
         Topology.cpp
 )
-add_subdirectory(Prediction)
 add_subdirectory(Index)
