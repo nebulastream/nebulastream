@@ -1,5 +1,38 @@
 # Changelog
 
+## [v0.6.170](https://github.com/nebulastream/nebulastream/tree/v0.6.170) (2024-07-18)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.169...v0.6.170)
+
+**Implemented enhancements:**
+
+- \[TASK\] DEBS tutorial tracking issue [\#4996](https://github.com/nebulastream/nebulastream/issues/4996)
+- \[TASK\] Implement window-based Java UDFs [\#3509](https://github.com/nebulastream/nebulastream/issues/3509)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Physical Source Catalog Coordinator REST response contains pointers instead of values [\#5032](https://github.com/nebulastream/nebulastream/issues/5032)
+- \[BUG\] Action runners fill up disk space [\#3883](https://github.com/nebulastream/nebulastream/issues/3883)
+- \[BUG\] Tumbling windows are not working / PhysicalWindowSinkOperator is not lowered [\#3597](https://github.com/nebulastream/nebulastream/issues/3597)
+- \[BUG\] Multiple tests fail on macOS [\#3321](https://github.com/nebulastream/nebulastream/issues/3321)
+- \[BUG\] Error message from the network stack that a host is not reachable should be a warning [\#2741](https://github.com/nebulastream/nebulastream/issues/2741)
+
+#### Build Management
+
+- Make Alpine executable image [\#2684](https://github.com/nebulastream/nebulastream/issues/2684)
+
+#### Operators 
+
+- \[Feature\] Support trigonometric expressions [\#2804](https://github.com/nebulastream/nebulastream/issues/2804)
+
+### Miscellaneous Issues ✌️
+
+- \[Feature\] Integrate with ELEGANT Acceleration Service [\#2989](https://github.com/nebulastream/nebulastream/issues/2989)
+- \[Feature\] Integrate NebulaStream with ELEGANT Planner [\#2988](https://github.com/nebulastream/nebulastream/issues/2988)
+- \[Feature\] Support wireless sensors and micro controllers [\#2985](https://github.com/nebulastream/nebulastream/issues/2985)
+- \[Feature\] Support UDFs [\#2984](https://github.com/nebulastream/nebulastream/issues/2984)
+- \[Feature\] Image support in NebulaStream [\#2982](https://github.com/nebulastream/nebulastream/issues/2982)
+
 ## [v0.6.169](https://github.com/nebulastream/nebulastream/tree/v0.6.169) (2024-07-11)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.168...v0.6.169)
