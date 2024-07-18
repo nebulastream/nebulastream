@@ -183,4 +183,4 @@ const std::string convertToJNIName(const std::string& javaClassName);
 
 } // namespace NES::jni
 
-#endif// NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
+#endif // NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_

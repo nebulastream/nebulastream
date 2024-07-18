@@ -145,4 +145,4 @@ private:
     std::map<size_t, size_t> allAvailFixedBufferSum;
 };
 } // namespace NES::Benchmark::Measurements
-#endif// NES_BENCHMARK_INCLUDE_MEASUREMENTS_HPP_
+#endif // NES_BENCHMARK_INCLUDE_MEASUREMENTS_HPP_

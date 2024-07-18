@@ -62,4 +62,4 @@ private:
 };
 
 } // namespace NES
-#endif// NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_
+#endif // NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_

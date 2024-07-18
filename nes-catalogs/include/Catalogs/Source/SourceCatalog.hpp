@@ -194,4 +194,4 @@ private:
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 } // namespace Catalogs::Source
 } // namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

@@ -54,4 +54,4 @@ struct StringConverter<T>
 } // namespace impl
 } // namespace Yaml
 
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEYAML_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEYAML_HPP_

@@ -30,4 +30,4 @@ struct SysPlanMetaData
 };
 } // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_SYSPLANMETADATA_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_SYSPLANMETADATA_HPP_

@@ -189,4 +189,4 @@ Windowing::TimeUnit Days();
 
 } // namespace NES::API
 
-#endif// NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
+#endif // NES_CLIENT_INCLUDE_API_WINDOWING_HPP_

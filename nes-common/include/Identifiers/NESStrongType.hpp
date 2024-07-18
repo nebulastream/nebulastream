@@ -106,4 +106,4 @@ struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
 };
 } // namespace std
 
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPE_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPE_HPP_

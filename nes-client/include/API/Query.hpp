@@ -569,4 +569,4 @@ using QueryPtr = std::shared_ptr<Query>;
 
 } // namespace NES
 
-#endif// NES_CLIENT_INCLUDE_API_QUERY_HPP_
+#endif // NES_CLIENT_INCLUDE_API_QUERY_HPP_

@@ -32,4 +32,4 @@ public:
     explicit LogicalSourceNotFoundException(const std::string& message);
 };
 } // namespace NES::Exceptions
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_LOGICALSOURCENOTFOUNDEXCEPTION_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_LOGICALSOURCENOTFOUNDEXCEPTION_HPP_

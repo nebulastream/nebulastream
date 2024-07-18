@@ -60,4 +60,4 @@ public:
     virtual void onChannelError(Messages::ErrorMessage) = 0;
 };
 } // namespace NES::Network
-#endif// NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_

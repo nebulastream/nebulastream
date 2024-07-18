@@ -29,4 +29,4 @@ public:
     [[nodiscard]] bool equal(SinkDescriptorPtr const&) override { return false; }
 };
 } // namespace NES
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_

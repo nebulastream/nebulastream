@@ -27,4 +27,4 @@ class InvalidCoordinateFormatException : public std::exception
 };
 
 } // namespace NES::Spatial::Index::Experimental
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_INVALIDCOORDINATEFORMATEXCEPTION_HPP_

@@ -45,4 +45,4 @@ public:
     static QueryId getNextQueryId();
 };
 } // namespace NES
-#endif// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_

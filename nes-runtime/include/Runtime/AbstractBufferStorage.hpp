@@ -49,4 +49,4 @@ public:
     virtual size_t getStorageSize() const = 0;
 };
 } // namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_

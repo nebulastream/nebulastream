@@ -91,4 +91,4 @@ concept DerivedBaseOption = std::is_base_of_v<BaseOption, T>;
 
 } // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_

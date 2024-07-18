@@ -80,4 +80,4 @@ using KeyedAppendToSliceStoreAction = AppendToSliceStoreAction<KeyedSlice>;
 using KeyedAppendToSliceStoreHandler = AppendToSliceStoreHandler<KeyedSlice>;
 } // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_APPENDTOSLICESTOREACTION_HPP_

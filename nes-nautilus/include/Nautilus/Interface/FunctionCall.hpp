@@ -314,4 +314,4 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
 
 } // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_

@@ -148,4 +148,4 @@ private:
 using RemoteClientPtr = std::shared_ptr<RemoteClient>;
 } // namespace NES::Client
 
-#endif// NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_
+#endif // NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_

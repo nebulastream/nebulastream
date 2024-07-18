@@ -63,4 +63,4 @@ std::filesystem::path getLibPath(std::string libName);
 
 } // namespace NES::Compiler::ExecutablePath
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_EXECUTABLEPATH_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_UTIL_EXECUTABLEPATH_HPP_

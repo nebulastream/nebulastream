@@ -103,4 +103,4 @@ using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
 
 } // namespace NES
 #endif // ENABLE_KAFKA_BUILD
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

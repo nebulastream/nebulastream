@@ -32,4 +32,4 @@ struct formatter<NES::NESStrongType<T, Tag, invalid, initial>> : formatter<std::
     }
 };
 } // namespace fmt
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_

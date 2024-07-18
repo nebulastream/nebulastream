@@ -95,4 +95,4 @@ struct QuantileEstimationValue : AggregationValue
 
 } // namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_

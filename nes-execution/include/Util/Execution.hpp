@@ -35,4 +35,4 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
 
 } // namespace NES::QueryCompilation::Util
 
-#endif// NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_
