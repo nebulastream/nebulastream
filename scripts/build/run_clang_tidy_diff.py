@@ -39,6 +39,7 @@ import traceback
 try:
     import yaml
 except ImportError:
+    print("Cannot find PyYAML. Please install it to enable exporting fixes to files.")
     yaml = None
 
 is_py2 = sys.version[0] == "2"
