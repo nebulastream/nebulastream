@@ -24,4 +24,4 @@ CLANG_TIDY_EXECUTABLE=$(cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS
 echo "CLANG_TIDY_EXECUTABLE: $CLANG_TIDY_EXECUTABLE"
 
 # run clang-tidy
-python3 /nebulastream/tools/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 4 -path /nebulastream/build -export-fixes /clang-tidy-result/fixes.yaml
+python3 /nebulastream/scripts/build/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 4 -path /nebulastream/build -export-fixes /clang-tidy-result/fixes.yaml
