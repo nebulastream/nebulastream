@@ -194,4 +194,4 @@ private:
     DecomposedQueryPlanVersion version;
 };
 } // namespace NES::Network
-#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
+#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

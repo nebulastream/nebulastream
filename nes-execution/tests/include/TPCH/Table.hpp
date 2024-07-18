@@ -139,4 +139,4 @@ private:
 
 } // namespace NES::Runtime
 
-#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_
+#endif// NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_

@@ -63,4 +63,4 @@ DataSourcePtr createNonRunnableSource(
     NES::Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 } // namespace NES::Testing
 
-#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_

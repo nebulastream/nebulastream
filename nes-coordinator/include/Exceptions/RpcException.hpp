@@ -53,4 +53,4 @@ private:
 };
 } // namespace Exceptions
 } // namespace NES
-#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_
+#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_

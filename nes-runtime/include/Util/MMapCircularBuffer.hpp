@@ -133,4 +133,4 @@ private:
     bool acive_read = false;
     bool acive_write = false;
 };
-#endif // NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
+#endif// NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_

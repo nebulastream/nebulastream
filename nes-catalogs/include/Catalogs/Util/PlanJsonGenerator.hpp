@@ -57,4 +57,4 @@ private:
     static std::string getOperatorType(const OperatorPtr& operatorNode);
 };
 } // namespace NES
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_

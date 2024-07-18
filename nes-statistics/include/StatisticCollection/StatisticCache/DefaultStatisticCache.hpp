@@ -68,4 +68,4 @@ private:
     folly::Synchronized<std::unordered_map<StatisticHash, std::vector<StatisticValuePtr>>> keyToStatistics;
 };
 } // namespace NES::Statistic
-#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_DEFAULTSTATISTICCACHE_HPP_
+#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICCACHE_DEFAULTSTATISTICCACHE_HPP_

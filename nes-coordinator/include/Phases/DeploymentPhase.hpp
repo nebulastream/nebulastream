@@ -97,4 +97,4 @@ private:
     Catalogs::Query::QueryCatalogPtr queryCatalog;
 };
 } // namespace NES
-#endif // NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_
+#endif// NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_

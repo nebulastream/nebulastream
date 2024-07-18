@@ -127,4 +127,4 @@ private:
     uint64_t countForZeta;
     std::uniform_real_distribution<double> dist;
 };
-#endif // NES_BENCHMARK_INCLUDE_UTIL_ZIPFIANGENERATOR_HPP_
+#endif// NES_BENCHMARK_INCLUDE_UTIL_ZIPFIANGENERATOR_HPP_

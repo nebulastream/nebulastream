@@ -51,4 +51,4 @@ public:
         size_t numOfProducers) override;
 };
 } // namespace NES::TestUtils
-#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_
+#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSINKPROVIDER_HPP_

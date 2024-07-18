@@ -27,4 +27,4 @@ class None
 };
 using InputVariant = std::variant<ValueRef, ConstantValue, BlockRef, None, FunctionCallTarget>;
 } // namespace NES::Nautilus::Tracing
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_

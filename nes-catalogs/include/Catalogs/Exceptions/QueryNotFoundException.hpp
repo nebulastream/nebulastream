@@ -32,4 +32,4 @@ public:
     const char* what() const noexcept override;
 };
 } // namespace NES::Exceptions
-#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_
+#endif// NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_QUERYNOTFOUNDEXCEPTION_HPP_

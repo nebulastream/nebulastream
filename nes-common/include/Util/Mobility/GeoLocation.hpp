@@ -109,4 +109,4 @@ private:
 } // namespace DataTypes::Experimental
 } // namespace NES::Spatial
 
-#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_
+#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_

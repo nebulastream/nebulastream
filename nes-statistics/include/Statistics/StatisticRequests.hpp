@@ -115,4 +115,4 @@ struct StatisticProbeRequestGRPC : public StatisticProbeRequest
 
 } // namespace NES::Statistic
 
-#endif // NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_
+#endif// NES_STATISTICS_INCLUDE_STATISTICS_STATISTICREQUESTS_HPP_

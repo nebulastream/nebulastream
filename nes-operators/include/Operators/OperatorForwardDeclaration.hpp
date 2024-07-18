@@ -92,4 +92,4 @@ using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindow
 } // namespace Statistic
 
 } // namespace NES
-#endif // NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
+#endif// NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
