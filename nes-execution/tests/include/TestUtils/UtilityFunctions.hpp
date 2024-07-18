@@ -125,7 +125,8 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     const SchemaPtr& schema,
     Runtime::BufferManagerPtr bufferManager,
     uint64_t originId = 0,
-    const std::string& timestampFieldname = "ts");
+    const std::string& timestampFieldname = "ts",
+    bool skipFirstLine = false);
 
 // TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**

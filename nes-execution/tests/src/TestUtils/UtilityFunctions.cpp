@@ -267,20 +267,22 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     const SchemaPtr& schema,
     Runtime::BufferManagerPtr bufferManager,
     uint64_t originId,
-    const std::string& timestampFieldname)
+    const std::string& timestampFieldname,
+    bool skipFirstLine)
 {
     std::vector<Runtime::TupleBuffer> recordBuffers;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
 
     // Creating everything for the csv parser
     std::ifstream file(csvFile);
-    std::istream_iterator<std::string> beginIt(file);
-    std::istream_iterator<std::string> endIt;
-    const std::string delimiter = ",";
 
-    // Do-while loop for checking, if we have another line to parse from the inputFile
+    if (skipFirstLine)
+    {
+        std::string line;
+        std::getline(file, line);
+    }
+
     const auto maxTuplesPerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
-    auto it = beginIt;
     auto tupleCount = 0UL;
     auto tupleBuffer = bufferManager->getBufferBlocking();
     const auto numberOfSchemaFields = schema->fields.size();
@@ -288,17 +290,14 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 
     uint64_t sequenceNumber = 0;
     uint64_t watermarkTS = 0;
-    do
+    for (std::string line; std::getline(file, line);)
     {
-        std::string line = *it;
-        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
-        auto values = NES::Util::splitWithStringDelimiter<std::string>(line, delimiter);
+        auto testBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
+        auto values = NES::Util::splitWithStringDelimiter<std::string>(line, ",");
 
         // iterate over fields of schema and cast string values to correct type
         for (uint64_t j = 0; j < numberOfSchemaFields; j++)
         {
-            auto field = physicalTypes[j];
-            NES_TRACE("Current value is:  {}", values[j]);
             writeFieldValueToTupleBuffer(values[j], j, testBuffer, schema, tupleCount, bufferManager);
         }
         if (schema->contains(timestampFieldname))
@@ -320,8 +319,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
             tupleCount = 0UL;
             watermarkTS = 0UL;
         }
-        ++it;
-    } while (it != endIt);
+    }
 
     if (tupleCount > 0)
     {
