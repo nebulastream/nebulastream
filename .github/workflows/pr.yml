@@ -1,18 +1,10 @@
-name: NES CI
+name: NES PR CI
+
+# The following pipeline is meant to run for every PR. It will not call any other workflow / pipeline.
+# It will also check for the format and the guard checks. If these steps are successful, it will try to build the PR and run the tests.
+# In the future, we will add more automated checks to this pipeline, e.g., clang-tidy for our codebase or code coverage checks.
 
 on:
-  push:
-    branches:
-      - master
-    tags-ignore:
-      - '*'
-    paths-ignore:
-      - nes-common/include/Version/version.hpp
-      - README.md
-      - CODE_OF_CONDUCT.md
-      - CHECKLIST.yml
-      - CHANGELOG.md
-      - '.github/**'
   pull_request:
     types:
       - ready_for_review
@@ -27,33 +19,13 @@ on:
       - README.md
       - CODE_OF_CONDUCT.md
       - CHANGELOG.md
-  workflow_dispatch:
-    inputs:
-      version:
-        description: 'Perform Major or Minor Release'
-        type: choice
-        required: true
-        options:
-          - Major
-          - Minor
+      - 'docs/**'
 
 jobs:
   validateTrigger:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: [ self-hosted, linux, X64, Build ]
     steps:
-      - name: verify-user
-        uses: tspascoal/get-user-teams-membership@v3
-        id: checkUserMember
-        with:
-          username: ${{ github.actor }}
-          team: 'NebulaStream-Admins'
-          GITHUB_TOKEN: ${{ secrets.CI_PRIVILEGE_SECRETE }}
-      - name: verify-run-privilage
-        if: steps.checkUserMember.outputs.isTeamMember == 'false' && github.event_name == 'workflow_dispatch'
-        run: |
-          echo "Unauthorized user triggering release"
-          exit 1
       - uses: AutoModality/action-clean@v1
       - name: Checkout
         uses: actions/checkout@v4
@@ -66,7 +38,6 @@ jobs:
 
   pre-build-checks:
     name: "Pre-Build-Checks"
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [ validateTrigger ]
     steps:
@@ -80,88 +51,25 @@ jobs:
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
+      - name: Build Docker for CleanUp
+        id: builddocker_prebuild
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_build_ubuntu -f Dockerfile-NES-Build .
       - name: preamble-check
         run: |
-          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu
       - name: format-check
         run: |
-          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nes_build_ubuntu
       - name: guard-check
         run: |
-          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
       - name: docker cleanup
-        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+        if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_preamble-check
           docker rm -f ${{ github.run_id }}_format-check
           docker rm -f ${{ github.run_id }}_guard-check
-
-  # Deactivate coverage report in #3564
-  #  build-x64-linux-code-coverage:
-  #    name: "Code Coverage Pipeline"
-  #    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-  #    runs-on: [ self-hosted, linux, X64, Build ]
-  #    needs: [ pre-build-checks ]
-  #    timeout-minutes: 300
-  #    strategy:
-  #      fail-fast: false
-  #      matrix:
-  #        include:
-  #          - osversion: ubuntu-20_04
-  #            require_build: "true"
-  #            require_test: "false"
-  #    steps:
-  #      - uses: AutoModality/action-clean@v1
-  #      - uses: actions/checkout@v4
-  #        with:
-  #          ssh-key: ${{ secrets.CI_SECRET }}
-  #          ssh-strict: 'false'
-  #          fetch-depth: '0'
-  #      - name: Cancel Previous Runs
-  #        uses: styfle/cancel-workflow-action@0.12.1
-  #        with:
-  #          access_token: ${{ secrets.NES_CI_SECRET }}
-  #      - name: Build Docker
-  #        id: builddocker
-  #        if: github.event_name != 'workflow_dispatch'
-  #        continue-on-error: true
-  #        working-directory: ${{ github.workspace }}/docker/buildImage
-  #        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-  #      - name: Run tests
-  #        if: github.event_name != 'workflow_dispatch'
-  #        run: |
-  #          docker run --name ${{ github.run_id }}_cc_${{ matrix.osversion }}_build -v $GITHUB_WORKSPACE:/nebulastream -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism="4" -eNesBuildParallelism="16" -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-cc.sh nes_build_${{ matrix.osversion }}
-  #      - name: Run Code Coverage Analysis
-  #        uses: irongut/CodeCoverageSummary@v1.3.0
-  #        with:
-  #          filename: build/coverage.xml
-  #          badge: true
-  #          fail_below_min: true
-  #          format: markdown
-  #          hide_branch_rate: false
-  #          hide_complexity: true
-  #          indicators: true
-  #          output: both
-  #          thresholds: '30 75'
-  #      - name: Add Coverage PR Comment
-  #        uses: marocchino/sticky-pull-request-comment@v2
-  #        if: github.event_name == 'pull_request'
-  #        with:
-  #          recreate: true
-  #          path: code-coverage-results.md
-  #      - name: docker cleanup
-  #        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
-  #        run: |
-  #          docker rm -f ${{ github.run_id }}_cc_${{ matrix.osversion }}_build
-  #      - name: Notify Slack
-  #        uses: 8398a7/action-slack@v3.16.2
-  #        with:
-  #          status: ${{ job.status }}
-  #          author_name: ${{ github.actor }}
-  #        env:
-  #          GITHUB_TOKEN: ${{ secrets.NES_CI_SECRET }}
-  #          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
-  #        if: always()
 
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
@@ -175,13 +83,6 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - osversion: ubuntu-20_04
-            arch: "X64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "16"
-            test_parallelism: "4"
-            runner_group: "default"
           - osversion: ubuntu-22_04
             arch: "X64"
             require_build: "true"
@@ -216,7 +117,6 @@ jobs:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: Build Docker for CleanUp
         id: builddocker_cleanup
-        if: github.event_name != 'workflow_dispatch'
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
@@ -231,7 +131,7 @@ jobs:
           file="/data/nes-ci/tmp/last_checked_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}.txt"
           
           # We check, if we have to perform some cleanup. 
-          perform_cleanup=$(bash $github_workspace/scripts/check_cleanup.sh $file)
+          perform_cleanup=$(bash $github_workspace/scripts/build/check_cleanup.sh $file)
           if [ $perform_cleanup -eq 1 ]; then
             echo "Performing cleanup!"
             # Running the script in the docker container, as otherwise, we will have permission issues
@@ -244,12 +144,10 @@ jobs:
 
       - name: Build Docker
         id: builddocker
-        if: github.event_name != 'workflow_dispatch'
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
         run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: Build Nebulastream
-        if: github.event_name != 'workflow_dispatch'
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
           GPU_RUNNER_PARAMS=""
@@ -265,7 +163,6 @@ jobs:
           mkdir -p $build_dir
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
       - name: Run tests
-        if: github.event_name != 'workflow_dispatch'
         run: |
           GPU_RUNNER_PARAMS=""
           if [ "${{ matrix.runner_group }}" == "gpu" ]; then
@@ -276,197 +173,7 @@ jobs:
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
         shell: bash
       - name: docker cleanup
-        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
+        if: ${{ always() }}
         run: |
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
           docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test
-
-
-  build-macos:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    runs-on: [ self-hosted, macos, '${{ matrix.arch }}', Build ]
-    name: macos ${{ matrix.arch }}
-    strategy:
-      fail-fast: false
-      matrix:
-        arch: [ "ARM64", "X64" ]
-    needs: [ pre-build-checks ]
-    timeout-minutes: 40
-    continue-on-error: true
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.1
-        with:
-          access_token: ${{ secrets.NES_CI_SECRET }}
-      #TODO: 2268 remove the environment variable to allow test execution on arm server
-      - name: Run build
-        if: github.event_name != 'workflow_dispatch'
-        run: |
-          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.arch }}"
-          echo $build_dir
-          mkdir -p $build_dir
-          $GITHUB_WORKSPACE/docker/buildImage/entrypoint-nes-build-macos.sh "$build_dir"
-
-
-#  infer-static-analysis:
-#    name: Static Analysis FB Infer
-#    if: "!contains(github.event.head_commit.message, 'GIT-CI:')  || github.event_name != 'workflow_dispatch' || github.ref != 'refs/heads/master'"
-#    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
-#    needs: [ pre-build-checks ]
-#    strategy:
-#      fail-fast: false
-#      matrix:
-#        include:
-#          - osversion: ubuntu-22_04
-#            arch: "X64"
-#            require_build: "true"
-#            require_test: "true"
-#            build_parallelism: "16"
-#            test_parallelism: "4"
-#    steps:
-#      - name: Check out code
-#        uses: actions/checkout@v4
-#        with:
-#          ssh-key: ${{ secrets.CI_SECRET }}
-#          ssh-strict: 'false'
-#          fetch-depth: '0'
-#      - name: Build Docker
-#        id: builddocker
-#        if: github.event_name != 'workflow_dispatch'
-#        continue-on-error: true
-#        working-directory: ${{ github.workspace }}/docker/staticAnalysisImage
-#        run: docker build  -t nes_static_analysis_${{ matrix.osversion }} -f Dockerfile-NES-StaticAnalysis-${{ matrix.osversion }} .
-#      - name: Build NebulaStream & Run Static Analysis
-#        if: github.event_name != 'workflow_dispatch'
-#        run: |
-#          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-#          build_dir="/data/nes-ci/tmp/nes-staticAnalysis_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-#          echo "build_dir=$build_dir" >> $GITHUB_ENV
-#          mkdir -p $build_dir
-#          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE nes_static_analysis_${{ matrix.osversion }}
-#      - name: Check Infer report
-#        uses: srz-zumix/reviewdog-action-infer@v1
-#        with:
-#          reporter: github-pr-review
-#          report_path: "${{ env.build_dir }}/infer-out"
-#      - name: docker cleanup
-#        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
-#        run: |
-#          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_static_analysis
-          
-
-  release:
-    runs-on: [ self-hosted, linux, X64, Build ]
-    if: github.ref == 'refs/heads/master'
-    needs: [ build-linux, build-macos ]
-    env:
-      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
-      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
-      EVENT: ${{ github.event_name }}
-      NEXT_VERSION: ${{ github.event.inputs.version }}
-    steps:
-      - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          fetch-depth: 0
-      - name: Get changed files using defaults
-        id: changed-files
-        uses: tj-actions/changed-files@v41.0.0
-      - name: Get changed files using a comma separator
-        id: changed-files-comma-separate
-        uses: tj-actions/changed-files@v41.0.0
-        with:
-          separator: ","
-      - name: "Set up QEMU"
-        uses: docker/setup-qemu-action@v3
-      - name: "Set up Docker Buildx"
-        uses: docker/setup-buildx-action@v3
-      - name: "Get NebulaStream Version"
-        run: |
-          NES_VERSION=$(grep -o "NES_VERSION.*" nes-common/include/Version/version.hpp | grep -o "\".*\"" |  sed -e 's/^.//' -e 's/-.*$//')
-          if [[ "${{ github.event_name }}"  =~ "workflow_dispatch" ]]; then
-            if [[ "${{ env.NEXT_VERSION }}" =~ "Minor" ]]; then
-              NES_VERSION=$(echo $NES_VERSION | awk -F. -v OFS=. '{$2 +=1 ; $3 = 0 ; print}')
-            else
-              NES_VERSION=$(echo $NES_VERSION | awk -F. -v OFS=. '{$1 +=1 ; $2 =0 ; $3 = 0 ; print}')
-            fi
-          fi
-          echo "NES_VERSION=$NES_VERSION" >> $GITHUB_ENV
-      - name: "Build and Release NES Build Image"
-        if: github.event_name != 'workflow_dispatch' && contains(steps.changed-files.outputs.modified_files, 'docker/buildImage/')
-        run: |
-          echo "Found changes done to buildImage"
-          cd docker/buildImage
-          #When we decide on weather to use the version as tag or not we can use the below command to extract the current version.
-          #grep -o "\".*\"" include/Version/version.hpp | sed -e 's/^.//' -e 's/.$//'
-          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . -f Dockerfile-NES-Build -t nebulastream/nes-build-image:latest --platform=linux/amd64,linux/arm64 --push
-          echo "Pushed the build image"        
-          docker logout
-      - name: "Build and Release NES Dev Image"
-        if: github.event_name != 'workflow_dispatch' && (contains(steps.changed-files.outputs.modified_files, 'docker/buildImage/') || contains(steps.changed-files.outputs.modified_files, 'docker/devImage/'))
-        run: |
-          echo "Found changes done to devImage"
-          cd docker/devImage/
-          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . -f Dockerfile-NES-Dev -t nebulastream/nes-dev-image:latest --platform=linux/amd64,linux/arm64 --push
-          echo "Pushed the dev image"          
-          docker logout
-      - name: "Generate ChangeLogs"
-        uses: heinrichreimer/github-changelog-generator-action@v2.4
-        with:
-          token: ${{ secrets.NES_CI_SECRET }}
-          issues: true
-          #maxIssues: 500
-          issuesWoLabels: true
-          pullRequests: false
-          prWoLabels: true
-          author: true
-          compareLink: true
-          stripGeneratorNotice: true
-          futureRelease: v${{ env.NES_VERSION }}
-          bugsLabel: "### Bug Fixes 🐛"
-          issuesLabel: "### Miscellaneous Issues ✌️"
-          addSections: '{"optimizer":{"prefix":"### Query Optimizer 🔧","labels":["Query Optimizer", "QueryMerge"]},
-          "Spatial": {"prefix": "#### Spatial Query Processing 🌇", "labels":["Spatial Query Processing"]}, 
-          "monitoring": {"prefix": "#### Monitoring 🚥", "labels":["Monitoring"]},
-          "cep": {"prefix": "#### Complex Event Processing", "labels":["Complex Event Processing"]},
-          "runtime": {"prefix": "#### Runtime ", "labels":["Runtime"]},
-          "udf": {"prefix": "#### User Defined Functions", "labels":["User Defined Functions"]},
-          "query compiler": {"prefix": "#### Query Compiler", "labels":["Query Compiler"]},
-          "fault tolerance": {"prefix": "#### Fault Tolerance", "labels":["Fault Tolerance"]},
-          "build management": {"prefix": "#### Build Management", "labels":["Build Management"]},
-          "operators": {"prefix": "#### Operators ", "labels":["Operators"]},
-          "state management": {"prefix": "#### State Management ", "labels":["State Management"]},
-          "rest": {"prefix": "#### REST API ", "labels":["REST"]},
-          "documentation": {"prefix": "#### Documentation ", "labels":["Documentation"]}
-          }'
-      - name: "Commit Updated Changelog File"
-        uses: stefanzweifel/git-auto-commit-action@v4
-        with:
-          commit_message: "GIT-CI: Adding changelog for version v${{ env.NES_VERSION }}"
-          file_pattern: CHANGELOG.md
-      - name: "Release Tag"
-        env:
-          CI_SECRET: ${{ secrets.CI_SECRET }}
-        run: |
-          echo "$CI_SECRET" | base64 -w 0 > $GITHUB_WORKSPACE/ci_secret.txt     
-          if [[ $EVENT == 'workflow_dispatch' ]]; then
-            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE  -e RELEASE_TYPE=$NEXT_VERSION --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
-          else
-            docker run -v $GITHUB_WORKSPACE/ci_secret.txt:/ci_secret.txt -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-release.sh nebulastream/nes-build-image:latest
-          fi
-      - name: "Push Docs To Pages"
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          personal_token: ${{ secrets.CI_TOKEN }}
-          publish_dir: ./build/cmake/docs/html
-          external_repository: nebulastream/nebulastream-docs
-          publish_branch: master
