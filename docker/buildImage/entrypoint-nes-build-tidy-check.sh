@@ -20,6 +20,9 @@ fi
 # We expect the diff to be located at /clang-tidy-result/git_pr.diff
 GIT_DIFF_FILE_NAME="/clang-tidy-result/git_pr.diff"
 
+# We write the fixes to /clang-tidy-result/fixes.yml
+OUTPUT_YAML_FILE="/clang-tidy-result/fixes.yml"
+
 
 # generate buildsystem
 mkdir -p /nebulastream/build
@@ -34,4 +37,4 @@ apt-get install -y python3-pip
 pip install pyyaml
 
 # run clang-tidy and pass the contents of the file to the script via stdin
-cat $GIT_DIFF_FILE_NAME | python3 /nebulastream/scripts/build/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 4 -path /nebulastream/build -export-fixes /clang-tidy-result/fixes.yml
+cat $GIT_DIFF_FILE_NAME | python3 /nebulastream/scripts/build/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 4 -path /nebulastream/build -export-fixes $OUTPUT_YAML_FILE
