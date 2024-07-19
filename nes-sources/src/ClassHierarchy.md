@@ -1,232 +1,92 @@
-# Todo: remove in #75, when completing #69
-# Description
-This document accompanies the epic issue #69. Upon completing #69 in #75, which is a clean up task,
-we convert this document to the final documentation of sources and sinks (after refactoring).
-
-# Version 1
+# Overview of nes-sources module 
+We propose the following solution. Users describe sources by providing the type of the Source, e.g. File or TCP,
+the schema and name of the logical source and the input format, e.g. CSV or JSON. During parsing, we create a validated and strongly types **SourceDescriptor**
+from the description of the user and attach it to the query plan. During lowering, we give the *SourceDescriptor* to the **SourceProvider**, which constructs
+the described **Source** using the **SourceRegistry** and, using the constructed Source, constructs and returns a **SourceHandle** which
+becomes part of an executable query plan. The SourceHandel offers a very slim interface, `start()` and `stop()` and thereby hides all the
+implementation details from users of sources. Internally, the SourceHandle constructs a **SourceThread** and delegates the start and stop
+calls to the *SourceThread*. The SourceThread starts a thread, so one thread per source, which runs the `runningRoutine()`. In the running routine,
+the SourceThread repeatedly calls the `fillTupleBuffer` function of the specific *Source* implementation, e.g., of the **SourceTCP**.
+If `fillTupleBuffer` succeeds, the *SourceThread* returns a TupleBuffer to the runtime via the *EmitFunction*, if not, it returns an
+error using the *EmitFunction*.
 ```mermaid
 ---
 title: Sources Implementation Overview
 ---
 classDiagram
-    SourceHandle --> Source : takes implementation from
-    Source --> PullingSource : implemented by
-    Source --> PushingSource : implemented by
-    PullingSource --> FileSource : calls 'pull()' in start()
-    PushingSource --> SourceTCP : start() -> subscribe, close() -> unsubscribe
-
-    namespace OutsideFacing {
+    SourceHandle --> SourceThread : calls start/stop of SourceThread
+    SourceThread --> Source : calls fillTupleBuffer in running routine
+    Source ..> SourceFile : data ingestion implemented by
+    Source ..> SourceTCP : data ingestion implemented by
+    SourceProvider --> SourceRegistry : provide SourceDescriptor
+    SourceRegistry --> SourceProvider : return Source
+    SourceProvider --> SourceHandle : construct SourceHandle
+    SourceDescriptor --> SourceProvider : fully describes Source
+    PhysicalSourceParser --> SourceRegistryValidation : provides string description of source
+    SourceRegistryValidation --> PhysicalSourceParser : validates and constructs typed descriptor
+    PhysicalSourceParser --> SourceDescriptor : constructs SourceDescriptor if valid
+    
+    namespace Parser {
+        class PhysicalSourceParser {
+            SourceDescriptor createSourceDescriptor(unordered_map~string, string~)
+        }
+    }
+    namespace QueryPlan {
+        class SourceDescriptor {
+            const shared_ptr~Schema~ schema
+            const string logicalSourceName
+            const string sourceType
+            const Configurations::InputFormat inputFormat
+        }
         class SourceHandle {
-            - Source sourceImpl
             + virtual void start()
             + virtual void stop()
+            - SourceThread sourceThread
         }
     }
-    
-    namespace Internal {
-        class Source {
-            + void virtual start()
-            + void virtual stop()
+    namespace SourceConstruction {
+        class SourceProvider {
+            + SourceHandle lower(SourceId, SourceDescriptor, BufferPool, EmitFunction)
         }
-        
-        class PullingSource {
-            + void start()
-            + void stop()
-            - std::jthread thread
-            + SourceImplementation sourceImpl
-        }
-        
-        class PushingSource {
-            + void start()
-            + void stop()
-            - std::jthread thread
-            + SourceImplementation sourceImpl
-        }
-        
-        class FileSource {
-            + void pull()
-            - std::string filePath
-        }
-        
-        class SourceTCP {
-            + void push()
-            - std::string host
-            - std::string port
-        }
-    }
-```
-(G3): FileSource/SourceTCP should implement a common 'SourceInterface' to reside in the same registry
----
-# Version 2
-```mermaid
----
-title: Sources Implementation Overview
----
-classDiagram
-    SourceHandle --> Source : takes implementation from
-    Source --> SourceThread : query start&stop logic implemented by
-    Source ..> FileSource : data ingestion implemented by 
-    Source ..> SourceTCP : data ingestion implemented by
-    SourceThread --> FileSource : start() -> connect & pull, stop() -> close
-    SourceThread --> SourceTCP : start() -> connect & pull, stop() -> close
-    
-    note for Source "- Interface for PluginRegistry\n - defers start/stop to\nPulling/PushingSource"
-    
-namespace OutsideFacing {
-    class SourceHandle {
-        + Source(Pulling/PushingSource) sourceImpl
-        + virtual void start()
-        + virtual void stop()
-    }
-}
 
-namespace Internal {
-    %% Source is the interface for the PluginRegistry for sources
-    class Source {
-        + void virtual start()
-        + void virtual stop()
-    }
-    
-    class SourceThread {
-        + void start()
-        + void stop()
-        + Source(File/TCP/..) sourceImpl
-    }
-    
-    class FileSource {
-        + void start()
-        + void stop()
-        - std::string filePath
-    }
-    
-    class SourceTCP {
-        + void start()
-        + void stop()
-        - std::string host
-        - std::string port
-    }
-}
-```
----
-# Version 2.5
-```mermaid
----
-title: Sources Implementation Overview
----
-classDiagram
-    SourceHandle --> SourceThread : uses
-    FileSource --> Source : implements
-    SourceTCP --> Source  : implements
-    SourceThread --> FileSource : uses
-    SourceThread --> SourceTCP : uses
-
-    namespace OutsideFacing {
-        class SourceHandle {
-            + SourceThread SourceThread
-            + void start()
-            + void stop()
-            + OriginId getSourceId()
-            + std::string toString()
+        class SourceRegistry {
+            Source create(SourceDescriptor)
         }
-    }
-    namespace SourceRegistry {
-    %% Source is the interface for the PluginRegistry for sources
-        class Source {
-            + virtual void open()
-            + virtual void close()
-            + virtual void fillTupleBuffer()
-            + virtual SourceType getType()
-            + virtual std::string toString()
+
+        class SourceRegistryValidation {
+            SourceDescriptor create(unordered_map~string, string~)
         }
     }
 
-    namespace Internal {
-
+    namespace SourceInternals {
         class SourceThread {
             + void start()
             + void stop()
-            + OriginId getSourceId()
-            + std::string toString()
-            + Source sourceImpl
+            + Source(File/TCP/..) sourceImpl
+            - std::thread thread
+            - void runningRoutine()
+            - void emitWork()
+        }
+    %% Source is the interface for the PluginRegistry for sources
+        class Source {
+            + bool fillTupleBuffer(TupleBuffer)
+            + void virtual open()
+            + void virtual close()
         }
 
-        class FileSource {
+        class SourceFile {
+            + bool fillTupleBuffer(TupleBuffer)
             + void open()
             + void close()
-            + void fillTupleBuffer()
-            + SourceType getType()
-            + std::string toString()
             - std::string filePath
         }
 
         class SourceTCP {
+            + bool fillTupleBuffer(TupleBuffer)
             + void open()
             + void close()
-            + void fillTupleBuffer()
-            + SourceType getType()
-            + std::string toString()
-            - std::string host
-            - std::string port
+            - string host
+            - string port
         }
     }
-```
-TODO #237: Still uses old threading logic.
----
-# Version (Vision) 3
-```mermaid
----
-title: Sources Implementation Overview
----
-classDiagram
-    SourceHandle --> Source : takes implementation from
-    Source --> PullingSource : query start&stop logic implemented by
-    Source --> PushingSource : query start&stop logic implemented by
-    PullingSource --> FileSource : start() -> connect & pull, stop() -> close
-    PushingSource --> SourceTCP : start() -> subscribe, close() -> unsubscribe
-    Source ..> FileSource : data ingestion implemented by 
-    Source ..> SourceTCP : data ingestion implemented by
-    
-    note for Source "- Interface for PluginRegistry\n - defers start/stop to\nPulling/PushingSource"
-    
-namespace OutsideFacing {
-    class SourceHandle {
-        + Source(Pulling/PushingSource) sourceImpl
-        + virtual void start()
-        + virtual void stop()
-    }
-}
-
-namespace Internal {
-    %% Source is the interface for the PluginRegistry for sources
-    class Source {
-        + void virtual start()
-        + void virtual stop()
-    }
-    
-    class PullingSource {
-        + void start()
-        + void stop()
-        - std::jthread thread
-        + Source(File/TCP/..) sourceImpl
-    }
-    
-    class PushingSource {
-        + void start()
-        + void stop()
-        + Source(File/TCP/..) sourceImpl
-    }
-    
-    class FileSource {
-        + void start()
-        + void stop()
-        - std::string filePath
-    }
-    
-    class SourceTCP {
-        + void start()
-        + void stop()
-        - std::string host
-        - std::string port
-    }
-}
 ```
