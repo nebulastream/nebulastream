@@ -38,3 +38,12 @@ pip install pyyaml
 
 # run clang-tidy and pass the contents of the file to the script via stdin
 cat $GIT_DIFF_FILE_NAME | python3 /nebulastream/scripts/build/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 1 -path /nebulastream/build -export-fixes $OUTPUT_YAML_FILE
+
+# check if the file is empty
+if [ -s $OUTPUT_YAML_FILE ]; then
+  echo "Fixes found. Please check the file $OUTPUT_YAML_FILE for the fixes."
+  exit 1
+else
+  echo "No fixes found."
+  exit 0
+fi
