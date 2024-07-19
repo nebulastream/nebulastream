@@ -74,11 +74,11 @@ Currently, NebulaStream does not support the above [vision](#motivation-and-visi
 # Goals
 - G1: Simplify the source implementations. Following the encapsulation principle of OOP, the task of a source should simply be to ingest data and to write that data to a TupleBuffer.
   - addresses P1 and P3
-- G2: Starting a query should be handled by a separate class that simply uses a Source implementation.
+- G2: Starting a query should be handled by a separate class that simply uses a source implementation.
   - addresses P2
 - G3: Handle formatting/parsing separate from ingesting data. A data source simply ingests data. A formatter/parser formats/parses the raw data according to a specific format.
   - addresses P2
-- G4: Create source/sink registries that enable us to easily create a new source/sik as an internal or external plugin and that returns a constructor given a source/sink name (or enum if feasible).
+- G4: Create source/sink registries that enable us to easily create a new source/sink as an internal or external plugin and that returns a constructor given a source/sink name (or enum if feasible).
   - mainly addresses P1 and P3
 - G5: unify the process of creating data sources and sinks
   - addresses P1, P3, and P5
@@ -94,8 +94,9 @@ Currently, NebulaStream does not support the above [vision](#motivation-and-visi
 - a complete vision or even implementation of how to separate formatting from sources and how to enable compilation of the formatting process
   - we address this problem specifically in the discussion #133
 - a complete vision or even implementation on how to decouple sources from a dedicated thread, enabling us to scale out concerning the number of sources on a single worker
-- we address this problem specifically in the discussion #133
-
+  - we address this problem specifically in the discussion #133
+- a complete vision or even implementation on how to do source sharing
+  - we address this problem specifically in the discussion #133
 # Proposed Solution
 ## Fully Specified Source/Sink Descriptor
 Currently, we are creating physical sources from source types. Source types are configured using either a `YAML::Node` as input or a `std::map<std::string, std::string>`. Therefore, all current configurations are possible to represent as a map from string to string. We also observe that most configurations use scalar values from the following set {uint32_t, uint64_t, bool, float, char}. Therefore, we conclude that we can model all current source configurations as a `std::unordered_map<std::string, std::variant<int64_t, std::string, bool, double>>`.
@@ -136,11 +137,87 @@ We make the following assumptions:
   - this assumption logically follows from Assumption 2 and 3
 
 ## Solution
-Todo: mermaid diagram that shows on overview of the implementation
+We propose the following solution. Users describe sources by providing the type of the Source, e.g. File or TCP, 
+the schema and name of the logical source and the input format, e.g. CSV or JSON. During parsing, we create a validated and strongly types **SourceDescriptor**
+from the description of the user and attach it to the query plan. During lowering, we give the *SourceDescriptor* to the **SourceProvider**, which constructs
+the described **Source** using the **SourceRegistry** and, using the constructed Source, constructs and returns a **SourceHandle** which
+becomes part of an executable query plan. The SourceHandel offers a very slim interface, `start()` and `stop()` and thereby hides all the 
+implementation details from users of sources. Internally, the SourceHandle constructs a **SourceThread** and delegates the start and stop
+calls to the *SourceThread*. The SourceThread starts a thread, so one thread per source, which runs the `runningRoutine()`. In the running routine,
+the SourceThread repeatedly calls the `fillTupleBuffer` function of the specific *Source* implementation, e.g., of the **SourceTCP**. 
+If `fillTupleBuffer` succeeds, the *SourceThread* returns a TupleBuffer to the runtime via the *EmitFunction*, if not, it returns an
+error using the *EmitFunction*.
+```mermaid
+---
+title: Sources Implementation Overview
+---
+classDiagram
+    SourceHandle --> SourceThread : calls start/stop of SourceThread
+    SourceThread --> Source : calls fillTupleBuffer in running routine
+    Source ..> SourceFile : data ingestion implemented by 
+    Source ..> SourceTCP : data ingestion implemented by
+    SourceProvider --> SourceRegistry : provide SourceDescriptor
+    SourceRegistry --> SourceProvider : return Source
+    SourceProvider --> SourceHandle : construct SourceHandle
+    SourceDescriptor --> SourceProvider : fully describes Source
 
-We propose the following solution.
+namespace QueryPlan {
+  class SourceDescriptor {
+    const shared_ptr~Schema~ schema
+    const string logicalSourceName
+    const string sourceType
+    const Configurations::InputFormat inputFormat
+  }
+  class SourceHandle {
+    + virtual void start()
+    + virtual void stop()
+    - SourceThread sourceThread
+  }
+}
+namespace SourceConstruction {
+    class SourceProvider {
+        + SourceHandle lower(SourceId, SourceDescriptor, BufferPool, EmitFunction)
+    }
+    
+    class SourceRegistry {
+      Source create(SourceDescriptor)
+    }
+}
+
+namespace SourceInternals {
+    class SourceThread {
+        + void start()
+        + void stop()
+        + Source(File/TCP/..) sourceImpl
+        - std::thread thread
+        - void runningRoutine()
+        - void emitWork()
+    }
+    %% Source is the interface for the PluginRegistry for sources
+    class Source {
+      + bool fillTupleBuffer(TupleBuffer)
+      + void virtual open()
+      + void virtual close()
+    }
+    
+    class SourceFile {
+        + bool fillTupleBuffer(TupleBuffer)
+        + void open()
+        + void close()
+        - std::string filePath
+    }
+    
+    class SourceTCP {
+        + bool fillTupleBuffer(TupleBuffer)
+        + void open()
+        + void close()
+        - string host
+        - string port
+    }
+}
+```
 ## G1
-Source implementations now only implement the logic to read data from a certain source, e.g. File, Kafka, or ZMQ, and write the raw bytes received from that source into a TupleBuffer (not a TestTupleBuffer!). This design follows the encapsulation principle of OOP. Additionally, since we write only the raw bytes into a buffer, there is no CSVSource anymore, or a JSONFileSource, or a ParquetSource. There is only a FileSource that reads data from a file. CSV, JSON and Parquet are formats, therefore they are handled by a formatter/parser.
+Source implementations now only implement the logic to read data from a certain source, e.g. File, Kafka, or ZMQ, and write the raw bytes received from that source into a TupleBuffer (not a TestTupleBuffer!). This design follows the encapsulation principle of OOP. Additionally, since we write only the raw bytes into a buffer, there is no CSVSource anymore, or a JSONSourceFile, or a ParquetSource. There is only a SourceFile that reads data from a file. CSV, JSON and Parquet are formats, therefore they are handled by a formatter/parser.
 
 We plan to reduce the supported sources to only the File, ZMQ and the TCP source. We will add the other sources back as soon as the design is fleshed out.
 ## G2
@@ -163,9 +240,6 @@ The source itself does not handle the formatting/parsing of the ingested data an
 By separating formatting/parsing from the source entirely, it becomes possible to make formatting/parsing part of the compiled query. This allows for interesting optimizations such as generating formatting/parsing code for a specific schema and a specific query. For example, a projection could be handled during formatting/parsing already.
 
 For the initial implementation of sources and sinks we use simple runtime implementations (non-compiled) for sources and sinks. We will support CSV and JSON. In a later design document based on discussion #133, we develop a concrete idea for how to support compilation of data formatters/parsers.
-
-
-Todo: provide implementation details on interaction between source and formatter/parser and how the formatter/parser is represented in the query and when it is constructed (will follow with prototype).
 
 ## G4
 In PR [#48](https://github.com/nebulastream/nebulastream-public/pull/48) we introduced the design of a static plugin registry. This registry allows to auto-register source and sinks constructors using a string key. In [Assumptions](#assumptions) we described that the worker receives fully specified query plans, were all sink and source names were already resolved to [fully specified source/sink descriptors](#fully-specified-sourcesink-descriptor). Thus, on the worker, after compiling the query, we can construct a source/sink in the following way using a fully specified source/sink descriptor and the source plugin registry:
