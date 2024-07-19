@@ -18,7 +18,7 @@ if ! [ -f "/nebulastream/CMakeLists.txt" ]; then
 fi
 
 # We expect the diff to be located at /clang-tidy-result/git_pr.diff
-GIT_DIFF_FILE_NAME="clang-tidy-result/git_pr.diff"
+GIT_DIFF_FILE_NAME="/clang-tidy-result/git_pr.diff"
 
 # We write the fixes to /clang-tidy-result/fixes.yml
 OUTPUT_YAML_FILE="/clang-tidy-result/fixes.yml"
