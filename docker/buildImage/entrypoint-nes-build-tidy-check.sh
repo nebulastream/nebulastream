@@ -29,7 +29,7 @@ mkdir -p /nebulastream/build
 cd /nebulastream/build
 
 # Important that -DCMAKE_EXPORT_COMPILE_COMMANDS=ON is not removed, as this is necessary for clang-tidy to work
-CLANG_TIDY_EXECUTABLE=$(cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSOR_FLOW=1 -DNES_USE_S2=1 .. 2>&1 | grep "$CLANG_TIDY_EXECUTABLE" | cut -d '=' -f2)
+CLANG_TIDY_EXECUTABLE=$(cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSOR_FLOW=1 -DNES_USE_S2=1 .. 2>&1 | grep "CLANG_TIDY_EXECUTABLE" | cut -d ' ' -f3)
 echo "CLANG_TIDY_EXECUTABLE: $CLANG_TIDY_EXECUTABLE"
 
 
@@ -39,7 +39,7 @@ apt-get install -y python3-pip
 pip install pyyaml
 
 # run clang-tidy and pass the contents of the file to the script via stdin
-cat $GIT_DIFF_FILE_NAME | python3 /nebulastream/scripts/build/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 1 -path /nebulastream/build -export-fixes $OUTPUT_YAML_FILE
+cat $GIT_DIFF_FILE_NAME | python3 /nebulastream/scripts/build/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 1 -path /nebulastream/build/compile_commands.json -export-fixes $OUTPUT_YAML_FILE
 
 # check if the file is empty
 if [ -s $OUTPUT_YAML_FILE ]; then
