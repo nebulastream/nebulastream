@@ -15,12 +15,12 @@
 #include <numeric>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/MMapCircularBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
-#include <Util/Logger/Logger.hpp>
 namespace NES
 {
 using namespace std::literals;
