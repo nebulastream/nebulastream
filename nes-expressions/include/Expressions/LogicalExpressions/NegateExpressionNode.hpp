@@ -15,13 +15,15 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_
 #include <Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This node negates its child expression.
  */
-class NegateExpressionNode : public LogicalUnaryExpressionNode {
-  public:
+class NegateExpressionNode : public LogicalUnaryExpressionNode
+{
+public:
     NegateExpressionNode();
     ~NegateExpressionNode() override = default;
 
@@ -46,9 +48,9 @@ class NegateExpressionNode : public LogicalUnaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+protected:
     explicit NegateExpressionNode(NegateExpressionNode* other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_

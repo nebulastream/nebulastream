@@ -14,8 +14,12 @@
 
 #include <Util/SpatialUtils.hpp>
 
-namespace NES {
+namespace NES
+{
 
-double SpatialUtils::degreesToRadians(double degrees) { return (degrees * M_PI / 180.0); }
+double SpatialUtils::degreesToRadians(double degrees)
+{
+    return (degrees * M_PI / 180.0);
+}
 
-}// namespace NES
+} // namespace NES

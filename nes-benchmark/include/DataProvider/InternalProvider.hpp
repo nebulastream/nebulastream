@@ -19,13 +19,14 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Benchmark::DataProvision {
+namespace NES::Benchmark::DataProvision
+{
 /**
  * @brief This class inherits from DataProvider. The internal provider ingests the generated data as quickly as possible.
  */
-class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
-
-  public:
+class InternalProvider : public DataProvider, public Runtime::BufferRecycler
+{
+public:
     /**
      * @brief creates an InternalProvider
      * @param id
@@ -74,11 +75,11 @@ class InternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     void stop() override;
 
-  private:
+private:
     std::vector<Runtime::TupleBuffer> preAllocatedBuffers;
     uint64_t currentlyEmittedBuffer = 0;
     bool started = false;
 };
-}// namespace NES::Benchmark::DataProvision
+} // namespace NES::Benchmark::DataProvision
 
-#endif// NES_BENCHMARK_INCLUDE_DATAPROVIDER_INTERNALPROVIDER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAPROVIDER_INTERNALPROVIDER_HPP_

@@ -18,13 +18,15 @@
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
 * @brief Base class for any class that represents a symbolic compiler built-in variable for computations in operator code.
 */
-class BuiltInVariable : public Any {
-  public:
+class BuiltInVariable : public Any
+{
+public:
     BuiltInVariable(const TypeIdentifier* identifier);
 
     /**
@@ -38,6 +40,6 @@ class BuiltInVariable : public Any {
     virtual const Value<> getAsValue() const = 0;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_BUILTINVARIABLE_HPP_
+#endif // NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_BUILTINVARIABLE_HPP_

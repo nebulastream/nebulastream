@@ -12,22 +12,26 @@
     limitations under the License.
 */
 
-#include <CoordinatorRPCService.pb.h>
+#include <cmath>
 #include <Exceptions/CoordinatesOutOfRangeException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
-#include <cmath>
+#include <CoordinatorRPCService.pb.h>
 
-namespace NES::Spatial::DataTypes::Experimental {
+namespace NES::Spatial::DataTypes::Experimental
+{
 
-GeoLocation::GeoLocation() {
+GeoLocation::GeoLocation()
+{
     latitude = std::numeric_limits<double>::quiet_NaN();
     longitude = std::numeric_limits<double>::quiet_NaN();
 }
 
-GeoLocation::GeoLocation(double latitude, double longitude) {
+GeoLocation::GeoLocation(double latitude, double longitude)
+{
     //Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
-    if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude)) {
+    if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude))
+    {
         NES_ERROR("Trying to create a location with invalid coordinates");
         throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
@@ -35,11 +39,14 @@ GeoLocation::GeoLocation(double latitude, double longitude) {
     this->longitude = longitude;
 }
 
-GeoLocation::GeoLocation(const NES::Spatial::Protobuf::GeoLocation& geoLocation)
-    : GeoLocation(geoLocation.lat(), geoLocation.lng()) {}
+GeoLocation::GeoLocation(const NES::Spatial::Protobuf::GeoLocation& geoLocation) : GeoLocation(geoLocation.lat(), geoLocation.lng())
+{
+}
 
-GeoLocation GeoLocation::fromString(const std::string& coordinates) {
-    if (coordinates.empty()) {
+GeoLocation GeoLocation::fromString(const std::string& coordinates)
+{
+    if (coordinates.empty())
+    {
         throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
 
@@ -48,7 +55,8 @@ GeoLocation GeoLocation::fromString(const std::string& coordinates) {
     stringStream >> lat;
     char separator = 0;
     stringStream >> separator;
-    if (separator != ',') {
+    if (separator != ',')
+    {
         NES_ERROR("input string is not of format \"<latitude>, <longitude>\". Node will be created as non field node");
         throw NES::Spatial::Exception::CoordinatesOutOfRangeException();
     }
@@ -58,23 +66,38 @@ GeoLocation GeoLocation::fromString(const std::string& coordinates) {
     return {lat, lng};
 }
 
-bool GeoLocation::operator==(const GeoLocation& other) const {
+bool GeoLocation::operator==(const GeoLocation& other) const
+{
     //if both objects are an invalid location, consider them equal
-    if (!this->isValid() && !other.isValid()) {
+    if (!this->isValid() && !other.isValid())
+    {
         return true;
     }
     return this->latitude == other.latitude && this->longitude == other.longitude;
 }
 
-double GeoLocation::getLatitude() const { return latitude; }
+double GeoLocation::getLatitude() const
+{
+    return latitude;
+}
 
-double GeoLocation::getLongitude() const { return longitude; }
+double GeoLocation::getLongitude() const
+{
+    return longitude;
+}
 
-bool GeoLocation::isValid() const { return !(std::isnan(latitude) || std::isnan(longitude)); }
+bool GeoLocation::isValid() const
+{
+    return !(std::isnan(latitude) || std::isnan(longitude));
+}
 
-std::string GeoLocation::toString() const { return std::to_string(latitude) + ", " + std::to_string(longitude); }
+std::string GeoLocation::toString() const
+{
+    return std::to_string(latitude) + ", " + std::to_string(longitude);
+}
 
-bool GeoLocation::checkValidityOfCoordinates(double latitude, double longitude) {
+bool GeoLocation::checkValidityOfCoordinates(double latitude, double longitude)
+{
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
-}// namespace NES::Spatial::DataTypes::Experimental
+} // namespace NES::Spatial::DataTypes::Experimental

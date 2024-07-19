@@ -15,13 +15,17 @@
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/Selectivity.hpp>
 
-namespace NES::Statistic {
-MetricPtr Selectivity::create(const FieldAccessExpressionNodePtr& expressionNode) {
+namespace NES::Statistic
+{
+MetricPtr Selectivity::create(const FieldAccessExpressionNodePtr& expressionNode)
+{
     return std::make_shared<Selectivity>(Selectivity(expressionNode));
 }
 
-bool Selectivity::operator==(const StatisticMetric& rhs) const {
-    if (rhs.instanceOf<Selectivity>()) {
+bool Selectivity::operator==(const StatisticMetric& rhs) const
+{
+    if (rhs.instanceOf<Selectivity>())
+    {
         // We assume that if the field has the same name, the metric is equal
         auto rhsSelectivity = dynamic_cast<const Selectivity&>(rhs);
         return field->getFieldName() == rhsSelectivity.field->getFieldName();
@@ -29,7 +33,12 @@ bool Selectivity::operator==(const StatisticMetric& rhs) const {
     return false;
 }
 
-std::string Selectivity::toString() const { return "Selectivity over " + field->toString(); }
+std::string Selectivity::toString() const
+{
+    return "Selectivity over " + field->toString();
+}
 
-Selectivity::Selectivity(const FieldAccessExpressionNodePtr& expressionNode) : StatisticMetric(expressionNode) {}
-}// namespace NES::Statistic
+Selectivity::Selectivity(const FieldAccessExpressionNodePtr& expressionNode) : StatisticMetric(expressionNode)
+{
+}
+} // namespace NES::Statistic

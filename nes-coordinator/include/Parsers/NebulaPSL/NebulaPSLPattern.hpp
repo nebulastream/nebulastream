@@ -15,20 +15,22 @@
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_HPP_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_HPP_
 
-#include <API/QueryAPI.hpp>
-#include <Parsers/NebulaPSL/NebulaPSLOperator.hpp>
 #include <list>
 #include <map>
 #include <string>
+#include <API/QueryAPI.hpp>
+#include <Parsers/NebulaPSL/NebulaPSLOperator.hpp>
 
-namespace NES::Parsers {
+namespace NES::Parsers
+{
 
 /**
  * @brief This class represents the results from parsing the ANTLR AST tree
  * Attributes of this class represent the different clauses and a merge into a query after parsing the AST
  */
-class NebulaPSLPattern {
-  public:
+class NebulaPSLPattern
+{
+public:
     //Constructors
     NebulaPSLPattern() = default;
     // Getter and Setter
@@ -81,15 +83,15 @@ class NebulaPSLPattern {
      */
     void addOperator(NebulaPSLOperator operatorNode);
 
-  private:
+private:
     std::map<int32_t, std::string> sourceList;
-    std::map<int32_t, NebulaPSLOperator> operatorList;// contains the operators from the PATTERN clause
+    std::map<int32_t, NebulaPSLOperator> operatorList; // contains the operators from the PATTERN clause
     std::list<ExpressionNodePtr> expressionList;
     std::vector<ExpressionNodePtr> projectionFields;
     std::list<SinkDescriptorPtr> sinkList; // INTO
-    std::pair<std::string, int32_t> window;// WITHIN
+    std::pair<std::string, int32_t> window; // WITHIN
 };
 
-}// namespace NES::Parsers
+} // namespace NES::Parsers
 
-#endif// NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_HPP_
+#endif // NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLPATTERN_HPP_

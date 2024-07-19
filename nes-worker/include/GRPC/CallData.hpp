@@ -17,11 +17,13 @@
 
 #include <stdint.h>
 
-namespace grpc {
+namespace grpc
+{
 class ServerCompletionQueue;
 }
 
-namespace NES {
+namespace NES
+{
 class WorkerRPCServer;
 /**
  * @brief This is taken from https://github.com/grpc/grpc/tree/master/examples/cpp/helloworld
@@ -29,8 +31,9 @@ class WorkerRPCServer;
  * server) and the completion queue "completionQueue" used for asynchronous communication
  * with the gRPC Runtime.
  */
-class CallData {
-  public:
+class CallData
+{
+public:
     /**
      * @brief Constructor for the Call Data
      * @param service server to listen on
@@ -43,15 +46,20 @@ class CallData {
     */
     void proceed();
 
-  private:
+private:
     // The means of communication with the gRPC Runtime for an asynchronous
     // server.
     WorkerRPCServer& service;
 
     // Let's implement a tiny state machine with the following states.
-    enum class CallStatus : uint8_t { CREATE, PROCESS, FINISH };
-    CallStatus status = CallStatus::CREATE;// The current serving state.
+    enum class CallStatus : uint8_t
+    {
+        CREATE,
+        PROCESS,
+        FINISH
+    };
+    CallStatus status = CallStatus::CREATE; // The current serving state.
 };
 
-}// namespace NES
-#endif// NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_
+} // namespace NES
+#endif // NES_WORKER_INCLUDE_GRPC_CALLDATA_HPP_

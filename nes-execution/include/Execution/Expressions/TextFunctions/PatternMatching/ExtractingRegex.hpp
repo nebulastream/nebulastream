@@ -19,7 +19,8 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
 * @brief This method returns a text sequence from the target text, which is matching the given regex pattern.
@@ -28,17 +29,18 @@ namespace NES::Runtime::Execution::Expressions {
 * @param regexpPattern as TextValue the pattern to extract
 * @param idx as Integer defines at what position in the textValue matching starts (only the first match is returned), use 0 for the first
 */
-class ExtractingRegex : public Expression {
-  public:
+class ExtractingRegex : public Expression
+{
+public:
     ExtractingRegex(const ExpressionPtr& textValue, const ExpressionPtr& regexpPattern, const ExpressionPtr& idx);
     Value<> execute(Record& record) const override;
 
-  private:
+private:
     const ExpressionPtr textValue;
     const ExpressionPtr regexpPattern;
     const ExpressionPtr idx;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_EXTRACTINGREGEX_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_EXTRACTINGREGEX_HPP_

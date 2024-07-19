@@ -16,11 +16,20 @@
 #include <Util/Logger/Logger.hpp>
 #include <flounder/executable.h>
 
-namespace NES::Nautilus::Backends::Flounder {
-FlounderExecutable::FlounderExecutable(std::unique_ptr<flounder::Executable> engine) : engine(std::move(engine)) {}
+namespace NES::Nautilus::Backends::Flounder
+{
+FlounderExecutable::FlounderExecutable(std::unique_ptr<flounder::Executable> engine) : engine(std::move(engine))
+{
+}
 
-void* FlounderExecutable::getInvocableFunctionPtr(const std::string&) { return reinterpret_cast<void*>(engine->callback()); }
-bool FlounderExecutable::hasInvocableFunctionPtr() { return true; }
+void* FlounderExecutable::getInvocableFunctionPtr(const std::string&)
+{
+    return reinterpret_cast<void*>(engine->callback());
+}
+bool FlounderExecutable::hasInvocableFunctionPtr()
+{
+    return true;
+}
 
 FlounderExecutable::~FlounderExecutable() noexcept = default;
-}// namespace NES::Nautilus::Backends::Flounder
+} // namespace NES::Nautilus::Backends::Flounder

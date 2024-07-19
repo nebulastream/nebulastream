@@ -17,24 +17,26 @@
 
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Checks if the latest statistic is above a threshold
  */
-template<typename T>
-class ThresholdTrigger : public TriggerCondition {
-  public:
+template <typename T>
+class ThresholdTrigger : public TriggerCondition
+{
+public:
     /**
      * @brief Creates a string representation
      * @return std::string
      */
     [[nodiscard]] std::string toString() const override;
 
-  private:
+private:
     const T threshold;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_THRESHOLDTRIGGER_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_THRESHOLDTRIGGER_HPP_

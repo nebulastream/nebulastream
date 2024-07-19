@@ -12,10 +12,8 @@
     limitations under the License.
 */
 
+#include <tuple>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <BaseUnitTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <GRPC/CoordinatorRPCServer.hpp>
 #include <Monitoring/MonitoringManager.hpp>
@@ -27,15 +25,20 @@
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock-more-matchers.h>
 #include <gtest/gtest.h>
-#include <tuple>
+#include <BaseIntegrationTest.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class CoordinatorRPCServerTest : public Testing::BaseUnitTest {
-  public:
-    void SetUp() override {
+class CoordinatorRPCServerTest : public Testing::BaseUnitTest
+{
+public:
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         VALID_LOGICAL_SOURCE_SCHEMA = TestSchemas::getSchemaTemplate("id_val_u64");
     }
@@ -44,13 +47,15 @@ class CoordinatorRPCServerTest : public Testing::BaseUnitTest {
     constexpr static auto VALID_LOGICAL_SOURCE_NAME = "ValidSource";
     constexpr static auto INVALID_LOGICAL_SOURCE_NAME = "InvalidSource";
 
-  protected:
+protected:
     SchemaPtr VALID_LOGICAL_SOURCE_SCHEMA;
-    static void setupLogging() {
+    static void setupLogging()
+    {
         NES::Logger::setupLogging("ExpressionNodeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup ExpressionNodeTest test class.");
     }
-    static std::tuple<std::unique_ptr<CoordinatorRPCServer>, std::shared_ptr<Catalogs::Source::SourceCatalog>> defaultUUT() {
+    static std::tuple<std::unique_ptr<CoordinatorRPCServer>, std::shared_ptr<Catalogs::Source::SourceCatalog>> defaultUUT()
+    {
         auto sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         auto catalog = std::make_shared<SourceCatalogService>(sourceCatalog);
 
@@ -60,7 +65,8 @@ class CoordinatorRPCServerTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(CoordinatorRPCServerTest, testEmptyPhysicalSourceRegistrationRequest) {
+TEST_F(CoordinatorRPCServerTest, testEmptyPhysicalSourceRegistrationRequest)
+{
     auto [uut, _] = defaultUUT();
     ServerContext serverContext;
     RegisterPhysicalSourcesRequest request;
@@ -72,7 +78,8 @@ TEST_F(CoordinatorRPCServerTest, testEmptyPhysicalSourceRegistrationRequest) {
     EXPECT_TRUE(reply.success());
 }
 
-TEST_F(CoordinatorRPCServerTest, testValidPhysicalSourceRegistrationRequest) {
+TEST_F(CoordinatorRPCServerTest, testValidPhysicalSourceRegistrationRequest)
+{
     auto [uut, sourceCatalog] = defaultUUT();
 
     sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME, VALID_LOGICAL_SOURCE_SCHEMA);
@@ -96,7 +103,8 @@ TEST_F(CoordinatorRPCServerTest, testValidPhysicalSourceRegistrationRequest) {
     EXPECT_TRUE(reply.success());
 }
 
-TEST_F(CoordinatorRPCServerTest, testInvalidPhysicalSourceRegistrationRequest) {
+TEST_F(CoordinatorRPCServerTest, testInvalidPhysicalSourceRegistrationRequest)
+{
     auto [uut, sourceCatalog] = defaultUUT();
 
     sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME, VALID_LOGICAL_SOURCE_SCHEMA);
@@ -120,7 +128,8 @@ TEST_F(CoordinatorRPCServerTest, testInvalidPhysicalSourceRegistrationRequest) {
     EXPECT_FALSE(reply.success());
 }
 
-TEST_F(CoordinatorRPCServerTest, testValidAndInvalidPhysicalSourceRegistrationRequest) {
+TEST_F(CoordinatorRPCServerTest, testValidAndInvalidPhysicalSourceRegistrationRequest)
+{
     auto [uut, sourceCatalog] = defaultUUT();
 
     sourceCatalog->addLogicalSource(VALID_LOGICAL_SOURCE_NAME, VALID_LOGICAL_SOURCE_SCHEMA);
@@ -160,4 +169,4 @@ TEST_F(CoordinatorRPCServerTest, testValidAndInvalidPhysicalSourceRegistrationRe
     EXPECT_FALSE(reply.success());
 }
 
-}// namespace NES
+} // namespace NES

@@ -14,19 +14,21 @@
 
 #ifndef NES_COMPILER_INCLUDE_COMPILER_COMPILATIONCACHE_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_COMPILATIONCACHE_HPP_
+#include <mutex>
+#include <unordered_map>
 #include <Compiler/CompilationResult.hpp>
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/SourceCode.hpp>
-#include <mutex>
-#include <unordered_map>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * This class is used to cache the already generated binaries to not compile the the query over and over again
  */
-class CompilationCache {
-  public:
+class CompilationCache
+{
+public:
     /**
      * @brief check if the binary for a query already exists
      * @param code
@@ -48,11 +50,11 @@ class CompilationCache {
      */
     CompilationResult get(const SourceCode& code);
 
-  private:
+private:
     std::unordered_map<const SourceCode, CompilationResult> compilationReuseMap;
     std::recursive_mutex mutex;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILATIONCACHE_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_COMPILATIONCACHE_HPP_

@@ -15,20 +15,22 @@
 #ifndef NES_COORDINATOR_INCLUDE_REST_RESTSERVERINTERRUPTHANDLER_HPP_
 #define NES_COORDINATOR_INCLUDE_REST_RESTSERVERINTERRUPTHANDLER_HPP_
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Interrupt Handler for the rest server.
  * This is used to wait for the termination of the rest server.
  */
-class RestServerInterruptHandler {
-  public:
+class RestServerInterruptHandler
+{
+public:
     static void hookUserInterruptHandler();
 
     static void handleUserInterrupt(int signal);
 
     static void waitForUserInterrupt();
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_REST_RESTSERVERINTERRUPTHANDLER_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REST_RESTSERVERINTERRUPTHANDLER_HPP_

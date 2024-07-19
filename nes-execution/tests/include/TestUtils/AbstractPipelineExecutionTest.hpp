@@ -15,6 +15,8 @@
 #ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_
 #define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_
 
+#include <utility>
+#include <vector>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
@@ -25,14 +27,15 @@
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
-#include <utility>
-#include <vector>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 /**
  * @brief This is an abstract test class for pipeline execution tests.
  */
-class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::string> {};
-}// namespace NES::Runtime
+class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::string>
+{
+};
+} // namespace NES::Runtime
 
-#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_
+#endif // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_

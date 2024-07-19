@@ -18,20 +18,24 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Monitoring {
+namespace Monitoring
+{
 
 /**
  * @brief Wrapper class to represent the metrics read from the OS about dynamically changing data represented in other metric classes.
  */
-class RuntimeMetrics {
-  public:
+class RuntimeMetrics
+{
+public:
     RuntimeMetrics();
 
     /**
@@ -74,7 +78,7 @@ class RuntimeMetrics {
     uint64_t nodeId;
     uint64_t wallTimeNs;
     uint64_t memoryUsageInBytes;
-    uint64_t cpuLoadInJiffies;//user+system
+    uint64_t cpuLoadInJiffies; //user+system
     uint64_t blkioBytesRead;
     uint64_t blkioBytesWritten;
     uint64_t batteryStatusInPercent;
@@ -107,6 +111,6 @@ void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
  */
 nlohmann::json asJson(const RuntimeMetrics& metrics);
 
-}// namespace Monitoring
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_RUNTIMEMETRICS_HPP_
+} // namespace Monitoring
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_RUNTIMEMETRICS_HPP_

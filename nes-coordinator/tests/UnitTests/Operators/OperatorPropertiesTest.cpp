@@ -13,29 +13,33 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class OperatorPropertiesTest : public Testing::BaseUnitTest {
-  public:
+class OperatorPropertiesTest : public Testing::BaseUnitTest
+{
+public:
     static void SetUpTestCase() { setupLogging(); }
 
-  protected:
-    static void setupLogging() {
+protected:
+    static void setupLogging()
+    {
         NES::Logger::setupLogging("OperatorPropertiesTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup OperatorPropertiesTest test class.");
     }
 };
 
 // test assigning operators properties
-TEST_F(OperatorPropertiesTest, testAssignProperties) {
+TEST_F(OperatorPropertiesTest, testAssignProperties)
+{
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::any>> properties;
@@ -80,7 +84,8 @@ TEST_F(OperatorPropertiesTest, testAssignProperties) {
 }
 
 // test assigning different types of operators properties
-TEST_F(OperatorPropertiesTest, testAssignDifferentPropertyTypes) {
+TEST_F(OperatorPropertiesTest, testAssignDifferentPropertyTypes)
+{
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::any>> properties;
@@ -119,7 +124,8 @@ TEST_F(OperatorPropertiesTest, testAssignDifferentPropertyTypes) {
 }
 
 // test on providing more properties than the number of operators in the query
-TEST_F(OperatorPropertiesTest, testAssignWithMorePropertiesThanOperators) {
+TEST_F(OperatorPropertiesTest, testAssignWithMorePropertiesThanOperators)
+{
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::any>> properties;
@@ -148,7 +154,8 @@ TEST_F(OperatorPropertiesTest, testAssignWithMorePropertiesThanOperators) {
 }
 
 // test on providing less properties than the number of operators in the query
-TEST_F(OperatorPropertiesTest, testAssignWithLessPropertiesThanOperators) {
+TEST_F(OperatorPropertiesTest, testAssignWithLessPropertiesThanOperators)
+{
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create());
 
     std::vector<std::map<std::string, std::any>> properties;
@@ -171,8 +178,8 @@ TEST_F(OperatorPropertiesTest, testAssignWithLessPropertiesThanOperators) {
 }
 
 // test with binary operator
-TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
-
+TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator)
+{
     auto subQuery = Query::from("default_logical").filter(Attribute("field_1") <= 10);
 
     auto query = Query::from("default_logical")
@@ -248,4 +255,4 @@ TEST_F(OperatorPropertiesTest, testAssignWithBinaryOperator) {
     ++queryPlanIterator;
 }
 
-}// namespace NES
+} // namespace NES

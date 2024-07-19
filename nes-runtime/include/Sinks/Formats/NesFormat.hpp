@@ -16,13 +16,15 @@
 #define NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_
 
 #include <Sinks/Formats/SinkFormat.hpp>
-namespace NES {
+namespace NES
+{
 
 class SerializableSchema;
 using SerializableSchemaPtr = std::shared_ptr<SerializableSchema>;
 
-class NesFormat : public SinkFormat {
-  public:
+class NesFormat : public SinkFormat
+{
+public:
     NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
     virtual ~NesFormat() noexcept = default;
 
@@ -58,9 +60,9 @@ class NesFormat : public SinkFormat {
      */
     FormatTypes getSinkFormat() override;
 
-  private:
+private:
     SerializableSchemaPtr serializedSchema;
 };
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_

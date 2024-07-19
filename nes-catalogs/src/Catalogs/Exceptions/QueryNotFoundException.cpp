@@ -14,8 +14,14 @@
 
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 
-namespace NES::Exceptions {
-QueryNotFoundException::QueryNotFoundException(const std::string& message) : RequestExecutionException(message) {}
+namespace NES::Exceptions
+{
+QueryNotFoundException::QueryNotFoundException(const std::string& message) : RequestExecutionException(message)
+{
+}
 
-const char* QueryNotFoundException::what() const noexcept { return RequestExecutionException::what(); }
-}// namespace NES::Exceptions
+const char* QueryNotFoundException::what() const noexcept
+{
+    return RequestExecutionException::what();
+}
+} // namespace NES::Exceptions

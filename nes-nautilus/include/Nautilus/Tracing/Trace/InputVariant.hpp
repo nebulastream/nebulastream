@@ -14,14 +14,17 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_
+#include <variant>
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
 #include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
-#include <variant>
-namespace NES::Nautilus::Tracing {
-class None {};
+namespace NES::Nautilus::Tracing
+{
+class None
+{
+};
 using InputVariant = std::variant<ValueRef, ConstantValue, BlockRef, None, FunctionCallTarget>;
-}// namespace NES::Nautilus::Tracing
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_
+} // namespace NES::Nautilus::Tracing
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_

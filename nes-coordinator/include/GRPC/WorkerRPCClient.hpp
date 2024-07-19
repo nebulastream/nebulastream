@@ -15,24 +15,25 @@
 #ifndef NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 #define NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
 
+#include <string>
+#include <thread>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <StatisticCollection/StatisticCache/AbstractStatisticCache.hpp>
 #include <StatisticCollection/StatisticProbeHandling/AbstractStatisticProbeGenerator.hpp>
 #include <Util/TimeMeasurement.hpp>
+#include <grpcpp/grpcpp.h>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
-#include <grpcpp/grpcpp.h>
-#include <string>
-#include <thread>
 
 using grpc::Channel;
 using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
 using grpc::CompletionQueue;
 using grpc::Status;
-namespace NES {
+namespace NES
+{
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
@@ -40,42 +41,54 @@ using OperatorPtr = std::shared_ptr<Operator>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-namespace Monitoring {
+namespace Monitoring
+{
 class MonitoringPlan;
 
 class MonitoringPlan;
 using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
-}// namespace Monitoring
+} // namespace Monitoring
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 using CompletionQueuePtr = std::shared_ptr<CompletionQueue>;
 
-namespace Spatial::DataTypes::Experimental {
+namespace Spatial::DataTypes::Experimental
+{
 class GeoLocation;
 class Waypoint;
-}// namespace Spatial::DataTypes::Experimental
+} // namespace Spatial::DataTypes::Experimental
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 class ReconnectSchedule;
 using ReconnectSchedulePtr = std::unique_ptr<ReconnectSchedule>;
-}// namespace Spatial::Mobility::Experimental
+} // namespace Spatial::Mobility::Experimental
 
-enum class RpcClientMode : uint8_t { Register, Unregister, Start, Stop };
+enum class RpcClientMode : uint8_t
+{
+    Register,
+    Unregister,
+    Start,
+    Stop
+};
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-struct RpcAsyncRequest {
+struct RpcAsyncRequest
+{
     CompletionQueuePtr completionQueue;
     RpcClientMode rpcClientMode;
 };
 
-class WorkerRPCClient {
-  public:
-    template<typename ReplayType>
-    struct AsyncClientCall {
+class WorkerRPCClient
+{
+public:
+    template <typename ReplayType>
+    struct AsyncClientCall
+    {
         // Container for the data we expect from the server.
         ReplayType reply;
 
@@ -109,9 +122,7 @@ class WorkerRPCClient {
      * @param query plan to register
      * @param cq the completion queue
      */
-    void registerQueryAsync(const std::string& address,
-                            const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                            const CompletionQueuePtr& cq);
+    void registerQueryAsync(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan, const CompletionQueuePtr& cq);
 
     /**
      * @brief ungregisters a query
@@ -143,10 +154,8 @@ class WorkerRPCClient {
       * @param decomposedQueryPlanId to start
       * @param cq the completion queue
       */
-    void startQueryAsync(const std::string& address,
-                         SharedQueryId sharedQueryId,
-                         DecomposedQueryPlanId decomposedQueryPlanId,
-                         const CompletionQueuePtr& cq);
+    void startQueryAsync(
+        const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, const CompletionQueuePtr& cq);
 
     /**
      * @brief method to stop a query
@@ -156,10 +165,11 @@ class WorkerRPCClient {
      * @param terminationType termination type of the query
      * @return bool indicating success
      */
-    bool stopQuery(const std::string& address,
-                   SharedQueryId sharedQueryId,
-                   DecomposedQueryPlanId decomposedQueryPlanId,
-                   Runtime::QueryTerminationType terminationType);
+    bool stopQuery(
+        const std::string& address,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        Runtime::QueryTerminationType terminationType);
 
     /**
      * @brief method to stop a query asynchronously
@@ -169,11 +179,12 @@ class WorkerRPCClient {
      * @param terminationType: the termination type
      * @param cq: completion queue of grpc requests
      */
-    void stopQueryAsync(const std::string& address,
-                        SharedQueryId sharedQueryId,
-                        DecomposedQueryPlanId decomposedQueryPlanId,
-                        Runtime::QueryTerminationType terminationType,
-                        const CompletionQueuePtr& cq);
+    void stopQueryAsync(
+        const std::string& address,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        Runtime::QueryTerminationType terminationType,
+        const CompletionQueuePtr& cq);
 
     /**
      * @brief Registers to a remote worker node its monitoring plan.
@@ -211,12 +222,13 @@ class WorkerRPCClient {
      * @param uniqueNetworkSinDescriptorId : unique id of the network sink descriptor. Used to find the Network Sink to buffer data on.
      * @return true if successful, else false
      */
-    bool updateNetworkSink(const std::string& address,
-                           uint64_t newNodeId,
-                           const std::string& newHostname,
-                           uint32_t newPort,
-                           uint64_t querySubPlanId,
-                           uint64_t uniqueNetworkSinDescriptorId);
+    bool updateNetworkSink(
+        const std::string& address,
+        uint64_t newNodeId,
+        const std::string& newHostname,
+        uint32_t newPort,
+        uint64_t querySubPlanId,
+        uint64_t uniqueNetworkSinDescriptorId);
 
     /**
      * @brief This functions loops over all queues and wait for the async calls return
@@ -251,9 +263,9 @@ class WorkerRPCClient {
      */
     NES::Spatial::DataTypes::Experimental::Waypoint getWaypoint(const std::string& address);
 
-  private:
+private:
     WorkerRPCClient() = default;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_
+#endif // NES_COORDINATOR_INCLUDE_GRPC_WORKERRPCCLIENT_HPP_

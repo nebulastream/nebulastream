@@ -14,26 +14,35 @@
 
 #include <Runtime/ReconfigurationMessage.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
-void ReconfigurationMessage::wait() { syncBarrier->wait(); }
+void ReconfigurationMessage::wait()
+{
+    syncBarrier->wait();
+}
 
-void ReconfigurationMessage::postWait() {
-    if (postSyncBarrier != nullptr) {
+void ReconfigurationMessage::postWait()
+{
+    if (postSyncBarrier != nullptr)
+    {
         postSyncBarrier->wait();
     }
 }
 
-void ReconfigurationMessage::postReconfiguration() {
+void ReconfigurationMessage::postReconfiguration()
+{
     //if ref count gets 0, we know all threads did the reconfiguration
-    if (refCnt.fetch_sub(1) == 1) {
+    if (refCnt.fetch_sub(1) == 1)
+    {
         instance->postReconfigurationCallback(*this);
     }
 }
 
-void ReconfigurationMessage::destroy() {
+void ReconfigurationMessage::destroy()
+{
     syncBarrier.reset();
     postSyncBarrier.reset();
 }
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime

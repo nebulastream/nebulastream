@@ -16,8 +16,10 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_
 
 #include <cstdint>
-namespace NES::Runtime {
-enum class QueryExecutionMode : uint8_t {
+namespace NES::Runtime
+{
+enum class QueryExecutionMode : uint8_t
+{
     /// MPMC work queue
     Dynamic,
     /// operator-to-thread executor
@@ -28,4 +30,4 @@ enum class QueryExecutionMode : uint8_t {
 };
 }
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_

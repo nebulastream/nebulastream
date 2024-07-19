@@ -19,7 +19,8 @@
 #include <string>
 #include <unordered_map>
 
-namespace NES {
+namespace NES
+{
 /**
      * @brief Represents various states the user query goes through.
      *
@@ -35,7 +36,8 @@ namespace NES {
      * Restarting: restarting the query
      * Migrating: migrating query
      */
-enum class QueryState : uint8_t {
+enum class QueryState : uint8_t
+{
     REGISTERED = 0,
     OPTIMIZING,
     MARKED_FOR_DEPLOYMENT,
@@ -57,6 +59,6 @@ enum class QueryState : uint8_t {
     EXPLAINED,
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_QUERYSTATE_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_QUERYSTATE_HPP_

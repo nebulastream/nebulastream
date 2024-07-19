@@ -13,17 +13,23 @@
 */
 #include <Nautilus/IR/Operations/CastOperation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
 CastOperation::CastOperation(OperationIdentifier identifier, OperationPtr input, Types::StampPtr targetStamp)
-    : Operation(OperationType::CastOp, identifier, targetStamp), input(input) {
+    : Operation(OperationType::CastOp, identifier, targetStamp), input(input)
+{
     input->addUsage(this);
 }
 
-OperationPtr CastOperation::getInput() { return input.lock(); }
+OperationPtr CastOperation::getInput()
+{
+    return input.lock();
+}
 
-std::string CastOperation::toString() {
+std::string CastOperation::toString()
+{
     return identifier + " = " + getInput()->getIdentifier() + " cast_to " + getStamp()->toString();
 }
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

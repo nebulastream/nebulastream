@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Expressions/Expressions.hpp>
 #include <Expressions/LogicalExpressions/AndExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -21,43 +22,57 @@
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-ExpressionNodePtr operator||(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+ExpressionNodePtr operator||(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
+{
     return OrExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr operator&&(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+ExpressionNodePtr operator&&(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
+{
     return AndExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr operator==(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+ExpressionNodePtr operator==(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
+{
     return EqualsExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr operator!=(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+ExpressionNodePtr operator!=(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
+{
     return NegateExpressionNode::create(EqualsExpressionNode::create(std::move(leftExp), std::move(rightExp)));
 }
 
-ExpressionNodePtr operator<=(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+ExpressionNodePtr operator<=(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
+{
     return LessEqualsExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+ExpressionNodePtr operator<(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
+{
     return LessExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr operator>=(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+ExpressionNodePtr operator>=(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
+{
     return GreaterEqualsExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp) {
+ExpressionNodePtr operator>(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
+{
     return GreaterExpressionNode::create(std::move(leftExp), std::move(rightExp));
 }
 
-ExpressionNodePtr operator!(ExpressionNodePtr exp) { return NegateExpressionNode::create(std::move(exp)); }
-ExpressionNodePtr operator!(ExpressionItem exp) { return !exp.getExpressionNode(); }
+ExpressionNodePtr operator!(ExpressionNodePtr exp)
+{
+    return NegateExpressionNode::create(std::move(exp));
+}
+ExpressionNodePtr operator!(ExpressionItem exp)
+{
+    return !exp.getExpressionNode();
+}
 
-}// namespace NES
+} // namespace NES

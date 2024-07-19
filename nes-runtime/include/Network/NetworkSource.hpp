@@ -22,17 +22,19 @@
 #include <Sources/DataSource.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class BaseEvent;
 }
-namespace NES::Network {
+namespace NES::Network
+{
 
 /**
  * @brief this class provide a zmq as data source
  */
-class NetworkSource : public DataSource {
-
-  public:
+class NetworkSource : public DataSource
+{
+public:
     /**
      * @param SchemaPtr
      * @param bufferManager
@@ -48,19 +50,20 @@ class NetworkSource : public DataSource {
      * @param uniqueNetworkSourceIdentifier system wide unique id that persists even if the partition of this source is changed
      * @param physicalSourceName
      */
-    NetworkSource(SchemaPtr schema,
-                  Runtime::BufferManagerPtr bufferManager,
-                  Runtime::QueryManagerPtr queryManager,
-                  NetworkManagerPtr networkManager,
-                  NesPartition nesPartition,
-                  NodeLocation sinkLocation,
-                  size_t numSourceLocalBuffers,
-                  std::chrono::milliseconds waitTime,
-                  uint8_t retryTimes,
-                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                  DecomposedQueryPlanVersion version,
-                  OperatorId uniqueNetworkSourceIdentifier,
-                  const std::string& physicalSourceName = "defaultPhysicalSourceName");
+    NetworkSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        NetworkManagerPtr networkManager,
+        NesPartition nesPartition,
+        NodeLocation sinkLocation,
+        size_t numSourceLocalBuffers,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+        DecomposedQueryPlanVersion version,
+        OperatorId uniqueNetworkSourceIdentifier,
+        const std::string& physicalSourceName = "defaultPhysicalSourceName");
 
     /**
      * @brief this method is just dummy and is replaced by the ZmqServer in the NetworkStack. Do not use!
@@ -169,7 +172,7 @@ class NetworkSource : public DataSource {
 
     friend bool operator<(const NetworkSource& lhs, const NetworkSource& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
-  private:
+private:
     NetworkManagerPtr networkManager;
     NesPartition nesPartition;
     NodeLocation sinkLocation;
@@ -181,6 +184,6 @@ class NetworkSource : public DataSource {
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
 };
 
-}// namespace NES::Network
+} // namespace NES::Network
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKSOURCE_HPP_

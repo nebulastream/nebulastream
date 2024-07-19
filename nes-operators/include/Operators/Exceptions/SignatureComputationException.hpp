@@ -17,13 +17,15 @@
 
 #include <stdexcept>
 
-namespace NES {
+namespace NES
+{
 /**
  * This exception is thrown when signature computation of an operator fails
  */
-class SignatureComputationException : public std::runtime_error {
-  public:
+class SignatureComputationException : public std::runtime_error
+{
+public:
     explicit SignatureComputationException(const std::string& message);
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_

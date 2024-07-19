@@ -13,23 +13,26 @@
 */
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class TestHarnessUtilTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class TestHarnessUtilTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TestHarnessUtilTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TestHarnessUtilTest test class.");
     }
@@ -40,8 +43,10 @@ class TestHarnessUtilTest : public Testing::BaseIntegrationTest {
 /*
  * Testing testHarness utility using one logical source and one physical source
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -82,8 +87,10 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithSingleSource) {
 /*
  * Testing testHarness utility using one logical source and two physical sources
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogicalSource)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -96,8 +103,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
     auto queryWithFilterOperator = Query::from("car").filter(Attribute("id") < 1000);
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car")//2
-                                  .attachWorkerWithMemorySourceToCoordinator("car")//3
+                                  .attachWorkerWithMemorySourceToCoordinator("car") //2
+                                  .attachWorkerWithMemorySourceToCoordinator("car") //3
                                   .pushElement<Car>({40, 40, 40}, 2)
                                   .pushElement<Car>({30, 30, 30}, 2)
                                   .pushElement<Car>({71, 71, 71}, 3)
@@ -126,14 +133,17 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfTheSameLogical
 /*
  * Testing testHarness utility using two logical source with one physical source each
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogicalSources)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    struct Truck {
+    struct Truck
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -180,8 +190,10 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithTwoPhysicalSourceOfDifferentLogic
 /*
  * Testing testHarness utility for query with a window operator
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -198,8 +210,8 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
     TestHarness testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
 
                                   .addLogicalSource("car", carSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car")//2
-                                  .attachWorkerWithMemorySourceToCoordinator("car")//3
+                                  .attachWorkerWithMemorySourceToCoordinator("car") //2
+                                  .attachWorkerWithMemorySourceToCoordinator("car") //3
                                   //Source1
                                   .pushElement<Car>({1, 1, 1000}, 2)
                                   .pushElement<Car>({12, 1, 1001}, 2)
@@ -256,13 +268,16 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithWindowOperator) {
 /**
  * Testing testHarness utility for query with a join operator on different sources
  */
-TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
-    struct Window1 {
+TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator)
+{
+    struct Window1
+    {
         uint64_t id;
         uint64_t timestamp;
     };
 
-    struct Window2 {
+    struct Window2
+    {
         uint64_t id2;
         uint64_t timestamp;
     };
@@ -325,8 +340,10 @@ TEST_F(TestHarnessUtilTest, testHarnessWithJoinOperator) {
 /*
  * Testing testHarness utility for a query with map operator
  */
-TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -366,8 +383,10 @@ TEST_F(TestHarnessUtilTest, testHarnessOnQueryWithMapOperator) {
 /*
  * Testing testHarness utility for a query with map operator
  */
-TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -389,11 +408,11 @@ TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
                                         |  |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
                                         |  |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=8, usedResource=0]
                                     */
-                                  .attachWorkerToCoordinator()                                   //idx=2
-                                  .attachWorkerToWorkerWithId(WorkerId(2))                       //idx=3
-                                  .attachWorkerWithMemorySourceToWorkerWithId("car", WorkerId(3))//idx=4
-                                  .attachWorkerWithMemorySourceToWorkerWithId("car", WorkerId(3))//idx=5
-                                                                                                 //Source1
+                                  .attachWorkerToCoordinator() //idx=2
+                                  .attachWorkerToWorkerWithId(WorkerId(2)) //idx=3
+                                  .attachWorkerWithMemorySourceToWorkerWithId("car", WorkerId(3)) //idx=4
+                                  .attachWorkerWithMemorySourceToWorkerWithId("car", WorkerId(3)) //idx=5
+                                  //Source1
                                   .pushElement<Car>({40, 40, 40}, 4)
                                   .pushElement<Car>({30, 30, 30}, 4)
                                   .pushElement<Car>({71, 71, 71}, 4)
@@ -432,8 +451,10 @@ TEST_F(TestHarnessUtilTest, testHarnessWithHiearchyInTopology) {
 /*
  * Testing test harness CSV source
  */
-TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessCsvSource)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -481,8 +502,10 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSource) {
 /*
  * Testing test harness CSV source and memory source
  */
-TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -507,9 +530,9 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   //register physical source
-                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType)//2
+                                  .attachWorkerWithCSVSourceToCoordinator(csvSourceType) //2
                                   // add a memory source
-                                  .attachWorkerWithMemorySourceToCoordinator("car")//3
+                                  .attachWorkerWithMemorySourceToCoordinator("car") //3
                                   // push two elements to the memory source
                                   .pushElement<Car>({1, 8, 8}, 3)
                                   .pushElement<Car>({1, 9, 9}, 3)
@@ -537,8 +560,10 @@ TEST_F(TestHarnessUtilTest, testHarnessCsvSourceAndMemorySource) {
 /*
  * Testing test harness without source (should not work)
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -554,8 +579,10 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilWithNoSources) {
 /*
  * Testing test harness pushing element to non-existent source (should not work)
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -571,14 +598,17 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToNonExsistentSource) {
 /*
  * Testing test harness pushing element push to wrong source (should not work)
  */
-TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
-    struct Car {
+TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
     };
 
-    struct Truck {
+    struct Truck
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -594,12 +624,12 @@ TEST_F(TestHarnessUtilTest, testHarnessUtilPushToWrongSource) {
     TestHarness testHarness = TestHarness(queryWithFilterOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("car", carSchema)
                                   .addLogicalSource("truck", truckSchema)
-                                  .attachWorkerWithMemorySourceToCoordinator("car")   //2
-                                  .attachWorkerWithMemorySourceToCoordinator("truck");//3
+                                  .attachWorkerWithMemorySourceToCoordinator("car") //2
+                                  .attachWorkerWithMemorySourceToCoordinator("truck"); //3
 
     ASSERT_EQ(testHarness.getWorkerCount(), 2UL);
 
     EXPECT_THROW(testHarness.pushElement<Truck>({30, 30, 30, 30, 30}, 2), Exceptions::RuntimeException);
 }
 
-}// namespace NES
+} // namespace NES

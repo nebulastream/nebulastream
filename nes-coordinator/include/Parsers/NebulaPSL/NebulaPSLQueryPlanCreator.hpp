@@ -15,7 +15,7 @@
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <string>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
@@ -31,16 +31,18 @@
 #include <Parsers/NebulaPSL/NebulaPSLPattern.hpp>
 #include <Parsers/NebulaPSL/gen/NesCEPBaseListener.h>
 #include <Plans/Query/QueryPlan.hpp>
-#include <string>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Parsers {
+namespace NES::Parsers
+{
 /**
  * @brief This class creates the query plan from ANTLR AST
  * It inherits from the auto-generated ANTLR base listener to walk the AST created from the pattern string.
  * This enables the parsing of declarative patterns into NES queries.
  */
-class NesCEPQueryPlanCreator : public NesCEPBaseListener {
-  public:
+class NesCEPQueryPlanCreator : public NesCEPBaseListener
+{
+public:
     /** the following methods read out the AST tree and collect all mined patterns in the global pattern list
      * An example of the AST looks as follows:
      * (query (cepPattern PATTERN test := (compositeEventExpressions (
@@ -153,8 +155,8 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     /**
      * @brief this methods parses the user-specified window information to TimeMeasures
      */
-    std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure> transformWindowToTimeMeasurements(std::string timeMeasure,
-                                                                                                int32_t timeValue) const;
+    std::pair<Windowing::TimeMeasure, Windowing::TimeMeasure>
+    transformWindowToTimeMeasurements(std::string timeMeasure, int32_t timeValue) const;
 
     /**
      * @brief this methods add all projections to the queryPlan
@@ -177,9 +179,8 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      * @param operaterName the operator name
      * @param iterator the list of nodes from the ANTLR AST Tree
      */
-    QueryPlanPtr addBinaryOperatorToQueryPlan(std::string operaterName,
-                                              std::map<int, NebulaPSLOperator>::const_iterator iterator,
-                                              QueryPlanPtr queryPlan) const;
+    QueryPlanPtr addBinaryOperatorToQueryPlan(
+        std::string operaterName, std::map<int, NebulaPSLOperator>::const_iterator iterator, QueryPlanPtr queryPlan) const;
 
     /**
      * @brief: checks if one of the sources for a binary operator is already part of either the left or right queryPlan that are composed by the binary operator, i.e., already added to the final queryPlan
@@ -187,11 +188,10 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
      * @param rightSourceName as string
      * @return the queryPlan to compose to the final queryPlan
      */
-    QueryPlanPtr checkIfSourceIsAlreadyConsumedSource(std::basic_string<char> leftSourceName,
-                                                      std::basic_string<char> rightSourceName,
-                                                      QueryPlanPtr queryPlan) const;
+    QueryPlanPtr checkIfSourceIsAlreadyConsumedSource(
+        std::basic_string<char> leftSourceName, std::basic_string<char> rightSourceName, QueryPlanPtr queryPlan) const;
 
-  private:
+private:
     // pointers to track relationship of AST elements while retrieving pattern specification
     int32_t sourceCounter = 0;
     int32_t lastSeenSourcePtr = -1;
@@ -204,6 +204,6 @@ class NesCEPQueryPlanCreator : public NesCEPBaseListener {
     std::string currentRightExp;
 };
 
-}// namespace NES::Parsers
+} // namespace NES::Parsers
 
-#endif// NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_
+#endif // NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLQUERYPLANCREATOR_HPP_

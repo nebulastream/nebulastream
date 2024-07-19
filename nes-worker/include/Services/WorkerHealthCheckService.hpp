@@ -17,15 +17,17 @@
 
 #include <string>
 
-namespace NES {
+namespace NES
+{
 class NesWorker;
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
 /**
  * @brief: This class is responsible for handling requests related to monitor the alive status of nodes from the worker
  */
-class WorkerHealthCheckService {
-  public:
+class WorkerHealthCheckService
+{
+public:
     WorkerHealthCheckService(CoordinatorRPCClientPtr coordinatorRpcClient, std::string healthServiceName, NesWorkerPtr worker);
 
     /**
@@ -35,7 +37,7 @@ class WorkerHealthCheckService {
 
     void stopHealthCheck();
 
-  private:
+private:
     CoordinatorRPCClientPtr coordinatorRpcClient;
     NesWorkerPtr worker;
     std::shared_ptr<std::thread> healthCheckingThread;
@@ -47,6 +49,6 @@ class WorkerHealthCheckService {
     std::condition_variable cv;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_WORKER_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_
+#endif // NES_WORKER_INCLUDE_SERVICES_WORKERHEALTHCHECKSERVICE_HPP_

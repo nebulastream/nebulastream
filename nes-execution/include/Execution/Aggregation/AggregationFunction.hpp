@@ -14,22 +14,25 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Aggregation {
+namespace NES::Runtime::Execution::Aggregation
+{
 /**
  * This class is the Nautilus aggregation interface
  */
-class AggregationFunction {
-  public:
-    AggregationFunction(PhysicalTypePtr inputType,
-                        PhysicalTypePtr resultType,
-                        Expressions::ExpressionPtr inputExpression,
-                        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
+class AggregationFunction
+{
+public:
+    AggregationFunction(
+        PhysicalTypePtr inputType,
+        PhysicalTypePtr resultType,
+        Expressions::ExpressionPtr inputExpression,
+        Nautilus::Record::RecordFieldIdentifier resultFieldIdentifier);
 
     /**
      * @brief lift adds the incoming value to the existing aggregation value
@@ -65,7 +68,7 @@ class AggregationFunction {
 
     virtual ~AggregationFunction();
 
-  protected:
+protected:
     const PhysicalTypePtr inputType;
     const PhysicalTypePtr resultType;
     const Expressions::ExpressionPtr inputExpression;
@@ -87,6 +90,6 @@ class AggregationFunction {
 };
 
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;
-}// namespace NES::Runtime::Execution::Aggregation
+} // namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_

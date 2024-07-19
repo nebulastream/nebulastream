@@ -12,106 +12,142 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <detail/PortDispatcher.hpp>
 #include <filesystem>
 #include <mutex>
 #include <random>
+#include <Util/Logger/Logger.hpp>
+#include <detail/PortDispatcher.hpp>
+#include <BaseIntegrationTest.hpp>
 #if defined(__linux__)
 #endif
-namespace NES::Testing {
-namespace detail::uuid {
+namespace NES::Testing
+{
+namespace detail::uuid
+{
 static std::random_device rd;
 static std::mt19937 gen(rd());
 static std::uniform_int_distribution<> dis(0, 15);
 static std::uniform_int_distribution<> dis2(8, 11);
 
-std::string generateUUID() {
+std::string generateUUID()
+{
     std::stringstream ss;
     int i;
     ss << std::hex;
-    for (i = 0; i < 8; i++) {
+    for (i = 0; i < 8; i++)
+    {
         ss << dis(gen);
     }
     ss << "-";
-    for (i = 0; i < 4; i++) {
+    for (i = 0; i < 4; i++)
+    {
         ss << dis(gen);
     }
     ss << "-4";
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++)
+    {
         ss << dis(gen);
     }
     ss << "-";
     ss << dis2(gen);
-    for (i = 0; i < 3; i++) {
+    for (i = 0; i < 3; i++)
+    {
         ss << dis(gen);
     }
     ss << "-";
-    for (i = 0; i < 12; i++) {
+    for (i = 0; i < 12; i++)
+    {
         ss << dis(gen);
     }
     return ss.str();
 }
-}// namespace detail::uuid
+} // namespace detail::uuid
 
-BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID()) {}
+BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID())
+{
+}
 
-void BaseIntegrationTest::SetUp() {
+void BaseIntegrationTest::SetUp()
+{
     auto expected = false;
-    if (setUpCalled.compare_exchange_strong(expected, true)) {
+    if (setUpCalled.compare_exchange_strong(expected, true))
+    {
         NES::Testing::BaseUnitTest::SetUp();
-        if (!std::filesystem::exists(testResourcePath)) {
+        if (!std::filesystem::exists(testResourcePath))
+        {
             std::filesystem::create_directories(testResourcePath);
-        } else {
+        }
+        else
+        {
             std::filesystem::remove_all(testResourcePath);
             std::filesystem::create_directories(testResourcePath);
         }
         restPort = detail::getPortDispatcher().getNextPort();
         rpcCoordinatorPort = detail::getPortDispatcher().getNextPort();
-    } else {
+    }
+    else
+    {
         NES_ERROR("SetUp called twice in {}", typeid(*this).name());
     }
 }
 
-BorrowedPortPtr BaseIntegrationTest::getAvailablePort() { return detail::getPortDispatcher().getNextPort(); }
+BorrowedPortPtr BaseIntegrationTest::getAvailablePort()
+{
+    return detail::getPortDispatcher().getNextPort();
+}
 
-std::filesystem::path BaseIntegrationTest::getTestResourceFolder() const { return testResourcePath; }
+std::filesystem::path BaseIntegrationTest::getTestResourceFolder() const
+{
+    return testResourcePath;
+}
 
-BaseIntegrationTest::~BaseIntegrationTest() {
+BaseIntegrationTest::~BaseIntegrationTest()
+{
     NES_ASSERT2_FMT(setUpCalled, "SetUp not called for test " << typeid(*this).name());
     NES_ASSERT2_FMT(tearDownCalled, "TearDown not called for test " << typeid(*this).name());
 }
 
-void BaseIntegrationTest::TearDown() {
+void BaseIntegrationTest::TearDown()
+{
     auto expected = false;
-    if (tearDownCalled.compare_exchange_strong(expected, true)) {
+    if (tearDownCalled.compare_exchange_strong(expected, true))
+    {
         restPort.reset();
         rpcCoordinatorPort.reset();
         std::filesystem::remove_all(testResourcePath);
         NES::Testing::BaseUnitTest::TearDown();
         completeTest();
-    } else {
+    }
+    else
+    {
         NES_ERROR("TearDown called twice in {}", typeid(*this).name());
     }
 }
 
-void BaseIntegrationTest::onFatalError(int signalNumber, std::string callstack) {
-    if (callstack.empty()) {
+void BaseIntegrationTest::onFatalError(int signalNumber, std::string callstack)
+{
+    if (callstack.empty())
+    {
         NES_ERROR("onFatalError: signal [{}] error [{}] (enable NES_DEBUG to view stacktrace)", signalNumber, strerror(errno));
-    } else {
+    }
+    else
+    {
         NES_ERROR("onFatalError: signal [{}] error [{}] callstack: {}", signalNumber, strerror(errno), callstack);
     }
     failTest();
 }
 
-void BaseIntegrationTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) {
-    if (callstack.empty()) {
+void BaseIntegrationTest::onFatalException(std::shared_ptr<std::exception> exception, std::string callstack)
+{
+    if (callstack.empty())
+    {
         NES_ERROR("onFatalException: exception=[{}] (enable NES_DEBUG to view stacktrace)", exception->what());
-    } else {
+    }
+    else
+    {
         NES_ERROR("onFatalException: exception=[{}] callstack={}", exception->what(), callstack);
     }
     failTest();
 }
 
-}// namespace NES::Testing
+} // namespace NES::Testing

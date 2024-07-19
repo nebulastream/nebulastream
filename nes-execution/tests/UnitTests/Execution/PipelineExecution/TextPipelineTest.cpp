@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -32,27 +31,33 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class TextPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+class TextPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TextPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TextPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup TextPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
@@ -67,7 +72,8 @@ class TextPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineEx
 /**
  * @brief Pipeline that execute a text processing expression.
  */
-TEST_P(TextPipelineTest, textEqualsPipeline) {
+TEST_P(TextPipelineTest, textEqualsPipeline)
+{
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", DataTypeFactory::createText());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -90,7 +96,8 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
 
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < 100; i++) {
+    for (uint64_t i = 0; i < 100; i++)
+    {
         testBuffer[i].writeVarSized("f1", "test", bm.get());
         testBuffer.setNumberOfTuples(i + 1);
     }
@@ -106,16 +113,16 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 100);
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
-    for (auto i = 0_u64; i < resultBuffer.getNumberOfTuples(); ++i) {
+    for (auto i = 0_u64; i < resultBuffer.getNumberOfTuples(); ++i)
+    {
         ASSERT_EQ(resulttestBuffer[i].readVarSized("f1"), "test");
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        TextPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<TextPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    TextPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<TextPipelineTest::ParamType>& info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

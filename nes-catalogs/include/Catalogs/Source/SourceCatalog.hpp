@@ -15,27 +15,30 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
 
-#include <API/Schema.hpp>
-#include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <deque>
 #include <map>
 #include <mutex>
 #include <set>
 #include <string>
 #include <vector>
+#include <API/Schema.hpp>
+#include <Catalogs/Source/SourceCatalogEntry.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 
 /**
  * @brief the source catalog handles the mapping of logical to physical sources
  */
-class SourceCatalog {
-  public:
+class SourceCatalog
+{
+public:
     /**
    * @brief method to add a logical source
    * @param logicalSourceName logical source name
@@ -68,8 +71,7 @@ class SourceCatalog {
      * @param topologyNodeId id of the topology node
      * @return bool indicating success of remove source
      */
-    bool
-    removePhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId);
+    bool removePhysicalSource(const std::string& logicalSourceName, const std::string& physicalSourceName, WorkerId topologyNodeId);
 
     /**
      * @brief method to remove all physical sources of a single worker
@@ -170,7 +172,7 @@ class SourceCatalog {
 
     SourceCatalog();
 
-  private:
+private:
     /**
      * @brief test if logical source with this name exists
      * @param logicalSourceName name of the logical source to test
@@ -190,6 +192,6 @@ class SourceCatalog {
     void addDefaultSources();
 };
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_
+} // namespace Catalogs::Source
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOG_HPP_

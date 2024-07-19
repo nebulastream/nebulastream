@@ -17,27 +17,31 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical operator for slice merging.
  * This operator receives pre-aggregated slices, e.g., from the slice merger, and merges them in its local operator state.
  */
-class PhysicalSliceMergingOperator : public PhysicalWindowOperator, public AbstractEmitOperator, public AbstractScanOperator {
-  public:
-    PhysicalSliceMergingOperator(OperatorId id,
-                                 StatisticId statisticId,
-                                 SchemaPtr inputSchema,
-                                 SchemaPtr outputSchema,
-                                 Windowing::LogicalWindowDescriptorPtr windowDefinition);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
+class PhysicalSliceMergingOperator : public PhysicalWindowOperator, public AbstractEmitOperator, public AbstractScanOperator
+{
+public:
+    PhysicalSliceMergingOperator(
+        OperatorId id,
+        StatisticId statisticId,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Windowing::LogicalWindowDescriptorPtr windowDefinition);
+    static PhysicalOperatorPtr create(
+        OperatorId id,
+        StatisticId statisticId,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        const Windowing::LogicalWindowDescriptorPtr& windowDefinition);
     std::string toString() const override;
     OperatorPtr copy() override;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICEMERGINGOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALSLICEMERGINGOPERATOR_HPP_

@@ -19,20 +19,24 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Monitoring {
+namespace Monitoring
+{
 
 /**
  * @brief DiskMetrics class, that is responsible for collecting and managing disk metrics.
  */
-class DiskMetrics {
-  public:
+class DiskMetrics
+{
+public:
     DiskMetrics();
 
     /**
@@ -106,6 +110,6 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
  */
 nlohmann::json asJson(const DiskMetrics& metrics);
 
-}// namespace Monitoring
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_
+} // namespace Monitoring
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_

@@ -11,13 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstring>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cstring>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
-    if (bufferSize % withAlignment) {
+uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
+{
+    if (bufferSize % withAlignment)
+    {
         // make sure that each buffer is a multiple of the alignment
         return bufferSize + (withAlignment - bufferSize % withAlignment);
     }
@@ -27,12 +30,19 @@ uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
 State::State(uint64_t stateSize)
     : stateSize(stateSize), ptr(std::aligned_alloc(STATE_ALIGNMENT, alignBufferSize(stateSize, STATE_ALIGNMENT))){};
 
-State::~State() { free(ptr); }
+State::~State()
+{
+    free(ptr);
+}
 
 NonKeyedSlice::NonKeyedSlice(uint64_t entrySize, uint64_t start, uint64_t end, const std::unique_ptr<State>& defaultState)
-    : start(start), end(end), state(std::make_unique<State>(entrySize)) {
+    : start(start), end(end), state(std::make_unique<State>(entrySize))
+{
     std::memcpy(state->ptr, defaultState->ptr, entrySize);
 }
-NonKeyedSlice::~NonKeyedSlice() { NES_DEBUG("~NonKeyedSlice {}-{}", start, end); }
+NonKeyedSlice::~NonKeyedSlice()
+{
+    NES_DEBUG("~NonKeyedSlice {}-{}", start, end);
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

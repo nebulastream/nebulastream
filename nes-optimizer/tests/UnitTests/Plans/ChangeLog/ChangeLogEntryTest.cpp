@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <set>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -24,18 +23,23 @@
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/DumpHandler/DumpContext.hpp>
 #include <gtest/gtest.h>
-#include <set>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class ChangeLogEntryTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class ChangeLogEntryTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ChangeLogEntryTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ChangeLogEntryTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
@@ -59,7 +63,7 @@ class ChangeLogEntryTest : public Testing::BaseUnitTest {
         sinkOp3 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     }
 
-  protected:
+protected:
     DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
@@ -70,8 +74,8 @@ class ChangeLogEntryTest : public Testing::BaseUnitTest {
 };
 
 //Fetch change log entry and check PoSet
-TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntry) {
-
+TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntry)
+{
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -99,8 +103,8 @@ TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntry) {
  *            --- Sink 2 ---
  *
  */
-TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntryWithMultipleDownStreamOptrs) {
-
+TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntryWithMultipleDownStreamOptrs)
+{
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -132,8 +136,8 @@ TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntryWithMultipleDownStreamOptrs
  *                            --- Filter --- Source 2
  *
  */
-TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntryWithMultipleUpStreamOptrs) {
-
+TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntryWithMultipleUpStreamOptrs)
+{
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -152,4 +156,4 @@ TEST_F(ChangeLogEntryTest, FetchPoSetOfChangeLogEntryWithMultipleUpStreamOptrs) 
     EXPECT_TRUE(changelogEntry->poSetOfSubQueryPlan.find(sinkOp1->getId()) != changelogEntry->poSetOfSubQueryPlan.end());
 }
 
-}// namespace NES
+} // namespace NES

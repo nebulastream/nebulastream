@@ -17,14 +17,16 @@
 
 #include <Monitoring/ResourcesReader/AbstractSystemResourcesReader.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
 * @brief This is a static utility class to collect basic system information on a Linux operating System
 * Warning: Only Linux distributions are currently supported
 */
-class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
-  public:
+class LinuxSystemResourcesReader : public AbstractSystemResourcesReader
+{
+public:
     LinuxSystemResourcesReader();
 
     /**
@@ -73,6 +75,6 @@ class LinuxSystemResourcesReader : public AbstractSystemResourcesReader {
     uint64_t getWallTimeInNs() override;
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_LINUXSYSTEMRESOURCESREADER_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_LINUXSYSTEMRESOURCESREADER_HPP_

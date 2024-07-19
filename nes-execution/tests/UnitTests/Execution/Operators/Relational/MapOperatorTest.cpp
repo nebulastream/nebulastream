@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
@@ -21,14 +21,17 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class MapOperatorTest : public Testing::BaseUnitTest {
-  public:
+class MapOperatorTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MapOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MapOperatorTest test class.");
     }
@@ -40,7 +43,8 @@ class MapOperatorTest : public Testing::BaseUnitTest {
 /**
  * @brief Tests if the map operator creates a new field.
  */
-TEST_F(MapOperatorTest, createNewFieldTest) {
+TEST_F(MapOperatorTest, createNewFieldTest)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto addExpression = std::make_shared<Expressions::AddExpression>(readF1, readF2);
@@ -61,7 +65,8 @@ TEST_F(MapOperatorTest, createNewFieldTest) {
 /**
  * @brief Tests if the map operator overrides a field if it already exists.
  */
-TEST_F(MapOperatorTest, overrideFieldTest) {
+TEST_F(MapOperatorTest, overrideFieldTest)
+{
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto addExpression = std::make_shared<Expressions::AddExpression>(readF1, readF2);
@@ -79,4 +84,4 @@ TEST_F(MapOperatorTest, overrideFieldTest) {
     ASSERT_EQ(collector->records[0].read("f1"), 22);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

@@ -17,52 +17,62 @@
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
-void assignmentOperator() {
+void assignmentOperator()
+{
     auto iw = Value<>(1);
     auto iw2 = Value<>(2);
     iw = iw2 + iw;
 }
 
-void arithmeticExpression() {
+void arithmeticExpression()
+{
     Value iw = Value(1);
     Value iw2 = Value(2);
     Value iw3 = Value(3);
     auto result = iw - iw3 + 2 * iw2 / iw;
 }
 
-void logicalNegate() {
+void logicalNegate()
+{
     Value iw = Value(true);
     auto result = !iw;
 }
 
-void logicalExpressionLessThan() {
+void logicalExpressionLessThan()
+{
     Value iw = Value(1);
     auto result = iw < 2;
 }
 
-void logicalExpressionEquals() {
+void logicalExpressionEquals()
+{
     Value iw = Value(1);
     auto result = iw == 2;
 }
 
-void logicalExpressionLessEquals() {
+void logicalExpressionLessEquals()
+{
     Value iw = Value(1);
     auto result = iw <= 2;
 }
 
-void logicalExpressionGreater() {
+void logicalExpressionGreater()
+{
     Value iw = Value(1);
     auto result = iw > 2;
 }
 
-void logicalExpressionGreaterEquals() {
+void logicalExpressionGreaterEquals()
+{
     Value iw = Value(1);
     auto result = iw >= 2;
 }
 
-Value<> logicalAssignTest() {
+Value<> logicalAssignTest()
+{
     Value<Boolean> res = true;
     Value x = Value(1);
     res = res && x == 42;
@@ -72,157 +82,207 @@ Value<> logicalAssignTest() {
     return res && z == 42;
 }
 
-void logicalExpression() {
+void logicalExpression()
+{
     Value iw = Value(1);
     auto result = iw == 2 && iw < 1 || true;
 }
 
-void ifCondition(bool flag) {
+void ifCondition(bool flag)
+{
     Value boolFlag = Value(flag);
     Value iw = Value(1);
-    if (boolFlag) {
+    if (boolFlag)
+    {
         iw = iw - 1;
     }
     auto x = iw + 42;
 }
 
-void ifElseCondition(bool flag) {
+void ifElseCondition(bool flag)
+{
     Value boolFlag = Value(flag);
     Value iw = Value(1);
     Value iw2 = Value(1);
-    if (boolFlag) {
+    if (boolFlag)
+    {
         iw = iw - 1;
-    } else {
+    }
+    else
+    {
         iw = iw * iw2;
     }
     iw + 1;
 }
 
-void nestedIfThenElseCondition() {
+void nestedIfThenElseCondition()
+{
     Value value = Value(1);
     Value iw = Value(1);
-    if (value == 42) {
-    } else {
-        if (iw == 8) {
-        } else {
+    if (value == 42)
+    {
+    }
+    else
+    {
+        if (iw == 8)
+        {
+        }
+        else
+        {
             iw = iw + 2;
         }
     }
 }
 
-void emptyLoop() {
+void emptyLoop()
+{
     Value iw = Value(1);
     Value iw2 = Value(2);
-    for (auto start = iw; start < 2; start = start + 1) {
+    for (auto start = iw; start < 2; start = start + 1)
+    {
     }
     auto iw3 = iw2 - 5;
 }
 
-void longEmptyLoop() {
+void longEmptyLoop()
+{
     Value iw = Value(1);
     Value iw2 = Value(2);
-    for (auto start = iw; start < 20000; start = start + 1) {
+    for (auto start = iw; start < 20000; start = start + 1)
+    {
     }
     auto iw3 = iw2 - 5;
 }
 
-void sumLoop() {
+void sumLoop()
+{
     Value agg = Value(1);
-    for (auto start = Value(0); start < 10; start = start + 1) {
+    for (auto start = Value(0); start < 10; start = start + 1)
+    {
         agg = agg + 1;
     }
     auto res = agg == 10;
 }
 
-void sumWhileLoop() {
+void sumWhileLoop()
+{
     Value agg = Value(1);
-    while (agg < 20) {
+    while (agg < 20)
+    {
         agg = agg + 1;
     }
     auto res = agg == 10;
 }
 
-void invertedLoop() {
+void invertedLoop()
+{
     Value i = Value(0);
     Value end = Value(300);
-    do {
+    do
+    {
         // body
         i = i + 1;
     } while (i < end);
 }
 
-void nestedLoop() {
+void nestedLoop()
+{
     Value agg = Value(0);
     Value i = Value(0);
     Value end = Value(300);
-    for (; i < end; i = i + 1) {
-        for (Value j = 0; j < 10; j = j + 1) {
+    for (; i < end; i = i + 1)
+    {
+        for (Value j = 0; j < 10; j = j + 1)
+        {
             agg = agg + 1;
         }
     }
 }
 
-void nestedLoopIf() {
+void nestedLoopIf()
+{
     Value agg = Value(0);
     Value i = Value(0);
     Value end = Value(300);
-    for (; i < end; i = i + 1) {
-        for (Value j = 0; j < 10; j = j + 1) {
+    for (; i < end; i = i + 1)
+    {
+        for (Value j = 0; j < 10; j = j + 1)
+        {
             if (agg < 50)
                 agg = agg + 1;
-            else {
+            else
+            {
                 agg = agg / 2;
             }
         }
     }
 }
 
-void loopWithBreak() {
+void loopWithBreak()
+{
     Value agg = Value(0);
     Value i = Value(0);
     Value end = Value(300);
-    for (; i < end; i = i + 1) {
-        if (agg == 42) {
+    for (; i < end; i = i + 1)
+    {
+        if (agg == 42)
+        {
             break;
         }
         agg = agg + 1;
     }
 }
 
-Value<> f2(Value<> x) {
+Value<> f2(Value<> x)
+{
     if (x > 10)
         return x;
     else
         return x + 1;
 }
 
-Value<> nativeLoop() {
+Value<> nativeLoop()
+{
     Value agg = Value(0);
-    for (uint64_t i = 0; i < 10; i++) {
-        if (agg > 42) {
+    for (uint64_t i = 0; i < 10; i++)
+    {
+        if (agg > 42)
+        {
             agg = agg + 1;
         }
     }
     return agg;
 }
 
-void f1() {
+void f1()
+{
     Value agg = Value(0);
     agg = f2(agg) + 42;
 }
 
-void deepLoop() {
+void deepLoop()
+{
     Value i = Value(0);
-    while (i < 10) {
-        while (i < 10) {
-            while (i < 10) {
-                while (i < 10) {
-                    while (i < 10) {
-                        while (i < 10) {
-                            while (i < 10) {
-                                while (i < 10) {
-                                    while (i < 10) {
-                                        while (i < 10) {
+    while (i < 10)
+    {
+        while (i < 10)
+        {
+            while (i < 10)
+            {
+                while (i < 10)
+                {
+                    while (i < 10)
+                    {
+                        while (i < 10)
+                        {
+                            while (i < 10)
+                            {
+                                while (i < 10)
+                                {
+                                    while (i < 10)
+                                    {
+                                        while (i < 10)
+                                        {
                                             i = i + 1;
                                         }
                                     }
@@ -234,16 +294,26 @@ void deepLoop() {
             }
         }
     }
-    while (i < 10) {
-        while (i < 10) {
-            while (i < 10) {
-                while (i < 10) {
-                    while (i < 10) {
-                        while (i < 10) {
-                            while (i < 10) {
-                                while (i < 10) {
-                                    while (i < 10) {
-                                        while (i < 10) {
+    while (i < 10)
+    {
+        while (i < 10)
+        {
+            while (i < 10)
+            {
+                while (i < 10)
+                {
+                    while (i < 10)
+                    {
+                        while (i < 10)
+                        {
+                            while (i < 10)
+                            {
+                                while (i < 10)
+                                {
+                                    while (i < 10)
+                                    {
+                                        while (i < 10)
+                                        {
                                             i = i + 1;
                                         }
                                     }
@@ -257,19 +327,28 @@ void deepLoop() {
     }
 }
 
-Value<> TracingBreaker() {
+Value<> TracingBreaker()
+{
     Value agg = Value(0);
     Value limit = Value(10);
-    if (agg < 350) {
+    if (agg < 350)
+    {
         agg = agg + 1;
     }
-    if (agg < 350) {
+    if (agg < 350)
+    {
         agg = agg + 1;
-    } else {
-        if (agg < 350) {
-            if (agg < 350) {//the 'false' case of this if this if-operation has no operations -> Block_9
-                            // agg = agg + 1;
-            } else {
+    }
+    else
+    {
+        if (agg < 350)
+        {
+            if (agg < 350)
+            { //the 'false' case of this if this if-operation has no operations -> Block_9
+                // agg = agg + 1;
+            }
+            else
+            {
                 //    agg = agg + 2;// leads to empty block
             }
         }
@@ -277,5 +356,5 @@ Value<> TracingBreaker() {
     return agg;
 }
 
-}// namespace NES::Nautilus::Tracing
-#endif// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_BASICTRACEFUNCTIONS_HPP_
+} // namespace NES::Nautilus::Tracing
+#endif // NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_BASICTRACEFUNCTIONS_HPP_

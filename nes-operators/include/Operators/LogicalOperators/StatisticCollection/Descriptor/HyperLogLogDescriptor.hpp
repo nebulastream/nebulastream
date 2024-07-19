@@ -15,14 +15,16 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_HYPERLOGLOGDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_HYPERLOGLOGDESCRIPTOR_HPP_
 
+#include <cstdint>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
-#include <cstdint>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-class HyperLogLogDescriptor : public WindowStatisticDescriptor {
-  public:
+class HyperLogLogDescriptor : public WindowStatisticDescriptor
+{
+public:
     static constexpr auto DEFAULT_RELATIVE_ERROR = 0.05;
 
     /**
@@ -73,7 +75,7 @@ class HyperLogLogDescriptor : public WindowStatisticDescriptor {
      */
     ~HyperLogLogDescriptor() override;
 
-  private:
+private:
     /**
      * @brief Private constructor for a HyperLogLogDescriptor
      * @param field: Over which field to create the synopsis
@@ -82,6 +84,6 @@ class HyperLogLogDescriptor : public WindowStatisticDescriptor {
     HyperLogLogDescriptor(const FieldAccessExpressionNodePtr& field, uint64_t width);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_HYPERLOGLOGDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_HYPERLOGLOGDESCRIPTOR_HPP_

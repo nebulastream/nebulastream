@@ -14,18 +14,20 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATION_HPP_
+#include <memory>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class TimeFunction;
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
@@ -33,23 +35,25 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
  * @brief KeyedSlicePreAggregation operator that performs the pre-aggregation step for a keyed window aggregation.
  * This window operator currently only supports tumbling time-based windows.
 */
-class KeyedSlicePreAggregation : public ExecutableOperator {
-  public:
+class KeyedSlicePreAggregation : public ExecutableOperator
+{
+public:
     /**
     * @brief Creates a KeyedSlicePreAggregation operator
     */
-    KeyedSlicePreAggregation(uint64_t operatorHandlerIndex,
-                             TimeFunctionPtr timeFunction,
-                             const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                             const std::vector<PhysicalTypePtr>& keyDataTypes,
-                             const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                             const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+    KeyedSlicePreAggregation(
+        uint64_t operatorHandlerIndex,
+        TimeFunctionPtr timeFunction,
+        const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+        const std::vector<PhysicalTypePtr>& keyDataTypes,
+        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+        const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const TimeFunctionPtr timeFunction;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
@@ -60,6 +64,6 @@ class KeyedSlicePreAggregation : public ExecutableOperator {
     uint64_t valueSize;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATION_HPP_

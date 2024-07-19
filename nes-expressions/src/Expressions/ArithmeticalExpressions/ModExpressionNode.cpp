@@ -12,29 +12,35 @@
     limitations under the License.
 */
 
+#include <sstream>
+#include <Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
-#include <sstream>
-namespace NES {
+namespace NES
+{
 
 ModExpressionNode::ModExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
 
-ModExpressionNode::ModExpressionNode(ModExpressionNode* other) : ArithmeticalBinaryExpressionNode(other) {}
+ModExpressionNode::ModExpressionNode(ModExpressionNode* other) : ArithmeticalBinaryExpressionNode(other)
+{
+}
 
-ExpressionNodePtr ModExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right) {
+ExpressionNodePtr ModExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right)
+{
     auto addNode = std::make_shared<ModExpressionNode>(
-        DataTypeFactory::createFloat());// TODO: stamp should always be float, but is this the right way?
+        DataTypeFactory::createFloat()); // TODO: stamp should always be float, but is this the right way?
     addNode->setChildren(left, right);
     return addNode;
 }
 
-void ModExpressionNode::inferStamp(SchemaPtr schema) {
+void ModExpressionNode::inferStamp(SchemaPtr schema)
+{
     ArithmeticalBinaryExpressionNode::inferStamp(schema);
 
-    if (stamp->isInteger()) {
+    if (stamp->isInteger())
+    {
         // we know that both children must have been Integer, too
         auto leftAsInt = DataType::as<Integer>(getLeft()->getStamp());
         auto rightAsInt = DataType::as<Integer>(getRight()->getStamp());
@@ -48,7 +54,9 @@ void ModExpressionNode::inferStamp(SchemaPtr schema) {
         int64_t newUpperBound = std::min(range, leftAsInt->upperBound);
 
         stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, newLowerBound, newUpperBound);
-    } else if (stamp->isFloat()) {
+    }
+    else if (stamp->isFloat())
+    {
         // children can be integer or float
         auto leftStamp = getLeft()->getStamp();
         auto rightStamp = getRight()->getStamp();
@@ -56,27 +64,37 @@ void ModExpressionNode::inferStamp(SchemaPtr schema) {
         // target values
         double leftL, leftU, rightL, rightU;
 
-        if (leftStamp->isFloat()) {
+        if (leftStamp->isFloat())
+        {
             auto leftAsFloat = DataType::as<Float>(static_cast<DataTypePtr>(leftStamp));
             leftL = leftAsFloat->lowerBound;
             leftU = leftAsFloat->upperBound;
-        } else if (leftStamp->isInteger()) {
+        }
+        else if (leftStamp->isInteger())
+        {
             auto leftAsInteger = DataType::as<Integer>(static_cast<DataTypePtr>(leftStamp));
-            leftL = (double) leftAsInteger->lowerBound;
-            leftU = (double) leftAsInteger->upperBound;
-        } else {
+            leftL = (double)leftAsInteger->lowerBound;
+            leftU = (double)leftAsInteger->upperBound;
+        }
+        else
+        {
             return;
         }
 
-        if (rightStamp->isFloat()) {
+        if (rightStamp->isFloat())
+        {
             auto rightAsFloat = DataType::as<Float>(static_cast<DataTypePtr>(rightStamp));
             rightL = rightAsFloat->lowerBound;
             rightU = rightAsFloat->upperBound;
-        } else if (rightStamp->isInteger()) {
+        }
+        else if (rightStamp->isInteger())
+        {
             auto rightAsInteger = DataType::as<Integer>(static_cast<DataTypePtr>(rightStamp));
-            rightL = (double) rightAsInteger->lowerBound;
-            rightU = (double) rightAsInteger->upperBound;
-        } else {
+            rightL = (double)rightAsInteger->lowerBound;
+            rightU = (double)rightAsInteger->upperBound;
+        }
+        else
+        {
             return;
         }
 
@@ -89,22 +107,26 @@ void ModExpressionNode::inferStamp(SchemaPtr schema) {
     // do nothing if the stamp is of type undefined (from ArithmeticalBinaryExpressionNode::inferSchema(typeInferencePhaseContext, schema);)
 }
 
-bool ModExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<ModExpressionNode>()) {
+bool ModExpressionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<ModExpressionNode>())
+    {
         auto otherAddNode = rhs->as<ModExpressionNode>();
         return getLeft()->equal(otherAddNode->getLeft()) && getRight()->equal(otherAddNode->getRight());
     }
     return false;
 }
 
-std::string ModExpressionNode::toString() const {
+std::string ModExpressionNode::toString() const
+{
     std::stringstream ss;
     ss << children[0]->toString() << "%" << children[1]->toString();
     return ss.str();
 }
 
-ExpressionNodePtr ModExpressionNode::copy() {
+ExpressionNodePtr ModExpressionNode::copy()
+{
     return ModExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
-}// namespace NES
+} // namespace NES

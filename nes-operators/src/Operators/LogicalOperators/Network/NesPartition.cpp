@@ -12,45 +12,62 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/Network/NesPartition.hpp>
-#include <fmt/core.h>
 #include <functional>
 #include <ostream>
+#include <Operators/LogicalOperators/Network/NesPartition.hpp>
+#include <fmt/core.h>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
-NesPartition::NesPartition(SharedQueryId sharedQueryId,
-                           OperatorId operatorId,
-                           PartitionId partitionId,
-                           SubpartitionId subpartitionId)
-    : sharedQueryId(sharedQueryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId) {}
+NesPartition::NesPartition(SharedQueryId sharedQueryId, OperatorId operatorId, PartitionId partitionId, SubpartitionId subpartitionId)
+    : sharedQueryId(sharedQueryId), operatorId(operatorId), partitionId(partitionId), subpartitionId(subpartitionId)
+{
+}
 
-PartitionId NesPartition::getPartitionId() const { return partitionId; }
-OperatorId NesPartition::getOperatorId() const { return operatorId; }
+PartitionId NesPartition::getPartitionId() const
+{
+    return partitionId;
+}
+OperatorId NesPartition::getOperatorId() const
+{
+    return operatorId;
+}
 
-SharedQueryId NesPartition::getQueryId() const { return sharedQueryId; }
+SharedQueryId NesPartition::getQueryId() const
+{
+    return sharedQueryId;
+}
 
-SubpartitionId NesPartition::getSubpartitionId() const { return subpartitionId; }
+SubpartitionId NesPartition::getSubpartitionId() const
+{
+    return subpartitionId;
+}
 
-std::string NesPartition::toString() const {
+std::string NesPartition::toString() const
+{
     return fmt::format("{}::{}::{}::{}", sharedQueryId, operatorId, partitionId, subpartitionId);
 }
-bool operator<(const NesPartition& lhs, const NesPartition& rhs) {
+bool operator<(const NesPartition& lhs, const NesPartition& rhs)
+{
     return lhs.sharedQueryId < rhs.sharedQueryId && lhs.operatorId < rhs.operatorId && lhs.partitionId < rhs.partitionId
         && lhs.subpartitionId < rhs.subpartitionId;
 }
 
-bool operator==(const NesPartition& lhs, const NesPartition& rhs) {
+bool operator==(const NesPartition& lhs, const NesPartition& rhs)
+{
     return lhs.sharedQueryId == rhs.sharedQueryId && lhs.operatorId == rhs.operatorId && lhs.partitionId == rhs.partitionId
         && lhs.subpartitionId == rhs.subpartitionId;
 }
-std::ostream& operator<<(std::ostream& os, const NesPartition& partition) {
+std::ostream& operator<<(std::ostream& os, const NesPartition& partition)
+{
     os << partition.toString();
     return os;
 }
-}// namespace NES::Network
+} // namespace NES::Network
 
-std::uint64_t std::hash<NES::Network::NesPartition>::operator()(const NES::Network::NesPartition& k) const {
+std::uint64_t std::hash<NES::Network::NesPartition>::operator()(const NES::Network::NesPartition& k) const
+{
     using std::hash;
 
     // Hash function for the NesPartition
@@ -60,11 +77,13 @@ std::uint64_t std::hash<NES::Network::NesPartition>::operator()(const NES::Netwo
 }
 
 auto fmt::formatter<NES::Network::NesPartition>::format(const NES::Network::NesPartition& partition, fmt::format_context& ctx)
-    -> decltype(ctx.out()) {
-    return fmt::format_to(ctx.out(),
-                          "query Id:{} OperatorId:{} PartitionId: {} SubpartitionID: {}",
-                          partition.getQueryId(),
-                          partition.getOperatorId(),
-                          partition.getPartitionId(),
-                          partition.getSubpartitionId());
+    -> decltype(ctx.out())
+{
+    return fmt::format_to(
+        ctx.out(),
+        "query Id:{} OperatorId:{} PartitionId: {} SubpartitionID: {}",
+        partition.getQueryId(),
+        partition.getOperatorId(),
+        partition.getPartitionId(),
+        partition.getSubpartitionId());
 }

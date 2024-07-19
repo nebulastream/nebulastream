@@ -12,20 +12,23 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class NesCoordinatorTest : public Testing::BaseIntegrationTest {
-  public:
+class NesCoordinatorTest : public Testing::BaseIntegrationTest
+{
+public:
     static void SetUpTestCase() { NES::Logger::setupLogging("CoordinatorTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
 // Test that the worker configuration from the coordinator configuration is passed to the internal worker.
-TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfiguration) {
+TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfiguration)
+{
     // given
     auto configuration = CoordinatorConfiguration::createDefault();
     configuration->rpcPort = *rpcCoordinatorPort;
@@ -43,7 +46,8 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesConfigurationFromCoordinatorConfigu
 }
 
 // Test that IP and port of the internal worker are consistent with IP and port from coordinator
-TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
+TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator)
+{
     // given: Set up the coordinator IP and ports, and enable monitoring
     auto coordinatorHost = "127.0.0.1";
     auto coordinatorWorkerHost = "localhost";
@@ -53,7 +57,7 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     configuration->coordinatorHost = coordinatorHost;
     configuration->enableMonitoring = true;
     // given: Configure the worker with nonsensical IP and port, and disable monitoring
-    configuration->worker.coordinatorPort = 111;// This port won't be assigned by the line above because it is below 1024.
+    configuration->worker.coordinatorPort = 111; // This port won't be assigned by the line above because it is below 1024.
     configuration->worker.coordinatorHost = "127.0.0.2";
     configuration->worker.localWorkerHost = coordinatorWorkerHost;
     configuration->worker.enableMonitoring = false;
@@ -72,4 +76,4 @@ TEST_F(NesCoordinatorTest, internalWorkerUsesIpAndPortFromCoordinator) {
     EXPECT_TRUE(coordinator->stopCoordinator(true));
 }
 
-}// namespace NES
+} // namespace NES

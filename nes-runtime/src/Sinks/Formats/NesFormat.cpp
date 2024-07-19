@@ -12,36 +12,48 @@
     limitations under the License.
 */
 
-#include "SerializableOperator.pb.h"
+#include <iostream>
+#include <utility>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
-#include <utility>
+#include "SerializableOperator.pb.h"
 
-namespace NES {
+namespace NES
+{
 
-NesFormat::NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
-    : SinkFormat(std::move(schema), std::move(bufferManager)) {
+NesFormat::NesFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager))
+{
     serializedSchema = std::make_shared<SerializableSchema>();
 }
 
-std::string NesFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
-    std::string out((char*) inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * getSchemaPtr()->getSchemaSizeInBytes());
+std::string NesFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer)
+{
+    std::string out((char*)inputBuffer.getBuffer(), inputBuffer.getNumberOfTuples() * getSchemaPtr()->getSchemaSizeInBytes());
     return out;
 }
 
-std::string NesFormat::toString() { return "NES_FORMAT"; }
+std::string NesFormat::toString()
+{
+    return "NES_FORMAT";
+}
 
-FormatTypes NesFormat::getSinkFormat() { return FormatTypes::NES_FORMAT; }
+FormatTypes NesFormat::getSinkFormat()
+{
+    return FormatTypes::NES_FORMAT;
+}
 
-FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer&) { NES_NOT_IMPLEMENTED(); }
+FormatIterator NesFormat::getTupleIterator(Runtime::TupleBuffer&)
+{
+    NES_NOT_IMPLEMENTED();
+}
 
-std::string NesFormat::getFormattedSchema() {
+std::string NesFormat::getFormattedSchema()
+{
     SerializableSchemaPtr protoBuff = SchemaSerializationUtil::serializeSchema(schema, serializedSchema.get());
     return protoBuff->SerializeAsString();
 }
 
-}// namespace NES
+} // namespace NES

@@ -17,13 +17,15 @@
 #include <cstdint>
 #include <string_view>
 #include <type_traits>
-namespace NES {
+namespace NES
+{
 /**
  * @brief Indicators for a log level following the priority of log messages.
  * A specific log level contains all log messages of an lower level.
  * For example if LOG_LEVEL is LOG_WARNING, then it also contains LOG_NONE, LOG_FATAL_ERROR, and LOG_ERROR.
  */
-enum class LogLevel : uint8_t {
+enum class LogLevel : uint8_t
+{
     // Indicates that no information will be logged.
     LOG_NONE = 1,
     // Indicates that only information about fatal errors will be logged.
@@ -52,8 +54,11 @@ std::basic_string_view<char> getLogName(LogLevel value);
  * @param value LogLevel
  * @return integer between 1 and 7 to identify the log level.
  */
-constexpr uint64_t getLogLevel(const LogLevel value) { return static_cast<std::underlying_type_t<LogLevel>>(value); }
+constexpr uint64_t getLogLevel(const LogLevel value)
+{
+    return static_cast<std::underlying_type_t<LogLevel>>(value);
+}
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_

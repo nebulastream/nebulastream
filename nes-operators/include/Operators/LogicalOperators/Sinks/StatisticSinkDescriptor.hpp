@@ -18,38 +18,36 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <StatisticIdentifiers.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Descriptor for the StatisticSink. Merely stores the StatisticSinkFormatType
  */
-class StatisticSinkDescriptor : public SinkDescriptor {
-
-  public:
+class StatisticSinkDescriptor : public SinkDescriptor
+{
+public:
     /**
      * @brief Factory method for creating the StatisticSinkDescriptor
      * @param sinkFormatType
      * @param numberOfOrigins
      * @return SinkDescriptorPtr
      */
-    static SinkDescriptorPtr
-    create(StatisticSynopsisType sinkFormatType, StatisticDataCodec sinkDataCodec, uint64_t numberOfOrigins = 1);
+    static SinkDescriptorPtr create(StatisticSynopsisType sinkFormatType, StatisticDataCodec sinkDataCodec, uint64_t numberOfOrigins = 1);
 
     std::string toString() const override;
     bool equal(const SinkDescriptorPtr& other) override;
     StatisticSynopsisType getSinkFormatType() const;
     StatisticDataCodec getSinkDataCodec() const;
 
-  private:
-    explicit StatisticSinkDescriptor(StatisticSynopsisType sinkFormatType,
-                                     StatisticDataCodec sinkDataCodec,
-                                     uint64_t numberOfOrigins);
+private:
+    explicit StatisticSinkDescriptor(StatisticSynopsisType sinkFormatType, StatisticDataCodec sinkDataCodec, uint64_t numberOfOrigins);
 
-  private:
+private:
     StatisticSynopsisType sinkFormatType;
     StatisticDataCodec sinkDataCodec;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_STATISTICSINKDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_STATISTICSINKDESCRIPTOR_HPP_

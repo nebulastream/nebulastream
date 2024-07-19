@@ -15,17 +15,19 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
 
-#include <Runtime/Allocator/MemoryResource.hpp>
 #include <memory>
-namespace NES::Runtime {
+#include <Runtime/Allocator/MemoryResource.hpp>
+namespace NES::Runtime
+{
 /**
  * @brief The default memory resource of nes that use posix_memalign
  */
-class NesDefaultMemoryAllocator : public std::pmr::memory_resource {
-  public:
+class NesDefaultMemoryAllocator : public std::pmr::memory_resource
+{
+public:
     explicit NesDefaultMemoryAllocator() = default;
 
-  private:
+private:
     void* do_allocate(size_t bytes, size_t alignment) override;
 
     void do_deallocate(void* p, size_t, size_t) override;
@@ -33,5 +35,5 @@ class NesDefaultMemoryAllocator : public std::pmr::memory_resource {
     bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
 };
 using NesDefaultMemoryAllocatorPtr = std::shared_ptr<NesDefaultMemoryAllocator>;
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_

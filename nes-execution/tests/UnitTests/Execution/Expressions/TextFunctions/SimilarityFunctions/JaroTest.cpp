@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/TextFunctions/SimilarityFunctions/JaroSimilarity.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -20,19 +20,23 @@
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class JaroTest : public Testing::BaseUnitTest {
-  public:
+class JaroTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("JaroTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup JaroTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
@@ -46,66 +50,70 @@ class JaroTest : public Testing::BaseUnitTest {
 
 /** @brief The Jaro Similarity Class provides functionality to compare two text objects and return their difference */
 
-TEST_F(JaroTest, BaseJaroTest) {
+TEST_F(JaroTest, BaseJaroTest)
+{
     auto expression = TernaryExpressionWrapper<JaroSimilarity>();
     auto flagValue = Value<Boolean>(false);
     auto textValue = Value<Text>("duck");
     auto textValue0 = Value<Text>("duckdb");
     auto dist1 = expression.eval(textValue, textValue0, flagValue);
-    EXPECT_EQ(dist1, (double) 8 / 9);
+    EXPECT_EQ(dist1, (double)8 / 9);
 
     auto textValue1 = Value<Text>("duck");
     auto dist2 = expression.eval(textValue, textValue1, flagValue);
-    EXPECT_EQ(dist2, (double) 1.0);
+    EXPECT_EQ(dist2, (double)1.0);
 
     auto textValue2 = Value<Text>("test");
     auto textValue3 = Value<Text>("case");
     auto dist3 = expression.eval(textValue3, textValue2, flagValue);
-    EXPECT_EQ(dist3, (double) 0.5);
+    EXPECT_EQ(dist3, (double)0.5);
 
     auto textValue4 = Value<Text>("testcase");
     auto textValue5 = Value<Text>("du");
     auto dist4 = expression.eval(textValue4, textValue5, flagValue);
-    EXPECT_EQ(dist4, (double) 0.0);
+    EXPECT_EQ(dist4, (double)0.0);
 }
 
-TEST_F(JaroTest, FailJaroTest) {
+TEST_F(JaroTest, FailJaroTest)
+{
     auto expression = TernaryExpressionWrapper<JaroSimilarity>();
     auto flagValue = Value<Boolean>(false);
-    auto textValue0 = Value<Float>((float) 17.5);
+    auto textValue0 = Value<Float>((float)17.5);
     auto textValue1 = Value<Text>("duck");
     EXPECT_ANY_THROW(expression.eval(textValue0, textValue1, flagValue));
 }
 
-TEST_F(JaroTest, BaseJaroWinklerTest) {
+TEST_F(JaroTest, BaseJaroWinklerTest)
+{
     auto expression = TernaryExpressionWrapper<JaroSimilarity>();
     auto flagValue = Value<Boolean>(true);
     auto textValue = Value<Text>("duck");
     auto textValue0 = Value<Text>("duckdb");
     auto dist1 = expression.eval(textValue, textValue0, flagValue);
-    EXPECT_EQ(dist1, (double) 14 / 15);
+    EXPECT_EQ(dist1, (double)14 / 15);
 
     auto textValue1 = Value<Text>("duck");
     auto dist2 = expression.eval(textValue, textValue1, flagValue);
-    EXPECT_EQ(dist2, (double) 1.0);
+    EXPECT_EQ(dist2, (double)1.0);
 
     auto textValue2 = Value<Text>("test");
     auto textValue3 = Value<Text>("case");
     auto dist3 = expression.eval(textValue3, textValue2, flagValue);
-    EXPECT_EQ(dist3, (double) 0.5);
+    EXPECT_EQ(dist3, (double)0.5);
 
     auto textValue4 = Value<Text>("testcase");
     auto textValue5 = Value<Text>("du");
     auto dist4 = expression.eval(textValue4, textValue5, flagValue);
-    EXPECT_EQ(dist4, (double) 0.0);
+    EXPECT_EQ(dist4, (double)0.0);
 }
 
-TEST_F(JaroTest, FailJaroWinklerTest) {
+TEST_F(JaroTest, FailJaroWinklerTest)
+{
     auto expression = TernaryExpressionWrapper<JaroSimilarity>();
     auto flagValue = Value<Boolean>(true);
-    auto textValue0 = Value<Float>((float) 17.5);
+    auto textValue0 = Value<Float>((float)17.5);
     auto textValue1 = Value<Text>("duck");
     EXPECT_ANY_THROW(expression.eval(textValue0, textValue1, flagValue));
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

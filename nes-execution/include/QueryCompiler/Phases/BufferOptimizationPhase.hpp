@@ -14,21 +14,23 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_
 
+#include <vector>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <vector>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief This phase scans all pipelines and determines if the OutputBufferOptimizationLevel (level) requested by the user can be applied.
  * It then notes the correct OutputBufferAllocationStrategy in the Emit operator of the pipeline.
  */
-class BufferOptimizationPhase {
-  public:
+class BufferOptimizationPhase
+{
+public:
     /**
      * @brief Constructor to create a BufferOptimizationPhase
      */
@@ -53,9 +55,9 @@ class BufferOptimizationPhase {
      */
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
 
-  private:
+private:
     [[maybe_unused]] OutputBufferOptimizationLevel level;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_

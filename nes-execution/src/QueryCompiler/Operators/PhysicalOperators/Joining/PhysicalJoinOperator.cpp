@@ -11,14 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalJoinOperator::PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler)
-    : operatorHandler(std::move(operatorHandler)){};
+PhysicalJoinOperator::PhysicalJoinOperator(Join::JoinOperatorHandlerPtr operatorHandler) : operatorHandler(std::move(operatorHandler)){};
 
-Join::JoinOperatorHandlerPtr PhysicalJoinOperator::getJoinHandler() { return operatorHandler; }
+Join::JoinOperatorHandlerPtr PhysicalJoinOperator::getJoinHandler()
+{
+    return operatorHandler;
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

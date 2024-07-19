@@ -19,7 +19,8 @@
 #include <Util/GatheringMode.hpp>
 #include <Util/SourceMode.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class BenchmarkSourceType;
 using BenchmarkSourceTypePtr = std::shared_ptr<BenchmarkSourceType>;
@@ -27,8 +28,9 @@ using BenchmarkSourceTypePtr = std::shared_ptr<BenchmarkSourceType>;
 /**
  * @brief A source config for a benchm source
  */
-class BenchmarkSourceType : public PhysicalSourceType {
-  public:
+class BenchmarkSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief Factory method of BenchmarkSourceType
      * @param memoryArea the pointer to the memory area
@@ -41,16 +43,17 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param taskQueueId the id to which queue we put buffers of this urce
      * @return a constructed BenchmarkSourceType
      */
-    static BenchmarkSourceTypePtr create(const std::string& logicalSourceName,
-                                         const std::string& physicalSourceName,
-                                         uint8_t* memoryArea,
-                                         size_t memoryAreaSize,
-                                         uint64_t numberOfBuffersToProduce,
-                                         uint64_t gatheringValue,
-                                         GatheringMode gatheringMode,
-                                         SourceMode sourceMode,
-                                         uint64_t sourceAffinity,
-                                         uint64_t taskQueueId);
+    static BenchmarkSourceTypePtr create(
+        const std::string& logicalSourceName,
+        const std::string& physicalSourceName,
+        uint8_t* memoryArea,
+        size_t memoryAreaSize,
+        uint64_t numberOfBuffersToProduce,
+        uint64_t gatheringValue,
+        GatheringMode gatheringMode,
+        SourceMode sourceMode,
+        uint64_t sourceAffinity,
+        uint64_t taskQueueId);
 
     const std::shared_ptr<uint8_t>& getMemoryArea() const;
 
@@ -74,7 +77,7 @@ class BenchmarkSourceType : public PhysicalSourceType {
 
     bool equal(const PhysicalSourceTypePtr& other) override;
 
-  private:
+private:
     /**
      * @brief Create a BenchmarkSourceType using a set of parameters
      * @param memoryArea the pointer to the memory area
@@ -86,16 +89,17 @@ class BenchmarkSourceType : public PhysicalSourceType {
      * @param sourceAffinity the source affinity
      * @param taskQueueId: taskQueueId
      */
-    explicit BenchmarkSourceType(const std::string& logicalSourceName,
-                                 const std::string& physicalSourceName,
-                                 uint8_t* memoryArea,
-                                 size_t memoryAreaSize,
-                                 uint64_t numBuffersToProduce,
-                                 uint64_t gatheringValue,
-                                 GatheringMode gatheringMode,
-                                 SourceMode sourceMode,
-                                 uint64_t sourceAffinity,
-                                 uint64_t taskQueueId);
+    explicit BenchmarkSourceType(
+        const std::string& logicalSourceName,
+        const std::string& physicalSourceName,
+        uint8_t* memoryArea,
+        size_t memoryAreaSize,
+        uint64_t numBuffersToProduce,
+        uint64_t gatheringValue,
+        GatheringMode gatheringMode,
+        SourceMode sourceMode,
+        uint64_t sourceAffinity,
+        uint64_t taskQueueId);
 
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
@@ -106,5 +110,5 @@ class BenchmarkSourceType : public PhysicalSourceType {
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BENCHMARKSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_BENCHMARKSOURCETYPE_HPP_

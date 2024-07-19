@@ -14,8 +14,6 @@
 #ifndef NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY6_HPP_
 #define NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY6_HPP_
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -47,14 +45,19 @@
 #include <TPCH/TPCHTableGenerator.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 using namespace Expressions;
 using namespace Operators;
-class TPCH_Query6 {
-  public:
-    static PipelinePlan getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables,
-                                        Runtime::BufferManagerPtr bm) {
+class TPCH_Query6
+{
+public:
+    static PipelinePlan
+    getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, Runtime::BufferManagerPtr bm)
+    {
         PipelinePlan plan;
         auto& lineitems = tables[TPCHTable::LineItem];
 
@@ -102,8 +105,8 @@ class TPCH_Query6 {
         auto revenue = std::make_shared<Expressions::MulExpression>(l_extendedprice, l_discount);
         auto physicalTypeFactory = DefaultPhysicalTypeFactory();
         PhysicalTypePtr integerType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
-        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions = {
-            std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, revenue, "revenue")};
+        std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions
+            = {std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, revenue, "revenue")};
         auto aggregation = std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFunctions);
         selection2->setChild(aggregation);
 
@@ -132,5 +135,5 @@ class TPCH_Query6 {
     }
 };
 
-}// namespace NES::Runtime::Execution
-#endif// NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY6_HPP_
+} // namespace NES::Runtime::Execution
+#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY6_HPP_

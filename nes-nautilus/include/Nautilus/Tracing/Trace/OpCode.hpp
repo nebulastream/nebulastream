@@ -13,11 +13,13 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 /**
  * @brief The OpCode enum defines the different traceable primitive operations.
  */
-enum class OpCode : uint8_t {
+enum class OpCode : uint8_t
+{
     ADD,
     SUB,
     DIV,
@@ -44,5 +46,5 @@ enum class OpCode : uint8_t {
     CALL,
     CAST
 };
-}// namespace NES::Nautilus::Tracing
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
+} // namespace NES::Nautilus::Tracing
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_

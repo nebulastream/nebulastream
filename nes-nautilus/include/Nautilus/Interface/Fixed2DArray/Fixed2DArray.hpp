@@ -17,7 +17,8 @@
 #include <Runtime/Allocator/MemoryResource.hpp>
 
 #include <cstdint>
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 
 class Fixed2DArray;
 class Fixed2DArrayRef;
@@ -26,8 +27,9 @@ class Fixed2DArrayRef;
  * @brief This class represents a fixed two dimensional array for a dynamical entrySize. Once the size is determined, it can not
  * be increased or decreased.
  */
-class Fixed2DArray {
-  public:
+class Fixed2DArray
+{
+public:
     /**
      * @brief Constructor for a Fixed2DArray object that allocates the required memory
      * @param allocator
@@ -42,13 +44,13 @@ class Fixed2DArray {
      */
     virtual ~Fixed2DArray();
 
-  private:
+private:
     friend Fixed2DArrayRef;
     std::size_t entrySize;
     uint64_t numRows;
     uint64_t numCols;
     uint8_t* data;
 };
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_

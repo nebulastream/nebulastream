@@ -14,14 +14,16 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
+#include <chrono>
 #include <Sources/DataSource.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <chrono>
 
-namespace NES {
+namespace NES
+{
 
-class DefaultSource : public GeneratorSource {
-  public:
+class DefaultSource : public GeneratorSource
+{
+public:
     /*
    * @brief public constructor for the default source
    * @param schema of the data that this source produces
@@ -36,17 +38,18 @@ class DefaultSource : public GeneratorSource {
    * @param successors the subsequent operators in the pipeline to which the data is pushed
    * @param physicalSourceName the name and unique identifier of a physical source
    */
-    DefaultSource(SchemaPtr schema,
-                  Runtime::BufferManagerPtr bufferManager,
-                  Runtime::QueryManagerPtr queryManager,
-                  uint64_t numberOfBufferToProduce,
-                  uint64_t gatheringInterval,
-                  OperatorId operatorId,
-                  OriginId originId,
-                  StatisticId statisticId,
-                  size_t numSourceLocalBuffers,
-                  std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {},
-                  const std::string& physicalSourceName = std::string("defaultPhysicalSourceName"));
+    DefaultSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        uint64_t numberOfBufferToProduce,
+        uint64_t gatheringInterval,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors = {},
+        const std::string& physicalSourceName = std::string("defaultPhysicalSourceName"));
 
     SourceType getType() const override;
 
@@ -56,5 +59,5 @@ class DefaultSource : public GeneratorSource {
 
 using DefaultSourcePtr = std::shared_ptr<DefaultSource>;
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_DEFAULTSOURCE_HPP_

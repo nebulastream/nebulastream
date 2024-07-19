@@ -12,40 +12,65 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <utility>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-FunctionOperation::FunctionOperation(std::string name,
-                                     std::vector<PrimitiveStamp> inputArgs,
-                                     std::vector<std::string> inputArgNames,
-                                     Types::StampPtr outputArg)
-    : Operation(OperationType::FunctionOp, outputArg), name(std::move(name)), inputArgs(std::move(inputArgs)),
-      inputArgNames(std::move(inputArgNames)) {}
+FunctionOperation::FunctionOperation(
+    std::string name, std::vector<PrimitiveStamp> inputArgs, std::vector<std::string> inputArgNames, Types::StampPtr outputArg)
+    : Operation(OperationType::FunctionOp, outputArg)
+    , name(std::move(name))
+    , inputArgs(std::move(inputArgs))
+    , inputArgNames(std::move(inputArgNames))
+{
+}
 
-const std::string& FunctionOperation::getName() const { return name; }
+const std::string& FunctionOperation::getName() const
+{
+    return name;
+}
 
-BasicBlockPtr FunctionOperation::addFunctionBasicBlock(BasicBlockPtr functionBasicBlock) {
+BasicBlockPtr FunctionOperation::addFunctionBasicBlock(BasicBlockPtr functionBasicBlock)
+{
     this->functionBasicBlock = functionBasicBlock;
     return this->functionBasicBlock;
 }
 
-BasicBlockPtr FunctionOperation::getFunctionBasicBlock() { return functionBasicBlock; }
-const std::vector<PrimitiveStamp>& FunctionOperation::getInputArgs() const { return inputArgs; }
-Types::StampPtr FunctionOperation::getOutputArg() const { return getStamp(); }
+BasicBlockPtr FunctionOperation::getFunctionBasicBlock()
+{
+    return functionBasicBlock;
+}
+const std::vector<PrimitiveStamp>& FunctionOperation::getInputArgs() const
+{
+    return inputArgs;
+}
+Types::StampPtr FunctionOperation::getOutputArg() const
+{
+    return getStamp();
+}
 
-std::string FunctionOperation::toString() {
+std::string FunctionOperation::toString()
+{
     std::string baseString = name + '(';
-    if (inputArgNames.size() > 0) {
+    if (inputArgNames.size() > 0)
+    {
         baseString += inputArgNames[0];
-        for (int i = 1; i < (int) inputArgNames.size(); ++i) {
+        for (int i = 1; i < (int)inputArgNames.size(); ++i)
+        {
             baseString += ", " + inputArgNames.at(i);
         }
     }
     return baseString + ')';
 }
-bool FunctionOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::FunctionOp; }
-const std::vector<std::string>& FunctionOperation::getInputArgNames() const { return inputArgNames; }
+bool FunctionOperation::classof(const Operation* Op)
+{
+    return Op->getOperationType() == OperationType::FunctionOp;
+}
+const std::vector<std::string>& FunctionOperation::getInputArgNames() const
+{
+    return inputArgNames;
+}
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

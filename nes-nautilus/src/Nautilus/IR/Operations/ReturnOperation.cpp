@@ -12,25 +12,39 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/ReturnOperation.hpp>
-#include <Nautilus/IR/Types/StampFactory.hpp>
 #include <cstdint>
 #include <string>
-namespace NES::Nautilus::IR::Operations {
-ReturnOperation::ReturnOperation() : Operation(Operation::OperationType::ReturnOp, Types::StampFactory::createVoidStamp()) {}
+#include <Nautilus/IR/Operations/ReturnOperation.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+namespace NES::Nautilus::IR::Operations
+{
+ReturnOperation::ReturnOperation() : Operation(Operation::OperationType::ReturnOp, Types::StampFactory::createVoidStamp())
+{
+}
 ReturnOperation::ReturnOperation(OperationPtr returnValue)
-    : Operation(Operation::OperationType::ReturnOp, returnValue->getStamp()), returnValue(returnValue) {
+    : Operation(Operation::OperationType::ReturnOp, returnValue->getStamp()), returnValue(returnValue)
+{
     returnValue->addUsage(this);
 }
 
-std::string ReturnOperation::toString() {
-    if (hasReturnValue()) {
+std::string ReturnOperation::toString()
+{
+    if (hasReturnValue())
+    {
         return "return (" + getReturnValue()->getIdentifier() + ")";
-    } else {
+    }
+    else
+    {
         return "return";
     }
 }
-OperationPtr ReturnOperation::getReturnValue() { return returnValue.lock(); }
-bool ReturnOperation::hasReturnValue() { return !stamp->isVoid(); }
+OperationPtr ReturnOperation::getReturnValue()
+{
+    return returnValue.lock();
+}
+bool ReturnOperation::hasReturnValue()
+{
+    return !stamp->isVoid();
+}
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

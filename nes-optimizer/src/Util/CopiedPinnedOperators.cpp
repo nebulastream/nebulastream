@@ -12,17 +12,18 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/CopiedPinnedOperators.hpp>
-#include <algorithm>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-CopiedPinnedOperators
-CopiedPinnedOperators::create(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                              const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                              std::unordered_map<OperatorId, LogicalOperatorPtr>& operatorIdToOriginalOperatorMap) {
-
+CopiedPinnedOperators CopiedPinnedOperators::create(
+    const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+    const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+    std::unordered_map<OperatorId, LogicalOperatorPtr>& operatorIdToOriginalOperatorMap)
+{
     std::set<LogicalOperatorPtr> copyOfPinnedUpStreamOperators;
     std::set<LogicalOperatorPtr> copyOfPinnedDownStreamOperators;
 
@@ -31,7 +32,8 @@ CopiedPinnedOperators::create(const std::set<LogicalOperatorPtr>& pinnedUpStream
     std::unordered_map<OperatorId, LogicalOperatorPtr> mapOfCopiedOperators;
 
     std::set<OperatorId> pinnedUpStreamOperatorId;
-    for (auto pinnedUpStreamOperator : pinnedUpStreamOperators) {
+    for (auto pinnedUpStreamOperator : pinnedUpStreamOperators)
+    {
         OperatorId operatorId = pinnedUpStreamOperator->getId();
         pinnedUpStreamOperatorId.emplace(operatorId);
         operatorsToProcess.emplace(pinnedUpStreamOperator);
@@ -39,11 +41,13 @@ CopiedPinnedOperators::create(const std::set<LogicalOperatorPtr>& pinnedUpStream
     }
 
     std::set<OperatorId> pinnedDownStreamOperatorId;
-    for (auto pinnedDownStreamOperator : pinnedDownStreamOperators) {
+    for (auto pinnedDownStreamOperator : pinnedDownStreamOperators)
+    {
         pinnedDownStreamOperatorId.emplace(pinnedDownStreamOperator->getId());
     }
 
-    while (!operatorsToProcess.empty()) {
+    while (!operatorsToProcess.empty())
+    {
         auto operatorToProcess = operatorsToProcess.front();
         operatorsToProcess.pop();
         // Skip if the topology node was visited previously
@@ -52,50 +56,62 @@ CopiedPinnedOperators::create(const std::set<LogicalOperatorPtr>& pinnedUpStream
         LogicalOperatorPtr operatorCopy = mapOfCopiedOperators[operatorId];
 
         //If the operator is a pinned upstream operator then add to the set of pinned upstream copy
-        if (pinnedUpStreamOperatorId.contains(operatorId)) {
+        if (pinnedUpStreamOperatorId.contains(operatorId))
+        {
             copyOfPinnedUpStreamOperators.emplace(operatorCopy);
         }
 
         //If the operator is a downstream operator then add to the set of pinned downstream copy
-        if (pinnedDownStreamOperatorId.contains(operatorId)) {
+        if (pinnedDownStreamOperatorId.contains(operatorId))
+        {
             copyOfPinnedDownStreamOperators.emplace(operatorCopy);
         }
 
         const auto& downstreamOperators = operatorToProcess->getParents();
-        std::for_each(downstreamOperators.begin(), downstreamOperators.end(), [&](const NodePtr& operatorNode) {
-            // only process downstream operators that are either directly or indirectly connected to pinned downstream
-            // operators
-            bool connectedToPinnedDownstreamOperator =
-                std::any_of(pinnedDownStreamOperators.begin(),
-                            pinnedDownStreamOperators.end(),
-                            [&](const auto& pinnedDownStreamOperator) {
-                                OperatorId downStreamOperatorId = operatorNode->as<Operator>()->getId();
-                                return pinnedDownStreamOperator->getId() == downStreamOperatorId
-                                    || pinnedDownStreamOperator->getChildWithOperatorId(downStreamOperatorId);
-                            });
+        std::for_each(
+            downstreamOperators.begin(),
+            downstreamOperators.end(),
+            [&](const NodePtr& operatorNode)
+            {
+                // only process downstream operators that are either directly or indirectly connected to pinned downstream
+                // operators
+                bool connectedToPinnedDownstreamOperator = std::any_of(
+                    pinnedDownStreamOperators.begin(),
+                    pinnedDownStreamOperators.end(),
+                    [&](const auto& pinnedDownStreamOperator)
+                    {
+                        OperatorId downStreamOperatorId = operatorNode->as<Operator>()->getId();
+                        return pinnedDownStreamOperator->getId() == downStreamOperatorId
+                            || pinnedDownStreamOperator->getChildWithOperatorId(downStreamOperatorId);
+                    });
 
-            // Add the remaining operators if connected to pinned downstream operator
-            if (connectedToPinnedDownstreamOperator) {
-
-                auto parentOperator = operatorNode->as<LogicalOperator>();
-                auto parentOperatorId = parentOperator->getId();
-                LogicalOperatorPtr parentOperatorCopy;
-                if (mapOfCopiedOperators.contains(parentOperatorId)) {
-                    parentOperatorCopy = mapOfCopiedOperators[parentOperatorId];
-                } else {
-                    parentOperatorCopy = parentOperator->copy()->as<LogicalOperator>();
-                    mapOfCopiedOperators[parentOperatorId] = parentOperatorCopy;
+                // Add the remaining operators if connected to pinned downstream operator
+                if (connectedToPinnedDownstreamOperator)
+                {
+                    auto parentOperator = operatorNode->as<LogicalOperator>();
+                    auto parentOperatorId = parentOperator->getId();
+                    LogicalOperatorPtr parentOperatorCopy;
+                    if (mapOfCopiedOperators.contains(parentOperatorId))
+                    {
+                        parentOperatorCopy = mapOfCopiedOperators[parentOperatorId];
+                    }
+                    else
+                    {
+                        parentOperatorCopy = parentOperator->copy()->as<LogicalOperator>();
+                        mapOfCopiedOperators[parentOperatorId] = parentOperatorCopy;
+                    }
+                    operatorCopy->addParent(parentOperatorCopy);
+                    operatorsToProcess.push(parentOperator);
                 }
-                operatorCopy->addParent(parentOperatorCopy);
-                operatorsToProcess.push(parentOperator);
-            }
-        });
+            });
     }
     return CopiedPinnedOperators(copyOfPinnedUpStreamOperators, copyOfPinnedDownStreamOperators);
 }
 
-CopiedPinnedOperators::CopiedPinnedOperators(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                             const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators)
-    : copiedPinnedUpStreamOperators(pinnedUpStreamOperators), copiedPinnedDownStreamOperators(pinnedDownStreamOperators) {}
+CopiedPinnedOperators::CopiedPinnedOperators(
+    const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators, const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators)
+    : copiedPinnedUpStreamOperators(pinnedUpStreamOperators), copiedPinnedDownStreamOperators(pinnedDownStreamOperators)
+{
+}
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

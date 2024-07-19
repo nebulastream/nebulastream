@@ -11,15 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/CosExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 CosExpression::CosExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression)
-    : leftSubExpression(leftSubExpression) {}
+    : leftSubExpression(leftSubExpression)
+{
+}
 
 /**
  * @brief This method calculates the cosinus of x.
@@ -27,9 +30,13 @@ CosExpression::CosExpression(const NES::Runtime::Execution::Expressions::Express
  * @param x double
  * @return double
  */
-double calculateCos(double x) { return std::cos(x); }
+double calculateCos(double x)
+{
+    return std::cos(x);
+}
 
-Value<> CosExpression::execute(NES::Nautilus::Record& record) const {
+Value<> CosExpression::execute(NES::Nautilus::Record& record) const
+{
     // Evaluate the  expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
 
@@ -38,24 +45,37 @@ Value<> CosExpression::execute(NES::Nautilus::Record& record) const {
     // In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (leftValue->isType<Int8>()) {
+    if (leftValue->isType<Int8>())
+    {
         // call the calculateCos function with the correct type
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Int8>());
-    } else if (leftValue->isType<Int16>()) {
+    }
+    else if (leftValue->isType<Int16>())
+    {
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Int16>());
-    } else if (leftValue->isType<Int32>()) {
+    }
+    else if (leftValue->isType<Int32>())
+    {
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Int32>());
-    } else if (leftValue->isType<Int64>()) {
+    }
+    else if (leftValue->isType<Int64>())
+    {
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Int64>());
-    } else if (leftValue->isType<Float>()) {
+    }
+    else if (leftValue->isType<Float>())
+    {
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Float>());
-    } else if (leftValue->isType<Double>()) {
+    }
+    else if (leftValue->isType<Double>())
+    {
         return FunctionCall<>("calculateCos", calculateCos, leftValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CosExpression>> cosFunction("cos");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

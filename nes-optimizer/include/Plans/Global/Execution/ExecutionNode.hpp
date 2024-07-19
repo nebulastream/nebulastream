@@ -15,14 +15,15 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <list>
 #include <map>
 #include <memory>
 #include <set>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
@@ -30,7 +31,8 @@ using OperatorPtr = std::shared_ptr<Operator>;
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
@@ -41,9 +43,9 @@ using PlacedDecomposedQueryPlans = std::map<SharedQueryId, std::map<DecomposedQu
  * This class contains information about the physical node, a map of decomposed query plans that need to be executed
  * on the physical node, and some additional configurations.
  */
-class ExecutionNode : public Node {
-
-  public:
+class ExecutionNode : public Node
+{
+public:
     static ExecutionNodePtr create(WorkerId WorkerId);
 
     explicit ExecutionNode(WorkerId WorkerId);
@@ -126,7 +128,7 @@ class ExecutionNode : public Node {
 
     std::vector<std::string> toMultilineString() override;
 
-  private:
+private:
     /**
      * Execution node id.
      * Same as physical node id.
@@ -138,7 +140,7 @@ class ExecutionNode : public Node {
      */
     PlacedDecomposedQueryPlans mapOfSharedQueryToDecomposedQueryPlans;
 };
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_EXECUTION_EXECUTIONNODE_HPP_

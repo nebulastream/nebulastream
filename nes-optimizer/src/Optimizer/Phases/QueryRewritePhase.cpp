@@ -29,16 +29,17 @@
 #include <Optimizer/QueryRewrite/RenameSourceToProjectOperatorRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-QueryRewritePhasePtr QueryRewritePhase::create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration) {
-
+QueryRewritePhasePtr QueryRewritePhase::create(const Configurations::CoordinatorConfigurationPtr& coordinatorConfiguration)
+{
     auto optimizerConfigurations = coordinatorConfiguration->optimizer;
 
     //If query merger rule is using string based signature or graph isomorphism to identify the sharing opportunities
     //then apply special rewrite rules for improving the match identification
-    bool applyRulesImprovingSharingIdentification =
-        optimizerConfigurations.queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
+    bool applyRulesImprovingSharingIdentification
+        = optimizerConfigurations.queryMergerRule == QueryMergerRule::SyntaxBasedCompleteQueryMergerRule
         || optimizerConfigurations.queryMergerRule == QueryMergerRule::ImprovedHashSignatureBasedCompleteQueryMergerRule
         || optimizerConfigurations.queryMergerRule == QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule
         || optimizerConfigurations.queryMergerRule == QueryMergerRule::HybridCompleteQueryMergerRule;
@@ -50,8 +51,9 @@ QueryRewritePhasePtr QueryRewritePhase::create(const Configurations::Coordinator
 }
 
 QueryRewritePhase::QueryRewritePhase(bool elegantAccelerationEnabled, bool applyRulesImprovingSharingIdentification)
-    : isElegantAccelerationEnabled(elegantAccelerationEnabled),
-      applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification) {
+    : isElegantAccelerationEnabled(elegantAccelerationEnabled)
+    , applyRulesImprovingSharingIdentification(applyRulesImprovingSharingIdentification)
+{
     attributeSortRule = AttributeSortRule::create();
     binaryOperatorSortRule = BinaryOperatorSortRule::create();
     filterMergeRule = FilterMergeRule::create();
@@ -64,18 +66,20 @@ QueryRewritePhase::QueryRewritePhase(bool elegantAccelerationEnabled, bool apply
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
 }
 
-QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
-
+QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan)
+{
     // Duplicate query plan
     auto duplicateQueryPlan = queryPlan->copy();
 
     // Apply elegant specific rule for accelerating  Java Map UDFs
-    if (isElegantAccelerationEnabled) {
+    if (isElegantAccelerationEnabled)
+    {
         mapUDFsToOpenCLOperatorsRule->apply(duplicateQueryPlan);
     }
 
     // Apply rules necessary for improving sharing identification
-    if (applyRulesImprovingSharingIdentification) {
+    if (applyRulesImprovingSharingIdentification)
+    {
         duplicateQueryPlan = attributeSortRule->apply(duplicateQueryPlan);
         duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
     }
@@ -94,4 +98,4 @@ QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan) {
     return predicateReorderingRule->apply(duplicateQueryPlan);
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

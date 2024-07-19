@@ -12,20 +12,23 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/Functions/BitcounterExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class BitcounterExpressionTest : public Testing::BaseUnitTest {
-  public:
+class BitcounterExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("BitcounterExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup BitcounterExpressionTest test class.");
     }
@@ -33,7 +36,8 @@ class BitcounterExpressionTest : public Testing::BaseUnitTest {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down BitcounterExpressionTest test class."); }
 };
-TEST_F(BitcounterExpressionTest, divIntegers) {
+TEST_F(BitcounterExpressionTest, divIntegers)
+{
     auto expression = UnaryExpressionWrapper<BitcounterExpression>();
 
     // Int8
@@ -47,7 +51,7 @@ TEST_F(BitcounterExpressionTest, divIntegers) {
         auto resultValue = expression.eval(Value<Int16>(31_s16));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }// Int32
+    } // Int32
     {
         auto resultValue = expression.eval(Value<Int32>(31_s32));
         ASSERT_EQ(resultValue, 5_u32);
@@ -61,7 +65,8 @@ TEST_F(BitcounterExpressionTest, divIntegers) {
     }
 }
 
-TEST_F(BitcounterExpressionTest, divUIntegers) {
+TEST_F(BitcounterExpressionTest, divUIntegers)
+{
     auto expression = UnaryExpressionWrapper<BitcounterExpression>();
 
     // UInt8
@@ -75,7 +80,7 @@ TEST_F(BitcounterExpressionTest, divUIntegers) {
         auto resultValue = expression.eval(Value<UInt16>(31_u16));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }// UInt32
+    } // UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(31_u32));
         ASSERT_EQ(resultValue, 5_u32);
@@ -92,9 +97,10 @@ TEST_F(BitcounterExpressionTest, divUIntegers) {
 /**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
-TEST_F(BitcounterExpressionTest, evaluateBitCounterExpressionOnWrongType) {
+TEST_F(BitcounterExpressionTest, evaluateBitCounterExpressionOnWrongType)
+{
     auto expression = UnaryExpressionWrapper<BitcounterExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

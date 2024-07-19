@@ -19,7 +19,6 @@
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -31,21 +30,22 @@
 #include <Plans/Global/Query/SharedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-#include <Util/Logger/Logger.hpp>
 #include <iostream>
+#include <Util/Logger/Logger.hpp>
 #include <z3++.h>
 
 using namespace NES;
 
-class Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry {
-
-  public:
-    Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(const std::string& testType,
-                                                          const Query& leftQuery,
-                                                          const Query& rightQuery,
-                                                          const std::string& mergedQueryPlan)
-        : testType(testType), leftQuery(leftQuery), rightQuery(rightQuery), mergedQueryPlan(mergedQueryPlan) {}
+class Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry
+{
+public:
+    Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+        const std::string& testType, const Query& leftQuery, const Query& rightQuery, const std::string& mergedQueryPlan)
+        : testType(testType), leftQuery(leftQuery), rightQuery(rightQuery), mergedQueryPlan(mergedQueryPlan)
+    {
+    }
 
     std::string testType;
     Query leftQuery;
@@ -55,22 +55,24 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry {
 
 class Z3SignatureBasedBottomUpQueryContainmentRuleTest
     : public Testing::BaseUnitTest,
-      public testing::WithParamInterface<std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>> {
-
-  public:
+      public testing::WithParamInterface<std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>>
+{
+public:
     SchemaPtr schema;
     SchemaPtr schemaHouseholds;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("Z3SignatureBasedBottomUpQueryContainmentRuleTest.log", NES::LogLevel::LOG_TRACE);
         NES_INFO("Setup Z3SignatureBasedBottomUpQueryContainmentRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         schema = Schema::create()
                      ->addField("ts", BasicType::UINT32)
                      ->addField("type", BasicType::UINT32)
@@ -101,7 +103,8 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
     /* Will be called after a test is executed. */
     void TearDown() override { NES_DEBUG("Tear down Z3SignatureBasedBottomUpQueryContainmentRuleTest test case."); }
 
-    static auto createEqualityCases() {
+    static auto createEqualityCases()
+    {
         return std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>{
             Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
                 "TestEquality",
@@ -303,8 +306,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                     .unionWith(Query::from("solarPanels"))
                     .filter(Attribute("value") > 4)
                     .project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts"))
-                    .joinWith(Query::from("households")
-                                  .project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
+                    .joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
                     .where(Attribute("windTurbines$id1") == Attribute("households$id"))
                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                     .sink(PrintSinkDescriptor::create()),
@@ -314,14 +316,15 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                     .where(Attribute("id1") == Attribute("id"))
                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                     .filter(Attribute("value") > 4)
-                    .project(Attribute("windTurbines$value"),
-                             Attribute("windTurbines$id1"),
-                             Attribute("windTurbines$value1"),
-                             Attribute("windTurbines$ts"),
-                             Attribute("households$value"),
-                             Attribute("households$id"),
-                             Attribute("households$value1"),
-                             Attribute("households$ts"))
+                    .project(
+                        Attribute("windTurbines$value"),
+                        Attribute("windTurbines$id1"),
+                        Attribute("windTurbines$value1"),
+                        Attribute("windTurbines$ts"),
+                        Attribute("households$value"),
+                        Attribute("households$id"),
+                        Attribute("households$value1"),
+                        Attribute("households$ts"))
                     .sink(PrintSinkDescriptor::create()),
                 "SINK(109: {PrintSinkDescriptor()})\n"
                 "  Join(108)\n"
@@ -416,7 +419,8 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                 "      WATERMARKASSIGNER(127)\n"
                 "        SOURCE(126,households,LogicalSourceDescriptor(households, ))\n")};
     }
-    static auto createMixedContainmentCases() {
+    static auto createMixedContainmentCases()
+    {
         return std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>{
             Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
                 "TestMixedContainmentCases",
@@ -679,81 +683,83 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                 "        "
                 "SOURCE(235,solarPanels,LogicalSourceDescriptor("
                 "solarPanels, ))\n"),
-            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry("TestMixedContainmentCases",
-                                                                  Query::from("windTurbines")
-                                                                      .filter(Attribute("value1") < 3)
-                                                                      .unionWith(Query::from("solarPanels"))
-                                                                      .unionWith(Query::from("test"))
-                                                                      .filter(Attribute("value") == 1)
-                                                                      .sink(PrintSinkDescriptor::create()),
-                                                                  Query::from("windTurbines")
-                                                                      .filter(Attribute("value1") < 3)
-                                                                      .unionWith(Query::from("solarPanels"))
-                                                                      .unionWith(Query::from("test"))
-                                                                      .sink(PrintSinkDescriptor::create()),
-                                                                  "SINK(247: {PrintSinkDescriptor()})\n"
-                                                                  "  FILTER(246)\n"
-                                                                  "    unionWith(253)\n"
-                                                                  "      unionWith(251)\n"
-                                                                  "        FILTER(249)\n"
-                                                                  "          "
-                                                                  "SOURCE(248,windTurbines,LogicalSourceDescriptor("
-                                                                  "windTurbines, ))\n"
-                                                                  "        "
-                                                                  "SOURCE(250,solarPanels,LogicalSourceDescriptor("
-                                                                  "solarPanels, ))\n"
-                                                                  "      "
-                                                                  "SOURCE(252,test,LogicalSourceDescriptor(test, ))\n"
-                                                                  "SINK(254: {PrintSinkDescriptor()})\n"
-                                                                  "  unionWith(253)\n"
-                                                                  "    unionWith(251)\n"
-                                                                  "      FILTER(249)\n"
-                                                                  "        "
-                                                                  "SOURCE(248,windTurbines,LogicalSourceDescriptor("
-                                                                  "windTurbines, ))\n"
-                                                                  "      "
-                                                                  "SOURCE(250,solarPanels,LogicalSourceDescriptor("
-                                                                  "solarPanels, ))\n"
-                                                                  "    SOURCE(252,test,LogicalSourceDescriptor(test, "
-                                                                  "))\n"),
-            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry("TestMixedContainmentCases",
-                                                                  Query::from("windTurbines")
-                                                                      .unionWith(Query::from("solarPanels"))
-                                                                      .filter(Attribute("value1") < 3)
-                                                                      .unionWith(Query::from("test"))
-                                                                      .filter(Attribute("value") == 1)
-                                                                      .sink(PrintSinkDescriptor::create()),
-                                                                  Query::from("windTurbines")
-                                                                      .unionWith(Query::from("solarPanels"))
-                                                                      .unionWith(Query::from("test"))
-                                                                      .filter(Attribute("value") == 1)
-                                                                      .sink(PrintSinkDescriptor::create()),
-                                                                  "SINK(262: {PrintSinkDescriptor()})\n"
-                                                                  "  FILTER(261)\n"
-                                                                  "    unionWith(260)\n"
-                                                                  "      FILTER(258)\n"
-                                                                  "        unionWith(265)\n"
-                                                                  "          "
-                                                                  "SOURCE(263,windTurbines,LogicalSourceDescriptor("
-                                                                  "windTurbines, ))\n"
-                                                                  "          "
-                                                                  "SOURCE(264,solarPanels,LogicalSourceDescriptor("
-                                                                  "solarPanels, ))\n"
-                                                                  "      "
-                                                                  "SOURCE(259,test,LogicalSourceDescriptor(test, ))\n"
-                                                                  "SINK(269: {PrintSinkDescriptor()})\n"
-                                                                  "  FILTER(268)\n"
-                                                                  "    unionWith(267)\n"
-                                                                  "      unionWith(265)\n"
-                                                                  "        "
-                                                                  "SOURCE(263,windTurbines,LogicalSourceDescriptor("
-                                                                  "windTurbines, ))\n"
-                                                                  "        "
-                                                                  "SOURCE(264,solarPanels,LogicalSourceDescriptor("
-                                                                  "solarPanels, ))\n"
-                                                                  "      "
-                                                                  "SOURCE(266,test,LogicalSourceDescriptor(test, "
-                                                                  "))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestMixedContainmentCases",
+                Query::from("windTurbines")
+                    .filter(Attribute("value1") < 3)
+                    .unionWith(Query::from("solarPanels"))
+                    .unionWith(Query::from("test"))
+                    .filter(Attribute("value") == 1)
+                    .sink(PrintSinkDescriptor::create()),
+                Query::from("windTurbines")
+                    .filter(Attribute("value1") < 3)
+                    .unionWith(Query::from("solarPanels"))
+                    .unionWith(Query::from("test"))
+                    .sink(PrintSinkDescriptor::create()),
+                "SINK(247: {PrintSinkDescriptor()})\n"
+                "  FILTER(246)\n"
+                "    unionWith(253)\n"
+                "      unionWith(251)\n"
+                "        FILTER(249)\n"
+                "          "
+                "SOURCE(248,windTurbines,LogicalSourceDescriptor("
+                "windTurbines, ))\n"
+                "        "
+                "SOURCE(250,solarPanels,LogicalSourceDescriptor("
+                "solarPanels, ))\n"
+                "      "
+                "SOURCE(252,test,LogicalSourceDescriptor(test, ))\n"
+                "SINK(254: {PrintSinkDescriptor()})\n"
+                "  unionWith(253)\n"
+                "    unionWith(251)\n"
+                "      FILTER(249)\n"
+                "        "
+                "SOURCE(248,windTurbines,LogicalSourceDescriptor("
+                "windTurbines, ))\n"
+                "      "
+                "SOURCE(250,solarPanels,LogicalSourceDescriptor("
+                "solarPanels, ))\n"
+                "    SOURCE(252,test,LogicalSourceDescriptor(test, "
+                "))\n"),
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestMixedContainmentCases",
+                Query::from("windTurbines")
+                    .unionWith(Query::from("solarPanels"))
+                    .filter(Attribute("value1") < 3)
+                    .unionWith(Query::from("test"))
+                    .filter(Attribute("value") == 1)
+                    .sink(PrintSinkDescriptor::create()),
+                Query::from("windTurbines")
+                    .unionWith(Query::from("solarPanels"))
+                    .unionWith(Query::from("test"))
+                    .filter(Attribute("value") == 1)
+                    .sink(PrintSinkDescriptor::create()),
+                "SINK(262: {PrintSinkDescriptor()})\n"
+                "  FILTER(261)\n"
+                "    unionWith(260)\n"
+                "      FILTER(258)\n"
+                "        unionWith(265)\n"
+                "          "
+                "SOURCE(263,windTurbines,LogicalSourceDescriptor("
+                "windTurbines, ))\n"
+                "          "
+                "SOURCE(264,solarPanels,LogicalSourceDescriptor("
+                "solarPanels, ))\n"
+                "      "
+                "SOURCE(259,test,LogicalSourceDescriptor(test, ))\n"
+                "SINK(269: {PrintSinkDescriptor()})\n"
+                "  FILTER(268)\n"
+                "    unionWith(267)\n"
+                "      unionWith(265)\n"
+                "        "
+                "SOURCE(263,windTurbines,LogicalSourceDescriptor("
+                "windTurbines, ))\n"
+                "        "
+                "SOURCE(264,solarPanels,LogicalSourceDescriptor("
+                "solarPanels, ))\n"
+                "      "
+                "SOURCE(266,test,LogicalSourceDescriptor(test, "
+                "))\n"),
             Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
                 "TestMixedContainmentCases",
                 Query::from("windTurbines")
@@ -806,8 +812,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                     .unionWith(Query::from("solarPanels"))
                     .filter(Attribute("value") > 4)
                     .project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts"))
-                    .joinWith(Query::from("households")
-                                  .project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
+                    .joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
                     .where(Attribute("windTurbines$id1") == Attribute("households$id"))
                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                     .sink(PrintSinkDescriptor::create()),
@@ -817,14 +822,15 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                     .where(Attribute("id1") == Attribute("id"))
                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                     .filter(Attribute("value") > 4)
-                    .project(Attribute("windTurbines$value"),
-                             Attribute("windTurbines$id1"),
-                             Attribute("windTurbines$value1"),
-                             Attribute("households$value"),
-                             Attribute("households$id"),
-                             Attribute("households$value1"),
-                             Attribute("windTurbines$ts"),
-                             Attribute("households$ts"))
+                    .project(
+                        Attribute("windTurbines$value"),
+                        Attribute("windTurbines$id1"),
+                        Attribute("windTurbines$value1"),
+                        Attribute("households$value"),
+                        Attribute("households$id"),
+                        Attribute("households$value1"),
+                        Attribute("windTurbines$ts"),
+                        Attribute("households$ts"))
                     .sink(PrintSinkDescriptor::create()),
                 "SINK(298: {PrintSinkDescriptor()})\n"
                 "  Join(297)\n"
@@ -1242,31 +1248,33 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                 "        "
                 "SOURCE(446,solarPanels,LogicalSourceDescriptor("
                 "solarPanels, ))\n"),
-            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry("TestFilterContainment",
-                                                                  Query::from("windTurbines")
-                                                                      .filter(Attribute("value") == 5)
-                                                                      .filter(Attribute("value1") == 8)
-                                                                      .sink(PrintSinkDescriptor::create()),
-                                                                  Query::from("windTurbines")
-                                                                      .filter(Attribute("value") >= 4)
-                                                                      .filter(Attribute("value1") > 3)
-                                                                      .sink(PrintSinkDescriptor::create()),
-                                                                  "SINK(454: {PrintSinkDescriptor()})\n"
-                                                                  "  FILTER(453)\n"
-                                                                  "    FILTER(452)\n"
-                                                                  "      FILTER(456)\n"
-                                                                  "        "
-                                                                  "SOURCE(455,windTurbines,LogicalSourceDescriptor("
-                                                                  "windTurbines, ))\n"
-                                                                  "SINK(458: {PrintSinkDescriptor()})\n"
-                                                                  "  FILTER(457)\n"
-                                                                  "    FILTER(456)\n"
-                                                                  "      "
-                                                                  "SOURCE(455,windTurbines,LogicalSourceDescriptor("
-                                                                  "windTurbines, ))\n")};
+            Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
+                "TestFilterContainment",
+                Query::from("windTurbines")
+                    .filter(Attribute("value") == 5)
+                    .filter(Attribute("value1") == 8)
+                    .sink(PrintSinkDescriptor::create()),
+                Query::from("windTurbines")
+                    .filter(Attribute("value") >= 4)
+                    .filter(Attribute("value1") > 3)
+                    .sink(PrintSinkDescriptor::create()),
+                "SINK(454: {PrintSinkDescriptor()})\n"
+                "  FILTER(453)\n"
+                "    FILTER(452)\n"
+                "      FILTER(456)\n"
+                "        "
+                "SOURCE(455,windTurbines,LogicalSourceDescriptor("
+                "windTurbines, ))\n"
+                "SINK(458: {PrintSinkDescriptor()})\n"
+                "  FILTER(457)\n"
+                "    FILTER(456)\n"
+                "      "
+                "SOURCE(455,windTurbines,LogicalSourceDescriptor("
+                "windTurbines, ))\n")};
     }
 
-    static auto createProjectionContainmentCases() {
+    static auto createProjectionContainmentCases()
+    {
         return std::vector<Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry>{
             Z3SignatureBasedBottomUpQueryContainmentRuleTestEntry(
                 "TestProjectionContainment",
@@ -1288,8 +1296,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                     .unionWith(Query::from("solarPanels"))
                     .filter(Attribute("value") > 4)
                     .project(Attribute("value"), Attribute("id1"), Attribute("value1"), Attribute("ts"))
-                    .joinWith(Query::from("households")
-                                  .project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
+                    .joinWith(Query::from("households").project(Attribute("value"), Attribute("id"), Attribute("value1"), Attribute("ts")))
                     .where(Attribute("windTurbines$id1") == Attribute("households$id"))
                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                     .sink(PrintSinkDescriptor::create()),
@@ -1299,12 +1306,13 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
                     .where(Attribute("id1") == Attribute("id"))
                     .window(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(1000)))
                     .filter(Attribute("value") > 4)
-                    .project(Attribute("windTurbines$value"),
-                             Attribute("windTurbines$id1"),
-                             Attribute("households$value"),
-                             Attribute("households$id"),
-                             Attribute("windTurbines$ts"),
-                             Attribute("households$ts"))
+                    .project(
+                        Attribute("windTurbines$value"),
+                        Attribute("windTurbines$id1"),
+                        Attribute("households$value"),
+                        Attribute("households$id"),
+                        Attribute("windTurbines$ts"),
+                        Attribute("households$ts"))
                     .sink(PrintSinkDescriptor::create()),
                 "SINK(476: {PrintSinkDescriptor()})\n"
                 "  Join(475)\n"
@@ -1368,9 +1376,11 @@ class Z3SignatureBasedBottomUpQueryContainmentRuleTest
 /**
  * @brief Test applying Z3SignatureBasedBottomUpQueryContainmentRuleTest on Global query plan
  */
-TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingContainmentQueries) {
+TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingContainmentQueries)
+{
     auto containmentCases = GetParam();
-    for (const auto& containmentCase : containmentCases) {
+    for (const auto& containmentCase : containmentCases)
+    {
         QueryPlanPtr queryPlanSQPQuery = containmentCase.leftQuery.getQueryPlan();
         QueryPlanPtr queryPlanNewQuery = containmentCase.rightQuery.getQueryPlan();
         SinkLogicalOperatorPtr sinkOperator1 = queryPlanSQPQuery->getSinkOperators()[0];
@@ -1385,9 +1395,8 @@ TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingCon
         typeInferencePhase->execute(queryPlanNewQuery);
 
         z3::ContextPtr context = std::make_shared<z3::context>();
-        auto z3InferencePhase =
-            Optimizer::SignatureInferencePhase::create(context,
-                                                       Optimizer::QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule);
+        auto z3InferencePhase
+            = Optimizer::SignatureInferencePhase::create(context, Optimizer::QueryMergerRule::Z3SignatureBasedBottomUpQueryContainmentRule);
         z3InferencePhase->execute(queryPlanSQPQuery);
         z3InferencePhase->execute(queryPlanNewQuery);
 
@@ -1417,12 +1426,15 @@ TEST_P(Z3SignatureBasedBottomUpQueryContainmentRuleTest, DISABLED_testMergingCon
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testMergingContainmentQueries,
-                        Z3SignatureBasedBottomUpQueryContainmentRuleTest,
-                        ::testing::Values(Z3SignatureBasedBottomUpQueryContainmentRuleTest::createEqualityCases(),
-                                          Z3SignatureBasedBottomUpQueryContainmentRuleTest::createMixedContainmentCases(),
-                                          Z3SignatureBasedBottomUpQueryContainmentRuleTest::createProjectionContainmentCases()),
-                        [](const testing::TestParamInfo<Z3SignatureBasedBottomUpQueryContainmentRuleTest::ParamType>& info) {
-                            std::string name = info.param.at(0).testType;
-                            return name;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testMergingContainmentQueries,
+    Z3SignatureBasedBottomUpQueryContainmentRuleTest,
+    ::testing::Values(
+        Z3SignatureBasedBottomUpQueryContainmentRuleTest::createEqualityCases(),
+        Z3SignatureBasedBottomUpQueryContainmentRuleTest::createMixedContainmentCases(),
+        Z3SignatureBasedBottomUpQueryContainmentRuleTest::createProjectionContainmentCases()),
+    [](const testing::TestParamInfo<Z3SignatureBasedBottomUpQueryContainmentRuleTest::ParamType>& info)
+    {
+        std::string name = info.param.at(0).testType;
+        return name;
+    });

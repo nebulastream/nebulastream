@@ -18,13 +18,15 @@
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Util/MetricCollectorType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating a Monitoring sink as physical source
  */
-class MonitoringSinkDescriptor : public SinkDescriptor {
-  public:
+class MonitoringSinkDescriptor : public SinkDescriptor
+{
+public:
     /**
      * @brief Factory method to create a new sink descriptor
      * @param numberOfOrigins: number of origins of a given query
@@ -37,15 +39,15 @@ class MonitoringSinkDescriptor : public SinkDescriptor {
     Monitoring::MetricCollectorType getCollectorType() const;
     void setCollectorType(Monitoring::MetricCollectorType collectorType);
 
-  private:
+private:
     explicit MonitoringSinkDescriptor(Monitoring::MetricCollectorType collectorType, uint64_t numberOfOrigins);
 
-  private:
+private:
     Monitoring::MetricCollectorType collectorType;
 };
 
 using MonitoringSinkDescriptorPtr = std::shared_ptr<MonitoringSinkDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MONITORINGSINKDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MONITORINGSINKDESCRIPTOR_HPP_

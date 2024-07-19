@@ -16,21 +16,19 @@
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical Binary operator combines the PhysicalOperator and BinaryOperator interfaces.
  * A physical binary operator has exactly two children operators.
  */
-class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator {
-  protected:
-    PhysicalBinaryOperator(OperatorId id,
-                           StatisticId statisticId,
-                           SchemaPtr leftSchema,
-                           SchemaPtr rightSchema,
-                           SchemaPtr outputSchema);
+class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator
+{
+protected:
+    PhysicalBinaryOperator(OperatorId id, StatisticId statisticId, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema);
 
-  public:
+public:
     /**
      * @brief returns the string representation of the class
      * @return the string representation of the class
@@ -38,6 +36,6 @@ class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator {
     std::string toString() const override;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALBINARYOPERATOR_HPP_

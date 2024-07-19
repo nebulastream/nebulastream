@@ -15,12 +15,14 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an EXP (exponential of) expression.
  */
-class ExpExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
+class ExpExpressionNode final : public ArithmeticalUnaryExpressionNode
+{
+public:
     explicit ExpExpressionNode(DataTypePtr stamp);
     ~ExpExpressionNode() noexcept override = default;
     /**
@@ -43,10 +45,10 @@ class ExpExpressionNode final : public ArithmeticalUnaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  private:
+private:
     explicit ExpExpressionNode(ExpExpressionNode* other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_

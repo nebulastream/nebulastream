@@ -15,27 +15,30 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
 
+#include <memory>
+#include <ostream>
+#include <vector>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <memory>
-#include <ostream>
-#include <vector>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 class Record;
 }
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 using namespace Nautilus;
 
 /**
  * @brief The RecordBuffer is a representation of a set of records that are stored together.
  * In the common case this maps to a TupleBuffer, which stores the individual records in either a row or a columnar layout.
  */
-class RecordBuffer {
-  public:
+class RecordBuffer
+{
+public:
     /**
      * @brief Creates a new record buffer with a reference to a tuple buffer
      * @param tupleBufferRef
@@ -165,12 +168,12 @@ class RecordBuffer {
 
     ~RecordBuffer() = default;
 
-  private:
+private:
     Value<MemRef> tupleBufferRef;
 };
 
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_

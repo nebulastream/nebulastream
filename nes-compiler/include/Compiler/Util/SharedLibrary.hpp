@@ -13,9 +13,10 @@
 */
 #ifndef NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
-#include <Compiler/DynamicObject.hpp>
 #include <memory>
-namespace NES::Compiler {
+#include <Compiler/DynamicObject.hpp>
+namespace NES::Compiler
+{
 
 class SharedLibrary;
 using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
@@ -23,8 +24,9 @@ using SharedLibraryPtr = std::shared_ptr<SharedLibrary>;
 /**
  * @brief Represents a @DynamicObject, which relies on a shared library.
  */
-class SharedLibrary : public DynamicObject {
-  public:
+class SharedLibrary : public DynamicObject
+{
+public:
     /**
      * @brief Creates a new @SharedLibrary Object
      * @param shareLib
@@ -44,7 +46,7 @@ class SharedLibrary : public DynamicObject {
      */
     ~SharedLibrary() override;
 
-  protected:
+protected:
     /**
      * @brief Returns a untyped function pointer to a specific symbol.
      * @param member on the dynamic object, currently provided as a MangledName.
@@ -52,11 +54,11 @@ class SharedLibrary : public DynamicObject {
      */
     [[nodiscard]] void* getInvocableFunctionPtr(const std::string& member) override;
 
-  private:
+private:
     void* shareLib;
     std::string soAbsolutePath;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_

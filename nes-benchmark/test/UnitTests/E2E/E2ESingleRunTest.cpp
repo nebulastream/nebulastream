@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
+#include <fstream>
+#include <string>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
@@ -23,21 +24,24 @@
 #include <E2E/E2ESingleRun.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Version/version.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
-#include <string>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Benchmark {
-class E2ESingleRunTest : public Testing::BaseIntegrationTest {
-  public:
+namespace NES::Benchmark
+{
+class E2ESingleRunTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("E2ESingleRunTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2ESingleRunTest test class.");
     }
 };
 
-TEST_F(E2ESingleRunTest, createE2ESingleRun) {
+TEST_F(E2ESingleRunTest, createE2ESingleRun)
+{
     E2EBenchmarkConfigPerRun configPerRun;
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
 
@@ -47,7 +51,8 @@ TEST_F(E2ESingleRunTest, createE2ESingleRun) {
 /**
  * @brief Testing if E2ESingleRun::setupCoordinatorConfig() is correct by comparing with a hardcoded truth
  **/
-TEST_F(E2ESingleRunTest, setUpCoordinatorAndWorkerConfig) {
+TEST_F(E2ESingleRunTest, setUpCoordinatorAndWorkerConfig)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     E2EBenchmarkConfigPerRun configPerRun;
 
@@ -66,17 +71,20 @@ TEST_F(E2ESingleRunTest, setUpCoordinatorAndWorkerConfig) {
     ASSERT_EQ(coordinatorConf->restPort.getValue(), restPortSaved);
     ASSERT_EQ(coordinatorConf->worker.numWorkerThreads.getValue(), configPerRun.numberOfWorkerThreads->getValue());
     ASSERT_EQ(coordinatorConf->worker.bufferSizeInBytes.getValue(), configPerRun.bufferSizeInBytes->getValue());
-    ASSERT_EQ(coordinatorConf->worker.numberOfBuffersInGlobalBufferManager.getValue(),
-              configPerRun.numberOfBuffersInGlobalBufferManager->getValue());
-    ASSERT_EQ(coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
-              configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue());
+    ASSERT_EQ(
+        coordinatorConf->worker.numberOfBuffersInGlobalBufferManager.getValue(),
+        configPerRun.numberOfBuffersInGlobalBufferManager->getValue());
+    ASSERT_EQ(
+        coordinatorConf->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
+        configPerRun.numberOfBuffersInSourceLocalBufferPool->getValue());
 }
 
 /**
  * @brief Testing if E2ESingleRun::createSources() is correct by creating several configPerRuns and then comparing versus a
  * hardcoded truth
  **/
-TEST_F(E2ESingleRunTest, createSources) {
+TEST_F(E2ESingleRunTest, createSources)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
 
@@ -90,14 +98,16 @@ TEST_F(E2ESingleRunTest, createSources) {
     configOverAllRuns.sourceNameToDataGenerator[zipfianDataGeneratorName] = std::move(zipfianDataGenerator);
     configOverAllRuns.numberOfPreAllocatedBuffer->setValue(10);
 
-    for (auto i = 0; i < 3; ++i) {
+    for (auto i = 0; i < 3; ++i)
+    {
         E2EBenchmarkConfigPerRun configPerRun;
         configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGeneratorName, i + 1}, {zipfianDataGeneratorName, i + 2}};
         configPerRun.bufferSizeInBytes->setValue(512);
         allConfigPerRuns.emplace_back(configPerRun);
     }
 
-    for (auto cnt = 0UL; cnt < allConfigPerRuns.size(); ++cnt) {
+    for (auto cnt = 0UL; cnt < allConfigPerRuns.size(); ++cnt)
+    {
         E2ESingleRun singleRun(allConfigPerRuns[cnt], configOverAllRuns, *rpcCoordinatorPort, *restPort);
         singleRun.setupCoordinatorConfig();
         singleRun.createSources();
@@ -110,7 +120,8 @@ TEST_F(E2ESingleRunTest, createSources) {
         ASSERT_EQ(coordinatorConf->worker.physicalSourceTypes.size(), cnt + 1 + cnt + 2);
 
         std::map<std::string, uint64_t> tmpMap{{defaultDataGeneratorName, 0}, {zipfianDataGeneratorName, 0}};
-        for (auto i = 0UL; i < coordinatorConf->worker.physicalSourceTypes.size(); ++i) {
+        for (auto i = 0UL; i < coordinatorConf->worker.physicalSourceTypes.size(); ++i)
+        {
             auto physicalSource = coordinatorConf->worker.physicalSourceTypes[i];
             tmpMap[physicalSource.getValue()->getLogicalSourceName()] += 1;
         }
@@ -124,7 +135,8 @@ TEST_F(E2ESingleRunTest, createSources) {
  * @brief Testing if E2ESingleRun::getStringLogicalSourceToNumberOfPhysicalSources() is correct by comparing versus
  * a hardcoded truth
  **/
-TEST_F(E2ESingleRunTest, getNumberOfPhysicalSources) {
+TEST_F(E2ESingleRunTest, getNumberOfPhysicalSources)
+{
     auto defaultDataGenerator = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
     auto zipfianDataGenerator = std::make_unique<DataGeneration::ZipfianDataGenerator>(0.8, 0, 1000);
     E2EBenchmarkConfigPerRun configPerRun;
@@ -143,7 +155,8 @@ TEST_F(E2ESingleRunTest, getNumberOfPhysicalSources) {
  * @brief Testing if E2ESingleRun::writeHeaderToCsvFile() is correct by creating multiple different measurements and
  * then compare the written csv file to a hardcoded truth
  **/
-TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
+TEST_F(E2ESingleRunTest, writeMeasurementsToCSV)
+{
     auto bmName = "Some awesome BM Name", inputType = "Auto", dataProviderMode = "ZeroCopy";
     auto queryString = "Query::from(source)", csvFile = "tmp.csv";
     auto numberOfWorkerThreads = 12, numberOfQueriesToDeploy = 123, bufferSizeInBytes = 8 * 1024;
@@ -152,8 +165,8 @@ TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
     const auto defaultDataGeneratorName = defaultDataGenerator->getName();
     const auto zipfianDataGeneratorName = zipfianDataGenerator->getName();
 
-    auto schemaSizeInB =
-        defaultDataGenerator->getSchema()->getSchemaSizeInBytes() + zipfianDataGenerator->getSchema()->getSchemaSizeInBytes();
+    auto schemaSizeInB
+        = defaultDataGenerator->getSchema()->getSchemaSizeInBytes() + zipfianDataGenerator->getSchema()->getSchemaSizeInBytes();
 
     E2EBenchmarkConfigPerRun configPerRun;
     configPerRun.logicalSrcToNoPhysicalSrc = {{defaultDataGeneratorName, 2}, {zipfianDataGeneratorName, 23}};
@@ -187,31 +200,33 @@ TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
     auto MAX_TIMESTAMP = 10;
 
     std::stringstream assertedCsvFile;
-    assertedCsvFile
-        << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
-           "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
-           "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
-           "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,"
-           "queryString"
-        << std::endl;
+    assertedCsvFile << "BenchmarkName,NES_VERSION,SchemaSize,timestamp,processedTasks,processedBuffers,processedTuples,latencySum,"
+                       "queueSizeSum,availGlobalBufferSum,availFixedBufferSum,"
+                       "tuplesPerSecond,tasksPerSecond,bufferPerSecond,mebiBPerSecond,"
+                       "numberOfWorkerOfThreads,numberOfDeployedQueries,numberOfSources,bufferSizeInBytes,inputType,dataProviderMode,"
+                       "queryString"
+                    << std::endl;
 
-    for (auto i = 0; i < MAX_TIMESTAMP; ++i) {
+    for (auto i = 0; i < MAX_TIMESTAMP; ++i)
+    {
         auto timeStamp = i;
         measurements.addNewTimestamp(timeStamp);
-        measurements.addNewMeasurement(processedTasksStart + i,
-                                       processedBuffersStart + i,
-                                       processedTuplesStart + i,
-                                       latencySumStart + i,
-                                       queueSizeSumStart + i,
-                                       availGlobalBufferSumStart + i,
-                                       availFixedBufferSumStart + i,
-                                       timeStamp);
+        measurements.addNewMeasurement(
+            processedTasksStart + i,
+            processedBuffersStart + i,
+            processedTuplesStart + i,
+            latencySumStart + i,
+            queueSizeSumStart + i,
+            availGlobalBufferSumStart + i,
+            availFixedBufferSumStart + i,
+            timeStamp);
 
-        if (i < MAX_TIMESTAMP - 1) {
+        if (i < MAX_TIMESTAMP - 1)
+        {
             assertedCsvFile << "\"" << bmName << "\""
-                            << "," << NES_VERSION << "," << schemaSizeInB << "," << timeStamp << "," << (processedTasksStart + i)
-                            << "," << (processedBuffersStart + i) << "," << (processedTuplesStart + i) << ","
-                            << (latencySumStart + i) << "," << (queueSizeSumStart + i) / numberOfQueriesToDeploy << ","
+                            << "," << NES_VERSION << "," << schemaSizeInB << "," << timeStamp << "," << (processedTasksStart + i) << ","
+                            << (processedBuffersStart + i) << "," << (processedTuplesStart + i) << "," << (latencySumStart + i) << ","
+                            << (queueSizeSumStart + i) / numberOfQueriesToDeploy << ","
                             << (availGlobalBufferSumStart + i) / numberOfQueriesToDeploy << ","
                             << (availFixedBufferSumStart + i) / numberOfQueriesToDeploy
                             // tuplesPerSecond, tasksPerSecond, bufferPerSecond, mebiPerSecond
@@ -230,4 +245,4 @@ TEST_F(E2ESingleRunTest, writeMeasurementsToCSV) {
     std::string writtenCsvFile((std::istreambuf_iterator<char>(ifs)), std::istreambuf_iterator<char>());
     ASSERT_EQ(writtenCsvFile, assertedCsvFile.str());
 }
-}// namespace NES::Benchmark
+} // namespace NES::Benchmark

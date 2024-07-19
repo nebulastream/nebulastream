@@ -17,7 +17,8 @@
 
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -28,7 +29,8 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 class OriginIdAssignmentOperator;
 using OriginIdAssignmentOperatorPtr = std::shared_ptr<OriginIdAssignmentOperator>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class OriginIdInferencePhase;
 using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
@@ -44,8 +46,9 @@ using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
  * These origin ids are unique to a specific query.
  * 2. It processes all operators and assigns the input and output origin ids.
 */
-class OriginIdInferencePhase {
-  public:
+class OriginIdInferencePhase
+{
+public:
     static OriginIdInferencePhasePtr create();
     virtual ~OriginIdInferencePhase() = default;
 
@@ -63,12 +66,11 @@ class OriginIdInferencePhase {
      */
     DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-  private:
+private:
     explicit OriginIdInferencePhase();
 
-    void performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator,
-                          std::vector<OperatorPtr> rootOperators);
+    void performInference(std::vector<OriginIdAssignmentOperatorPtr> originIdAssignmentOperator, std::vector<OperatorPtr> rootOperators);
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_ORIGINIDINFERENCEPHASE_HPP_

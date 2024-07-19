@@ -12,27 +12,31 @@
     limitations under the License.
 */
 
+#include <numeric>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/ExecutableType/Array.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/MMapCircularBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-#include <numeric>
-namespace NES {
+#include <BaseIntegrationTest.hpp>
+#include <Common/ExecutableType/Array.hpp>
+namespace NES
+{
 using namespace std::literals;
-class MMapCircularBufferTest : public Testing::BaseUnitTest {
-  public:
+class MMapCircularBufferTest : public Testing::BaseUnitTest
+{
+public:
     size_t pageSize = getpagesize();
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         Logger::setupLogging("MMapCircularBufferTest.log", LogLevel::LOG_DEBUG);
         NES_INFO("Setup MMapCircularBufferTest test class.");
     }
     void SetUp() override { Testing::BaseUnitTest::SetUp(); }
 };
 
-TEST_F(MMapCircularBufferTest, TestConstruction) {
+TEST_F(MMapCircularBufferTest, TestConstruction)
+{
     MMapCircularBuffer buffer(pageSize);
     EXPECT_EQ(buffer.capacity(), pageSize);
     EXPECT_EQ(buffer.size(), 0);
@@ -40,7 +44,8 @@ TEST_F(MMapCircularBufferTest, TestConstruction) {
     EXPECT_FALSE(buffer.full());
 }
 
-TEST_F(MMapCircularBufferTest, TestWrite) {
+TEST_F(MMapCircularBufferTest, TestWrite)
+{
     MMapCircularBuffer buffer(pageSize);
 
     {
@@ -63,7 +68,8 @@ TEST_F(MMapCircularBufferTest, TestWrite) {
     EXPECT_FALSE(buffer.full());
 }
 
-TEST_F(MMapCircularBufferTest, TestRead) {
+TEST_F(MMapCircularBufferTest, TestRead)
+{
     MMapCircularBuffer buffer(pageSize);
     {
         auto writer = buffer.write();
@@ -86,7 +92,8 @@ TEST_F(MMapCircularBufferTest, TestRead) {
     EXPECT_FALSE(buffer.full());
 }
 
-TEST_F(MMapCircularBufferTest, TestWrapAround) {
+TEST_F(MMapCircularBufferTest, TestWrapAround)
+{
     MMapCircularBuffer buffer(pageSize);
     {
         // write pagesize - 2 bytes
@@ -129,4 +136,4 @@ TEST_F(MMapCircularBufferTest, TestWrapAround) {
     EXPECT_FALSE(buffer.empty());
     EXPECT_FALSE(buffer.full());
 }
-}// namespace NES
+} // namespace NES

@@ -17,20 +17,21 @@
 
 #ifdef ENABLE_OPC_BUILD
 
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <open62541/client_config_default.h>
-#include <open62541/client_highlevel.h>
-#include <open62541/plugin/log_stdout.h>
-#include <string>
+#    include <string>
+#    include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#    include <open62541/client_config_default.h>
+#    include <open62541/client_highlevel.h>
+#    include <open62541/plugin/log_stdout.h>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical opc sink
  */
-class OPCSinkDescriptor : public SinkDescriptor {
-
-  public:
+class OPCSinkDescriptor : public SinkDescriptor
+{
+public:
     /**
      * @brief Creates the OPC sink description
      * @param url: server url used to connect to OPC server
@@ -64,7 +65,7 @@ class OPCSinkDescriptor : public SinkDescriptor {
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
-  private:
+private:
     explicit OPCSinkDescriptor(std::string url, UA_NodeId nodeId, std::string user, std::string password);
 
     const std::string url;
@@ -75,6 +76,6 @@ class OPCSinkDescriptor : public SinkDescriptor {
 
 typedef std::shared_ptr<OPCSinkDescriptor> OPCSinkDescriptorPtr;
 
-}// namespace NES
+} // namespace NES
 #endif
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_OPCSINKDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_OPCSINKDESCRIPTOR_HPP_

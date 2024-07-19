@@ -15,19 +15,20 @@
 #ifndef NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
 #define NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <stdexcept>
 #include <string>
+#include <Exceptions/RequestExecutionException.hpp>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This exception is thrown if some error occurred while deploying the query
  */
-class QueryDeploymentException : public Exceptions::RequestExecutionException {
-
-  public:
+class QueryDeploymentException : public Exceptions::RequestExecutionException
+{
+public:
     /**
      * @brief c-tor deployment exception
      * @param sharedQueryId: the shared query id that failed
@@ -35,5 +36,5 @@ class QueryDeploymentException : public Exceptions::RequestExecutionException {
      */
     explicit QueryDeploymentException(SharedQueryId sharedQueryId, const std::string& message);
 };
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_QUERYDEPLOYMENTEXCEPTION_HPP_

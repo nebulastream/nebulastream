@@ -15,12 +15,14 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an ADD expression.
  */
-class AddExpressionNode final : public ArithmeticalBinaryExpressionNode {
-  public:
+class AddExpressionNode final : public ArithmeticalBinaryExpressionNode
+{
+public:
     explicit AddExpressionNode(DataTypePtr stamp);
     ~AddExpressionNode() noexcept override = default;
     /**
@@ -36,10 +38,10 @@ class AddExpressionNode final : public ArithmeticalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  private:
+private:
     explicit AddExpressionNode(AddExpressionNode* other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSIONNODE_HPP_

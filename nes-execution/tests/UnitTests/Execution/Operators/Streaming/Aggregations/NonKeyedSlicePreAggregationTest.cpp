@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <memory>
+#include <vector>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
@@ -31,23 +31,27 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-#include <vector>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class NonKeyedSlicePreAggregationTest : public testing::Test {
-  public:
+class NonKeyedSlicePreAggregationTest : public testing::Test
+{
+public:
     std::shared_ptr<BufferManager> bufferManager;
     std::shared_ptr<WorkerContext> workerContext;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("NonKeyedSlicePreAggregationTest.log", NES::LogLevel::LOG_DEBUG);
         std::cout << "Setup NonKeyedSlicePreAggregationTest test class." << std::endl;
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         std::cout << "Setup NonKeyedSlicePreAggregationTest test case." << std::endl;
         bufferManager = std::make_shared<BufferManager>();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
@@ -59,11 +63,13 @@ class NonKeyedSlicePreAggregationTest : public testing::Test {
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down NonKeyedSlicePreAggregationTest test class." << std::endl; }
 
-    void emitWatermark(const NonKeyedSlicePreAggregation& slicePreAggregation,
-                       ExecutionContext& context,
-                       uint64_t wts,
-                       OriginId originId,
-                       uint64_t sequenceNumber) {
+    void emitWatermark(
+        const NonKeyedSlicePreAggregation& slicePreAggregation,
+        ExecutionContext& context,
+        uint64_t wts,
+        OriginId originId,
+        uint64_t sequenceNumber)
+    {
         auto buffer = bufferManager->getBufferBlocking();
         buffer.setWatermark(wts);
         buffer.setOriginId(originId);
@@ -74,12 +80,14 @@ class NonKeyedSlicePreAggregationTest : public testing::Test {
         slicePreAggregation.close(context, rb);
     }
 
-    void emitRecord(const NonKeyedSlicePreAggregation& slicePreAggregation, ExecutionContext& ctx, Record record) {
+    void emitRecord(const NonKeyedSlicePreAggregation& slicePreAggregation, ExecutionContext& ctx, Record record)
+    {
         slicePreAggregation.execute(ctx, record);
     }
 };
 
-TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
+TEST_F(NonKeyedSlicePreAggregationTest, performAggregation)
+{
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -94,8 +102,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto context = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                    Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto context = ExecutionContext(
+        Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
     auto buffer = bufferManager->getBufferBlocking();
 
     auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
@@ -129,7 +137,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
 
-TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
+TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation)
+{
     auto readTs = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
 
@@ -137,20 +146,20 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
     PhysicalTypePtr i64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
     PhysicalTypePtr ui64 = physicalTypeFactory.getPhysicalType(DataTypeFactory::createUInt64());
 
-    auto slicePreAggregation =
-        NonKeyedSlicePreAggregation(0 /*handler index*/,
-                                    std::make_unique<EventTimeFunction>(readTs, Windowing::TimeUnit::Milliseconds()),
-                                    {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
-                                     std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
+    auto slicePreAggregation = NonKeyedSlicePreAggregation(
+        0 /*handler index*/,
+        std::make_unique<EventTimeFunction>(readTs, Windowing::TimeUnit::Milliseconds()),
+        {std::make_shared<Aggregation::SumAggregationFunction>(i64, i64, readF2, "sum"),
+         std::make_shared<Aggregation::CountAggregationFunction>(ui64, ui64, readF2, "count")});
 
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto context = ExecutionContext(Value<MemRef>((int8_t*) workerContext.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto context = ExecutionContext(Value<MemRef>((int8_t*)workerContext.get()), Value<MemRef>((int8_t*)&pipelineContext));
     auto buffer = bufferManager->getBufferBlocking();
 
-    auto recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
+    auto recordBuffer = RecordBuffer(Value<MemRef>((int8_t*)std::addressof(buffer)));
     slicePreAggregation.setup(context);
     auto stateStore = handler->getThreadLocalSliceStore(workerContext->getId());
 
@@ -161,7 +170,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
     ASSERT_EQ(stateStore->getFirstSlice()->getStart(), 10);
     ASSERT_EQ(stateStore->getFirstSlice()->getEnd(), 20);
-    struct State {
+    struct State
+    {
         uint64_t sum;
         uint64_t count;
     };
@@ -186,4 +196,4 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

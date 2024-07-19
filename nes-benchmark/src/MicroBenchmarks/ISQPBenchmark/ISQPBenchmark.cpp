@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <fstream>
+#include <iostream>
+#include <thread>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -47,9 +50,6 @@
 #include <Util/Placement/PlacementConstants.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <fstream>
-#include <iostream>
-#include <thread>
 #include <z3++.h>
 
 using namespace NES;
@@ -58,21 +58,29 @@ using std::filesystem::directory_iterator;
 
 std::chrono::nanoseconds Runtime;
 
-class ErrorHandler : public Exceptions::ErrorListener {
-  public:
-    virtual void onFatalError(int signalNumber, std::string callstack) override {
-        if (callstack.empty()) {
+class ErrorHandler : public Exceptions::ErrorListener
+{
+public:
+    virtual void onFatalError(int signalNumber, std::string callstack) override
+    {
+        if (callstack.empty())
+        {
             std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] ";
-        } else {
-            std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack "
-                      << callstack;
+        }
+        else
+        {
+            std::cout << "onFatalError: signal [" << signalNumber << "] error [" << strerror(errno) << "] callstack " << callstack;
         }
     }
 
-    virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override {
-        if (callstack.empty()) {
+    virtual void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override
+    {
+        if (callstack.empty())
+        {
             std::cout << "onFatalException: exception=[" << exception->what() << "] ";
-        } else {
+        }
+        else
+        {
             std::cout << "onFatalException: exception=[" << exception->what() << "] callstack=\n" << callstack;
         }
     }
@@ -82,8 +90,8 @@ class ErrorHandler : public Exceptions::ErrorListener {
  * @brief Set up the physical sources for the benchmark
  * @param leafWorkerIds: leaf worker ids
  */
-void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr sourceCatalogService) {
-
+void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr sourceCatalogService)
+{
     //register logical stream with different schema
     NES::SchemaPtr schema1 = NES::Schema::create()
                                  ->addField("a", BasicType::UINT64)
@@ -126,9 +134,11 @@ void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr s
                                  ->addField("time2", BasicType::UINT64);
 
     //Add the logical and physical stream to the stream catalog such that each leaf has two distinct sources attached
-    for (const auto& leafWorkerId : leafWorkerIds) {
+    for (const auto& leafWorkerId : leafWorkerIds)
+    {
         uint16_t noOfPhySourcePerWorker = 32;
-        for (uint16_t counter = 1; counter <= noOfPhySourcePerWorker; counter++) {
+        for (uint16_t counter = 1; counter <= noOfPhySourcePerWorker; counter++)
+        {
             const auto& logicalSourceName = "example" + leafWorkerId.toString() + "-" + std::to_string(counter);
             auto physicalSourceName = "phy_" + logicalSourceName;
             sourceCatalogService->registerLogicalSource(logicalSourceName, schema3);
@@ -147,61 +157,50 @@ void setupSources(std::vector<WorkerId> leafWorkerIds, SourceCatalogServicePtr s
  * @param topology : the topology
  * @param globalExecutionPlan : the global execution plan
  */
-void setupTopology(uint16_t numOfRootNodes,
-                   uint16_t numOfIntermediateNodes,
-                   uint16_t numOfSourceNodes,
-                   RequestHandlerServicePtr requestHandlerService,
-                   SourceCatalogServicePtr sourceCatalogService,
-                   TopologyPtr topology,
-                   Optimizer::GlobalExecutionPlanPtr globalExecutionPlan) {
-
+void setupTopology(
+    uint16_t numOfRootNodes,
+    uint16_t numOfIntermediateNodes,
+    uint16_t numOfSourceNodes,
+    RequestHandlerServicePtr requestHandlerService,
+    SourceCatalogServicePtr sourceCatalogService,
+    TopologyPtr topology,
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan)
+{
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
 
     //1. Compute ISQP request to register new root nodes (Cloud Layer)
     std::vector<RequestProcessor::ISQPEventPtr> rootISQPAddNodeEvents;
-    for (uint16_t counter = 0; counter < numOfRootNodes; counter++) {
-        rootISQPAddNodeEvents.emplace_back(RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::CLOUD,
-                                                                                      INVALID_WORKER_NODE_ID,
-                                                                                      "localhost",
-                                                                                      0,
-                                                                                      0,
-                                                                                      UINT16_MAX,
-                                                                                      properties));
+    for (uint16_t counter = 0; counter < numOfRootNodes; counter++)
+    {
+        rootISQPAddNodeEvents.emplace_back(RequestProcessor::ISQPAddNodeEvent::create(
+            RequestProcessor::WorkerType::CLOUD, INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
     }
     requestHandlerService->queueISQPRequest(rootISQPAddNodeEvents);
 
     //2. Compute ISQP request to register intermediate nodes (Fog layer)
     std::vector<RequestProcessor::ISQPEventPtr> intermediateISQPAddNodeEvents;
-    for (uint16_t counter = 0; counter < numOfIntermediateNodes; counter++) {
-        intermediateISQPAddNodeEvents.emplace_back(
-            RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::SENSOR,
-                                                       INVALID_WORKER_NODE_ID,
-                                                       "localhost",
-                                                       0,
-                                                       0,
-                                                       UINT16_MAX,
-                                                       properties));
+    for (uint16_t counter = 0; counter < numOfIntermediateNodes; counter++)
+    {
+        intermediateISQPAddNodeEvents.emplace_back(RequestProcessor::ISQPAddNodeEvent::create(
+            RequestProcessor::WorkerType::SENSOR, INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
     }
     requestHandlerService->queueISQPRequest(intermediateISQPAddNodeEvents);
 
     //3. Compute ISQP request to register leaf nodes (IoT Layer)
     std::vector<RequestProcessor::ISQPEventPtr> leafISQPAddNodeEvents;
-    for (uint16_t counter = 0; counter < numOfSourceNodes; counter++) {
-        leafISQPAddNodeEvents.emplace_back(RequestProcessor::ISQPAddNodeEvent::create(RequestProcessor::WorkerType::SENSOR,
-                                                                                      INVALID_WORKER_NODE_ID,
-                                                                                      "localhost",
-                                                                                      0,
-                                                                                      0,
-                                                                                      UINT16_MAX,
-                                                                                      properties));
+    for (uint16_t counter = 0; counter < numOfSourceNodes; counter++)
+    {
+        leafISQPAddNodeEvents.emplace_back(RequestProcessor::ISQPAddNodeEvent::create(
+            RequestProcessor::WorkerType::SENSOR, INVALID_WORKER_NODE_ID, "localhost", 0, 0, UINT16_MAX, properties));
     }
     requestHandlerService->queueISQPRequest(leafISQPAddNodeEvents);
 
     //4. Record the root node worker Ids
     std::vector<WorkerId> rootWorkerIds = topology->getRootWorkerNodeIds();
-    for (const auto& rootISQPAddNodeEvent : rootISQPAddNodeEvents) {
+    for (const auto& rootISQPAddNodeEvent : rootISQPAddNodeEvents)
+    {
         const auto& response = rootISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
         auto workerId = std::static_pointer_cast<RequestProcessor::ISQPAddNodeResponse>(response)->workerId;
         rootWorkerIds.emplace_back(workerId);
@@ -209,16 +208,17 @@ void setupTopology(uint16_t numOfRootNodes,
 
     //5. Record the intermediate node worker Ids
     std::vector<WorkerId> intermediateWorkerIds;
-    for (const auto& intermediateISQPAddNodeEvent : intermediateISQPAddNodeEvents) {
-        const auto& response =
-            intermediateISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
+    for (const auto& intermediateISQPAddNodeEvent : intermediateISQPAddNodeEvents)
+    {
+        const auto& response = intermediateISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
         auto workerId = std::static_pointer_cast<RequestProcessor::ISQPAddNodeResponse>(response)->workerId;
         intermediateWorkerIds.emplace_back(workerId);
     }
 
     //6. Record the leaf node worker Ids
     std::vector<WorkerId> leafWorkerIds;
-    for (const auto& leafISQPAddNodeEvent : leafISQPAddNodeEvents) {
+    for (const auto& leafISQPAddNodeEvent : leafISQPAddNodeEvents)
+    {
         const auto& response = leafISQPAddNodeEvent->as<RequestProcessor::ISQPAddNodeEvent>()->response.get_future().get();
         auto workerId = std::static_pointer_cast<RequestProcessor::ISQPAddNodeResponse>(response)->workerId;
         leafWorkerIds.emplace_back(workerId);
@@ -226,8 +226,10 @@ void setupTopology(uint16_t numOfRootNodes,
 
     //7. Remove connection between leaf and root nodes
     std::vector<RequestProcessor::ISQPEventPtr> linkRemoveEvents;
-    for (const auto& rootWorkerId : rootWorkerIds) {
-        for (const auto& leafWorkerId : leafWorkerIds) {
+    for (const auto& rootWorkerId : rootWorkerIds)
+    {
+        for (const auto& leafWorkerId : leafWorkerIds)
+        {
             auto linkRemoveEvent = RequestProcessor::ISQPRemoveLinkEvent::create(rootWorkerId, leafWorkerId);
             linkRemoveEvents.emplace_back(linkRemoveEvent);
         }
@@ -237,13 +239,16 @@ void setupTopology(uint16_t numOfRootNodes,
     //8. Add connection between leaf and intermediate nodes
     std::vector<RequestProcessor::ISQPEventPtr> linkAddEvents;
     uint16_t leafNodeCounter = 0;
-    for (const auto& intermediateWorkerId : intermediateWorkerIds) {
+    for (const auto& intermediateWorkerId : intermediateWorkerIds)
+    {
         uint16_t connectivityCounter = 1;
-        for (; leafNodeCounter < leafWorkerIds.size(); leafNodeCounter++) {
+        for (; leafNodeCounter < leafWorkerIds.size(); leafNodeCounter++)
+        {
             auto linkAddEvent = RequestProcessor::ISQPAddLinkEvent::create(intermediateWorkerId, leafWorkerIds[leafNodeCounter]);
             linkAddEvents.emplace_back(linkAddEvent);
             connectivityCounter++;
-            if (connectivityCounter > leafWorkerIds.size() / intermediateWorkerIds.size()) {
+            if (connectivityCounter > leafWorkerIds.size() / intermediateWorkerIds.size())
+            {
                 leafNodeCounter++;
                 break;
             }
@@ -253,24 +258,28 @@ void setupTopology(uint16_t numOfRootNodes,
 
     //9. Add link properties between root and intermediate nodes
     std::vector<RequestProcessor::ISQPEventPtr> addLinkPropertyEvents;
-    for (const auto& rootWorkerId : rootWorkerIds) {
-        for (const auto& intermediateWorkerId : intermediateWorkerIds) {
-            auto addLinkPropertyEvent =
-                RequestProcessor::ISQPAddLinkPropertyEvent::create(rootWorkerId, intermediateWorkerId, 1, 1);
+    for (const auto& rootWorkerId : rootWorkerIds)
+    {
+        for (const auto& intermediateWorkerId : intermediateWorkerIds)
+        {
+            auto addLinkPropertyEvent = RequestProcessor::ISQPAddLinkPropertyEvent::create(rootWorkerId, intermediateWorkerId, 1, 1);
             addLinkPropertyEvents.emplace_back(addLinkPropertyEvent);
         }
     }
 
     //10. Add link properties properties between leaf and intermediate nodes
     leafNodeCounter = 0;
-    for (const auto& intermediateWorkerId : intermediateWorkerIds) {
+    for (const auto& intermediateWorkerId : intermediateWorkerIds)
+    {
         uint16_t connectivityCounter = 1;
-        for (; leafNodeCounter < leafWorkerIds.size(); leafNodeCounter++) {
-            auto addLinkPropertyEvent =
-                RequestProcessor::ISQPAddLinkPropertyEvent::create(intermediateWorkerId, leafWorkerIds[leafNodeCounter], 1, 1);
+        for (; leafNodeCounter < leafWorkerIds.size(); leafNodeCounter++)
+        {
+            auto addLinkPropertyEvent
+                = RequestProcessor::ISQPAddLinkPropertyEvent::create(intermediateWorkerId, leafWorkerIds[leafNodeCounter], 1, 1);
             addLinkPropertyEvents.emplace_back(addLinkPropertyEvent);
             connectivityCounter++;
-            if (connectivityCounter > leafWorkerIds.size() / intermediateWorkerIds.size()) {
+            if (connectivityCounter > leafWorkerIds.size() / intermediateWorkerIds.size())
+            {
                 leafNodeCounter++;
                 break;
             }
@@ -279,15 +288,18 @@ void setupTopology(uint16_t numOfRootNodes,
     requestHandlerService->queueISQPRequest(addLinkPropertyEvents);
 
     //11. Create execution Nodes
-    for (const auto& workerId : rootWorkerIds) {
+    for (const auto& workerId : rootWorkerIds)
+    {
         auto lockedTopologyNode = topology->lockTopologyNode(workerId);
         globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     }
-    for (const auto& workerId : intermediateWorkerIds) {
+    for (const auto& workerId : intermediateWorkerIds)
+    {
         auto lockedTopologyNode = topology->lockTopologyNode(workerId);
         globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     }
-    for (const auto& workerId : leafWorkerIds) {
+    for (const auto& workerId : leafWorkerIds)
+    {
         auto lockedTopologyNode = topology->lockTopologyNode(workerId);
         globalExecutionPlan->registerExecutionNode(lockedTopologyNode);
     }
@@ -306,20 +318,23 @@ void setupTopology(uint16_t numOfRootNodes,
   * @param topology : the topology
   * @param globalExecutionPlan : the global execution plan
   */
-void setUp(uint16_t numOfRootNodes,
-           uint16_t numOfIntermediateNodes,
-           uint16_t numOfSourceNodes,
-           RequestHandlerServicePtr requestHandlerService,
-           SourceCatalogServicePtr sourceCatalogService,
-           TopologyPtr topology,
-           Optimizer::GlobalExecutionPlanPtr globalExecutionPlan) {
-    setupTopology(numOfRootNodes,
-                  numOfIntermediateNodes,
-                  numOfSourceNodes,
-                  requestHandlerService,
-                  sourceCatalogService,
-                  topology,
-                  globalExecutionPlan);
+void setUp(
+    uint16_t numOfRootNodes,
+    uint16_t numOfIntermediateNodes,
+    uint16_t numOfSourceNodes,
+    RequestHandlerServicePtr requestHandlerService,
+    SourceCatalogServicePtr sourceCatalogService,
+    TopologyPtr topology,
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan)
+{
+    setupTopology(
+        numOfRootNodes,
+        numOfIntermediateNodes,
+        numOfSourceNodes,
+        requestHandlerService,
+        sourceCatalogService,
+        topology,
+        globalExecutionPlan);
 }
 
 /**
@@ -328,11 +343,13 @@ void setUp(uint16_t numOfRootNodes,
  * @param delim : delimiter
  * @return  vector of split string
  */
-std::vector<std::string> split(const std::string input, char delim) {
+std::vector<std::string> split(const std::string input, char delim)
+{
     std::vector<std::string> result;
     std::stringstream ss(input);
     std::string item;
-    while (getline(ss, item, delim)) {
+    while (getline(ss, item, delim))
+    {
         result.push_back(item);
     }
     return result;
@@ -342,28 +359,32 @@ std::vector<std::string> split(const std::string input, char delim) {
  * @brief Load provided configuration file
  * @param filePath : location of the configuration file
  */
-Yaml::Node loadConfigFromYAMLFile(const std::string& filePath) {
-
+Yaml::Node loadConfigFromYAMLFile(const std::string& filePath)
+{
     NES_INFO("BenchmarkIncrementalPlacement: Using config file with path: {} .", filePath);
-    if (!filePath.empty() && std::filesystem::exists(filePath)) {
-        try {
+    if (!filePath.empty() && std::filesystem::exists(filePath))
+    {
+        try
+        {
             Yaml::Node config = *(new Yaml::Node());
             Yaml::Parse(config, filePath.c_str());
             return config;
-        } catch (std::exception& e) {
-            NES_ERROR("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file. {}",
-                      e.what());
+        }
+        catch (std::exception& e)
+        {
+            NES_ERROR("BenchmarkIncrementalPlacement: Error while initializing configuration parameters from YAML file. {}", e.what());
             throw e;
         }
     }
-    NES_THROW_RUNTIME_ERROR("BenchmarkIncrementalPlacement: No file path was provided or file could not be found at the path: "
-                            + filePath);
+    NES_THROW_RUNTIME_ERROR("BenchmarkIncrementalPlacement: No file path was provided or file could not be found at the path: " + filePath);
 }
 
-void compileQuery(const std::string& stringQuery,
-                  uint64_t id,
-                  const std::shared_ptr<QueryParsingService>& queryParsingService,
-                  std::promise<QueryPlanPtr> promise) {
+void compileQuery(
+    const std::string& stringQuery,
+    uint64_t id,
+    const std::shared_ptr<QueryParsingService>& queryParsingService,
+    std::promise<QueryPlanPtr> promise)
+{
     auto queryplan = queryParsingService->createQueryFromCodeString(stringQuery);
     queryplan->setQueryId(QueryId(id));
     promise.set_value(queryplan);
@@ -372,8 +393,8 @@ void compileQuery(const std::string& stringQuery,
 /**
  * @brief This benchmarks time taken in the preparation of Global Query Plan after merging @param{NO_OF_QUERIES_TO_SEND} number of queries.
  */
-int main(int argc, const char* argv[]) {
-
+int main(int argc, const char* argv[])
+{
     auto listener = std::make_shared<ErrorHandler>();
     Exceptions::installGlobalErrorListener(listener);
 
@@ -382,7 +403,8 @@ int main(int argc, const char* argv[]) {
 
     //Load all command line arguments
     std::map<std::string, std::string> commandLineParams;
-    for (int i = 1; i < argc; ++i) {
+    for (int i = 1; i < argc; ++i)
+    {
         commandLineParams.insert(std::pair<std::string, std::string>(
             std::string(argv[i]).substr(0, std::string(argv[i]).find("=")),
             std::string(argv[i]).substr(std::string(argv[i]).find("=") + 1, std::string(argv[i]).length() - 1)));
@@ -393,9 +415,12 @@ int main(int argc, const char* argv[]) {
 
     Yaml::Node configs;
     //Load the configuration file
-    if (configPath != commandLineParams.end()) {
+    if (configPath != commandLineParams.end())
+    {
         configs = loadConfigFromYAMLFile(configPath->second);
-    } else {
+    }
+    else
+    {
         NES_ERROR("Configuration file is not provided. Please use the option --configPath");
         return -1;
     }
@@ -410,10 +435,11 @@ int main(int argc, const char* argv[]) {
     auto querySetLocation = configs["QuerySetLocation"].As<std::string>();
 
     //Load individual query set from the query set location and run the benchmark
-    for (const auto& file : directory_iterator(querySetLocation)) {
-
+    for (const auto& file : directory_iterator(querySetLocation))
+    {
         auto fileName = file.path().filename().string();
-        if (fileName.find("_done") != std::string::npos) {
+        if (fileName.find("_done") != std::string::npos)
+        {
             std::cout << "Skip processing event set" << fileName << std::endl;
             continue;
         }
@@ -424,12 +450,14 @@ int main(int argc, const char* argv[]) {
         std::ifstream infile(file.path());
         std::vector<std::string> queries;
         std::string line;
-        while (std::getline(infile, line)) {
+        while (std::getline(infile, line))
+        {
             std::istringstream iss(line);
             queries.emplace_back(line);
         }
 
-        if (queries.empty()) {
+        if (queries.empty())
+        {
             NES_THROW_RUNTIME_ERROR("Unable to find any query");
         }
 
@@ -443,7 +471,8 @@ int main(int argc, const char* argv[]) {
 
         //If no available thread then set number of threads to 1
         uint64_t numThreads = std::thread::hardware_concurrency();
-        if (numThreads == 0) {
+        if (numThreads == 0)
+        {
             NES_WARNING("No available threads. Going to use only 1 thread for parsing input queries.");
             numThreads = 1;
         }
@@ -451,14 +480,17 @@ int main(int argc, const char* argv[]) {
 
         uint64_t queryNum = 0;
         //Work till all queries are not parsed
-        while (queryNum < numOfQueries) {
+        while (queryNum < numOfQueries)
+        {
             std::vector<std::future<QueryPlanPtr>> futures;
             std::vector<std::thread> threadPool(numThreads);
             uint64_t threadNum;
             //Schedule queries to be parsed with #numThreads parallelism
-            for (threadNum = 0; threadNum < numThreads; threadNum++) {
+            for (threadNum = 0; threadNum < numThreads; threadNum++)
+            {
                 //If no more query to parse
-                if (queryNum >= numOfQueries) {
+                if (queryNum >= numOfQueries)
+                {
                     break;
                 }
                 //Schedule thread for execution and pass a promise
@@ -471,17 +503,20 @@ int main(int argc, const char* argv[]) {
             }
 
             //Wait for all unfinished threads
-            for (auto& item : threadPool) {
-                if (item.joinable()) {// if thread is not finished yet
+            for (auto& item : threadPool)
+            {
+                if (item.joinable())
+                { // if thread is not finished yet
                     item.join();
                 }
             }
 
             //Fetch the parsed query from all threads
-            for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++) {
+            for (uint64_t futureNum = 0; futureNum < threadNum; futureNum++)
+            {
                 auto query = futures[futureNum].get();
                 auto queryID = query->getQueryId();
-                queryObjects[queryID.getRawValue() - 1] = query;//Add the parsed query to the (queryID - 1)th index
+                queryObjects[queryID.getRawValue() - 1] = query; //Add the parsed query to the (queryID - 1)th index
             }
         }
 
@@ -503,7 +538,8 @@ int main(int argc, const char* argv[]) {
 
         //Perform benchmark for each run configuration
         auto runConfig = configs["RunConfig"];
-        for (auto entry = runConfig.Begin(); entry != runConfig.End(); entry++) {
+        for (auto entry = runConfig.Begin(); entry != runConfig.End(); entry++)
+        {
             auto node = (*entry).second;
             auto placementStrategy = node["QueryPlacementStrategy"].As<std::string>();
             auto incrementalPlacement = node["IncrementalPlacement"].As<bool>();
@@ -522,12 +558,12 @@ int main(int argc, const char* argv[]) {
             optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::HashSignatureBasedCompleteQueryMergerRule;
             optimizerConfiguration.enableIncrementalPlacement = incrementalPlacement;
             optimizerConfiguration.placementAmendmentThreadCount = placementAmendmentThreadCount;
-            optimizerConfiguration.placementAmendmentMode =
-                magic_enum::enum_cast<Optimizer::PlacementAmendmentMode>(placementAmendmentMode).value();
+            optimizerConfiguration.placementAmendmentMode
+                = magic_enum::enum_cast<Optimizer::PlacementAmendmentMode>(placementAmendmentMode).value();
             coordinatorConfiguration->optimizer = optimizerConfiguration;
 
-            for (uint32_t run = 0; run < numberOfRun; run++) {
-
+            for (uint32_t run = 0; run < numberOfRun; run++)
+            {
                 std::this_thread::sleep_for(std::chrono::seconds(startupSleepInterval));
                 auto nesCoordinator = std::make_shared<NesCoordinator>(coordinatorConfiguration);
                 nesCoordinator->startCoordinator(false);
@@ -545,7 +581,8 @@ int main(int argc, const char* argv[]) {
                 std::vector<QueryId> potentialCandidatesForRemoval;
                 std::vector<RequestProcessor::ISQPEventPtr> initialISQPEvents;
                 uint64_t currentIndex;
-                for (currentIndex = 0; currentIndex < initialQueries; currentIndex++) {
+                for (currentIndex = 0; currentIndex < initialQueries; currentIndex++)
+                {
                     auto queryPlan = queryObjects[currentIndex];
                     potentialCandidatesForRemoval.emplace_back(queryPlan->getQueryId());
                     initialISQPEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
@@ -561,22 +598,25 @@ int main(int argc, const char* argv[]) {
                 uint16_t addQueryIncrement = 1;
                 uint16_t removeQueryIncrement = 1;
                 std::vector<QueryId> newPotentialCandidatesForRemoval;
-                while (currentIndex < numOfQueries) {
-
+                while (currentIndex < numOfQueries)
+                {
                     //Add query events
-                    while (addQueryIncrement <= numOfAddQueries) {
+                    while (addQueryIncrement <= numOfAddQueries)
+                    {
                         auto queryPlan = queryObjects[currentIndex];
                         isqpEvents.emplace_back(RequestProcessor::ISQPAddQueryEvent::create(queryPlan->copy(), placement));
                         newPotentialCandidatesForRemoval.emplace_back(queryPlan->getQueryId());
                         addQueryIncrement++;
                         currentIndex++;
-                        if (currentIndex >= numOfQueries) {
+                        if (currentIndex >= numOfQueries)
+                        {
                             break;
                         }
                     }
 
                     //Remove query events
-                    while (removeQueryIncrement <= numOfRemoveQueries) {
+                    while (removeQueryIncrement <= numOfRemoveQueries)
+                    {
                         QueryId& queryId = potentialCandidatesForRemoval.rbegin()[removeQueryIncrement - 1];
                         isqpEvents.emplace_back(RequestProcessor::ISQPRemoveQueryEvent::create(queryId));
                         removeQueryIncrement++;
@@ -593,15 +633,18 @@ int main(int argc, const char* argv[]) {
                 //Compute ISQP batches
                 std::vector<std::vector<RequestProcessor::ISQPEventPtr>> isqpBatches;
                 uint64_t counter = 0;
-                while (counter < isqpEvents.size()) {
+                while (counter < isqpEvents.size())
+                {
                     uint16_t batchSizeCounter = 0;
                     std::vector<RequestProcessor::ISQPEventPtr> tempBatch;
-                    while (batchSizeCounter < batchSize) {
+                    while (batchSizeCounter < batchSize)
+                    {
                         auto isqpEvent = isqpEvents.at(counter);
                         tempBatch.emplace_back(isqpEvent);
                         batchSizeCounter++;
                         counter++;
-                        if (counter >= isqpEvents.size()) {
+                        if (counter >= isqpEvents.size())
+                        {
                             break;
                         }
                     }
@@ -611,42 +654,40 @@ int main(int argc, const char* argv[]) {
                 std::cout << "*******************************Finished preparing ISQP batches " << isqpBatches.size() << std::endl;
 
                 std::vector<std::tuple<uint64_t, uint64_t, RequestProcessor::ISQPRequestResponsePtr>> batchResponses;
-                auto startTime =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
+                auto startTime
+                    = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 uint32_t count = 0;
                 // Execute batches of ISQP events
-                for (auto const& isqpBatch : isqpBatches) {
+                for (auto const& isqpBatch : isqpBatches)
+                {
                     count++;
-                    auto requestEventTime =
-                        std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                            .count();
+                    auto requestEventTime
+                        = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
+                              .count();
                     auto response = requestHandlerService->queueISQPRequest(isqpBatch);
                     batchResponses.emplace_back(
-                        std::tuple<uint64_t, uint64_t, RequestProcessor::ISQPRequestResponsePtr>(count,
-                                                                                                 requestEventTime,
-                                                                                                 response));
+                        std::tuple<uint64_t, uint64_t, RequestProcessor::ISQPRequestResponsePtr>(count, requestEventTime, response));
                 }
-                auto endTime =
-                    std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch())
-                        .count();
+                auto endTime
+                    = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
                 aggregatedBenchmarkOutput << fileName << "," << configNum << "," << placementStrategy << ","
                                           << std::to_string(incrementalPlacement) << "," << placementAmendmentThreadCount << ","
                                           << placementAmendmentMode << "," << numOfAddQueries << "," << numOfRemoveQueries << ","
                                           << batchSize << "," << run << "," << count << "," << startTime << "," << endTime << ","
                                           << (endTime - startTime) << std::endl;
 
-                for (const auto& batchResponse : batchResponses) {
+                for (const auto& batchResponse : batchResponses)
+                {
                     uint64_t batchCount = std::get<0>(batchResponse);
                     uint64_t batchEventTime = std::get<1>(batchResponse);
                     RequestProcessor::ISQPRequestResponsePtr response = std::get<2>(batchResponse);
                     detailedBenchmarkOutput << fileName << "," << configNum << "," << placementStrategy << ","
                                             << std::to_string(incrementalPlacement) << "," << placementAmendmentThreadCount << ","
-                                            << placementAmendmentMode << "," << batchSize << "," << run << "," << numOfAddQueries
-                                            << "," << numOfRemoveQueries << "," << count << "," << batchCount << ","
-                                            << batchEventTime << "," << response->processingStartTime << ","
-                                            << response->amendmentStartTime << "," << response->processingEndTime << ","
-                                            << response->numOfFailedPlacements << "," << response->numOfSQPAffected << std::endl;
+                                            << placementAmendmentMode << "," << batchSize << "," << run << "," << numOfAddQueries << ","
+                                            << numOfRemoveQueries << "," << count << "," << batchCount << "," << batchEventTime << ","
+                                            << response->processingStartTime << "," << response->amendmentStartTime << ","
+                                            << response->processingEndTime << "," << response->numOfFailedPlacements << ","
+                                            << response->numOfSQPAffected << std::endl;
                 }
 
                 std::cout << "Total SQPs " << nesCoordinator->getGlobalQueryPlan()->getAllSharedQueryPlans().size();
@@ -661,12 +702,9 @@ int main(int argc, const char* argv[]) {
             std::ofstream outDetailed("ISQP-Detailed-Benchmark_" + fileName + ".csv", std::ios::trunc);
             outDetailed << detailedBenchmarkOutput.str();
             outDetailed.close();
-            std::cout << "---------------------------------------------------------------------------------------------"
-                      << std::endl;
-            std::cout << "---------------------------------------------------------------------------------------------"
-                      << std::endl;
-            std::cout << "---------------------------------------------------------------------------------------------"
-                      << std::endl;
+            std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
+            std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
+            std::cout << "---------------------------------------------------------------------------------------------" << std::endl;
         }
         // rename filename
         std::cout << "Renaming File: " << file.path().relative_path().string() << std::endl;

@@ -15,16 +15,18 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NONZEROVALIDATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NONZEROVALIDATION_HPP_
 
-#include "Configurations/Validation/ConfigurationValidation.hpp"
 #include <string>
+#include "Configurations/Validation/ConfigurationValidation.hpp"
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 /**
 * @brief This class implements validation for parameters that should represent non-negative non-zero integers
 */
-class NonZeroValidation : public ConfigurationValidation {
-  public:
+class NonZeroValidation : public ConfigurationValidation
+{
+public:
     /**
      * @brief Method to check the validity of a parameter as a non-negative non-zero integer
      * @param number number to validate
@@ -32,6 +34,6 @@ class NonZeroValidation : public ConfigurationValidation {
      */
     bool isValid(const std::string& number) const override;
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NONZEROVALIDATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NONZEROVALIDATION_HPP_

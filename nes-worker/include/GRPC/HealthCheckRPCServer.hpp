@@ -22,20 +22,24 @@
 
 #include <Health.grpc.pb.h>
 
-namespace NES {
+namespace NES
+{
 /**
  * This class usees the Heatlth service of GRPC to implement a keep alive service
  * This implementation follows the example: https://github.com/grpc/grpc/blob/master/test/cpp/end2end/test_health_check_service_impl.cc
  *
  */
-class HealthCheckRPCServer : public grpc::health::v1::Health::Service {
-  public:
-    grpc::Status Check(grpc::ServerContext* context,
-                       const grpc::health::v1::HealthCheckRequest* request,
-                       grpc::health::v1::HealthCheckResponse* response) override;
-    grpc::Status Watch(grpc::ServerContext* context,
-                       const grpc::health::v1::HealthCheckRequest* request,
-                       grpc::ServerWriter<grpc::health::v1::HealthCheckResponse>* writer) override;
+class HealthCheckRPCServer : public grpc::health::v1::Health::Service
+{
+public:
+    grpc::Status Check(
+        grpc::ServerContext* context,
+        const grpc::health::v1::HealthCheckRequest* request,
+        grpc::health::v1::HealthCheckResponse* response) override;
+    grpc::Status Watch(
+        grpc::ServerContext* context,
+        const grpc::health::v1::HealthCheckRequest* request,
+        grpc::ServerWriter<grpc::health::v1::HealthCheckResponse>* writer) override;
 
     /**
     * Method to set the status for health checking for a particular service
@@ -55,12 +59,12 @@ class HealthCheckRPCServer : public grpc::health::v1::Health::Service {
     */
     void Shutdown();
 
-  private:
+private:
     std::mutex mutex;
     bool shutdown = false;
     std::map<const std::string, grpc::health::v1::HealthCheckResponse::ServingStatus> statusMap;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_WORKER_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_
+#endif // NES_WORKER_INCLUDE_GRPC_HEALTHCHECKRPCSERVER_HPP_

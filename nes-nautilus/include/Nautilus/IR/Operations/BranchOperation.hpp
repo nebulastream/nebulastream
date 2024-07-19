@@ -18,13 +18,15 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 /**
  * @brief Terminator Operation(Op), must be last Op in BasicBlock(BB). Passes control flow from one BB to another.
  * 
  */
-class BranchOperation : public Operation {
-  public:
+class BranchOperation : public Operation
+{
+public:
     explicit BranchOperation();
     ~BranchOperation() override = default;
 
@@ -32,8 +34,8 @@ class BranchOperation : public Operation {
     std::string toString() override;
     static bool classof(const Operation* Op);
 
-  private:
+private:
     BasicBlockInvocation basicBlock;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_

@@ -13,12 +13,13 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
+#include <cassert>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/Allocator/MemoryResource.hpp>
-#include <cassert>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 class ChainedHashMapRef;
 
 /**
@@ -39,8 +40,9 @@ class ChainedHashMapRef;
  * 1. This hash map is *not* thread save and allows for no concurrent accesses
  * 2. This hash map dose not clears the content of the entry. So its up to the user to initialize values correctly.
  */
-class ChainedHashMap {
-  public:
+class ChainedHashMap
+{
+public:
     using hash_t = uint64_t;
     static const size_t DEFAULT_PAGE_SIZE = 8024;
     /**
@@ -50,8 +52,9 @@ class ChainedHashMap {
      * | --- Entry* --- | --- hash_t --- | --- keys ---     | --- values ---    |
      * | --- 64bit ---  | --- 64bit ---  | --- keySize ---  | --- valueSize ---  |
      */
-    class Entry {
-      public:
+    class Entry
+    {
+    public:
         Entry* next;
         hash_t hash;
         // payload data follows this header
@@ -67,18 +70,20 @@ class ChainedHashMap {
      * @param allocator the memory allocator, which is used to allocate space for entries.
      * @param pageSize the page size with DEFAULT_PAGE_SIZE as default.
      */
-    ChainedHashMap(uint64_t keySize,
-                   uint64_t valueSize,
-                   uint64_t numberOfKeys,
-                   std::unique_ptr<std::pmr::memory_resource> allocator,
-                   size_t pageSize = DEFAULT_PAGE_SIZE);
+    ChainedHashMap(
+        uint64_t keySize,
+        uint64_t valueSize,
+        uint64_t numberOfKeys,
+        std::unique_ptr<std::pmr::memory_resource> allocator,
+        size_t pageSize = DEFAULT_PAGE_SIZE);
 
     /**
      * @brief Inline implementation to find the start of a chain from the hash map.
      * @param hash the hash for the key.
      * @return Entry* to the start of the chain.
      */
-    [[nodiscard]] inline Entry* findChain(hash_t hash) const {
+    [[nodiscard]] inline Entry* findChain(hash_t hash) const
+    {
         auto pos = hash & mask;
         return entries[pos];
     }
@@ -89,7 +94,8 @@ class ChainedHashMap {
      * @param hash the hash for the key.
      * @return Entry* to the new entry.
      */
-    inline Entry* insertEntry(hash_t hash) {
+    inline Entry* insertEntry(hash_t hash)
+    {
         auto* newEntry = allocateNewEntry();
         // call the constructor of Entry at the address of new Entry to initialize the object.
         new (newEntry) Entry(hash);
@@ -125,13 +131,14 @@ class ChainedHashMap {
      */
     virtual ~ChainedHashMap();
 
-  private:
+private:
     /**
      * @brief Inserts a new entry to the hash map. Each new entry will be stored as the first element in the bucket chain.
      * @param entry pointer to the new entry
      * @param hash of the new entry
      */
-    inline void insert(Entry* entry, hash_t hash) {
+    inline void insert(Entry* entry, hash_t hash)
+    {
         const size_t pos = hash & mask;
         assert(pos <= mask);
         assert(pos < capacity);
@@ -156,7 +163,7 @@ class ChainedHashMap {
      */
     Entry* entryIndexToAddress(uint64_t entryIndex);
 
-  private:
+private:
     // ChainedHashMapRef is a friend to access private members and functions
     friend ChainedHashMapRef;
     const std::unique_ptr<std::pmr::memory_resource> allocator;
@@ -171,6 +178,6 @@ class ChainedHashMap {
     Entry** entries;
     std::vector<int8_t*> pages;
 };
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_

@@ -15,20 +15,25 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
-    if (auto ctx = Nautilus::Tracing::TraceContext::getIfActive()) {
+void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector<Nautilus::Tracing::InputVariant>& arguments)
+{
+    if (auto ctx = Nautilus::Tracing::TraceContext::getIfActive())
+    {
         //auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultRef, arguments);
         ctx->traceFunctionCall(resultRef, arguments);
     }
 }
 
-void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments) {
-    if (auto ctx = Nautilus::Tracing::TraceContext::getIfActive()) {
+void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& arguments)
+{
+    if (auto ctx = Nautilus::Tracing::TraceContext::getIfActive())
+    {
         // auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, arguments);
         ctx->traceFunctionCall(arguments);
     }
 }
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

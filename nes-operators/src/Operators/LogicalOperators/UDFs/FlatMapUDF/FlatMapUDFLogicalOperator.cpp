@@ -12,24 +12,29 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <API/AttributeField.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sstream>
 
-namespace NES {
+namespace NES
+{
 
 FlatMapUDFLogicalOperator::FlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor, OperatorId id)
-    : Operator(id), UDFLogicalOperator(udfDescriptor, id) {}
+    : Operator(id), UDFLogicalOperator(udfDescriptor, id)
+{
+}
 
-std::string FlatMapUDFLogicalOperator::toString() const {
+std::string FlatMapUDFLogicalOperator::toString() const
+{
     std::stringstream ss;
     ss << "FLATMAP_UDF(" << id << ")";
     return ss.str();
 }
 
-OperatorPtr FlatMapUDFLogicalOperator::copy() {
+OperatorPtr FlatMapUDFLogicalOperator::copy()
+{
     auto copy = std::make_shared<FlatMapUDFLogicalOperator>(this->getUDFDescriptor(), id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -38,18 +43,21 @@ OperatorPtr FlatMapUDFLogicalOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
+    for (const auto& [key, value] : properties)
+    {
         copy->addProperty(key, value);
     }
     return copy;
 }
 
-bool FlatMapUDFLogicalOperator::equal(const NodePtr& other) const {
+bool FlatMapUDFLogicalOperator::equal(const NodePtr& other) const
+{
     return other->instanceOf<FlatMapUDFLogicalOperator>() && UDFLogicalOperator::equal(other);
 }
 
-bool FlatMapUDFLogicalOperator::isIdentical(const NodePtr& other) const {
+bool FlatMapUDFLogicalOperator::isIdentical(const NodePtr& other) const
+{
     return equal(other) && id == other->as<FlatMapUDFLogicalOperator>()->id;
 }
 
-}// namespace NES
+} // namespace NES

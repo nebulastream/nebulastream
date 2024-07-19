@@ -17,14 +17,16 @@
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class BinaryOperator;
 using BinaryOperatorPtr = std::shared_ptr<BinaryOperator>;
 
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class BinaryOperatorSortRule;
 using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
@@ -39,15 +41,15 @@ using BinaryOperatorSortRulePtr = std::shared_ptr<BinaryOperatorSortRule>;
  *
  *     3. Query::from("car").joinWith(Query::from("truck")).sink(); =>  Query::from("truck").joinWith(Query::from("car")).sink();
  */
-class BinaryOperatorSortRule : public BaseRewriteRule {
-
-  public:
+class BinaryOperatorSortRule : public BaseRewriteRule
+{
+public:
     static BinaryOperatorSortRulePtr create();
     virtual ~BinaryOperatorSortRule() = default;
 
     QueryPlanPtr apply(QueryPlanPtr queryPlanPtr) override;
 
-  private:
+private:
     /**
      * @brief This method takes input as a binary operator and sort the children alphabetically based on source qualifier name
      * @param binaryOperator : the input binary operator
@@ -56,6 +58,6 @@ class BinaryOperatorSortRule : public BaseRewriteRule {
 
     BinaryOperatorSortRule();
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BINARYOPERATORSORTRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BINARYOPERATORSORTRULE_HPP_

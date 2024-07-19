@@ -14,16 +14,17 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_
-#include <Runtime/TupleBuffer.hpp>
 #include <memory>
 #include <vector>
+#include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 /**
  * @brief Interface that defines operations to migrate an operator state
  */
-class MigratableStateInterface {
-
+class MigratableStateInterface
+{
     /**
      * @brief Gets the state
      * @param startTS
@@ -38,5 +39,5 @@ class MigratableStateInterface {
      */
     virtual void restoreState(std::vector<Runtime::TupleBuffer>&) = 0;
 };
-}// namespace NES::Runtime::Execution
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_
+} // namespace NES::Runtime::Execution
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_

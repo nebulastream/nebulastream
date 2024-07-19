@@ -17,18 +17,20 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-class NegateOperation : public Operation {
-  public:
+class NegateOperation : public Operation
+{
+public:
     NegateOperation(OperationIdentifier identifier, OperationPtr input);
     ~NegateOperation() override = default;
     OperationPtr getInput();
     std::string toString() override;
     bool classof(const Operation* Op);
 
-  private:
+private:
     OperationWPtr input;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_NEGATEOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_NEGATEOPERATION_HPP_

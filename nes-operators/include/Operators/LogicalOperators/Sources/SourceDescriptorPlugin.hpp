@@ -16,13 +16,15 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/PluginRegistry.hpp>
-namespace NES {
+namespace NES
+{
 
 class SourceDescriptor;
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 
-class SourceDescriptorPlugin {
-  public:
+class SourceDescriptorPlugin
+{
+public:
     SourceDescriptorPlugin() = default;
     virtual SourceDescriptorPtr create(SchemaPtr schema, PhysicalSourceTypePtr physicalSource) = 0;
 
@@ -31,6 +33,6 @@ class SourceDescriptorPlugin {
 
 using SourceDescriptorPluginRegistry = Util::PluginRegistry<SourceDescriptorPlugin>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTORPLUGIN_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTORPLUGIN_HPP_

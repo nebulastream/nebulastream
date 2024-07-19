@@ -14,11 +14,12 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINHANDLER_HPP_
+#include <vector>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <vector>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief The batch join handler maintains the join state that is used by the join build and the join probe operator.
@@ -33,9 +34,9 @@ namespace NES::Runtime::Execution::Operators {
  * This code improve performance, but it should first investigated if the merging becomes a performance bottleneck.
  */
 class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
-                         public NES::detail::virtual_enable_shared_from_this<BatchJoinHandler, false> {
-
-  public:
+                         public NES::detail::virtual_enable_shared_from_this<BatchJoinHandler, false>
+{
+public:
     /**
      * @brief Creates the operator handler for the join operator.
      */
@@ -52,8 +53,8 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext)
+        override;
 
     /**
      * @brief Returns the thread local state for a  specific worker thread id
@@ -78,11 +79,11 @@ class BatchJoinHandler : public Runtime::Execution::OperatorHandler,
 
     void postReconfigurationCallback(Runtime::ReconfigurationMessage& message) override;
 
-  private:
+private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVector>> threadLocalStateStores;
     std::unique_ptr<Nautilus::Interface::ChainedHashMap> globalMap;
     uint64_t keySize;
     uint64_t valueSize;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINHANDLER_HPP_

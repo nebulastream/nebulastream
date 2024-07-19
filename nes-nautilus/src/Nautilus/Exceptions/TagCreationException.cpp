@@ -12,9 +12,12 @@
     limitations under the License.
 */
 #include <Nautilus/Exceptions/TagCreationException.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 TagCreationException::TagCreationException(const std::string& message, const std::source_location location)
-    : RuntimeException(message, NES::collectStacktrace(), location) {}
+    : RuntimeException(message, NES::collectStacktrace(), location)
+{
+}
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

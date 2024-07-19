@@ -18,10 +18,12 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/DefaultSource.hpp>
 #include <Util/TestTupleBuffer.hpp>
-namespace NES::Testing {
+namespace NES::Testing
+{
 
-class NonRunnableDataSource : public NES::DefaultSource {
-  public:
+class NonRunnableDataSource : public NES::DefaultSource
+{
+public:
     explicit NonRunnableDataSource(
         const SchemaPtr& schema,
         const Runtime::BufferManagerPtr& bufferManager,
@@ -45,20 +47,20 @@ class NonRunnableDataSource : public NES::DefaultSource {
 
     void emitBuffer(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true);
 
-  private:
+private:
     std::promise<bool> canTerminate;
 };
 
-DataSourcePtr
-createNonRunnableSource(const SchemaPtr& schema,
-                        const Runtime::BufferManagerPtr& bufferManager,
-                        const Runtime::QueryManagerPtr& queryManager,
-                        OperatorId operatorId,
-                        OriginId originId,
-                        StatisticId statisticId,
-                        size_t numSourceLocalBuffers,
-                        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                        NES::Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
-}// namespace NES::Testing
+DataSourcePtr createNonRunnableSource(
+    const SchemaPtr& schema,
+    const Runtime::BufferManagerPtr& bufferManager,
+    const Runtime::QueryManagerPtr& queryManager,
+    OperatorId operatorId,
+    OriginId originId,
+    StatisticId statisticId,
+    size_t numSourceLocalBuffers,
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+    NES::Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
+} // namespace NES::Testing
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_NONRUNNABLEDATASOURCE_HPP_

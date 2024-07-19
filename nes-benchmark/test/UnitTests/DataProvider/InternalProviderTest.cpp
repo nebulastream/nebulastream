@@ -14,7 +14,6 @@
 
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <DataProvider/InternalProvider.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -22,25 +21,31 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Benchmark::DataProvision {
-class InternalProviderTest : public Testing::BaseIntegrationTest {
-  public:
+namespace NES::Benchmark::DataProvision
+{
+class InternalProviderTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("InternalProviderTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup InternalProviderTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         NES_INFO("Setup InternalProviderTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down InternalProviderTest test case.");
         Testing::BaseIntegrationTest::TearDown();
     }
@@ -55,7 +60,8 @@ class InternalProviderTest : public Testing::BaseIntegrationTest {
      * @brief Testing if InternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
      * accessed by readNextBuffer() for a row layout
      */
-TEST_F(InternalProviderTest, readNextBufferRowLayoutTest) {
+TEST_F(InternalProviderTest, readNextBufferRowLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     uint64_t currentlyEmittedBuffer = 0;
     size_t sourceId = 0;
@@ -67,11 +73,13 @@ TEST_F(InternalProviderTest, readNextBufferRowLayoutTest) {
     auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -82,16 +90,15 @@ TEST_F(InternalProviderTest, readNextBufferRowLayoutTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto internalProviderDefault =
-        std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto internalProviderDefault
+        = std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     internalProviderDefault->start();
     auto nextBufferDefault = internalProviderDefault->readNextBuffer(sourceId);
 
     ASSERT_FALSE(createdBuffers.empty());
 
     auto buffer = createdBuffers[currentlyEmittedBuffer % createdBuffers.size()];
-    auto expectedNextBuffer =
-        Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), internalProviderDefault.get());
+    auto expectedNextBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), internalProviderDefault.get());
     expectedNextBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
     ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
@@ -106,7 +113,8 @@ TEST_F(InternalProviderTest, readNextBufferRowLayoutTest) {
      * @brief Testing if InternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
      * accessed by readNextBuffer() for a column layout
      */
-TEST_F(InternalProviderTest, readNextBufferColumnarLayoutTest) {
+TEST_F(InternalProviderTest, readNextBufferColumnarLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     uint64_t currentlyEmittedBuffer = 0;
     size_t sourceId = 0;
@@ -122,11 +130,13 @@ TEST_F(InternalProviderTest, readNextBufferColumnarLayoutTest) {
                              ->addField(createField("timestamp", BasicType::UINT64));
     auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -137,16 +147,15 @@ TEST_F(InternalProviderTest, readNextBufferColumnarLayoutTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto internalProviderDefault =
-        std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto internalProviderDefault
+        = std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     internalProviderDefault->start();
     auto nextBufferDefault = internalProviderDefault->readNextBuffer(sourceId);
 
     ASSERT_FALSE(createdBuffers.empty());
 
     auto buffer = createdBuffers[currentlyEmittedBuffer % createdBuffers.size()];
-    auto expectedNextBuffer =
-        Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), internalProviderDefault.get());
+    auto expectedNextBuffer = Runtime::TupleBuffer::wrapMemory(buffer.getBuffer(), buffer.getBufferSize(), internalProviderDefault.get());
     expectedNextBuffer.setNumberOfTuples(buffer.getNumberOfTuples());
 
     ASSERT_EQ(nextBufferDefault->getBufferSize(), expectedNextBuffer.getBufferSize());
@@ -161,7 +170,8 @@ TEST_F(InternalProviderTest, readNextBufferColumnarLayoutTest) {
      * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
      *  row layout
      */
-TEST_F(InternalProviderTest, stopRowLayoutTest) {
+TEST_F(InternalProviderTest, stopRowLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     size_t sourceId = 0;
     size_t numberOfBuffers = 2;
@@ -172,11 +182,13 @@ TEST_F(InternalProviderTest, stopRowLayoutTest) {
     auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -187,8 +199,8 @@ TEST_F(InternalProviderTest, stopRowLayoutTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto internalProviderDefault =
-        std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto internalProviderDefault
+        = std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     internalProviderDefault->stop();
 
     auto preAllocatedBuffers = internalProviderDefault->getPreAllocatedBuffers();
@@ -200,7 +212,8 @@ TEST_F(InternalProviderTest, stopRowLayoutTest) {
      * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
      * column layout
      */
-TEST_F(InternalProviderTest, stopColumnarLayoutTest) {
+TEST_F(InternalProviderTest, stopColumnarLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     size_t sourceId = 0;
     size_t numberOfBuffers = 2;
@@ -215,11 +228,13 @@ TEST_F(InternalProviderTest, stopColumnarLayoutTest) {
                              ->addField(createField("timestamp", BasicType::UINT64));
     auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -230,12 +245,12 @@ TEST_F(InternalProviderTest, stopColumnarLayoutTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto internalProviderDefault =
-        std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto internalProviderDefault
+        = std::dynamic_pointer_cast<InternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     internalProviderDefault->stop();
 
     auto preAllocatedBuffers = internalProviderDefault->getPreAllocatedBuffers();
 
     ASSERT_EQ(preAllocatedBuffers.size(), 0);
 }
-}//namespace NES::Benchmark::DataProvision
+} //namespace NES::Benchmark::DataProvision

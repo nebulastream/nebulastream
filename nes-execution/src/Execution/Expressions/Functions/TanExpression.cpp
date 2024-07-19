@@ -12,45 +12,73 @@
     limitations under the License.
 */
 
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/TanExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-TanExpression::TanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : expression(expression) {}
+TanExpression::TanExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : expression(expression)
+{
+}
 
-double calculateTan(double x) { return std::tan(x); }
+double calculateTan(double x)
+{
+    return std::tan(x);
+}
 
-Value<> TanExpression::execute(NES::Nautilus::Record& record) const {
+Value<> TanExpression::execute(NES::Nautilus::Record& record) const
+{
     Value value = expression->execute(record);
 
-    if (value->isType<Int8>()) {
+    if (value->isType<Int8>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Int8>());
-    } else if (value->isType<Int16>()) {
+    }
+    else if (value->isType<Int16>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Int16>());
-    } else if (value->isType<Int32>()) {
+    }
+    else if (value->isType<Int32>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Int32>());
-    } else if (value->isType<Int64>()) {
+    }
+    else if (value->isType<Int64>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Int64>());
-    } else if (value->isType<UInt8>()) {
+    }
+    else if (value->isType<UInt8>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<UInt8>());
-    } else if (value->isType<UInt16>()) {
+    }
+    else if (value->isType<UInt16>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<UInt16>());
-    } else if (value->isType<UInt32>()) {
+    }
+    else if (value->isType<UInt32>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<UInt32>());
-    } else if (value->isType<UInt64>()) {
+    }
+    else if (value->isType<UInt64>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<UInt64>());
-    } else if (value->isType<Float>()) {
+    }
+    else if (value->isType<Float>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Float>());
-    } else if (value->isType<Double>()) {
+    }
+    else if (value->isType<Double>())
+    {
         return FunctionCall<>("calculateTan", calculateTan, value.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<TanExpression>> tanFunction("tan");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

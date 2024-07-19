@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <string>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
@@ -22,8 +23,7 @@
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <string>
+#include <BaseIntegrationTest.hpp>
 
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -41,31 +41,33 @@
 #include <netinet/in.h>
 
 #ifndef OPERATORID
-#define OPERATORID OperatorId(1)
+#    define OPERATORID OperatorId(1)
 #endif
 
 #ifndef ORIGINID
-#define ORIGINID OriginId(1)
+#    define ORIGINID OriginId(1)
 #endif
 
 #ifndef STATISTICID
-#define STATISTICID 1
+#    define STATISTICID 1
 #endif
 
 #ifndef NUMSOURCELOCALBUFFERS
-#define NUMSOURCELOCALBUFFERS 12
+#    define NUMSOURCELOCALBUFFERS 12
 #endif
 
 #ifndef SUCCESSORS
-#define SUCCESSORS                                                                                                               \
-    {}
+#    define SUCCESSORS \
+        { \
+        }
 #endif
 
 #ifndef INPUTFORMAT
-#define INPUTFORMAT InputFormat::JSON
+#    define INPUTFORMAT InputFormat::JSON
 #endif
 
-static thread_local struct {
+static thread_local struct
+{
     bool called_socket_create = false;
     int domain = 0;
     int type = 0;
@@ -78,33 +80,40 @@ static thread_local struct {
     std::vector<size_t> read_sizes;
     std::vector<const void*> read_ptr;
 } record_socket_parameters;
-static thread_local struct {
+static thread_local struct
+{
     int fd = 0;
     int connection_fd = 0;
     std::vector<char> data;
     size_t index = 0;
 } socket_mock_data;
 
-void setup_read_from_buffer(std::vector<char> data) {
+void setup_read_from_buffer(std::vector<char> data)
+{
     socket_mock_data.fd = 9234;
     socket_mock_data.data = std::move(data);
     socket_mock_data.index = 0;
 
     record_socket_parameters = {};
 }
-std::string get_ip_address() {
+std::string get_ip_address()
+{
     char ip_string[INET_ADDRSTRLEN];
     inet_ntop(AF_INET, &(record_socket_parameters.addr_in.sin_addr), ip_string, INET_ADDRSTRLEN);
     return {ip_string, strnlen(ip_string, INET_ADDRSTRLEN)};
 }
 
-short get_port() { return ntohs(record_socket_parameters.addr_in.sin_port); }
+short get_port()
+{
+    return ntohs(record_socket_parameters.addr_in.sin_port);
+}
 
 // Mock Network Stack
 // We can override socket and connect within the TCPSourceTest binary
 // both socket and create are defined weakly and can be overriden
 // since neither functions are called anywhere else within the test it is fine to completly mock them
-extern "C" int socket(int domain, int type, int protocol) {
+extern "C" int socket(int domain, int type, int protocol)
+{
     assert(!record_socket_parameters.called_socket_create && "Unexpected multiple create socket calls");
     record_socket_parameters.called_socket_create = true;
     record_socket_parameters.domain = domain;
@@ -113,7 +122,8 @@ extern "C" int socket(int domain, int type, int protocol) {
 
     return socket_mock_data.fd;
 }
-extern "C" int connect(int fd, const sockaddr* addr, [[maybe_unused]] socklen_t addrlen) {
+extern "C" int connect(int fd, const sockaddr* addr, [[maybe_unused]] socklen_t addrlen)
+{
     assert(!record_socket_parameters.called_connect && "Unexpected multiple connect calls");
     record_socket_parameters.connect_fd = fd;
     assert(addrlen == sizeof(sockaddr_in) && "Unexpected size of sockaddr_in parameter");
@@ -125,8 +135,10 @@ extern "C" int connect(int fd, const sockaddr* addr, [[maybe_unused]] socklen_t 
 // see nes-runtime cmake script ('-Wl,--wrap,read') this means calls to read a instead calling __wrap_read
 // and __wrap_read can delegate all real calls to __real_read.
 extern "C" ssize_t __real_read(int fd, void* data, size_t size);
-extern "C" ssize_t __wrap_read(int fd, void* data, size_t size) {
-    if (fd != socket_mock_data.fd) {
+extern "C" ssize_t __wrap_read(int fd, void* data, size_t size)
+{
+    if (fd != socket_mock_data.fd)
+    {
         return __real_read(fd, data, size);
     }
 
@@ -141,32 +153,33 @@ extern "C" ssize_t __wrap_read(int fd, void* data, size_t size) {
     return static_cast<ssize_t>(read_size);
 }
 
-namespace NES {
+namespace NES
+{
 
-class TCPSourceTest : public Testing::BaseIntegrationTest {
-  public:
+class TCPSourceTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TCPSourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("TCPSOURCETEST::SetUpTestCase()");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("TCPSOURCETEST::SetUp() TCPSourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
         bufferManager = std::make_shared<Runtime::BufferManager>();
-        queryManager = std::make_shared<Runtime::DynamicQueryManager>(nullptr,
-                                                                      std::vector{bufferManager},
-                                                                      WorkerId(1),
-                                                                      1,
-                                                                      std::make_shared<Runtime::HardwareManager>(),
-                                                                      1);
+        queryManager = std::make_shared<Runtime::DynamicQueryManager>(
+            nullptr, std::vector{bufferManager}, WorkerId(1), 1, std::make_shared<Runtime::HardwareManager>(), 1);
         auto workerConfigurations = WorkerConfiguration::create();
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         Testing::BaseIntegrationTest::TearDown();
         queryManager->destroy();
         NES_DEBUG("TCPSOURCETEST::TearDown() Tear down TCPSOURCETEST");
@@ -185,8 +198,8 @@ class TCPSourceTest : public Testing::BaseIntegrationTest {
 /**
  * Test TCPSource Construction via PhysicalSourceFactory from YAML
  */
-TEST_F(TCPSourceTest, TCPSourceUserSpecifiedTupleSizePrint) {
-
+TEST_F(TCPSourceTest, TCPSourceUserSpecifiedTupleSizePrint)
+{
     Yaml::Node sourceConfiguration;
     std::string yaml = R"(
 logicalSourceName: tcpsource
@@ -217,16 +230,17 @@ configuration:
     ASSERT_EQ(tcpSourceType->getSocketBufferSize()->getValue(), 20);
     ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 10);
 
-    auto tcpSource = createTCPSource(test_schema,
-                                     bufferManager,
-                                     queryManager,
-                                     tcpSourceType,
-                                     OPERATORID,
-                                     ORIGINID,
-                                     STATISTICID,
-                                     NUMSOURCELOCALBUFFERS,
-                                     "tcp-source",
-                                     SUCCESSORS);
+    auto tcpSource = createTCPSource(
+        test_schema,
+        bufferManager,
+        queryManager,
+        tcpSourceType,
+        OPERATORID,
+        ORIGINID,
+        STATISTICID,
+        NUMSOURCELOCALBUFFERS,
+        "tcp-source",
+        SUCCESSORS);
 
     std::string expected =
         R"(TCPSOURCE(SCHEMA(var:INTEGER(32 bits)), TCPSourceType => {
@@ -246,7 +260,8 @@ bytesUsedForSocketBufferSizeTransfer: 0
     EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 
     std::stringstream ss;
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1000; i++)
+    {
         ss << fmt::format("{:20}", i);
     }
 
@@ -261,14 +276,15 @@ bytesUsedForSocketBufferSizeTransfer: 0
     ASSERT_EQ(get_port(), 9080);
 
     uint32_t i = 0;
-    while (socket_mock_data.index < total_number_of_bytes) {
+    while (socket_mock_data.index < total_number_of_bytes)
+    {
         auto buffer = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(
-            Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()),
-            buffer);
+            Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()), buffer);
         std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(testBuffer);
 
-        for (const auto& tuple : testBuffer) {
+        for (const auto& tuple : testBuffer)
+        {
             ASSERT_EQ(tuple["var"].read<uint32_t>(), i++);
         }
     }
@@ -279,8 +295,8 @@ bytesUsedForSocketBufferSizeTransfer: 0
 /**
  * Test TCPSource Construction via PhysicalSourceFactory from YAML
  */
-TEST_F(TCPSourceTest, TCPSourceTupleSeparatorPrint) {
-
+TEST_F(TCPSourceTest, TCPSourceTupleSeparatorPrint)
+{
     Yaml::Node sourceConfiguration;
     std::string yaml = R"(
 logicalSourceName: tcpsource
@@ -311,16 +327,17 @@ configuration:
     ASSERT_EQ(tcpSourceType->getDecideMessageSize()->getValue(), TCPDecideMessageSize::TUPLE_SEPARATOR);
     ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 100);
 
-    auto tcpSource = createTCPSource(test_schema,
-                                     bufferManager,
-                                     queryManager,
-                                     tcpSourceType,
-                                     OPERATORID,
-                                     ORIGINID,
-                                     STATISTICID,
-                                     NUMSOURCELOCALBUFFERS,
-                                     "tcp-source",
-                                     SUCCESSORS);
+    auto tcpSource = createTCPSource(
+        test_schema,
+        bufferManager,
+        queryManager,
+        tcpSourceType,
+        OPERATORID,
+        ORIGINID,
+        STATISTICID,
+        NUMSOURCELOCALBUFFERS,
+        "tcp-source",
+        SUCCESSORS);
 
     std::string expected =
         R"(TCPSOURCE(SCHEMA(var:INTEGER(32 bits)), TCPSourceType => {
@@ -340,7 +357,8 @@ bytesUsedForSocketBufferSizeTransfer: 0
     EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 
     std::stringstream ss;
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1000; i++)
+    {
         ss << "{ \"var\": " << i << "}" << '\n';
     }
     std::string as_string = ss.str();
@@ -353,14 +371,15 @@ bytesUsedForSocketBufferSizeTransfer: 0
     ASSERT_EQ(get_port(), 9090);
 
     uint32_t i = 0;
-    while (socket_mock_data.index < as_string.size()) {
+    while (socket_mock_data.index < as_string.size())
+    {
         auto buffer = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(
-            Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()),
-            buffer);
+            Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()), buffer);
         std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(testBuffer);
 
-        for (const auto& tuple : testBuffer) {
+        for (const auto& tuple : testBuffer)
+        {
             ASSERT_EQ(tuple["var"].read<uint32_t>(), i++);
         }
     }
@@ -369,8 +388,8 @@ bytesUsedForSocketBufferSizeTransfer: 0
 /**
  * Test TCPSource Construction via PhysicalSourceFactory from YAML
  */
-TEST_F(TCPSourceTest, TCPSourceBufferSizeFromSocketPrint) {
-
+TEST_F(TCPSourceTest, TCPSourceBufferSizeFromSocketPrint)
+{
     Yaml::Node sourceConfiguration;
     std::string yaml = R"(
 logicalSourceName: tcpsource
@@ -400,16 +419,17 @@ configuration:
     ASSERT_EQ(tcpSourceType->getDecideMessageSize()->getValue(), TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET);
     ASSERT_EQ(tcpSourceType->getFlushIntervalMS()->getValue(), 1000);
 
-    auto tcpSource = createTCPSource(test_schema,
-                                     bufferManager,
-                                     queryManager,
-                                     tcpSourceType,
-                                     OPERATORID,
-                                     ORIGINID,
-                                     STATISTICID,
-                                     NUMSOURCELOCALBUFFERS,
-                                     "tcp-source",
-                                     SUCCESSORS);
+    auto tcpSource = createTCPSource(
+        test_schema,
+        bufferManager,
+        queryManager,
+        tcpSourceType,
+        OPERATORID,
+        ORIGINID,
+        STATISTICID,
+        NUMSOURCELOCALBUFFERS,
+        "tcp-source",
+        SUCCESSORS);
 
     std::string expected =
         R"(TCPSOURCE(SCHEMA(var:INTEGER(32 bits)), TCPSourceType => {
@@ -429,7 +449,8 @@ bytesUsedForSocketBufferSizeTransfer: 8
     EXPECT_EQ(tcpSource->toString(), expected + expected_part_2 + expected_part_3);
 
     std::stringstream ss;
-    for (int i = 0; i < 1000; i++) {
+    for (int i = 0; i < 1000; i++)
+    {
         std::string tuple = fmt::format("{{\"var\":{}}}", i);
         ss << fmt::format("{:8}{}", tuple.size(), tuple);
     }
@@ -442,15 +463,16 @@ bytesUsedForSocketBufferSizeTransfer: 8
     ASSERT_EQ(get_port(), 9090);
 
     uint32_t i = 0;
-    while (i < 1000) {
+    while (i < 1000)
+    {
         auto buffer = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(
-            Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()),
-            buffer);
+            Runtime::MemoryLayouts::RowLayout::create(test_schema, bufferManager->getBufferSize()), buffer);
         std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(testBuffer);
         std::cout << socket_mock_data.index;
 
-        for (const auto& tuple : testBuffer) {
+        for (const auto& tuple : testBuffer)
+        {
             ASSERT_EQ(tuple["var"].read<uint32_t>(), i++);
         }
     }
@@ -460,8 +482,8 @@ bytesUsedForSocketBufferSizeTransfer: 8
 /**
  * Test TCPSource Construction via PhysicalSourceFactory from YAML
  */
-TEST_F(TCPSourceTest, TCPSourceBufferSizeFromSocketNesFormatPrint) {
-
+TEST_F(TCPSourceTest, TCPSourceBufferSizeFromSocketNesFormatPrint)
+{
     Yaml::Node sourceConfiguration;
     std::string yaml = R"(
 logicalSourceName: tcpsource
@@ -497,16 +519,8 @@ configuration:
                       ->addField("auction", BasicType::UINT64)
                       ->addField("datetime", BasicType::UINT64)
                       ->addField("price", BasicType::FLOAT64);
-    auto tcpSource = createTCPSource(schema,
-                                     bufferManager,
-                                     queryManager,
-                                     tcpSourceType,
-                                     OPERATORID,
-                                     ORIGINID,
-                                     1,
-                                     NUMSOURCELOCALBUFFERS,
-                                     "tcp-source",
-                                     SUCCESSORS);
+    auto tcpSource = createTCPSource(
+        schema, bufferManager, queryManager, tcpSourceType, OPERATORID, ORIGINID, 1, NUMSOURCELOCALBUFFERS, "tcp-source", SUCCESSORS);
 
     std::string expected =
         R"(TCPSOURCE(SCHEMA(timestamp:INTEGER(64 bits) bidder:INTEGER(64 bits) auction:INTEGER(64 bits) datetime:INTEGER(64 bits) price:Float(64 bits)), TCPSourceType => {
@@ -527,12 +541,14 @@ bytesUsedForSocketBufferSizeTransfer: 8
 
     size_t total_number_of_buffers = 100;
     std::vector<char> data;
-    for (size_t number_of_buffers = 0; number_of_buffers < total_number_of_buffers; number_of_buffers++) {
+    for (size_t number_of_buffers = 0; number_of_buffers < total_number_of_buffers; number_of_buffers++)
+    {
         auto buffer = bufferManager->getBufferBlocking();
         auto dynBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         buffer.setNumberOfTuples(dynBuffer.getCapacity());
         uint64_t i = 0;
-        for (auto tuple : dynBuffer) {
+        for (auto tuple : dynBuffer)
+        {
             tuple[0].write<uint64_t>(i);
             tuple[1].write<uint64_t>(i);
             tuple[2].write<uint64_t>(i);
@@ -554,18 +570,20 @@ bytesUsedForSocketBufferSizeTransfer: 8
     ASSERT_EQ(get_port(), 9090);
 
     uint32_t i = 0;
-    while (true) {
+    while (true)
+    {
         auto buffer = bufferManager->getBufferBlocking();
         auto dynamicBuffer = Runtime::MemoryLayouts::TestTupleBuffer(
-            Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize()),
-            buffer);
+            Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize()), buffer);
         std::dynamic_pointer_cast<TCPSource>(tcpSource)->fillBuffer(dynamicBuffer);
 
-        if (buffer.getNumberOfTuples() == 0) {
+        if (buffer.getNumberOfTuples() == 0)
+        {
             break;
         }
 
-        for (const auto& tuple : dynamicBuffer) {
+        for (const auto& tuple : dynamicBuffer)
+        {
             ASSERT_EQ(tuple[0].read<uint64_t>(), i % dynamicBuffer.getCapacity());
             ASSERT_EQ(tuple[1].read<uint64_t>(), i % dynamicBuffer.getCapacity());
             ASSERT_EQ(tuple[2].read<uint64_t>(), i % dynamicBuffer.getCapacity());
@@ -581,4 +599,4 @@ bytesUsedForSocketBufferSizeTransfer: 8
     ASSERT_EQ(i, total_number_of_buffers * tupleInBuffer);
 }
 
-}// namespace NES
+} // namespace NES

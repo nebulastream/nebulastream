@@ -12,8 +12,6 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -25,17 +23,23 @@
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/DumpHandler/DumpContext.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class ChangeLogTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class ChangeLogTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ChangeLogTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ChangeLogTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
@@ -51,7 +55,7 @@ class ChangeLogTest : public Testing::BaseUnitTest {
         sinkOp2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     }
 
-  protected:
+protected:
     DumpContextPtr dumpContext;
 
     ExpressionNodePtr pred1;
@@ -67,8 +71,8 @@ class ChangeLogTest : public Testing::BaseUnitTest {
 };
 
 //Insert and fetch change log entry
-TEST_F(ChangeLogTest, InsertAndFetchChangeLogEntry) {
-
+TEST_F(ChangeLogTest, InsertAndFetchChangeLogEntry)
+{
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -90,8 +94,8 @@ TEST_F(ChangeLogTest, InsertAndFetchChangeLogEntry) {
 }
 
 //Insert and fetch change log entries
-TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
-
+TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries)
+{
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -127,8 +131,8 @@ TEST_F(ChangeLogTest, InsertAndFetchMultipleChangeLogEntries) {
 }
 
 //Insert and fetch change log entries
-TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
-
+TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime)
+{
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -203,8 +207,8 @@ TEST_F(ChangeLogTest, UpdateChangeLogProcessingTime) {
  * Sink 1 ---------------                 --- Source 1
  *
  */
-TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyOverlappingChangeLogs) {
-
+TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyOverlappingChangeLogs)
+{
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -248,8 +252,8 @@ TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyOverlappingChangeLogs) {
  * Sink 1 ---------------                 --- Source 1
  *
  */
-TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyNonOverlappingChangeLogs) {
-
+TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyNonOverlappingChangeLogs)
+{
     // Compute Plan
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
@@ -288,4 +292,4 @@ TEST_F(ChangeLogTest, PerformLogCompactionForPartiallyNonOverlappingChangeLogs) 
     EXPECT_EQ(1, actualDownstreamOperatorsNext.size());
     EXPECT_EQ(sinkOp1, (*actualDownstreamOperatorsNext.begin()));
 }
-}// namespace NES
+} // namespace NES

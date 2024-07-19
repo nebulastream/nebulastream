@@ -13,18 +13,33 @@
 */
 #include <Statistics/Statistic.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 Statistic::~Statistic() = default;
 
-Windowing::TimeMeasure Statistic::getStartTs() const { return startTs; }
+Windowing::TimeMeasure Statistic::getStartTs() const
+{
+    return startTs;
+}
 
-Windowing::TimeMeasure Statistic::getEndTs() const { return endTs; }
+Windowing::TimeMeasure Statistic::getEndTs() const
+{
+    return endTs;
+}
 
-uint64_t Statistic::getObservedTuples() const { return observedTuples; }
+uint64_t Statistic::getObservedTuples() const
+{
+    return observedTuples;
+}
 
-bool Statistic::operator==(const Statistic& other) const { return this->equal(other); }
+bool Statistic::operator==(const Statistic& other) const
+{
+    return this->equal(other);
+}
 
 Statistic::Statistic(const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t observedTuples)
-    : startTs(startTs), endTs(endTs), observedTuples(observedTuples) {}
-}// namespace NES::Statistic
+    : startTs(startTs), endTs(endTs), observedTuples(observedTuples)
+{
+}
+} // namespace NES::Statistic

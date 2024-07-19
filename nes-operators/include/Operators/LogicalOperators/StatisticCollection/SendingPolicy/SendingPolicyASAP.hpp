@@ -16,7 +16,8 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICYASAP_HPP_
 
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 // defines for the sending policies. This way, we reduce the number of ()
 #define SENDING_ASAP(StatisticDataCodec) SendingPolicyASAP::create(StatisticDataCodec)
@@ -24,8 +25,9 @@ namespace NES::Statistic {
 /**
  * @brief Represents a sending policy, where a created statistic is send ASAP to the store
  */
-class SendingPolicyASAP : public SendingPolicy {
-  public:
+class SendingPolicyASAP : public SendingPolicy
+{
+public:
     /**
      * @brief Creates a string representation
      * @return std::string
@@ -45,9 +47,9 @@ class SendingPolicyASAP : public SendingPolicy {
      */
     static SendingPolicyPtr create(StatisticDataCodec sinkDataCodec);
 
-  private:
+private:
     explicit SendingPolicyASAP(StatisticDataCodec sinkDataCodec);
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICYASAP_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICYASAP_HPP_

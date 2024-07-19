@@ -19,13 +19,15 @@
 #include <string>
 #include <vector>
 
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class Node : public std::enable_shared_from_this<Node> {
-  public:
+class Node : public std::enable_shared_from_this<Node>
+{
+public:
     Node();
     virtual ~Node() = default;
 
@@ -183,9 +185,11 @@ class Node : public std::enable_shared_from_this<Node> {
      * @tparam NodeType
      * @return bool true if node is of NodeType
      */
-    template<class NodeType>
-    bool instanceOf() {
-        if (dynamic_cast<NodeType*>(this)) {
+    template <class NodeType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<NodeType*>(this))
+        {
             return true;
         }
         return false;
@@ -196,13 +200,15 @@ class Node : public std::enable_shared_from_this<Node> {
     * @tparam NodeType
     * @return returns a shared pointer of the NodeType
     */
-    template<class NodeType>
-    std::shared_ptr<NodeType> as() {
-        if (instanceOf<NodeType>()) {
+    template <class NodeType>
+    std::shared_ptr<NodeType> as()
+    {
+        if (instanceOf<NodeType>())
+        {
             return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
         }
-        throw std::logic_error("Node:: we performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(NodeType).name());
+        throw std::logic_error(
+            "Node:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(NodeType).name());
     }
 
     /**
@@ -210,8 +216,9 @@ class Node : public std::enable_shared_from_this<Node> {
      * @tparam NodeType
      * @return returns a shared pointer of the NodeType or nullptr if the type can't be casted.
      */
-    template<class NodeType>
-    std::shared_ptr<NodeType> as_if() {
+    template <class NodeType>
+    std::shared_ptr<NodeType> as_if()
+    {
         return std::dynamic_pointer_cast<NodeType>(this->shared_from_this());
     }
 
@@ -220,8 +227,9 @@ class Node : public std::enable_shared_from_this<Node> {
      * @tparam NodeType
      * @return vector of nodes
      */
-    template<class NodeType>
-    std::vector<std::shared_ptr<NodeType>> getNodesByType() {
+    template <class NodeType>
+    std::vector<std::shared_ptr<NodeType>> getNodesByType()
+    {
         std::vector<std::shared_ptr<NodeType>> vector;
         getNodesByTypeHelper<NodeType>(vector);
         return vector;
@@ -332,7 +340,7 @@ class Node : public std::enable_shared_from_this<Node> {
 
     friend std::ostream& operator<<(std::ostream& os, const NodePtr& node);
 
-  protected:
+protected:
     /**
      * @brief the parents of this node. There is no equal nodes
      *        in this vector
@@ -344,16 +352,19 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     std::vector<NodePtr> children{};
 
-  private:
+private:
     /**
     * @brief helper function of getSpatialType() function
     */
-    template<class NodeType>
-    void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes) {
-        if (this->instanceOf<NodeType>()) {
+    template <class NodeType>
+    void getNodesByTypeHelper(std::vector<std::shared_ptr<NodeType>>& foundNodes)
+    {
+        if (this->instanceOf<NodeType>())
+        {
             foundNodes.push_back(this->as<NodeType>());
         }
-        for (auto& successor : this->children) {
+        for (auto& successor : this->children)
+        {
             successor->getNodesByTypeHelper(foundNodes);
         }
     };
@@ -389,10 +400,8 @@ class Node : public std::enable_shared_from_this<Node> {
     /**
      * @brief helper function of getAndFlattenAllChildren() function
      */
-    void getAndFlattenAllChildrenHelper(NodePtr const& node,
-                                        std::vector<NodePtr>& allChildren,
-                                        NodePtr const& excludedNode,
-                                        bool allowDuplicate);
+    void getAndFlattenAllChildrenHelper(
+        NodePtr const& node, std::vector<NodePtr>& allChildren, NodePtr const& excludedNode, bool allowDuplicate);
 
     /**
      * @brief helper function of cycle detector
@@ -414,6 +423,6 @@ class Node : public std::enable_shared_from_this<Node> {
      */
     std::string stackTrace;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_NODES_NODE_HPP_
+#endif // NES_COMMON_INCLUDE_NODES_NODE_HPP_

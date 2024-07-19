@@ -16,7 +16,8 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 
 // Forward declaration
 class PagedVectorRefIter;
@@ -25,8 +26,9 @@ class PagedVectorRefIter;
  * @brief This is a nautilus wrapper for the sequential data structure.
  * It wraps a memref to the underling sequential and provides access methods.
  */
-class PagedVectorRef {
-  public:
+class PagedVectorRef
+{
+public:
     /**
      * @brief Constructs the wrapper.
      * @param pagedVectorRef memref to the list
@@ -103,14 +105,15 @@ class PagedVectorRef {
      */
     bool operator==(const PagedVectorRef& other) const;
 
-  private:
+private:
     Value<MemRef> getCurrentPage();
     Value<MemRef> pagedVectorRef;
     uint64_t entrySize;
 };
 
-class PagedVectorRefIter {
-  public:
+class PagedVectorRefIter
+{
+public:
     friend class PagedVectorRef;
 
     /**
@@ -164,7 +167,7 @@ class PagedVectorRefIter {
      */
     bool operator!=(const PagedVectorRefIter& other) const;
 
-  private:
+private:
     /**
      * @brief Sets the position with the newValue
      * @param newValue
@@ -175,6 +178,6 @@ class PagedVectorRefIter {
     PagedVectorRef pagedVectorRef;
 };
 
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_

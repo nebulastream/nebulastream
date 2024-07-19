@@ -21,14 +21,16 @@
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Nautilus value type for variable length text values.
  * The value type is physically represented by a TextValue.
  */
-class Text final : public Nautilus::Any {
-  public:
+class Text final : public Nautilus::Any
+{
+public:
     static const inline auto type = TypeIdentifier::create<Text>();
 
     /**
@@ -209,13 +211,14 @@ class Text final : public Nautilus::Any {
 
     AnyPtr copy() override;
 
-  private:
+private:
     const TypedRef<TextValue> rawReference;
 };
 
-template<typename T>
-    requires std::is_same_v<TextValue*, T>
-auto createDefault() {
+template <typename T>
+requires std::is_same_v<TextValue*, T>
+auto createDefault()
+{
     auto textRef = TypedRef<TextValue>();
     auto text = Value<Text>(std::make_unique<Text>(textRef));
     return text;
@@ -223,5 +226,5 @@ auto createDefault() {
 
 Value<Text> transformReturnValues(TextValue* value);
 
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_

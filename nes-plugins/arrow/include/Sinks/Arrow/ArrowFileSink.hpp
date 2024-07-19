@@ -15,22 +15,24 @@
 #ifndef NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_
 #define NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_
 
+#include <cstdint>
+#include <memory>
+#include <string>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <arrow/csv/type_fwd.h>
 #include <arrow/io/type_fwd.h>
 #include <arrow/ipc/type_fwd.h>
 #include <arrow/type_fwd.h>
-#include <cstdint>
-#include <memory>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this class implements the File sink that uses arrow.
  */
-class ArrowFileSink : public SinkMedium {
-  public:
+class ArrowFileSink : public SinkMedium
+{
+public:
     /**
      * @brief constructor that creates an empty file sink using a schema
      * @param schema of the print sink
@@ -39,14 +41,15 @@ class ArrowFileSink : public SinkMedium {
      * @param modus of writting (overwrite or append)
      * @param numberOfOrigins: number of origins of a given query
      */
-    explicit ArrowFileSink(SinkFormatPtr format,
-                           Runtime::NodeEnginePtr nodeEngine,
-                           uint32_t numOfProducers,
-                           const std::string& filePath,
-                           bool append,
-                           SharedQueryId sharedQueryId,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
-                           uint64_t numberOfOrigins = 1);
+    explicit ArrowFileSink(
+        SinkFormatPtr format,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        const std::string& filePath,
+        bool append,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins = 1);
 
     /**
      * @brief dtor
@@ -101,7 +104,7 @@ class ArrowFileSink : public SinkMedium {
      */
     std::string getAppendAsString() const;
 
-  protected:
+protected:
     std::string filePath;
     std::ofstream outputFile;
     bool append{false};
@@ -120,11 +123,12 @@ class ArrowFileSink : public SinkMedium {
      * @param a tuple buffers pointer
      * @return bool indicating if the write was complete
      */
-    arrow::Status openArrowFile(std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
-                                std::shared_ptr<arrow::Schema> arrowSchema,
-                                std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
+    arrow::Status openArrowFile(
+        std::shared_ptr<arrow::io::FileOutputStream> arrowFileOutputStream,
+        std::shared_ptr<arrow::Schema> arrowSchema,
+        std::shared_ptr<arrow::ipc::RecordBatchWriter> arrowWriter);
 };
 using ArrowFileSinkPtr = std::shared_ptr<ArrowFileSink>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFILESINK_HPP_

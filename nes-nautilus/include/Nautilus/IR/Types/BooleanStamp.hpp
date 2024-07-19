@@ -13,12 +13,14 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_
-#include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
-namespace NES::Nautilus::IR::Types {
+#include <Nautilus/IR/Types/Stamp.hpp>
+namespace NES::Nautilus::IR::Types
+{
 
-class BooleanStamp : public Stamp {
-  public:
+class BooleanStamp : public Stamp
+{
+public:
     static const inline auto type = TypeIdentifier::create<BooleanStamp>();
     /**
      * @brief Constructor to create a boolean stamp.
@@ -27,6 +29,6 @@ class BooleanStamp : public Stamp {
     const std::string toString() const override;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_BOOLEANSTAMP_HPP_

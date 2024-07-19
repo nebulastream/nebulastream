@@ -17,14 +17,16 @@
 #include <cstdlib>
 #include <memory>
 #include <ostream>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief State, to represent one or more aggregation values.
  * This is a wrapper around a small chuck of memory, which is dynamically allocated.
  */
-class State {
-  public:
+class State
+{
+public:
     // Align memory chunk to STATE_ALIGNMENT
     static constexpr uint64_t STATE_ALIGNMENT = 8;
 
@@ -47,8 +49,9 @@ class State {
  * @brief A global slice that contains key value pairs for a specific interval of [start, end).
  * The aggregate value is stored in the State object.
  */
-class NonKeyedSlice {
-  public:
+class NonKeyedSlice
+{
+public:
     /**
      * @brief Constructor to create a new slice that covers a specific range between stat and end.
      * @param entrySize entry size of the content of a slice
@@ -86,12 +89,12 @@ class NonKeyedSlice {
 
     ~NonKeyedSlice();
 
-  private:
+private:
     uint64_t start;
     uint64_t end;
     std::unique_ptr<State> state;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICE_HPP_

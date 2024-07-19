@@ -17,12 +17,14 @@
 
 #include <Nautilus/Interface/DataTypes/BuiltIns/BuiltInVariable.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 class FieldAccess;
 
-class BlockIdx : public BuiltInVariable {
-  public:
+class BlockIdx : public BuiltInVariable
+{
+public:
     static const inline auto type = TypeIdentifier::create<BlockIdx>();
 
     BlockIdx();
@@ -41,6 +43,6 @@ class BlockIdx : public BuiltInVariable {
     std::shared_ptr<FieldAccess> x();
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_BLOCKIDX_HPP_
+#endif // NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_BLOCKIDX_HPP_

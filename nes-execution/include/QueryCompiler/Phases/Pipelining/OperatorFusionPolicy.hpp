@@ -15,14 +15,16 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORFUSIONPOLICY_HPP_
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Policy which determines if an particular operator can be fused with other operators in a pipeline.
  * A particular policy can make this secession based on rules or costs.
  */
-class OperatorFusionPolicy {
-  public:
+class OperatorFusionPolicy
+{
+public:
     virtual ~OperatorFusionPolicy() = default;
     /**
      * @brief Determines if an particular operator can be fused with other operators.
@@ -31,6 +33,6 @@ class OperatorFusionPolicy {
      */
     virtual bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) = 0;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORFUSIONPOLICY_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORFUSIONPOLICY_HPP_

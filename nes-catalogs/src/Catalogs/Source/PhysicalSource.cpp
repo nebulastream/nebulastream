@@ -11,34 +11,43 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <sstream>
+#include <utility>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/Operator.hpp>
-#include <sstream>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-PhysicalSource::PhysicalSource(std::string logicalSourceName,
-                               std::string physicalSourceName,
-                               PhysicalSourceTypePtr physicalSourceType)
-    : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-      physicalSourceType(std::move(physicalSourceType)), statisticId(getNextStatisticId()) {}
+PhysicalSource::PhysicalSource(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType)
+    : logicalSourceName(std::move(logicalSourceName))
+    , physicalSourceName(std::move(physicalSourceName))
+    , physicalSourceType(std::move(physicalSourceType))
+    , statisticId(getNextStatisticId())
+{
+}
 
-PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType) {
+PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType)
+{
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
     auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
     return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, physicalSourceName, std::move(physicalSourceType)));
 }
 
-PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName) {
+PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName)
+{
     return std::make_shared<PhysicalSource>(PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), nullptr));
 }
 
-StatisticId PhysicalSource::getStatisticId() const { return statisticId; }
+StatisticId PhysicalSource::getStatisticId() const
+{
+    return statisticId;
+}
 
-std::string PhysicalSource::toString() {
+std::string PhysicalSource::toString()
+{
     std::stringstream ss;
     ss << "PhysicalSource Name: " << physicalSourceName;
     ss << "LogicalSource Name" << logicalSourceName;
@@ -46,9 +55,18 @@ std::string PhysicalSource::toString() {
     return ss.str();
 }
 
-const std::string& PhysicalSource::getLogicalSourceName() const { return logicalSourceName; }
+const std::string& PhysicalSource::getLogicalSourceName() const
+{
+    return logicalSourceName;
+}
 
-const std::string& PhysicalSource::getPhysicalSourceName() const { return physicalSourceName; }
+const std::string& PhysicalSource::getPhysicalSourceName() const
+{
+    return physicalSourceName;
+}
 
-const PhysicalSourceTypePtr& PhysicalSource::getPhysicalSourceType() const { return physicalSourceType; }
-}// namespace NES
+const PhysicalSourceTypePtr& PhysicalSource::getPhysicalSourceType() const
+{
+    return physicalSourceType;
+}
+} // namespace NES

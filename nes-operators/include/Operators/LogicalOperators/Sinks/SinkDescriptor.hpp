@@ -17,7 +17,8 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
@@ -25,9 +26,9 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 /**
  * @brief This class is used for representing the description of a sink operator
  */
-class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
-
-  public:
+class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor>
+{
+public:
     /**
      * @brief Ctor to create a new sink descriptor
      * @param numberOfOrigins: number of origins of a given query
@@ -45,9 +46,11 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     * @tparam SinkType
     * @return bool true if node is of SinkMedium
     */
-    template<class SinkType>
-    bool instanceOf() const {
-        if (dynamic_cast<const SinkType*>(this)) {
+    template <class SinkType>
+    bool instanceOf() const
+    {
+        if (dynamic_cast<const SinkType*>(this))
+        {
             return true;
         }
         return false;
@@ -70,31 +73,35 @@ class SinkDescriptor : public std::enable_shared_from_this<SinkDescriptor> {
     * @tparam NodeType
     * @return returns a shared pointer of the NodeType
     */
-    template<class SinkType>
-    std::shared_ptr<SinkType> as() const {
-        if (instanceOf<SinkType>()) {
+    template <class SinkType>
+    std::shared_ptr<SinkType> as() const
+    {
+        if (instanceOf<SinkType>())
+        {
             return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
         }
         throw std::bad_cast();
     }
-    template<class SinkType>
-    std::shared_ptr<SinkType> as() {
+    template <class SinkType>
+    std::shared_ptr<SinkType> as()
+    {
         return std::const_pointer_cast<SinkType>(const_cast<const SinkDescriptor*>(this)->as<const SinkType>());
     }
 
-    template<class SinkType>
-    std::shared_ptr<SinkType> as_if() {
+    template <class SinkType>
+    std::shared_ptr<SinkType> as_if()
+    {
         return std::dynamic_pointer_cast<SinkType>(this->shared_from_this());
     }
 
     virtual std::string toString() const = 0;
     [[nodiscard]] virtual bool equal(SinkDescriptorPtr const& other) = 0;
 
-  protected:
+protected:
     uint64_t numberOfOrigins;
     bool addTimestamp;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKDESCRIPTOR_HPP_

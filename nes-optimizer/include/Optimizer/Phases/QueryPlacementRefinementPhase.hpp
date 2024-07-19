@@ -15,15 +15,17 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTREFINEMENTPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTREFINEMENTPHASE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <memory>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class QueryPlacementRefinementPhase;
 using QueryPlacementRefinementPhasePtr = std::shared_ptr<QueryPlacementRefinementPhase>;
@@ -31,8 +33,9 @@ using QueryPlacementRefinementPhasePtr = std::shared_ptr<QueryPlacementRefinemen
 /**
  * @brief This phase is responsible for refinement of the query plan
  */
-class QueryPlacementRefinementPhase {
-  public:
+class QueryPlacementRefinementPhase
+{
+public:
     static QueryPlacementRefinementPhasePtr create(GlobalExecutionPlanPtr globalPlan);
 
     /**
@@ -42,10 +45,10 @@ class QueryPlacementRefinementPhase {
      */
     static bool execute(QueryId queryId);
 
-  private:
+private:
     explicit QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan);
 
     GlobalExecutionPlanPtr globalExecutionPlan;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTREFINEMENTPHASE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_QUERYPLACEMENTREFINEMENTPHASE_HPP_

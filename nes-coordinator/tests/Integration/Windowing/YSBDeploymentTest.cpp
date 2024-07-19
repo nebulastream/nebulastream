@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
@@ -22,16 +21,20 @@
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class YSBDeploymentTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class YSBDeploymentTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("YSBDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup YSBDeploymentTest test class.");
     }
@@ -40,14 +43,15 @@ class YSBDeploymentTest : public Testing::BaseIntegrationTest {
 /**
  * @brief test ysb query deployment
  */
-TEST_F(YSBDeploymentTest, testYSBWindow) {
+TEST_F(YSBDeploymentTest, testYSBWindow)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.queryCompiler.queryCompilerType = QueryCompilation::QueryCompilerType::NAUTILUS_QUERY_COMPILER;
     NES_INFO("YSBDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     auto input = Schema::create()
                      ->addField("ysb$user_id", BasicType::UINT64)
@@ -81,18 +85,16 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
                          ->addField("ysb$d3", BasicType::UINT32)
                          ->addField("ysb$d4", BasicType::UINT16);
 
-    auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-        struct __attribute__((packed)) YsbRecord {
+    auto func = [](NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)
+    {
+        struct __attribute__((packed)) YsbRecord
+        {
             YsbRecord() = default;
-            YsbRecord(uint64_t userId,
-                      uint64_t pageId,
-                      uint64_t campaignId,
-                      uint64_t adType,
-                      uint64_t eventType,
-                      uint64_t currentMs,
-                      uint64_t ip)
-                : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType),
-                  currentMs(currentMs), ip(ip) {}
+            YsbRecord(
+                uint64_t userId, uint64_t pageId, uint64_t campaignId, uint64_t adType, uint64_t eventType, uint64_t currentMs, uint64_t ip)
+                : userId(userId), pageId(pageId), campaignId(campaignId), adType(adType), eventType(eventType), currentMs(currentMs), ip(ip)
+            {
+            }
 
             uint64_t userId{};
             uint64_t pageId{};
@@ -108,7 +110,8 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
             uint32_t dummy3{0};
             uint16_t dummy4{0};
 
-            YsbRecord(const YsbRecord& rhs) {
+            YsbRecord(const YsbRecord& rhs)
+            {
                 userId = rhs.userId;
                 pageId = rhs.pageId;
                 campaignId = rhs.campaignId;
@@ -117,19 +120,20 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
                 currentMs = rhs.currentMs;
                 ip = rhs.ip;
             }
-            [[nodiscard]] std::string toString() const {
-                return "YsbRecord(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId)
-                    + ", campaignId=" + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType="
-                    + std::to_string(eventType) + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
+            [[nodiscard]] std::string toString() const
+            {
+                return "YsbRecord(userId=" + std::to_string(userId) + ", pageId=" + std::to_string(pageId) + ", campaignId="
+                    + std::to_string(campaignId) + ", adType=" + std::to_string(adType) + ", eventType=" + std::to_string(eventType)
+                    + ", currentMs=" + std::to_string(currentMs) + ", ip=" + std::to_string(ip);
             }
         };
 
         auto* records = buffer.getBuffer<YsbRecord>();
-        auto ts =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-                .count();
+        auto ts
+            = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
-        for (auto u = 0u; u < numberOfTuplesToProduce; ++u) {
+        for (auto u = 0u; u < numberOfTuplesToProduce; ++u)
+        {
             //                    memset(&records, 0, sizeof(YsbRecord));
             records[u].userId = 1;
             records[u].pageId = 0;
@@ -161,8 +165,7 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
                      .apply(Sum(Attribute("user_id")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -182,4 +185,4 @@ TEST_F(YSBDeploymentTest, testYSBWindow) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("YSBDeploymentTest: Test finished");
 }
-}// namespace NES
+} // namespace NES

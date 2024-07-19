@@ -14,11 +14,14 @@
 
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowState.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-KeyedThresholdWindowState::KeyedThresholdWindowState(const NES::Runtime::Execution::Operators::KeyedThresholdWindowState& other) {
+KeyedThresholdWindowState::KeyedThresholdWindowState(const NES::Runtime::Execution::Operators::KeyedThresholdWindowState& other)
+{
     aggregationValues.reserve(other.aggregationValues.size());
-    for (const auto& value : other.aggregationValues) {
+    for (const auto& value : other.aggregationValues)
+    {
         aggregationValues.push_back(std::make_unique<Aggregation::AggregationValue>(*value));
     }
     recordCount = other.recordCount;
@@ -27,4 +30,4 @@ KeyedThresholdWindowState::KeyedThresholdWindowState(const NES::Runtime::Executi
 
 KeyedThresholdWindowState::KeyedThresholdWindowState() = default;
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

@@ -15,24 +15,26 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFOPERATORHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFOPERATORHANDLER_HPP_
 
-#include <Execution/Aggregation/AggregationValue.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
-#include <Util/JNI/JNI.hpp>
-#include <Util/JNI/JNIUtils.hpp>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <utility>
 #include <vector>
+#include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Operators/Relational/JavaUDF/JavaUDFUtils.hpp>
+#include <Runtime/Execution/OperatorHandler.hpp>
+#include <Util/JNI/JNI.hpp>
+#include <Util/JNI/JNIUtils.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This handler stores states of a MapJavaUDF operator during its execution.
  */
-class JavaUDFOperatorHandler : public OperatorHandler {
-  public:
+class JavaUDFOperatorHandler : public OperatorHandler
+{
+public:
     /**
      * @brief This creates a JavaUDFOperatorHandler
      * @param className The java class name containing the java udf
@@ -45,15 +47,16 @@ class JavaUDFOperatorHandler : public OperatorHandler {
      * @param udfOutputSchema The output schema of the Java UDF
      * @param javaPath Optional: path to jar files to load classes from into JVM
      */
-    explicit JavaUDFOperatorHandler(const std::string& className,
-                                    const std::string& methodName,
-                                    const std::string& inputClassName,
-                                    const std::string& outputClassName,
-                                    const jni::JavaUDFByteCodeList& byteCodeList,
-                                    const jni::JavaSerializedInstance& serializedInstance,
-                                    SchemaPtr udfInputSchema,
-                                    SchemaPtr udfOutputSchema,
-                                    const std::optional<std::string>& javaPath);
+    explicit JavaUDFOperatorHandler(
+        const std::string& className,
+        const std::string& methodName,
+        const std::string& inputClassName,
+        const std::string& outputClassName,
+        const jni::JavaUDFByteCodeList& byteCodeList,
+        const jni::JavaSerializedInstance& serializedInstance,
+        SchemaPtr udfInputSchema,
+        SchemaPtr udfOutputSchema,
+        const std::optional<std::string>& javaPath);
 
     /**
      * @brief Initializes the operator handler and the jvm if required.
@@ -144,7 +147,7 @@ class JavaUDFOperatorHandler : public OperatorHandler {
 
     ~JavaUDFOperatorHandler();
 
-  private:
+private:
     /** @brief Setup a custom class loader for this UDF. */
     void setupClassLoader();
     /** @brief Inject classes of this UDF into the JVM. */
@@ -173,5 +176,5 @@ class JavaUDFOperatorHandler : public OperatorHandler {
     jni::jmethodID loadClassMethod;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFOPERATORHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFOPERATORHANDLER_HPP_

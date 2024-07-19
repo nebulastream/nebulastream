@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
@@ -22,19 +22,23 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-namespace NES::Nautilus {
+#include <BaseIntegrationTest.hpp>
+namespace NES::Nautilus
+{
 
-class ListTypeTest : public Testing::BaseUnitTest {
-  public:
+class ListTypeTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ListTypeTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup ListTypeTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
@@ -47,7 +51,8 @@ class ListTypeTest : public Testing::BaseUnitTest {
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
-TEST_F(ListTypeTest, createListTest) {
+TEST_F(ListTypeTest, createListTest)
+{
     auto list = ListValue<int32_t>::create(10);
     auto listRef = TypedRef<ListValue<int32_t>>(list);
     auto valueList = Value<TypedList<Int32>>(TypedList<Int32>(listRef));
@@ -61,24 +66,28 @@ TEST_F(ListTypeTest, createListTest) {
     ASSERT_TRUE(isList);
 }
 
-TEST_F(ListTypeTest, createListTypeFromArray) {
+TEST_F(ListTypeTest, createListTypeFromArray)
+{
     int32_t array[6] = {0, 1, 2, 3, 4, 5};
     auto list = ListValue<int32_t>::create(array, 6);
-    for (auto i = 0; i < 6; i++) {
+    for (auto i = 0; i < 6; i++)
+    {
         ASSERT_EQ(list->data()[i], i);
     }
     // free list value explicitly here.
     list->~ListValue<int32_t>();
 }
 
-TEST_F(ListTypeTest, concatTest) {
+TEST_F(ListTypeTest, concatTest)
+{
     int32_t array[6] = {0, 1, 2, 3, 4, 5};
     auto list1 = ListValue<int32_t>::create(array, 6);
     auto list2 = ListValue<int32_t>::create(array, 6);
 
     auto result = list1->concat(list2);
     ASSERT_EQ(result->length(), 12);
-    for (int32_t i = 0; i < 12; i++) {
+    for (int32_t i = 0; i < 12; i++)
+    {
         ASSERT_EQ(result->data()[i], i % 6);
     }
     // free each list value explicitly here.
@@ -87,20 +96,23 @@ TEST_F(ListTypeTest, concatTest) {
     result->~ListValue<int32_t>();
 }
 
-TEST_F(ListTypeTest, prepend) {
+TEST_F(ListTypeTest, prepend)
+{
     int32_t array[7] = {1, 2, 3, 4, 5, 6, 7};
     auto list1 = ListValue<int32_t>::create(array, 7);
     auto result = list1->prepend(10);
     ASSERT_EQ(result->data()[0], 10);
     ASSERT_EQ(result->length(), 8);
-    for (int32_t i = 1; i < 8; i++) {
+    for (int32_t i = 1; i < 8; i++)
+    {
         EXPECT_EQ(result->data()[i], i);
     }
     list1->~ListValue<int32_t>();
     result->~ListValue<int32_t>();
 }
 
-TEST_F(ListTypeTest, listPosition) {
+TEST_F(ListTypeTest, listPosition)
+{
     int32_t array[6] = {0, 1, 2, 3, 4, 5};
     auto list1 = ListValue<int32_t>::create(array, 6);
     ASSERT_EQ(list1->listPosition(2), 2);
@@ -111,7 +123,8 @@ TEST_F(ListTypeTest, listPosition) {
     list1->~ListValue<int32_t>();
 }
 
-TEST_F(ListTypeTest, reverse) {
+TEST_F(ListTypeTest, reverse)
+{
     int32_t array[6] = {0, 1, 2, 3, 4, 5};
     auto list1 = ListValue<int32_t>::create(array, 6);
     auto result = list1->revers();
@@ -127,12 +140,14 @@ TEST_F(ListTypeTest, reverse) {
     result->~ListValue<int32_t>();
 }
 
-TEST_F(ListTypeTest, appendTest) {
+TEST_F(ListTypeTest, appendTest)
+{
     int32_t array[6] = {0, 1, 2, 3, 4, 5};
     auto list1 = ListValue<int32_t>::create(array, 6);
     auto result = list1->append(6);
     ASSERT_EQ(result->length(), 7);
-    for (int32_t i = 0; i < 7; i++) {
+    for (int32_t i = 0; i < 7; i++)
+    {
         ASSERT_EQ(result->data()[i], i);
     }
     // free each list value explicitly here.
@@ -140,7 +155,8 @@ TEST_F(ListTypeTest, appendTest) {
     result->~ListValue<int32_t>();
 }
 
-TEST_F(ListTypeTest, containsTest) {
+TEST_F(ListTypeTest, containsTest)
+{
     int32_t array[6] = {0, 1, 2, 3, 4, 5};
     auto list1 = ListValue<int32_t>::create(array, 6);
     ASSERT_EQ(list1->contains(3), true);
@@ -149,13 +165,15 @@ TEST_F(ListTypeTest, containsTest) {
     list1->~ListValue<int32_t>();
 }
 
-TEST_F(ListTypeTest, sortTest) {
+TEST_F(ListTypeTest, sortTest)
+{
     int32_t array[6] = {6, 3, 5, 1, 4, 2};
     auto list1 = ListValue<int32_t>::create(array, 6);
 
     auto result = list1->sort();
     ASSERT_EQ(result->length(), 6);
-    for (int32_t i = 1; i < 6; i++) {
+    for (int32_t i = 1; i < 6; i++)
+    {
         EXPECT_EQ(result->data()[i - 1], i);
     }
     // free each list value explicitly here.
@@ -163,4 +181,4 @@ TEST_F(ListTypeTest, sortTest) {
     result->~ListValue<int32_t>();
 }
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

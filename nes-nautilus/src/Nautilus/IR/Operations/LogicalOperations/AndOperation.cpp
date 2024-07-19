@@ -14,20 +14,33 @@
 
 #include <Nautilus/IR/Operations/LogicalOperations/AndOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
 AndOperation::AndOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::AndOp, identifier, Types::StampFactory::createBooleanStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {
+    : Operation(OperationType::AndOp, identifier, Types::StampFactory::createBooleanStamp())
+    , leftInput(std::move(leftInput))
+    , rightInput(std::move(rightInput))
+{
     leftInput->addUsage(this);
     rightInput->addUsage(this);
 }
 
-std::string AndOperation::toString() {
+std::string AndOperation::toString()
+{
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " and " + getRightInput()->getIdentifier();
 }
-bool AndOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddOp; }
+bool AndOperation::classof(const Operation* Op)
+{
+    return Op->getOperationType() == OperationType::AddOp;
+}
 
-OperationPtr AndOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr AndOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::Nautilus::IR::Operations
+OperationPtr AndOperation::getLeftInput()
+{
+    return leftInput.lock();
+}
+OperationPtr AndOperation::getRightInput()
+{
+    return rightInput.lock();
+}
+} // namespace NES::Nautilus::IR::Operations

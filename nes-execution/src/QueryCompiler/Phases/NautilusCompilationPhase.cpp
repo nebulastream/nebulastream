@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -21,30 +22,37 @@
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
-#include <utility>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 NautilusCompilationPhase::NautilusCompilationPhase(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
-    : compilerOptions(compilerOptions) {}
+    : compilerOptions(compilerOptions)
+{
+}
 
-std::shared_ptr<NautilusCompilationPhase>
-NautilusCompilationPhase::create(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
+std::shared_ptr<NautilusCompilationPhase> NautilusCompilationPhase::create(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
+{
     return std::make_shared<NautilusCompilationPhase>(compilerOptions);
 }
 
-PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryPlan) {
+PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryPlan)
+{
     NES_DEBUG("Generate code for query plan {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
-    for (const auto& pipeline : queryPlan->getPipelines()) {
-        if (pipeline->isOperatorPipeline()) {
+    for (const auto& pipeline : queryPlan->getPipelines())
+    {
+        if (pipeline->isOperatorPipeline())
+        {
             apply(pipeline);
         }
     }
     return queryPlan;
 }
 
-std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions) {
-    switch (compilerOptions->getNautilusBackend()) {
+std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerOptionsPtr& compilerOptions)
+{
+    switch (compilerOptions->getNautilusBackend())
+    {
         case NautilusBackend::INTERPRETER: {
             return "PipelineInterpreter";
         };
@@ -63,25 +71,26 @@ std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerO
     }
 }
 
-OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline) {
+OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline)
+{
     auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
     auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
     Nautilus::CompilationOptions options;
-    auto identifier = fmt::format("NautilusCompilation-{}-{}-{}",
-                                  pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
-                                  pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
-                                  pipeline->getPipelineId());
+    auto identifier = fmt::format(
+        "NautilusCompilation-{}-{}-{}",
+        pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
+        pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
+        pipeline->getPipelineId());
     options.setIdentifier(identifier);
 
     // enable dump to console if the compiler options are set
-    options.setDumpToConsole(compilerOptions->getDumpMode() == DumpMode::CONSOLE
-                             || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+    options.setDumpToConsole(
+        compilerOptions->getDumpMode() == DumpMode::CONSOLE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
     // enable dump to file if the compiler options are set
-    options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE
-                          || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+    options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
     options.setProxyInlining(compilerOptions->getCompilationStrategy() == CompilationStrategy::PROXY_INLINING);
 
@@ -97,4 +106,4 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     return pipeline;
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

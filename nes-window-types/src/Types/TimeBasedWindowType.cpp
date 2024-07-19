@@ -14,30 +14,41 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/Integer.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
-TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic)
-    : timeCharacteristic(std::move(timeCharacteristic)) {}
+TimeBasedWindowType::TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic) : timeCharacteristic(std::move(timeCharacteristic))
+{
+}
 
-bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
-    if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime) {
+bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
+{
+    if (timeCharacteristic->getType() == TimeCharacteristic::Type::EventTime)
+    {
         auto fieldName = timeCharacteristic->getField()->getName();
         auto existingField = schema->getField(fieldName);
-        if (!existingField->getDataType()->isInteger()) {
+        if (!existingField->getDataType()->isInteger())
+        {
             NES_ERROR("TimeBasedWindow should use a uint for time field {}", fieldName);
             throw InvalidFieldException("TimeBasedWindow should use a uint for time field " + fieldName);
-        } else if (existingField) {
+        }
+        else if (existingField)
+        {
             timeCharacteristic->getField()->setName(existingField->getName());
             return true;
-        } else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
+        }
+        else if (fieldName == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
+        {
             return true;
-        } else {
+        }
+        else
+        {
             NES_ERROR("TimeBasedWindow using a non existing time field  {}", fieldName);
             throw InvalidFieldException("TimeBasedWindow using a non existing time field " + fieldName);
         }
@@ -45,6 +56,9 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema) {
     return true;
 }
 
-TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const { return timeCharacteristic; }
+TimeCharacteristicPtr TimeBasedWindowType::getTimeCharacteristic() const
+{
+    return timeCharacteristic;
+}
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing

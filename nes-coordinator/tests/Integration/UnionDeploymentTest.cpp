@@ -13,16 +13,18 @@
 */
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <Util/TestUtils.hpp>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class UnionDeploymentTest : public Testing::BaseIntegrationTest {
-  public:
+class UnionDeploymentTest : public Testing::BaseIntegrationTest
+{
+public:
     CSVSourceTypePtr sourceCar;
     CSVSourceTypePtr sourceTruck;
     CSVSourceTypePtr sourceRuby;
@@ -30,12 +32,14 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
     SchemaPtr schemaCarTruck;
     SchemaPtr schemaRubyDiamond;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("UnionDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup UnionDeploymentTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
 
         // Setup sources.
@@ -58,7 +62,8 @@ class UnionDeploymentTest : public Testing::BaseIntegrationTest {
 /**
  * Test deploying unionWith query with source on two different worker node using the bottom up strategy.
  */
-TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
+TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp)
+{
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
     const auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -71,7 +76,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     // Expected output the first 40 entries are car values (0,0 - 39,39), the last 40 entries are truck values (0,0 - 39,3900).
     std::stringstream expectedOutput;
-    for (uint32_t i = 0; i < 80; i++) {
+    for (uint32_t i = 0; i < 80; i++)
+    {
         bool isCarValue = i < 40;
         // Start counting from 0 again when the 40 car values were processed.
         uint32_t id = i % 40;
@@ -92,7 +98,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 /**
  * Test deploying unionWith query with source on two different worker node using the topDown strategy.
  */
-TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
+TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown)
+{
     std::string outputFilePath = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingTopDown.out";
     const auto query = Query::from("car").unionWith(Query::from("truck"));
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
@@ -105,7 +112,8 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     // Expected output the first 40 entries are car values (0,0 - 39,39), the last 40 entries are truck values (0,0 - 39,3900).
     std::stringstream expectedOutput;
-    for (uint32_t i = 0; i < 80; i++) {
+    for (uint32_t i = 0; i < 80; i++)
+    {
         bool isCarValue = i < 40;
         // Start counting from 0 again when the 40 car values were processed.
         uint32_t id = i % 40;
@@ -126,9 +134,10 @@ TEST_F(UnionDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 /**
  * Test deploying a union query with filters and sources on two different worker nodes using bottomUp strategy.
  */
-TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources) {
-    std::string outputFilePath =
-        getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
+TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
+{
+    std::string outputFilePath
+        = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
     const auto query = Query::from("ruby")
                            .filter(Attribute("id") > 4)
                            .unionWith(Query::from("diamond")
@@ -167,9 +176,10 @@ TEST_F(UnionDeploymentTest, testOneFilterPushDownWithMergeOfTwoDifferentSources)
 /**
  * Test deploying a union query with filters and sources on two different worker nodes using topDown strategy.
  */
-TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources) {
-    std::string outputFilePath =
-        getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
+TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources)
+{
+    std::string outputFilePath
+        = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
     const auto query = Query::from("ruby")
                            .filter(Attribute("value") > 3)
                            .unionWith(Query::from("diamond")
@@ -190,7 +200,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
     // The next 12 entries are the result of the second query of the unionWith statement.
     std::stringstream expectedOutput;
     uint32_t numFirstQueryValues = 18;
-    for (uint32_t i = 0; i < 29; i++) {
+    for (uint32_t i = 0; i < 29; i++)
+    {
         uint32_t id = 1;
         uint32_t value = (i % numFirstQueryValues) + 4;
         uint32_t timestamp = (i < numFirstQueryValues) ? value * 1000 : 2;
@@ -210,9 +221,10 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBott
 /**
  * Test a union query with multiple filters for both sources and two different worker nodes using the bottomUp strategy.
  */
-TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources) {
-    std::string outputFilePath =
-        getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
+TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDifferentSources)
+{
+    std::string outputFilePath
+        = getTestResourceFolder() / "testPushingTwoFiltersBelowAndTwoFiltersAlreadyAtBottomWithMergeOfTwoDifferentSources.out";
     const auto query = Query::from("ruby")
                            .map(Attribute("timestamp") = 2)
                            .filter(Attribute("id") < 4)
@@ -234,7 +246,8 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     // The next 2 entries are the result of the second query of the unionWith statement.
     std::stringstream expectedOutput;
     uint32_t numFirstQueryValues = 18;
-    for (uint32_t i = 0; i < 20; i++) {
+    for (uint32_t i = 0; i < 20; i++)
+    {
         uint32_t id = 1;
         uint32_t value = (i % numFirstQueryValues) + 4;
         uint32_t timestamp = (i < numFirstQueryValues) ? 2 : 1;
@@ -250,4 +263,4 @@ TEST_F(UnionDeploymentTest, testPushingTwoFiltersAlreadyBelowAndMergeOfTwoDiffer
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
-}// namespace NES
+} // namespace NES

@@ -15,24 +15,27 @@
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
 
 #ifdef ENABLE_KAFKA_BUILD
-#include <chrono>
-#include <cstdint>
-#include <memory>
-#include <string>
+#    include <chrono>
+#    include <cstdint>
+#    include <memory>
+#    include <string>
 
-#include <Sinks/Mediums/SinkMedium.hpp>
+#    include <Sinks/Mediums/SinkMedium.hpp>
 
-namespace cppkafka {
+namespace cppkafka
+{
 class Configuration;
 class Producer;
 class MessageBuilder;
-}// namespace cppkafka
-namespace NES {
+} // namespace cppkafka
+namespace NES
+{
 
-class KafkaSink : public SinkMedium {
+class KafkaSink : public SinkMedium
+{
     constexpr static uint64_t INVALID_PARTITION_NUMBER = -1;
 
-  public:
+public:
     /**
     * Constructor for a kafka Sink
     * @param format format of the sink
@@ -45,15 +48,16 @@ class KafkaSink : public SinkMedium {
     * @param kafkaProducerTimeout timeout how long to wait until the push fails
     * @param numberOfOrigins
     */
-    KafkaSink(SinkFormatPtr format,
-              Runtime::NodeEnginePtr nodeEngine,
-              uint32_t numOfProducers,
-              const std::string& brokers,
-              const std::string& topic,
-              SharedQueryId sharedQueryId,
-              DecomposedQueryPlanId decomposedQueryPlanId,
-              const uint64_t kafkaProducerTimeout = 10 * 1000,
-              uint64_t numberOfOrigins = 1);
+    KafkaSink(
+        SinkFormatPtr format,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        const std::string& brokers,
+        const std::string& topic,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        const uint64_t kafkaProducerTimeout = 10 * 1000,
+        uint64_t numberOfOrigins = 1);
 
     ~KafkaSink() override;
 
@@ -83,7 +87,7 @@ class KafkaSink : public SinkMedium {
     uint64_t getKafkaProducerTimeout() const;
     std::string toString() const override;
 
-  private:
+private:
     void connect();
 
     std::string brokers;
@@ -97,6 +101,6 @@ class KafkaSink : public SinkMedium {
 };
 using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
 
-}// namespace NES
-#endif// ENABLE_KAFKA_BUILD
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_
+} // namespace NES
+#endif // ENABLE_KAFKA_BUILD
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

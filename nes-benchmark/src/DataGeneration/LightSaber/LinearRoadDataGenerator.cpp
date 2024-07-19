@@ -11,21 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <fstream>
+#include <iterator>
+#include <utility>
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/LightSaber/LinarRoadDataGenerator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <fstream>
-#include <iterator>
-#include <utility>
 
-namespace NES::Benchmark::DataGeneration {
-LinearRoadDataGenerator::LinearRoadDataGenerator() : DataGenerator() {}
+namespace NES::Benchmark::DataGeneration
+{
+LinearRoadDataGenerator::LinearRoadDataGenerator() : DataGenerator()
+{
+}
 
-std::string LinearRoadDataGenerator::getName() { return "LinearRoad"; }
+std::string LinearRoadDataGenerator::getName()
+{
+    return "LinearRoad";
+}
 
-std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize)
+{
     std::vector<Runtime::TupleBuffer> buffers;
     buffers.reserve(numberOfBuffers);
 
@@ -34,17 +41,21 @@ std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(size_t num
     std::ifstream file(std::string(BENCHMARK_DATA_DIRECTORY) + "/lrb/lrb-data-small-ht.txt");
     std::string line;
 
-    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
+    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++)
+    {
         auto buffer = allocateBuffer();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++) {
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++)
+        {
             // check if we reached the end of the file and start from the beginning
-            if (!std::getline(file, line)) {
+            if (!std::getline(file, line))
+            {
                 file.seekg(0);
                 std::getline(file, line);
             }
 
-            if (line.empty()) {
+            if (line.empty())
+            {
                 NES_THROW_RUNTIME_ERROR("Parsing Error: line was empty!");
             }
 
@@ -63,7 +74,8 @@ std::vector<Runtime::TupleBuffer> LinearRoadDataGenerator::createData(size_t num
     }
     return buffers;
 }
-SchemaPtr LinearRoadDataGenerator::getSchema() {
+SchemaPtr LinearRoadDataGenerator::getSchema()
+{
     return Schema::create()
         ->addField("creationTS", BasicType::INT64)
         ->addField("vehicle", BasicType::INT16)
@@ -74,7 +86,8 @@ SchemaPtr LinearRoadDataGenerator::getSchema() {
         ->addField("position", BasicType::INT16);
 }
 
-Configurations::SchemaTypePtr LinearRoadDataGenerator::getSchemaType() {
+Configurations::SchemaTypePtr LinearRoadDataGenerator::getSchemaType()
+{
     const char* dataTypeI64 = "INT64";
     const char* dataTypeI16 = "INT16";
     const char* dataTypeF64 = "FLOAT64";
@@ -89,9 +102,10 @@ Configurations::SchemaTypePtr LinearRoadDataGenerator::getSchemaType() {
     return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
-std::string LinearRoadDataGenerator::toString() {
+std::string LinearRoadDataGenerator::toString()
+{
     std::ostringstream oss;
     oss << getName();
     return oss.str();
 }
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration

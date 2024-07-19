@@ -20,14 +20,30 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <nlohmann/json.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 MemoryMetrics::MemoryMetrics()
-    : nodeId(0), timestamp(0), TOTAL_RAM(0), TOTAL_SWAP(0), FREE_RAM(0), SHARED_RAM(0), BUFFER_RAM(0), FREE_SWAP(0),
-      TOTAL_HIGH(0), FREE_HIGH(0), PROCS(0), MEM_UNIT(0), LOADS_1MIN(0), LOADS_5MIN(0), LOADS_15MIN(0) {}
+    : nodeId(0)
+    , timestamp(0)
+    , TOTAL_RAM(0)
+    , TOTAL_SWAP(0)
+    , FREE_RAM(0)
+    , SHARED_RAM(0)
+    , BUFFER_RAM(0)
+    , FREE_SWAP(0)
+    , TOTAL_HIGH(0)
+    , FREE_HIGH(0)
+    , PROCS(0)
+    , MEM_UNIT(0)
+    , LOADS_1MIN(0)
+    , LOADS_5MIN(0)
+    , LOADS_15MIN(0)
+{
+}
 
-Configurations::SchemaTypePtr MemoryMetrics::getSchemaType(const std::string& prefix) {
-
+Configurations::SchemaTypePtr MemoryMetrics::getSchemaType(const std::string& prefix)
+{
     std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails;
     const char* length = "0";
     const char* dataType = "UINT64";
@@ -49,16 +65,21 @@ Configurations::SchemaTypePtr MemoryMetrics::getSchemaType(const std::string& pr
     return Configurations::SchemaType::create(schemaFiledDetails);
 }
 
-SchemaPtr MemoryMetrics::getSchema(const std::string& prefix) { return Schema::createFromSchemaType(getSchemaType(prefix)); }
+SchemaPtr MemoryMetrics::getSchema(const std::string& prefix)
+{
+    return Schema::createFromSchemaType(getSchemaType(prefix));
+}
 
-void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const {
+void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) const
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
     auto totalSize = MemoryMetrics::getSchema("")->getSchemaSizeInBytes();
-    NES_ASSERT(totalSize <= buf.getBufferSize(),
-               "MemoryMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
-                   + " getBufferSize:" + std::to_string(buf.getBufferSize()));
+    NES_ASSERT(
+        totalSize <= buf.getBufferSize(),
+        "MemoryMetrics: Content does not fit in TupleBuffer totalSize:" + std::to_string(totalSize) + " < "
+            + " getBufferSize:" + std::to_string(buf.getBufferSize()));
 
     uint64_t cnt = 0;
     buffer[tupleIndex][cnt++].write<uint64_t>(nodeId.getRawValue());
@@ -80,7 +101,8 @@ void MemoryMetrics::writeToBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex
     buf.setNumberOfTuples(buf.getNumberOfTuples() + 1);
 }
 
-void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+{
     auto layout = Runtime::MemoryLayouts::RowLayout::create(MemoryMetrics::getSchema(""), buf.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
 
@@ -102,18 +124,26 @@ void MemoryMetrics::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t tupleInde
     LOADS_15MIN = buffer[tupleIndex][cnt++].read<uint64_t>();
 }
 
-SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix) { return MemoryMetrics::getSchema(prefix); }
+SchemaPtr getSchema(const MemoryMetrics&, const std::string& prefix)
+{
+    return MemoryMetrics::getSchema(prefix);
+}
 
-bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const {
+bool MemoryMetrics::operator==(const MemoryMetrics& rhs) const
+{
     return nodeId == rhs.nodeId && timestamp == rhs.timestamp && TOTAL_RAM == rhs.TOTAL_RAM && TOTAL_SWAP == rhs.TOTAL_SWAP
         && FREE_RAM == rhs.FREE_RAM && SHARED_RAM == rhs.SHARED_RAM && BUFFER_RAM == rhs.BUFFER_RAM && FREE_SWAP == rhs.FREE_SWAP
         && TOTAL_HIGH == rhs.TOTAL_HIGH && FREE_HIGH == rhs.FREE_HIGH && PROCS == rhs.PROCS && MEM_UNIT == rhs.MEM_UNIT
         && LOADS_1MIN == rhs.LOADS_1MIN && LOADS_5MIN == rhs.LOADS_5MIN && LOADS_15MIN == rhs.LOADS_15MIN;
 }
 
-bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const { return !(rhs == *this); }
+bool MemoryMetrics::operator!=(const MemoryMetrics& rhs) const
+{
+    return !(rhs == *this);
+}
 
-nlohmann::json MemoryMetrics::toJson() const {
+nlohmann::json MemoryMetrics::toJson() const
+{
     nlohmann::json metricsJson{};
     metricsJson["NODE_ID"] = nodeId;
     metricsJson["TIMESTAMP"] = timestamp;
@@ -133,14 +163,19 @@ nlohmann::json MemoryMetrics::toJson() const {
     return metricsJson;
 }
 
-void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void writeToBuffer(const MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+{
     metrics.writeToBuffer(buf, tupleIndex);
 }
 
-void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+{
     metrics.readFromBuffer(buf, tupleIndex);
 }
 
-nlohmann::json asJson(const MemoryMetrics& metrics) { return metrics.toJson(); }
+nlohmann::json asJson(const MemoryMetrics& metrics)
+{
+    return metrics.toJson();
+}
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

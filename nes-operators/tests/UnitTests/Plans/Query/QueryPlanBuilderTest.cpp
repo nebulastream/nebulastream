@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/Query.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -25,15 +25,16 @@
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 
-class QueryPlanBuilderTest : public Testing::BaseUnitTest {
-
-  public:
+class QueryPlanBuilderTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         NES::Logger::setupLogging("QueryPlanBuilderTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryPlanTest test case.");
     }
@@ -45,7 +46,8 @@ class QueryPlanBuilderTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down QueryPlanBuilderTest test class."); }
 };
 
-TEST_F(QueryPlanBuilderTest, testHasOperator) {
+TEST_F(QueryPlanBuilderTest, testHasOperator)
+{
     //test createQueryPlan
     auto queryPlan = QueryPlanBuilder::createQueryPlan("test_stream");
     EXPECT_EQ(queryPlan->getSourceConsumed(), "test_stream");
@@ -54,8 +56,8 @@ TEST_F(QueryPlanBuilderTest, testHasOperator) {
     EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperator>()[0]->getNewSourceName(), "testStream");
     //test addFilter
-    auto filterExpression = ExpressionNodePtr(
-        LessExpressionNode::create(NES::Attribute("a").getExpressionNode(), NES::Attribute("b").getExpressionNode()));
+    auto filterExpression
+        = ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("a").getExpressionNode(), NES::Attribute("b").getExpressionNode()));
     queryPlan = QueryPlanBuilder::addFilter(filterExpression, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalFilterOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<LogicalFilterOperator>()[0]->getPredicate(), filterExpression);

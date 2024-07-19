@@ -15,14 +15,26 @@
 #include <Operators/LogicalOperators/StatisticCollection/SendingPolicy/SendingPolicy.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-void WindowStatisticDescriptor::inferStamps(const SchemaPtr& inputSchema) { field->inferStamp(inputSchema); }
+void WindowStatisticDescriptor::inferStamps(const SchemaPtr& inputSchema)
+{
+    field->inferStamp(inputSchema);
+}
 
 WindowStatisticDescriptor::WindowStatisticDescriptor(const FieldAccessExpressionNodePtr& field, const uint64_t width)
-    : field(field), width(width) {}
+    : field(field), width(width)
+{
+}
 
-FieldAccessExpressionNodePtr WindowStatisticDescriptor::getField() const { return field; }
+FieldAccessExpressionNodePtr WindowStatisticDescriptor::getField() const
+{
+    return field;
+}
 
-uint64_t WindowStatisticDescriptor::getWidth() const { return width; }
-}// namespace NES::Statistic
+uint64_t WindowStatisticDescriptor::getWidth() const
+{
+    return width;
+}
+} // namespace NES::Statistic

@@ -17,14 +17,15 @@
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining referencing a logical source.
  */
-class LogicalSourceDescriptor : public SourceDescriptor {
-
-  public:
+class LogicalSourceDescriptor : public SourceDescriptor
+{
+public:
     /**
      * @brief Factory method to create a new logical source descriptor.
      * @param logicalSourceName Name of this source
@@ -37,12 +38,12 @@ class LogicalSourceDescriptor : public SourceDescriptor {
     std::string toString() const override;
     SourceDescriptorPtr copy() override;
 
-  private:
+private:
     explicit LogicalSourceDescriptor(std::string logicalSourceName);
 };
 
 using LogicalSourceDescriptorPtr = std::shared_ptr<LogicalSourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LOGICALSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LOGICALSOURCEDESCRIPTOR_HPP_

@@ -15,12 +15,13 @@
 #ifndef NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGOVERALLRUNS_HPP_
 #define NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGOVERALLRUNS_HPP_
 
+#include <map>
 #include <Configurations/ConfigurationOption.hpp>
 #include <DataGeneration/DataGenerator.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <map>
 
-namespace NES::Benchmark {
+namespace NES::Benchmark
+{
 
 // Default values for config options
 constexpr auto defaultCustomDelayInSeconds = 0;
@@ -28,23 +29,30 @@ constexpr auto defaultCustomDelayInSeconds = 0;
 /**
  * @brief all configurations that are constant over all runs
  */
-class E2EBenchmarkConfigOverAllRuns {
-
-  public:
+class E2EBenchmarkConfigOverAllRuns
+{
+public:
     /**
      * @brief encapsulates the query and the custom delay for query config
      */
-    class E2EBenchmarkQueryConfig {
-      public:
+    class E2EBenchmarkQueryConfig
+    {
+    public:
         E2EBenchmarkQueryConfig(std::string queryString, uint32_t customDelayInSeconds)
-            : queryString(std::move(queryString)), customDelayInSeconds(customDelayInSeconds) {}
+            : queryString(std::move(queryString)), customDelayInSeconds(customDelayInSeconds)
+        {
+        }
         friend std::ostream& operator<<(std::ostream& os, const E2EBenchmarkQueryConfig& config);
 
         E2EBenchmarkQueryConfig(const E2EBenchmarkQueryConfig& other)
-            : queryString(other.queryString), customDelayInSeconds(other.customDelayInSeconds) {}
+            : queryString(other.queryString), customDelayInSeconds(other.customDelayInSeconds)
+        {
+        }
 
         E2EBenchmarkQueryConfig(E2EBenchmarkQueryConfig&& other) noexcept
-            : queryString(std::move(other.queryString)), customDelayInSeconds(other.customDelayInSeconds) {}
+            : queryString(std::move(other.queryString)), customDelayInSeconds(other.customDelayInSeconds)
+        {
+        }
 
         E2EBenchmarkQueryConfig& operator=(const E2EBenchmarkQueryConfig& other);
         E2EBenchmarkQueryConfig& operator=(E2EBenchmarkQueryConfig&& other);
@@ -52,7 +60,7 @@ class E2EBenchmarkConfigOverAllRuns {
         [[nodiscard]] const std::string& getQueryString() const;
         [[nodiscard]] uint32_t getCustomDelayInSeconds() const;
 
-      private:
+    private:
         std::string queryString;
         uint32_t customDelayInSeconds;
     };
@@ -94,7 +102,7 @@ class E2EBenchmarkConfigOverAllRuns {
      */
     [[nodiscard]] std::string getStrQueries() const;
 
-  public:
+public:
     Configurations::IntConfigOption startupSleepIntervalInSeconds;
     Configurations::IntConfigOption numMeasurementsToCollect;
     Configurations::IntConfigOption experimentMeasureIntervalInSeconds;
@@ -117,6 +125,6 @@ class E2EBenchmarkConfigOverAllRuns {
     Configurations::StringConfigOption connectionString;
     Configurations::StringConfigOption joinStrategy;
 };
-}// namespace NES::Benchmark
+} // namespace NES::Benchmark
 
-#endif// NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGOVERALLRUNS_HPP_
+#endif // NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIGOVERALLRUNS_HPP_

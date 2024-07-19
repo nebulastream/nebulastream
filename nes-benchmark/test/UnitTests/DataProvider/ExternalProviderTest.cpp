@@ -14,7 +14,6 @@
 
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <DataProvider/ExternalProvider.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -22,25 +21,31 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Benchmark::DataProvision {
-class ExternalProviderTest : public Testing::BaseIntegrationTest {
-  public:
+namespace NES::Benchmark::DataProvision
+{
+class ExternalProviderTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ExternalProviderTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ExternalProviderTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>();
         NES_INFO("Setup ExternalProviderTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down ExternalProviderTest test case.");
         Testing::BaseIntegrationTest::TearDown();
     }
@@ -54,7 +59,8 @@ class ExternalProviderTest : public Testing::BaseIntegrationTest {
 /**
      * @brief busy waiting until the ExternalProvider has started
      */
-void waitForExternalProviderStartup(ExternalProvider& externalProvider) {
+void waitForExternalProviderStartup(ExternalProvider& externalProvider)
+{
     NES_DEBUG("Waiting until ExternalProvider has started...");
     externalProvider.waitUntilStarted();
 }
@@ -64,7 +70,8 @@ void waitForExternalProviderStartup(ExternalProvider& externalProvider) {
      * compare to an expected. This might fail randomly as the CI is not fast enough to produce large amounts of buffers
      */
 // Enable when fixing #4625
-TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest) {
+TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     size_t sourceId = 0;
@@ -76,11 +83,13 @@ TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest) {
     auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -91,8 +100,8 @@ TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto externalProviderDefault =
-        std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto externalProviderDefault
+        = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     externalProviderDefault->start();
     // we wait for buffers to be ingested into the buffer queue
     sleep(1);
@@ -110,7 +119,8 @@ TEST_F(ExternalProviderTest, DISABLED_uniformIngestionRateTest) {
      * @brief Testing if ExternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
      * accessed by readNextBuffer() for a row layout
      */
-TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
+TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     size_t sourceId = 0;
@@ -122,11 +132,13 @@ TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
     auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -139,8 +151,8 @@ TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
 
     ASSERT_FALSE(createdBuffers.empty());
 
-    auto externalProviderDefault =
-        std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto externalProviderDefault
+        = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
          * failing tests due to the CI being overwhelmed
          */
@@ -164,7 +176,8 @@ TEST_F(ExternalProviderTest, readNextBufferRowLayoutTest) {
      * @brief Testing if ExternalProvider::readNextBuffer() works by creating tupleBuffers and then checks if the buffers can be
      * accessed by readNextBuffer() for a column layout
      */
-TEST_F(ExternalProviderTest, readNextBufferColumnarLayoutTest) {
+TEST_F(ExternalProviderTest, readNextBufferColumnarLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     size_t sourceId = 0;
@@ -180,11 +193,13 @@ TEST_F(ExternalProviderTest, readNextBufferColumnarLayoutTest) {
                              ->addField(createField("timestamp", BasicType::UINT64));
     auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -197,8 +212,8 @@ TEST_F(ExternalProviderTest, readNextBufferColumnarLayoutTest) {
 
     ASSERT_FALSE(createdBuffers.empty());
 
-    auto externalProviderDefault =
-        std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto externalProviderDefault
+        = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
          * failing tests due to the CI being overwhelmed
          */
@@ -222,7 +237,8 @@ TEST_F(ExternalProviderTest, readNextBufferColumnarLayoutTest) {
      * @brief Testing if ExternalProvider::start() works by creating tupleBuffers and then checks if the thread can be joined
      * for row layout
      */
-TEST_F(ExternalProviderTest, startRowLayoutTest) {
+TEST_F(ExternalProviderTest, startRowLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     size_t sourceId = 0;
@@ -234,11 +250,13 @@ TEST_F(ExternalProviderTest, startRowLayoutTest) {
     auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -249,8 +267,8 @@ TEST_F(ExternalProviderTest, startRowLayoutTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto externalProviderDefault =
-        std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto externalProviderDefault
+        = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
          * failing tests due to the CI being overwhelmed
          */
@@ -269,7 +287,8 @@ TEST_F(ExternalProviderTest, startRowLayoutTest) {
      * @brief Testing if ExternalProvider::start() works by creating tupleBuffers and then checks if the thread can be joined
      * for column layout
      */
-TEST_F(ExternalProviderTest, startColumnarLayoutTest) {
+TEST_F(ExternalProviderTest, startColumnarLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     size_t sourceId = 0;
@@ -285,11 +304,13 @@ TEST_F(ExternalProviderTest, startColumnarLayoutTest) {
                              ->addField(createField("timestamp", BasicType::UINT64));
     auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -300,8 +321,8 @@ TEST_F(ExternalProviderTest, startColumnarLayoutTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto externalProviderDefault =
-        std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto externalProviderDefault
+        = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
          * failing tests due to the CI being overwhelmed
          */
@@ -320,7 +341,8 @@ TEST_F(ExternalProviderTest, startColumnarLayoutTest) {
      * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
      *  row layout
      */
-TEST_F(ExternalProviderTest, stopRowLayoutTest) {
+TEST_F(ExternalProviderTest, stopRowLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     size_t sourceId = 0;
@@ -332,11 +354,13 @@ TEST_F(ExternalProviderTest, stopRowLayoutTest) {
     auto schemaDefault = TestSchemas::getSchemaTemplate("id_val_time_u64")->addField("payload", BasicType::UINT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -347,8 +371,8 @@ TEST_F(ExternalProviderTest, stopRowLayoutTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto externalProviderDefault =
-        std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto externalProviderDefault
+        = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
          * failing tests due to the CI being overwhelmed
          */
@@ -369,7 +393,8 @@ TEST_F(ExternalProviderTest, stopRowLayoutTest) {
      * @brief Testing if ExternalProvider::stop() works by creating tupleBuffers and then checks if the ExternalProvider stops correctly
      * column layout
      */
-TEST_F(ExternalProviderTest, stopColumnarLayoutTest) {
+TEST_F(ExternalProviderTest, stopColumnarLayoutTest)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
     configOverAllRuns.dataProvider->setValue("External");
     size_t sourceId = 0;
@@ -385,11 +410,13 @@ TEST_F(ExternalProviderTest, stopColumnarLayoutTest) {
                              ->addField(createField("timestamp", BasicType::UINT64));
     auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schemaDefault, bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["payload"].write<uint64_t>(curRecord);
@@ -400,8 +427,8 @@ TEST_F(ExternalProviderTest, stopColumnarLayoutTest) {
         createdBuffers.emplace_back(bufferRef);
     }
 
-    auto externalProviderDefault =
-        std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
+    auto externalProviderDefault
+        = std::dynamic_pointer_cast<ExternalProvider>(DataProvider::createProvider(sourceId, configOverAllRuns, createdBuffers));
     /* We do not want to throw an exception in our test environment regarding timing, because this could induce randomly
          * failing tests due to the CI being overwhelmed
          */
@@ -414,4 +441,4 @@ TEST_F(ExternalProviderTest, stopColumnarLayoutTest) {
     auto preAllocatedBuffers = externalProviderDefault->getPreAllocatedBuffers();
     ASSERT_TRUE(preAllocatedBuffers.empty());
 }
-}//namespace NES::Benchmark::DataProvision
+} //namespace NES::Benchmark::DataProvision

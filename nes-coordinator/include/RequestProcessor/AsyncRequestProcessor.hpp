@@ -14,11 +14,12 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_
 
-#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <deque>
 #include <limits.h>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 struct StorageDataStructures;
 using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
@@ -27,24 +28,26 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
  * @brief This class asynchronously processes request to be executed by the coordinator. Requests can spawn new requests
  * if the logic requires follow up actions.
  */
-class AsyncRequestProcessor {
+class AsyncRequestProcessor
+{
     //define an empty request type that does nothing and is used only for flushing the executor
-    class FlushRequest : public AbstractUniRequest {
+    class FlushRequest : public AbstractUniRequest
+    {
         static constexpr auto NO_RETRIES = 0;
 
-      public:
-        FlushRequest() : AbstractUniRequest({}, NO_RETRIES) {}
+    public:
+        FlushRequest() : AbstractUniRequest({}, NO_RETRIES) { }
         std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override { return {}; }
         //request type uses exception_ptr so it can set the exception state on its response promise without casting or slicing
         std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
 
-      protected:
-        void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-        void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-        void postExecution(const StorageHandlerPtr&) override {}
+    protected:
+        void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override { }
+        void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override { }
+        void postExecution(const StorageHandlerPtr&) override { }
     };
 
-  public:
+public:
     /**
      * @brief constructor
      * @param storageDataStructures a struct containing pointers to the data structures on which the requests operate
@@ -70,7 +73,7 @@ class AsyncRequestProcessor {
      */
     ~AsyncRequestProcessor();
 
-  private:
+private:
     /**
      * @brief The routine executed by each thread. Retrieves requests from the queue, executes them and inserts
      * follow up requests into the queue. This is repeated until the executor is shut down by calling destroy()
@@ -87,5 +90,5 @@ class AsyncRequestProcessor {
 };
 
 using AsyncRequestProcessorPtr = std::shared_ptr<AsyncRequestProcessor>;
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_ASYNCREQUESTPROCESSOR_HPP_

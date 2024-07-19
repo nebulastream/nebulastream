@@ -16,14 +16,16 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 
 /**
  * @brief Implementation of the MurMur3 hash function for nautilus types.
  * This implementations is based on the hash functions of https://github.com/martinus/robin-hood-hashing/ and duckdb.
  */
-class MurMur3HashFunction : public HashFunction {
-  public:
+class MurMur3HashFunction : public HashFunction
+{
+public:
     // Seed as an initialisation.
     const uint64_t SEED = 902850234;
 
@@ -57,6 +59,6 @@ class MurMur3HashFunction : public HashFunction {
      */
     HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
 };
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_

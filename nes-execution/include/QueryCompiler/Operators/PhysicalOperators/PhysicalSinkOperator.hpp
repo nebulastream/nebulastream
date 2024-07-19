@@ -18,23 +18,23 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical Sink operator.
  */
-class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
-  public:
-    PhysicalSinkOperator(OperatorId id,
-                         StatisticId statisticId,
-                         SchemaPtr inputSchema,
-                         SchemaPtr outputSchema,
-                         SinkDescriptorPtr sinkDescriptor);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const SinkDescriptorPtr& sinkDescriptor);
+class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator
+{
+public:
+    PhysicalSinkOperator(
+        OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
+    static PhysicalOperatorPtr create(
+        OperatorId id,
+        StatisticId statisticId,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        const SinkDescriptorPtr& sinkDescriptor);
     static PhysicalOperatorPtr
     create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SinkDescriptorPtr sinkDescriptor);
     SinkDescriptorPtr getSinkDescriptor();
@@ -42,9 +42,9 @@ class PhysicalSinkOperator : public PhysicalUnaryOperator, public AbstractEmitOp
     std::string toString() const override;
     OperatorPtr copy() override;
 
-  private:
+private:
     SinkDescriptorPtr sinkDescriptor;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSINKOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSINKOPERATOR_HPP_

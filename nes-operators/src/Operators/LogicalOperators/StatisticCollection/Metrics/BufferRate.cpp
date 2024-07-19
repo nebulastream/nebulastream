@@ -15,12 +15,18 @@
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/BufferRate.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-MetricPtr BufferRate::create() { return std::make_shared<BufferRate>(BufferRate()); }
+MetricPtr BufferRate::create()
+{
+    return std::make_shared<BufferRate>(BufferRate());
+}
 
-bool BufferRate::operator==(const StatisticMetric& rhs) const {
-    if (rhs.instanceOf<BufferRate>()) {
+bool BufferRate::operator==(const StatisticMetric& rhs) const
+{
+    if (rhs.instanceOf<BufferRate>())
+    {
         // We assume that if the field has the same name, the metric is equal
         auto rhsBufferRate = dynamic_cast<const BufferRate&>(rhs);
         return field->getFieldName() == rhsBufferRate.field->getFieldName();
@@ -28,8 +34,12 @@ bool BufferRate::operator==(const StatisticMetric& rhs) const {
     return false;
 }
 
-BufferRate::BufferRate()
-    : StatisticMetric(FieldAccessExpressionNode::create(BUFFER_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
+BufferRate::BufferRate() : StatisticMetric(FieldAccessExpressionNode::create(BUFFER_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>())
+{
+}
 
-std::string BufferRate::toString() const { return "BufferRate"; }
-}// namespace NES::Statistic
+std::string BufferRate::toString() const
+{
+    return "BufferRate";
+}
+} // namespace NES::Statistic

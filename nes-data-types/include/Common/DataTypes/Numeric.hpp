@@ -15,13 +15,15 @@
 #ifndef NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
 #define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
 #include <Common/DataTypes/DataType.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The Numeric type represents integers and floats.
  */
-class Numeric : public DataType {
-  public:
+class Numeric : public DataType
+{
+public:
     explicit Numeric(int8_t bits);
     ~Numeric() override = default;
 
@@ -37,10 +39,10 @@ class Numeric : public DataType {
      */
     [[nodiscard]] int8_t getBits() const;
 
-  protected:
+protected:
     const int8_t bits;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_NUMERIC_HPP_

@@ -17,19 +17,21 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
     * @brief This expression computes the log2 value of the subExpression.
     */
-class Log2Expression : public Expression {
-  public:
+class Log2Expression : public Expression
+{
+public:
     Log2Expression(const ExpressionPtr& subExpression);
     Value<> execute(Record& record) const override;
 
-  private:
+private:
     const ExpressionPtr subExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_LOG2EXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_LOG2EXPRESSION_HPP_

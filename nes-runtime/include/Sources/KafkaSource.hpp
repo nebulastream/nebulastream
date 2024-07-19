@@ -16,21 +16,24 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_KAFKASOURCE_HPP_
 
 #ifdef ENABLE_KAFKA_BUILD
-#include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
-#include <Sources/Parsers/Parser.hpp>
-#include <cppkafka/configuration.h>
-#include <cstdint>
-#include <memory>
-#include <string>
-namespace cppkafka {
+#    include <cstdint>
+#    include <memory>
+#    include <string>
+#    include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
+#    include <Sources/Parsers/Parser.hpp>
+#    include <cppkafka/configuration.h>
+namespace cppkafka
+{
 class Consumer;
 class Message;
-}// namespace cppkafka
+} // namespace cppkafka
 
-namespace NES {
+namespace NES
+{
 
-class KafkaSource : public DataSource {
-  public:
+class KafkaSource : public DataSource
+{
+public:
     /**
    * @brief constructor for a kafka source
    * @param schema schema of the elements
@@ -53,24 +56,25 @@ class KafkaSource : public DataSource {
    * @param successors the subsequent operators in the pipeline to which the data is pushed
    * @return
    */
-    KafkaSource(SchemaPtr schema,
-                Runtime::BufferManagerPtr bufferManager,
-                Runtime::QueryManagerPtr queryManager,
-                uint64_t numberOfBuffersToProduce,
-                std::string brokers,
-                std::string topic,
-                std::string groupId,
-                bool autoCommit,
-                uint64_t kafkaConsumerTimeout,
-                std::string offsetMode,
-                const KafkaSourceTypePtr& kafkaSourceType,
-                OriginId originId,
-                StatisticId statisticId,
-                OperatorId operatorId,
-                size_t numSourceLocalBuffers,
-                uint64_t batchSize,
-                const std::string& physicalSourceName,
-                const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+    KafkaSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        uint64_t numberOfBuffersToProduce,
+        std::string brokers,
+        std::string topic,
+        std::string groupId,
+        bool autoCommit,
+        uint64_t kafkaConsumerTimeout,
+        std::string offsetMode,
+        const KafkaSourceTypePtr& kafkaSourceType,
+        OriginId originId,
+        StatisticId statisticId,
+        OperatorId operatorId,
+        size_t numSourceLocalBuffers,
+        uint64_t batchSize,
+        const std::string& physicalSourceName,
+        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
     /**
      * @brief Get source type
@@ -138,7 +142,7 @@ class KafkaSource : public DataSource {
      */
     bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer);
 
-  private:
+private:
     /**
      * @brief method to connect kafka using the host and port specified before
      * check if already connected, if not connect try to connect, if already connected return
@@ -168,6 +172,6 @@ class KafkaSource : public DataSource {
 };
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
-}// namespace NES
-#endif// ENABLE_KAFKA_BUILD
-#endif// NES_RUNTIME_INCLUDE_SOURCES_KAFKASOURCE_HPP_
+} // namespace NES
+#endif // ENABLE_KAFKA_BUILD
+#endif // NES_RUNTIME_INCLUDE_SOURCES_KAFKASOURCE_HPP_

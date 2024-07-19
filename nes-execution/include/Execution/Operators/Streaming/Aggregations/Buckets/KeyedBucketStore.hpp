@@ -14,11 +14,12 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETSTORE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETSTORE_HPP_
+#include <memory>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
-#include <memory>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class State;
 class KeyedSlice;
@@ -30,8 +31,9 @@ using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
  * In the current implementation we handle tumbling windows as sliding widows with windowSize==windowSlide.
  * As the slice store is only using by a single thread, we don't have to protect its functions for concurrent accesses.
  */
-class KeyedBucketStore : public BucketStore<KeyedSlice> {
-  public:
+class KeyedBucketStore : public BucketStore<KeyedSlice>
+{
+public:
     static const uint64_t DEFAULT_NUMBER_OF_KEYS = 1000;
 
     /**
@@ -42,18 +44,15 @@ class KeyedBucketStore : public BucketStore<KeyedSlice> {
      * @param windowSlide size of the window slide in ms
      * @param numberOfKeys number of expected keys
      */
-    explicit KeyedBucketStore(uint64_t keySize,
-                              uint64_t valueSize,
-                              uint64_t windowSize,
-                              uint64_t windowSlide,
-                              uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
+    explicit KeyedBucketStore(
+        uint64_t keySize, uint64_t valueSize, uint64_t windowSize, uint64_t windowSlide, uint64_t numberOfKeys = DEFAULT_NUMBER_OF_KEYS);
     ~KeyedBucketStore() = default;
 
-  private:
+private:
     KeyedSlicePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) override;
     const uint64_t keySize;
     const uint64_t valueSize;
     const uint64_t numberOfKeys;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETSTORE_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETSTORE_HPP_

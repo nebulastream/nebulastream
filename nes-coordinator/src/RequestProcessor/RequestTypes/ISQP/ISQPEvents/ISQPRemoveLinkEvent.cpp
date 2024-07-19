@@ -14,17 +14,27 @@
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveLinkEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 ISQPRemoveLinkEvent::ISQPRemoveLinkEvent(const WorkerId& parentNodeId, const WorkerId& childWorkerId)
-    : ISQPEvent(ISQP_REMOVE_QUERY_EVENT_PRIORITY), parentNodeId(parentNodeId), childNodeId(childWorkerId) {}
+    : ISQPEvent(ISQP_REMOVE_QUERY_EVENT_PRIORITY), parentNodeId(parentNodeId), childNodeId(childWorkerId)
+{
+}
 
-ISQPEventPtr ISQPRemoveLinkEvent::create(const WorkerId& parentNodeId, const WorkerId& childWorkerId) {
+ISQPEventPtr ISQPRemoveLinkEvent::create(const WorkerId& parentNodeId, const WorkerId& childWorkerId)
+{
     return std::make_shared<ISQPRemoveLinkEvent>(parentNodeId, childWorkerId);
 }
 
-WorkerId ISQPRemoveLinkEvent::getParentNodeId() const { return parentNodeId; }
+WorkerId ISQPRemoveLinkEvent::getParentNodeId() const
+{
+    return parentNodeId;
+}
 
-WorkerId ISQPRemoveLinkEvent::getChildNodeId() const { return childNodeId; }
+WorkerId ISQPRemoveLinkEvent::getChildNodeId() const
+{
+    return childNodeId;
+}
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

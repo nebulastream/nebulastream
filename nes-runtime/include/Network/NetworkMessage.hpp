@@ -15,15 +15,16 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
 
+#include <cstdint>
+#include <stdexcept>
+#include <utility>
 #include <Network/ChannelId.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Util/Common.hpp>
-#include <cstdint>
-#include <stdexcept>
-#include <utility>
 
-namespace NES::Network::Messages {
+namespace NES::Network::Messages
+{
 
 /**
  * @brief This magic number is written as first 64bits of every NES network message.
@@ -32,7 +33,8 @@ namespace NES::Network::Messages {
 using nes_magic_number_t = uint64_t;
 static constexpr nes_magic_number_t NES_NETWORK_MAGIC_NUMBER = 0xBADC0FFEE;
 
-enum class MessageType : uint8_t {
+enum class MessageType : uint8_t
+{
     /// message type that the client uses to announce itself to the server
     ClientAnnouncement,
     /// message type that the servers uses to reply to the client regarding the availability
@@ -49,7 +51,8 @@ enum class MessageType : uint8_t {
 };
 
 /// this enum defines the errors that can occur in the network stack logic
-enum class ErrorType : uint8_t {
+enum class ErrorType : uint8_t
+{
     /// error raised when requesting a partition that is not registered
     PartitionNotRegisteredError,
     /// error raised when a data/event buffer arrives for a partition that is not known on the current node
@@ -62,7 +65,8 @@ enum class ErrorType : uint8_t {
     UnknownError,
 };
 
-enum class ChannelType : uint8_t {
+enum class ChannelType : uint8_t
+{
     /// data channel: allows sending data and event buffers
     DataChannel,
     /// event-only channel: allows sending event buffers only
@@ -83,10 +87,13 @@ enum class ChannelType : uint8_t {
 /**
  * @brief this is the pramble of each message that is sent via the network
  */
-class MessageHeader {
-  public:
+class MessageHeader
+{
+public:
     explicit MessageHeader(MessageType msgType, uint32_t msgLength)
-        : magicNumber(NES_NETWORK_MAGIC_NUMBER), msgType(msgType), msgLength(msgLength) {}
+        : magicNumber(NES_NETWORK_MAGIC_NUMBER), msgType(msgType), msgLength(msgLength)
+    {
+    }
 
     [[nodiscard]] nes_magic_number_t getMagicNumber() const { return magicNumber; }
 
@@ -94,7 +101,7 @@ class MessageHeader {
 
     [[nodiscard]] uint32_t getMsgLength() const { return msgLength; }
 
-  private:
+private:
     /// this is a magic number that we use as checksum
     const nes_magic_number_t magicNumber;
     /// type of the message that follows as payload
@@ -106,31 +113,35 @@ class MessageHeader {
 /**
  * @brief This is the base class for all messages that can be sent in NES
  */
-class ExchangeMessage {
-  public:
-    explicit ExchangeMessage(ChannelId channelId) : channelId(std::move(channelId)) {}
+class ExchangeMessage
+{
+public:
+    explicit ExchangeMessage(ChannelId channelId) : channelId(std::move(channelId)) { }
 
     [[nodiscard]] const ChannelId& getChannelId() const { return channelId; }
 
-  private:
+private:
     const ChannelId channelId;
 };
 
 /**
  * @brief This message is sent when a client announces itself to a server. It's the first message that is sent.
  */
-class ClientAnnounceMessage : public ExchangeMessage {
-  public:
+class ClientAnnounceMessage : public ExchangeMessage
+{
+public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::ClientAnnouncement;
 
     explicit ClientAnnounceMessage(ChannelId channelId, ChannelType mode, DecomposedQueryPlanVersion version = 0)
-        : ExchangeMessage(channelId), mode(mode), version(version) {}
+        : ExchangeMessage(channelId), mode(mode), version(version)
+    {
+    }
 
     [[nodiscard]] DecomposedQueryPlanVersion getVersion() const { return version; }
 
     ChannelType getMode() const { return mode; }
 
-  private:
+private:
     ChannelType mode;
     DecomposedQueryPlanVersion version;
 };
@@ -138,11 +149,13 @@ class ClientAnnounceMessage : public ExchangeMessage {
 /**
  * @brief This message is sent back to a client when a server is ready to receive data.
  */
-class ServerReadyMessage : public ExchangeMessage {
-  public:
+class ServerReadyMessage : public ExchangeMessage
+{
+public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::ServerReady;
 
-    explicit ServerReadyMessage(ChannelId channelId) : ExchangeMessage(channelId) {
+    explicit ServerReadyMessage(ChannelId channelId) : ExchangeMessage(channelId)
+    {
         // nop
     }
 };
@@ -150,17 +163,24 @@ class ServerReadyMessage : public ExchangeMessage {
 /**
  * @brief This message is sent to notify end-of-stream.
  */
-class EndOfStreamMessage : public ExchangeMessage {
-  public:
+class EndOfStreamMessage : public ExchangeMessage
+{
+public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::EndOfStream;
 
-    explicit EndOfStreamMessage(ChannelId channelId,
-                                ChannelType channelType,
-                                Runtime::QueryTerminationType terminationType,
-                                uint16_t numSendingThreads,
-                                uint64_t maxMessageSequenceNumber)
-        : ExchangeMessage(channelId), channelType(channelType), terminationType(terminationType),
-          numSendingThreads(numSendingThreads), maxMessageSequenceNumber(maxMessageSequenceNumber) {}
+    explicit EndOfStreamMessage(
+        ChannelId channelId,
+        ChannelType channelType,
+        Runtime::QueryTerminationType terminationType,
+        uint16_t numSendingThreads,
+        uint64_t maxMessageSequenceNumber)
+        : ExchangeMessage(channelId)
+        , channelType(channelType)
+        , terminationType(terminationType)
+        , numSendingThreads(numSendingThreads)
+        , maxMessageSequenceNumber(maxMessageSequenceNumber)
+    {
+    }
 
     [[nodiscard]] Runtime::QueryTerminationType getQueryTerminationType() const { return terminationType; }
 
@@ -172,7 +192,7 @@ class EndOfStreamMessage : public ExchangeMessage {
 
     [[nodiscard]] uint64_t getMaxMessageSequenceNumber() const { return maxMessageSequenceNumber; }
 
-  private:
+private:
     ChannelType channelType;
     Runtime::QueryTerminationType terminationType;
     uint16_t numSendingThreads;
@@ -182,20 +202,26 @@ class EndOfStreamMessage : public ExchangeMessage {
 /**
  * @brief This message represent an error that is sent from the client to the server or vice versa.
  */
-class ErrorMessage : public ExchangeMessage {
-  public:
+class ErrorMessage : public ExchangeMessage
+{
+public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::ErrorMessage;
 
-    explicit ErrorMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), errorCode(error) {
+    explicit ErrorMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), errorCode(error)
+    {
         // nop
     }
 
     [[nodiscard]] ErrorType getErrorType() const { return errorCode; }
 
-    [[nodiscard]] std::string getErrorTypeAsString() const {
-        if (errorCode == ErrorType::PartitionNotRegisteredError) {
+    [[nodiscard]] std::string getErrorTypeAsString() const
+    {
+        if (errorCode == ErrorType::PartitionNotRegisteredError)
+        {
             return "PartitionNotRegisteredError";
-        } else if (errorCode == ErrorType::DeletedPartitionError) {
+        }
+        else if (errorCode == ErrorType::DeletedPartitionError)
+        {
             return "DeletedPartitionError";
         }
         return "UnknownError";
@@ -219,28 +245,37 @@ class ErrorMessage : public ExchangeMessage {
      */
     [[nodiscard]] bool isVersionMismatch() const { return errorCode == ErrorType::VersionMismatchError; }
 
-  private:
+private:
     const ErrorType errorCode;
 };
 
 /**
  * @brief This is the payload with tuples
  */
-class DataBufferMessage {
-  public:
+class DataBufferMessage
+{
+public:
     static constexpr MessageType MESSAGE_TYPE = MessageType::DataBuffer;
 
-    explicit inline DataBufferMessage(uint32_t payloadSize,
-                                      uint32_t numOfRecords,
-                                      OriginId originId,
-                                      uint64_t watermark,
-                                      uint64_t creationTimestamp,
-                                      SequenceData sequenceData,
-                                      uint64_t messageSequenceNumber,
-                                      uint32_t numOfChildren = 0) noexcept
-        : payloadSize(payloadSize), numOfRecords(numOfRecords), originId(originId), watermark(watermark),
-          creationTimestamp(creationTimestamp), sequenceData(sequenceData), messageSequenceNumber(messageSequenceNumber),
-          numOfChildren(numOfChildren) {}
+    explicit inline DataBufferMessage(
+        uint32_t payloadSize,
+        uint32_t numOfRecords,
+        OriginId originId,
+        uint64_t watermark,
+        uint64_t creationTimestamp,
+        SequenceData sequenceData,
+        uint64_t messageSequenceNumber,
+        uint32_t numOfChildren = 0) noexcept
+        : payloadSize(payloadSize)
+        , numOfRecords(numOfRecords)
+        , originId(originId)
+        , watermark(watermark)
+        , creationTimestamp(creationTimestamp)
+        , sequenceData(sequenceData)
+        , messageSequenceNumber(messageSequenceNumber)
+        , numOfChildren(numOfChildren)
+    {
+    }
 
     uint32_t const payloadSize;
     uint32_t const numOfRecords;
@@ -252,6 +287,6 @@ class DataBufferMessage {
     uint32_t const numOfChildren;
 };
 
-}// namespace NES::Network::Messages
+} // namespace NES::Network::Messages
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_

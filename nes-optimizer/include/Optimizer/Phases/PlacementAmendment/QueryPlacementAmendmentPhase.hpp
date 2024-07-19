@@ -15,19 +15,21 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_QUERYPLACEMENTAMENDMENTPHASE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_QUERYPLACEMENTAMENDMENTPHASE_HPP_
 
-#include <Configurations/Enums/PlacementAmendmentMode.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
 #include <memory>
 #include <set>
 #include <vector>
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -41,18 +43,21 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
-}// namespace NES
+} // namespace Catalogs::Source
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
@@ -75,8 +80,9 @@ static std::atomic_uint64_t counter{0};
  * @brief This class is responsible for placing and removing operators (depending on their status) from the
  * global execution.
  */
-class QueryPlacementAmendmentPhase {
-  public:
+class QueryPlacementAmendmentPhase
+{
+public:
     /**
      * This method creates an instance of query placement phase
      * @param globalExecutionPlan : an instance of global execution plan
@@ -85,10 +91,11 @@ class QueryPlacementAmendmentPhase {
      * @param coordinatorConfiguration: coordinator configuration
      * @return pointer to query placement phase
      */
-    static QueryPlacementAmendmentPhasePtr create(GlobalExecutionPlanPtr globalExecutionPlan,
-                                                  TopologyPtr topology,
-                                                  TypeInferencePhasePtr typeInferencePhase,
-                                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+    static QueryPlacementAmendmentPhasePtr create(
+        GlobalExecutionPlanPtr globalExecutionPlan,
+        TopologyPtr topology,
+        TypeInferencePhasePtr typeInferencePhase,
+        Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief Method takes input a shared query plan and performs first query operator placement
@@ -99,11 +106,12 @@ class QueryPlacementAmendmentPhase {
      */
     std::set<DeploymentContextPtr> execute(const SharedQueryPlanPtr& sharedQueryPlan);
 
-  private:
-    explicit QueryPlacementAmendmentPhase(GlobalExecutionPlanPtr globalExecutionPlan,
-                                          TopologyPtr topology,
-                                          TypeInferencePhasePtr typeInferencePhase,
-                                          Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+private:
+    explicit QueryPlacementAmendmentPhase(
+        GlobalExecutionPlanPtr globalExecutionPlan,
+        TopologyPtr topology,
+        TypeInferencePhasePtr typeInferencePhase,
+        Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * @brief: analyze the set and pin all unpinned sink operators
@@ -147,5 +155,5 @@ class QueryPlacementAmendmentPhase {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     PlacementAmendmentMode placementAmendmentMode;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_QUERYPLACEMENTAMENDMENTPHASE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_PLACEMENTAMENDMENT_QUERYPLACEMENTAMENDMENTPHASE_HPP_

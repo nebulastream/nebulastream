@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <fstream>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -24,29 +24,33 @@
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fstream>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 using namespace std;
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class SourceCatalogRemoteTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class SourceCatalogRemoteTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SourceCatalogRemoteTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SourceCatalogRemoteTest test class.");
     }
 };
 
-TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
+TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("SourceCatalogRemoteTest: Coordinator started successfully");
 
@@ -78,13 +82,14 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToExistingLogicalSourceRemote) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
+TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
@@ -119,13 +124,14 @@ TEST_F(SourceCatalogRemoteTest, addPhysicalToNewLogicalSourceRemote) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
+TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
@@ -156,13 +162,14 @@ TEST_F(SourceCatalogRemoteTest, removePhysicalFromNewLogicalSourceRemote) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
+TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("SourceCatalogRemoteTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
@@ -206,4 +213,4 @@ TEST_F(SourceCatalogRemoteTest, removeNotExistingSourceRemote) {
     bool retStopCord = crd->stopCoordinator(false);
     EXPECT_TRUE(retStopCord);
 }
-}// namespace NES
+} // namespace NES

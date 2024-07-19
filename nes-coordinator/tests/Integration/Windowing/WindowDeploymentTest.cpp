@@ -12,11 +12,9 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/ExecutableType/Array.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -25,24 +23,29 @@
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/ExecutableType/Array.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class WindowDeploymentTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class WindowDeploymentTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("WindowDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup WindowDeploymentTest test class.");
     }
 };
 
-TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
-
+TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     auto query = Query::from("window")
@@ -87,8 +90,8 @@ TEST_F(WindowDeploymentTest, testTumblingWindowEventTimeWithTimeUnit) {
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
-
+TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     auto query = Query::from("window")
@@ -134,8 +137,8 @@ TEST_F(WindowDeploymentTest, testCentralSlidingWindowEventTime) {
 /**
  * @brief test distributed tumbling window and event time, for now disabled see issue #3324
  */
-TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEventTimeTimeUnit) {
-
+TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEventTimeTimeUnit)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     auto query = Query::from("window")
@@ -181,13 +184,12 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeployDistributedTumblingWindowQueryEv
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
-
+TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
-    auto query = Query::from("window")
-                     .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)))
-                     .apply(Sum(Attribute("value")));
+    auto query
+        = Query::from("window").window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1))).apply(Sum(Attribute("value")));
 
     auto sourceConfig = CSVSourceType::create("window", "window2");
     sourceConfig->setFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -221,7 +223,8 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowEventTime) {
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
+TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     auto query = Query::from("window")
@@ -262,7 +265,8 @@ TEST_F(WindowDeploymentTest, testCentralNonKeySlidingWindowEventTime) {
 /**
  * @brief test central tumbling window and event time
  */
-TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
+TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
 
     auto sourceConfig = CSVSourceType::create("windowSource", "test_stream");
@@ -286,7 +290,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Start coordinator");
     auto crd = std::make_shared<NesCoordinator>(coordinatorConfig);
     crd->getSourceCatalogService()->registerLogicalSource("windowSource", window);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
 
@@ -308,8 +312,7 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
                      .apply(Sum(Attribute("value")))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     //todo will be removed once the new window source is in place
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -329,8 +332,10 @@ TEST_F(WindowDeploymentTest, testCentralNonKeyTumblingWindowIngestionTime) {
     NES_INFO("WindowDeploymentTest: Test finished");
 }
 
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
-    struct Car {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey)
+{
+    struct Car
+    {
         double key;
         uint64_t value1;
         uint64_t value2;
@@ -373,8 +378,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithDoubleKey) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
-    struct __attribute__((__packed__)) Car2 {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey)
+{
+    struct __attribute__((__packed__)) Car2
+    {
         float key;
         uint64_t value1;
         uint64_t timestamp;
@@ -419,8 +426,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatKey) {
 /**
  * @brief TODO support bool key for aggregations #4151
  */
-TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
-    struct __attribute__((__packed__)) Car {
+TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey)
+{
+    struct __attribute__((__packed__)) Car
+    {
         bool key;
         uint32_t value2;
         uint64_t timestamp;
@@ -465,8 +474,10 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithBoolKey) {
 /**
  * @brief TODO inplace chars are not implemented in Nautilus #2739
  */
-TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
-    struct Car {
+TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey)
+{
+    struct Car
+    {
         char key;
         std::array<char, 3> value1;
         uint32_t value2;
@@ -515,8 +526,10 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWitCharKey) {
 /**
  * @brief TODO inplace chars are not implemented in Nautilus
  */
-TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar) {
-    struct Car {
+TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar)
+{
+    struct Car
+    {
         NES::ExecutableTypes::Array<char, 4> key;
         uint32_t value1;
         uint64_t timestamp;
@@ -566,8 +579,10 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithFixedChar) {
 /*
  * @brief Test if the avg aggregation can be deployed
 */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
-    struct Car {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation)
+{
+    struct Car
+    {
         uint64_t key;
         uint64_t value;
         uint64_t timestamp;
@@ -609,8 +624,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithAvgAggregation) {
 /*
  * @brief Test if the max aggregation can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
-    struct Car {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation)
+{
+    struct Car
+    {
         uint32_t id;
         uint32_t value;
         uint64_t timestamp;
@@ -653,8 +670,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregation) {
 /*
  * @brief Test if the max aggregation of negative values can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues) {
-    struct Car {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativeValues)
+{
+    struct Car
+    {
         int32_t id;
         int32_t value;
         int64_t timestamp;
@@ -696,8 +715,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithNegativ
 /*
  * @brief Test if the max aggregation with uint64 data type can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64AggregatedField) {
-    struct Car {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64AggregatedField)
+{
+    struct Car
+    {
         uint64_t id;
         uint64_t value;
         uint64_t timestamp;
@@ -747,8 +768,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithMaxAggregationWithUint64A
 /*
  * @brief Test if the min aggregation with float data type can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
-    struct Car {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation)
+{
+    struct Car
+    {
         uint32_t key;
         float value;
         uint64_t timestamp;
@@ -793,8 +816,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFloatMinAggregation) {
 /*
  * @brief Test if the Count aggregation can be deployed
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
-    struct Car {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation)
+{
+    struct Car
+    {
         uint64_t id;
         uint64_t value;
         uint64_t value2;
@@ -838,8 +863,10 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithCountAggregation) {
  * @brief Test if the Median aggregation can be deployed
  * TODO enable if median is implemented #4096
 */
-TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregation) {
-    struct Car {
+TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregation)
+{
+    struct Car
+    {
         uint64_t key;
         double value;
         uint64_t value2;
@@ -882,8 +909,10 @@ TEST_F(WindowDeploymentTest, DISABLED_testDeploymentOfWindowWithMedianAggregatio
 /*
  * @brief Test aggregation with field rename
  */
-TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
-    struct Car {
+TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename)
+{
+    struct Car
+    {
         uint64_t id;
         uint64_t value;
         uint64_t value2;
@@ -923,4 +952,4 @@ TEST_F(WindowDeploymentTest, testDeploymentOfWindowWithFieldRename) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-}// namespace NES
+} // namespace NES

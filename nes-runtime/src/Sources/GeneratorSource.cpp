@@ -17,15 +17,20 @@
 
 #include <iostream>
 
-namespace NES {
+namespace NES
+{
 
-std::string GeneratorSource::toString() const {
+std::string GeneratorSource::toString() const
+{
     std::stringstream ss;
     ss << "GENERATOR_SOURCE(SCHEMA(" << schema->toString();
     ss << "), NUM_BUFFERS=" << this->numberOfBuffersToProduce << " interval=" << this->gatheringInterval.count() << "ms))";
     return ss.str();
 }
 
-SourceType GeneratorSource::getType() const { return SourceType::TEST_SOURCE; }// todo add generator source?
+SourceType GeneratorSource::getType() const
+{
+    return SourceType::TEST_SOURCE;
+} // todo add generator source?
 
-}// namespace NES
+} // namespace NES

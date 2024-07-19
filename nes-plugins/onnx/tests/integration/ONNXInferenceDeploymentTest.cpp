@@ -12,26 +12,29 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <iostream>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class ONNXInferenceDeploymentTest : public Testing::BaseIntegrationTest {
-  public:
+class ONNXInferenceDeploymentTest : public Testing::BaseIntegrationTest
+{
+public:
     static constexpr auto ALLOWED_ERROR = 0.0001;
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MLModelDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MLModelDeploymentTest test class.");
     }
@@ -39,7 +42,8 @@ class ONNXInferenceDeploymentTest : public Testing::BaseIntegrationTest {
 /**
 * Tests the deployment of a simple ONNX model using base64 encoded input data
 */
-TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase64Encoding) {
+TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase64Encoding)
+{
     auto irisSchema = Schema::create()
                           ->addField("id", DataTypeFactory::createUInt64())
                           ->addField("data", DataTypeFactory::createText())
@@ -51,13 +55,13 @@ TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase6
     csvSourceType->setNumberOfBuffersToProduce(10);
     csvSourceType->setSkipHeader(false);
 
-    auto query = Query::from("irisData")
-                     .inferModel(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.onnx",
-                                 {Attribute("data")},
-                                 {Attribute("iris0", BasicType::FLOAT32),
-                                  Attribute("iris1", BasicType::FLOAT32),
-                                  Attribute("iris2", BasicType::FLOAT32)})
-                     .project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2"));
+    auto query
+        = Query::from("irisData")
+              .inferModel(
+                  std::string(TEST_DATA_DIRECTORY) + "iris_95acc.onnx",
+                  {Attribute("data")},
+                  {Attribute("iris0", BasicType::FLOAT32), Attribute("iris1", BasicType::FLOAT32), Attribute("iris2", BasicType::FLOAT32)})
+              .project(Attribute("iris0"), Attribute("iris1"), Attribute("iris2"));
 
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("irisData", irisSchema)
@@ -85,16 +89,14 @@ TEST_F(ONNXInferenceDeploymentTest, testSimpleMLModelDeploymentUsingONNXAndBase6
     auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput, outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     auto actualTuples = TestUtils::countTuples(actualBuffers);
-    for (auto i = 0_u64; i < actualTuples; ++i) {
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris0"].read<float>(),
-                    actualBuffers[0][i]["irisData$iris0"].read<float>(),
-                    ALLOWED_ERROR);
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris1"].read<float>(),
-                    actualBuffers[0][i]["irisData$iris1"].read<float>(),
-                    ALLOWED_ERROR);
-        EXPECT_NEAR(expectedBuffers[0][i]["irisData$iris2"].read<float>(),
-                    actualBuffers[0][i]["irisData$iris2"].read<float>(),
-                    ALLOWED_ERROR);
+    for (auto i = 0_u64; i < actualTuples; ++i)
+    {
+        EXPECT_NEAR(
+            expectedBuffers[0][i]["irisData$iris0"].read<float>(), actualBuffers[0][i]["irisData$iris0"].read<float>(), ALLOWED_ERROR);
+        EXPECT_NEAR(
+            expectedBuffers[0][i]["irisData$iris1"].read<float>(), actualBuffers[0][i]["irisData$iris1"].read<float>(), ALLOWED_ERROR);
+        EXPECT_NEAR(
+            expectedBuffers[0][i]["irisData$iris2"].read<float>(), actualBuffers[0][i]["irisData$iris2"].read<float>(), ALLOWED_ERROR);
     }
 }
-}// namespace NES
+} // namespace NES

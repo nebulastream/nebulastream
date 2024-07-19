@@ -12,44 +12,55 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
 #include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES {
+#include <Common/DataTypes/DataType.hpp>
+namespace NES
+{
 
 NegateExpressionNode::NegateExpressionNode() = default;
 
-NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : LogicalUnaryExpressionNode(other) {}
+NegateExpressionNode::NegateExpressionNode(NegateExpressionNode* other) : LogicalUnaryExpressionNode(other)
+{
+}
 
-bool NegateExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<NegateExpressionNode>()) {
+bool NegateExpressionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<NegateExpressionNode>())
+    {
         auto other = rhs->as<NegateExpressionNode>();
         return this->getChildren()[0]->equal(other->getChildren()[0]);
     }
     return false;
 }
 
-std::string NegateExpressionNode::toString() const {
+std::string NegateExpressionNode::toString() const
+{
     std::stringstream ss;
     ss << "!" << children[0]->toString();
     return ss.str();
 }
 
-ExpressionNodePtr NegateExpressionNode::create(ExpressionNodePtr const& child) {
+ExpressionNodePtr NegateExpressionNode::create(ExpressionNodePtr const& child)
+{
     auto equals = std::make_shared<NegateExpressionNode>();
     equals->setChild(child);
     return equals;
 }
 
-void NegateExpressionNode::inferStamp(SchemaPtr schema) {
+void NegateExpressionNode::inferStamp(SchemaPtr schema)
+{
     // delegate stamp inference of children
     ExpressionNode::inferStamp(schema);
     // check if children stamp is correct
-    if (!child()->isPredicate()) {
-        NES_THROW_RUNTIME_ERROR("Negate Expression Node: the stamp of child must be boolean, but was: "
-                                + child()->getStamp()->toString());
+    if (!child()->isPredicate())
+    {
+        NES_THROW_RUNTIME_ERROR("Negate Expression Node: the stamp of child must be boolean, but was: " + child()->getStamp()->toString());
     }
 }
-ExpressionNodePtr NegateExpressionNode::copy() { return NegateExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
+ExpressionNodePtr NegateExpressionNode::copy()
+{
+    return NegateExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
-}// namespace NES
+} // namespace NES

@@ -13,7 +13,6 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -22,7 +21,6 @@
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
@@ -50,7 +48,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 #include <z3++.h>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 uint32_t EVENT_CHANNEL_RETRY_TIMES = 1;
 auto WAIT_TIME = std::chrono::milliseconds(1);
@@ -58,10 +58,12 @@ auto WAIT_TIME = std::chrono::milliseconds(1);
 uint32_t DATA_CHANNEL_RETRY_TIMES = 1;
 uint64_t DEFAULT_NUMBER_OF_ORIGINS = 1;
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
-  public:
+class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest
+{
+public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
@@ -70,13 +72,15 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TopologyNodeRelocationRequestTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TopologyNodeRelocationRequestTest test case.");
     }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         context = std::make_shared<z3::context>();
         queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
@@ -89,10 +93,11 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
 
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
         globalExecutionPlan = Optimizer::GlobalExecutionPlan::create();
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                         Statistic::DefaultStatisticCache::create(),
-                                                                         topology);
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+            Statistic::StatisticRegistry::create(),
+            Statistic::DefaultStatisticProbeGenerator::create(),
+            Statistic::DefaultStatisticCache::create(),
+            topology);
     }
 
     z3::ContextPtr context;
@@ -104,21 +109,16 @@ class TopologyNodeRelocationRequestTest : public Testing::BaseUnitTest {
 * the sets of upstream and downstream operators of an incremental placement.
 *
 */
-TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDownstream) {
+TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDownstream)
+{
     const auto globalQueryPlan = GlobalQueryPlan::create();
     auto coordinatorConfig = Configurations::CoordinatorConfiguration::createDefault();
     auto optimizerConfiguration = Configurations::OptimizerConfiguration();
     optimizerConfiguration.queryMergerRule = Optimizer::QueryMergerRule::SyntaxBasedCompleteQueryMergerRule;
     coordinatorConfig->optimizer = optimizerConfiguration;
 
-    RequestProcessor::StorageDataStructures storageDataStructures(coordinatorConfig,
-                                                                  topology,
-                                                                  globalExecutionPlan,
-                                                                  globalQueryPlan,
-                                                                  queryCatalog,
-                                                                  sourceCatalog,
-                                                                  udfCatalog,
-                                                                  statisticProbeHandler);
+    RequestProcessor::StorageDataStructures storageDataStructures(
+        coordinatorConfig, topology, globalExecutionPlan, globalQueryPlan, queryCatalog, sourceCatalog, udfCatalog, statisticProbeHandler);
 
     auto storageHandler = RequestProcessor::SerialStorageHandler::create(storageDataStructures);
 
@@ -206,14 +206,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     auto nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, PartitionId(0), SubpartitionId(0));
     auto networkSinkHostWorkerId = WorkerId(2);
     auto uniqueId = 1;
-    networkSourceDescriptor =
-        Network::NetworkSourceDescriptor::create(schema,
-                                                 nesPartition,
-                                                 Network::NodeLocation(networkSinkHostWorkerId, workerAddress, dataPort),
-                                                 WAIT_TIME,
-                                                 EVENT_CHANNEL_RETRY_TIMES,
-                                                 version,
-                                                 OperatorId(uniqueId));
+    networkSourceDescriptor = Network::NetworkSourceDescriptor::create(
+        schema,
+        nesPartition,
+        Network::NodeLocation(networkSinkHostWorkerId, workerAddress, dataPort),
+        WAIT_TIME,
+        EVENT_CHANNEL_RETRY_TIMES,
+        version,
+        OperatorId(uniqueId));
     uniqueId++;
     sourceLogicalOperator = std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
     sourceLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{1});
@@ -229,13 +229,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     //sub plan on node 2
     pinnedId = WorkerId(2);
     decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId), sharedQueryId, pinnedId);
-    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(WorkerId(1), workerAddress, dataPort),
-                                                                   nesPartition,
-                                                                   WAIT_TIME,
-                                                                   DATA_CHANNEL_RETRY_TIMES,
-                                                                   version,
-                                                                   DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+        Network::NodeLocation(WorkerId(1), workerAddress, dataPort),
+        nesPartition,
+        WAIT_TIME,
+        DATA_CHANNEL_RETRY_TIMES,
+        version,
+        DEFAULT_NUMBER_OF_ORIGINS,
+        networkSinkId);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{1});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
@@ -248,14 +249,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     sinkLogicalOperator->addChild(unaryOperator);
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, PartitionId(0), SubpartitionId(0));
-    networkSourceDescriptor =
-        Network::NetworkSourceDescriptor::create(schema,
-                                                 nesPartition,
-                                                 Network::NodeLocation(WorkerId(3), workerAddress, dataPort),
-                                                 WAIT_TIME,
-                                                 EVENT_CHANNEL_RETRY_TIMES,
-                                                 version,
-                                                 OperatorId(uniqueId));
+    networkSourceDescriptor = Network::NetworkSourceDescriptor::create(
+        schema,
+        nesPartition,
+        Network::NodeLocation(WorkerId(3), workerAddress, dataPort),
+        WAIT_TIME,
+        EVENT_CHANNEL_RETRY_TIMES,
+        version,
+        OperatorId(uniqueId));
     uniqueId++;
     sourceLogicalOperator = std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
     sourceLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
@@ -268,34 +269,34 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     subPlanId++;
 
     //test link
-    auto linkedSinkSourcePairs =
-        Experimental::findNetworkOperatorsForLink(sharedQueryId,
-                                                  globalExecutionPlan->getLockedExecutionNode(WorkerId(2)),
-                                                  globalExecutionPlan->getLockedExecutionNode(WorkerId(1)));
+    auto linkedSinkSourcePairs = Experimental::findNetworkOperatorsForLink(
+        sharedQueryId, globalExecutionPlan->getLockedExecutionNode(WorkerId(2)), globalExecutionPlan->getLockedExecutionNode(WorkerId(1)));
     ASSERT_EQ(linkedSinkSourcePairs.size(), 1);
     auto [upstreamSink, downstreamSource] = linkedSinkSourcePairs.front();
     ASSERT_EQ(upstreamSink, sinkLogicalOperator);
-    ASSERT_EQ(downstreamSource,
-              globalExecutionPlan->getLockedExecutionNode(WorkerId(1))
-                  ->
-                  operator*()
-                  ->getAllDecomposedQueryPlans(sharedQueryId)
-                  .front()
-                  ->getSourceOperators()
-                  .front());
+    ASSERT_EQ(
+        downstreamSource,
+        globalExecutionPlan->getLockedExecutionNode(WorkerId(1))
+            ->
+            operator*()
+            ->getAllDecomposedQueryPlans(sharedQueryId)
+            .front()
+            ->getSourceOperators()
+            .front());
 
     networkSinkId = getNextOperatorId();
 
     //sub plan on node 3
     pinnedId = WorkerId(3);
     decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId), sharedQueryId, pinnedId);
-    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(WorkerId(2), workerAddress, dataPort),
-                                                                   nesPartition,
-                                                                   WAIT_TIME,
-                                                                   DATA_CHANNEL_RETRY_TIMES,
-                                                                   version,
-                                                                   DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+        Network::NodeLocation(WorkerId(2), workerAddress, dataPort),
+        nesPartition,
+        WAIT_TIME,
+        DATA_CHANNEL_RETRY_TIMES,
+        version,
+        DEFAULT_NUMBER_OF_ORIGINS,
+        networkSinkId);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{4});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
@@ -309,14 +310,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     //network source left
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, PartitionId(0), SubpartitionId(0));
-    networkSourceDescriptor =
-        Network::NetworkSourceDescriptor::create(schema,
-                                                 nesPartition,
-                                                 Network::NodeLocation(WorkerId(6), workerAddress, dataPort),
-                                                 WAIT_TIME,
-                                                 EVENT_CHANNEL_RETRY_TIMES,
-                                                 version,
-                                                 OperatorId(uniqueId));
+    networkSourceDescriptor = Network::NetworkSourceDescriptor::create(
+        schema,
+        nesPartition,
+        Network::NodeLocation(WorkerId(6), workerAddress, dataPort),
+        WAIT_TIME,
+        EVENT_CHANNEL_RETRY_TIMES,
+        version,
+        OperatorId(uniqueId));
     uniqueId++;
     auto leftsourceLogicalOperator = std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
     leftsourceLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
@@ -325,14 +326,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     //network source right
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, PartitionId(0), SubpartitionId(0));
-    networkSourceDescriptor =
-        Network::NetworkSourceDescriptor::create(schema,
-                                                 nesPartition,
-                                                 Network::NodeLocation(WorkerId(6), workerAddress, dataPort),
-                                                 WAIT_TIME,
-                                                 EVENT_CHANNEL_RETRY_TIMES,
-                                                 version,
-                                                 OperatorId(uniqueId));
+    networkSourceDescriptor = Network::NetworkSourceDescriptor::create(
+        schema,
+        nesPartition,
+        Network::NodeLocation(WorkerId(6), workerAddress, dataPort),
+        WAIT_TIME,
+        EVENT_CHANNEL_RETRY_TIMES,
+        version,
+        OperatorId(uniqueId));
     uniqueId++;
     auto rightsourceLogicalOperator = std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
     rightsourceLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
@@ -361,14 +362,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     decomposedQueryPlan->addRootOperator(sinkLogicalOperator);
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, PartitionId(0), SubpartitionId(0));
-    networkSourceDescriptor =
-        Network::NetworkSourceDescriptor::create(schema,
-                                                 nesPartition,
-                                                 Network::NodeLocation(WorkerId(7), workerAddress, dataPort),
-                                                 WAIT_TIME,
-                                                 EVENT_CHANNEL_RETRY_TIMES,
-                                                 version,
-                                                 OperatorId(uniqueId));
+    networkSourceDescriptor = Network::NetworkSourceDescriptor::create(
+        schema,
+        nesPartition,
+        Network::NodeLocation(WorkerId(7), workerAddress, dataPort),
+        WAIT_TIME,
+        EVENT_CHANNEL_RETRY_TIMES,
+        version,
+        OperatorId(uniqueId));
     uniqueId++;
     sourceLogicalOperator = std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
     sourceLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
@@ -384,13 +385,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     //sub plan on node 7
     pinnedId = WorkerId(7);
     decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId), sharedQueryId, pinnedId);
-    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(WorkerId(6), workerAddress, dataPort),
-                                                                   nesPartition,
-                                                                   WAIT_TIME,
-                                                                   DATA_CHANNEL_RETRY_TIMES,
-                                                                   version,
-                                                                   DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+        Network::NodeLocation(WorkerId(6), workerAddress, dataPort),
+        nesPartition,
+        WAIT_TIME,
+        DATA_CHANNEL_RETRY_TIMES,
+        version,
+        DEFAULT_NUMBER_OF_ORIGINS,
+        networkSinkId);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{13});
@@ -411,8 +413,7 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
 
     networkSinkId = getNextOperatorId();
     //second sub plan on node 6
-    decomposedQueryPlan =
-        DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId), SharedQueryId(sharedQueryId), WorkerId(6));
+    decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId), SharedQueryId(sharedQueryId), WorkerId(6));
     networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
         Network::NodeLocation(WorkerId(3), workerAddress, dataPort),
         rightsourceLogicalOperator->getSourceDescriptor()->as<Network::NetworkSourceDescriptor>()->getNesPartition(),
@@ -427,14 +428,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     decomposedQueryPlan->addRootOperator(sinkLogicalOperator);
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, PartitionId(0), SubpartitionId(0));
-    networkSourceDescriptor =
-        Network::NetworkSourceDescriptor::create(schema,
-                                                 nesPartition,
-                                                 Network::NodeLocation(WorkerId(8), workerAddress, dataPort),
-                                                 WAIT_TIME,
-                                                 EVENT_CHANNEL_RETRY_TIMES,
-                                                 version,
-                                                 OperatorId(uniqueId));
+    networkSourceDescriptor = Network::NetworkSourceDescriptor::create(
+        schema,
+        nesPartition,
+        Network::NodeLocation(WorkerId(8), workerAddress, dataPort),
+        WAIT_TIME,
+        EVENT_CHANNEL_RETRY_TIMES,
+        version,
+        OperatorId(uniqueId));
     uniqueId++;
     sourceLogicalOperator = std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
     sourceLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
@@ -450,13 +451,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     //sub plan on node 8
     pinnedId = WorkerId(8);
     decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId), SharedQueryId(sharedQueryId), pinnedId);
-    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(WorkerId(6), workerAddress, dataPort),
-                                                                   nesPartition,
-                                                                   WAIT_TIME,
-                                                                   DATA_CHANNEL_RETRY_TIMES,
-                                                                   version,
-                                                                   DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+        Network::NodeLocation(WorkerId(6), workerAddress, dataPort),
+        nesPartition,
+        WAIT_TIME,
+        DATA_CHANNEL_RETRY_TIMES,
+        version,
+        DEFAULT_NUMBER_OF_ORIGINS,
+        networkSinkId);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, OperatorId{17});
@@ -477,14 +479,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     //second network source on the right
     networkSourceId = getNextOperatorId();
     nesPartition = Network::NesPartition(sharedQueryId, networkSourceId, PartitionId(0), SubpartitionId(0));
-    networkSourceDescriptor =
-        Network::NetworkSourceDescriptor::create(schema,
-                                                 nesPartition,
-                                                 Network::NodeLocation(WorkerId(9), workerAddress, dataPort),
-                                                 WAIT_TIME,
-                                                 EVENT_CHANNEL_RETRY_TIMES,
-                                                 version,
-                                                 OperatorId(uniqueId));
+    networkSourceDescriptor = Network::NetworkSourceDescriptor::create(
+        schema,
+        nesPartition,
+        Network::NodeLocation(WorkerId(9), workerAddress, dataPort),
+        WAIT_TIME,
+        EVENT_CHANNEL_RETRY_TIMES,
+        version,
+        OperatorId(uniqueId));
     uniqueId++;
     auto secondRightsourceLogicalOperator = std::make_shared<SourceLogicalOperator>(networkSourceDescriptor, networkSourceId);
     secondRightsourceLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, OperatorId{7});
@@ -494,13 +496,14 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     networkSinkId = getNextOperatorId();
     //sub plan on node 8
     decomposedQueryPlan = DecomposedQueryPlan::create(DecomposedQueryPlanId(subPlanId), SharedQueryId(sharedQueryId), pinnedId);
-    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(Network::NodeLocation(WorkerId(3), workerAddress, dataPort),
-                                                                   nesPartition,
-                                                                   WAIT_TIME,
-                                                                   DATA_CHANNEL_RETRY_TIMES,
-                                                                   version,
-                                                                   DEFAULT_NUMBER_OF_ORIGINS,
-                                                                   networkSinkId);
+    networkSinkDescriptor = Network::NetworkSinkDescriptor::create(
+        Network::NodeLocation(WorkerId(3), workerAddress, dataPort),
+        nesPartition,
+        WAIT_TIME,
+        DATA_CHANNEL_RETRY_TIMES,
+        version,
+        DEFAULT_NUMBER_OF_ORIGINS,
+        networkSinkId);
     sinkLogicalOperator = std::make_shared<SinkLogicalOperator>(networkSinkDescriptor, networkSinkId);
     sinkLogicalOperator->addProperty(Optimizer::DOWNSTREAM_LOGICAL_OPERATOR_ID, 7);
     sinkLogicalOperator->addProperty(Optimizer::UPSTREAM_LOGICAL_OPERATOR_ID, 20);
@@ -519,11 +522,11 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
 
     auto sharedQueryPlan = SharedQueryPlan::create(innerSharedQueryPlan);
 
-    auto [upstreamPinned, downStreamPinned] =
-        Experimental::findUpstreamAndDownstreamPinnedOperators(sharedQueryPlan,
-                                                               globalExecutionPlan->getLockedExecutionNode(WorkerId(6)),
-                                                               globalExecutionPlan->getLockedExecutionNode(WorkerId(3)),
-                                                               topology);
+    auto [upstreamPinned, downStreamPinned] = Experimental::findUpstreamAndDownstreamPinnedOperators(
+        sharedQueryPlan,
+        globalExecutionPlan->getLockedExecutionNode(WorkerId(6)),
+        globalExecutionPlan->getLockedExecutionNode(WorkerId(3)),
+        topology);
     ASSERT_EQ(upstreamPinned.size(), 3);
     ASSERT_TRUE(upstreamPinned.contains(OperatorId(13)));
     ASSERT_TRUE(upstreamPinned.contains(OperatorId(17)));
@@ -531,4 +534,4 @@ TEST_F(TopologyNodeRelocationRequestTest, testFindingIncrementalUpstreamAndDowns
     ASSERT_EQ(downStreamPinned.size(), 1);
     ASSERT_TRUE(downStreamPinned.contains(OperatorId(4)));
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

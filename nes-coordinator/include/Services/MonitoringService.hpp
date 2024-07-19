@@ -15,11 +15,12 @@
 #ifndef NES_COORDINATOR_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
 #define NES_COORDINATOR_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
 
+#include <memory>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
@@ -30,24 +31,25 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class RequestHandlerService;
 using RequestHandlerServicePtr = std::shared_ptr<RequestHandlerService>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
 /**
  * @brief: This class is responsible for handling requests related to fetching information regarding monitoring data.
  */
-class MonitoringService {
-  public:
-    MonitoringService(TopologyPtr topology,
-                      RequestHandlerServicePtr requestHandlerService,
-                      Catalogs::Query::QueryCatalogPtr queryCatalog);
+class MonitoringService
+{
+public:
+    MonitoringService(TopologyPtr topology, RequestHandlerServicePtr requestHandlerService, Catalogs::Query::QueryCatalogPtr queryCatalog);
 
-    MonitoringService(TopologyPtr topology,
-                      RequestHandlerServicePtr requestHandlerService,
-                      Catalogs::Query::QueryCatalogPtr queryCatalog,
-                      bool enableMonitoring);
+    MonitoringService(
+        TopologyPtr topology,
+        RequestHandlerServicePtr requestHandlerService,
+        Catalogs::Query::QueryCatalogPtr queryCatalog,
+        bool enableMonitoring);
 
     /**
      * @brief Registers a monitoring plan at all nodes. A MonitoringPlan indicates which metrics have to be sampled at a node.
@@ -104,7 +106,7 @@ class MonitoringService {
      */
     bool isMonitoringEnabled() const;
 
-  private:
+private:
     Monitoring::MonitoringManagerPtr monitoringManager;
     TopologyPtr topology;
     bool enableMonitoring;
@@ -112,6 +114,6 @@ class MonitoringService {
 
 using MonitoringServicePtr = std::shared_ptr<MonitoringService>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_SERVICES_MONITORINGSERVICE_HPP_

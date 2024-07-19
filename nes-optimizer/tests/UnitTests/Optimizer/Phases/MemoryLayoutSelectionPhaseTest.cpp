@@ -15,7 +15,6 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
@@ -42,22 +41,27 @@
 #include <Util/TestQuery.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 using NES::Runtime::TupleBuffer;
 
-namespace NES {
+namespace NES
+{
 
-class MemoryLayoutSelectionPhaseTest : public Testing::BaseUnitTest {
-  public:
+class MemoryLayoutSelectionPhaseTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MemoryLayoutSelectionPhase.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
     }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup MemoryLayoutSelectionPhase test case.");
 
@@ -73,13 +77,14 @@ class MemoryLayoutSelectionPhaseTest : public Testing::BaseUnitTest {
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 };
 
-void fillBufferRowLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout, uint64_t numberOfTuples) {
-
+void fillBufferRowLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayoutPtr& memoryLayout, uint64_t numberOfTuples)
+{
     auto recordIndexFields = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(0, memoryLayout, buf);
     auto fields01 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(1, memoryLayout, buf);
     auto fields02 = Runtime::MemoryLayouts::RowLayoutField<int64_t, true>::create(2, memoryLayout, buf);
 
-    for (size_t recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
+    for (size_t recordIndex = 0; recordIndex < numberOfTuples; recordIndex++)
+    {
         recordIndexFields[recordIndex] = recordIndex;
         fields01[recordIndex] = 100 + recordIndex;
         fields02[recordIndex] = 200 + recordIndex;
@@ -87,13 +92,14 @@ void fillBufferRowLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::RowLayo
     buf.setNumberOfTuples(numberOfTuples);
 }
 
-void fillBufferColLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::ColumnLayoutPtr& memoryLayout, uint64_t numberOfTuples) {
-
+void fillBufferColLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::ColumnLayoutPtr& memoryLayout, uint64_t numberOfTuples)
+{
     auto recordIndexFields = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(0, memoryLayout, buf);
     auto fields01 = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(1, memoryLayout, buf);
     auto fields02 = Runtime::MemoryLayouts::ColumnLayoutField<int64_t, true>::create(2, memoryLayout, buf);
 
-    for (size_t recordIndex = 0; recordIndex < numberOfTuples; recordIndex++) {
+    for (size_t recordIndex = 0; recordIndex < numberOfTuples; recordIndex++)
+    {
         recordIndexFields[recordIndex] = recordIndex;
         fields01[recordIndex] = 100 + recordIndex;
         fields02[recordIndex] = 200 + recordIndex;
@@ -101,7 +107,8 @@ void fillBufferColLayout(TupleBuffer& buf, const Runtime::MemoryLayouts::ColumnL
     buf.setNumberOfTuples(numberOfTuples);
 }
 
-TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
+TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery)
+{
     const uint64_t numbersOfBufferToProduce = 1000;
     const uint64_t frequency = 1000;
 
@@ -117,14 +124,17 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnarLayoutMapQuery) {
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
-    for (auto node : PlanIterator(plan)) {
-        if (auto op = node->as_if<Operator>()) {
+    for (auto node : PlanIterator(plan))
+    {
+        if (auto op = node->as_if<Operator>())
+        {
             ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
         }
     }
 }
 
-TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
+TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery)
+{
     const uint64_t numbersOfBufferToProduce = 1000;
     const uint64_t frequency = 1000;
 
@@ -145,14 +155,17 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setRowLayoutMapQuery) {
     phase->execute(plan);
 
     // Check if all operators in the query have an column layout
-    for (auto node : PlanIterator(plan)) {
-        if (auto op = node->as_if<Operator>()) {
+    for (auto node : PlanIterator(plan))
+    {
+        if (auto op = node->as_if<Operator>())
+        {
             ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::ROW_LAYOUT);
         }
     }
 }
 
-TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
+TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference)
+{
     const uint64_t numbersOfBufferToProduce = 1000;
     const uint64_t frequency = 1000;
 
@@ -176,11 +189,13 @@ TEST_F(MemoryLayoutSelectionPhaseTest, setColumnLayoutWithTypeInference) {
     phase->execute(plan);
     plan = typeInference->execute(plan);
     // Check if all operators in the query have an column layout
-    for (auto node : PlanIterator(plan)) {
-        if (auto op = node->as_if<Operator>()) {
+    for (auto node : PlanIterator(plan))
+    {
+        if (auto op = node->as_if<Operator>())
+        {
             ASSERT_EQ(op->getOutputSchema()->getLayoutType(), Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
         }
     }
 }
 
-}// namespace NES
+} // namespace NES

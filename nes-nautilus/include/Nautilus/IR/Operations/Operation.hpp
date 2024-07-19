@@ -15,22 +15,32 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
 
-#include <Nautilus/IR/Types/BasicTypes.hpp>
-#include <Nautilus/IR/Types/Stamp.hpp>
 #include <memory>
 #include <vector>
+#include <Nautilus/IR/Types/BasicTypes.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
 
-namespace NES::Nautilus::IR::Types {
+namespace NES::Nautilus::IR::Types
+{
 class Stamp;
 using StampPtr = std::shared_ptr<Stamp>;
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 using OperationIdentifier = std::string;
-class Operation {
-  public:
-    enum class ProxyCallType : uint8_t { GetNumTuples = 0, SetNumTuples = 1, GetDataBuffer = 2, Other = 50 };
-    enum class OperationType : uint8_t {
+class Operation
+{
+public:
+    enum class ProxyCallType : uint8_t
+    {
+        GetNumTuples = 0,
+        SetNumTuples = 1,
+        GetDataBuffer = 2,
+        Other = 50
+    };
+    enum class OperationType : uint8_t
+    {
         AddOp,
         AddressOp,
         AndOp,
@@ -73,7 +83,7 @@ class Operation {
     void addUsage(const Operation*);
     const std::vector<const Operation*>& getUsages();
 
-  protected:
+protected:
     OperationType opType;
     OperationIdentifier identifier;
     const Types::StampPtr stamp;
@@ -83,5 +93,5 @@ using OperationPtr = std::shared_ptr<Operation>;
 using OperationWPtr = std::weak_ptr<Operation>;
 using OperationRawPtr = Operation*;
 
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_

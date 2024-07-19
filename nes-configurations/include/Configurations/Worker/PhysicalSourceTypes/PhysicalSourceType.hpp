@@ -15,14 +15,16 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
 
-#include <Configurations/ConfigurationsNames.hpp>
 #include <map>
 #include <memory>
 #include <string>
+#include <Configurations/ConfigurationsNames.hpp>
 
-namespace NES {
+namespace NES
+{
 
-enum class SourceType : uint8_t {
+enum class SourceType : uint8_t
+{
     OPC_SOURCE,
     ZMQ_SOURCE,
     CSV_SOURCE,
@@ -50,9 +52,9 @@ using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 /**
  * @brief Interface for different Physical Source types
  */
-class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceType> {
-
-  public:
+class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceType>
+{
+public:
     PhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, SourceType sourceType);
 
     virtual ~PhysicalSourceType() noexcept = default;
@@ -104,9 +106,11 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
      * @tparam PhysicalSourceType: the source type to check
      * @return bool true if Source is of PhysicalSourceType
      */
-    template<class SourceType>
-    bool instanceOf() {
-        if (dynamic_cast<SourceType*>(this)) {
+    template <class SourceType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<SourceType*>(this))
+        {
             return true;
         };
         return false;
@@ -117,20 +121,22 @@ class PhysicalSourceType : public std::enable_shared_from_this<PhysicalSourceTyp
     * @tparam SourceType: source type to cast to
     * @return returns a shared pointer of the PhysicalSourceType
     */
-    template<class SourceType>
-    std::shared_ptr<SourceType> as() {
-        if (instanceOf<SourceType>()) {
+    template <class SourceType>
+    std::shared_ptr<SourceType> as()
+    {
+        if (instanceOf<SourceType>())
+        {
             return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
         }
-        throw std::logic_error("PhysicalSourceType:: we performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(SourceType).name());
+        throw std::logic_error(
+            "PhysicalSourceType:: we performed an invalid cast of operator " + this->toString() + " to type " + typeid(SourceType).name());
     }
 
-  private:
+private:
     std::string logicalSourceName;
     std::string physicalSourceName;
     SourceType sourceType;
 };
 
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_

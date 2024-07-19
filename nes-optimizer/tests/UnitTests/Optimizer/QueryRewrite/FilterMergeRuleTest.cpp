@@ -36,23 +36,26 @@
 
 using namespace NES;
 
-class FilterMergeRuleTest : public Testing::BaseIntegrationTest {
-
-  public:
+class FilterMergeRuleTest : public Testing::BaseIntegrationTest
+{
+public:
     SchemaPtr schema;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("PredicateReorderingRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PredicateReorderingRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
+    {
         NES_INFO("Setup FilterMergeRule test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -66,16 +69,20 @@ class FilterMergeRuleTest : public Testing::BaseIntegrationTest {
         sourceCatalog->addPhysicalSource("default_logical", sce1);
     }
 
-    bool isFilterAndHasCorrectPredicate(NodePtr filter, ExpressionNodePtr expectedPredicate) {
-        if (!filter->instanceOf<LogicalFilterOperator>()) {
+    bool isFilterAndHasCorrectPredicate(NodePtr filter, ExpressionNodePtr expectedPredicate)
+    {
+        if (!filter->instanceOf<LogicalFilterOperator>())
+        {
             return false;
         }
 
         auto filterPredicates = filter->as<LogicalFilterOperator>()->getPredicate()->getAndFlattenAllChildren(true);
         auto expectedPredicates = expectedPredicate->getAndFlattenAllChildren(true);
 
-        for (unsigned int i = 0; i < filterPredicates.size(); i++) {
-            if (!filterPredicates.at(i)->equal(expectedPredicates.at(i))) {
+        for (unsigned int i = 0; i < filterPredicates.size(); i++)
+        {
+            if (!filterPredicates.at(i)->equal(expectedPredicates.at(i)))
+            {
                 return false;
             }
         }
@@ -84,16 +91,15 @@ class FilterMergeRuleTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
+TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(Attribute("id") < 5)
-                      .filter(Attribute("vehicle") == "car")
-                      .sink(printSinkDescriptor);
+    Query query
+        = Query::from("default_logical").filter(Attribute("id") < 5).filter(Attribute("vehicle") == "car").sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -126,7 +132,8 @@ TEST_F(FilterMergeRuleTest, testMergeTwoConsecutiveFilters) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
+TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -173,7 +180,8 @@ TEST_F(FilterMergeRuleTest, testMergeThreeConsecutiveComplexFilters) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
+TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -258,7 +266,8 @@ TEST_F(FilterMergeRuleTest, testMergeDifferentFilterGroups) {
     EXPECT_TRUE(srcOperatorSQ->equal((*itr)));
 }
 
-TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween) {
+TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -306,16 +315,15 @@ TEST_F(FilterMergeRuleTest, testMergeNotPossibleOperatorsInBetween) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterMergeRuleTest, testMergeNotPossibleOneFilter) {
+TEST_F(FilterMergeRuleTest, testMergeNotPossibleOneFilter)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter(Attribute("id") < 5)
-                      .map(Attribute("id") = Attribute("id") * 2)
-                      .sink(printSinkDescriptor);
+    Query query
+        = Query::from("default_logical").filter(Attribute("id") < 5).map(Attribute("id") = Attribute("id") * 2).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);

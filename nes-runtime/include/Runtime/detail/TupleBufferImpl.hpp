@@ -15,21 +15,22 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Runtime/TaggedPointer.hpp>
 #include <atomic>
 #include <functional>
 #include <sstream>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/TaggedPointer.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-#include <deque>
-#include <mutex>
-#include <thread>
-#include <unordered_map>
+#    include <deque>
+#    include <mutex>
+#    include <thread>
+#    include <unordered_map>
 #endif
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 class BufferManager;
 class LocalBufferPool;
 class TupleBuffer;
@@ -39,15 +40,18 @@ class BufferRecycler;
 /**
  * @brief Computes aligned buffer size based on original buffer size and alignment
  */
-constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment) {
-    if (bufferSize % withAlignment) {
+constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
+{
+    if (bufferSize % withAlignment)
+    {
         // make sure that each buffer is a multiple of the alignment
         return bufferSize + (withAlignment - bufferSize % withAlignment);
     }
     return bufferSize;
 }
 
-namespace detail {
+namespace detail
+{
 
 class MemorySegment;
 
@@ -62,11 +66,11 @@ class MemorySegment;
  *
  * Reminder: this class should be header-only to help inlining
  */
-class alignas(64) BufferControlBlock {
-  public:
-    explicit BufferControlBlock(MemorySegment* owner,
-                                BufferRecycler* recycler,
-                                std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
+class alignas(64) BufferControlBlock
+{
+public:
+    explicit BufferControlBlock(
+        MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback);
 
     BufferControlBlock(const BufferControlBlock&);
 
@@ -219,7 +223,7 @@ class alignas(64) BufferControlBlock {
     void dumpOwningThreadInfo();
 #endif
 
-  private:
+private:
     std::atomic<int32_t> referenceCounter = 0;
     uint32_t numberOfTuples = 0;
     WatermarkTs watermark = 0;
@@ -231,21 +235,22 @@ class alignas(64) BufferControlBlock {
     StatisticId statisticId = INVALID_STATISTIC_ID;
     std::vector<MemorySegment*> children;
 
-  public:
+public:
     MemorySegment* owner;
     std::atomic<BufferRecycler*> owningBufferRecycler{};
     std::function<void(MemorySegment*, BufferRecycler*)> recycleCallback;
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-  private:
-    class ThreadOwnershipInfo {
+private:
+    class ThreadOwnershipInfo
+    {
         friend class BufferControlBlock;
 
-      private:
+    private:
         std::string threadName;
         std::string callstack;
 
-      public:
+    public:
         ThreadOwnershipInfo();
 
         ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack);
@@ -254,7 +259,8 @@ class alignas(64) BufferControlBlock {
 
         ThreadOwnershipInfo& operator=(const ThreadOwnershipInfo&) = default;
 
-        friend std::ostream& operator<<(std::ostream& os, const ThreadOwnershipInfo& info) {
+        friend std::ostream& operator<<(std::ostream& os, const ThreadOwnershipInfo& info)
+        {
             os << info.threadName << " buffer is used in " << info.callstack;
             return os;
         }
@@ -275,33 +281,39 @@ static_assert(alignof(BufferControlBlock) % 64 == 0);
  * Reminder: this class should be header-only to help inlining
  *
  */
-class MemorySegment {
+class MemorySegment
+{
     friend class NES::Runtime::TupleBuffer;
     friend class NES::Runtime::LocalBufferPool;
     friend class NES::Runtime::FixedSizeBufferPool;
     friend class NES::Runtime::BufferManager;
     friend class NES::Runtime::detail::BufferControlBlock;
 
-    enum class MemorySegmentType : uint8_t { Native = 0, Wrapped = 1 };
+    enum class MemorySegmentType : uint8_t
+    {
+        Native = 0,
+        Wrapped = 1
+    };
 
-  public:
+public:
     MemorySegment(const MemorySegment& other);
 
     MemorySegment& operator=(const MemorySegment& other);
 
     MemorySegment() noexcept = default;
 
-    explicit MemorySegment(uint8_t* ptr,
-                           uint32_t size,
-                           BufferRecycler* recycler,
-                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-                           uint8_t* controlBlock);
+    explicit MemorySegment(
+        uint8_t* ptr,
+        uint32_t size,
+        BufferRecycler* recycler,
+        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+        uint8_t* controlBlock);
 
     ~MemorySegment();
 
     uint8_t* getPointer() const { return ptr; }
 
-  private:
+private:
     /**
      * @brief Private constructor for the memory Segment
      * @param ptr
@@ -309,11 +321,12 @@ class MemorySegment {
      * @param recycler
      * @param recycleFunction
      */
-    explicit MemorySegment(uint8_t* ptr,
-                           uint32_t size,
-                           BufferRecycler* recycler,
-                           std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
-                           bool);
+    explicit MemorySegment(
+        uint8_t* ptr,
+        uint32_t size,
+        BufferRecycler* recycler,
+        std::function<void(MemorySegment*, BufferRecycler*)>&& recycleFunction,
+        bool);
 
     /**
      * @return true if the segment has a reference counter equals to zero
@@ -352,7 +365,7 @@ class MemorySegment {
  */
 void zmqBufferRecyclingCallback(void* ptr, void* hint);
 
-}// namespace detail
-}// namespace NES::Runtime
+} // namespace detail
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_

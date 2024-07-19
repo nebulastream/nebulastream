@@ -15,12 +15,13 @@
 #ifndef NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
 #define NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
 
-#include <Common/DataTypes/BasicTypes.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <memory>
 #include <string>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -31,8 +32,9 @@ using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 /**
  * @brief Represents a typed field in a schema.
  */
-class AttributeField {
-  public:
+class AttributeField
+{
+public:
     AttributeField() = default;
     AttributeField(std::string name, DataTypePtr dataType);
 
@@ -60,10 +62,10 @@ class AttributeField {
      */
     AttributeFieldPtr copy() const;
 
-  private:
+private:
     std::string name;
     DataTypePtr dataType;
 };
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_

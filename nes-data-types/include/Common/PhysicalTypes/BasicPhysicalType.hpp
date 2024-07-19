@@ -16,14 +16,17 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_BASICPHYSICALTYPE_HPP_
 
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The BasicPhysicalType represents nes data types, which can be directly mapped to a native c++ type.
  */
-class BasicPhysicalType final : public PhysicalType {
-  public:
-    enum class NativeType : uint8_t {
+class BasicPhysicalType final : public PhysicalType
+{
+public:
+    enum class NativeType : uint8_t
+    {
         UINT_8,
         UINT_16,
         UINT_32,
@@ -93,6 +96,6 @@ class BasicPhysicalType final : public PhysicalType {
 
 using BasicPhysicalTypePtr = std::shared_ptr<BasicPhysicalType>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_BASICPHYSICALTYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_BASICPHYSICALTYPE_HPP_

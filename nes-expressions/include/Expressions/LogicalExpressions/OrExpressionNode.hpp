@@ -15,13 +15,15 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSIONNODE_HPP_
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This node represents an OR combination between the two children.
  */
-class OrExpressionNode : public LogicalBinaryExpressionNode {
-  public:
+class OrExpressionNode : public LogicalBinaryExpressionNode
+{
+public:
     OrExpressionNode();
     ~OrExpressionNode() override = default;
     /**
@@ -43,9 +45,9 @@ class OrExpressionNode : public LogicalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+protected:
     explicit OrExpressionNode(OrExpressionNode* other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_OREXPRESSIONNODE_HPP_

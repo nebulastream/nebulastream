@@ -15,13 +15,15 @@
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
 
+#include <mutex>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
-#include <mutex>
 
-namespace NES {
+namespace NES
+{
 
-enum class SinkMediumTypes : uint8_t {
+enum class SinkMediumTypes : uint8_t
+{
     ZMQ_SINK,
     PRINT_SINK,
     KAFKA_SINK,
@@ -38,27 +40,29 @@ enum class SinkMediumTypes : uint8_t {
  * @brief Base class for all data sinks in NES
  * @note this code is not thread safe
  */
-class SinkMedium : public Runtime::Reconfigurable {
-
-  public:
+class SinkMedium : public Runtime::Reconfigurable
+{
+public:
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        SharedQueryId sharedQueryId,
-                        DecomposedQueryPlanId decomposedQueryPlanId);
+    explicit SinkMedium(
+        SinkFormatPtr sinkFormat,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId);
 
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(SinkFormatPtr sinkFormat,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        uint32_t numOfProducers,
-                        SharedQueryId sharedQueryId,
-                        DecomposedQueryPlanId decomposedQueryPlanId,
-                        uint64_t numberOfOrigins);
+    explicit SinkMedium(
+        SinkFormatPtr sinkFormat,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins);
 
     /**
      * @brief virtual method to setup sink
@@ -147,7 +151,7 @@ class SinkMedium : public Runtime::Reconfigurable {
      */
     OperatorId getOperatorId() const;
 
-  protected:
+protected:
     SinkFormatPtr sinkFormat;
     bool schemaWritten;
     Runtime::NodeEnginePtr nodeEngine;
@@ -163,6 +167,6 @@ class SinkMedium : public Runtime::Reconfigurable {
 
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_

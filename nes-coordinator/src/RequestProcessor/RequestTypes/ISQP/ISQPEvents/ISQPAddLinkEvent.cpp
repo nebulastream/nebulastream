@@ -14,17 +14,27 @@
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-ISQPEventPtr ISQPAddLinkEvent::create(const WorkerId& parentNodeId, const WorkerId& childWorkerId) {
+ISQPEventPtr ISQPAddLinkEvent::create(const WorkerId& parentNodeId, const WorkerId& childWorkerId)
+{
     return std::make_shared<ISQPAddLinkEvent>(parentNodeId, childWorkerId);
 };
 
 ISQPAddLinkEvent::ISQPAddLinkEvent(const WorkerId& parentNodeId, const WorkerId& childWorkerId)
-    : ISQPEvent(ISQP_ADD_LINK_EVENT_PRIORITY), parentNodeId(parentNodeId), childNodeId(childWorkerId) {}
+    : ISQPEvent(ISQP_ADD_LINK_EVENT_PRIORITY), parentNodeId(parentNodeId), childNodeId(childWorkerId)
+{
+}
 
-WorkerId ISQPAddLinkEvent::getParentNodeId() const { return parentNodeId; }
+WorkerId ISQPAddLinkEvent::getParentNodeId() const
+{
+    return parentNodeId;
+}
 
-WorkerId ISQPAddLinkEvent::getChildNodeId() const { return childNodeId; }
+WorkerId ISQPAddLinkEvent::getChildNodeId() const
+{
+    return childNodeId;
+}
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

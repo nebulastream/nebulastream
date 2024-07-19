@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/Query.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -25,16 +24,20 @@
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class ExplainRequestIntegrationTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class ExplainRequestIntegrationTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ExplainRequestIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ExplainRequestIntegrationTest test class.");
     }
@@ -42,7 +45,8 @@ class ExplainRequestIntegrationTest : public Testing::BaseIntegrationTest {
     static void TearDownTestCase() { NES_INFO("Tear down ExplainRequestIntegrationTest class."); }
 };
 
-TEST_F(ExplainRequestIntegrationTest, executeExplainRequest) {
+TEST_F(ExplainRequestIntegrationTest, executeExplainRequest)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -74,16 +78,16 @@ TEST_F(ExplainRequestIntegrationTest, executeExplainRequest) {
     // Send first explain request
     auto requestHandlerService = crd->getRequestHandlerService();
     auto query1 = Query::from("test_source").project(Attribute("id")).sink(NullOutputSinkDescriptor::create());
-    auto response1 =
-        requestHandlerService->validateAndQueueExplainQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    auto response1
+        = requestHandlerService->validateAndQueueExplainQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     //Assertion
     NES_INFO("Explain Request Output: {}", response1.dump());
     ASSERT_FALSE(response1.empty());
 
     // Send Second explain request
     auto query2 = Query::from("test_source").project(Attribute("id")).sink(NullOutputSinkDescriptor::create());
-    auto response2 =
-        requestHandlerService->validateAndQueueExplainQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    auto response2
+        = requestHandlerService->validateAndQueueExplainQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     //Assertion
     NES_INFO("Explain Request Output: {}", response2.dump());
     ASSERT_FALSE(response2.empty());
@@ -96,4 +100,4 @@ TEST_F(ExplainRequestIntegrationTest, executeExplainRequest) {
     bool retStopWrk1 = wrk1->stop(false);
     EXPECT_TRUE(retStopWrk1);
 }
-}// namespace NES
+} // namespace NES

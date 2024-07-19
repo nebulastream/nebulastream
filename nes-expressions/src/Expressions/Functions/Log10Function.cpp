@@ -11,19 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /*
  * Defines the log-10 function and registers it to the FunctionRegistry.
  */
-class Log10Function : public UnaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (!input->isNumeric()) {
+class Log10Function : public UnaryLogicalFunction
+{
+public:
+    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override
+    {
+        if (!input->isNumeric())
+        {
             NES_THROW_RUNTIME_ERROR("LogExpressions can only be evaluated on numeric values.");
         }
         // Output values can become highly negative for inputs close to +0. Set Double as output stamp.
@@ -33,4 +37,4 @@ class Log10Function : public UnaryLogicalFunction {
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<Log10Function> logFunction("log10");
 
-}// namespace NES
+} // namespace NES

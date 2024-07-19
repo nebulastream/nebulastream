@@ -11,20 +11,34 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Compiler/SourceCode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
-SourceCode::SourceCode(Language language, std::string code) : code(std::move(code)), language(std::move(language)) {
+SourceCode::SourceCode(Language language, std::string code) : code(std::move(code)), language(std::move(language))
+{
     NES_ASSERT(code.empty(), "Code should not be empty");
 }
 
-const Language& SourceCode::getLanguage() const { return language; }
+const Language& SourceCode::getLanguage() const
+{
+    return language;
+}
 
-const std::string& SourceCode::getCode() const { return code; }
-bool SourceCode::operator==(const SourceCode& rhs) const { return code == rhs.code && language == rhs.language; }
-bool SourceCode::operator!=(const SourceCode& rhs) const { return !(rhs == *this); }
+const std::string& SourceCode::getCode() const
+{
+    return code;
+}
+bool SourceCode::operator==(const SourceCode& rhs) const
+{
+    return code == rhs.code && language == rhs.language;
+}
+bool SourceCode::operator!=(const SourceCode& rhs) const
+{
+    return !(rhs == *this);
+}
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler

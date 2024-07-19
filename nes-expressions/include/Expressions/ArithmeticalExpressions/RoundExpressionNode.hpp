@@ -15,12 +15,14 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ROUNDEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ROUNDEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an ROUND (absolut value) expression.
  */
-class RoundExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
+class RoundExpressionNode final : public ArithmeticalUnaryExpressionNode
+{
+public:
     explicit RoundExpressionNode(DataTypePtr stamp);
     ~RoundExpressionNode() noexcept override = default;
     /**
@@ -43,10 +45,10 @@ class RoundExpressionNode final : public ArithmeticalUnaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  private:
+private:
     explicit RoundExpressionNode(RoundExpressionNode* other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ROUNDEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ROUNDEXPRESSIONNODE_HPP_

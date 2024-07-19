@@ -19,18 +19,17 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES::InferModel {
+namespace NES::InferModel
+{
 
 /**
  * @brief Infer model operator
  */
-class LogicalInferModelOperator : public LogicalUnaryOperator {
-
-  public:
-    LogicalInferModelOperator(std::string model,
-                              std::vector<ExpressionNodePtr> inputFields,
-                              std::vector<ExpressionNodePtr> outputFields,
-                              OperatorId id);
+class LogicalInferModelOperator : public LogicalUnaryOperator
+{
+public:
+    LogicalInferModelOperator(
+        std::string model, std::vector<ExpressionNodePtr> inputFields, std::vector<ExpressionNodePtr> outputFields, OperatorId id);
 
     /**
      * @brief creates a string representation of this node
@@ -94,7 +93,7 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
      */
     const std::vector<ExpressionNodePtr>& getOutputFields() const;
 
-  private:
+private:
     /**
      * @brief updates the field to a fully qualified one.
      * @param field
@@ -106,6 +105,6 @@ class LogicalInferModelOperator : public LogicalUnaryOperator {
     std::vector<ExpressionNodePtr> outputFields;
 };
 
-}// namespace NES::InferModel
+} // namespace NES::InferModel
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_

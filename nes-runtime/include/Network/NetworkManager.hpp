@@ -15,25 +15,27 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_NETWORKMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_NETWORKMANAGER_HPP_
 
-#include <Network/ExchangeProtocol.hpp>
-#include <Network/NetworkForwardRefs.hpp>
-#include <Network/PartitionRegistrationStatus.hpp>
-#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <chrono>
 #include <cstdint>
 #include <functional>
 #include <future>
 #include <memory>
 #include <string>
+#include <Network/ExchangeProtocol.hpp>
+#include <Network/NetworkForwardRefs.hpp>
+#include <Network/PartitionRegistrationStatus.hpp>
+#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
 /**
  * @brief The NetworkManager manages creation and deletion of subpartition producer and consumer.
  */
-class NetworkManager {
-  public:
+class NetworkManager
+{
+public:
     /**
      * @brief create method to return a shared pointer of the NetworkManager
      * @param nodeEngineId,
@@ -46,15 +48,16 @@ class NetworkManager {
      * @param connectSourceEventChannelsAsync if true, source will use a dedicated thread when attempting to establish an event channel
      * @return the shared_ptr object
      */
-    static NetworkManagerPtr create(WorkerId nodeEngineId,
-                                    const std::string& hostname,
-                                    uint16_t port,
-                                    Network::ExchangeProtocol&& exchangeProtocol,
-                                    const Runtime::BufferManagerPtr& bufferManager,
-                                    int senderHighWatermark = -1,
-                                    uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS,
-                                    bool connectSinksAsync = false,
-                                    bool connectSourceEventChannelsAsync = false);
+    static NetworkManagerPtr create(
+        WorkerId nodeEngineId,
+        const std::string& hostname,
+        uint16_t port,
+        Network::ExchangeProtocol&& exchangeProtocol,
+        const Runtime::BufferManagerPtr& bufferManager,
+        int senderHighWatermark = -1,
+        uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS,
+        bool connectSinksAsync = false,
+        bool connectSourceEventChannelsAsync = false);
 
     /**
      * @brief Creates a new network manager object, which comprises of a zmq server and an exchange protocol
@@ -68,15 +71,16 @@ class NetworkManager {
      * @param connectSinksAsync if true, sinks will use a dedicated thread when attempting to establish a network channel
      * @param connectSourceEventChannelsAsync if true, source will use a dedicated thread when attempting to establish an event channel
      */
-    explicit NetworkManager(WorkerId nodeEngineId,
-                            const std::string& hostname,
-                            uint16_t port,
-                            ExchangeProtocol&& exchangeProtocol,
-                            const Runtime::BufferManagerPtr& bufferManager,
-                            int senderHighWatermark,
-                            uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS,
-                            bool connectSinksAsync = false,
-                            bool connectSourceEventChannelsAsync = false);
+    explicit NetworkManager(
+        WorkerId nodeEngineId,
+        const std::string& hostname,
+        uint16_t port,
+        ExchangeProtocol&& exchangeProtocol,
+        const Runtime::BufferManagerPtr& bufferManager,
+        int senderHighWatermark,
+        uint16_t numServerThread = DEFAULT_NUM_SERVER_THREADS,
+        bool connectSinksAsync = false,
+        bool connectSourceEventChannelsAsync = false);
 
     /**
      * @brief Destroy the network manager calling destroy()
@@ -91,9 +95,8 @@ class NetworkManager {
      * @param emitter underlying network source
      * @return true if the partition was registered for the first time, false otherwise
      */
-    bool registerSubpartitionConsumer(const NesPartition& nesPartition,
-                                      const NodeLocation& senderLocation,
-                                      const DataEmitterPtr& emitter) const;
+    bool
+    registerSubpartitionConsumer(const NesPartition& nesPartition, const NodeLocation& senderLocation, const DataEmitterPtr& emitter) const;
 
     /**
      * @brief This method is called on the receiver side to remove a SubpartitionConsumer.
@@ -134,12 +137,13 @@ class NetworkManager {
      * @param version the version number which will be used by the receiver to determine if this channel will be accepted
      * @return the data network channel
      */
-    NetworkChannelPtr registerSubpartitionProducer(const NodeLocation& nodeLocation,
-                                                   const NesPartition& nesPartition,
-                                                   Runtime::BufferManagerPtr bufferManager,
-                                                   std::chrono::milliseconds waitTime,
-                                                   uint8_t retryTimes,
-                                                   DecomposedQueryPlanVersion version = 0);
+    NetworkChannelPtr registerSubpartitionProducer(
+        const NodeLocation& nodeLocation,
+        const NesPartition& nesPartition,
+        Runtime::BufferManagerPtr bufferManager,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes,
+        DecomposedQueryPlanVersion version = 0);
 
     /**
      * @brief This method is called on the sender side to asynchronously register a SubpartitionProducer. It returns a future
@@ -157,15 +161,15 @@ class NetworkManager {
      * @return a pair consisting of a future containing the data network channel on completion and a promise that aborts the connection process when
      * its value is set
      */
-    std::pair<std::future<NetworkChannelPtr>, std::promise<bool>>
-    registerSubpartitionProducerAsync(const NodeLocation& nodeLocation,
-                                      const NesPartition& nesPartition,
-                                      Runtime::BufferManagerPtr bufferManager,
-                                      std::chrono::milliseconds waitTime,
-                                      uint8_t retryTimes,
-                                      Runtime::ReconfigurationMessage reconfigurationMessage,
-                                      Runtime::QueryManagerPtr queryManager,
-                                      DecomposedQueryPlanVersion version = 0);
+    std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> registerSubpartitionProducerAsync(
+        const NodeLocation& nodeLocation,
+        const NesPartition& nesPartition,
+        Runtime::BufferManagerPtr bufferManager,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes,
+        Runtime::ReconfigurationMessage reconfigurationMessage,
+        Runtime::QueryManagerPtr queryManager,
+        DecomposedQueryPlanVersion version = 0);
 
     /**
      * @brief This method is called on the sender side to register a SubpartitionProducer. If the connection to
@@ -177,11 +181,12 @@ class NetworkManager {
      * @param retryTimes times to retry a connection
      * @return the event-only network channel
      */
-    EventOnlyNetworkChannelPtr registerSubpartitionEventProducer(const NodeLocation& nodeLocation,
-                                                                 const NesPartition& nesPartition,
-                                                                 Runtime::BufferManagerPtr bufferManager,
-                                                                 std::chrono::milliseconds waitTime,
-                                                                 uint8_t retryTimes);
+    EventOnlyNetworkChannelPtr registerSubpartitionEventProducer(
+        const NodeLocation& nodeLocation,
+        const NesPartition& nesPartition,
+        Runtime::BufferManagerPtr bufferManager,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes);
 
     /**
      * @brief
@@ -189,9 +194,8 @@ class NetworkManager {
      * @param nesPartition
      * @return
      */
-    bool registerSubpartitionEventConsumer(const NodeLocation& nodeLocation,
-                                           const NesPartition& nesPartition,
-                                           Runtime::RuntimeEventListenerPtr eventListener);
+    bool registerSubpartitionEventConsumer(
+        const NodeLocation& nodeLocation, const NesPartition& nesPartition, Runtime::RuntimeEventListenerPtr eventListener);
 
     /**
      * @brief This methods destroys the network manager by stopping the underlying (ZMQ) server
@@ -224,12 +228,12 @@ class NetworkManager {
      * its value is set (abortion not yet implemented)
      */
     //todo #4490: implement aborting connection attempt if returned promise is set
-    std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>>
-    registerSubpartitionEventProducerAsync(const NodeLocation& nodeLocation,
-                                           const NesPartition& nesPartition,
-                                           Runtime::BufferManagerPtr bufferManager,
-                                           std::chrono::milliseconds waitTime,
-                                           uint8_t retryTimes);
+    std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>> registerSubpartitionEventProducerAsync(
+        const NodeLocation& nodeLocation,
+        const NesPartition& nesPartition,
+        Runtime::BufferManagerPtr bufferManager,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes);
 
     /**
      * @brief retrieve the value of the connectSinkAsync flag which indicates if a separate thread should be used to establish
@@ -245,7 +249,7 @@ class NetworkManager {
      */
     bool getConnectSourceEventChannelsAsync();
 
-  private:
+private:
     NodeLocation nodeLocation;
     ZmqServerPtr server;
     ExchangeProtocol exchangeProtocol;
@@ -255,6 +259,6 @@ class NetworkManager {
     const bool connectSourceEventChannelsAsync;
 };
 
-}// namespace NES::Network
+} // namespace NES::Network
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKMANAGER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKMANAGER_HPP_

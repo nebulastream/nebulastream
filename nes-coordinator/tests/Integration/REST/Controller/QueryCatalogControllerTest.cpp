@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <API/Query.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp>
@@ -23,20 +23,24 @@
 #include <Util/TestUtils.hpp>
 #include <cpr/cpr.h>
 #include <gtest/gtest.h>
-#include <memory>
 #include <nlohmann/json.hpp>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
-class QueryCatalogControllerTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES
+{
+class QueryCatalogControllerTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("QueryCatalogControllerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryCatalogControllerTest test class.");
     }
 
     static void TearDownTestCase() { NES_INFO("Tear down QueryCatalogControllerTest test class."); }
 
-    void startCoordinator() {
+    void startCoordinator()
+    {
         NES_INFO("QueryCatalogControllerTest: Start coordinator");
         coordinatorConfig = CoordinatorConfiguration::createDefault();
         coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -47,7 +51,8 @@ class QueryCatalogControllerTest : public Testing::BaseIntegrationTest {
         NES_INFO("QueryCatalogControllerTest: Coordinator started successfully");
     }
 
-    void stopCoordinator() {
+    void stopCoordinator()
+    {
         bool stopCrd = coordinator->stopCoordinator(true);
         ASSERT_TRUE(stopCrd);
     }
@@ -57,12 +62,13 @@ class QueryCatalogControllerTest : public Testing::BaseIntegrationTest {
 };
 
 // Test that allRegisteredQueries first returns an empty json when no queries are registered and then a non-empty one after a query has been registered
-TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
+TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries)
+{
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
-    cpr::AsyncResponse future1 =
-        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+    cpr::AsyncResponse future1
+        = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     future1.wait();
     auto r = future1.get();
     EXPECT_EQ(r.status_code, 200l);
@@ -74,12 +80,9 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    queryCatalog->createQueryCatalogEntry("query string",
-                                          queryPlan,
-                                          Optimizer::PlacementStrategy::BottomUp,
-                                          QueryState::REGISTERED);
-    cpr::AsyncResponse future2 =
-        cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
+    queryCatalog->createQueryCatalogEntry("query string", queryPlan, Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
+    cpr::AsyncResponse future2
+        = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/allRegisteredQueries"});
     future2.wait();
     auto response2 = future2.get();
     EXPECT_EQ(response2.status_code, 200l);
@@ -90,7 +93,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestAllRegistedQueries) {
 }
 
 // Test queries endpoint: 400 if no status provided, otherwise 200. Depending on if a query is registered or not either an empty json body or non-empty
-TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
+TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus)
+{
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -102,8 +106,8 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     EXPECT_EQ(r1.status_code, 400l);
 
     // When including the status
-    cpr::AsyncResponse future2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
-                                               cpr::Parameters{{"status", "REGISTERED"}});
+    cpr::AsyncResponse future2 = cpr::GetAsync(
+        cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"}, cpr::Parameters{{"status", "REGISTERED"}});
 
     future2.wait();
     auto r2 = future2.get();
@@ -120,14 +124,11 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    queryCatalog->createQueryCatalogEntry("queryString",
-                                          queryPlan,
-                                          Optimizer::PlacementStrategy::BottomUp,
-                                          QueryState::REGISTERED);
+    queryCatalog->createQueryCatalogEntry("queryString", queryPlan, Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
 
     // when making a request for a query with a specific status after having submitted a query
-    cpr::AsyncResponse future3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"},
-                                               cpr::Parameters{{"status", "REGISTERED"}});
+    cpr::AsyncResponse future3 = cpr::GetAsync(
+        cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/queries"}, cpr::Parameters{{"status", "REGISTERED"}});
 
     future3.wait();
     auto r3 = future3.get();
@@ -141,7 +142,8 @@ TEST_F(QueryCatalogControllerTest, testGetQueriesWithSpecificStatus) {
 }
 
 //Test status endpoint correctly returns status of a query
-TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
+TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery)
+{
     startCoordinator();
     ASSERT_TRUE(TestUtils::checkRESTServerStartedOrTimeout(coordinatorConfig->restPort.getValue(), 5));
 
@@ -153,8 +155,8 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     EXPECT_EQ(r1.status_code, 400l);
 
     // when sending a request to the status endpoint with 'queryId' supplied but no such query registered
-    cpr::AsyncResponse f2 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
-                                          cpr::Parameters{{"queryId", "1"}});
+    cpr::AsyncResponse f2
+        = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"}, cpr::Parameters{{"queryId", "1"}});
     f2.wait();
     auto r2 = f2.get();
     //return 400 NO CONTENT
@@ -166,14 +168,11 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     const QueryPlanPtr queryPlan = query.getQueryPlan();
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
-    queryCatalog->createQueryCatalogEntry("queryString",
-                                          queryPlan,
-                                          Optimizer::PlacementStrategy::BottomUp,
-                                          QueryState::REGISTERED);
+    queryCatalog->createQueryCatalogEntry("queryString", queryPlan, Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
 
     // when sending a request to the status endpoint with 'queryId' supplied and a query with specified id registered
-    cpr::AsyncResponse f3 = cpr::GetAsync(cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"},
-                                          cpr::Parameters{{"queryId", queryId.toString()}});
+    cpr::AsyncResponse f3 = cpr::GetAsync(
+        cpr::Url{BASE_URL + std::to_string(*restPort) + "/v1/nes/queryCatalog/status"}, cpr::Parameters{{"queryId", queryId.toString()}});
     f3.wait();
     auto r3 = f3.get();
     //return 200 OK
@@ -185,4 +184,4 @@ TEST_F(QueryCatalogControllerTest, testGetRequestStatusOfQuery) {
     ASSERT_TRUE(jsonResponse["queryId"].get<QueryId>() == queryId);
     stopCoordinator();
 }
-}//namespace NES
+} //namespace NES

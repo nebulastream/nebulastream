@@ -15,19 +15,21 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
 
-#include <Exceptions/RuntimeException.hpp>
 #include <memory>
+#include <Exceptions/RuntimeException.hpp>
 
-namespace NES {
+namespace NES
+{
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
-
-  public:
+class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule>
+{
+public:
     /**
      * @brief Apply the rule to the Query plan
      * @param queryPlanPtr : The original query plan
@@ -40,9 +42,11 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
      * @tparam RefinementType
      * @return bool true if node is of RuleType
      */
-    template<class RefinementType>
-    bool instanceOf() {
-        if (dynamic_cast<RefinementType*>(this)) {
+    template <class RefinementType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<RefinementType*>(this))
+        {
             return true;
         };
         return false;
@@ -53,14 +57,16 @@ class BaseRewriteRule : public std::enable_shared_from_this<BaseRewriteRule> {
     * @tparam RefinementType
     * @return returns a shared pointer of the RuleType
     */
-    template<class RefinementType>
-    std::shared_ptr<RefinementType> as() {
-        if (instanceOf<RefinementType>()) {
+    template <class RefinementType>
+    std::shared_ptr<RefinementType> as()
+    {
+        if (instanceOf<RefinementType>())
+        {
             return std::dynamic_pointer_cast<RefinementType>(this->shared_from_this());
         }
         throw Exceptions::RuntimeException("We performed an invalid cast");
     }
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_BASEREWRITERULE_HPP_

@@ -12,51 +12,63 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <string>
+#include <utility>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
-#include <string>
-#include <utility>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-JSONParser::JSONParser(uint64_t numberOfSchemaFields,
-                       std::vector<std::string> schemaKeys,
-                       std::vector<NES::PhysicalTypePtr> physicalTypes)
-    : Parser(physicalTypes), numberOfSchemaFields(numberOfSchemaFields), schemaKeys(std::move(schemaKeys)),
-      physicalTypes(std::move(physicalTypes)) {}
+JSONParser::JSONParser(uint64_t numberOfSchemaFields, std::vector<std::string> schemaKeys, std::vector<NES::PhysicalTypePtr> physicalTypes)
+    : Parser(physicalTypes)
+    , numberOfSchemaFields(numberOfSchemaFields)
+    , schemaKeys(std::move(schemaKeys))
+    , physicalTypes(std::move(physicalTypes))
+{
+}
 
-bool JSONParser::writeInputTupleToTupleBuffer(std::string_view jsonTuple,
-                                              uint64_t tupleCount,
-                                              Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-                                              const SchemaPtr& schema,
-                                              const Runtime::BufferManagerPtr& bufferManager) {
+bool JSONParser::writeInputTupleToTupleBuffer(
+    std::string_view jsonTuple,
+    uint64_t tupleCount,
+    Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    const SchemaPtr& schema,
+    const Runtime::BufferManagerPtr& bufferManager)
+{
     NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount:  {}", tupleCount);
     std::vector<std::string> helperToken;
     // extract values as strings from JSON message - should be improved with JSON library
     nlohmann::json parsedJSONObject;
-    try {
+    try
+    {
         parsedJSONObject = nlohmann::json ::parse(jsonTuple);
-    } catch (std::exception e) {
-        NES_THROW_RUNTIME_ERROR(
-            "JSONParser::writeInputTupleToTupleBuffer: Couldn't parse json tuple. ERROR: " << strerror(errno));
+    }
+    catch (std::exception e)
+    {
+        NES_THROW_RUNTIME_ERROR("JSONParser::writeInputTupleToTupleBuffer: Couldn't parse json tuple. ERROR: " << strerror(errno));
     }
     // iterate over fields of schema and cast string values to correct type
     std::basic_string<char> jsonValue;
-    for (uint64_t fieldIndex = 0; fieldIndex < numberOfSchemaFields; fieldIndex++) {
+    for (uint64_t fieldIndex = 0; fieldIndex < numberOfSchemaFields; fieldIndex++)
+    {
         auto field = physicalTypes[fieldIndex];
-        try {
+        try
+        {
             //serialize() is called to get the web::json::value as a string. This is done for 2 reasons:
             // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
             // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
             NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current Field:  {}", schemaKeys[fieldIndex]);
             jsonValue = parsedJSONObject[schemaKeys[fieldIndex]].dump();
-            if (jsonValue == "null") {// key doesn't exist in parsedJSONObject, which is not an error itself
+            if (jsonValue == "null")
+            { // key doesn't exist in parsedJSONObject, which is not an error itself
                 return false;
             }
-        } catch (nlohmann::json::exception jsonException) {
+        }
+        catch (nlohmann::json::exception jsonException)
+        {
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: {}", jsonException.what());
             return false;
         }
@@ -68,4 +80,4 @@ bool JSONParser::writeInputTupleToTupleBuffer(std::string_view jsonTuple,
     }
     return true;
 }
-}// namespace NES
+} // namespace NES

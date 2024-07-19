@@ -19,7 +19,8 @@
 #include <memory>
 #include <utility>
 
-namespace NES {
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -30,9 +31,10 @@ using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 /**
  * @brief The physical data type represents the physical representation of a NES data type.
  */
-class PhysicalType {
-  public:
-    inline explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) {}
+class PhysicalType
+{
+public:
+    inline explicit PhysicalType(DataTypePtr type) noexcept : type(std::move(type)) { }
 
     virtual ~PhysicalType() = default;
 
@@ -96,6 +98,6 @@ class PhysicalType {
     DataTypePtr const type;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_

@@ -16,15 +16,17 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class TimeFunction;
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 /**
  * @brief Watermark assignment operator.
  * Determines the watermark ts according to a WatermarkStrategyDescriptor an places it in the current buffer.
  */
-class IngestionTimeWatermarkAssignment : public ExecutableOperator {
-  public:
+class IngestionTimeWatermarkAssignment : public ExecutableOperator
+{
+public:
     /**
      * @brief Creates a IngestionTimeWatermarkAssignment operator without expression
      */
@@ -32,9 +34,9 @@ class IngestionTimeWatermarkAssignment : public ExecutableOperator {
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+private:
     std::unique_ptr<TimeFunction> timeFunction;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_INGESTIONTIMEWATERMARKASSIGNMENT_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_INGESTIONTIMEWATERMARKASSIGNMENT_HPP_

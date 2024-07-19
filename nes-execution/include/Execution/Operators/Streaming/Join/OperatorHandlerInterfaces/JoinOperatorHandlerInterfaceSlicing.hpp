@@ -16,9 +16,11 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACESLICING_HPP_
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 
-namespace NES::Runtime::Execution::Operators {
-class JoinOperatorHandlerInterfaceSlicing {
-  public:
+namespace NES::Runtime::Execution::Operators
+{
+class JoinOperatorHandlerInterfaceSlicing
+{
+public:
     /**
      * @brief Retrieves the slice that corresponds to the timestamp. If no window exists for the timestamp, one gets created
      * @param timestamp
@@ -33,6 +35,6 @@ class JoinOperatorHandlerInterfaceSlicing {
      */
     virtual StreamSlice* getCurrentSliceOrCreate() = 0;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACESLICING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACESLICING_HPP_

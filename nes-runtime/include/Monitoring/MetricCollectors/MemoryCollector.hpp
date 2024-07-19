@@ -15,13 +15,15 @@
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
  * The MemoryCollector class enables measuring and writing records of class Metrics/Gauge/MemoryMetrics into a TupleBuffer.
  */
-class MemoryCollector : public MetricCollector {
-  public:
+class MemoryCollector : public MetricCollector
+{
+public:
     explicit MemoryCollector();
 
     /**
@@ -49,11 +51,11 @@ class MemoryCollector : public MetricCollector {
      */
     const MetricPtr readMetric() const override;
 
-  private:
+private:
     AbstractSystemResourcesReaderPtr resourceReader;
     SchemaPtr schema;
 };
 
 using MemoryCollectorPtr = std::shared_ptr<MemoryCollector>;
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring

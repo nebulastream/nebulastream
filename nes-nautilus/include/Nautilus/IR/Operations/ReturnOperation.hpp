@@ -15,12 +15,14 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_
 
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <cstdint>
+#include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
-class ReturnOperation : public Operation {
-  public:
+namespace NES::Nautilus::IR::Operations
+{
+class ReturnOperation : public Operation
+{
+public:
     ReturnOperation();
     ReturnOperation(OperationPtr returnValue);
     ~ReturnOperation() override = default;
@@ -30,8 +32,8 @@ class ReturnOperation : public Operation {
 
     std::string toString() override;
 
-  private:
+private:
     OperationWPtr returnValue;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_RETURNOPERATION_HPP_

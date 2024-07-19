@@ -11,28 +11,40 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
-#include <utility>
 
-namespace NES::Statistic {
-StatisticMetric::StatisticMetric(FieldAccessExpressionNodePtr field) : field(std::move(field)) {}
+namespace NES::Statistic
+{
+StatisticMetric::StatisticMetric(FieldAccessExpressionNodePtr field) : field(std::move(field))
+{
+}
 
-FieldAccessExpressionNodePtr StatisticMetric::getField() const { return field; }
+FieldAccessExpressionNodePtr StatisticMetric::getField() const
+{
+    return field;
+}
 
-StatisticMetricHash StatisticMetric::hash() const {
+StatisticMetricHash StatisticMetric::hash() const
+{
     // We do not want to hash the qualifierSourceName, only the field name without it
     auto fieldNameToHash = field->getFieldName();
-    if (field->getFieldName().find(Schema::ATTRIBUTE_NAME_SEPARATOR)) {
+    if (field->getFieldName().find(Schema::ATTRIBUTE_NAME_SEPARATOR))
+    {
         fieldNameToHash = fieldNameToHash.substr(fieldNameToHash.find(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1);
     }
     return std::hash<std::string>()(fieldNameToHash);
 }
 
-bool StatisticMetric::equal(const StatisticMetric& rhs) const { return *this == rhs; }
+bool StatisticMetric::equal(const StatisticMetric& rhs) const
+{
+    return *this == rhs;
+}
 
-FieldAccessExpressionNodePtr Over(std::string name) {
+FieldAccessExpressionNodePtr Over(std::string name)
+{
     return FieldAccessExpressionNode::create(std::move(name))->as<FieldAccessExpressionNode>();
 }
-}//namespace NES::Statistic
+} //namespace NES::Statistic

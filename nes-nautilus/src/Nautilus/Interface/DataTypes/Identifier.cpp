@@ -13,6 +13,10 @@
 */
 
 #include <Nautilus/Interface/DataTypes/Identifier.hpp>
-namespace NES::Nautilus {
-bool Identifier::isIdentifier(const Any& val) { return dynamic_cast<const Identifier*>(&val) != nullptr; }
-}// namespace NES::Nautilus
+namespace NES::Nautilus
+{
+bool Identifier::isIdentifier(const Any& val)
+{
+    return dynamic_cast<const Identifier*>(&val) != nullptr;
+}
+} // namespace NES::Nautilus

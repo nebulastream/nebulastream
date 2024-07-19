@@ -15,7 +15,8 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_ATOMICCOUNTER_HPP_
 #define NES_COMMON_INCLUDE_UTIL_ATOMICCOUNTER_HPP_
 
-namespace NES {
+namespace NES
+{
 
 #ifdef __cpp_lib_hardware_interference_size
 using std::hardware_constructive_interference_size;
@@ -26,12 +27,14 @@ constexpr std::size_t hardware_constructive_interference_size = 64;
 constexpr std::size_t hardware_destructive_interference_size = 64;
 #endif
 
-template<typename T>
+template <typename T>
 //TODO: change this to folly::hardware_destructive_interference_size but then we have to load folly
-struct alignas(hardware_constructive_interference_size) AtomicCounter {
-    explicit AtomicCounter(T defValue = 0) : counter(defValue) {}
-    AtomicCounter(const AtomicCounter<T>& other) : counter(other.counter.load()) {}
-    AtomicCounter<T>& operator=(const AtomicCounter<T>& other) {
+struct alignas(hardware_constructive_interference_size) AtomicCounter
+{
+    explicit AtomicCounter(T defValue = 0) : counter(defValue) { }
+    AtomicCounter(const AtomicCounter<T>& other) : counter(other.counter.load()) { }
+    AtomicCounter<T>& operator=(const AtomicCounter<T>& other)
+    {
         counter.store(other.counter.load());
         return *this;
     }
@@ -41,5 +44,5 @@ struct alignas(hardware_constructive_interference_size) AtomicCounter {
 };
 static_assert(sizeof(AtomicCounter<uint64_t>) == 64);
 
-}// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_ATOMICCOUNTER_HPP_
+} // namespace NES
+#endif // NES_COMMON_INCLUDE_UTIL_ATOMICCOUNTER_HPP_

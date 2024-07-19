@@ -15,18 +15,20 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_
 
+#include <chrono>
 #include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Util/MetricCollectorType.hpp>
-#include <chrono>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical source for monitoring
  */
-class MonitoringSourceDescriptor : public SourceDescriptor {
-  public:
+class MonitoringSourceDescriptor : public SourceDescriptor
+{
+public:
     static SourceDescriptorPtr create(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
 
     /**
@@ -45,7 +47,7 @@ class MonitoringSourceDescriptor : public SourceDescriptor {
     std::string toString() const override;
     SourceDescriptorPtr copy() override;
 
-  private:
+private:
     explicit MonitoringSourceDescriptor(std::chrono::milliseconds waitTime, Monitoring::MetricCollectorType metricCollectorType);
     std::chrono::milliseconds waitTime;
     Monitoring::MetricCollectorType metricCollectorType;
@@ -53,6 +55,6 @@ class MonitoringSourceDescriptor : public SourceDescriptor {
 
 using MonitoringSourceDescriptorPtr = std::shared_ptr<MonitoringSourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_

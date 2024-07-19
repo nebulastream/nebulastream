@@ -28,130 +28,177 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/PluginRegistry.hpp>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
-PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string,
-                                                                  std::map<std::string, std::string>& commandLineParams) {
-
+PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams)
+{
     std::string sourceType, logicalSourceName, physicalSourceName;
-    for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it) {
-        if (it->first == SOURCE_TYPE_CONFIG && !it->second.empty()) {
+    for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it)
+    {
+        if (it->first == SOURCE_TYPE_CONFIG && !it->second.empty())
+        {
             sourceType = it->second;
-        } else if (it->first == PHYSICAL_SOURCE_NAME_CONFIG && !it->second.empty()) {
+        }
+        else if (it->first == PHYSICAL_SOURCE_NAME_CONFIG && !it->second.empty())
+        {
             physicalSourceName = it->second;
-        } else if (it->first == LOGICAL_SOURCE_NAME_CONFIG && !it->second.empty()) {
+        }
+        else if (it->first == LOGICAL_SOURCE_NAME_CONFIG && !it->second.empty())
+        {
             logicalSourceName = it->second;
         }
     }
 
-    if (logicalSourceName.empty()) {
-        NES_WARNING("No logical source name is not supplied for creating the physical source. Please supply "
-                    "logical source name using --{}",
-                    LOGICAL_SOURCE_NAME_CONFIG);
+    if (logicalSourceName.empty())
+    {
+        NES_WARNING(
+            "No logical source name is not supplied for creating the physical source. Please supply "
+            "logical source name using --{}",
+            LOGICAL_SOURCE_NAME_CONFIG);
         return nullptr;
-    } else if (physicalSourceName.empty()) {
+    }
+    else if (physicalSourceName.empty())
+    {
         NES_WARNING(
             "No physical source name supplied for creating the physical source. Please supply physical source name using --{}",
             PHYSICAL_SOURCE_NAME_CONFIG);
         return nullptr;
-    } else if (sourceType.empty()) {
-        NES_WARNING("No source type supplied for creating the physical source. Please supply source type using --{}",
-                    SOURCE_TYPE_CONFIG);
+    }
+    else if (sourceType.empty())
+    {
+        NES_WARNING("No source type supplied for creating the physical source. Please supply source type using --{}", SOURCE_TYPE_CONFIG);
         return nullptr;
     }
 
     return createPhysicalSourceType(logicalSourceName, physicalSourceName, sourceType, commandLineParams);
 }
 
-PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlConfig) {
+PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlConfig)
+{
     std::vector<PhysicalSourceTypePtr> physicalSources;
     //Iterate over all physical sources defined in the yaml file
     std::string logicalSourceName, physicalSourceName, sourceType;
     if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
-        && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n") {
+        && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
+    {
         logicalSourceName = yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>();
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
     }
 
     if (!yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
-        && yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n") {
+        && yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
+    {
         physicalSourceName = yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>();
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Physical Source Name.");
     }
 
-    if (!yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>().empty() && yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>() != "\n") {
+    if (!yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>().empty() && yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>() != "\n")
+    {
         sourceType = yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>();
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Source type.");
     }
 
-    if (yamlConfig[PHYSICAL_SOURCE_TYPE_CONFIGURATION].IsMap()) {
+    if (yamlConfig[PHYSICAL_SOURCE_TYPE_CONFIGURATION].IsMap())
+    {
         auto physicalSourceTypeConfiguration = yamlConfig[PHYSICAL_SOURCE_TYPE_CONFIGURATION];
         return createPhysicalSourceType(logicalSourceName, physicalSourceName, sourceType, physicalSourceTypeConfiguration);
-    } else {
-        NES_THROW_RUNTIME_ERROR(
-            "Found Invalid Physical Source Configuration. Please define Source Type Configuration properties.");
+    }
+    else
+    {
+        NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Source Type Configuration properties.");
     }
 }
 
-PhysicalSourceTypePtr
-PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceName,
-                                                    std::string physicalSourceName,
-                                                    std::string sourceType,
-                                                    const std::map<std::string, std::string>& commandLineParams) {
-
+PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
+    std::string logicalSourceName,
+    std::string physicalSourceName,
+    std::string sourceType,
+    const std::map<std::string, std::string>& commandLineParams)
+{
     // check if a plugin is registered to handle this source type
-    for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins()) {
-        if (auto type = plugin->createPhysicalSourceType(sourceType, commandLineParams)) {
+    for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins())
+    {
+        if (auto type = plugin->createPhysicalSourceType(sourceType, commandLineParams))
+        {
             return type;
         }
     }
 
-    switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
-        case SourceType::CSV_SOURCE: return CSVSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
-        case SourceType::MQTT_SOURCE: return MQTTSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
-        case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
-        case SourceType::OPC_SOURCE: return OPCSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
-        case SourceType::BINARY_SOURCE: return BinarySourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
-        case SourceType::SENSE_SOURCE: return SenseSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
-        case SourceType::ARROW_SOURCE: return ArrowSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
-        case SourceType::TCP_SOURCE: return TCPSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+    switch (magic_enum::enum_cast<SourceType>(sourceType).value())
+    {
+        case SourceType::CSV_SOURCE:
+            return CSVSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::MQTT_SOURCE:
+            return MQTTSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::KAFKA_SOURCE:
+            return KafkaSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::OPC_SOURCE:
+            return OPCSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::BINARY_SOURCE:
+            return BinarySourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::SENSE_SOURCE:
+            return SenseSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::ARROW_SOURCE:
+            return ArrowSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+        case SourceType::TCP_SOURCE:
+            return TCPSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
         case SourceType::DEFAULT_SOURCE:
             return DefaultSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
-        default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
+        default:
+            NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
 
-PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceName,
-                                                                          std::string physicalSourceName,
-                                                                          std::string sourceType,
-                                                                          Yaml::Node& yamlConfig) {
-
+PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
+    std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, Yaml::Node& yamlConfig)
+{
     // check a plugin is registered to handle this source type
-    for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins()) {
-        if (auto type = plugin->createPhysicalSourceType(sourceType, yamlConfig)) {
+    for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins())
+    {
+        if (auto type = plugin->createPhysicalSourceType(sourceType, yamlConfig))
+        {
             return type;
         }
     }
 
-    if (!magic_enum::enum_cast<SourceType>(sourceType).has_value()) {
+    if (!magic_enum::enum_cast<SourceType>(sourceType).has_value())
+    {
         NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 
-    switch (magic_enum::enum_cast<SourceType>(sourceType).value()) {
-        case SourceType::CSV_SOURCE: return CSVSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        case SourceType::MQTT_SOURCE: return MQTTSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        case SourceType::KAFKA_SOURCE: return KafkaSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        case SourceType::OPC_SOURCE: return OPCSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        case SourceType::BINARY_SOURCE: return BinarySourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        case SourceType::SENSE_SOURCE: return SenseSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        case SourceType::DEFAULT_SOURCE: return DefaultSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        case SourceType::TCP_SOURCE: return TCPSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        case SourceType::ARROW_SOURCE: return ArrowSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
-        default: NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
+    switch (magic_enum::enum_cast<SourceType>(sourceType).value())
+    {
+        case SourceType::CSV_SOURCE:
+            return CSVSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::MQTT_SOURCE:
+            return MQTTSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::KAFKA_SOURCE:
+            return KafkaSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::OPC_SOURCE:
+            return OPCSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::BINARY_SOURCE:
+            return BinarySourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::SENSE_SOURCE:
+            return SenseSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::DEFAULT_SOURCE:
+            return DefaultSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::TCP_SOURCE:
+            return TCPSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        case SourceType::ARROW_SOURCE:
+            return ArrowSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+        default:
+            NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations

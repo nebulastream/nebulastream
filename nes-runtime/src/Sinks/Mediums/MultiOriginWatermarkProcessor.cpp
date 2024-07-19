@@ -15,50 +15,64 @@
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/WatermarkProcessor.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
-MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins) {
+MultiOriginWatermarkProcessor::MultiOriginWatermarkProcessor(const uint64_t numberOfOrigins) : numberOfOrigins(numberOfOrigins)
+{
     NES_ASSERT2_FMT(numberOfOrigins != 0, "The MultiOriginWatermarkProcessor should have at least one origin");
 }
 
-MultiOriginWatermarkProcessor::~MultiOriginWatermarkProcessor() { localWatermarkProcessor.clear(); }
+MultiOriginWatermarkProcessor::~MultiOriginWatermarkProcessor()
+{
+    localWatermarkProcessor.clear();
+}
 
-std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const uint64_t numberOfOrigins) {
+std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::create(const uint64_t numberOfOrigins)
+{
     return std::make_shared<MultiOriginWatermarkProcessor>(numberOfOrigins);
 }
 
-void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId originId) {
+void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId originId)
+{
     std::unique_lock lock(watermarkLatch);
     // insert new local watermark processor if the id is not present in the map
-    if (localWatermarkProcessor.find(originId) == localWatermarkProcessor.end()) {
+    if (localWatermarkProcessor.find(originId) == localWatermarkProcessor.end())
+    {
         localWatermarkProcessor[originId] = std::make_unique<WatermarkProcessor>();
     }
-    NES_ASSERT2_FMT(localWatermarkProcessor.size() <= numberOfOrigins,
-                    "The watermark processor maintains watermarks from " << localWatermarkProcessor.size()
-                                                                         << " origins but we only expected  " << numberOfOrigins);
+    NES_ASSERT2_FMT(
+        localWatermarkProcessor.size() <= numberOfOrigins,
+        "The watermark processor maintains watermarks from " << localWatermarkProcessor.size() << " origins but we only expected  "
+                                                             << numberOfOrigins);
     localWatermarkProcessor[originId]->updateWatermark(ts, sequenceNumber);
 }
 
-bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) const {
+bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) const
+{
     std::unique_lock lock(watermarkLatch);
     auto iter = localWatermarkProcessor.find(originId);
-    if (iter != localWatermarkProcessor.end()) {
+    if (iter != localWatermarkProcessor.end())
+    {
         return iter->second->isWatermarkSynchronized();
     }
     return false;
 }
 
-WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const {
+WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const
+{
     std::unique_lock lock(watermarkLatch);
     // check if we already registered each expected origin in the local watermark processor map
-    if (localWatermarkProcessor.size() != numberOfOrigins) {
+    if (localWatermarkProcessor.size() != numberOfOrigins)
+    {
         return 0;
     }
     WatermarkTs maxWatermarkTs = UINT64_MAX;
-    for (const auto& localWatermarkManager : localWatermarkProcessor) {
+    for (const auto& localWatermarkManager : localWatermarkProcessor)
+    {
         maxWatermarkTs = std::min(maxWatermarkTs, localWatermarkManager.second->getCurrentWatermark());
     }
     return maxWatermarkTs;
 }
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing

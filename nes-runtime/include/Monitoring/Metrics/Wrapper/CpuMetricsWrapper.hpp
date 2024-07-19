@@ -20,13 +20,15 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TopologyLinkInformation.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
  * @brief Wrapper class to represent a tuple buffer with multiple CpuMetrics objects.
  */
-class CpuMetricsWrapper {
-  public:
+class CpuMetricsWrapper
+{
+public:
     /**
      * Default Ctor for CpuMetricsWrapper with timestamp=0.
      */
@@ -87,7 +89,7 @@ class CpuMetricsWrapper {
     bool operator==(const CpuMetricsWrapper& rhs) const;
     bool operator!=(const CpuMetricsWrapper& rhs) const;
 
-  private:
+private:
     std::vector<CpuMetrics> cpuMetrics;
     WorkerId nodeId;
     uint64_t timestamp;
@@ -116,6 +118,6 @@ void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint6
  */
 nlohmann::json asJson(const CpuMetricsWrapper& metrics);
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_CPUMETRICSWRAPPER_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_CPUMETRICSWRAPPER_HPP_

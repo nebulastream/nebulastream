@@ -16,13 +16,18 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_
 #include <cstdint>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 /**
  * @brief Represents various storage handler types.
  */
-enum class StorageHandlerType : uint8_t { SerialHandler = 0, TwoPhaseLocking };
+enum class StorageHandlerType : uint8_t
+{
+    SerialHandler = 0,
+    TwoPhaseLocking
+};
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_

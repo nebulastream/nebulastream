@@ -15,17 +15,27 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 WindowOperator::WindowOperator(const Windowing::LogicalWindowDescriptorPtr& windowDefinition, OperatorId id, OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(windowDefinition) {}
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), windowDefinition(windowDefinition)
+{
+}
 
-Windowing::LogicalWindowDescriptorPtr WindowOperator::getWindowDefinition() const { return windowDefinition; }
+Windowing::LogicalWindowDescriptorPtr WindowOperator::getWindowDefinition() const
+{
+    return windowDefinition;
+}
 
-std::vector<OriginId> WindowOperator::getOutputOriginIds() const { return OriginIdAssignmentOperator::getOutputOriginIds(); }
-void WindowOperator::setOriginId(OriginId originId) {
+std::vector<OriginId> WindowOperator::getOutputOriginIds() const
+{
+    return OriginIdAssignmentOperator::getOutputOriginIds();
+}
+void WindowOperator::setOriginId(OriginId originId)
+{
     OriginIdAssignmentOperator::setOriginId(originId);
     windowDefinition->setOriginId(originId);
 }
 
-}// namespace NES
+} // namespace NES

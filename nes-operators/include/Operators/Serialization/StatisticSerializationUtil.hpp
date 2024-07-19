@@ -20,7 +20,8 @@
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <StatisticWindowDescriptorMessage.pb.h>
 
-namespace NES {
+namespace NES
+{
 
 class SendingPolicyMessage;
 class TriggerConditionMessage;
@@ -29,8 +30,9 @@ class StatisticWindowDescriptorMessage;
 /**
  * @brief Provides functionality to (de-)serialize statistic components, i.e., SendingPolicy or WindowStatisticDescriptor
  */
-class StatisticSerializationUtil {
-  public:
+class StatisticSerializationUtil
+{
+public:
     /**
      * @brief Serializes the sendingPolicy into the sendingPolicyMessage
      * @param sendingPolicy
@@ -43,16 +45,16 @@ class StatisticSerializationUtil {
      * @param triggerCondition
      * @param triggerConditionMessage
      */
-    static void serializeTriggerCondition(const Statistic::TriggerCondition& triggerCondition,
-                                          TriggerConditionMessage& triggerConditionMessage);
+    static void
+    serializeTriggerCondition(const Statistic::TriggerCondition& triggerCondition, TriggerConditionMessage& triggerConditionMessage);
 
     /**
      * @brief Serializes the descriptor into the descriptorMessage
      * @param descriptor
      * @param descriptorMessage
      */
-    static void serializeDescriptorDetails(const Statistic::WindowStatisticDescriptor& descriptor,
-                                           StatisticWindowDescriptorMessage& descriptorMessage);
+    static void
+    serializeDescriptorDetails(const Statistic::WindowStatisticDescriptor& descriptor, StatisticWindowDescriptorMessage& descriptorMessage);
 
     /**
      * @brief Creates a SendingPolicy from a sendingPolicyMessage by deserializing it
@@ -73,10 +75,9 @@ class StatisticSerializationUtil {
      * @param descriptorMessage
      * @return WindowStatisticDescriptorPtr
      */
-    static Statistic::WindowStatisticDescriptorPtr
-    deserializeDescriptor(const StatisticWindowDescriptorMessage& descriptorMessage);
+    static Statistic::WindowStatisticDescriptorPtr deserializeDescriptor(const StatisticWindowDescriptorMessage& descriptorMessage);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_STATISTICSERIALIZATIONUTIL_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_STATISTICSERIALIZATIONUTIL_HPP_

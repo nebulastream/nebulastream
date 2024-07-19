@@ -15,19 +15,21 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
+#include <Exceptions/RequestExecutionException.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief This class is used for raising exceptions in the type inference phase
  */
-class TypeInferenceException : public Exceptions::RequestExecutionException {
-  public:
+class TypeInferenceException : public Exceptions::RequestExecutionException
+{
+public:
     explicit TypeInferenceException(const std::string& message);
     TypeInferenceException(QueryId queryId, const std::string& message);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_

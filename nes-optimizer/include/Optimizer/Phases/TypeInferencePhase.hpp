@@ -17,7 +17,8 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -37,21 +38,25 @@ using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
-namespace Catalogs {
+namespace Catalogs
+{
 
-namespace Source {
+namespace Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
-namespace UDF {
+namespace UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+} // namespace UDF
 
-}// namespace Catalogs
+} // namespace Catalogs
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
@@ -60,14 +65,14 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
  * @brief The type inference phase receives and query plan and infers all input and output schemata for all operators.
  * If this is not possible it throws an Runtime exception.
  */
-class TypeInferencePhase {
-  public:
+class TypeInferencePhase
+{
+public:
     /**
      * @brief Factory method to create a type inference phase.
      * @return TypeInferencePhasePtr
      */
-    static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                        Catalogs::UDF::UDFCatalogPtr udfCatalog);
+    static TypeInferencePhasePtr create(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
 
     /**
      * @brief Performs type inference on the given query plan.
@@ -89,7 +94,7 @@ class TypeInferencePhase {
      */
     DecomposedQueryPlanPtr execute(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-  private:
+private:
     /**
      * @brief Infer schema for all operators between given source and sink operators.
      * @param planId: the id of the plan
@@ -100,15 +105,14 @@ class TypeInferencePhase {
      * @throws TypeInferenceException if inferring the data types into the query failed
      * @throws LogicalSourceNotFoundException if a logical source with the given source name could not be found
      */
-    void performTypeInference(QueryId planId,
-                              std::vector<SourceLogicalOperatorPtr> sourceOperators,
-                              std::vector<SinkLogicalOperatorPtr> sinkOperators);
+    void performTypeInference(
+        QueryId planId, std::vector<SourceLogicalOperatorPtr> sourceOperators, std::vector<SinkLogicalOperatorPtr> sinkOperators);
 
     explicit TypeInferencePhase(Catalogs::Source::SourceCatalogPtr sourceCatalog, Catalogs::UDF::UDFCatalogPtr udfCatalog);
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
 };
-}// namespace Optimizer
-}// namespace NES
+} // namespace Optimizer
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_PHASES_TYPEINFERENCEPHASE_HPP_

@@ -16,15 +16,20 @@
 #include <API/TestSchemas.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
-SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name) {
+namespace NES
+{
+SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name)
+{
     auto it = testSchemaCatalog.find(name);
-    if (it != testSchemaCatalog.end()) {
+    if (it != testSchemaCatalog.end())
+    {
         auto newSchema = std::make_shared<Schema>();
         // Use copyFields() to create a deep copy of the fields
         newSchema->copyFields(it->second);
         return newSchema;
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Schema not found");
     }
 }
@@ -37,30 +42,15 @@ std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog =
     {"id_val_u64", Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)},
     {"id_val_u32", Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32)},
     {"id_val_time_u64",
-     Schema::create()
-         ->addField("id", BasicType::UINT64)
-         ->addField("value", BasicType::UINT64)
-         ->addField("timestamp", BasicType::UINT64)},
+     Schema::create()->addField("id", BasicType::UINT64)->addField("value", BasicType::UINT64)->addField("timestamp", BasicType::UINT64)},
     {"id2_val2_time_u64",
-     Schema::create()
-         ->addField("id2", BasicType::UINT64)
-         ->addField("value2", BasicType::UINT64)
-         ->addField("timestamp", BasicType::UINT64)},
+     Schema::create()->addField("id2", BasicType::UINT64)->addField("value2", BasicType::UINT64)->addField("timestamp", BasicType::UINT64)},
     {"id3_val3_time_u64",
-     Schema::create()
-         ->addField("id3", BasicType::UINT64)
-         ->addField("value3", BasicType::UINT64)
-         ->addField("timestamp", BasicType::UINT64)},
+     Schema::create()->addField("id3", BasicType::UINT64)->addField("value3", BasicType::UINT64)->addField("timestamp", BasicType::UINT64)},
     {"id4_val4_time_u64",
-     Schema::create()
-         ->addField("id4", BasicType::UINT64)
-         ->addField("value4", BasicType::UINT64)
-         ->addField("timestamp", BasicType::UINT64)},
+     Schema::create()->addField("id4", BasicType::UINT64)->addField("value4", BasicType::UINT64)->addField("timestamp", BasicType::UINT64)},
     {"id_val_time_u32",
-     Schema::create()
-         ->addField("id", BasicType::UINT32)
-         ->addField("value", BasicType::UINT32)
-         ->addField("timestamp", BasicType::UINT64)},
+     Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT32)->addField("timestamp", BasicType::UINT64)},
     {"id_one_val_64",
      Schema::create()->addField("id", BasicType::INT64)->addField("one", BasicType::INT64)->addField("value", BasicType::INT64)},
     {"id_2val_time_u64",
@@ -69,4 +59,4 @@ std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog =
          ->addField("value", BasicType::UINT64)
          ->addField("value2", BasicType::UINT64)
          ->addField("timestamp", BasicType::UINT64)}};
-}// namespace NES
+} // namespace NES

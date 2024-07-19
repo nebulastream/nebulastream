@@ -14,41 +14,45 @@
 
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wdeprecated-copy-dtor"
-#include <BaseIntegrationTest.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 #pragma clang diagnostic pop
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
-#include <iostream>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
 /**
  * @brief In this test we assess the correctness of the thread local tumbling window
  */
-class KeyedSlidingWindowTests : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<int> {
-  public:
+class KeyedSlidingWindowTests : public Testing::BaseIntegrationTest, public ::testing::WithParamInterface<int>
+{
+public:
     WorkerConfigurationPtr workerConfiguration;
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("KeyedSlidingWindowTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup KeyedSlidingWindowTests test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         workerConfiguration = WorkerConfiguration::create();
         workerConfiguration->queryCompiler.windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
@@ -56,13 +60,15 @@ class KeyedSlidingWindowTests : public Testing::BaseIntegrationTest, public ::te
     }
 };
 
-struct InputValue {
+struct InputValue
+{
     uint64_t value;
     uint64_t id;
     uint64_t timestamp;
 };
 
-struct InputValueMultiKeys {
+struct InputValueMultiKeys
+{
     uint64_t value;
     uint64_t key1;
     uint64_t key2;
@@ -70,16 +76,17 @@ struct InputValueMultiKeys {
     uint64_t timestamp;
 };
 
-PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
-                                              std::string physicalSourceName,
-                                              uint64_t numberOfBuffers,
-                                              uint64_t numberOfKeys = 1) {
+PhysicalSourceTypePtr
+createSimpleInputStream(std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers, uint64_t numberOfKeys = 1)
+{
     return LambdaSourceType::create(
         logicalSourceName,
         physicalSourceName,
-        [numberOfKeys](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-            auto inputValue = (InputValue*) buffer.getBuffer();
-            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+        [numberOfKeys](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)
+        {
+            auto inputValue = (InputValue*)buffer.getBuffer();
+            for (uint64_t i = 0; i < numberOfTuplesToProduce; i++)
+            {
                 inputValue[i].value = 1;
                 inputValue[i].id = i % numberOfKeys;
                 inputValue[i].timestamp = 1;
@@ -91,21 +98,25 @@ PhysicalSourceTypePtr createSimpleInputStream(std::string logicalSourceName,
         GatheringMode::INTERVAL_MODE);
 }
 
-class DataGeneratorMultiKey {
-  public:
-    DataGeneratorMultiKey(std::string logicalSourceName,
-                          std::string physicalSourceName,
-                          uint64_t numberOfBuffers,
-                          uint64_t numberOfKeys = 1)
-        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-          numberOfBuffers(numberOfBuffers), numberOfKeys(numberOfKeys){};
-    PhysicalSourceTypePtr getSource() {
+class DataGeneratorMultiKey
+{
+public:
+    DataGeneratorMultiKey(
+        std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers, uint64_t numberOfKeys = 1)
+        : logicalSourceName(std::move(logicalSourceName))
+        , physicalSourceName(std::move(physicalSourceName))
+        , numberOfBuffers(numberOfBuffers)
+        , numberOfKeys(numberOfKeys){};
+    PhysicalSourceTypePtr getSource()
+    {
         return LambdaSourceType::create(
             logicalSourceName,
             physicalSourceName,
-            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-                auto inputValue = (InputValueMultiKeys*) buffer.getBuffer();
-                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)
+            {
+                auto inputValue = (InputValueMultiKeys*)buffer.getBuffer();
+                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++)
+                {
                     inputValue[i].value = 1;
                     inputValue[i].key1 = i % numberOfKeys;
                     inputValue[i].key2 = i % numberOfKeys;
@@ -119,7 +130,7 @@ class DataGeneratorMultiKey {
             GatheringMode::INTERVAL_MODE);
     }
 
-  private:
+private:
     std::string logicalSourceName;
     std::string physicalSourceName;
     uint64_t numberOfBuffers;
@@ -127,18 +138,23 @@ class DataGeneratorMultiKey {
     std::atomic_uint64_t counter = 0;
 };
 
-class DataGenerator {
-  public:
+class DataGenerator
+{
+public:
     DataGenerator(std::string logicalSourceName, std::string physicalSourceName, uint64_t numberOfBuffers)
-        : logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName)),
-          numberOfBuffers(numberOfBuffers){};
-    PhysicalSourceTypePtr getSource() {
+        : logicalSourceName(std::move(logicalSourceName))
+        , physicalSourceName(std::move(physicalSourceName))
+        , numberOfBuffers(numberOfBuffers){};
+    PhysicalSourceTypePtr getSource()
+    {
         return LambdaSourceType::create(
             logicalSourceName,
             physicalSourceName,
-            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce) {
-                auto inputValue = (InputValue*) buffer.getBuffer();
-                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++) {
+            [this](Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)
+            {
+                auto inputValue = (InputValue*)buffer.getBuffer();
+                for (uint64_t i = 0; i < numberOfTuplesToProduce; i++)
+                {
                     inputValue[i].value = 1;
                     inputValue[i].id = 1;
                     inputValue[i].timestamp = (counter * numberOfTuplesToProduce) + i;
@@ -152,14 +168,15 @@ class DataGenerator {
             GatheringMode::INTERVAL_MODE);
     }
 
-  private:
+private:
     std::string logicalSourceName;
     std::string physicalSourceName;
     uint64_t numberOfBuffers;
     std::atomic_uint64_t counter = 0;
 };
 
-TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength) {
+TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
@@ -189,7 +206,8 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBufferSameLength) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
+TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
@@ -219,7 +237,8 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowSingleBuffer) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
+TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
@@ -248,7 +267,8 @@ TEST_F(KeyedSlidingWindowTests, testSingleSlidingWindowMultiBuffer) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(KeyedSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
+TEST_F(KeyedSlidingWindowTests, testMultipleSlidingWindowMultiBuffer)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
@@ -266,7 +286,8 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
 
     // Expected output
     std::stringstream expectedOutput;
-    for (uint64_t windowStart = 0; windowStart <= 16000; windowStart = windowStart + 100) {
+    for (uint64_t windowStart = 0; windowStart <= 16000; windowStart = windowStart + 100)
+    {
         expectedOutput << windowStart << ", " << (windowStart + 1000) << ", 1, 1000\n";
     }
     expectedOutput << "16100, 17100, 1, 900\n"
@@ -289,7 +310,8 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSlidingWindowMultiBuffer) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
+TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64");
 
     ASSERT_EQ(sizeof(InputValue), testSchema->getSchemaSizeInBytes());
@@ -308,7 +330,8 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
     // Expected output
     std::stringstream expectedOutput;
     expectedOutput << "0, 1000, 1, 1000\n";
-    for (uint64_t windowStart = 300; windowStart <= 16000; windowStart = windowStart + 300) {
+    for (uint64_t windowStart = 300; windowStart <= 16000; windowStart = windowStart + 300)
+    {
         expectedOutput << windowStart << ", " << (windowStart + 1000) << ", 1, 1000\n";
     }
     expectedOutput << "16200, 17200, 1, 800\n"
@@ -325,7 +348,8 @@ TEST_F(KeyedSlidingWindowTests, testMultipleSldingWindowIrigularSlide) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
+TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow)
+{
     auto testSchema = TestSchemas::getSchemaTemplate("id_val_time_u64")
                           ->addField("id2", DataTypeFactory::createUInt64())
                           ->addField("id3", DataTypeFactory::createUInt64());
@@ -345,7 +369,8 @@ TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
 
     // Expected output
     std::stringstream expectedOutput;
-    for (uint64_t k = 0; k < 102; k++) {
+    for (uint64_t k = 0; k < 102; k++)
+    {
         expectedOutput << "0, 1000, 1, " << k << ", " << k << ", " << k << "\n";
     }
 
@@ -358,4 +383,4 @@ TEST_F(KeyedSlidingWindowTests, testSingleMultiKeySlidingWindow) {
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
-}// namespace NES
+} // namespace NES

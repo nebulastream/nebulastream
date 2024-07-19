@@ -15,16 +15,18 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPREMOVELINKEVENT_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPREMOVELINKEVENT_HPP_
 
+#include <future>
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
-#include <future>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 /**
  * @brief the response indicating if the remove link event was successfully applied
  */
-struct ISQPRemoveLinkResponse : public ISQPResponse {
+struct ISQPRemoveLinkResponse : public ISQPResponse
+{
     explicit ISQPRemoveLinkResponse(bool success) : success(success){};
     bool success;
 };
@@ -36,9 +38,9 @@ using ISQPRemoveLinkEventPtr = std::shared_ptr<ISQPRemoveLinkEvent>;
 /**
  * @brief the ISQP remove link event
  */
-class ISQPRemoveLinkEvent : public ISQPEvent {
-
-  public:
+class ISQPRemoveLinkEvent : public ISQPEvent
+{
+public:
     static ISQPEventPtr create(const WorkerId& parentNodeId, const WorkerId& childWorkerId);
 
     ISQPRemoveLinkEvent(const WorkerId& parentNodeId, const WorkerId& childWorkerId);
@@ -47,10 +49,10 @@ class ISQPRemoveLinkEvent : public ISQPEvent {
 
     WorkerId getChildNodeId() const;
 
-  private:
+private:
     WorkerId parentNodeId;
     WorkerId childNodeId;
 };
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPREMOVELINKEVENT_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPREMOVELINKEVENT_HPP_

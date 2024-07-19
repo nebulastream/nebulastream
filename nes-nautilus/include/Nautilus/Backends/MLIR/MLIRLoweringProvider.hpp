@@ -15,6 +15,7 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
 
+#include <unordered_set>
 #include <Nautilus/Backends/MLIR/ProxyFunctions.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -51,12 +52,13 @@
 #include <llvm/ADT/StringSet.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
 #include <mlir/IR/PatternMatch.h>
-#include <unordered_set>
 
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
-class MLIRLoweringProvider {
-  public:
+class MLIRLoweringProvider
+{
+public:
     // A ValueFrame is hashmap that binds operation names to MLIR values.
     // It is used to 'pass' values between mlir operations.
     // Control Flow can cause new ValueFrames to be created, to correctly model value access rights (scopes).
@@ -86,7 +88,7 @@ class MLIRLoweringProvider {
      */
     std::vector<llvm::JITTargetAddress> getJitProxyTargetAddresses();
 
-  private:
+private:
     // MLIR variables
     mlir::MLIRContext* context;
     mlir::ModuleOp theModule;
@@ -100,7 +102,7 @@ class MLIRLoweringProvider {
     mlir::Value globalString;
     mlir::FlatSymbolRefAttr printfReference;
     llvm::StringMap<mlir::Value> printfStrings;
-    std::unordered_map<std::string, mlir::Block*> blockMapping;//Keeps track of already created basic blocks.
+    std::unordered_map<std::string, mlir::Block*> blockMapping; //Keeps track of already created basic blocks.
 
     /**
      * @brief Generates MLIR from a  basic block. Iterates over basic block operations and calls generate.
@@ -160,11 +162,8 @@ class MLIRLoweringProvider {
      * @param varArgs: Include variable arguments.
      * @return FlatSymbolRefAttr: Reference to function used in CallOps.
      */
-    mlir::FlatSymbolRefAttr insertExternalFunction(const std::string& name,
-                                                   void* functionPtr,
-                                                   mlir::Type resultType,
-                                                   std::vector<mlir::Type> argTypes,
-                                                   bool varArgs);
+    mlir::FlatSymbolRefAttr insertExternalFunction(
+        const std::string& name, void* functionPtr, mlir::Type resultType, std::vector<mlir::Type> argTypes, bool varArgs);
 
     /**
      * @brief Generates a Name(d)Loc(ation) that is attached to the operation.
@@ -218,5 +217,5 @@ class MLIRLoweringProvider {
      */
     ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
 };
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_

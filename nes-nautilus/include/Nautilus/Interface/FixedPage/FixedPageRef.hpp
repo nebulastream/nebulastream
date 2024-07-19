@@ -18,7 +18,8 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 // Forward declaration
 class FixedPageRefIter;
 
@@ -26,8 +27,9 @@ class FixedPageRefIter;
  * @brief This is a Nautilus wrapper for the FixedPage.
  * It wraps a MemRef to the underling data structure and provides access methods.
  */
-class FixedPageRef {
-  public:
+class FixedPageRef
+{
+public:
     /**
      * @brief Constructs the wrapper.
      * @param fixedPageRef MemRef to the FixedPage
@@ -98,12 +100,13 @@ class FixedPageRef {
      */
     bool operator==(const FixedPageRef& other) const;
 
-  private:
+private:
     Value<MemRef> fixedPageRef;
 };
 
-class FixedPageRefIter {
-  public:
+class FixedPageRefIter
+{
+public:
     friend class FixedPageRef;
 
     /**
@@ -157,10 +160,10 @@ class FixedPageRefIter {
      */
     bool operator!=(const FixedPageRefIter& other) const;
 
-  private:
+private:
     Value<MemRef> addr;
     FixedPageRef fixedPageRef;
 };
-}// namespace NES::Nautilus::Interface
+} // namespace NES::Nautilus::Interface
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_

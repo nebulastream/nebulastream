@@ -15,17 +15,26 @@
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
-bool Char::equals(DataTypePtr otherDataType) { return otherDataType->isChar(); }
+bool Char::equals(DataTypePtr otherDataType)
+{
+    return otherDataType->isChar();
+}
 
-DataTypePtr Char::join(DataTypePtr otherDataType) {
-    if (otherDataType->isChar()) {
+DataTypePtr Char::join(DataTypePtr otherDataType)
+{
+    if (otherDataType->isChar())
+    {
         return DataTypeFactory::createChar();
     }
     return DataTypeFactory::createUndefined();
 }
 
-std::string Char::toString() { return "Char"; }
+std::string Char::toString()
+{
+    return "Char";
+}
 
-}// namespace NES
+} // namespace NES

@@ -22,14 +22,17 @@
  * This allows assignements of json values with identifiers.
  * To retrieve Identifiers from json `.get<WorkerId>()` is used instead of manually creating an Identifier using the raw value.
  */
-namespace nlohmann {
-template<typename T, typename Tag, T invalid, T initial>
-struct adl_serializer<NES::NESStrongType<T, Tag, invalid, initial>> {
-    static NES::NESStrongType<T, Tag, invalid, initial> from_json(const json& j) {
+namespace nlohmann
+{
+template <typename T, typename Tag, T invalid, T initial>
+struct adl_serializer<NES::NESStrongType<T, Tag, invalid, initial>>
+{
+    static NES::NESStrongType<T, Tag, invalid, initial> from_json(const json& j)
+    {
         return NES::NESStrongType<T, Tag, invalid, initial>{j.get<T>()};
     }
     static void to_json(json& j, NES::NESStrongType<T, Tag, invalid, initial> t) { j = t.getRawValue(); }
 };
-}// namespace nlohmann
+} // namespace nlohmann
 
-#endif// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEJSON_HPP_
+#endif // NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEJSON_HPP_

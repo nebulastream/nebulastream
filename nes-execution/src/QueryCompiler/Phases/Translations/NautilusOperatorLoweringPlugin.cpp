@@ -14,12 +14,13 @@
 
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 std::optional<Runtime::Execution::Operators::ExecutableOperatorPtr>
-NautilusOperatorLoweringPlugin::lower(const PhysicalOperators::PhysicalOperatorPtr&,
-                                      std::vector<Runtime::Execution::OperatorHandlerPtr>&) {
+NautilusOperatorLoweringPlugin::lower(const PhysicalOperators::PhysicalOperatorPtr&, std::vector<Runtime::Execution::OperatorHandlerPtr>&)
+{
     return {};
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

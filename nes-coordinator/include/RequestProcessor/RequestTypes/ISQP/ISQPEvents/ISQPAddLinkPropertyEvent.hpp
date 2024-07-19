@@ -18,12 +18,14 @@
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 /**
  * @brief the response indicating if the add link event was successfully applied
  */
-struct ISQPAddLinkPropertyResponse : public ISQPResponse {
+struct ISQPAddLinkPropertyResponse : public ISQPResponse
+{
     explicit ISQPAddLinkPropertyResponse(bool success) : success(success){};
     bool success;
 };
@@ -35,16 +37,14 @@ using ISQPAddLinkPropertyEventPtr = std::shared_ptr<ISQPAddLinkPropertyEvent>;
 /**
  * @brief Representing the ISQP add link event indicating a new link is established between two worker node ids
  */
-class ISQPAddLinkPropertyEvent : public ISQPEvent {
-
-  public:
+class ISQPAddLinkPropertyEvent : public ISQPEvent
+{
+public:
     static ISQPEventPtr
     create(const WorkerId& parentNodeId, const WorkerId& childWorkerId, const uint64_t& bandwidth, const uint64_t& latency);
 
-    ISQPAddLinkPropertyEvent(const WorkerId& parentNodeId,
-                             const WorkerId& childWorkerId,
-                             const uint64_t& bandwidth,
-                             const uint64_t& latency);
+    ISQPAddLinkPropertyEvent(
+        const WorkerId& parentNodeId, const WorkerId& childWorkerId, const uint64_t& bandwidth, const uint64_t& latency);
 
     WorkerId getParentNodeId() const;
 
@@ -54,12 +54,12 @@ class ISQPAddLinkPropertyEvent : public ISQPEvent {
 
     uint64_t getLatency() const;
 
-  private:
+private:
     const WorkerId parentNodeId;
     const WorkerId childNodeId;
     const uint64_t bandwidth;
     const uint64_t latency;
 };
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDLINKPROPERTYEVENT_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDLINKPROPERTYEVENT_HPP_

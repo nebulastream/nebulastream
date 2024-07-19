@@ -15,12 +15,13 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <memory>
 #include <sstream>
 #include <string>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
@@ -28,7 +29,8 @@ using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 
 class SourceCatalogEntry;
 using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
@@ -41,9 +43,9 @@ using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
  * @Limitations
  *
  */
-class SourceCatalogEntry {
-
-  public:
+class SourceCatalogEntry
+{
+public:
     /**
      * @brief Create the shared pointer for the source catalog entry
      * @param physicalSource: physical source name
@@ -51,8 +53,7 @@ class SourceCatalogEntry {
      * @param topologyNodeId: the if of topology node
      * @return shared pointer to Source catalog entry
      */
-    static SourceCatalogEntryPtr
-    create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
+    static SourceCatalogEntryPtr create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId);
 
     /**
      * @brief Get the physical source
@@ -78,7 +79,7 @@ class SourceCatalogEntry {
      */
     std::string toString();
 
-  private:
+private:
     /**
      * @brief Constructor
      * @param physicalSource : the physical source pointer
@@ -91,7 +92,7 @@ class SourceCatalogEntry {
     LogicalSourcePtr logicalSource;
     WorkerId topologyNodeId;
 };
-}// namespace Catalogs::Source
-}// namespace NES
+} // namespace Catalogs::Source
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGENTRY_HPP_

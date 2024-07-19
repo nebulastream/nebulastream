@@ -14,10 +14,16 @@
 
 #include <Common/DataTypes/Numeric.hpp>
 
-namespace NES {
+namespace NES
+{
 
-Numeric::Numeric(int8_t bits) : bits(bits) {}
+Numeric::Numeric(int8_t bits) : bits(bits)
+{
+}
 
-int8_t Numeric::getBits() const { return bits; }
+int8_t Numeric::getBits() const
+{
+    return bits;
+}
 
-}// namespace NES
+} // namespace NES

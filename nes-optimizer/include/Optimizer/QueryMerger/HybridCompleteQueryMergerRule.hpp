@@ -18,12 +18,14 @@
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <Util/QuerySignatures/Z3QuerySignatureContext.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 class QuerySignatureContext;
 using ContextPtr = std::shared_ptr<QuerySignatureContext>;
 class SignatureEqualityUtil;
@@ -71,20 +73,20 @@ using HybridCompleteQueryMergerRulePtr = std::shared_ptr<HybridCompleteQueryMerg
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class HybridCompleteQueryMergerRule final : public BaseQueryMergerRule {
-
-  public:
+class HybridCompleteQueryMergerRule final : public BaseQueryMergerRule
+{
+public:
     static HybridCompleteQueryMergerRulePtr create(z3::ContextPtr context);
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
     ~HybridCompleteQueryMergerRule() noexcept final = default;
 
-  private:
+private:
     explicit HybridCompleteQueryMergerRule(z3::ContextPtr context);
     SignatureEqualityUtilPtr signatureEqualityUtil;
     Z3QuerySignatureContext context;
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_HYBRIDCOMPLETEQUERYMERGERRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_HYBRIDCOMPLETEQUERYMERGERRULE_HPP_

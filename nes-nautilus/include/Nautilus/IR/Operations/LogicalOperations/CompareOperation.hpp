@@ -17,10 +17,13 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
-class CompareOperation : public Operation {
-  public:
-    enum Comparator {
+namespace NES::Nautilus::IR::Operations
+{
+class CompareOperation : public Operation
+{
+public:
+    enum Comparator
+    {
         EQ = 0,
         NE = 1,
         LT = 2,
@@ -45,10 +48,10 @@ class CompareOperation : public Operation {
 
     std::string toString() override;
 
-  private:
+private:
     OperationWPtr leftInput;
     OperationWPtr rightInput;
     Comparator comparator;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_COMPAREOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_COMPAREOPERATION_HPP_

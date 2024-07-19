@@ -19,14 +19,15 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
-#include <SerializableDecomposedQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>
+#include <SerializableDecomposedQueryPlan.pb.h>
 
-namespace NES {
+namespace NES
+{
 
 void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
-    const DecomposedQueryPlanPtr& decomposedQueryPlan,
-    SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan) {
+    const DecomposedQueryPlanPtr& decomposedQueryPlan, SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan)
+{
     NES_DEBUG("QueryPlanSerializationUtil: serializing query plan {}", decomposedQueryPlan->toString());
     std::vector<OperatorPtr> rootOperators = decomposedQueryPlan->getRootOperators();
     NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
@@ -34,9 +35,11 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     //Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableDecomposedQueryPlan->mutable_operatormap();
     auto bfsIterator = PlanIterator(decomposedQueryPlan);
-    for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr) {
+    for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr)
+    {
         auto visitingOp = (*itr)->as<Operator>();
-        if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end()) {
+        if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end())
+        {
             // skip rest of the steps as the operator is already serialized
             continue;
         }
@@ -46,7 +49,8 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     }
 
     //Serialize the root operator ids
-    for (const auto& rootOperator : rootOperators) {
+    for (const auto& rootOperator : rootOperators)
+    {
         auto rootOperatorId = rootOperator->getId();
         serializableDecomposedQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
     }
@@ -59,95 +63,142 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
 }
 
 DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecomposedQueryPlan(
-    const NES::SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan) {
+    const NES::SerializableDecomposedQueryPlan* serializableDecomposedQueryPlan)
+{
     NES_TRACE("QueryPlanSerializationUtil: Deserializing query plan {}", serializableDecomposedQueryPlan->DebugString());
     std::vector<OperatorPtr> rootOperators;
     std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
 
     //Deserialize all operators in the operator map
-    for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap()) {
+    for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap())
+    {
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
-        operatorIdToOperatorMap[serializedOperator.operatorid()] =
-            OperatorSerializationUtil::deserializeOperator(serializedOperator);
+        operatorIdToOperatorMap[serializedOperator.operatorid()] = OperatorSerializationUtil::deserializeOperator(serializedOperator);
     }
 
     //Add deserialized children
-    for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap()) {
+    for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap())
+    {
         const auto serializedOperator = operatorIdAndSerializedOperator.second;
         auto deserializedOperator = operatorIdToOperatorMap[serializedOperator.operatorid()];
-        for (auto childId : serializedOperator.childrenids()) {
+        for (auto childId : serializedOperator.childrenids())
+        {
             deserializedOperator->addChild(operatorIdToOperatorMap[childId]);
         }
     }
 
     //add root operators
-    for (auto rootOperatorId : serializableDecomposedQueryPlan->rootoperatorids()) {
+    for (auto rootOperatorId : serializableDecomposedQueryPlan->rootoperatorids())
+    {
         rootOperators.emplace_back(operatorIdToOperatorMap[rootOperatorId]);
     }
 
     //set properties of the query plan
-    DecomposedQueryPlanId decomposableQueryPlanId =
-        DecomposedQueryPlanId(serializableDecomposedQueryPlan->decomposedqueryplanid());
+    DecomposedQueryPlanId decomposableQueryPlanId = DecomposedQueryPlanId(serializableDecomposedQueryPlan->decomposedqueryplanid());
     SharedQueryId sharedQueryId = SharedQueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
-    auto decomposedQueryPlan =
-        DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators);
-    if (serializableDecomposedQueryPlan->has_state()) {
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators);
+    if (serializableDecomposedQueryPlan->has_state())
+    {
         auto state = deserializeQueryState(serializableDecomposedQueryPlan->state());
         decomposedQueryPlan->setState(state);
     }
     return decomposedQueryPlan;
 }
 
-QueryState DecomposedQueryPlanSerializationUtil::deserializeQueryState(SerializableQueryState serializedQueryState) {
+QueryState DecomposedQueryPlanSerializationUtil::deserializeQueryState(SerializableQueryState serializedQueryState)
+{
     using enum QueryState;
-    switch (serializedQueryState) {
-        case QUERY_STATE_REGISTERED: return REGISTERED;
-        case QUERY_STATE_OPTIMIZING: return OPTIMIZING;
-        case QUERY_STATE_DEPLOYED: return DEPLOYED;
-        case QUERY_STATE_RUNNING: return RUNNING;
-        case QUERY_STATE_MARKED_FOR_HARD_STOP: return MARKED_FOR_HARD_STOP;
-        case QUERY_STATE_MARKED_FOR_SOFT_STOP: return MARKED_FOR_SOFT_STOP;
-        case QUERY_STATE_SOFT_STOP_TRIGGERED: return SOFT_STOP_TRIGGERED;
-        case QUERY_STATE_SOFT_STOP_COMPLETED: return SOFT_STOP_COMPLETED;
-        case QUERY_STATE_STOPPED: return STOPPED;
-        case QUERY_STATE_MARKED_FOR_FAILURE: return MARKED_FOR_FAILURE;
-        case QUERY_STATE_FAILED: return FAILED;
-        case QUERY_STATE_RESTARTING: return RESTARTING;
-        case QUERY_STATE_MIGRATING: return MIGRATING;
-        case QUERY_STATE_MIGRATION_COMPLETED: return MIGRATION_COMPLETED;
-        case QUERY_STATE_EXPLAINED: return EXPLAINED;
-        case QUERY_STATE_REDEPLOYED: return REDEPLOYED;
-        case QUERY_STATE_MARKED_FOR_DEPLOYMENT: return MARKED_FOR_DEPLOYMENT;
-        case QUERY_STATE_MARKED_FOR_REDEPLOYMENT: return MARKED_FOR_REDEPLOYMENT;
-        case QUERY_STATE_MARKED_FOR_MIGRATION: return MARKED_FOR_MIGRATION;
-        case SerializableQueryState_INT_MIN_SENTINEL_DO_NOT_USE_: return REGISTERED;
-        case SerializableQueryState_INT_MAX_SENTINEL_DO_NOT_USE_: return REGISTERED;
+    switch (serializedQueryState)
+    {
+        case QUERY_STATE_REGISTERED:
+            return REGISTERED;
+        case QUERY_STATE_OPTIMIZING:
+            return OPTIMIZING;
+        case QUERY_STATE_DEPLOYED:
+            return DEPLOYED;
+        case QUERY_STATE_RUNNING:
+            return RUNNING;
+        case QUERY_STATE_MARKED_FOR_HARD_STOP:
+            return MARKED_FOR_HARD_STOP;
+        case QUERY_STATE_MARKED_FOR_SOFT_STOP:
+            return MARKED_FOR_SOFT_STOP;
+        case QUERY_STATE_SOFT_STOP_TRIGGERED:
+            return SOFT_STOP_TRIGGERED;
+        case QUERY_STATE_SOFT_STOP_COMPLETED:
+            return SOFT_STOP_COMPLETED;
+        case QUERY_STATE_STOPPED:
+            return STOPPED;
+        case QUERY_STATE_MARKED_FOR_FAILURE:
+            return MARKED_FOR_FAILURE;
+        case QUERY_STATE_FAILED:
+            return FAILED;
+        case QUERY_STATE_RESTARTING:
+            return RESTARTING;
+        case QUERY_STATE_MIGRATING:
+            return MIGRATING;
+        case QUERY_STATE_MIGRATION_COMPLETED:
+            return MIGRATION_COMPLETED;
+        case QUERY_STATE_EXPLAINED:
+            return EXPLAINED;
+        case QUERY_STATE_REDEPLOYED:
+            return REDEPLOYED;
+        case QUERY_STATE_MARKED_FOR_DEPLOYMENT:
+            return MARKED_FOR_DEPLOYMENT;
+        case QUERY_STATE_MARKED_FOR_REDEPLOYMENT:
+            return MARKED_FOR_REDEPLOYMENT;
+        case QUERY_STATE_MARKED_FOR_MIGRATION:
+            return MARKED_FOR_MIGRATION;
+        case SerializableQueryState_INT_MIN_SENTINEL_DO_NOT_USE_:
+            return REGISTERED;
+        case SerializableQueryState_INT_MAX_SENTINEL_DO_NOT_USE_:
+            return REGISTERED;
     }
 }
 
-SerializableQueryState DecomposedQueryPlanSerializationUtil::serializeQueryState(QueryState queryState) {
+SerializableQueryState DecomposedQueryPlanSerializationUtil::serializeQueryState(QueryState queryState)
+{
     using enum QueryState;
-    switch (queryState) {
-        case REGISTERED: return QUERY_STATE_REGISTERED;
-        case OPTIMIZING: return QUERY_STATE_OPTIMIZING;
-        case DEPLOYED: return QUERY_STATE_DEPLOYED;
-        case RUNNING: return QUERY_STATE_RUNNING;
-        case MARKED_FOR_HARD_STOP: return QUERY_STATE_MARKED_FOR_HARD_STOP;
-        case MARKED_FOR_SOFT_STOP: return QUERY_STATE_MARKED_FOR_SOFT_STOP;
-        case SOFT_STOP_TRIGGERED: return QUERY_STATE_SOFT_STOP_TRIGGERED;
-        case SOFT_STOP_COMPLETED: return QUERY_STATE_SOFT_STOP_COMPLETED;
-        case STOPPED: return QUERY_STATE_STOPPED;
-        case MARKED_FOR_FAILURE: return QUERY_STATE_MARKED_FOR_FAILURE;
-        case FAILED: return QUERY_STATE_FAILED;
-        case RESTARTING: return QUERY_STATE_RESTARTING;
-        case MIGRATING: return QUERY_STATE_MIGRATING;
-        case MIGRATION_COMPLETED: return QUERY_STATE_MIGRATION_COMPLETED;
-        case EXPLAINED: return QUERY_STATE_EXPLAINED;
-        case REDEPLOYED: return QUERY_STATE_REDEPLOYED;
-        case MARKED_FOR_DEPLOYMENT: return QUERY_STATE_MARKED_FOR_DEPLOYMENT;
-        case MARKED_FOR_REDEPLOYMENT: return QUERY_STATE_MARKED_FOR_REDEPLOYMENT;
-        case MARKED_FOR_MIGRATION: return QUERY_STATE_MARKED_FOR_MIGRATION;
+    switch (queryState)
+    {
+        case REGISTERED:
+            return QUERY_STATE_REGISTERED;
+        case OPTIMIZING:
+            return QUERY_STATE_OPTIMIZING;
+        case DEPLOYED:
+            return QUERY_STATE_DEPLOYED;
+        case RUNNING:
+            return QUERY_STATE_RUNNING;
+        case MARKED_FOR_HARD_STOP:
+            return QUERY_STATE_MARKED_FOR_HARD_STOP;
+        case MARKED_FOR_SOFT_STOP:
+            return QUERY_STATE_MARKED_FOR_SOFT_STOP;
+        case SOFT_STOP_TRIGGERED:
+            return QUERY_STATE_SOFT_STOP_TRIGGERED;
+        case SOFT_STOP_COMPLETED:
+            return QUERY_STATE_SOFT_STOP_COMPLETED;
+        case STOPPED:
+            return QUERY_STATE_STOPPED;
+        case MARKED_FOR_FAILURE:
+            return QUERY_STATE_MARKED_FOR_FAILURE;
+        case FAILED:
+            return QUERY_STATE_FAILED;
+        case RESTARTING:
+            return QUERY_STATE_RESTARTING;
+        case MIGRATING:
+            return QUERY_STATE_MIGRATING;
+        case MIGRATION_COMPLETED:
+            return QUERY_STATE_MIGRATION_COMPLETED;
+        case EXPLAINED:
+            return QUERY_STATE_EXPLAINED;
+        case REDEPLOYED:
+            return QUERY_STATE_REDEPLOYED;
+        case MARKED_FOR_DEPLOYMENT:
+            return QUERY_STATE_MARKED_FOR_DEPLOYMENT;
+        case MARKED_FOR_REDEPLOYMENT:
+            return QUERY_STATE_MARKED_FOR_REDEPLOYMENT;
+        case MARKED_FOR_MIGRATION:
+            return QUERY_STATE_MARKED_FOR_MIGRATION;
     }
 }
-}// namespace NES
+} // namespace NES

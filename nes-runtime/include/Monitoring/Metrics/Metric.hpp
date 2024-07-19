@@ -20,7 +20,8 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <nlohmann/json.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
@@ -58,17 +59,22 @@ nlohmann::json asJson(std::shared_ptr<Metric> ptrMetric);
 * @brief The metric class is a conceptual superclass that represents all metrics in NES.
 * Currently existing metrics are Counter, GaugeCollectors, Histogram and Meter.
 */
-class Metric {
-  public:
+class Metric
+{
+public:
     /**
      * @brief The ctor of the metric, which takes an arbitrary value
      * @param arbitrary parameter of any type
      * @dev too broad to make non-explicit.
     */
-    template<typename T>
-    explicit Metric(T x) : self(std::make_unique<Model<T>>(std::move(x))), type(MetricType::UnknownMetric) {}
-    template<typename T>
-    explicit Metric(T x, MetricType type) : self(std::make_unique<Model<T>>(std::move(x))), type(type) {}
+    template <typename T>
+    explicit Metric(T x) : self(std::make_unique<Model<T>>(std::move(x))), type(MetricType::UnknownMetric)
+    {
+    }
+    template <typename T>
+    explicit Metric(T x, MetricType type) : self(std::make_unique<Model<T>>(std::move(x))), type(type)
+    {
+    }
     ~Metric() = default;
 
     /**
@@ -89,8 +95,9 @@ class Metric {
      * @tparam the type of the value
      * @return the value
     */
-    template<typename T>
-    [[nodiscard]] T& getValue() const {
+    template <typename T>
+    [[nodiscard]] T& getValue() const
+    {
         return dynamic_cast<Model<T>*>(self.get())->data;
     }
 
@@ -115,7 +122,8 @@ class Metric {
      * @param the metric
      * @return the type of the metric
     */
-    friend void writeToBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    friend void writeToBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+    {
         x.self->writeToBufferConcept(buf, tupleIndex);
     }
 
@@ -125,15 +133,17 @@ class Metric {
      * @param the metric
      * @return the type of the metric
     */
-    friend void readFromBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex) {
+    friend void readFromBuffer(const Metric& x, Runtime::TupleBuffer& buf, uint64_t tupleIndex)
+    {
         return x.self->readFromBufferConcept(buf, tupleIndex);
     }
 
-  private:
+private:
     /**
      * @brief Abstract superclass that represents the conceptual features of a metric
     */
-    struct ConceptT {
+    struct ConceptT
+    {
         ConceptT() = default;
         virtual ~ConceptT() = default;
         [[nodiscard]] virtual std::unique_ptr<ConceptT> copy() const = 0;
@@ -158,21 +168,18 @@ class Metric {
      * @brief Child class of concept that contains the actual metric value.
      * @tparam T
     */
-    template<typename T>
-    struct Model final : ConceptT {
+    template <typename T>
+    struct Model final : ConceptT
+    {
         explicit Model(T x) : data(std::move(x)){};
 
         [[nodiscard]] std::unique_ptr<ConceptT> copy() const override { return std::make_unique<Model>(*this); }
 
         [[nodiscard]] nlohmann::json toJson() const override { return asJson(data); }
 
-        void writeToBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override {
-            writeToBuffer(data, buf, tupleIndex);
-        }
+        void writeToBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override { writeToBuffer(data, buf, tupleIndex); }
 
-        void readFromBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override {
-            readFromBuffer(data, buf, tupleIndex);
-        }
+        void readFromBufferConcept(Runtime::TupleBuffer& buf, uint64_t tupleIndex) override { readFromBuffer(data, buf, tupleIndex); }
 
         T data;
     };
@@ -181,6 +188,6 @@ class Metric {
     MetricType type;
 };
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRIC_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRIC_HPP_

@@ -15,12 +15,13 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
 
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 
 using FIELD_SIZE = uint64_t;
 class MemoryLayoutTupleBuffer;
@@ -47,8 +48,9 @@ std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::
  * To this end, it requires the definition of an schema and a specific buffer size.
  * Currently. we support a RowLayout and a ColumnLayout.
  */
-class MemoryLayout {
-  public:
+class MemoryLayout
+{
+public:
     /**
      * @brief Constructor for MemoryLayout.
      * @param bufferSize A memory layout is always created for a specific buffer size.
@@ -130,7 +132,7 @@ class MemoryLayout {
     bool operator==(const MemoryLayout& rhs) const;
     bool operator!=(const MemoryLayout& rhs) const;
 
-  protected:
+protected:
     const uint64_t bufferSize;
     const SchemaPtr schema;
     uint64_t recordSize;
@@ -139,6 +141,6 @@ class MemoryLayout {
     std::vector<PhysicalTypePtr> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_

@@ -13,28 +13,36 @@
 */
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-class TextInvocationPlugin : public InvocationPlugin {
-  public:
+class TextInvocationPlugin : public InvocationPlugin
+{
+public:
     TextInvocationPlugin() = default;
 
-    std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override {
-        if (left->isType<Text>() && right->isType<Text>()) {
+    std::optional<Value<>> Equals(const Value<>& left, const Value<>& right) const override
+    {
+        if (left->isType<Text>() && right->isType<Text>())
+        {
             return left.as<Text>()->equals(right.as<Text>());
         }
         return std::nullopt;
     }
 
-    std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<UInt32> index) const override {
-        if (array->isType<Text>()) {
+    std::optional<Value<>> ReadArrayIndex(const Value<>& array, Value<UInt32> index) const override
+    {
+        if (array->isType<Text>())
+        {
             return array.as<Text>()->read(index);
         }
         return std::nullopt;
     }
 
-    std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<UInt32> index, const Value<>& value) const override {
-        if (array->isType<Text>() && value->isType<Int8>()) {
+    std::optional<Value<>> WriteArrayIndex(const Value<>& array, Value<UInt32> index, const Value<>& value) const override
+    {
+        if (array->isType<Text>() && value->isType<Int8>())
+        {
             array.as<Text>()->write(index, value.as<Int8>());
             return array;
         }
@@ -43,4 +51,4 @@ class TextInvocationPlugin : public InvocationPlugin {
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<TextInvocationPlugin> TextInvocationPlugin;
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

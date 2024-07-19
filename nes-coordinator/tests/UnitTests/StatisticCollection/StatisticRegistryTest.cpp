@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <vector>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/NeverTrigger.hpp>
 #include <StatisticCollection/Characteristic/InfrastructureCharacteristic.hpp>
@@ -21,13 +21,16 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <vector>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class StatisticRegistryTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class StatisticRegistryTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("StatisticRegistryTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup StatisticRegistryTest test class.");
     }
@@ -35,25 +38,30 @@ class StatisticRegistryTest : public Testing::BaseUnitTest {
     /* Will be called before a test is executed. */
     void SetUp() override { NES::Testing::BaseUnitTest::SetUp(); }
 
-    static void TearDownTestCase() {}
+    static void TearDownTestCase() { }
 };
 
-std::vector<Statistic::StatisticKey> createRandomStatisticKey(const uint64_t numberOfKeys) {
+std::vector<Statistic::StatisticKey> createRandomStatisticKey(const uint64_t numberOfKeys)
+{
     std::vector<Statistic::StatisticKey> randomKeys;
-    for (auto i = 0_u64; i < numberOfKeys; ++i) {
+    for (auto i = 0_u64; i < numberOfKeys; ++i)
+    {
         randomKeys.emplace_back(Statistic::IngestionRate::create(), i);
     }
     return randomKeys;
 }
 
-std::vector<Statistic::StatisticInfo> createRandomStatisticInfo(const uint64_t numberOfInfos) {
+std::vector<Statistic::StatisticInfo> createRandomStatisticInfo(const uint64_t numberOfInfos)
+{
     std::vector<Statistic::StatisticInfo> randomInfos;
-    for (auto i = 0_u64; i < numberOfInfos; ++i) {
-        randomInfos.emplace_back(TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(rand())),
-                                 Statistic::NeverTrigger::create(),
-                                 nullptr,
-                                 QueryId(rand()),
-                                 Statistic::IngestionRate::create());
+    for (auto i = 0_u64; i < numberOfInfos; ++i)
+    {
+        randomInfos.emplace_back(
+            TumblingWindow::of(EventTime(Attribute("ts")), Milliseconds(rand())),
+            Statistic::NeverTrigger::create(),
+            nullptr,
+            QueryId(rand()),
+            Statistic::IngestionRate::create());
     }
     return randomInfos;
 }
@@ -61,7 +69,8 @@ std::vector<Statistic::StatisticInfo> createRandomStatisticInfo(const uint64_t n
 /**
  * @brief This tests checks, if we can insert and retrieve one statistic
  */
-TEST_F(StatisticRegistryTest, singleStatisticTest) {
+TEST_F(StatisticRegistryTest, singleStatisticTest)
+{
     {
         Statistic::StatisticRegistry statisticRegistry;
         auto singleStatisticKey = createRandomStatisticKey(1)[0];
@@ -76,17 +85,20 @@ TEST_F(StatisticRegistryTest, singleStatisticTest) {
 /**
  * @brief This tests checks, if we can insert and retrieve multiple statistics
  */
-TEST_F(StatisticRegistryTest, multipleStatisticsTest) {
+TEST_F(StatisticRegistryTest, multipleStatisticsTest)
+{
     constexpr auto NUMBER_OF_ENTRIES = 1000;
     auto statisticKeys = createRandomStatisticKey(NUMBER_OF_ENTRIES);
     auto statisticInfos = createRandomStatisticInfo(NUMBER_OF_ENTRIES);
     Statistic::StatisticRegistry statisticRegistry;
 
-    for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i) {
+    for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i)
+    {
         statisticRegistry.insert(statisticKeys[i].hash(), statisticInfos[i]);
     }
 
-    for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i) {
+    for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i)
+    {
         auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(statisticKeys[i].hash());
         ASSERT_EQ((**returnedStatisticInfo), statisticInfos[i]);
     }
@@ -95,7 +107,8 @@ TEST_F(StatisticRegistryTest, multipleStatisticsTest) {
 /**
  * @brief This tests checks, if we can insert and retrieve multiple statistics concurrently.
  */
-TEST_F(StatisticRegistryTest, complexConcurrentStatisticsTest) {
+TEST_F(StatisticRegistryTest, complexConcurrentStatisticsTest)
+{
     constexpr auto NUMBER_OF_ENTRIES = 10000;
     constexpr auto NUMBER_OF_THREADS = 16;
 
@@ -105,24 +118,30 @@ TEST_F(StatisticRegistryTest, complexConcurrentStatisticsTest) {
 
     std::vector<std::thread> allThreads;
     std::atomic<uint64_t> currentPos = 0;
-    for (auto threadId = 0; threadId < NUMBER_OF_THREADS; ++threadId) {
-        allThreads.emplace_back([&currentPos, &statisticKeys, &statisticRegistry, &statisticInfos]() {
-            auto nextUpdatePos = 0_u64;
-            while ((nextUpdatePos = currentPos++) < NUMBER_OF_ENTRIES) {
-                statisticRegistry.insert(statisticKeys[nextUpdatePos].hash(), statisticInfos[nextUpdatePos]);
-            }
-        });
+    for (auto threadId = 0; threadId < NUMBER_OF_THREADS; ++threadId)
+    {
+        allThreads.emplace_back(
+            [&currentPos, &statisticKeys, &statisticRegistry, &statisticInfos]()
+            {
+                auto nextUpdatePos = 0_u64;
+                while ((nextUpdatePos = currentPos++) < NUMBER_OF_ENTRIES)
+                {
+                    statisticRegistry.insert(statisticKeys[nextUpdatePos].hash(), statisticInfos[nextUpdatePos]);
+                }
+            });
     }
 
     // Waiting till all threads are done
-    for (auto& thread : allThreads) {
+    for (auto& thread : allThreads)
+    {
         thread.join();
     }
 
     // Comparing output
-    for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i) {
+    for (auto i = 0_u64; i < NUMBER_OF_ENTRIES; ++i)
+    {
         auto returnedStatisticInfo = statisticRegistry.getStatisticInfo(statisticKeys[i].hash());
         ASSERT_EQ((**returnedStatisticInfo), statisticInfos[i]);
     }
 }
-}// namespace NES
+} // namespace NES

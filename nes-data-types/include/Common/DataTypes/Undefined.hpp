@@ -16,13 +16,15 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_UNDEFINED_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The Undefined type represents a type for without any meaning.
  */
-class Undefined final : public DataType {
-  public:
+class Undefined final : public DataType
+{
+public:
     ~Undefined() override = default;
 
     /**
@@ -52,6 +54,6 @@ class Undefined final : public DataType {
     std::string toString() override;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_UNDEFINED_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_UNDEFINED_HPP_

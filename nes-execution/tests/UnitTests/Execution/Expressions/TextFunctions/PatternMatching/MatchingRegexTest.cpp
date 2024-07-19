@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/TextFunctions/PatternMatching/MatchingRegex.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -21,19 +21,23 @@
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class MatchingRegexTest : public Testing::BaseUnitTest {
-  public:
+class MatchingRegexTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MatchingRegexTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MatchingRegexTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
@@ -45,7 +49,8 @@ class MatchingRegexTest : public Testing::BaseUnitTest {
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 
-TEST_F(MatchingRegexTest, evaluateRegexMatch1) {
+TEST_F(MatchingRegexTest, evaluateRegexMatch1)
+{
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
     // TextValue
     {
@@ -56,7 +61,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch1) {
         EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-TEST_F(MatchingRegexTest, evaluateRegexMatch2) {
+TEST_F(MatchingRegexTest, evaluateRegexMatch2)
+{
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
     // TextValue
     {
@@ -67,7 +73,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch2) {
         EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-TEST_F(MatchingRegexTest, evaluateRegexMatch3) {
+TEST_F(MatchingRegexTest, evaluateRegexMatch3)
+{
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
     // TextValue
     {
@@ -78,7 +85,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch3) {
         EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-TEST_F(MatchingRegexTest, evaluateRegexMatch4) {
+TEST_F(MatchingRegexTest, evaluateRegexMatch4)
+{
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
     // TextValue
     {
@@ -89,7 +97,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch4) {
         EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-TEST_F(MatchingRegexTest, evaluateRegexMatch5) {
+TEST_F(MatchingRegexTest, evaluateRegexMatch5)
+{
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
     // TextValue
     {
@@ -100,7 +109,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch5) {
         EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-TEST_F(MatchingRegexTest, evaluateRegexMatch6) {
+TEST_F(MatchingRegexTest, evaluateRegexMatch6)
+{
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
     // TextValue
     {
@@ -111,7 +121,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch6) {
         EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-TEST_F(MatchingRegexTest, evaluateRegexMatch7) {
+TEST_F(MatchingRegexTest, evaluateRegexMatch7)
+{
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
     // TextValue
     {
@@ -122,7 +133,8 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch7) {
         EXPECT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
 }
-TEST_F(MatchingRegexTest, evaluateRegexMatch8) {
+TEST_F(MatchingRegexTest, evaluateRegexMatch8)
+{
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
     // TextValue
     {
@@ -134,4 +146,4 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch8) {
     }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

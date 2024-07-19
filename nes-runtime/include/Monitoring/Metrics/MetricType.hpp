@@ -15,15 +15,17 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
 
-#include <Util/magicenum/magic_enum.hpp>
 #include <string>
+#include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
 * @brief The metric types of NES represented in the subdirectories of Metrics/..
 */
-enum class MetricType : uint8_t {
+enum class MetricType : uint8_t
+{
     CpuMetric,
     DiskMetric,
     MemoryMetric,
@@ -37,6 +39,6 @@ enum class MetricType : uint8_t {
 
 std::string toString(MetricType metricType);
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRICTYPE_HPP_

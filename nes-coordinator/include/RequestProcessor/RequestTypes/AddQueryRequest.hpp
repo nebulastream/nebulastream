@@ -18,20 +18,23 @@
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
@@ -42,25 +45,30 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Catalogs {
-namespace Source {
+namespace Catalogs
+{
+namespace Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
-namespace UDF {
+namespace UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+} // namespace UDF
 
-}// namespace Catalogs
+} // namespace Catalogs
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
@@ -97,12 +105,14 @@ using QueryPlacementAmendmentPhasePtr = std::shared_ptr<QueryPlacementAmendmentP
 
 class GlobalQueryPlanUpdatePhase;
 using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase>;
-}// namespace Optimizer
+} // namespace Optimizer
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 
 //a response to the creator of the request
-struct AddQueryResponse : public AbstractRequestResponse {
+struct AddQueryResponse : public AbstractRequestResponse
+{
     explicit AddQueryResponse(QueryId queryId) : queryId(queryId){};
     QueryId queryId;
 };
@@ -110,8 +120,9 @@ struct AddQueryResponse : public AbstractRequestResponse {
 class AddQueryRequest;
 using AddQueryRequestPtr = std::shared_ptr<AddQueryRequest>;
 
-class AddQueryRequest : public AbstractUniRequest {
-  public:
+class AddQueryRequest : public AbstractUniRequest
+{
+public:
     /**
      * @brief Constructor
      * @param queryString: the query string
@@ -120,11 +131,12 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param queryParsingService: parsing string queries
      */
-    AddQueryRequest(const std::string& queryString,
-                    const Optimizer::PlacementStrategy queryPlacementStrategy,
-                    const uint8_t maxRetries,
-                    const z3::ContextPtr& z3Context,
-                    const QueryParsingServicePtr& queryParsingService);
+    AddQueryRequest(
+        const std::string& queryString,
+        const Optimizer::PlacementStrategy queryPlacementStrategy,
+        const uint8_t maxRetries,
+        const z3::ContextPtr& z3Context,
+        const QueryParsingServicePtr& queryParsingService);
 
     /**
      * @brief Constructor
@@ -133,10 +145,11 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
-    AddQueryRequest(const QueryPlanPtr& queryPlan,
-                    const Optimizer::PlacementStrategy queryPlacementStrategy,
-                    const uint8_t maxRetries,
-                    const z3::ContextPtr& z3Context);
+    AddQueryRequest(
+        const QueryPlanPtr& queryPlan,
+        const Optimizer::PlacementStrategy queryPlacementStrategy,
+        const uint8_t maxRetries,
+        const z3::ContextPtr& z3Context);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -145,10 +158,11 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param maxRetries: Maximum number of retry attempts for the request
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      */
-    static AddQueryRequestPtr create(const QueryPlanPtr& queryPlan,
-                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                     const uint8_t maxRetries,
-                                     const z3::ContextPtr& z3Context);
+    static AddQueryRequestPtr create(
+        const QueryPlanPtr& queryPlan,
+        const Optimizer::PlacementStrategy queryPlacementStrategy,
+        const uint8_t maxRetries,
+        const z3::ContextPtr& z3Context);
 
     /**
      * @brief creates a new AddQueryRequest object
@@ -158,13 +172,14 @@ class AddQueryRequest : public AbstractUniRequest {
      * @param z3Context: The z3 context to be used for the request, needed for query merging phase
      * @param queryParsingService: parsing string query
      */
-    static AddQueryRequestPtr create(const std::string& queryPlan,
-                                     const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                     const uint8_t maxRetries,
-                                     const z3::ContextPtr& z3Context,
-                                     const QueryParsingServicePtr& queryParsingService);
+    static AddQueryRequestPtr create(
+        const std::string& queryPlan,
+        const Optimizer::PlacementStrategy queryPlacementStrategy,
+        const uint8_t maxRetries,
+        const z3::ContextPtr& z3Context,
+        const QueryParsingServicePtr& queryParsingService);
 
-  protected:
+protected:
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
      * @param ex: The exception encountered
@@ -201,7 +216,7 @@ class AddQueryRequest : public AbstractUniRequest {
      */
     void assignOperatorIds(const QueryPlanPtr& queryPlan);
 
-  private:
+private:
     QueryId queryId;
     std::string queryString;
     QueryPlanPtr queryPlan;
@@ -211,6 +226,6 @@ class AddQueryRequest : public AbstractUniRequest {
     void markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler);
     void removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler);
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ADDQUERYREQUEST_HPP_
