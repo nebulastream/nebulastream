@@ -37,4 +37,4 @@ apt-get install -y python3-pip
 pip install pyyaml
 
 # run clang-tidy and pass the contents of the file to the script via stdin
-cat $GIT_DIFF_FILE_NAME | python3 /nebulastream/scripts/build/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 4 -path /nebulastream/build -export-fixes $OUTPUT_YAML_FILE
+cat $GIT_DIFF_FILE_NAME | python3 /nebulastream/scripts/build/run_clang_tidy_diff.py -clang-tidy-binary "$CLANG_TIDY_EXECUTABLE" -p1 -j 1 -path /nebulastream/build -export-fixes $OUTPUT_YAML_FILE
