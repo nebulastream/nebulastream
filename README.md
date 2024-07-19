@@ -75,7 +75,11 @@ nes-worker-->nes-execution
 ```
 
 
-# Clang-Format, Clang-Tidy, and IWYU
-We use clang-format, clang-tidy, and include-what-you-use (IWYU) to ensure code quality and consistency.
+# Clang-Format, Clang-Tidy, and Fix-Guards
+We use clang-format, clang-tidy, and fix-guards to ensure code quality and consistency.
 To run these tools, you need to use the cmake option: `-DNES_SELF_HOSTING=ON`.
-Afterward, there is a new target in the makefile called `format` that runs clang-format and clang-tidy.
+Afterward, there exist multiple new targets:
+- `format` runs clang-format 
+- `format-check` runs clang-format and checks if the code is formatted correctly but does not fix it
+- `tidy`  runs clang-tidy 
+- `fix-guards` runs `fix-guard` ensuring the include guards are correct, e.g., `#ifndef NES_COMMON_H` and `#define NES_COMMON_H`
