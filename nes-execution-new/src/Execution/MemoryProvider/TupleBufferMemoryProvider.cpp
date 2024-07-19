@@ -18,20 +18,20 @@
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Nautilus/DataTypes/ExecutableDataType.hpp>
-#include <Nautilus/DataTypes/Text/Text.hpp>
-#include <Nautilus/DataTypes/Text/TextValue.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <cstdint>
 #include <nautilus/function.hpp>
+#include <string>
 
 namespace NES::Runtime::Execution::MemoryProvider {
 
-Nautilus::TextValue* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex) {
+const uint8_t* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex) {
     auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
     auto childBuffer = tb.loadChildBuffer(childIndex);
-    return Nautilus::TextValue::load(childBuffer);
+    return childBuffer.getBuffer<uint8_t>();
 }
 
 Nautilus::ExecDataType TupleBufferMemoryProvider::load(const PhysicalTypePtr& type,
@@ -93,20 +93,19 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::load(const PhysicalTypePtr& ty
         NES_ERROR("Physical Type: array type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
     } else if (type->isTextType()) {
-        //        auto childIndex = fieldReference.load<Nautilus::UInt32>();
-        //        auto variableSizeBuffer =
-        //            Nautilus::FunctionCall("loadAssociatedTextValue", loadAssociatedTextValue, bufferReference, childIndex);
-        //        return variableSizeBuffer;
-        NES_NOT_IMPLEMENTED();
+        auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
+        auto childIndex = *fieldReferenceCastedU32;
+        auto textPtr = nautilus::invoke(loadAssociatedTextValue, bufferReference, childIndex);
+        return Nautilus::ExecutableDataType<std::string>::create(static_cast<nautilus::val<const char*>>(textPtr));
     } else {
         NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
 
-uint32_t storeAssociatedTextValue(void* tupleBuffer, const Nautilus::TextValue* textValue) {
+uint32_t storeAssociatedTextValue(void* tupleBuffer, const std::string textValue) {
     auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
-    auto textBuffer = TupleBuffer::reinterpretAsTupleBuffer((void*) textValue);
+    auto textBuffer = TupleBuffer::reinterpretAsTupleBuffer((void*)textValue.c_str());
     return tb.storeChildBuffer(textBuffer);
 }
 
@@ -119,47 +118,58 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::store(const NES::PhysicalTypeP
         switch (basicType->nativeType) {
             case BasicPhysicalType::NativeType::BOOLEAN: {
                 *static_cast<nautilus::val<bool*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<bool>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<bool>>(value)->as<bool>();
+                break;
             };
             case BasicPhysicalType::NativeType::INT_8: {
                 *static_cast<nautilus::val<int8_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int8_t>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int8_t>>(value)->as<int8_t>();
+                break;
             };
             case BasicPhysicalType::NativeType::INT_16: {
                 *static_cast<nautilus::val<int16_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int16_t>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int16_t>>(value)->as<int16_t>();
+                break;
             };
             case BasicPhysicalType::NativeType::INT_32: {
                 *static_cast<nautilus::val<int32_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int32_t>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int32_t>>(value)->as<int32_t>();
+                break;
             };
             case BasicPhysicalType::NativeType::INT_64: {
                 *static_cast<nautilus::val<int64_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int64_t>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int64_t>>(value)->as<int64_t>();
+                break;
             };
             case BasicPhysicalType::NativeType::UINT_8: {
                 *static_cast<nautilus::val<uint8_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint8_t>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint8_t>>(value)->as<uint8_t>();
+                break;
             };
             case BasicPhysicalType::NativeType::UINT_16: {
                 *static_cast<nautilus::val<uint16_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint16_t>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint16_t>>(value)->as<uint16_t>();
+                break;
             };
             case BasicPhysicalType::NativeType::UINT_32: {
                 *static_cast<nautilus::val<uint32_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint32_t>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint32_t>>(value)->as<uint32_t>();
+                break;
             };
             case BasicPhysicalType::NativeType::UINT_64: {
                 *static_cast<nautilus::val<uint64_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint64_t>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint64_t>>(value)->as<uint64_t>();
+                break;
             };
             case BasicPhysicalType::NativeType::FLOAT: {
                 *static_cast<nautilus::val<float*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<float>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<float>>(value)->as<float>();
+                break;
             };
             case BasicPhysicalType::NativeType::DOUBLE: {
                 *static_cast<nautilus::val<double*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<double>>(value)->read();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<double>>(value)->as<double>();
+                break;
             };
             default: {
                 NES_ERROR("Physical Type: {} is currently not supported", type->toString());
@@ -168,13 +178,11 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::store(const NES::PhysicalTypeP
         }
         return value;
     } else if (type->isTextType()) {
-        //        auto textValue = value.as<Nautilus::Text>();
-        //        auto childIndex = Nautilus::FunctionCall("storeAssociatedTextValue",
-        //                                                 storeAssociatedTextValue,
-        //                                                 bufferReference,
-        //                                                 textValue->getReference());
-        //        fieldReference.store(childIndex);
-        //        return value;
+        auto textValue = std::dynamic_pointer_cast<Nautilus::ExecutableDataType<std::string>>(value);
+        auto childIndex = nautilus::invoke(storeAssociatedTextValue, bufferReference, textValue->read());
+        auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
+        *fieldReferenceCastedU32 = childIndex;
+        return value;
         NES_NOT_IMPLEMENTED();
     }
     NES_NOT_IMPLEMENTED();
@@ -191,7 +199,7 @@ bool TupleBufferMemoryProvider::includesField(const std::vector<Nautilus::Record
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
 }
 
-TupleBufferMemoryProvider::~TupleBufferMemoryProvider() {}
+TupleBufferMemoryProvider::~TupleBufferMemoryProvider() = default;
 
 MemoryProviderPtr TupleBufferMemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema) {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {

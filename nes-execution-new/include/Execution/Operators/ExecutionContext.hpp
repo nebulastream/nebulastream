@@ -16,10 +16,10 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #include <Execution/Operators/OperatorState.hpp>
 #include <Nautilus/DataTypes/ExecutableDataType.hpp>
-#include <nautilus/val.hpp>
-#include <nautilus/val_ptr.hpp>
 #include <cstdint>
 #include <memory>
+#include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <unordered_map>
 
 namespace NES::Runtime::Execution {

@@ -13,8 +13,8 @@
 */
 
 #include <Nautilus/DataTypes/ExecutableDataType.hpp>
-#include <nautilus/val.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nautilus/val.hpp>
 
 namespace NES::Nautilus {
 

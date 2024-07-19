@@ -38,9 +38,16 @@ class TupleBufferMemoryProvider {
     virtual void
     write(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const = 0;
 
+    /**
+     * @brief Currently, this method does not support Null handling
+     */
     static Nautilus::ExecDataType
     load(const PhysicalTypePtr& type, nautilus::val<int8_t*>& bufferReference, nautilus::val<int8_t*>& fieldReference);
 
+
+    /**
+     * @brief Currently, this method does not support Null handling
+     */
     static Nautilus::ExecDataType store(const NES::PhysicalTypePtr& type,
                                         nautilus::val<int8_t*>& bufferReference,
                                         nautilus::val<int8_t*>& fieldReference,

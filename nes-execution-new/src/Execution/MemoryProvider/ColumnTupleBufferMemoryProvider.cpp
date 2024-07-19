@@ -14,8 +14,8 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider {

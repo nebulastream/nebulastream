@@ -328,10 +328,6 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
             // add logical query plan to the json object
             currentQuerySubPlanMetaData["logicalQuerySubPlan"] = decomposedQueryPlan->toString();
 
-
-            // Added generated code snippets to the response
-            currentQuerySubPlanMetaData["Pipelines"] = generatedCodeSnippets;
-
             scheduledSubQueries.push_back(currentQuerySubPlanMetaData);
         }
         executionNodeMetaData["querySubPlans"] = scheduledSubQueries;

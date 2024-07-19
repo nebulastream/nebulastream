@@ -13,6 +13,3 @@
 add_source_files(nes-nautilus
         ExecutableDataType.cpp
 )
-
-# We disable it as we have not ported them yet
-#add_subdirectory(Text)

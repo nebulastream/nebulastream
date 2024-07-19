@@ -14,63 +14,17 @@
 
 #ifndef NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
 #define NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
-//#include <Nautilus/DataTypes/Identifier.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <nautilus/std/string.hpp>
+#include <nautilus/common/Types.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ostream>
 #include <sstream>
+#include <fmt/format.h>
 
 namespace NES::Nautilus {
-
-class AbstractDataType;
-using ExecDataType = std::shared_ptr<AbstractDataType>;
-
-
-class AbstractDataType {
-  public:
-    explicit AbstractDataType(const nautilus::val<bool>& null) : null(null) {}
-    virtual ~AbstractDataType() = default;
-    friend std::ostream& operator<<(std::ostream& os, const AbstractDataType& type) {
-        os << type.toString();
-        return os;
-    }
-
-    [[nodiscard]] const nautilus::val<bool>& isNull() const { return null; }
-
-    // Defining operations on data types
-    virtual ExecDataType operator&&(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator||(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator==(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator!=(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator<(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator>(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator<=(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator>=(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator+(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator-(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator*(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator/(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator%(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator&(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator|(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator^(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator<<(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator>>(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator!() const = 0;
-
-    template<typename CastedDataType>
-    bool isType() { return false; };
-
-    template<typename CastedDataType>
-    nautilus::val<CastedDataType> as() { NES_NOT_IMPLEMENTED(); return {}; }
-
-    protected:
-    [[nodiscard]] virtual std::string toString() const = 0;
-
-    const nautilus::val<bool> null;
-};
-
 
 template<typename ValueType>
 class ExecutableDataType : public AbstractDataType {
@@ -81,7 +35,7 @@ class ExecutableDataType : public AbstractDataType {
         return std::make_shared<ExecutableDataType<ValueType>>(value, null);
     }
 
-//    // Implementing operations on data types
+    // Implementing operations on data types
     ExecDataType operator&&(const AbstractDataType& rightExp) const override;
     ExecDataType operator||(const AbstractDataType& rightExp) const override;
     ExecDataType operator==(const AbstractDataType& rightExp) const override;
@@ -102,23 +56,20 @@ class ExecutableDataType : public AbstractDataType {
     ExecDataType operator>>(const AbstractDataType& rightExp) const override;
     ExecDataType operator!() const override;
 
+    nautilus::val<ValueType> read();
     template<typename CastedDataType>
     bool isType() { return std::is_same_v<ValueType, CastedDataType>; }
 
     template<typename CastedDataType>
     nautilus::val<CastedDataType> as() { return static_cast<nautilus::val<CastedDataType>>(rawValue); }
 
-    // Defining friend classes so that they can access private members, and we can define operations on data types
-    friend class ArithmeticalOperations;
-
-
-
     ~ExecutableDataType() override = default;
 
   protected:
     [[nodiscard]] std::string toString() const override {
         std::ostringstream oss;
-        oss << " rawValue: " << rawValue << " null: " << null;
+        oss << "NOT IMPLEMENTED YET!";
+//        oss << " rawValue: " << rawValue << " null: " << null;
         return oss.str();
     }
 
@@ -132,6 +83,7 @@ class ExecutableDataType : public AbstractDataType {
 
 
 // Define common data types
+using MemRef = ExecutableDataType<int8_t*>;
 using Int8 = ExecutableDataType<int8_t>;
 using Int16 = ExecutableDataType<int16_t>;
 using Int32 = ExecutableDataType<int32_t>;
@@ -143,6 +95,7 @@ using UInt64 = ExecutableDataType<uint64_t>;
 using Float = ExecutableDataType<float>;
 using Double = ExecutableDataType<double>;
 using Boolean = ExecutableDataType<bool>;
+using Text = ExecutableDataType<std::string>;
 
 }// namespace NES::Nautilus
 
