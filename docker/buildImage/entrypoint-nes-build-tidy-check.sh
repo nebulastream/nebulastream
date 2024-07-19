@@ -24,14 +24,12 @@ GIT_DIFF_FILE_NAME="/clang-tidy-result/git_pr.diff"
 OUTPUT_YAML_FILE="/clang-tidy-result/fixes.yml"
 
 
-# generate buildsystem
+# Generate buildsystem. Important that -DCMAKE_EXPORT_COMPILE_COMMANDS=ON is not removed, as this is necessary for clang-tidy to work
 mkdir -p /nebulastream/build
 cd /nebulastream/build
-
-# Important that -DCMAKE_EXPORT_COMPILE_COMMANDS=ON is not removed, as this is necessary for clang-tidy to work
 CLANG_TIDY_EXECUTABLE=$(cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSOR_FLOW=1 -DNES_USE_S2=1 .. 2>&1 | grep "CLANG_TIDY_EXECUTABLE" | cut -d ' ' -f3)
 echo "CLANG_TIDY_EXECUTABLE: $CLANG_TIDY_EXECUTABLE"
-
+cd /nebulastream
 
 # For the script to work, we need to install pyyaml and for that we need pip
 apt-get update
