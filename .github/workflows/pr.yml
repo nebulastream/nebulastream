@@ -68,7 +68,7 @@ jobs:
         run: |
           echo "Creating folder for clang-tidy-result"
           mkdir -p $GITHUB_WORKSPACE/clang-tidy-result
-          git diff -U0 "$(git merge-base HEAD "upstream/${{ github.event.pull_request.base.ref }}")" > $GITHUB_WORKSPACE/clang-tidy-result/clang-tidy.diff
+          git diff -U0 "$(git merge-base HEAD "origin/${{ github.event.pull_request.base.ref }}")" > $GITHUB_WORKSPACE/clang-tidy-result/clang-tidy.diff
           docker run --name ${{ github.run_id }}_tidy-check -v $GITHUB_WORKSPACE:/nebulastream -v $GITHUB_WORKSPACE/clang-tidy-result:/clang-tidy-result --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-tidy-check.sh nebulastream/nes-build-image:latest
       - name: Run clang-tidy-pr-comments action
         uses: platisd/clang-tidy-pr-comments@v1
