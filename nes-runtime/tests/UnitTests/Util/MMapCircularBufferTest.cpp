@@ -20,6 +20,7 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <numeric>
+#include <Util/Logger/Logger.hpp>
 namespace NES {
 using namespace std::literals;
 class MMapCircularBufferTest : public Testing::BaseUnitTest {
