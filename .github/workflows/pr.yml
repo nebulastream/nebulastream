@@ -64,12 +64,34 @@ jobs:
       - name: guard-check
         run: |
           docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
+      - name: tidy-check
+        run: |
+          echo "Creating folder for clang-tidy-result"
+          mkdir -p $GITHUB_WORKSPACE/clang-tidy-result
+          git diff -U0 "$(git merge-base HEAD "upstream/${{ github.event.pull_request.base.ref }}")" > $GITHUB_WORKSPACE/clang-tidy-result/clang-tidy.diff
+          docker run --name ${{ github.run_id }}_tidy-check -v $GITHUB_WORKSPACE:/nebulastream -v $GITHUB_WORKSPACE/clang-tidy-result:/clang-tidy-result --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-tidy-check.sh nebulastream/nes-build-image:latest
+      - name: Run clang-tidy-pr-comments action
+        uses: platisd/clang-tidy-pr-comments@v1
+        with:
+          # The GitHub token (or a personal access token)
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          # The path to the clang-tidy fixes generated previously
+          clang_tidy_fixes: clang-tidy-result/fixes.yml
+          # Optionally set to true if you want the Action to request
+          # changes in case warnings are found
+          request_changes: true
+          # Optionally set the number of comments per review
+          # to avoid GitHub API timeouts for heavily loaded
+          # pull requests
+          suggestions_per_comment: 10
       - name: docker cleanup
-        if: ${{ always() }}
+        if: ${{ always() }} && github.event_name != 'workflow_dispatch'
         run: |
           docker rm -f ${{ github.run_id }}_preamble-check
           docker rm -f ${{ github.run_id }}_format-check
           docker rm -f ${{ github.run_id }}_guard-check
+          docker rm -f ${{ github.run_id }}_tidy-check
+          rm -rf $GITHUB_WORKSPACE/clang-tidy-result 
 
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
