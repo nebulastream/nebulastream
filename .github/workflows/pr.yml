@@ -71,7 +71,7 @@ jobs:
           git diff -U0 "$(git merge-base HEAD "origin/${{ github.event.pull_request.base.ref }}")" > $GITHUB_WORKSPACE/clang-tidy-result/git_pr.diff
           docker run --name ${{ github.run_id }}_tidy-check -v $GITHUB_WORKSPACE:/nebulastream -v $GITHUB_WORKSPACE/clang-tidy-result:/clang-tidy-result --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-tidy-check.sh nebulastream/nes-build-image:latest
       - name: Run clang-tidy-pr-comments action
-        uses: platisd/clang-tidy-pr-comments@v1
+        uses: platisd/clang-tidy-pr-comments@v1.4.3
         with:
           # The GitHub token (or a personal access token)
           github_token: ${{ secrets.GITHUB_TOKEN }}
