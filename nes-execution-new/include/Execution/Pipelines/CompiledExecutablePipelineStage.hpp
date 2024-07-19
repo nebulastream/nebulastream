@@ -18,9 +18,6 @@
 #include <Util/Timer.hpp>
 #include <future>
 
-- integrate nautilus into our compilation pipeline
-    - fix the compilation errors
-    - try a filter query
 namespace NES {
 class DumpHelper;
 }

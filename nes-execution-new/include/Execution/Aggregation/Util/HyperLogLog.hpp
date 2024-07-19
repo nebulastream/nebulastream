@@ -9,7 +9,6 @@
  * Exchange of the MurmurHash Function with Nautilus Implementation of the MurmurHash
  */
 
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <algorithm>
 #include <cmath>

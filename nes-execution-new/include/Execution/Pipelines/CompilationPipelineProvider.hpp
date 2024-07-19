@@ -14,7 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
+#include <nautilus/options.hpp>
 namespace NES::Runtime::Execution {
 
 /**
@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution {
 class CompilationPipelineProvider : public ExecutablePipelineProvider {
   public:
     std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                                    const Nautilus::CompilationOptions& options) override;
+                                                    const nautilus::engine::Options& options) override;
 };
 }// namespace NES::Runtime::Execution
 #endif// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILATIONPIPELINEPROVIDER_HPP_

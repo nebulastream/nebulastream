@@ -34,6 +34,11 @@ class AbstractDataType {
         return os;
     }
 
+    AbstractDataType& operator=(const AbstractDataType& other) {
+        null = other.null;
+        return *this;
+    }
+
     [[nodiscard]] const nautilus::val<bool>& isNull() const { return null; }
 
     // Defining operations on data types
@@ -66,7 +71,7 @@ class AbstractDataType {
   protected:
     [[nodiscard]] virtual std::string toString() const = 0;
 
-    const nautilus::val<bool> null;
+    nautilus::val<bool> null;
 };
 
 } // namespace NES::Nautilus

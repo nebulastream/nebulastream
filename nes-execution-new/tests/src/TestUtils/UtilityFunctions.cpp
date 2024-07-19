@@ -15,8 +15,8 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Nautilus/Interface/Hash/H3Hash.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+//#include <Nautilus/Interface/Hash/H3Hash.hpp>
+//#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <StatisticCollection/StatisticStorage/AbstractStatisticStore.hpp>
 #include <Statistics/Synopses/CountMinStatistic.hpp>

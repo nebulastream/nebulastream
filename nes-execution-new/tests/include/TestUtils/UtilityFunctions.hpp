@@ -20,11 +20,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>

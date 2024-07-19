@@ -15,6 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #include <Execution/Operators/OperatorState.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <cstdint>
 #include <memory>
@@ -69,7 +70,7 @@ class ExecutionContext final {
      * @brief Get worker thread id of the current execution.
      * @return ValueId<WorkerThreadId>
      */
-    Nautilus::ValueId<WorkerThreadId> getWorkerThreadId();
+    nautilus::val<WorkerThreadId> getWorkerThreadId();
 
     /**
      * @brief Allocate a new tuple buffer.

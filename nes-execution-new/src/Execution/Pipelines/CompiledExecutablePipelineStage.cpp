@@ -51,6 +51,10 @@ nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> CompiledExec
         physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
     };
 
+    - integrate nautilus into our compilation pipeline
+        - fix the compilation errors
+        - try a filter query
+
     engine = std::make_shared<engine::NautilusEngine>(options);
     nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> executable = engine->registerFunction(compiledFunction);
     timer.snapshot("Compilation");

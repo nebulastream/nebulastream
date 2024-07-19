@@ -26,15 +26,15 @@ class AvgAggregationFunction : public AggregationFunction {
                            const Expressions::ExpressionPtr& inputExpression,
                            const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
-    void lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) override;
-    void combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) override;
-    void lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRecord) override;
-    void reset(Nautilus::Value<Nautilus::MemRef> state) override;
+    void lift(Nautilus::MemRef state, Nautilus::Record& inputRecord) override;
+    void combine(Nautilus::MemRef state1, Nautilus::MemRef state2) override;
+    void lower(Nautilus::MemRef state, Nautilus::Record& resultRecord) override;
+    void reset(Nautilus::MemRef state) override;
     uint64_t getSize() override;
 
   private:
     PhysicalTypePtr countType;
-    Nautilus::Value<Nautilus::MemRef> loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref);
+    Nautilus::MemRef loadSumMemRef(const Nautilus::MemRef& memref);
 };
 }// namespace NES::Runtime::Execution::Aggregation
 

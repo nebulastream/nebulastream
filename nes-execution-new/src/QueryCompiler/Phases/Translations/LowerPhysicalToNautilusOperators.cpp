@@ -26,12 +26,12 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
-#include <Execution/Operators/Relational/Limit.hpp>
+//#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
+//#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
+//#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
+//#include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
-#include <Execution/Operators/Relational/Project.hpp>
+//#include <Execution/Operators/Relational/Project.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>

@@ -26,10 +26,10 @@ class CountAggregationFunction : public AggregationFunction {
                              const Expressions::ExpressionPtr& inputExpression,
                              const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
-    void lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& record) override;
-    void combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) override;
-    void lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& record) override;
-    void reset(Nautilus::Value<Nautilus::MemRef> state) override;
+    void lift(Nautilus::MemRef state, Nautilus::Record& record) override;
+    void combine(Nautilus::MemRef state1, Nautilus::MemRef state2) override;
+    void lower(Nautilus::MemRef state, Nautilus::Record& record) override;
+    void reset(Nautilus::MemRef state) override;
     uint64_t getSize() override;
 };
 

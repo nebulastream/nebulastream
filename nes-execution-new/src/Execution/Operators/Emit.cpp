@@ -25,9 +25,9 @@ class EmitState : public OperatorState {
   public:
     explicit EmitState(const RecordBuffer& resultBuffer)
         : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
-    Value<UInt64> outputIndex = 0_u64;
+    nautilus::val<uint64_t> outputIndex = 0_u64;
     RecordBuffer resultBuffer;
-    Value<MemRef> bufferReference;
+    nautilus::val<int8_t*> bufferReference;
 };
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {

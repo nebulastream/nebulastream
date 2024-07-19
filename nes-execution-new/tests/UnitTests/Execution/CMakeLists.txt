@@ -16,7 +16,7 @@
 
 # We disable the tests for now, as they are not ported to the new nautilus-lib yet
 #add_subdirectory(Aggregation)
-#add_subdirectory(PipelineExecution)
+add_subdirectory(PipelineExecution)
 
 if(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING)
     add_nes_execution_test(nautilus-proxy-inlining-test "ProxyInliningCompilationTest.cpp")

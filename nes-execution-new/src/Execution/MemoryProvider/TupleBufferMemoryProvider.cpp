@@ -103,7 +103,7 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::load(const PhysicalTypePtr& ty
     }
 }
 
-uint32_t storeAssociatedTextValue(void* tupleBuffer, const std::string textValue) {
+uint32_t storeAssociatedTextValue(void* tupleBuffer, const std::string& textValue) {
     auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
     auto textBuffer = TupleBuffer::reinterpretAsTupleBuffer((void*)textValue.c_str());
     return tb.storeChildBuffer(textBuffer);

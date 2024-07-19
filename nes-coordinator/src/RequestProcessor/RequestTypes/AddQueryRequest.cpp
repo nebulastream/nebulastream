@@ -42,7 +42,6 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
-#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
