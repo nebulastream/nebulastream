@@ -15,7 +15,7 @@
 #define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
 
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <nautilus/val.hpp>
 #include <Util/StdInt.hpp>
 #include <memory>
 namespace NES::Runtime::Execution::Expressions {
@@ -27,7 +27,7 @@ class UnaryExpressionWrapper {
         auto input = std::make_shared<ReadFieldExpression>("value");
         expression = std::make_shared<ExpressionType>(input);
     }
-    Nautilus::Value<> eval(Nautilus::Value<> value) {
+    ExecDataType eval(ExecDataType value) {
         auto record = Record({{"value", value}});
         return expression->execute(record);
     }
@@ -43,7 +43,7 @@ class BinaryExpressionWrapper {
         auto rightExpression = std::make_shared<ReadFieldExpression>("right");
         expression = std::make_shared<ExpressionType>(leftExpression, rightExpression);
     }
-    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> right) {
+    ExecDataType eval(ExecDataType left, ExecDataType right) {
         auto record = Record({{"left", left}, {"right", right}});
         return expression->execute(record);
     }
@@ -60,7 +60,7 @@ class TernaryExpressionWrapper {
         auto rightExpression = std::make_shared<ReadFieldExpression>("right");
         expression = std::make_shared<ExpressionType>(leftExpression, midExpression, rightExpression);
     }
-    Nautilus::Value<> eval(Nautilus::Value<> left, Nautilus::Value<> mid, Nautilus::Value<> right) {
+    ExecDataType eval(ExecDataType left, ExecDataType mid, ExecDataType right) {
         auto record = Record({{"left", left}, {"mid", mid}, {"right", right}});
         return expression->execute(record);
     }
