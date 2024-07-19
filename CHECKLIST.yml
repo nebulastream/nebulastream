@@ -8,5 +8,5 @@ paths:
     - You are doing changes to github configurations. Did you assign member of build management team to your PR for change review?
   "docker/**":
     - You are doing changes to docker configurations. Did you update all images? Did you assign member of build management team to your PR for change review?
-  "**":
+  "./**/*":
     - I went over the checklist in [PR CheckList](https://github.com/nebulastream/nebulastream-public/blob/master/docs/git/checklist_pr.md)?

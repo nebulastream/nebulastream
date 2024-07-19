@@ -24,7 +24,7 @@ jobs:
           ssh-strict: 'false'
       - name: Run benchmarks
         run: |
-          docker run --name ${{ github.run_id }}_benchmark_version -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-build-image:latest
+          docker run --name ${{ github.run_id }}_benchmark_version -v $GITHUB_WORKSPACE:/nebulastream -v /etc/localtime:/etc/localtime:ro --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-benchmark.sh nebulastream/nes-public-build-image:latest
       - name: Push Benchmarks to pages
         uses: peaceiris/actions-gh-pages@v3
         with:
