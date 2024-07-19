@@ -20,6 +20,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/ExecutableType/Array.hpp>
+#include <Util/Logger/Logger.hpp>
 namespace NES
 {
 using namespace std::literals;
