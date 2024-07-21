@@ -65,7 +65,7 @@ jobs:
             exit 1
           fi
 
-  build-linux:
+  test:
     name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
     needs: [ pre-build-checks ]
     timeout-minutes: 40
