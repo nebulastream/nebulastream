@@ -72,7 +72,7 @@ jobs:
           docker rm -f ${{ github.run_id }}_guard-check
 
   build-linux:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
+    if: ${{ !contains(github.event.head_commit.message, 'GIT-CI:') }}
     name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
     needs: [ pre-build-checks ]
     timeout-minutes: 40
