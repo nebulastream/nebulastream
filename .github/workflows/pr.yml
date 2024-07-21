@@ -43,10 +43,6 @@ jobs:
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.12.1
         with:
@@ -107,10 +103,6 @@ jobs:
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.12.1
         with:
