@@ -44,28 +44,27 @@ jobs:
     name: "Pre-Build-Checks"
     runs-on: [ self-hosted, linux, X64, Build ]
     needs: [ validateTrigger ]
+    container:
+      image: nebulastream/nes-build-image:latest
+      volumes:
+        - cmake-deps-cache:/cmake-deps-cache
     steps:
-      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
-      - name: Build Docker for CleanUp
-        id: builddocker_prebuild
-        working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_build_ubuntu -f Dockerfile-NES-Build .
       - name: preamble-check
-        run: |
-          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu
+        run: python3 scripts/check_license.py . .no-license-check
+      - name: configure and generate
+        run: cmake -S . -B build
       - name: format-check
-        run: |
-          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nes_build_ubuntu
+        run: cmake --build build --target format-check
       - name: guard-check
         run: |
-          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
-      - name: docker cleanup
-        if: ${{ always() }}
-        run: |
-          docker rm -f ${{ github.run_id }}_preamble-check
-          docker rm -f ${{ github.run_id }}_format-check
-          docker rm -f ${{ github.run_id }}_guard-check
+          cmake --build build --target fix-guards
+          if ! git diff --quiet
+          then
+            echo '## Files with bad include guards' >> $GITHUB_STEP_SUMMARY
+            git status --porcelain | sed "s/^ M/-/" >> $GITHUB_STEP_SUMMARY
+            exit 1
+          fi
 
   build-linux:
     if: ${{ !contains(github.event.head_commit.message, 'GIT-CI:') }}
