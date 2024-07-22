@@ -12,19 +12,30 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <string>
-namespace NES::Nautilus::IR::Operations {
+#include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
+namespace NES::Nautilus::IR::Operations
+{
 SubOperation::SubOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::SubOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {
+    : Operation(OperationType::SubOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)), rightInput(std::move(rightInput))
+{
     leftInput->addUsage(this);
     rightInput->addUsage(this);
 }
-std::string SubOperation::toString() {
+std::string SubOperation::toString()
+{
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " - " + getRightInput()->getIdentifier();
 }
-bool SubOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::SubOp; }
-OperationPtr SubOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr SubOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::Nautilus::IR::Operations
+bool SubOperation::classof(const Operation* Op)
+{
+    return Op->getOperationType() == OperationType::SubOp;
+}
+OperationPtr SubOperation::getLeftInput()
+{
+    return leftInput.lock();
+}
+OperationPtr SubOperation::getRightInput()
+{
+    return rightInput.lock();
+}
+} // namespace NES::Nautilus::IR::Operations

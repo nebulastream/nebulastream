@@ -15,11 +15,12 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_
 
+#include <vector>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
-#include <vector>
 
-namespace NES {
+namespace NES
+{
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 class LogicalJoinOperator;
@@ -28,17 +29,19 @@ class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 class Node;
 using NodePtr = std::shared_ptr<Node>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 class DistributedMatrixJoinRule;
 using DistributedMatrixJoinRulePtr = std::shared_ptr<DistributedMatrixJoinRule>;
 
 /**
  * @brief DistributedMatrixJoinRule which is rewriting a central to a distributed grid-partitioned join based on the physical streams.
  */
-class DistributedMatrixJoinRule : public BaseRewriteRule {
-  public:
+class DistributedMatrixJoinRule : public BaseRewriteRule
+{
+public:
     static DistributedMatrixJoinRulePtr create(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
     virtual ~DistributedMatrixJoinRule() = default;
 
@@ -50,12 +53,12 @@ class DistributedMatrixJoinRule : public BaseRewriteRule {
      */
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-  private:
+private:
     explicit DistributedMatrixJoinRule(Configurations::OptimizerConfiguration configuration, TopologyPtr topology);
 
-  private:
+private:
     TopologyPtr topology;
     Configurations::OptimizerConfiguration configuration;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_DISTRIBUTEDMATRIXJOINRULE_HPP_

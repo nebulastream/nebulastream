@@ -14,13 +14,15 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_
 #include <Nautilus/IR/Types/Stamp.hpp>
-namespace NES::Nautilus::IR::Types {
+namespace NES::Nautilus::IR::Types
+{
 
 /**
  * @brief A address stamp, which represents a data type for a memory address.
  */
-class AddressStamp : public Stamp {
-  public:
+class AddressStamp : public Stamp
+{
+public:
     static const inline auto type = TypeIdentifier::create<AddressStamp>();
 
     /**
@@ -31,6 +33,6 @@ class AddressStamp : public Stamp {
     const std::string toString() const override;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_

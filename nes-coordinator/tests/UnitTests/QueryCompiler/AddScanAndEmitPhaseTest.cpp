@@ -12,10 +12,9 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/Expressions/Expressions.hpp>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -33,18 +32,22 @@
 #include <Sources/DefaultSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace NES::API;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class AddScanAndEmitPhaseTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class AddScanAndEmitPhaseTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("AddScanAndEmitPhase.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AddScanAndEmitPhase test class.");
     }
@@ -61,14 +64,13 @@ class AddScanAndEmitPhaseTest : public Testing::BaseUnitTest {
  * | Physical Source |
  *
  */
-TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
+TEST_F(AddScanAndEmitPhaseTest, scanOperator)
+{
     auto pipelineQueryPlan = QueryCompilation::PipelineQueryPlan::create();
     auto operatorPlan = QueryCompilation::OperatorPipeline::createSourcePipeline();
 
-    auto source = QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(statisticId,
-                                                                                      SchemaPtr(),
-                                                                                      SchemaPtr(),
-                                                                                      SourceDescriptorPtr());
+    auto source
+        = QueryCompilation::PhysicalOperators::PhysicalSourceOperator::create(statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     operatorPlan->prependOperator(source);
     pipelineQueryPlan->addPipeline(operatorPlan);
 
@@ -90,12 +92,11 @@ TEST_F(AddScanAndEmitPhaseTest, scanOperator) {
  * | Physical Sink |
  *
  */
-TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
+TEST_F(AddScanAndEmitPhaseTest, sinkOperator)
+{
     auto operatorPlan = QueryCompilation::OperatorPipeline::create();
-    auto sink = QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(statisticId,
-                                                                                  SchemaPtr(),
-                                                                                  SchemaPtr(),
-                                                                                  SinkDescriptorPtr());
+    auto sink
+        = QueryCompilation::PhysicalOperators::PhysicalSinkOperator::create(statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
     operatorPlan->prependOperator(sink);
 
     auto phase = QueryCompilation::AddScanAndEmitPhase::create();
@@ -116,8 +117,8 @@ TEST_F(AddScanAndEmitPhaseTest, sinkOperator) {
  * | Physical Scan --- Physical Filter --- Physical Emit|
  *
  */
-TEST_F(AddScanAndEmitPhaseTest, pipelineFilterQuery) {
-
+TEST_F(AddScanAndEmitPhaseTest, pipelineFilterQuery)
+{
     auto operatorPlan = QueryCompilation::OperatorPipeline::create();
     operatorPlan->prependOperator(PhysicalFilterOperator::create(statisticId, SchemaPtr(), SchemaPtr(), ExpressionNodePtr()));
 
@@ -132,4 +133,4 @@ TEST_F(AddScanAndEmitPhaseTest, pipelineFilterQuery) {
     auto emit = filter->getChildren()[0];
     ASSERT_INSTANCE_OF(emit, PhysicalEmitOperator);
 }
-}// namespace NES
+} // namespace NES

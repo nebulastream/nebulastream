@@ -14,18 +14,21 @@
 
 #include <IngestionRateGeneration/CustomIngestionRateGenerator.hpp>
 
-namespace NES::Benchmark::IngestionRateGeneration {
+namespace NES::Benchmark::IngestionRateGeneration
+{
 CustomIngestionRateGenerator::CustomIngestionRateGenerator(uint64_t ingestionRateCount, std::vector<uint64_t>& customValues)
-    : IngestionRateGenerator(), customValues(customValues) {
-
+    : IngestionRateGenerator(), customValues(customValues)
+{
     IngestionRateGenerator::ingestionRateCount = ingestionRateCount;
 }
 
-std::vector<std::uint64_t> CustomIngestionRateGenerator::generateIngestionRates() {
-    for (uint64_t i = 0; i < ingestionRateCount; ++i) {
+std::vector<std::uint64_t> CustomIngestionRateGenerator::generateIngestionRates()
+{
+    for (uint64_t i = 0; i < ingestionRateCount; ++i)
+    {
         predefinedIngestionRates.push_back(customValues[i % customValues.size()]);
     }
 
     return predefinedIngestionRates;
 }
-}// namespace NES::Benchmark::IngestionRateGeneration
+} // namespace NES::Benchmark::IngestionRateGeneration

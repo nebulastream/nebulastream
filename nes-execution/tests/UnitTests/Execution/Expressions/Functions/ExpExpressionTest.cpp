@@ -12,20 +12,23 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/Functions/ExpExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class ExpExpressionTest : public Testing::BaseUnitTest {
-  public:
+class ExpExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ExpExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ExpExpressionTest test class.");
     }
@@ -34,7 +37,8 @@ class ExpExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down ExpExpressionTest test class."); }
 };
 
-TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
+TEST_F(ExpExpressionTest, evaluateExpExpressionInteger)
+{
     auto expression = UnaryExpressionWrapper<ExpExpression>();
     // Int8
     {
@@ -90,17 +94,18 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
     }
 }
 
-TEST_F(ExpExpressionTest, evaluateExpExpressionFloat) {
+TEST_F(ExpExpressionTest, evaluateExpExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<ExpExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 5));
+        auto resultValue = expression.eval(Value<Float>((float)5));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 5));
+        auto resultValue = expression.eval(Value<Double>((double)5));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -109,9 +114,10 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionFloat) {
 /**
  * @brief If we execute the expression on a boolean it should throw an exception.
  */
-TEST_F(ExpExpressionTest, evaluateExpExpressionOnWrongType) {
+TEST_F(ExpExpressionTest, evaluateExpExpressionOnWrongType)
+{
     auto expression = UnaryExpressionWrapper<ExpExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

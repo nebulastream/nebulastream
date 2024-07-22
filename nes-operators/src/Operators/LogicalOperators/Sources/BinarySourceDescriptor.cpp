@@ -12,42 +12,57 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
 BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string filePath)
-    : SourceDescriptor(std::move(schema)), filePath(std::move(filePath)) {}
+    : SourceDescriptor(std::move(schema)), filePath(std::move(filePath))
+{
+}
 
 BinarySourceDescriptor::BinarySourceDescriptor(SchemaPtr schema, std::string sourceName, std::string filePath)
-    : SourceDescriptor(std::move(schema), std::move(sourceName)), filePath(std::move(filePath)) {}
+    : SourceDescriptor(std::move(schema), std::move(sourceName)), filePath(std::move(filePath))
+{
+}
 
-SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string filePath) {
+SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string filePath)
+{
     return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(filePath)));
 }
 
-SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string sourceName, std::string filePath) {
-    return std::make_shared<BinarySourceDescriptor>(
-        BinarySourceDescriptor(std::move(schema), std::move(sourceName), std::move(filePath)));
+SourceDescriptorPtr BinarySourceDescriptor::create(SchemaPtr schema, std::string sourceName, std::string filePath)
+{
+    return std::make_shared<BinarySourceDescriptor>(BinarySourceDescriptor(std::move(schema), std::move(sourceName), std::move(filePath)));
 }
 
-const std::string& BinarySourceDescriptor::getFilePath() const { return filePath; }
+const std::string& BinarySourceDescriptor::getFilePath() const
+{
+    return filePath;
+}
 
-bool BinarySourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-    if (!other->instanceOf<BinarySourceDescriptor>()) {
+bool BinarySourceDescriptor::equal(SourceDescriptorPtr const& other) const
+{
+    if (!other->instanceOf<BinarySourceDescriptor>())
+    {
         return false;
     }
     auto otherDefaultSource = other->as<BinarySourceDescriptor>();
     return filePath == otherDefaultSource->getFilePath() && getSchema()->equals(otherDefaultSource->getSchema());
 }
 
-std::string BinarySourceDescriptor::toString() const { return "BinarySourceDescriptor(" + filePath + ")"; }
+std::string BinarySourceDescriptor::toString() const
+{
+    return "BinarySourceDescriptor(" + filePath + ")";
+}
 
-SourceDescriptorPtr BinarySourceDescriptor::copy() {
+SourceDescriptorPtr BinarySourceDescriptor::copy()
+{
     auto copy = BinarySourceDescriptor::create(schema->copy(), filePath);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
-}// namespace NES
+} // namespace NES

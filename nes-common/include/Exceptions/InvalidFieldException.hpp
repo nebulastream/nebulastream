@@ -17,16 +17,17 @@
 
 #include <stdexcept>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This exception is thrown when an invalid vide is detected during type inference phase
  */
-class InvalidFieldException : public std::runtime_error {
-
-  public:
+class InvalidFieldException : public std::runtime_error
+{
+public:
     explicit InvalidFieldException(const std::string& msg);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDFIELDEXCEPTION_HPP_
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDFIELDEXCEPTION_HPP_

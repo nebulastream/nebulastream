@@ -12,31 +12,34 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
-#include <sstream>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
-PythonUDFDescriptor::PythonUDFDescriptor(const std::string& functionName,
-                                         const std::string& functionString,
-                                         const SchemaPtr& inputSchema,
-                                         const SchemaPtr& outputSchema)
-    : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString) {
-    if (functionString.empty()) {
+PythonUDFDescriptor::PythonUDFDescriptor(
+    const std::string& functionName, const std::string& functionString, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema)
+    : UDFDescriptor(functionName, inputSchema, outputSchema), functionString(functionString)
+{
+    if (functionString.empty())
+    {
         throw UDFException("Function String of Python UDF must not be empty");
     }
 }
 
-bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const {
+bool PythonUDFDescriptor::operator==(const PythonUDFDescriptor& other) const
+{
     return functionString == other.functionString && getMethodName() == other.getMethodName()
         && getInputSchema()->equals(other.getInputSchema(), true) && getOutputSchema()->equals(other.getOutputSchema(), true);
 }
 
-std::stringstream PythonUDFDescriptor::generateInferStringSignature() {
+std::stringstream PythonUDFDescriptor::generateInferStringSignature()
+{
     auto signatureStream = std::stringstream{};
     auto& functionName = getMethodName();
     signatureStream << "PYTHON_UDF(functionName=" + functionName + ", functionString=" + functionString + ")";
     return signatureStream;
 }
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF

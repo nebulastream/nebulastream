@@ -17,32 +17,35 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class TimeFunction;
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**
 * @brief NonKeyedBucketPreAggregation operator that performs the pre-aggregation step for a global window aggregation.
 */
-class NonKeyedBucketPreAggregation : public ExecutableOperator {
-  public:
+class NonKeyedBucketPreAggregation : public ExecutableOperator
+{
+public:
     /**
     * @brief Creates a NonKeyedBucketPreAggregation operator
     */
-    NonKeyedBucketPreAggregation(uint64_t operatorHandlerIndex,
-                                 TimeFunctionPtr timeFunction,
-                                 const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
+    NonKeyedBucketPreAggregation(
+        uint64_t operatorHandlerIndex,
+        TimeFunctionPtr timeFunction,
+        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const TimeFunctionPtr timeFunction;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETPREAGGREGATION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETPREAGGREGATION_HPP_

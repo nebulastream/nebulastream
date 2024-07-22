@@ -15,21 +15,22 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
 #include <atomic>
-#include <folly/Synchronized.h>
 #include <map>
 #include <memory>
 #include <string>
 #include <vector>
+#include <folly/Synchronized.h>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 class QueryStatistics;
 using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
-class QueryStatistics {
-  public:
-    QueryStatistics(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId)
-        : queryId(sharedQueryId), subQueryId(subQueryId){};
+class QueryStatistics
+{
+public:
+    QueryStatistics(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId) : queryId(sharedQueryId), subQueryId(subQueryId){};
 
     QueryStatistics(const QueryStatistics& other);
 
@@ -223,7 +224,7 @@ class QueryStatistics {
      */
     void clear();
 
-  private:
+private:
     std::atomic<uint64_t> processedTasks = 0;
     std::atomic<uint64_t> processedTuple = 0;
     std::atomic<uint64_t> processedBuffers = 0;
@@ -243,6 +244,6 @@ class QueryStatistics {
     folly::Synchronized<std::map<PipelineId, std::map<WorkerThreadId, std::atomic<uint64_t>>>> pipelineIdToTaskThroughputMap;
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_

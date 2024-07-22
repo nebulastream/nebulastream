@@ -13,6 +13,10 @@
 */
 #include <Operators/LogicalOperators/StatisticCollection/TriggerCondition/TriggerCondition.hpp>
 
-namespace NES::Statistic {
-bool TriggerCondition::operator!=(const TriggerCondition& rhs) const { return !(*this == rhs); }
-}// namespace NES::Statistic
+namespace NES::Statistic
+{
+bool TriggerCondition::operator!=(const TriggerCondition& rhs) const
+{
+    return !(*this == rhs);
+}
+} // namespace NES::Statistic

@@ -12,17 +12,17 @@
     limitations under the License.
 */
 
-#include <Configurations/Validation/BooleanValidation.hpp>
 #include <algorithm>
+#include <Configurations/Validation/BooleanValidation.hpp>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
-bool BooleanValidation::isValid(const std::string& parameter) const {
+bool BooleanValidation::isValid(const std::string& parameter) const
+{
     std::string lowerParam = parameter;
-    std::transform(lowerParam.begin(), lowerParam.end(), lowerParam.begin(), [](unsigned char c) {
-        return std::tolower(c);
-    });
+    std::transform(lowerParam.begin(), lowerParam.end(), lowerParam.begin(), [](unsigned char c) { return std::tolower(c); });
 
     return lowerParam == "true" || lowerParam == "false" || lowerParam == "1" || lowerParam == "0";
 }
-}// namespace NES::Configurations
+} // namespace NES::Configurations

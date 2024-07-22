@@ -11,26 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <numeric>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuildBucketing.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <numeric>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void* getAllWindowsToFillProxy(void* ptrOpHandler,
-                               uint64_t ts,
-                               WorkerThreadId workerThreadId,
-                               uint64_t joinStrategyInt,
-                               uint64_t windowingStrategyInt) {
+void* getAllWindowsToFillProxy(
+    void* ptrOpHandler, uint64_t ts, WorkerThreadId workerThreadId, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+{
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
     return dynamic_cast<StreamJoinOperatorHandlerBucketing*>(opHandler)->getAllWindowsToFillForTs(ts, workerThreadId);
 }
 
 // TODO ask Philipp why I can not write this directly in Nautilus. How can I cast a UINT64 to INT64?
-uint64_t calcNumWindowsProxy(uint64_t ts, uint64_t windowSize, uint64_t windowSlide) {
+uint64_t calcNumWindowsProxy(uint64_t ts, uint64_t windowSize, uint64_t windowSlide)
+{
     int64_t timestamp = ts;
     int64_t remainder = (timestamp % windowSlide);
     int64_t lastStart = (timestamp - remainder);
@@ -38,41 +38,42 @@ uint64_t calcNumWindowsProxy(uint64_t ts, uint64_t windowSize, uint64_t windowSl
 
     uint64_t numWindows = 0;
     int64_t start = lastStart;
-    for (; start >= 0 && start > lowerBound; start -= windowSlide) {
+    for (; start >= 0 && start > lowerBound; start -= windowSlide)
+    {
         numWindows++;
     }
 
     return numWindows;
 }
 
-Value<UInt64> StreamJoinBuildBucketing::calcNumWindows(Value<UInt64>& ts) const {
-    return Nautilus::FunctionCall("calcNumWindowsProxy",
-                                  calcNumWindowsProxy,
-                                  ts,
-                                  Value<UInt64>(windowSize),
-                                  Value<UInt64>(windowSlide));
+Value<UInt64> StreamJoinBuildBucketing::calcNumWindows(Value<UInt64>& ts) const
+{
+    return Nautilus::FunctionCall("calcNumWindowsProxy", calcNumWindowsProxy, ts, Value<UInt64>(windowSize), Value<UInt64>(windowSlide));
 }
 
-Value<UInt64> StreamJoinBuildBucketing::calcLastStartForTs(Value<UInt64>& ts) const {
+Value<UInt64> StreamJoinBuildBucketing::calcLastStartForTs(Value<UInt64>& ts) const
+{
     auto remainder = (ts % windowSlide);
     Value<UInt64> lastStart(0_u64);
     lastStart = (ts - remainder);
     return lastStart;
 }
 
-Value<UInt64> StreamJoinBuildBucketing::getMinWindowStartForTs(Value<UInt64>& ts) const {
+Value<UInt64> StreamJoinBuildBucketing::getMinWindowStartForTs(Value<UInt64>& ts) const
+{
     auto lastStart = calcLastStartForTs(ts);
     auto numWindows = calcNumWindows(ts);
     return (lastStart - (numWindows - 1_u64) * windowSlide).as<UInt64>();
 }
 
-Value<UInt64> StreamJoinBuildBucketing::getMaxWindowStartForTs(Value<UInt64>& ts) const {
+Value<UInt64> StreamJoinBuildBucketing::getMaxWindowStartForTs(Value<UInt64>& ts) const
+{
     auto lastStart = calcLastStartForTs(ts);
     return (lastStart + windowSize).as<UInt64>();
 }
 
-Value<Boolean> StreamJoinBuildBucketing::checkIfLocalStateUpToDate(Value<UInt64>& ts,
-                                                                   LocalStateBucketing* localStateBucketing) const {
+Value<Boolean> StreamJoinBuildBucketing::checkIfLocalStateUpToDate(Value<UInt64>& ts, LocalStateBucketing* localStateBucketing) const
+{
     Value<UInt64> newMinWindowStart = getMinWindowStartForTs(ts);
     Value<UInt64> newMaxWindowEnd = getMaxWindowStartForTs(ts);
 
@@ -81,9 +82,13 @@ Value<Boolean> StreamJoinBuildBucketing::checkIfLocalStateUpToDate(Value<UInt64>
     return (sameMinWindowStart && sameMaxWindowEnd).as<Boolean>();
 }
 
-void* getDefaultMemRefProxy() { return nullptr; }
+void* getDefaultMemRefProxy()
+{
+    return nullptr;
+}
 
-void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
     // We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
     Operator::open(ctx, recordBuffer);
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -91,58 +96,61 @@ void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer& recordB
     ctx.setLocalOperatorState(this, std::make_unique<LocalStateBucketing>(allWindowsToFill));
 }
 
-void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) const {
+void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) const
+{
     auto joinState = dynamic_cast<LocalStateBucketing*>(ctx.getLocalState(this));
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
     ValueId<WorkerThreadId> workerThreadId = ctx.getWorkerThreadId();
 
-    if (!checkIfLocalStateUpToDate(timestampVal, joinState)) {
+    if (!checkIfLocalStateUpToDate(timestampVal, joinState))
+    {
         // If the current local state is not up-to-date anymore then we have to update it
         auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         updateLocalState(joinState, opHandlerMemRef, timestampVal, workerThreadId);
     }
 
     // Iterating over all windows and then inserting the current record in all windows
-    for (Value<UInt64> curWindowIdx = 0_u64; curWindowIdx < joinState->numWindowsToFill; curWindowIdx = curWindowIdx + 1_u64) {
+    for (Value<UInt64> curWindowIdx = 0_u64; curWindowIdx < joinState->numWindowsToFill; curWindowIdx = curWindowIdx + 1_u64)
+    {
         insertRecordForWindow(joinState->allWindowsToFill, curWindowIdx, workerThreadId, record);
     }
 }
 
-void StreamJoinBuildBucketing::updateLocalState(LocalStateBucketing* localStateBucketing,
-                                                Value<MemRef>& opHandlerMemRef,
-                                                Value<UInt64>& ts,
-                                                ValueId<WorkerThreadId>& workerThreadId) const {
+void StreamJoinBuildBucketing::updateLocalState(
+    LocalStateBucketing* localStateBucketing,
+    Value<MemRef>& opHandlerMemRef,
+    Value<UInt64>& ts,
+    ValueId<WorkerThreadId>& workerThreadId) const
+{
     localStateBucketing->numWindowsToFill = calcNumWindows(ts);
-    localStateBucketing->allWindowsToFill =
-        Nautilus::FunctionCall("getAllWindowsToFillProxy",
-                               getAllWindowsToFillProxy,
-                               opHandlerMemRef,
-                               ts,
-                               workerThreadId,
-                               Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                               Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    localStateBucketing->allWindowsToFill = Nautilus::FunctionCall(
+        "getAllWindowsToFillProxy",
+        getAllWindowsToFillProxy,
+        opHandlerMemRef,
+        ts,
+        workerThreadId,
+        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     localStateBucketing->minWindowStart = getMinWindowStartForTs(ts);
     localStateBucketing->maxWindowEnd = getMaxWindowStartForTs(ts);
 }
 
-StreamJoinBuildBucketing::StreamJoinBuildBucketing(const uint64_t operatorHandlerIndex,
-                                                   const SchemaPtr& schema,
-                                                   const std::string& joinFieldName,
-                                                   const QueryCompilation::JoinBuildSideType joinBuildSide,
-                                                   const uint64_t entrySize,
-                                                   TimeFunctionPtr timeFunction,
-                                                   QueryCompilation::StreamJoinStrategy joinStrategy,
-                                                   QueryCompilation::WindowingStrategy windowingStrategy,
-                                                   uint64_t windowSize,
-                                                   uint64_t windowSlide)
-    : StreamJoinBuild(operatorHandlerIndex,
-                      schema,
-                      joinFieldName,
-                      joinBuildSide,
-                      entrySize,
-                      std::move(timeFunction),
-                      joinStrategy,
-                      windowingStrategy),
-      windowSize(windowSize), windowSlide(windowSlide) {}
+StreamJoinBuildBucketing::StreamJoinBuildBucketing(
+    const uint64_t operatorHandlerIndex,
+    const SchemaPtr& schema,
+    const std::string& joinFieldName,
+    const QueryCompilation::JoinBuildSideType joinBuildSide,
+    const uint64_t entrySize,
+    TimeFunctionPtr timeFunction,
+    QueryCompilation::StreamJoinStrategy joinStrategy,
+    QueryCompilation::WindowingStrategy windowingStrategy,
+    uint64_t windowSize,
+    uint64_t windowSlide)
+    : StreamJoinBuild(
+        operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy, windowingStrategy)
+    , windowSize(windowSize)
+    , windowSlide(windowSlide)
+{
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

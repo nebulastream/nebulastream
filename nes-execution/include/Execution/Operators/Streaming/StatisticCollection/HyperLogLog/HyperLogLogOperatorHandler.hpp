@@ -17,35 +17,39 @@
 
 #include <Execution/Operators/Streaming/StatisticCollection/AbstractSynopsesOperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class HyperLogLogOperatorHandler;
 using HyperLogLogOperatorHandlerPtr = std::shared_ptr<HyperLogLogOperatorHandler>;
 
 /**
  * @brief Operator handler for HyperLogLog sketches.
  */
-class HyperLogLogOperatorHandler : public AbstractSynopsesOperatorHandler {
-  public:
-    static HyperLogLogOperatorHandlerPtr create(const uint64_t windowSize,
-                                                const uint64_t windowSlide,
-                                                Statistic::SendingPolicyPtr sendingPolicy,
-                                                Statistic::StatisticFormatPtr statisticFormat,
-                                                const uint64_t width,
-                                                const std::vector<OriginId>& inputOrigins);
+class HyperLogLogOperatorHandler : public AbstractSynopsesOperatorHandler
+{
+public:
+    static HyperLogLogOperatorHandlerPtr create(
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        Statistic::SendingPolicyPtr sendingPolicy,
+        Statistic::StatisticFormatPtr statisticFormat,
+        const uint64_t width,
+        const std::vector<OriginId>& inputOrigins);
 
     Statistic::StatisticPtr createInitStatistic(Windowing::TimeMeasure sliceStart, Windowing::TimeMeasure sliceEnd) override;
 
-  private:
-    HyperLogLogOperatorHandler(const uint64_t windowSize,
-                               const uint64_t windowSlide,
-                               const Statistic::SendingPolicyPtr& sendingPolicy,
-                               const Statistic::StatisticFormatPtr& statisticFormat,
-                               const std::vector<OriginId>& inputOrigins,
-                               const uint64_t width);
+private:
+    HyperLogLogOperatorHandler(
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const Statistic::SendingPolicyPtr& sendingPolicy,
+        const Statistic::StatisticFormatPtr& statisticFormat,
+        const std::vector<OriginId>& inputOrigins,
+        const uint64_t width);
 
-  private:
+private:
     const uint64_t width;
 };
 
-}//namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_HYPERLOGLOG_HYPERLOGLOGOPERATORHANDLER_HPP_
+} //namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_STATISTICCOLLECTION_HYPERLOGLOG_HYPERLOGLOGOPERATORHANDLER_HPP_

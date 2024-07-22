@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <string>
+#include <utility>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/LogicalSourceNotFoundException.hpp>
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
@@ -58,99 +60,153 @@
 #include <Util/DeploymentContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
-#include <string>
-#include <utility>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-AddQueryRequest::AddQueryRequest(const std::string& queryString,
-                                 const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                 const uint8_t maxRetries,
-                                 const z3::ContextPtr& z3Context,
-                                 const QueryParsingServicePtr& queryParsingService)
-    : AbstractUniRequest({ResourceType::QueryCatalogService,
-                          ResourceType::GlobalExecutionPlan,
-                          ResourceType::Topology,
-                          ResourceType::GlobalQueryPlan,
-                          ResourceType::UdfCatalog,
-                          ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration,
-                          ResourceType::StatisticProbeHandler},
-                         maxRetries),
-      queryId(INVALID_QUERY_ID), queryString(queryString), queryPlan(nullptr), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(queryParsingService) {}
+AddQueryRequest::AddQueryRequest(
+    const std::string& queryString,
+    const Optimizer::PlacementStrategy queryPlacementStrategy,
+    const uint8_t maxRetries,
+    const z3::ContextPtr& z3Context,
+    const QueryParsingServicePtr& queryParsingService)
+    : AbstractUniRequest(
+        {ResourceType::QueryCatalogService,
+         ResourceType::GlobalExecutionPlan,
+         ResourceType::Topology,
+         ResourceType::GlobalQueryPlan,
+         ResourceType::UdfCatalog,
+         ResourceType::SourceCatalog,
+         ResourceType::CoordinatorConfiguration,
+         ResourceType::StatisticProbeHandler},
+        maxRetries)
+    , queryId(INVALID_QUERY_ID)
+    , queryString(queryString)
+    , queryPlan(nullptr)
+    , queryPlacementStrategy(queryPlacementStrategy)
+    , z3Context(z3Context)
+    , queryParsingService(queryParsingService)
+{
+}
 
-AddQueryRequest::AddQueryRequest(const QueryPlanPtr& queryPlan,
-                                 const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                 const uint8_t maxRetries,
-                                 const z3::ContextPtr& z3Context)
-    : AbstractUniRequest({ResourceType::QueryCatalogService,
-                          ResourceType::GlobalExecutionPlan,
-                          ResourceType::Topology,
-                          ResourceType::GlobalQueryPlan,
-                          ResourceType::UdfCatalog,
-                          ResourceType::SourceCatalog,
-                          ResourceType::CoordinatorConfiguration,
-                          ResourceType::StatisticProbeHandler},
-                         maxRetries),
-      queryId(INVALID_QUERY_ID), queryString(""), queryPlan(queryPlan), queryPlacementStrategy(queryPlacementStrategy),
-      z3Context(z3Context), queryParsingService(nullptr) {}
+AddQueryRequest::AddQueryRequest(
+    const QueryPlanPtr& queryPlan,
+    const Optimizer::PlacementStrategy queryPlacementStrategy,
+    const uint8_t maxRetries,
+    const z3::ContextPtr& z3Context)
+    : AbstractUniRequest(
+        {ResourceType::QueryCatalogService,
+         ResourceType::GlobalExecutionPlan,
+         ResourceType::Topology,
+         ResourceType::GlobalQueryPlan,
+         ResourceType::UdfCatalog,
+         ResourceType::SourceCatalog,
+         ResourceType::CoordinatorConfiguration,
+         ResourceType::StatisticProbeHandler},
+        maxRetries)
+    , queryId(INVALID_QUERY_ID)
+    , queryString("")
+    , queryPlan(queryPlan)
+    , queryPlacementStrategy(queryPlacementStrategy)
+    , z3Context(z3Context)
+    , queryParsingService(nullptr)
+{
+}
 
-AddQueryRequestPtr AddQueryRequest::create(const std::string& queryPlan,
-                                           const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                           const uint8_t maxRetries,
-                                           const z3::ContextPtr& z3Context,
-                                           const QueryParsingServicePtr& queryParsingService) {
+AddQueryRequestPtr AddQueryRequest::create(
+    const std::string& queryPlan,
+    const Optimizer::PlacementStrategy queryPlacementStrategy,
+    const uint8_t maxRetries,
+    const z3::ContextPtr& z3Context,
+    const QueryParsingServicePtr& queryParsingService)
+{
     return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context, queryParsingService);
 }
 
-AddQueryRequestPtr AddQueryRequest::create(const QueryPlanPtr& queryPlan,
-                                           const Optimizer::PlacementStrategy queryPlacementStrategy,
-                                           const uint8_t maxRetries,
-                                           const z3::ContextPtr& z3Context) {
+AddQueryRequestPtr AddQueryRequest::create(
+    const QueryPlanPtr& queryPlan,
+    const Optimizer::PlacementStrategy queryPlacementStrategy,
+    const uint8_t maxRetries,
+    const z3::ContextPtr& z3Context)
+{
     return std::make_shared<AddQueryRequest>(queryPlan, queryPlacementStrategy, maxRetries, z3Context);
 }
 
-void AddQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex,
-                                        [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
+void AddQueryRequest::preRollbackHandle([[maybe_unused]] std::exception_ptr ex, [[maybe_unused]] const StorageHandlerPtr& storageHandler)
+{
+}
 
-std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] std::exception_ptr exception,
-                                                          [[maybe_unused]] const StorageHandlerPtr& storageHandler) {
-    try {
+std::vector<AbstractRequestPtr>
+AddQueryRequest::rollBack([[maybe_unused]] std::exception_ptr exception, [[maybe_unused]] const StorageHandlerPtr& storageHandler)
+{
+    try
+    {
         std::rethrow_exception(exception);
-    } catch (Exceptions::QueryNotFoundException& e) {
-    } catch (Exceptions::InvalidQueryStateException& e) {
+    }
+    catch (Exceptions::QueryNotFoundException& e)
+    {
+    }
+    catch (Exceptions::InvalidQueryStateException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (MapEntryNotFoundException& e) {
+    }
+    catch (MapEntryNotFoundException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (TypeInferenceException& e) {
+    }
+    catch (TypeInferenceException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (Exceptions::LogicalSourceNotFoundException& e) {
+    }
+    catch (Exceptions::LogicalSourceNotFoundException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (SignatureComputationException& e) {
+    }
+    catch (SignatureComputationException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (Exceptions::PhysicalSourceNotFoundException& e) {
+    }
+    catch (Exceptions::PhysicalSourceNotFoundException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (Exceptions::SharedQueryPlanNotFoundException& e) {
+    }
+    catch (Exceptions::SharedQueryPlanNotFoundException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (UDFException& e) {
+    }
+    catch (UDFException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (Exceptions::OperatorNotFoundException& e) {
+    }
+    catch (Exceptions::OperatorNotFoundException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (Exceptions::InvalidLogicalOperatorException& e) {
+    }
+    catch (Exceptions::InvalidLogicalOperatorException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (GlobalQueryPlanUpdateException& e) {
+    }
+    catch (GlobalQueryPlanUpdateException& e)
+    {
         markAsFailedInQueryCatalog(e, storageHandler);
-    } catch (Exceptions::QueryPlacementAdditionException& e) {
+    }
+    catch (Exceptions::QueryPlacementAdditionException& e)
+    {
         //todo #4296: remove from global execution plan as well
         removeFromGlobalQueryPlanAndMarkAsFailed(e, storageHandler);
-    } catch (Exceptions::ExecutionNodeNotFoundException& e) {
+    }
+    catch (Exceptions::ExecutionNodeNotFoundException& e)
+    {
         //todo #4296: remove from global execution plan as well
         removeFromGlobalQueryPlanAndMarkAsFailed(e, storageHandler);
-    } catch (QueryDeploymentException& e) {
+    }
+    catch (QueryDeploymentException& e)
+    {
         //todo #4296: remove from global execution plan as well
         removeFromGlobalQueryPlanAndMarkAsFailed(e, storageHandler);
-    } catch (Exceptions::RequestExecutionException& e) {
+    }
+    catch (Exceptions::RequestExecutionException& e)
+    {
         setExceptionInPromiseOrRethrow(exception);
     }
 
@@ -160,22 +216,28 @@ std::vector<AbstractRequestPtr> AddQueryRequest::rollBack([[maybe_unused]] std::
     return {};
 }
 
-void AddQueryRequest::removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler) {
+void AddQueryRequest::removeFromGlobalQueryPlanAndMarkAsFailed(std::exception& e, const StorageHandlerPtr& storageHandler)
+{
     auto globalQueryPlan = storageHandler->getGlobalQueryPlanHandle(requestId);
     globalQueryPlan->removeQuery(queryId, RequestType::FailQuery);
     markAsFailedInQueryCatalog(e, storageHandler);
 }
 
-void AddQueryRequest::markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler) {
+void AddQueryRequest::markAsFailedInQueryCatalog(std::exception& e, const StorageHandlerPtr& storageHandler)
+{
     auto queryCatalog = storageHandler->getQueryCatalogHandle(requestId);
     queryCatalog->updateQueryStatus(queryId, QueryState::FAILED, e.what());
 }
 
-void AddQueryRequest::postRollbackHandle([[maybe_unused]] std::exception_ptr exception,
-                                         [[maybe_unused]] const StorageHandlerPtr& storageHandler) {}
+void AddQueryRequest::postRollbackHandle(
+    [[maybe_unused]] std::exception_ptr exception, [[maybe_unused]] const StorageHandlerPtr& storageHandler)
+{
+}
 
-std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler) {
-    try {
+std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const StorageHandlerPtr& storageHandler)
+{
+    try
+    {
         NES_DEBUG("Acquiring required resources.");
         // Acquire all necessary resources
         auto globalExecutionPlan = storageHandler->getGlobalExecutionPlanHandle(requestId);
@@ -190,10 +252,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         NES_DEBUG("Initializing various optimization phases.");
         // Initialize all necessary phases
         auto typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, udfCatalog);
-        auto queryPlacementAmendmentPhase = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan,
-                                                                                            topology,
-                                                                                            typeInferencePhase,
-                                                                                            coordinatorConfiguration);
+        auto queryPlacementAmendmentPhase
+            = Optimizer::QueryPlacementAmendmentPhase::create(globalExecutionPlan, topology, typeInferencePhase, coordinatorConfiguration);
         auto deploymentPhase = DeploymentPhase::create(queryCatalog);
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
@@ -202,29 +262,28 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
         auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
-        auto topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(topology,
-                                                                                                      sourceCatalog,
-                                                                                                      optimizerConfigurations,
-                                                                                                      statisticProbeHandler);
-        auto signatureInferencePhase =
-            Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
-        auto memoryLayoutSelectionPhase =
-            Optimizer::MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
+        auto topologySpecificQueryRewritePhase
+            = Optimizer::TopologySpecificQueryRewritePhase::create(topology, sourceCatalog, optimizerConfigurations, statisticProbeHandler);
+        auto signatureInferencePhase = Optimizer::SignatureInferencePhase::create(this->z3Context, optimizerConfigurations.queryMergerRule);
+        auto memoryLayoutSelectionPhase = Optimizer::MemoryLayoutSelectionPhase::create(optimizerConfigurations.memoryLayoutPolicy);
         auto syntacticQueryValidation = Optimizer::SyntacticQueryValidation::create(queryParsingService);
-        auto semanticQueryValidation =
-            Optimizer::SemanticQueryValidation::create(sourceCatalog,
-                                                       udfCatalog,
-                                                       coordinatorConfiguration->optimizer.performAdvanceSemanticValidation);
+        auto semanticQueryValidation = Optimizer::SemanticQueryValidation::create(
+            sourceCatalog, udfCatalog, coordinatorConfiguration->optimizer.performAdvanceSemanticValidation);
 
         // Compile and perform syntactic check if necessary
-        if (!queryString.empty() && !queryPlan) {
+        if (!queryString.empty() && !queryPlan)
+        {
             // Checking the syntactic validity and compiling the query string to an object
             queryPlan = syntacticQueryValidation->validate(queryString);
-        } else if (queryPlan && queryString.empty()) {
+        }
+        else if (queryPlan && queryString.empty())
+        {
             // assign unique operator identifier to the operators in the query plan
             assignOperatorIds(queryPlan);
             queryString = queryPlan->toString();
-        } else {
+        }
+        else
+        {
             NES_ERROR("Please supply either query string or query plan while creating this request.");
             NES_NOT_IMPLEMENTED();
         }
@@ -270,7 +329,8 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         //8. Generate sample code for elegant planner
         if (queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_BALANCED
             || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_PERFORMANCE
-            || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_ENERGY) {
+            || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_ENERGY)
+        {
             queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
         }
 
@@ -309,22 +369,25 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
 
         //19. Get the shared query plan id for the added query
         auto sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
-        if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+        if (sharedQueryId == INVALID_SHARED_QUERY_ID)
+        {
             throw Exceptions::SharedQueryPlanNotFoundException(
-                "Could not find shared query id in global query plan. Shared query id is invalid.",
-                sharedQueryId);
+                "Could not find shared query id in global query plan. Shared query id is invalid.", sharedQueryId);
         }
 
         //20. Get the shared query plan for the added query
         auto sharedQueryPlan = globalQueryPlan->getSharedQueryPlan(sharedQueryId);
-        if (!sharedQueryPlan) {
-            throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.",
-                                                               sharedQueryId);
+        if (!sharedQueryPlan)
+        {
+            throw Exceptions::SharedQueryPlanNotFoundException("Could not obtain shared query plan by shared query id.", sharedQueryId);
         }
 
-        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED) {
+        if (sharedQueryPlan->getStatus() == SharedQueryPlanStatus::CREATED)
+        {
             queryCatalog->createSharedQueryCatalogEntry(sharedQueryId, {queryId}, QueryState::OPTIMIZING);
-        } else {
+        }
+        else
+        {
             queryCatalog->updateSharedQueryStatus(sharedQueryId, QueryState::OPTIMIZING, "");
         }
         //Link both catalogs
@@ -340,51 +403,49 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         sharedQueryPlan->setStatus(SharedQueryPlanStatus::DEPLOYED);
 
         // Iterate over deployment context and update execution plan
-        for (const auto& deploymentContext : deploymentContexts) {
+        for (const auto& deploymentContext : deploymentContexts)
+        {
             auto WorkerId = deploymentContext->getWorkerId();
             auto decomposedQueryPlanId = deploymentContext->getDecomposedQueryPlanId();
             auto decomposedQueryPlanVersion = deploymentContext->getDecomposedQueryPlanVersion();
             auto decomposedQueryPlanState = deploymentContext->getDecomposedQueryPlanState();
-            switch (decomposedQueryPlanState) {
+            switch (decomposedQueryPlanState)
+            {
                 case QueryState::MARKED_FOR_REDEPLOYMENT:
                 case QueryState::MARKED_FOR_DEPLOYMENT: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
-                                                                        sharedQueryId,
-                                                                        decomposedQueryPlanId,
-                                                                        decomposedQueryPlanVersion,
-                                                                        QueryState::RUNNING);
+                    globalExecutionPlan->updateDecomposedQueryPlanState(
+                        WorkerId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion, QueryState::RUNNING);
                     break;
                 }
                 case QueryState::MARKED_FOR_MIGRATION: {
-                    globalExecutionPlan->updateDecomposedQueryPlanState(WorkerId,
-                                                                        sharedQueryId,
-                                                                        decomposedQueryPlanId,
-                                                                        decomposedQueryPlanVersion,
-                                                                        QueryState::STOPPED);
-                    globalExecutionPlan->removeDecomposedQueryPlan(WorkerId,
-                                                                   sharedQueryId,
-                                                                   decomposedQueryPlanId,
-                                                                   decomposedQueryPlanVersion);
+                    globalExecutionPlan->updateDecomposedQueryPlanState(
+                        WorkerId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion, QueryState::STOPPED);
+                    globalExecutionPlan->removeDecomposedQueryPlan(
+                        WorkerId, sharedQueryId, decomposedQueryPlanId, decomposedQueryPlanVersion);
                     break;
                 }
                 default:
                     NES_WARNING("Unhandled Deployment context with status: {}", magic_enum::enum_name(decomposedQueryPlanState));
             }
         }
-    } catch (RequestExecutionException& exception) {
+    }
+    catch (RequestExecutionException& exception)
+    {
         NES_ERROR("Exception occurred while processing AddQueryRequest with error {}", exception.what());
         handleError(std::current_exception(), storageHandler);
     }
     return {};
 }
 
-void AddQueryRequest::assignOperatorIds(const QueryPlanPtr& queryPlan) {
+void AddQueryRequest::assignOperatorIds(const QueryPlanPtr& queryPlan)
+{
     // Iterate over all operators in the query and replace the client-provided ID
     auto queryPlanIterator = PlanIterator(queryPlan);
-    for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
+    for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr)
+    {
         auto visitingOp = (*itr)->as<Operator>();
         visitingOp->setId(NES::getNextOperatorId());
     }
 }
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

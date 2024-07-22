@@ -13,21 +13,24 @@
 */
 #ifndef NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_
 #define NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_
+#include <memory>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Exceptions/RuntimeException.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 using CompletionQueuePtr = std::shared_ptr<grpc::CompletionQueue>;
 
-namespace Exceptions {
+namespace Exceptions
+{
 
 /**
  * @brief This exception indicates the failure of an rpc
  */
-class RpcException : public RequestExecutionException {
-  public:
+class RpcException : public RequestExecutionException
+{
+public:
     /**
      * @brief Constructor
      * @param message a human readable message describing the error
@@ -44,10 +47,10 @@ class RpcException : public RequestExecutionException {
      */
     std::vector<RpcAsyncRequest> getFailedCalls();
 
-  private:
+private:
     std::string message;
     std::vector<RpcAsyncRequest> failedRpcs;
 };
-}// namespace Exceptions
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_
+} // namespace Exceptions
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RPCEXCEPTION_HPP_

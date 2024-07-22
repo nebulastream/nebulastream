@@ -14,32 +14,35 @@
 #ifndef NES_COMMON_TESTS_UTIL_INCLUDE_BASEINTEGRATIONTEST_HPP_
 #define NES_COMMON_TESTS_UTIL_INCLUDE_BASEINTEGRATIONTEST_HPP_
 
-#include <BaseUnitTest.hpp>
-#include <BorrowedPort.hpp>
+#include <filesystem>
 #include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <filesystem>
+#include <BaseUnitTest.hpp>
+#include <BorrowedPort.hpp>
 
-#define ASSERT_INSTANCE_OF(node, instance)                                                                                       \
-    if (!(node)->instanceOf<instance>()) {                                                                                       \
-        auto message = (node)->toString() + " is not of instance " + std::string(typeid(instance).name());                       \
-        GTEST_FATAL_FAILURE_(message.c_str());                                                                                   \
+#define ASSERT_INSTANCE_OF(node, instance) \
+    if (!(node)->instanceOf<instance>()) \
+    { \
+        auto message = (node)->toString() + " is not of instance " + std::string(typeid(instance).name()); \
+        GTEST_FATAL_FAILURE_(message.c_str()); \
     }
 
-namespace NES::Testing {
+namespace NES::Testing
+{
 
 class BorrowedPort;
 using BorrowedPortPtr = std::shared_ptr<BorrowedPort>;
 
-class BaseIntegrationTest : public Testing::BaseUnitTest {
+class BaseIntegrationTest : public Testing::BaseUnitTest
+{
     friend class BorrowedPort;
 
-  protected:
+protected:
     BorrowedPortPtr rpcCoordinatorPort{nullptr};
     BorrowedPortPtr restPort{nullptr};
 
-  public:
+public:
     /**
      * @brief the base test class ctor that creates the internal test resources
      */
@@ -61,7 +64,7 @@ class BaseIntegrationTest : public Testing::BaseUnitTest {
 
     void onFatalException(std::shared_ptr<std::exception> exception, std::string callstack) override;
 
-  protected:
+protected:
     /**
      * @brief Retrieve another free port
      * @return a free port
@@ -74,11 +77,11 @@ class BaseIntegrationTest : public Testing::BaseUnitTest {
      */
     std::filesystem::path getTestResourceFolder() const;
 
-  private:
+private:
     std::filesystem::path testResourcePath;
     std::atomic<bool> setUpCalled{false};
     std::atomic<bool> tearDownCalled{false};
 };
-}// namespace NES::Testing
+} // namespace NES::Testing
 
-#endif// NES_COMMON_TESTS_UTIL_INCLUDE_BASEINTEGRATIONTEST_HPP_
+#endif // NES_COMMON_TESTS_UTIL_INCLUDE_BASEINTEGRATIONTEST_HPP_

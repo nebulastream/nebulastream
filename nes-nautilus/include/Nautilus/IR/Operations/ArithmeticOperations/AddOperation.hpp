@@ -17,11 +17,13 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
 //Todo: Decide: Leave type
-class AddOperation : public Operation {
-  public:
+class AddOperation : public Operation
+{
+public:
     AddOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput);
     ~AddOperation() override = default;
     OperationPtr getLeftInput();
@@ -29,9 +31,9 @@ class AddOperation : public Operation {
     std::string toString() override;
     bool classof(const Operation* Op);
 
-  private:
+private:
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_ADDOPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ARITHMETICOPERATIONS_ADDOPERATION_HPP_

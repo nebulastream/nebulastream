@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -27,43 +28,41 @@
 #include <Optimizer/QueryRewrite/BinaryOperatorSortRule.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <iostream>
 
 using namespace NES;
 
-class BinaryOperatorSortRuleTest : public Testing::BaseUnitTest {
-
-  public:
+class BinaryOperatorSortRuleTest : public Testing::BaseUnitTest
+{
+public:
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("BinaryOperatorSortRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
+    {
         NES_INFO("Setup BinaryOperatorSortRuleTest test case.");
-        auto schema1 = Schema::create()
-                           ->addField("id", BasicType::UINT32)
-                           ->addField("value", BasicType::UINT64)
-                           ->addField("ts", BasicType::UINT64);
-        auto schema2 = Schema::create()
-                           ->addField("id", BasicType::UINT32)
-                           ->addField("value", BasicType::UINT64)
-                           ->addField("ts", BasicType::UINT64);
+        auto schema1
+            = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);
+        auto schema2
+            = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64)->addField("ts", BasicType::UINT64);
         sourceCatalog->addLogicalSource("src1", schema1);
         sourceCatalog->addLogicalSource("src2", schema2);
     }
 };
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSortedChildren) {
-
+TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSortedChildren)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -93,8 +92,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithUnSorte
     EXPECT_EQ(unionChildren[1], updatedUnionChildren[0]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedChildren) {
-
+TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedChildren)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -123,8 +122,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForUnionWithSortedC
     EXPECT_EQ(unionChildren[1], updatedUnionChildren[1]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSortedChildren) {
-
+TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSortedChildren)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -135,11 +134,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("src1");
-    Query query = Query::from("src2")
-                      .joinWith(subQuery)
-                      .where(Attribute("id") == Attribute("id"))
-                      .window(windowType1)
-                      .sink(printSinkDescriptor);
+    Query query
+        = Query::from("src2").joinWith(subQuery).where(Attribute("id") == Attribute("id")).window(windowType1).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
@@ -159,8 +155,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithUnSorted
     EXPECT_EQ(joinChildren[1], updatedJoinChildren[0]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedChildren) {
-
+TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedChildren)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -171,11 +167,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
     Query subQuery = Query::from("src2");
-    Query query = Query::from("src1")
-                      .joinWith(subQuery)
-                      .where(Attribute("id") == Attribute("id"))
-                      .window(windowType1)
-                      .sink(printSinkDescriptor);
+    Query query
+        = Query::from("src1").joinWith(subQuery).where(Attribute("id") == Attribute("id")).window(windowType1).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     auto joinOperators = queryPlan->getOperatorByType<LogicalJoinOperator>();
@@ -195,8 +188,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinWithSortedCh
     EXPECT_EQ(joinChildren[1], updatedJoinChildren[1]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithUnSortedChildren) {
-
+TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithUnSortedChildren)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -244,8 +237,8 @@ TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAnUnionWithU
     EXPECT_EQ(joinChildren[1], updatedJoinChildren[0]);
 }
 
-TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWithSortedChildren) {
-
+TEST_F(BinaryOperatorSortRuleTest, testBinaryOperatorSortRuleForJoinAndUnionWithSortedChildren)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 

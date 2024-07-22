@@ -19,33 +19,37 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-namespace NES {
+namespace NES
+{
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-}// namespace NES
-namespace NES::Runtime::Execution::Operators {
+} // namespace NES
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief KeyedSliceMerging operator that performs the merges pre-aggregated slices from the GlobalSlicePreAggregation operator
  * The slice merging operator is always the first element in a pipeline. Thus it acts like a scan and emits window to downstream operators.
  */
-class KeyedSliceMerging : public Operator {
-  public:
+class KeyedSliceMerging : public Operator
+{
+public:
     /**
      * @brief Creates a KeyedSliceMerging operator
      * @param operatorHandlerIndex the index of the GlobalSliceMerging operator handler
      * @param aggregationFunctions the set of aggregation function that are performed on each slice merging step.
      */
-    KeyedSliceMerging(uint64_t operatorHandlerIndex,
-                      const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                      const std::unique_ptr<SliceMergingAction> sliceMergingAction,
-                      const std::vector<PhysicalTypePtr>& keyDataTypes,
-                      const uint64_t keySize,
-                      const uint64_t valueSize);
+    KeyedSliceMerging(
+        uint64_t operatorHandlerIndex,
+        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+        const std::unique_ptr<SliceMergingAction> sliceMergingAction,
+        const std::vector<PhysicalTypePtr>& keyDataTypes,
+        const uint64_t keySize,
+        const uint64_t valueSize);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-  private:
+private:
     /**
      * @brief Function to combine all pre-aggregated slices.
      * @param globalOperatorHandler reference to the window handler
@@ -61,7 +65,7 @@ class KeyedSliceMerging : public Operator {
      */
     void mergeHashTable(Interface::ChainedHashMapRef& globalEntry, Interface::ChainedHashMapRef& threadLocalSliceHashMap) const;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
     const std::unique_ptr<SliceMergingAction> sliceMergingAction;
@@ -70,6 +74,6 @@ class KeyedSliceMerging : public Operator {
     const uint64_t valueSize;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEMERGING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEMERGING_HPP_

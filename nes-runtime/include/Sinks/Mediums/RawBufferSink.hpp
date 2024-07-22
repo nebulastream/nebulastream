@@ -14,20 +14,22 @@
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_
 
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <cstdint>
 #include <memory>
 #include <string>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /*
 Sink to write raw tuple buffers to the file in format:
 buffer size | number of tuples in buffer | buffer content
 uint_64 | uint_64 | buffer content of buffer size
 */
-class RawBufferSink : public SinkMedium {
-  public:
+class RawBufferSink : public SinkMedium
+{
+public:
     /**
      * @brief Create a file sink in migrate format.
      * @param nodeEngine The node engine of the worker.
@@ -38,13 +40,14 @@ class RawBufferSink : public SinkMedium {
      * @param decomposedQueryPlanId
      * @param numberOfOrigins number of origins of a given query
      */
-    explicit RawBufferSink(Runtime::NodeEnginePtr nodeEngine,
-                           uint32_t numOfProducers,
-                           const std::string& filePath,
-                           bool append,
-                           SharedQueryId sharedQueryId,
-                           DecomposedQueryPlanId decomposedQueryPlanId,
-                           uint64_t numberOfOrigins = 1);
+    explicit RawBufferSink(
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        const std::string& filePath,
+        bool append,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins = 1);
 
     ~RawBufferSink() override;
 
@@ -82,7 +85,7 @@ class RawBufferSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  protected:
+protected:
     /// The output file path of the file sink.
     std::string filePath;
 
@@ -95,6 +98,6 @@ class RawBufferSink : public SinkMedium {
     /// Indicate if the file could be opened during setup.
     bool isOpen{false};
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_

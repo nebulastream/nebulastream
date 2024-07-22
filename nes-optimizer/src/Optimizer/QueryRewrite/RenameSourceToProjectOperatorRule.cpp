@@ -21,13 +21,16 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
+QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan)
+{
     NES_DEBUG("RenameSourceToProjectOperatorRule: Convert all Rename Source operator to the project operator");
     auto renameSourceOperators = queryPlan->getOperatorByType<RenameSourceOperator>();
     //Iterate over all rename source operators and convert them to project operator
-    for (auto& renameSourceOperator : renameSourceOperators) {
+    for (auto& renameSourceOperator : renameSourceOperators)
+    {
         //Convert the rename source operator to project operator
         auto projectOperator = convert(renameSourceOperator);
         //Replace rename source operator with the project operator
@@ -39,7 +42,8 @@ QueryPlanPtr RenameSourceToProjectOperatorRule::apply(QueryPlanPtr queryPlan) {
     return queryPlan;
 }
 
-OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operatorNode) {
+OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operatorNode)
+{
     //Fetch the new source name and input schema for the as operator
     auto renameSourceOperator = operatorNode->as<RenameSourceOperator>();
     auto newSourceName = renameSourceOperator->getNewSourceName();
@@ -47,15 +51,15 @@ OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operat
 
     std::vector<ExpressionNodePtr> projectionAttributes;
     //Iterate over the input schema and add a new field rename expression
-    for (const auto& field : inputSchema->fields) {
+    for (const auto& field : inputSchema->fields)
+    {
         //compute the new name for the field by added new source name as field qualifier
         std::string fieldName = field->getName();
         //Compute new name without field qualifier
         std::string updatedFieldName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR + fieldName;
         //Compute field access and field rename expression
         auto originalField = FieldAccessExpressionNode::create(field->getDataType(), fieldName);
-        auto fieldRenameExpression =
-            FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
+        auto fieldRenameExpression = FieldRenameExpressionNode::create(originalField->as<FieldAccessExpressionNode>(), updatedFieldName);
         projectionAttributes.push_back(fieldRenameExpression);
     }
     //Construct a new project operator
@@ -63,8 +67,9 @@ OperatorPtr RenameSourceToProjectOperatorRule::convert(const OperatorPtr& operat
     return projectOperator;
 }
 
-RenameSourceToProjectOperatorRulePtr RenameSourceToProjectOperatorRule::create() {
+RenameSourceToProjectOperatorRulePtr RenameSourceToProjectOperatorRule::create()
+{
     return std::make_shared<RenameSourceToProjectOperatorRule>(RenameSourceToProjectOperatorRule());
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

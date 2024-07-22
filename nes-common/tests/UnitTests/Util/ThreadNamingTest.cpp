@@ -12,29 +12,33 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <cstring>
+#include <unistd.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <cstring>
 #include <gtest/gtest.h>
-#include <unistd.h>
+#include <BaseIntegrationTest.hpp>
 #ifdef _POSIX_THREADS
-#define HAS_POSIX_THREAD
-#include <pthread.h>
+#    define HAS_POSIX_THREAD
+#    include <pthread.h>
 #else
-#error "Unsupported architecture"
+#    error "Unsupported architecture"
 #endif
 
-namespace NES {
-class ThreadNamingTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES
+{
+class ThreadNamingTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ThreadNamingTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("ThreadNamingTest test class SetUpTestCase.");
     }
 };
 
-TEST_F(ThreadNamingTest, testThreadNaming) {
+TEST_F(ThreadNamingTest, testThreadNaming)
+{
     char threadName[17];
     setThreadName("NES-%d", 0);
 #if defined(__GLIBC__) || defined(__APPLE__)
@@ -42,4 +46,4 @@ TEST_F(ThreadNamingTest, testThreadNaming) {
     EXPECT_TRUE(std::strcmp(threadName, "NES-0") == 0);
 #endif
 }
-}// namespace NES
+} // namespace NES

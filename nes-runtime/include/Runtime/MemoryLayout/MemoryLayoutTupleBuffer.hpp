@@ -15,20 +15,21 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_
 
+#include <cstring>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <cstring>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 
 /**
  * @brief This abstract class is the base class for DynamicRowLayoutBuffer and DynamicColumnLayoutBuffer.
  * As the base class, it has multiple methods or members that are useful for both derived classes.
  * @caution This class is non-thread safe
  */
-class MemoryLayoutTupleBuffer {
-
-  public:
+class MemoryLayoutTupleBuffer
+{
+public:
     /**
      * @brief Constructor for DynamicLayoutBuffer
      * @param tupleBuffer
@@ -56,11 +57,11 @@ class MemoryLayoutTupleBuffer {
      */
     TupleBuffer getTupleBuffer();
 
-  protected:
+protected:
     TupleBuffer tupleBuffer;
     uint64_t capacity;
     uint64_t numberOfRecords = 0;
 };
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_

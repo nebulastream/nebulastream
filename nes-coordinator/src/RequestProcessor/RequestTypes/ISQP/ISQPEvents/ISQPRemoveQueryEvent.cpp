@@ -14,13 +14,21 @@
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveQueryEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-ISQPRemoveQueryEvent::ISQPRemoveQueryEvent(const QueryId& queryId)
-    : ISQPEvent(ISQP_REMOVE_QUERY_EVENT_PRIORITY), queryId(queryId) {}
+ISQPRemoveQueryEvent::ISQPRemoveQueryEvent(const QueryId& queryId) : ISQPEvent(ISQP_REMOVE_QUERY_EVENT_PRIORITY), queryId(queryId)
+{
+}
 
-ISQPEventPtr ISQPRemoveQueryEvent::create(const QueryId& queryId) { return std::make_shared<ISQPRemoveQueryEvent>(queryId); }
+ISQPEventPtr ISQPRemoveQueryEvent::create(const QueryId& queryId)
+{
+    return std::make_shared<ISQPRemoveQueryEvent>(queryId);
+}
 
-QueryId ISQPRemoveQueryEvent::getQueryId() const { return queryId; }
+QueryId ISQPRemoveQueryEvent::getQueryId() const
+{
+    return queryId;
+}
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

@@ -16,13 +16,15 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Selection operator that evaluates an boolean expression on each record.
  */
-class Selection : public ExecutableOperator {
-  public:
+class Selection : public ExecutableOperator
+{
+public:
     /**
      * @brief Creates a selection operator with a expression.
      * @param expression boolean predicate expression
@@ -30,9 +32,9 @@ class Selection : public ExecutableOperator {
     Selection(Runtime::Execution::Expressions::ExpressionPtr expression) : expression(expression){};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+private:
     const Runtime::Execution::Expressions::ExpressionPtr expression;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SELECTION_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SELECTION_HPP_

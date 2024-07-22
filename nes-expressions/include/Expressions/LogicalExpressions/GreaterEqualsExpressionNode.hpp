@@ -15,13 +15,15 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This node represents a greater comparison between the two children.
  */
-class GreaterEqualsExpressionNode : public LogicalBinaryExpressionNode {
-  public:
+class GreaterEqualsExpressionNode : public LogicalBinaryExpressionNode
+{
+public:
     GreaterEqualsExpressionNode() noexcept = default;
     ~GreaterEqualsExpressionNode() override = default;
     /**
@@ -37,9 +39,9 @@ class GreaterEqualsExpressionNode : public LogicalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+protected:
     explicit GreaterEqualsExpressionNode(GreaterEqualsExpressionNode* other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_

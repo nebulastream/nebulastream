@@ -15,8 +15,11 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 
-namespace NES {
+namespace NES
+{
 
-FixedChar::FixedChar(uint64_t length) noexcept : ArrayType(length, DataTypeFactory::createChar()) {}
+FixedChar::FixedChar(uint64_t length) noexcept : ArrayType(length, DataTypeFactory::createChar())
+{
+}
 
-}// namespace NES
+} // namespace NES

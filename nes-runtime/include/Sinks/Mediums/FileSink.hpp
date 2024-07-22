@@ -21,13 +21,15 @@
 #include <memory>
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The file sink writes the stream result to a text file, in CSV or JSON format.
  */
-class FileSink : public SinkMedium {
-  public:
+class FileSink : public SinkMedium
+{
+public:
     /**
      * @brief Create a file sink.
      * @param nodeEngine The node engine of the worker.
@@ -38,14 +40,15 @@ class FileSink : public SinkMedium {
      * @param decomposedQueryPlanId ?
      * @param numberOfOrigins number of origins of a given query
      */
-    explicit FileSink(SinkFormatPtr format,
-                      Runtime::NodeEnginePtr nodeEngine,
-                      uint32_t numOfProducers,
-                      const std::string& filePath,
-                      bool append,
-                      SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
-                      uint64_t numberOfOrigins = 1);
+    explicit FileSink(
+        SinkFormatPtr format,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        const std::string& filePath,
+        bool append,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        uint64_t numberOfOrigins = 1);
 
     /**
      * @brief Setup the file sink.
@@ -81,7 +84,7 @@ class FileSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  protected:
+protected:
     /// The output file path of the file sink.
     std::string filePath;
 
@@ -95,6 +98,6 @@ class FileSink : public SinkMedium {
     bool isOpen{false};
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_

@@ -15,15 +15,23 @@
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/IngestionRate.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-MetricPtr IngestionRate::create() { return std::make_shared<IngestionRate>(IngestionRate()); }
+MetricPtr IngestionRate::create()
+{
+    return std::make_shared<IngestionRate>(IngestionRate());
+}
 
 IngestionRate::IngestionRate()
-    : StatisticMetric(FieldAccessExpressionNode::create(INGESTION_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>()) {}
+    : StatisticMetric(FieldAccessExpressionNode::create(INGESTION_RATE_FIELD_NAME)->as<FieldAccessExpressionNode>())
+{
+}
 
-bool IngestionRate::operator==(const StatisticMetric& rhs) const {
-    if (rhs.instanceOf<IngestionRate>()) {
+bool IngestionRate::operator==(const StatisticMetric& rhs) const
+{
+    if (rhs.instanceOf<IngestionRate>())
+    {
         // We assume that if the field has the same name, the metric is equal
         auto rhsIngestionRate = dynamic_cast<const IngestionRate&>(rhs);
         return field->getFieldName() == rhsIngestionRate.field->getFieldName();
@@ -31,5 +39,8 @@ bool IngestionRate::operator==(const StatisticMetric& rhs) const {
     return false;
 }
 
-std::string IngestionRate::toString() const { return "IngestionRate"; }
-}// namespace NES::Statistic
+std::string IngestionRate::toString() const
+{
+    return "IngestionRate";
+}
+} // namespace NES::Statistic

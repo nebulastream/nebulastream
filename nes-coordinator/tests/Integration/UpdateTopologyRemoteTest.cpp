@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <gtest/gtest.h>//
+#include <gtest/gtest.h> //
 
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
@@ -24,17 +24,20 @@
 #include <BaseIntegrationTest.hpp>
 
 using namespace std;
-namespace NES {
+namespace NES
+{
 
-class UpdateTopologyRemoteTest : public Testing::BaseIntegrationTest {
-  public:
+class UpdateTopologyRemoteTest : public Testing::BaseIntegrationTest
+{
+public:
     // set the default numberOfSlots to the number of processor
     const uint16_t processorCount = std::thread::hardware_concurrency();
     std::string ipAddress = "127.0.0.1";
     uint16_t coordinatorNumberOfSlots = 12;
     uint16_t workerNumberOfSlots = 6;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("UpdateTopologyRemoteTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup UpdateTopologyRemoteTest test class.");
     }
@@ -42,7 +45,8 @@ class UpdateTopologyRemoteTest : public Testing::BaseIntegrationTest {
     static void TearDownTestCase() { NES_DEBUG("Tear down UpdateTopologyRemoteTest test class."); }
 };
 
-TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
+TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     auto workerConfig1 = WorkerConfiguration::create();
     auto workerConfig2 = WorkerConfiguration::create();
@@ -83,9 +87,9 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     NES_INFO("worker started successfully");
 
     TopologyPtr topology = crd->getTopology();
-    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(1)));// worker inside the coordinator
-    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(2)));// first worker should get id 2
-    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(3)));// second worker should get id 3
+    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(1))); // worker inside the coordinator
+    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(2))); // first worker should get id 2
+    EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(3))); // second worker should get id 3
 
     auto rootWorkerNodeIds = topology->getRootWorkerNodeIds();
     EXPECT_EQ(rootWorkerNodeIds.size(), 1);
@@ -128,7 +132,8 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnId) {
     EXPECT_TRUE(retStopCord);
 }
 
-TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
+TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     auto workerConfig1 = WorkerConfiguration::create();
     auto workerConfig2 = WorkerConfiguration::create();
@@ -195,4 +200,4 @@ TEST_F(UpdateTopologyRemoteTest, addAndRemovePathWithOwnIdAndSelf) {
     EXPECT_TRUE(retStopCord);
 }
 
-}// namespace NES
+} // namespace NES

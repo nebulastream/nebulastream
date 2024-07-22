@@ -22,27 +22,30 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Base type for all lists. A list can have different values that all have the same underlying type.
  * LISTs are typically used to store arrays of numbers.
  */
-class List : public Nautilus::Any {
-  public:
+class List : public Nautilus::Any
+{
+public:
     static const inline auto type = TypeIdentifier::create<List>();
 
     /**
      * @brief Iterator over all entries in the list.
      */
-    class ListValueIterator {
-      public:
+    class ListValueIterator
+    {
+    public:
         ListValueIterator(List& listRef, Value<UInt32>& currentIndex);
         ListValueIterator& operator++();
         bool operator==(const ListValueIterator& other) const;
         Value<> operator*();
 
-      private:
+    private:
         List& list;
         Value<UInt32> currentIndex;
     };
@@ -88,16 +91,17 @@ class List : public Nautilus::Any {
  * Currently, lists are restricted to Ints and Floats.
  * @tparam T
  */
-template<typename T>
+template <typename T>
 concept IsListComponentType = std::is_base_of_v<Int, T> || std::is_same_v<Float, T> || std::is_same_v<T, Double>;
 
 /**
  * @brief A typed list that contains values of a specific nautilus data types.
  * @tparam BaseType
  */
-template<IsListComponentType BaseType>
-class TypedList final : public List {
-  public:
+template <IsListComponentType BaseType>
+class TypedList final : public List
+{
+public:
     static const inline auto type = TypeIdentifier::create<TypedList<BaseType>>();
     /**
      * @brief Exposes the component type of this TypedList.
@@ -144,9 +148,9 @@ class TypedList final : public List {
 
     AnyPtr copy() override;
 
-  private:
+private:
     const TypedRef<RawType> rawReference;
 };
 
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_

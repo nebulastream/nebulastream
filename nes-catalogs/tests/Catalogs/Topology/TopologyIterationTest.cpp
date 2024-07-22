@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
@@ -22,18 +21,22 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class TopologyIteratorTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
-
+class TopologyIteratorTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TopologyIteratorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup TopologyIteratorTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
 
         std::map<std::string, std::any> properties;
@@ -50,7 +53,7 @@ class TopologyIteratorTest : public Testing::BaseUnitTest {
         src4 = TopologyNode::create(WorkerId(7), "localhost", 4007, 5007, 4, properties);
     }
 
-  protected:
+protected:
     TopologyNodePtr rootNode, mid1, mid2, mid3, src1, src2, src3, src4;
 };
 
@@ -58,7 +61,8 @@ class TopologyIteratorTest : public Testing::BaseUnitTest {
  * @brief Test on a linear topology
  * --- root --- mid1 --- src1
  */
-TEST_F(TopologyIteratorTest, testLinearTopology) {
+TEST_F(TopologyIteratorTest, testLinearTopology)
+{
     TopologyPtr topology = Topology::create();
 
     std::map<std::string, std::any> properties;
@@ -101,7 +105,8 @@ TEST_F(TopologyIteratorTest, testLinearTopology) {
  *                   \
  *                    --- src2
  */
-TEST_F(TopologyIteratorTest, testMultipleSources) {
+TEST_F(TopologyIteratorTest, testMultipleSources)
+{
     TopologyPtr topology = Topology::create();
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -150,7 +155,8 @@ TEST_F(TopologyIteratorTest, testMultipleSources) {
  *                   \
  *                    --- mid2 -- src2
  */
-TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
+TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths)
+{
     TopologyPtr topology = Topology::create();
 
     std::map<std::string, std::any> properties;
@@ -208,7 +214,8 @@ TEST_F(TopologyIteratorTest, testTopologyWithDiffernetDepths) {
  *                   \
  *                    --- src2
  */
-TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
+TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch)
+{
     TopologyPtr topology = Topology::create();
 
     std::map<std::string, std::any> properties;
@@ -269,7 +276,8 @@ TEST_F(TopologyIteratorTest, testTopologyWithLongerFirstBranch) {
  *                     \              /
  *                       --- mid3 ---
  */
-TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
+TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology)
+{
     TopologyPtr topology = Topology::create();
 
     std::map<std::string, std::any> properties;
@@ -343,7 +351,8 @@ TEST_F(TopologyIteratorTest, testBranchedAndMergedTopology) {
  *                           \
  *                             --- src4
  */
-TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
+TEST_F(TopologyIteratorTest, testWithHiearchicalTopology)
+{
     TopologyPtr topology = Topology::create();
 
     std::map<std::string, std::any> properties;
@@ -413,4 +422,4 @@ TEST_F(TopologyIteratorTest, testWithHiearchicalTopology) {
     EXPECT_EQ(srcNodeId1, (*dfIterator)->as<TopologyNode>()->getId());
 }
 
-}// namespace NES
+} // namespace NES

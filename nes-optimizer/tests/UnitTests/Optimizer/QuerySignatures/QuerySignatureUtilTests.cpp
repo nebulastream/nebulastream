@@ -20,7 +20,6 @@
 #include <API/Expressions/LogicalExpressions.hpp>
 #include <API/Schema.hpp>
 #include <API/Windowing.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
@@ -37,26 +36,29 @@
 #include <Util/QuerySignatures/QuerySignature.hpp>
 #include <Util/QuerySignatures/QuerySignatureUtil.hpp>
 #include <Util/QuerySignatures/Z3QuerySignatureContext.hpp>
+#include <BaseIntegrationTest.hpp>
 #include <z3++.h>
 
 using namespace NES;
 
-class QuerySignatureUtilTests : public Testing::BaseUnitTest {
-
-  public:
+class QuerySignatureUtilTests : public Testing::BaseUnitTest
+{
+public:
     SchemaPtr schema;
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
 
     /* Will be called before all tests in this class are started. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("QuerySignatureUtilTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QuerySignatureUtilTests test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
@@ -64,7 +66,8 @@ class QuerySignatureUtilTests : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
+TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Predicate
     ExpressionNodePtr predicate = Attribute("value") == 40;
@@ -93,7 +96,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithExactPredicates) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
+TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
@@ -125,7 +129,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithEqualPredicates) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
+TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
@@ -155,8 +160,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleExactPredicates) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
-
+TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
@@ -188,8 +193,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates1) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
-
+TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
@@ -221,8 +226,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleEqualPredicates2) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
-
+TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
@@ -254,8 +259,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithDifferentPredicates) {
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
-
+TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
 
     //Define Predicate
@@ -286,8 +291,8 @@ TEST_F(QuerySignatureUtilTests, testFiltersWithMultipleDifferentPredicates) {
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
-
+TEST_F(QuerySignatureUtilTests, testMapWithExactExpression)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression = Attribute("value") = 40;
@@ -316,8 +321,8 @@ TEST_F(QuerySignatureUtilTests, testMapWithExactExpression) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
-
+TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
@@ -346,8 +351,8 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpression) {
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
-
+TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("id") = 40;
@@ -380,8 +385,8 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithDifferentOrder) {
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
-
+TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("id") = 40;
@@ -416,8 +421,8 @@ TEST_F(QuerySignatureUtilTests, testMultipleMapsWithSameOrder) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
-
+TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define expression
     FieldAssignmentExpressionNodePtr expression1 = Attribute("value") = 40;
@@ -448,8 +453,8 @@ TEST_F(QuerySignatureUtilTests, testMapWithDifferentExpressionOnSameField) {
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSourceWithSameSourceName) {
-
+TEST_F(QuerySignatureUtilTests, testSourceWithSameSourceName)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Predicate
     auto sourceDescriptor = LogicalSourceDescriptor::create("Car");
@@ -471,8 +476,8 @@ TEST_F(QuerySignatureUtilTests, testSourceWithSameSourceName) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSourceWithDifferentSourceName) {
-
+TEST_F(QuerySignatureUtilTests, testSourceWithDifferentSourceName)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Predicate
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -496,7 +501,8 @@ TEST_F(QuerySignatureUtilTests, testSourceWithDifferentSourceName) {
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -527,7 +533,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForProjectOperators) {
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsButDifferentSources) {
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsButDifferentSources)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -558,7 +565,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForSameProjectOperatorsB
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperators) {
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperators)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -588,7 +596,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferenProjectOperat
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperator) {
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperator)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -597,14 +606,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("id"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
-    auto watermarkOperator2 = LogicalOperatorFactory::createWatermarkAssignerOperator(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("id"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
+    auto watermarkOperator1
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            FieldAccessExpressionNode::create("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator2
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            FieldAccessExpressionNode::create("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
 
     LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
@@ -623,7 +630,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermarkAssignerOperator) {
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermarkAssignerOperator)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -632,10 +640,10 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
-    auto watermarkOperator2 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+    auto watermarkOperator1
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+    auto watermarkOperator2
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
 
     LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
@@ -654,7 +662,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForIngestionTimeWatermar
     EXPECT_TRUE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAssignerOperator) {
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAssignerOperator)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -663,12 +672,11 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("id"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
-    auto watermarkOperator2 =
-        LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
+    auto watermarkOperator1
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            FieldAccessExpressionNode::create("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator2
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::IngestionTimeWatermarkStrategyDescriptor::create());
 
     LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
@@ -687,7 +695,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForDifferentWatermarkAss
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentLateness) {
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentLateness)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -696,14 +705,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("id"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
-    auto watermarkOperator2 = LogicalOperatorFactory::createWatermarkAssignerOperator(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("id"),
-                                                                NES::API::Milliseconds(9),
-                                                                NES::API::Milliseconds()));
+    auto watermarkOperator1
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            FieldAccessExpressionNode::create("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator2
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            FieldAccessExpressionNode::create("id"), NES::API::Milliseconds(9), NES::API::Milliseconds()));
 
     LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);
@@ -722,7 +729,8 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     EXPECT_FALSE(signatureEqualityUtil->checkEquality(sig1, sig2));
 }
 
-TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentField) {
+TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOperatorWithDifferentField)
+{
     auto context = Optimizer::Z3QuerySignatureContext(std::make_shared<z3::context>());
     //Define Sources
     auto sourceDescriptor1 = LogicalSourceDescriptor::create("Car");
@@ -731,14 +739,12 @@ TEST_F(QuerySignatureUtilTests, testSignatureComputationForWatermarkAssignerOper
     sourceDescriptor2->setSchema(schema);
 
     //Create projection operator
-    auto watermarkOperator1 = LogicalOperatorFactory::createWatermarkAssignerOperator(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("id"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
-    auto watermarkOperator2 = LogicalOperatorFactory::createWatermarkAssignerOperator(
-        Windowing::EventTimeWatermarkStrategyDescriptor::create(FieldAccessExpressionNode::create("value"),
-                                                                NES::API::Milliseconds(10),
-                                                                NES::API::Milliseconds()));
+    auto watermarkOperator1
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            FieldAccessExpressionNode::create("id"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
+    auto watermarkOperator2
+        = LogicalOperatorFactory::createWatermarkAssignerOperator(Windowing::EventTimeWatermarkStrategyDescriptor::create(
+            FieldAccessExpressionNode::create("value"), NES::API::Milliseconds(10), NES::API::Milliseconds()));
 
     LogicalOperatorPtr logicalOperator1 = LogicalOperatorFactory::createSourceOperator(sourceDescriptor1);
     watermarkOperator1->addChild(logicalOperator1);

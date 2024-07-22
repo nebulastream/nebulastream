@@ -11,16 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/PowerExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-PowerExpression::PowerExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
-                                 const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
-    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
+PowerExpression::PowerExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
+    const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
+    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression)
+{
+}
 
 /**
  * @brief This method calculates x to the power of y.
@@ -29,9 +33,13 @@ PowerExpression::PowerExpression(const NES::Runtime::Execution::Expressions::Exp
  * @param y double
  * @return double
  */
-double calculatePower(double x, double y) { return std::pow(x, y); }
+double calculatePower(double x, double y)
+{
+    return std::pow(x, y);
+}
 
-Value<> PowerExpression::execute(NES::Nautilus::Record& record) const {
+Value<> PowerExpression::execute(NES::Nautilus::Record& record) const
+{
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.
@@ -42,24 +50,37 @@ Value<> PowerExpression::execute(NES::Nautilus::Record& record) const {
     // In all cases we can call the same calculatePow function as under the hood C++ can do an implicit cast from
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (leftValue->isType<Int8>() && rightValue->isType<Int8>()) {
+    if (leftValue->isType<Int8>() && rightValue->isType<Int8>())
+    {
         // call the calculatePow function with the correct type
         return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Int8>(), rightValue.as<Int8>());
-    } else if (leftValue->isType<Int16>() && rightValue->isType<Int16>()) {
+    }
+    else if (leftValue->isType<Int16>() && rightValue->isType<Int16>())
+    {
         return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Int16>(), rightValue.as<Int16>());
-    } else if (leftValue->isType<Int32>() && rightValue->isType<Int32>()) {
+    }
+    else if (leftValue->isType<Int32>() && rightValue->isType<Int32>())
+    {
         return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Int32>(), rightValue.as<Int32>());
-    } else if (leftValue->isType<Int64>() && rightValue->isType<Int64>()) {
+    }
+    else if (leftValue->isType<Int64>() && rightValue->isType<Int64>())
+    {
         return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Int64>(), rightValue.as<Int64>());
-    } else if (leftValue->isType<Float>() && rightValue->isType<Float>()) {
+    }
+    else if (leftValue->isType<Float>() && rightValue->isType<Float>())
+    {
         return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Float>(), rightValue.as<Float>());
-    } else if (leftValue->isType<Double>() && rightValue->isType<Double>()) {
+    }
+    else if (leftValue->isType<Double>() && rightValue->isType<Double>())
+    {
         return FunctionCall<>("calculatePow", calculatePower, leftValue.as<Double>(), rightValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<PowerExpression>> powerFunction("power");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

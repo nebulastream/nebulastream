@@ -20,7 +20,8 @@
 #include <Util/CircularBuffer.hpp>
 #include <Util/MMapCircularBuffer.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Parser;
 using ParserPtr = std::shared_ptr<Parser>;
@@ -28,9 +29,9 @@ using ParserPtr = std::shared_ptr<Parser>;
 /**
  * @brief source to receive data via TCP connection
  */
-class TCPSource : public DataSource {
-
-  public:
+class TCPSource : public DataSource
+{
+public:
     /**
      * @brief constructor of a TCP Source
      * @param schema the schema of the data
@@ -47,17 +48,18 @@ class TCPSource : public DataSource {
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param executableSuccessors executable operators coming after this source
      */
-    explicit TCPSource(SchemaPtr schema,
-                       Runtime::BufferManagerPtr bufferManager,
-                       Runtime::QueryManagerPtr queryManager,
-                       TCPSourceTypePtr tcpSourceType,
-                       OperatorId operatorId,
-                       OriginId originId,
-                       StatisticId statisticId,
-                       size_t numSourceLocalBuffers,
-                       GatheringMode gatheringMode,
-                       const std::string& physicalSourceName,
-                       std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
+    explicit TCPSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        TCPSourceTypePtr tcpSourceType,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        const std::string& physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 
     /**
      * @brief override the receiveData method for the csv source
@@ -99,7 +101,7 @@ class TCPSource : public DataSource {
      */
     void close() override;
 
-  private:
+private:
     /**
      * \brief converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
      * \param data data memory segment which contains the buffersize
@@ -117,5 +119,5 @@ class TCPSource : public DataSource {
     MMapCircularBuffer circularBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_

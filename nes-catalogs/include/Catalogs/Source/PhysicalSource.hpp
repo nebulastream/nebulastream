@@ -15,11 +15,12 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <memory>
 #include <string>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class PhysicalSourceType;
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
@@ -30,9 +31,9 @@ using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 /**
  * @brief Container for storing all configurations for physical source
  */
-class PhysicalSource {
-
-  public:
+class PhysicalSource
+{
+public:
     /**
      * @brief create method to construct physical Source
      * @param physicalSourceType : physical source type
@@ -74,10 +75,8 @@ class PhysicalSource {
      */
     StatisticId getStatisticId() const;
 
-  private:
-    explicit PhysicalSource(std::string logicalSourceName,
-                            std::string physicalSourceName,
-                            PhysicalSourceTypePtr physicalSourceType);
+private:
+    explicit PhysicalSource(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType);
 
     std::string logicalSourceName;
     std::string physicalSourceName;
@@ -85,6 +84,6 @@ class PhysicalSource {
     StatisticId statisticId;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_PHYSICALSOURCE_HPP_

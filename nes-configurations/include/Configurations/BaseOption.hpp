@@ -13,16 +13,18 @@
 */
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
-#include "Util/yaml/Yaml.hpp"
 #include <string>
-namespace NES::Configurations {
+#include "Util/yaml/Yaml.hpp"
+namespace NES::Configurations
+{
 
 /**
  * @brief This class is the basis of all option.
  * All option can define a name and a description.
  */
-class BaseOption {
-  public:
+class BaseOption
+{
+public:
     BaseOption() = default;
 
     /**
@@ -63,7 +65,7 @@ class BaseOption {
      */
     virtual std::string toString() = 0;
 
-  protected:
+protected:
     friend class BaseConfiguration;
 
     /**
@@ -84,9 +86,9 @@ class BaseOption {
     std::string description;
 };
 
-template<class T>
+template <class T>
 concept DerivedBaseOption = std::is_base_of_v<BaseOption, T>;
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_

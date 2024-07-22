@@ -12,22 +12,23 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <memory>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-KeyedThreadLocalSliceStore::KeyedThreadLocalSliceStore(uint64_t keySize,
-                                                       uint64_t valueSize,
-                                                       uint64_t windowSize,
-                                                       uint64_t windowSlide,
-                                                       uint64_t numberOfKeys)
-    : ThreadLocalSliceStore(windowSize, windowSlide), keySize(keySize), valueSize(valueSize), numberOfKeys(numberOfKeys) {}
+KeyedThreadLocalSliceStore::KeyedThreadLocalSliceStore(
+    uint64_t keySize, uint64_t valueSize, uint64_t windowSize, uint64_t windowSlide, uint64_t numberOfKeys)
+    : ThreadLocalSliceStore(windowSize, windowSlide), keySize(keySize), valueSize(valueSize), numberOfKeys(numberOfKeys)
+{
+}
 
-KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs) {
+KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uint64_t endTs)
+{
     // allocate hash map
     NES_DEBUG("allocateNewSlice {}-{}", startTs, endTs);
     auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
@@ -35,4 +36,4 @@ KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uin
     return std::make_unique<KeyedSlice>(std::move(hashMap), startTs, endTs);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

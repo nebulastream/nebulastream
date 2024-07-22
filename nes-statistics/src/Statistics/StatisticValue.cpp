@@ -14,4 +14,6 @@
 
 #include <Statistics/StatisticValue.hpp>
 
-namespace NES::Statistic {}// namespace NES::Statistic
+namespace NES::Statistic
+{
+} // namespace NES::Statistic

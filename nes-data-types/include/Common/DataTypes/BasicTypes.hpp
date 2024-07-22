@@ -17,9 +17,11 @@
 
 #include <stdint.h>
 
-namespace NES {
+namespace NES
+{
 
-enum class BasicType : uint8_t {
+enum class BasicType : uint8_t
+{
     INT8,
     UINT8,
     INT16,
@@ -36,4 +38,4 @@ enum class BasicType : uint8_t {
 
 }
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_BASICTYPES_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_BASICTYPES_HPP_

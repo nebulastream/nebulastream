@@ -14,13 +14,14 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEPREAGGREGATIONHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEPREAGGREGATIONHANDLER_HPP_
+#include <vector>
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-#include <vector>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class MultiOriginWatermarkProcessor;
 class State;
@@ -31,9 +32,9 @@ class State;
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-class NonKeyedSlicePreAggregationHandler
-    : public AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore> {
-  public:
+class NonKeyedSlicePreAggregationHandler : public AbstractSlicePreAggregationHandler<NonKeyedSlice, NonKeyedThreadLocalSliceStore>
+{
+public:
     /**
      * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
      * @param windowDefinition logical window definition
@@ -52,8 +53,8 @@ class NonKeyedSlicePreAggregationHandler
 
     const State* getDefaultState() const;
 
-  private:
+private:
     std::unique_ptr<State> defaultState;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEPREAGGREGATIONHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEPREAGGREGATIONHANDLER_HPP_

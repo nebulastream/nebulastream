@@ -13,16 +13,18 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_VOIDSTAMP_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_VOIDSTAMP_HPP_
-#include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
+#include <Nautilus/IR/Types/Stamp.hpp>
 
-namespace NES::Nautilus::IR::Types {
+namespace NES::Nautilus::IR::Types
+{
 
 /**
  * @brief A void stamp, which represents a data type without a value.
  */
-class VoidStamp : public Stamp {
-  public:
+class VoidStamp : public Stamp
+{
+public:
     static const inline auto type = TypeIdentifier::create<VoidStamp>();
 
     /**
@@ -32,6 +34,6 @@ class VoidStamp : public Stamp {
     const std::string toString() const override;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_VOIDSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_VOIDSTAMP_HPP_

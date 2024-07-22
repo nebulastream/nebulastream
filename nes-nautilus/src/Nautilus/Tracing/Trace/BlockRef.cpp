@@ -14,13 +14,18 @@
 
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
-BlockRef::BlockRef(uint32_t block) : block(block) {}
+BlockRef::BlockRef(uint32_t block) : block(block)
+{
+}
 
-std::ostream& operator<<(std::ostream& os, const BlockRef& block) {
+std::ostream& operator<<(std::ostream& os, const BlockRef& block)
+{
     os << "Block" << block.block << "(";
-    for (auto argument : block.arguments) {
+    for (auto argument : block.arguments)
+    {
         os << argument << ",";
     }
 
@@ -29,4 +34,4 @@ std::ostream& operator<<(std::ostream& os, const BlockRef& block) {
     return os;
 }
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing

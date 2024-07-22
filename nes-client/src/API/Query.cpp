@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Expressions/LogicalExpressions.hpp>
@@ -29,59 +30,93 @@
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem) { return expressionItem.getExpressionNode(); }
+ExpressionNodePtr getExpressionNodePtr(ExpressionItem& expressionItem)
+{
+    return expressionItem.getExpressionNode();
+}
 
-JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs) { return JoinOperatorBuilder::Join(subQueryRhs, *this); }
+JoinOperatorBuilder::Join Query::joinWith(const Query& subQueryRhs)
+{
+    return JoinOperatorBuilder::Join(subQueryRhs, *this);
+}
 
-NES::Experimental::BatchJoinOperatorBuilder::Join Query::batchJoinWith(const Query& subQueryRhs) {
+NES::Experimental::BatchJoinOperatorBuilder::Join Query::batchJoinWith(const Query& subQueryRhs)
+{
     return NES::Experimental::BatchJoinOperatorBuilder::Join(subQueryRhs, *this);
 }
 
-CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs) { return CEPOperatorBuilder::And(subQueryRhs, *this); }
+CEPOperatorBuilder::And Query::andWith(const Query& subQueryRhs)
+{
+    return CEPOperatorBuilder::And(subQueryRhs, *this);
+}
 
-CEPOperatorBuilder::Seq Query::seqWith(const Query& subQueryRhs) { return CEPOperatorBuilder::Seq(subQueryRhs, *this); }
+CEPOperatorBuilder::Seq Query::seqWith(const Query& subQueryRhs)
+{
+    return CEPOperatorBuilder::Seq(subQueryRhs, *this);
+}
 
-CEPOperatorBuilder::Times Query::times(const uint64_t minOccurrences, const uint64_t maxOccurrences) {
+CEPOperatorBuilder::Times Query::times(const uint64_t minOccurrences, const uint64_t maxOccurrences)
+{
     return CEPOperatorBuilder::Times(minOccurrences, maxOccurrences, *this);
 }
 
-CEPOperatorBuilder::Times Query::times(const uint64_t occurrences) { return CEPOperatorBuilder::Times(occurrences, *this); }
-
-CEPOperatorBuilder::Times Query::times() { return CEPOperatorBuilder::Times(*this); }
-
-namespace JoinOperatorBuilder {
-
-JoinWhere Join::where(ExpressionNodePtr joinExpression) const { return JoinWhere(subQueryRhs, originalQuery, joinExpression); }
-
-Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
-
-JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionNodePtr joinExpression)
-    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinExpressions(joinExpression) {}
-
-Query& JoinWhere::window(const Windowing::WindowTypePtr& windowType) const {
-    return originalQuery.joinWith(subQueryRhs, joinExpressions, windowType);//call original joinWith() function
+CEPOperatorBuilder::Times Query::times(const uint64_t occurrences)
+{
+    return CEPOperatorBuilder::Times(occurrences, *this);
 }
 
-}// namespace JoinOperatorBuilder
+CEPOperatorBuilder::Times Query::times()
+{
+    return CEPOperatorBuilder::Times(*this);
+}
 
-namespace Experimental::BatchJoinOperatorBuilder {
+namespace JoinOperatorBuilder
+{
 
-Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery) {}
+JoinWhere Join::where(ExpressionNodePtr joinExpression) const
+{
+    return JoinWhere(subQueryRhs, originalQuery, joinExpression);
+}
 
-Query& Join::where(const ExpressionNodePtr joinExpression) const {
+Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery)
+{
+}
+
+JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionNodePtr joinExpression)
+    : subQueryRhs(subQueryRhs), originalQuery(originalQuery), joinExpressions(joinExpression)
+{
+}
+
+Query& JoinWhere::window(const Windowing::WindowTypePtr& windowType) const
+{
+    return originalQuery.joinWith(subQueryRhs, joinExpressions, windowType); //call original joinWith() function
+}
+
+} // namespace JoinOperatorBuilder
+
+namespace Experimental::BatchJoinOperatorBuilder
+{
+
+Join::Join(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(subQueryRhs), originalQuery(originalQuery)
+{
+}
+
+Query& Join::where(const ExpressionNodePtr joinExpression) const
+{
     return originalQuery.batchJoinWith(subQueryRhs, joinExpression);
 }
 
-}// namespace Experimental::BatchJoinOperatorBuilder
+} // namespace Experimental::BatchJoinOperatorBuilder
 
-namespace CEPOperatorBuilder {
+namespace CEPOperatorBuilder
+{
 
-And::And(const Query& subQueryRhs, Query& originalQuery)
-    : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
+And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery)
+{
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
     auto cepLeftKey = "cep_leftKey";
@@ -92,16 +127,17 @@ And::And(const Query& subQueryRhs, Query& originalQuery)
     //last, define the artificial attributes as key attributes
     NES_DEBUG("Query: add name cepLeftKey {}", cepLeftKey);
     NES_DEBUG("Query: add name cepRightKey {}", cepRightKey);
-    joinExpression =
-        ExpressionItem(Attribute(cepLeftKey)).getExpressionNode() == ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
+    joinExpression
+        = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode() == ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
 }
 
-Query& And::window(const Windowing::WindowTypePtr& windowType) const {
-    return originalQuery.andWith(subQueryRhs, joinExpression, windowType);//call original andWith() function
+Query& And::window(const Windowing::WindowTypePtr& windowType) const
+{
+    return originalQuery.andWith(subQueryRhs, joinExpression, windowType); //call original andWith() function
 }
 
-Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
-    : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery) {
+Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery)
+{
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
     //here, we add artificial key attributes to the sources in order to reuse the join-logic later
     auto cepLeftKey = "cep_leftKey";
@@ -110,79 +146,92 @@ Seq::Seq(const Query& subQueryRhs, Query& originalQuery)
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
     //last, define the artificial attributes as key attributes
-    joinExpression =
-        ExpressionItem(Attribute(cepLeftKey)).getExpressionNode() == ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
+    joinExpression
+        = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode() == ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
 }
 
-Query& Seq::window(const Windowing::WindowTypePtr& windowType) const {
+Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
+{
     NES_DEBUG("Sequence enters window function");
-    auto timestamp = windowType->as<Windowing::TimeBasedWindowType>()
-                         ->getTimeCharacteristic()
-                         ->getField()
-                         ->getName();// assume time-based windows
+    auto timestamp
+        = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName(); // assume time-based windows
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
     // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
     // in case of composed streams on the right branch
-    if (sourceNameRight.find("_") != std::string::npos) {
+    if (sourceNameRight.find("_") != std::string::npos)
+    {
         // we find the most left source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameRight.find("_");
         uint64_t posEnd = sourceNameRight.find("_", posStart + 1);
         sourceNameRight = sourceNameRight.substr(posStart + 1, posEnd - 2) + "$" + timestamp;
-    }// in case the right branch only contains 1 source we can just use it
-    else {
+    } // in case the right branch only contains 1 source we can just use it
+    else
+    {
         sourceNameRight = sourceNameRight + "$" + timestamp;
     }
     // in case of composed sources on the left branch
-    if (sourceNameLeft.find("_") != std::string::npos) {
+    if (sourceNameLeft.find("_") != std::string::npos)
+    {
         // we find the most right source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameLeft.find_last_of("_");
         sourceNameLeft = sourceNameLeft.substr(posStart + 1) + "$" + timestamp;
-    }// in case the left branch only contains 1 source we can just use it
-    else {
+    } // in case the left branch only contains 1 source we can just use it
+    else
+    {
         sourceNameLeft = sourceNameLeft + "$" + timestamp;
     }
     NES_DEBUG("ExpressionItem for Left Source {}", sourceNameLeft);
     NES_DEBUG("ExpressionItem for Right Source {}", sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, joinExpression, windowType)
-        .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight));//call original seqWith() function
+        .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight)); //call original seqWith() function
 }
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
-    : originalQuery(originalQuery), minOccurrences(minOccurrences), maxOccurrences(maxOccurrences), bounded(true) {
+    : originalQuery(originalQuery), minOccurrences(minOccurrences), maxOccurrences(maxOccurrences), bounded(true)
+{
     // add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
 Times::Times(const uint64_t occurrences, Query& originalQuery)
-    : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(occurrences), bounded(true) {
+    : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(occurrences), bounded(true)
+{
     // add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
-Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(0), bounded(false) {
+Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(0), bounded(false)
+{
     // add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
-Query& Times::window(const Windowing::WindowTypePtr& windowType) const {
+Query& Times::window(const Windowing::WindowTypePtr& windowType) const
+{
     auto timestamp = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName();
     // if no min and max occurrence is defined, apply count without filter
-    if (!bounded) {
+    if (!bounded)
+    {
         return originalQuery.window(windowType).apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)));
-    } else {
+    }
+    else
+    {
         // if user passed 0 occurrences which is not wanted
-        if ((minOccurrences == 0) && (maxOccurrences == 0)) {
+        if ((minOccurrences == 0) && (maxOccurrences == 0))
+        {
             NES_THROW_RUNTIME_ERROR("Number of occurrences must be at least 1.");
         }
         // if min and/or max occurrence are defined, apply count without filter
-        if (maxOccurrences == 0) {
+        if (maxOccurrences == 0)
+        {
             return originalQuery.window(windowType)
                 .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
                 .filter(Attribute("Count") >= minOccurrences);
         }
 
-        if (minOccurrences == 0) {
+        if (minOccurrences == 0)
+        {
             return originalQuery.window(windowType)
                 .apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)))
                 .filter(Attribute("Count") == maxOccurrences);
@@ -196,132 +245,150 @@ Query& Times::window(const Windowing::WindowTypePtr& windowType) const {
     return originalQuery;
 }
 
-}// namespace CEPOperatorBuilder
+} // namespace CEPOperatorBuilder
 
-Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {}
+Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan))
+{
+}
 
 Query::Query(const Query& query) = default;
 
-Query Query::from(const std::string& sourceName) {
+Query Query::from(const std::string& sourceName)
+{
     NES_DEBUG("Query: create new Query with source {}", sourceName);
     auto queryPlan = QueryPlanBuilder::createQueryPlan(sourceName);
     return Query(queryPlan);
 }
 
-Query& Query::buildStatistic(Windowing::WindowTypePtr window,
-                             Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                             Statistic::StatisticMetricHash metricHash,
-                             Statistic::SendingPolicyPtr sendingPolicy,
-                             Statistic::TriggerConditionPtr triggerCondition) {
-    this->queryPlan = QueryPlanBuilder::addStatisticBuildOperator(std::move(window),
-                                                                  std::move(statisticDescriptor),
-                                                                  metricHash,
-                                                                  sendingPolicy,
-                                                                  triggerCondition,
-                                                                  this->queryPlan);
+Query& Query::buildStatistic(
+    Windowing::WindowTypePtr window,
+    Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+    Statistic::StatisticMetricHash metricHash,
+    Statistic::SendingPolicyPtr sendingPolicy,
+    Statistic::TriggerConditionPtr triggerCondition)
+{
+    this->queryPlan = QueryPlanBuilder::addStatisticBuildOperator(
+        std::move(window), std::move(statisticDescriptor), metricHash, sendingPolicy, triggerCondition, this->queryPlan);
     return *this;
 }
 
-Query& Query::project(std::vector<ExpressionNodePtr> expressions) {
+Query& Query::project(std::vector<ExpressionNodePtr> expressions)
+{
     NES_DEBUG("Query: add projection to query");
     this->queryPlan = QueryPlanBuilder::addProjection(expressions, this->queryPlan);
     return *this;
 }
 
-Query& Query::as(const std::string& newSourceName) {
+Query& Query::as(const std::string& newSourceName)
+{
     NES_DEBUG("Query: add rename operator to query");
     this->queryPlan = QueryPlanBuilder::addRename(newSourceName, this->queryPlan);
     return *this;
 }
 
-Query& Query::unionWith(const Query& subQuery) {
+Query& Query::unionWith(const Query& subQuery)
+{
     NES_DEBUG("Query: unionWith the subQuery to current query");
     this->queryPlan = QueryPlanBuilder::addUnion(this->queryPlan, subQuery.getQueryPlan());
     return *this;
 }
 
-Query& Query::joinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType) {
+Query& Query::joinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType)
+{
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinExpression);
-    this->queryPlan =
-        QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
     return *this;
 }
 
-Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression) {
+Query& Query::batchJoinWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression)
+{
     NES_DEBUG("Query: add Batch Join Operator to Query");
-    if (joinExpression->as<EqualsExpressionNode>()) {
+    if (joinExpression->as<EqualsExpressionNode>())
+    {
         auto onProbeKey = joinExpression->as<BinaryExpressionNode>()->getLeft();
         auto onBuildKey = joinExpression->as<BinaryExpressionNode>()->getRight();
 
         this->queryPlan = QueryPlanBuilder::addBatchJoin(this->queryPlan, subQueryRhs.getQueryPlan(), onProbeKey, onBuildKey);
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Query:joinExpression has to be a EqualsExpressionNode");
     }
     return *this;
 }
 
-Query& Query::andWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType) {
+Query& Query::andWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType)
+{
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinExpression);
-    this->queryPlan =
-        QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
     return *this;
 }
 
-Query& Query::seqWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType) {
+Query& Query::seqWith(const Query& subQueryRhs, ExpressionNodePtr joinExpression, const Windowing::WindowTypePtr& windowType)
+{
     Join::LogicalJoinDescriptor::JoinType joinType = identifyJoinType(joinExpression);
-    this->queryPlan =
-        QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
+    this->queryPlan = QueryPlanBuilder::addJoin(this->queryPlan, subQueryRhs.getQueryPlan(), joinExpression, windowType, joinType);
     return *this;
 }
 
-Query& Query::orWith(const Query& subQueryRhs) {
+Query& Query::orWith(const Query& subQueryRhs)
+{
     NES_DEBUG("Query: finally we translate the OR into a union OP ");
     this->queryPlan = QueryPlanBuilder::addUnion(this->queryPlan, subQueryRhs.getQueryPlan());
     return *this;
 }
 
-Query& Query::filter(const ExpressionNodePtr& filterExpression) {
+Query& Query::filter(const ExpressionNodePtr& filterExpression)
+{
     NES_DEBUG("Query: add filter operator to query");
     this->queryPlan = QueryPlanBuilder::addFilter(filterExpression, this->queryPlan);
     return *this;
 }
 
-Query& Query::limit(const uint64_t limit) {
+Query& Query::limit(const uint64_t limit)
+{
     NES_DEBUG("Query: add limit operator to query");
     this->queryPlan = QueryPlanBuilder::addLimit(limit, this->queryPlan);
     return *this;
 }
 
-Query& Query::mapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor) {
+Query& Query::mapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor)
+{
     NES_DEBUG("Query: add map java udf operator to query");
     this->queryPlan = QueryPlanBuilder::addMapUDF(descriptor, this->queryPlan);
     return *this;
 }
 
-Query& Query::flatMapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor) {
+Query& Query::flatMapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor)
+{
     NES_DEBUG("Query: add flat map java udf operator to query");
     this->queryPlan = QueryPlanBuilder::addFlatMapUDF(descriptor, this->queryPlan);
     return *this;
 }
 
-Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression) {
+Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression)
+{
     NES_DEBUG("Query: add map operator to query");
     this->queryPlan = QueryPlanBuilder::addMap(mapExpression, this->queryPlan);
     return *this;
 }
 
-Query& Query::inferModel(const std::string model,
-                         const std::initializer_list<ExpressionItem> inputFields,
-                         const std::initializer_list<ExpressionItem> outputFields) {
+Query& Query::inferModel(
+    const std::string model,
+    const std::initializer_list<ExpressionItem> inputFields,
+    const std::initializer_list<ExpressionItem> outputFields)
+{
     NES_DEBUG("Query: add map inferModel to query");
     auto inputFieldVector = std::vector(inputFields);
     auto outputFieldVector = std::vector(outputFields);
     std::vector<ExpressionNodePtr> inputFieldsPtr;
     std::vector<ExpressionNodePtr> outputFieldsPtr;
-    for (const auto& inputField : inputFieldVector) {
+    for (const auto& inputField : inputFieldVector)
+    {
         inputFieldsPtr.push_back(inputField.getExpressionNode());
     }
-    for (const auto& outputField : outputFieldVector) {
+    for (const auto& outputField : outputFieldVector)
+    {
         outputFieldsPtr.push_back(outputField.getExpressionNode());
     }
 
@@ -331,36 +398,48 @@ Query& Query::inferModel(const std::string model,
     return *this;
 }
 
-Query& Query::sink(const SinkDescriptorPtr sinkDescriptor, WorkerId workerId) {
+Query& Query::sink(const SinkDescriptorPtr sinkDescriptor, WorkerId workerId)
+{
     NES_DEBUG("Query: add sink operator to query");
     this->queryPlan = QueryPlanBuilder::addSink(this->queryPlan, sinkDescriptor, workerId);
     return *this;
 }
 
-Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor) {
+Query& Query::assignWatermark(const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor)
+{
     NES_DEBUG("Query: add assignWatermark operator to query");
     this->queryPlan = QueryPlanBuilder::assignWatermark(this->queryPlan, watermarkStrategyDescriptor);
     return *this;
 }
 
-QueryPlanPtr Query::getQueryPlan() const { return queryPlan; }
+QueryPlanPtr Query::getQueryPlan() const
+{
+    return queryPlan;
+}
 
 //
-Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr joinExpression) {
+Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr joinExpression)
+{
     NES_DEBUG("Query: identify Join Type; default: CARTESIAN PRODUCT");
     auto joinType = Join::LogicalJoinDescriptor::JoinType::CARTESIAN_PRODUCT;
     NES_DEBUG("Query: Iterate over all ExpressionNode to check join field.");
     std::unordered_set<std::shared_ptr<BinaryExpressionNode>> visitedExpressions;
     auto bfsIterator = BreadthFirstNodeIterator(joinExpression);
-    for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr) {
-        if ((*itr)->instanceOf<BinaryExpressionNode>()) {
+    for (auto itr = bfsIterator.begin(); itr != BreadthFirstNodeIterator::end(); ++itr)
+    {
+        if ((*itr)->instanceOf<BinaryExpressionNode>())
+        {
             auto visitingOp = (*itr)->as<BinaryExpressionNode>();
-            if (visitedExpressions.contains(visitingOp)) {
+            if (visitedExpressions.contains(visitingOp))
+            {
                 // skip rest of the steps as the node found in already visited node list
                 continue;
-            } else {
+            }
+            else
+            {
                 visitedExpressions.insert(visitingOp);
-                if ((*itr)->instanceOf<EqualsExpressionNode>()) {
+                if ((*itr)->instanceOf<EqualsExpressionNode>())
+                {
                     NES_DEBUG("Query: identify Join Type: INNER JOIN");
                     joinType = Join::LogicalJoinDescriptor::JoinType::INNER_JOIN;
                     break;
@@ -371,4 +450,4 @@ Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr 
     return joinType;
 }
 
-}// namespace NES
+} // namespace NES

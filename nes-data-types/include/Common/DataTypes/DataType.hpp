@@ -18,7 +18,8 @@
 #include <memory>
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -26,8 +27,9 @@ using DataTypePtr = std::shared_ptr<DataType>;
 /**
  * @brief Base data type, which is the parent class for all other data types.
  */
-class DataType {
-  public:
+class DataType
+{
+public:
     virtual ~DataType() = default;
     /**
      * @brief Checks if this data type is Undefined.
@@ -75,8 +77,9 @@ class DataType {
     */
     [[nodiscard]] virtual bool isText() const;
 
-    template<class DataType>
-    static std::shared_ptr<DataType> as(DataTypePtr ptr) {
+    template <class DataType>
+    static std::shared_ptr<DataType> as(DataTypePtr ptr)
+    {
         return std::dynamic_pointer_cast<DataType>(ptr);
     }
 
@@ -102,6 +105,6 @@ class DataType {
     virtual std::string toString() = 0;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_

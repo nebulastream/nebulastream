@@ -16,12 +16,14 @@
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALUNARYEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Expressions/UnaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an arithmetical expression.
  */
-class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public ArithmeticalExpressionNode {
-  public:
+class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public ArithmeticalExpressionNode
+{
+public:
     /**
      * @brief Infers the stamp of this arithmetical expression node.
      * Currently the type inference is equal for all arithmetical expression and expects numerical data types as operands.
@@ -33,12 +35,12 @@ class ArithmeticalUnaryExpressionNode : public UnaryExpressionNode, public Arith
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
 
-  protected:
+protected:
     explicit ArithmeticalUnaryExpressionNode(DataTypePtr stamp);
     explicit ArithmeticalUnaryExpressionNode(ArithmeticalUnaryExpressionNode* other);
     ~ArithmeticalUnaryExpressionNode() noexcept override = default;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALUNARYEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALUNARYEXPRESSIONNODE_HPP_

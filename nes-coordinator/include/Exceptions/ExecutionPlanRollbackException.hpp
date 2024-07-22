@@ -18,15 +18,17 @@
 #include <stdexcept>
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This exception represents an error occurred while reverting the changes in the QEP plan
  */
-class ExecutionPlanRollbackException : public std::runtime_error {
-  public:
+class ExecutionPlanRollbackException : public std::runtime_error
+{
+public:
     explicit ExecutionPlanRollbackException(const std::string& message);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONPLANROLLBACKEXCEPTION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_EXECUTIONPLANROLLBACKEXCEPTION_HPP_

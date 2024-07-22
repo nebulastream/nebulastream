@@ -20,29 +20,36 @@
 #include <Sinks/Arrow/ArrowFormat.hpp>
 #include <Sinks/DataSinkPlugin.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class ArrowFileSinkPlugin : public DataSinkPlugin {
-  public:
+class ArrowFileSinkPlugin : public DataSinkPlugin
+{
+public:
     ArrowFileSinkPlugin() { NES_INFO("ArrowFileSinkPlugin loaded"); }
-    std::optional<DataSinkPtr> createDataSink(OperatorId,
-                                              SinkDescriptorPtr sinkDescriptor,
-                                              SchemaPtr schema,
-                                              Runtime::NodeEnginePtr nodeEngine,
-                                              const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                              size_t numOfProducers) override {
-        if (sinkDescriptor->instanceOf<FileSinkDescriptor>()) {
+    std::optional<DataSinkPtr> createDataSink(
+        OperatorId,
+        SinkDescriptorPtr sinkDescriptor,
+        SchemaPtr schema,
+        Runtime::NodeEnginePtr nodeEngine,
+        const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+        size_t numOfProducers) override
+    {
+        if (sinkDescriptor->instanceOf<FileSinkDescriptor>())
+        {
             auto fileSinkDescriptor = sinkDescriptor->as<FileSinkDescriptor>();
-            if (fileSinkDescriptor->getSinkFormatAsString() == "ARROW_FORMAT") {
+            if (fileSinkDescriptor->getSinkFormatAsString() == "ARROW_FORMAT")
+            {
                 auto format = std::make_shared<ArrowFormat>(schema, nodeEngine->getBufferManager());
-                return std::make_shared<ArrowFileSink>(format,
-                                                       nodeEngine,
-                                                       numOfProducers,
-                                                       fileSinkDescriptor->getFileName(),
-                                                       fileSinkDescriptor->getAppend(),
-                                                       querySubPlan->getQueryId(),
-                                                       querySubPlan->getQuerySubPlanId(),
-                                                       fileSinkDescriptor->getNumberOfOrigins());
+                return std::make_shared<ArrowFileSink>(
+                    format,
+                    nodeEngine,
+                    numOfProducers,
+                    fileSinkDescriptor->getFileName(),
+                    fileSinkDescriptor->getAppend(),
+                    querySubPlan->getQueryId(),
+                    querySubPlan->getQuerySubPlanId(),
+                    fileSinkDescriptor->getNumberOfOrigins());
             }
         }
         return {};
@@ -53,4 +60,4 @@ class ArrowFileSinkPlugin : public DataSinkPlugin {
 // Register sink plugin
 [[maybe_unused]] static SinkPluginRegistry::Add<ArrowFileSinkPlugin> arrowSinkPlugin;
 
-}// namespace NES
+} // namespace NES

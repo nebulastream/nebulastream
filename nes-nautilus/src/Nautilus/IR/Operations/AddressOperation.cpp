@@ -12,30 +12,57 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Nautilus/IR/Operations/AddressOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-#include <string>
 
-namespace NES::Nautilus::IR::Operations {
-AddressOperation::AddressOperation(OperationIdentifier identifier,
-                                   PrimitiveStamp dataType,
-                                   uint64_t getRecordWidth,
-                                   uint64_t fieldOffset,
-                                   std::string recordIdxName,
-                                   std::string addressSourceName)
-    : Operation(Operation::OperationType::AddressOp, identifier, Types::StampFactory::createAddressStamp()), dataType(dataType),
-      recordWidth(getRecordWidth), fieldOffset(fieldOffset), recordIdxName(recordIdxName), addressSourceName(addressSourceName) {}
-
-PrimitiveStamp AddressOperation::getDataType() { return dataType; }
-uint64_t AddressOperation::getRecordWidthInBytes() { return recordWidth; }
-uint64_t AddressOperation::getFieldOffsetInBytes() { return fieldOffset; }
-std::string AddressOperation::getRecordIdxName() { return recordIdxName; }
-std::string AddressOperation::getAddressSourceName() { return addressSourceName; }
-
-std::string AddressOperation::toString() {
-    return "AddressOperation_" + identifier + "(" + std::to_string(recordWidth) + ", " + std::to_string(fieldOffset) + ", "
-        + recordIdxName + ", " + addressSourceName + ")";
+namespace NES::Nautilus::IR::Operations
+{
+AddressOperation::AddressOperation(
+    OperationIdentifier identifier,
+    PrimitiveStamp dataType,
+    uint64_t getRecordWidth,
+    uint64_t fieldOffset,
+    std::string recordIdxName,
+    std::string addressSourceName)
+    : Operation(Operation::OperationType::AddressOp, identifier, Types::StampFactory::createAddressStamp())
+    , dataType(dataType)
+    , recordWidth(getRecordWidth)
+    , fieldOffset(fieldOffset)
+    , recordIdxName(recordIdxName)
+    , addressSourceName(addressSourceName)
+{
 }
 
-bool AddressOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::AddressOp; }
-}// namespace NES::Nautilus::IR::Operations
+PrimitiveStamp AddressOperation::getDataType()
+{
+    return dataType;
+}
+uint64_t AddressOperation::getRecordWidthInBytes()
+{
+    return recordWidth;
+}
+uint64_t AddressOperation::getFieldOffsetInBytes()
+{
+    return fieldOffset;
+}
+std::string AddressOperation::getRecordIdxName()
+{
+    return recordIdxName;
+}
+std::string AddressOperation::getAddressSourceName()
+{
+    return addressSourceName;
+}
+
+std::string AddressOperation::toString()
+{
+    return "AddressOperation_" + identifier + "(" + std::to_string(recordWidth) + ", " + std::to_string(fieldOffset) + ", " + recordIdxName
+        + ", " + addressSourceName + ")";
+}
+
+bool AddressOperation::classof(const Operation* Op)
+{
+    return Op->getOperationType() == OperationType::AddressOp;
+}
+} // namespace NES::Nautilus::IR::Operations

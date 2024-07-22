@@ -18,13 +18,15 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this operator renames the source
  */
-class RenameSourceOperator : public LogicalUnaryOperator {
-  public:
+class RenameSourceOperator : public LogicalUnaryOperator
+{
+public:
     explicit RenameSourceOperator(std::string const& newSourceName, OperatorId id);
     ~RenameSourceOperator() override = default;
 
@@ -47,9 +49,9 @@ class RenameSourceOperator : public LogicalUnaryOperator {
     void inferStringSignature() override;
     std::string getNewSourceName() const;
 
-  private:
+private:
     const std::string newSourceName;
 };
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_RENAMESOURCEOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_RENAMESOURCEOPERATOR_HPP_

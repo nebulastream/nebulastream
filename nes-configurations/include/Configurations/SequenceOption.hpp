@@ -14,21 +14,23 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
 
+#include <vector>
 #include "Configurations/BaseOption.hpp"
 #include "Configurations/ConfigurationException.hpp"
 #include "Configurations/TypedBaseOption.hpp"
-#include <vector>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 /**
  * @brief This class implements sequential options of a type that has to be a subtype of the BaseOption.
  * @note SequenceOptions can't have default values.
  * @tparam Type of the component.
  */
-template<DerivedBaseOption T>
-class SequenceOption : public BaseOption {
-  public:
+template <DerivedBaseOption T>
+class SequenceOption : public BaseOption
+{
+public:
     /**
      * @brief Constructor to create a new option that sets a name, and description.
      * @param name of the option.
@@ -56,8 +58,9 @@ class SequenceOption : public BaseOption {
 
     [[nodiscard]] std::vector<T> getValues() const;
     [[nodiscard]] bool empty() const;
-    template<class X>
-    void add(X value) {
+    template <class X>
+    void add(X value)
+    {
         auto option = T();
         option.setValue(value);
         options.push_back(option);
@@ -65,71 +68,83 @@ class SequenceOption : public BaseOption {
 
     std::string toString() override;
 
-  protected:
+protected:
     void parseFromYAMLNode(Yaml::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
-  private:
+private:
     std::vector<T> options;
 };
 
-template<DerivedBaseOption T>
+template <DerivedBaseOption T>
 SequenceOption<T>::SequenceOption(const std::string& name, const std::string& description) : BaseOption(name, description){};
 
-template<DerivedBaseOption T>
-void SequenceOption<T>::clear() {
+template <DerivedBaseOption T>
+void SequenceOption<T>::clear()
+{
     options.clear();
 }
 
-template<DerivedBaseOption T>
-void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node) {
-    if (node.IsSequence()) {
-        for (auto child = node.Begin(); child != node.End(); child++) {
+template <DerivedBaseOption T>
+void SequenceOption<T>::parseFromYAMLNode(Yaml::Node node)
+{
+    if (node.IsSequence())
+    {
+        for (auto child = node.Begin(); child != node.End(); child++)
+        {
             auto identifier = (*child).first;
             auto value = (*child).second;
             auto option = T();
             option.parseFromYAMLNode(value);
             options.push_back(option);
         }
-    } else {
+    }
+    else
+    {
         throw ConfigurationException("YAML node should be a sequence but it was a " + node.As<std::string>());
     }
 }
-template<DerivedBaseOption T>
-void SequenceOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) {
+template <DerivedBaseOption T>
+void SequenceOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams)
+{
     auto option = T();
     option.parseFromString(identifier, inputParams);
     options.push_back(option);
 }
 
-template<DerivedBaseOption T>
-T SequenceOption<T>::operator[](size_t index) const {
+template <DerivedBaseOption T>
+T SequenceOption<T>::operator[](size_t index) const
+{
     return options[index];
 }
 
-template<DerivedBaseOption T>
-size_t SequenceOption<T>::size() const {
+template <DerivedBaseOption T>
+size_t SequenceOption<T>::size() const
+{
     return options.size();
 }
 
-template<DerivedBaseOption T>
-std::vector<T> SequenceOption<T>::getValues() const {
+template <DerivedBaseOption T>
+std::vector<T> SequenceOption<T>::getValues() const
+{
     return options;
 }
 
-template<DerivedBaseOption T>
-bool SequenceOption<T>::empty() const {
+template <DerivedBaseOption T>
+bool SequenceOption<T>::empty() const
+{
     return options.empty();
 }
 
-template<DerivedBaseOption T>
-std::string SequenceOption<T>::toString() {
+template <DerivedBaseOption T>
+std::string SequenceOption<T>::toString()
+{
     std::stringstream os;
     os << "Name: " << name << "\n";
     os << "Description: " << description << "\n";
     return os.str();
 }
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_

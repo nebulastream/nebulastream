@@ -14,7 +14,6 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseUnitTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Query/QueryCatalogEntry.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
@@ -66,12 +65,15 @@
 #include <Util/IncrementalPlacementUtils.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseUnitTest.hpp>
 #include <z3++.h>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-class ISQPRequestTest : public Testing::BaseUnitTest {
-  public:
+class ISQPRequestTest : public Testing::BaseUnitTest
+{
+public:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     Optimizer::PlacementStrategy TEST_PLACEMENT_STRATEGY = Optimizer::PlacementStrategy::BottomUp;
@@ -88,7 +90,8 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         topology = Topology::create();
         globalQueryPlan = GlobalQueryPlan::create();
@@ -97,10 +100,11 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
         sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
         udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
         coordinatorConfiguration = Configurations::CoordinatorConfiguration::createDefault();
-        statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
-                                                                         Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                         Statistic::DefaultStatisticCache::create(),
-                                                                         topology);
+        statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+            Statistic::StatisticRegistry::create(),
+            Statistic::DefaultStatisticProbeGenerator::create(),
+            Statistic::DefaultStatisticCache::create(),
+            topology);
         z3::config cfg;
         cfg.set("timeout", 50000);
         cfg.set("model", false);
@@ -110,8 +114,8 @@ class ISQPRequestTest : public Testing::BaseUnitTest {
 };
 
 //test adding topology nodes and links
-TEST_F(ISQPRequestTest, testISQPAddNodeAndLinkEvents) {
-
+TEST_F(ISQPRequestTest, testISQPAddNodeAndLinkEvents)
+{
     // init topology nodes by computing ISQP events
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
@@ -135,25 +139,29 @@ TEST_F(ISQPRequestTest, testISQPAddNodeAndLinkEvents) {
     isqpEvents.emplace_back(isqpAddLink34);
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEvents, ZERO_RETRIES);
     constexpr auto requestId = RequestId(1);
     isqpRequest->setId(requestId);
 
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
 
@@ -165,8 +173,8 @@ TEST_F(ISQPRequestTest, testISQPAddNodeAndLinkEvents) {
 }
 
 //test adding two requests to first add topology nodes and then remove topology nodes
-TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes) {
-
+TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
@@ -191,24 +199,28 @@ TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes) {
     isqpEventsForRequest1.emplace_back(isqpAddLink34);
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -226,17 +238,20 @@ TEST_F(ISQPRequestTest, testFirstISQPAddNodeThenRemoveNodes) {
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_FALSE(topology->nodeWithWorkerIdExists(nodeId4));
 }
 
 //test adding a single
-TEST_F(ISQPRequestTest, testAddQueryEvents) {
-
+TEST_F(ISQPRequestTest, testAddQueryEvents)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -277,24 +292,28 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
     coordinatorConfiguration->optimizer.enableIncrementalPlacement = true;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -322,9 +341,12 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response1 = queryAddEvent1->getResponse().get();
@@ -334,8 +356,8 @@ TEST_F(ISQPRequestTest, testAddQueryEvents) {
 }
 
 //test adding a single
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithIncrementalPlacement2PL) {
-
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithIncrementalPlacement2PL)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -378,24 +400,28 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 2;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -429,9 +455,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response1 = queryAddEvent1->getResponse().get();
@@ -448,9 +477,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
     auto isqpRequest3 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest3, ZERO_RETRIES);
     constexpr RequestId requestId3(3);
     isqpRequest3->setId(requestId3);
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
 
@@ -464,8 +496,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithI
 }
 
 //test adding multiple queries
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithoutIncrementalPlacement2PL) {
-
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithoutIncrementalPlacement2PL)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -508,24 +540,28 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -540,14 +576,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
 
-    auto query1 =
-        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
+    auto query1 = Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(QueryId(1));
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
-    auto query2 =
-        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
+    auto query2 = Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(QueryId(2));
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
@@ -561,9 +595,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response1 = queryAddEvent1->getResponse().get();
@@ -580,9 +617,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     auto isqpRequest3 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest3, ZERO_RETRIES);
     constexpr RequestId requestId3(3);
     isqpRequest3->setId(requestId3);
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
 
@@ -595,8 +635,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
 }
 
 //test adding multiple queries without merging and perform placement using 2PL startegy
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWithoutIncrementalPlacementWith2PL) {
-
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWithoutIncrementalPlacementWith2PL)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -639,24 +679,28 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 2;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -671,14 +715,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId4);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
 
-    auto query1 =
-        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
+    auto query1 = Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(QueryId(1));
 
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
-    auto query2 =
-        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
+    auto query2 = Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(QueryId(2));
 
@@ -692,9 +734,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
 
@@ -713,17 +758,20 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     auto isqpRequest3 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest3, ZERO_RETRIES);
     constexpr RequestId requestId3(3);
     isqpRequest3->setId(requestId3);
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     placementAmendmentHandler->shutDown();
 }
 
 //test adding multiple queries without merging and perform placement using OCC startegy
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWithoutIncrementalPlacementWithOCC) {
-
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWithoutIncrementalPlacementWithOCC)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -758,24 +806,28 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -815,9 +867,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response1 = queryAddEvent1->getResponse().get();
@@ -830,8 +885,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithoutMergingWi
 }
 
 //test adding multiple queries without merging and perform placement using OCC startegy
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithoutIncrementalPlacementWithOCC) {
-
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWithoutIncrementalPlacementWithOCC)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -870,24 +925,28 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr RequestId requestId1(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -934,9 +993,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
     constexpr RequestId requestId2(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response1 = queryAddEvent1->getResponse().get();
@@ -949,8 +1011,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInaSingleBatchWithMergingWitho
 }
 
 //test adding multiple queries
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWithIncrementalPlacementOCC) {
-
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWithIncrementalPlacementOCC)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -985,24 +1047,28 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -1029,9 +1095,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response = queryAddEvent1->getResponse().get();
@@ -1050,9 +1119,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     constexpr auto requestId3 = RequestId(3);
     isqpRequest3->setId(requestId3);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response2 = queryAddEvent2->getResponse().get();
@@ -1062,8 +1134,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
 }
 
 //test adding multiple queries
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWithoutIncrementalPlacement) {
-
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWithoutIncrementalPlacement)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1100,24 +1172,28 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 2;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -1139,8 +1215,7 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     auto sce2 = Catalogs::Source::SourceCatalogEntry::create(physicalSource2, logicalSource2, nodeId3);
     sourceCatalog->addPhysicalSource(logicalSourceName2, sce2);
 
-    auto query1 =
-        Query::from(logicalSourceName1).unionWith(Query::from(logicalSourceName2)).sink(NullOutputSinkDescriptor::create());
+    auto query1 = Query::from(logicalSourceName1).unionWith(Query::from(logicalSourceName2)).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
@@ -1152,17 +1227,19 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response = queryAddEvent1->getResponse().get();
     auto queryId1 = std::static_pointer_cast<RequestProcessor::ISQPAddQueryResponse>(response)->queryId;
     EXPECT_EQ(queryCatalog->getQueryState(queryId1), QueryState::RUNNING);
 
-    auto query2 =
-        Query::from(logicalSourceName1).unionWith(Query::from(logicalSourceName2)).sink(NullOutputSinkDescriptor::create());
+    auto query2 = Query::from(logicalSourceName1).unionWith(Query::from(logicalSourceName2)).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
 
@@ -1174,9 +1251,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
     constexpr auto requestId3 = RequestId(3);
     isqpRequest3->setId(requestId3);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response2 = queryAddEvent2->getResponse().get();
@@ -1186,8 +1266,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithMergingWit
 }
 
 //test adding multiple queries
-TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMergingWithoutIncrementalPlacement) {
-
+TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMergingWithoutIncrementalPlacement)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1220,24 +1300,28 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 2;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -1264,9 +1348,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response = queryAddEvent1->getResponse().get();
@@ -1285,9 +1372,12 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
     constexpr auto requestId3 = RequestId(3);
     isqpRequest3->setId(requestId3);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response2 = queryAddEvent2->getResponse().get();
@@ -1297,8 +1387,8 @@ TEST_F(ISQPRequestTest, testMultipleAddQueryEventsInDifferentBatchWithoutMerging
 }
 
 //test adding multiple queries without merging and perform placement using OCC startegy
-TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueriesUsingOptimisticStrategy) {
-
+TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueriesUsingOptimisticStrategy)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1307,14 +1397,11 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueriesUsingOptimist
     auto nodeId1 = WorkerId(1);
     auto addNodeEvent1 = ISQPAddNodeEvent::create(WorkerType::CLOUD, nodeId1, "localhost", 4000, 4002, numberOfSlots, properties);
     auto nodeId2 = WorkerId(2);
-    auto addNodeEvent2 =
-        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, numberOfSlots, properties);
+    auto addNodeEvent2 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId2, "localhost", 4000, 4002, numberOfSlots, properties);
     auto nodeId3 = WorkerId(3);
-    auto addNodeEvent3 =
-        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, numberOfSlots, properties);
+    auto addNodeEvent3 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId3, "localhost", 4000, 4002, numberOfSlots, properties);
     auto nodeId4 = WorkerId(4);
-    auto addNodeEvent4 =
-        ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, numberOfSlots, properties);
+    auto addNodeEvent4 = ISQPAddNodeEvent::create(WorkerType::SENSOR, nodeId4, "localhost", 4000, 4002, numberOfSlots, properties);
 
     auto isqpRemoveLink14 = ISQPRemoveLinkEvent::create(nodeId1, nodeId4);
     auto isqpAddLink34 = ISQPAddLinkEvent::create(nodeId3, nodeId4);
@@ -1337,24 +1424,28 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueriesUsingOptimist
     coordinatorConfiguration->optimizer.placementAmendmentMode = Optimizer::PlacementAmendmentMode::OPTIMISTIC;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr auto requestId1 = RequestId(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -1412,9 +1503,12 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueriesUsingOptimist
     constexpr auto requestId2 = RequestId(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
 
@@ -1422,12 +1516,13 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueriesUsingOptimist
     // Only two requests should be processed
     EXPECT_EQ(sharedQueryPlanToDeploy.size(), 2);
     // Assert that the change log still exists in the failed shared query plans and the status of the query is in optimizing
-    for (const auto& unDeployedSharedQueryPlan : sharedQueryPlanToDeploy) {
+    for (const auto& unDeployedSharedQueryPlan : sharedQueryPlanToDeploy)
+    {
         auto hostedQueryIds = unDeployedSharedQueryPlan->getQueryIds();
         EXPECT_EQ(hostedQueryIds.size(), 1);
         EXPECT_EQ(queryCatalog->getQueryState(hostedQueryIds[0]), QueryState::OPTIMIZING);
-        uint64_t nowInMicroSec =
-            std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+        uint64_t nowInMicroSec
+            = std::chrono::duration_cast<std::chrono::microseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         const ChangeLogEntries& changeLogEntries = unDeployedSharedQueryPlan->getChangeLogEntries(nowInMicroSec);
         EXPECT_EQ(changeLogEntries.size(), 1);
     }
@@ -1435,8 +1530,8 @@ TEST_F(ISQPRequestTest, testFailureDuringPlacementOfMultipleQueriesUsingOptimist
 }
 
 //test adding multiple queries
-TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithoutIncrementalPlacement2PL) {
-
+TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithoutIncrementalPlacement2PL)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1484,24 +1579,28 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithout
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr RequestId requestId1(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -1516,14 +1615,12 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithout
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, nodeId5);
     sourceCatalog->addPhysicalSource(logicalSourceName, sce);
 
-    auto query1 =
-        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
+    auto query1 = Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan1 = query1.getQueryPlan();
     queryPlan1->setQueryId(QueryId(1));
     auto queryAddEvent1 = ISQPAddQueryEvent::create(queryPlan1, TEST_PLACEMENT_STRATEGY);
 
-    auto query2 =
-        Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
+    auto query2 = Query::from(logicalSourceName).map(Attribute("value") = Attribute("value") + 1).sink(NullOutputSinkDescriptor::create());
     const QueryPlanPtr& queryPlan2 = query2.getQueryPlan();
     queryPlan2->setQueryId(QueryId(2));
     auto queryAddEvent2 = ISQPAddQueryEvent::create(queryPlan2, TEST_PLACEMENT_STRATEGY);
@@ -1537,9 +1634,12 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithout
     constexpr RequestId requestId2(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response1 = queryAddEvent1->getResponse().get();
@@ -1558,9 +1658,12 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithout
     auto isqpRequest3 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest3, ZERO_RETRIES);
     constexpr RequestId requestId3(3);
     isqpRequest3->setId(requestId3);
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
 
@@ -1573,8 +1676,8 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsInaSingleBatchWithMergingWithout
 }
 
 //test adding multiple queries
-TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWithMergingWithoutIncrementalPlacement2PL) {
-
+TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWithMergingWithoutIncrementalPlacement2PL)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1622,24 +1725,28 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWith
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr RequestId requestId1(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(nodeId4));
@@ -1676,9 +1783,12 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWith
     constexpr RequestId requestId2(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response1 = queryAddEvent1->getResponse().get();
@@ -1696,9 +1806,12 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWith
     auto isqpRequest3 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest3, ZERO_RETRIES);
     constexpr RequestId requestId3(3);
     isqpRequest3->setId(requestId3);
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
 
@@ -1710,8 +1823,8 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWith
     placementAmendmentHandler->shutDown();
 }
 
-TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWithMergingWithIncrementalPlacement2PL) {
-
+TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWithMergingWithIncrementalPlacement2PL)
+{
     // init topology nodes
     std::map<std::string, std::any> properties;
     properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -1759,24 +1872,28 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWith
     coordinatorConfiguration->optimizer.placementAmendmentThreadCount = 4;
 
     // Prepare the system
-    auto placementAmendmentHandler =
-        std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
+    auto placementAmendmentHandler
+        = std::make_shared<Optimizer::PlacementAmendmentHandler>(coordinatorConfiguration->optimizer.placementAmendmentThreadCount);
     placementAmendmentHandler->start();
-    auto storageHandler = TwoPhaseLockingStorageHandler::create({coordinatorConfiguration,
-                                                                 topology,
-                                                                 globalExecutionPlan,
-                                                                 globalQueryPlan,
-                                                                 queryCatalog,
-                                                                 sourceCatalog,
-                                                                 udfCatalog,
-                                                                 statisticProbeHandler});
+    auto storageHandler = TwoPhaseLockingStorageHandler::create(
+        {coordinatorConfiguration,
+         topology,
+         globalExecutionPlan,
+         globalQueryPlan,
+         queryCatalog,
+         sourceCatalog,
+         udfCatalog,
+         statisticProbeHandler});
     auto isqpRequest1 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest1, ZERO_RETRIES);
     constexpr RequestId requestId1(1);
     isqpRequest1->setId(requestId1);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest1->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     EXPECT_TRUE(topology->nodeWithWorkerIdExists(WorkerId(nodeId4)));
@@ -1813,9 +1930,12 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWith
     constexpr RequestId requestId2(2);
     isqpRequest2->setId(requestId2);
     // Execute add request until deployment phase
-    try {
+    try
+    {
         isqpRequest2->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
     auto response1 = queryAddEvent1->getResponse().get();
@@ -1833,9 +1953,12 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWith
     auto isqpRequest3 = ISQPRequest::create(placementAmendmentHandler, z3Context, isqpEventsForRequest3, ZERO_RETRIES);
     constexpr RequestId requestId3(3);
     isqpRequest3->setId(requestId3);
-    try {
+    try
+    {
         isqpRequest3->execute(storageHandler);
-    } catch (Exceptions::RPCQueryUndeploymentException& e) {
+    }
+    catch (Exceptions::RPCQueryUndeploymentException& e)
+    {
         FAIL();
     }
 
@@ -1847,4 +1970,4 @@ TEST_F(ISQPRequestTest, testTopologyChangeEventsFourUnionQueryInaSingleBatchWith
     placementAmendmentHandler->shutDown();
 }
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

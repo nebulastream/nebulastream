@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 #include <Monitoring/MonitoringCatalog.hpp>
 #include <Monitoring/MonitoringPlan.hpp>
@@ -29,22 +29,26 @@
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES {
+namespace NES
+{
 using namespace Configurations;
 using namespace Runtime;
 
-class UserDefinedMonitoringTest : public Testing::BaseUnitTest {
-  public:
+class UserDefinedMonitoringTest : public Testing::BaseUnitTest
+{
+public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("UserDefinedMonitoringTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("ResourcesReaderTest: Setup UserDefinedMonitoringTest test class.");
     }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("UserDefinedMonitoringTest: Setup UserDefinedMonitoringTest test case.");
 
@@ -54,7 +58,8 @@ class UserDefinedMonitoringTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
+TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts)
+{
     nlohmann::json metricsJson{};
     std::vector<Monitoring::Metric> metrics;
 
@@ -63,19 +68,22 @@ TEST_F(UserDefinedMonitoringTest, testRuntimeConcepts) {
     std::string myString = "testString";
     metrics.emplace_back(myString);
 
-    for (unsigned int i = 0; i < metrics.size(); i++) {
+    for (unsigned int i = 0; i < metrics.size(); i++)
+    {
         metricsJson[i] = asJson(metrics[i]);
     }
 
     NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: {}", metricsJson);
 }
 
-TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
+TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts)
+{
     auto monitoringPlan = Monitoring::MonitoringPlan::defaultPlan();
     auto monitoringCatalog = Monitoring::MonitoringCatalog::defaultCatalog();
     nlohmann::json metricsJson{};
 
-    for (auto type : monitoringPlan->getMetricTypes()) {
+    for (auto type : monitoringPlan->getMetricTypes())
+    {
         auto collector = monitoringCatalog->getMetricCollector(type);
         Monitoring::MetricPtr metric = collector->readMetric();
         metricsJson[std::string(magic_enum::enum_name(metric->getMetricType()))] = asJson(metric);
@@ -83,4 +91,4 @@ TEST_F(UserDefinedMonitoringTest, testJsonRuntimeConcepts) {
     NES_DEBUG("UserDefinedMonitoringTest: Json Concepts: {}", metricsJson);
 }
 
-}// namespace NES
+} // namespace NES

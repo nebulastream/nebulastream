@@ -14,6 +14,8 @@
 
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#include <map>
+#include <string>
 #include "Configurations/BaseOption.hpp"
 #include "Configurations/ConfigurationException.hpp"
 #include "Configurations/Enums/EnumOption.hpp"
@@ -22,10 +24,9 @@
 #include "Configurations/WrapOption.hpp"
 #include "Identifiers/Identifiers.hpp"
 #include "Util/yaml/Yaml.hpp"
-#include <map>
-#include <string>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 /**
  * @brief This class is the bases for all configuration.
@@ -34,8 +35,9 @@ namespace NES::Configurations {
  * Or it could be member field of a high level configuration, e.g., see OptimizerConfiguration.
  * To identify a member field, all configuration have to implement getOptionMap() and return a set of options.
  */
-class BaseConfiguration : public BaseOption {
-  public:
+class BaseConfiguration : public BaseOption
+{
+public:
     /**
      * @brief Constructor for a root configuration. In this case the name and description are empty.
      */
@@ -78,13 +80,13 @@ class BaseConfiguration : public BaseOption {
 
     std::string toString() override;
 
-  protected:
+protected:
     void parseFromYAMLNode(const Yaml::Node config) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
     virtual std::vector<Configurations::BaseOption*> getOptions() = 0;
     std::map<std::string, Configurations::BaseOption*> getOptionMap();
 };
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_

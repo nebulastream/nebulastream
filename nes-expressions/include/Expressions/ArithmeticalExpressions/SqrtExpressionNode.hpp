@@ -15,12 +15,14 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SQRTEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SQRTEXPRESSIONNODE_HPP_
 #include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an SQRT (absolut value) expression.
  */
-class SqrtExpressionNode final : public ArithmeticalUnaryExpressionNode {
-  public:
+class SqrtExpressionNode final : public ArithmeticalUnaryExpressionNode
+{
+public:
     explicit SqrtExpressionNode(DataTypePtr stamp);
     ~SqrtExpressionNode() noexcept override = default;
     /**
@@ -43,10 +45,10 @@ class SqrtExpressionNode final : public ArithmeticalUnaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+protected:
     explicit SqrtExpressionNode(SqrtExpressionNode* other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SQRTEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SQRTEXPRESSIONNODE_HPP_

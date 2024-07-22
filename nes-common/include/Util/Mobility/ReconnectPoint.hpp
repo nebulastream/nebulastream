@@ -15,14 +15,16 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_
 #define NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_
 
+#include <cstdint>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Mobility/GeoLocation.hpp>
-#include <cstdint>
 
-namespace NES {
+namespace NES
+{
 using Timestamp = uint64_t;
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 
 /**
  * @brief A struct containing the reconnect prediction consisting of expected reconnect time and expected new parent as well as
@@ -31,11 +33,12 @@ namespace Spatial::Mobility::Experimental {
  * 2. The id of the next worker that this worker can connect to.
  * 3. The time when the reconnection will occur.
  */
-struct ReconnectPoint {
+struct ReconnectPoint
+{
     NES::Spatial::DataTypes::Experimental::GeoLocation pointGeoLocation;
     WorkerId newParentId;
     Timestamp expectedTime;
 };
-}// namespace Spatial::Mobility::Experimental
-}// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_
+} // namespace Spatial::Mobility::Experimental
+} // namespace NES
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_

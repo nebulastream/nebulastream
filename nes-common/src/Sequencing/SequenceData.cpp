@@ -14,23 +14,33 @@
 
 #include <Sequencing/SequenceData.hpp>
 
-namespace NES {
+namespace NES
+{
 SequenceData::SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumber, bool lastChunk)
-    : sequenceNumber(sequenceNumber), chunkNumber(chunkNumber), lastChunk(lastChunk) {}
+    : sequenceNumber(sequenceNumber), chunkNumber(chunkNumber), lastChunk(lastChunk)
+{
+}
 
 SequenceData::SequenceData() : sequenceNumber(INVALID_SEQ_NUMBER), chunkNumber(INVALID_CHUNK_NUMBER), lastChunk(false){};
 
-[[nodiscard]] std::string SequenceData::toString() const {
+[[nodiscard]] std::string SequenceData::toString() const
+{
     std::ostringstream oss;
     oss << *this;
     return oss.str();
 }
 
-bool SequenceData::operator<=(const SequenceData& other) const { return ((*this < other)) || ((*this) == other); }
+bool SequenceData::operator<=(const SequenceData& other) const
+{
+    return ((*this < other)) || ((*this) == other);
+}
 
-bool SequenceData::operator<(const SequenceData& other) const {
-    if (sequenceNumber == other.sequenceNumber) {
-        if (chunkNumber == other.chunkNumber) {
+bool SequenceData::operator<(const SequenceData& other) const
+{
+    if (sequenceNumber == other.sequenceNumber)
+    {
+        if (chunkNumber == other.chunkNumber)
+        {
             return lastChunk != other.lastChunk;
         }
         return chunkNumber < other.chunkNumber;
@@ -38,10 +48,14 @@ bool SequenceData::operator<(const SequenceData& other) const {
     return sequenceNumber < other.sequenceNumber;
 }
 
-bool SequenceData::operator==(const SequenceData& other) const {
+bool SequenceData::operator==(const SequenceData& other) const
+{
     return sequenceNumber == other.sequenceNumber && chunkNumber == other.chunkNumber && lastChunk == other.lastChunk;
 }
 
-bool SequenceData::operator!=(const SequenceData& other) const { return !(*this == other); }
+bool SequenceData::operator!=(const SequenceData& other) const
+{
+    return !(*this == other);
+}
 
-}// namespace NES
+} // namespace NES

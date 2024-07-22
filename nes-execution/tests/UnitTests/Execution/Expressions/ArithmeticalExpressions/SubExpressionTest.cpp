@@ -11,19 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class SubExpressionTest : public Testing::BaseUnitTest {
-  public:
+class SubExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SubExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SubExpressionTest test class.");
     }
@@ -32,7 +35,8 @@ class SubExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down SubExpressionTest test class."); }
 };
 
-TEST_F(SubExpressionTest, subIntegers) {
+TEST_F(SubExpressionTest, subIntegers)
+{
     auto expression = BinaryExpressionWrapper<SubExpression>();
 
     // Int8
@@ -46,7 +50,7 @@ TEST_F(SubExpressionTest, subIntegers) {
         auto resultValue = expression.eval(Value<Int16>(42_s16), Value<Int16>(42_s16));
         ASSERT_EQ(resultValue, 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int16>());
-    }// Int32
+    } // Int32
     {
         auto resultValue = expression.eval(Value<Int32>(42), Value<Int32>(42));
         ASSERT_EQ(resultValue, 0);
@@ -60,7 +64,8 @@ TEST_F(SubExpressionTest, subIntegers) {
     }
 }
 
-TEST_F(SubExpressionTest, subUnsignedIntegers) {
+TEST_F(SubExpressionTest, subUnsignedIntegers)
+{
     auto expression = BinaryExpressionWrapper<SubExpression>();
 
     // UInt8
@@ -74,12 +79,12 @@ TEST_F(SubExpressionTest, subUnsignedIntegers) {
         auto resultValue = expression.eval(Value<UInt16>(42_u16), Value<UInt16>(42_u16));
         ASSERT_EQ(resultValue, 0_u16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>());
-    }// UInt32
+    } // UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(42u), Value<UInt32>(42u));
         ASSERT_EQ(resultValue, 0_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    }// UInt64
+    } // UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
         ASSERT_EQ(resultValue, 0_u64);
@@ -93,20 +98,21 @@ TEST_F(SubExpressionTest, subUnsignedIntegers) {
     }
 }
 
-TEST_F(SubExpressionTest, subFloat) {
+TEST_F(SubExpressionTest, subFloat)
+{
     auto expression = BinaryExpressionWrapper<SubExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 42), Value<Float>((float) 42));
-        ASSERT_EQ(resultValue, (float) 0);
+        auto resultValue = expression.eval(Value<Float>((float)42), Value<Float>((float)42));
+        ASSERT_EQ(resultValue, (float)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Float>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 42), Value<Double>((double) 42));
-        ASSERT_EQ(resultValue, (float) 0);
+        auto resultValue = expression.eval(Value<Double>((double)42), Value<Double>((double)42));
+        ASSERT_EQ(resultValue, (float)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

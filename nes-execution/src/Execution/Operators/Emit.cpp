@@ -19,28 +19,32 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class EmitState : public OperatorState {
-  public:
-    explicit EmitState(const RecordBuffer& resultBuffer)
-        : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
+class EmitState : public OperatorState
+{
+public:
+    explicit EmitState(const RecordBuffer& resultBuffer) : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) { }
     Value<UInt64> outputIndex = 0_u64;
     RecordBuffer resultBuffer;
     Value<MemRef> bufferReference;
 };
 
-void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
+void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
+{
     // initialize state variable and create new buffer
     auto resultBufferRef = ctx.allocateBuffer();
     auto resultBuffer = RecordBuffer(resultBufferRef);
     ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
 }
 
-void Emit::execute(ExecutionContext& ctx, Record& record) const {
-    auto emitState = (EmitState*) ctx.getLocalState(this);
+void Emit::execute(ExecutionContext& ctx, Record& record) const
+{
+    auto emitState = (EmitState*)ctx.getLocalState(this);
     // emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= maxRecordsPerBuffer) {
+    if (emitState->outputIndex >= maxRecordsPerBuffer)
+    {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
@@ -56,16 +60,16 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
     emitState->outputIndex = emitState->outputIndex + 1_u64;
 }
 
-void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
+void Emit::close(ExecutionContext& ctx, RecordBuffer&) const
+{
     // emit current buffer and set the metadata
-    auto emitState = (EmitState*) ctx.getLocalState(this);
+    auto emitState = (EmitState*)ctx.getLocalState(this);
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, ctx.isLastChunk());
 }
 
-void Emit::emitRecordBuffer(ExecutionContext& ctx,
-                            RecordBuffer& recordBuffer,
-                            const Value<UInt64>& numRecords,
-                            const Value<Boolean>& lastChunk) const {
+void Emit::emitRecordBuffer(
+    ExecutionContext& ctx, RecordBuffer& recordBuffer, const Value<UInt64>& numRecords, const Value<Boolean>& lastChunk) const
+{
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
     recordBuffer.setOriginId(ctx.getOriginId());
@@ -76,12 +80,15 @@ void Emit::emitRecordBuffer(ExecutionContext& ctx,
     recordBuffer.setCreationTs(ctx.getCurrentTs());
     ctx.emitBuffer(recordBuffer);
 
-    if (lastChunk == true) {
+    if (lastChunk == true)
+    {
         ctx.removeSequenceState();
     }
 }
 
 Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
-    : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider)) {}
+    : maxRecordsPerBuffer(memoryProvider->getMemoryLayoutPtr()->getCapacity()), memoryProvider(std::move(memoryProvider))
+{
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

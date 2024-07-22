@@ -15,11 +15,12 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_STATISTICMETRIC_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_STATISTICMETRIC_HPP_
 
+#include <utility>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <StatisticIdentifiers.hpp>
-#include <utility>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 class StatisticMetric;
 using MetricPtr = std::shared_ptr<StatisticMetric>;
 
@@ -34,8 +35,9 @@ using StatisticMetricHash = uint64_t;
 /**
  * @brief This class acts as an abstract class for all possible statistic types, e.g., Cardinality over field f1
  */
-class StatisticMetric : public std::enable_shared_from_this<StatisticMetric> {
-  public:
+class StatisticMetric : public std::enable_shared_from_this<StatisticMetric>
+{
+public:
     /**
      * @brief Constructor for a Metric object
      * @param field
@@ -73,9 +75,11 @@ class StatisticMetric : public std::enable_shared_from_this<StatisticMetric> {
      * @tparam StatisticMetricType
      * @return bool true if node is of Metric
      */
-    template<class StatisticMetricType>
-    bool instanceOf() {
-        if (dynamic_cast<StatisticMetricType*>(this)) {
+    template <class StatisticMetricType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<StatisticMetricType*>(this))
+        {
             return true;
         }
         return false;
@@ -86,13 +90,15 @@ class StatisticMetric : public std::enable_shared_from_this<StatisticMetric> {
     * @tparam StatisticMetricType
     * @return returns a shared pointer of the MetricType
     */
-    template<class StatisticMetricType>
-    std::shared_ptr<StatisticMetricType> as() {
-        if (instanceOf<StatisticMetricType>()) {
+    template <class StatisticMetricType>
+    std::shared_ptr<StatisticMetricType> as()
+    {
+        if (instanceOf<StatisticMetricType>())
+        {
             return std::dynamic_pointer_cast<StatisticMetricType>(this->shared_from_this());
         }
-        throw std::logic_error("We performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(StatisticMetricType).name());
+        throw std::logic_error(
+            "We performed an invalid cast of operator " + this->toString() + " to type " + typeid(StatisticMetricType).name());
     }
 
     /**
@@ -100,9 +106,11 @@ class StatisticMetric : public std::enable_shared_from_this<StatisticMetric> {
      * @tparam StatisticMetricType
      * @return bool true if node is of Metric
      */
-    template<class StatisticMetricType>
-    [[nodiscard]] bool instanceOf() const {
-        if (dynamic_cast<const StatisticMetricType*>(this)) {
+    template <class StatisticMetricType>
+    [[nodiscard]] bool instanceOf() const
+    {
+        if (dynamic_cast<const StatisticMetricType*>(this))
+        {
             return true;
         }
         return false;
@@ -119,7 +127,7 @@ class StatisticMetric : public std::enable_shared_from_this<StatisticMetric> {
      */
     virtual ~StatisticMetric() = default;
 
-  protected:
+protected:
     const FieldAccessExpressionNodePtr field;
 };
 
@@ -130,5 +138,5 @@ class StatisticMetric : public std::enable_shared_from_this<StatisticMetric> {
  */
 FieldAccessExpressionNodePtr Over(std::string name);
 
-}// namespace NES::Statistic
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_STATISTICMETRIC_HPP_
+} // namespace NES::Statistic
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_STATISTICMETRIC_HPP_

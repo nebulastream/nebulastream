@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <fstream>
 #include <API/Schema.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <DataGeneration/YSBDataGenerator.hpp>
@@ -19,13 +20,17 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <fstream>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-std::string YSBDataGenerator::getName() { return "YSB"; }
+std::string YSBDataGenerator::getName()
+{
+    return "YSB";
+}
 
-std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize) {
+std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBuffers, size_t bufferSize)
+{
     NES_INFO("YSB Mode source mode");
 
     std::vector<Runtime::TupleBuffer> createdBuffers;
@@ -33,10 +38,12 @@ std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBu
 
     auto memoryLayout = getMemoryLayout(bufferSize);
     auto ts = 0UL;
-    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++) {
+    for (uint64_t currentBuffer = 0; currentBuffer < numberOfBuffers; currentBuffer++)
+    {
         auto buffer = allocateBuffer();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++, ts++) {
+        for (uint64_t currentRecord = 0; currentRecord < testBuffer.getCapacity(); currentRecord++, ts++)
+        {
             auto campaign_id = rand() % 1000;
             auto event_type = currentRecord % 3;
             testBuffer[currentRecord]["user_id"].write<uint64_t>(1);
@@ -58,14 +65,16 @@ std::vector<Runtime::TupleBuffer> YSBDataGenerator::createData(size_t numberOfBu
     return createdBuffers;
 }
 
-std::string YSBDataGenerator::toString() {
+std::string YSBDataGenerator::toString()
+{
     std::ostringstream oss;
 
     oss << getName();
     return oss.str();
 }
 
-SchemaPtr YSBDataGenerator::getSchema() {
+SchemaPtr YSBDataGenerator::getSchema()
+{
     return Schema::create()
         ->addField("user_id", BasicType::UINT64)
         ->addField("page_id", BasicType::UINT64)
@@ -80,7 +89,8 @@ SchemaPtr YSBDataGenerator::getSchema() {
         ->addField("d4", BasicType::UINT16);
 }
 
-Configurations::SchemaTypePtr YSBDataGenerator::getSchemaType() {
+Configurations::SchemaTypePtr YSBDataGenerator::getSchemaType()
+{
     const char* dataType = "UINT64";
     std::vector<Configurations::SchemaFieldDetail> schemaFieldDetails;
     schemaFieldDetails.emplace_back("user_id", dataType);
@@ -97,4 +107,4 @@ Configurations::SchemaTypePtr YSBDataGenerator::getSchemaType() {
     return Configurations::SchemaType::create(schemaFieldDetails);
 }
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration

@@ -11,4 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-int mul(int x, int y) { return x * y; }
+int mul(int x, int y)
+{
+    return x * y;
+}

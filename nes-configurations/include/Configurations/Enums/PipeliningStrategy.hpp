@@ -17,12 +17,14 @@
 
 #include <cstdint>
 
-namespace NES::QueryCompilation {
-enum class PipeliningStrategy : uint8_t {
+namespace NES::QueryCompilation
+{
+enum class PipeliningStrategy : uint8_t
+{
     // Applies operator fusion.
     OPERATOR_FUSION,
     // Places each operator in an individual pipeline.
     OPERATOR_AT_A_TIME
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_PIPELININGSTRATEGY_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_PIPELININGSTRATEGY_HPP_

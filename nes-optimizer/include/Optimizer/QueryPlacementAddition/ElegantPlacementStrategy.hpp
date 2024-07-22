@@ -20,18 +20,20 @@
 #include <cpr/response.h>
 #include <nlohmann/json.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 /**
  * @brief This class allows us to communicate with external planner service to perform operator placement.
  */
-class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
-  public:
+class ElegantPlacementStrategy : public BasePlacementAdditionStrategy
+{
+public:
     // Keys for information that is used during ELEGANT placement and stored in node properties.
     // This key is also accessed in SampleCodeGenerationPhase.cpp.
     const static std::string sourceCodeKey;
 
-  public:
+public:
     ~ElegantPlacementStrategy() override = default;
 
     /**
@@ -44,25 +46,28 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
      * @param placementMode: placement mode
      * @return shared pointer to the placement strategy
      */
-    static BasePlacementStrategyPtr create(const std::string& serviceURL,
-                                           PlacementStrategy placementStrategy,
-                                           const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                           const TopologyPtr& topology,
-                                           const TypeInferencePhasePtr& typeInferencePhase,
-                                           PlacementAmendmentMode placementAmendmentMode);
+    static BasePlacementStrategyPtr create(
+        const std::string& serviceURL,
+        PlacementStrategy placementStrategy,
+        const GlobalExecutionPlanPtr& globalExecutionPlan,
+        const TopologyPtr& topology,
+        const TypeInferencePhasePtr& typeInferencePhase,
+        PlacementAmendmentMode placementAmendmentMode);
 
-    PlacementAdditionResult updateGlobalExecutionPlan(SharedQueryId sharedQueryId,
-                                                      const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                                                      const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                                      DecomposedQueryPlanVersion querySubPlanVersion) override;
+    PlacementAdditionResult updateGlobalExecutionPlan(
+        SharedQueryId sharedQueryId,
+        const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+        DecomposedQueryPlanVersion querySubPlanVersion) override;
 
-  private:
-    explicit ElegantPlacementStrategy(const std::string& serviceURL,
-                                      const float timeWeight,
-                                      const GlobalExecutionPlanPtr& globalExecutionPlan,
-                                      const TopologyPtr& topology,
-                                      const TypeInferencePhasePtr& typeInferencePhase,
-                                      PlacementAmendmentMode placementAmendmentMode);
+private:
+    explicit ElegantPlacementStrategy(
+        const std::string& serviceURL,
+        const float timeWeight,
+        const GlobalExecutionPlanPtr& globalExecutionPlan,
+        const TopologyPtr& topology,
+        const TypeInferencePhasePtr& typeInferencePhase,
+        PlacementAmendmentMode placementAmendmentMode);
 
     /**
      * @brief: Prepare the query payload for the external service
@@ -70,9 +75,10 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
      * @param pinnedDownStreamOperators: pinned downstream operators of the plan to be placed
      * @return json representing the payload
      */
-    void prepareQueryPayload(const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
-                             const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                             nlohmann::json&);
+    void prepareQueryPayload(
+        const std::set<LogicalOperatorPtr>& pinnedUpStreamOperators,
+        const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
+        nlohmann::json&);
 
     /**
      * @brief: Prepare the topology payload for the external placement service
@@ -86,9 +92,8 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
      * @param pinnedDownStreamOperators: pinned downstream operators
      * @param response: Json representing the placement response received from the external service
      */
-    void pinOperatorsBasedOnElegantService(SharedQueryId sharedQueryId,
-                                           const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators,
-                                           cpr::Response& response) const;
+    void pinOperatorsBasedOnElegantService(
+        SharedQueryId sharedQueryId, const std::set<LogicalOperatorPtr>& pinnedDownStreamOperators, cpr::Response& response) const;
 
     /**
      * @brief Add a base64-transformed Java bytecode list to the JSON representation of the operator, if the operator is a MapUDFLogicalOperator or FlatMapUDFLogicalOperator. Otherwise, add an empty field.
@@ -104,6 +109,6 @@ class ElegantPlacementStrategy : public BasePlacementAdditionStrategy {
     const std::string EMPTY_STRING;
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ELEGANTPLACEMENTSTRATEGY_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_ELEGANTPLACEMENTSTRATEGY_HPP_

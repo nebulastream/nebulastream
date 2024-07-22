@@ -17,16 +17,18 @@
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
 class LogicalFilterOperator;
 using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class FilterSplitUpRule;
 using FilterSplitUpRulePtr = std::shared_ptr<FilterSplitUpRule>;
@@ -36,14 +38,15 @@ using FilterSplitUpRulePtr = std::shared_ptr<FilterSplitUpRule>;
  *  1.) A filter with an andExpression as a predicate can be split up into two separate filters.
  *  2.) A filter with a negated OrExpression can be reformulated deMorgans rules and can be split up afterwards.
  */
-class FilterSplitUpRule : public BaseRewriteRule {
-  public:
+class FilterSplitUpRule : public BaseRewriteRule
+{
+public:
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
     static FilterSplitUpRulePtr create();
     virtual ~FilterSplitUpRule() = default;
 
-  private:
+private:
     explicit FilterSplitUpRule();
 
     /**
@@ -58,6 +61,6 @@ class FilterSplitUpRule : public BaseRewriteRule {
     void splitUpFilters(LogicalFilterOperatorPtr filterOperator);
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERSPLITUPRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_FILTERSPLITUPRULE_HPP_

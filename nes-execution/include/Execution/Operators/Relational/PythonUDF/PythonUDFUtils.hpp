@@ -17,7 +17,8 @@
 
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
      * @brief Checks for an exception in the python Interpreter and throws a runtime error if one is found.
@@ -27,16 +28,19 @@ namespace NES::Runtime::Execution::Operators {
      * @param line_number line number where the error occurred: should be __LINE__
      * @param errorMessage error message that is shown
      */
-inline void pythonInterpreterErrorCheck(PyObject* pyObject, const char* func_name, int line_number, std::string errorMessage) {
-    if (pyObject == NULL) {
-        if (PyErr_Occurred()) {
+inline void pythonInterpreterErrorCheck(PyObject* pyObject, const char* func_name, int line_number, std::string errorMessage)
+{
+    if (pyObject == NULL)
+    {
+        if (PyErr_Occurred())
+        {
             PyErr_Print();
             PyErr_Clear();
         }
         NES_THROW_RUNTIME_ERROR("[" << func_name << ": line " << line_number << "] " << errorMessage);
     }
 }
-};// namespace NES::Runtime::Execution::Operators
+}; // namespace NES::Runtime::Execution::Operators
 
-#endif// NAUTILUS_PYTHON_UDF_ENABLED
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_
+#endif // NAUTILUS_PYTHON_UDF_ENABLED
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_

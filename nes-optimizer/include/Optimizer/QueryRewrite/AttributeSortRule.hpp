@@ -15,16 +15,18 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_ATTRIBUTESORTRULE_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_ATTRIBUTESORTRULE_HPP_
 
+#include <memory>
 #include <Expressions/ExpressionNode.hpp>
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 class FieldAccessExpressionNode;
 class ConstantValueExpressionNode;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class AttributeSortRule;
 using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
@@ -49,9 +51,9 @@ using AttributeSortRulePtr = std::shared_ptr<AttributeSortRule>;
  * 1. filter("c" * "b" > "d" + "a") => filter("a" + "d" < "b" * "c")
  * 2. filter("c" * "b" > "d" + "a" and "a" < "b") => filter("a" < "b" and "b" * "c" > "a" + "d")
  */
-class AttributeSortRule : public BaseRewriteRule {
-
-  public:
+class AttributeSortRule : public BaseRewriteRule
+{
+public:
     static AttributeSortRulePtr create();
     AttributeSortRule() = default;
     virtual ~AttributeSortRule() = default;
@@ -63,7 +65,7 @@ class AttributeSortRule : public BaseRewriteRule {
      */
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
 
-  private:
+private:
     /**
      * @brief Alphabetically sort the attributes in the operator. This method only expects operators of type filter and map.
      * @param logicalOperator: the operator to be sorted
@@ -91,13 +93,18 @@ class AttributeSortRule : public BaseRewriteRule {
      * @param expression: the expression to be used
      * @return: vector of expression containing commutative field access or constant expression type
      */
-    template<class ExpressionType>
-    std::vector<ExpressionNodePtr> fetchCommutativeFields(const ExpressionNodePtr& expression) {
+    template <class ExpressionType>
+    std::vector<ExpressionNodePtr> fetchCommutativeFields(const ExpressionNodePtr& expression)
+    {
         std::vector<ExpressionNodePtr> commutativeFields;
-        if (expression->instanceOf<FieldAccessExpressionNode>() || expression->instanceOf<ConstantValueExpressionNode>()) {
+        if (expression->instanceOf<FieldAccessExpressionNode>() || expression->instanceOf<ConstantValueExpressionNode>())
+        {
             commutativeFields.push_back(expression);
-        } else if (expression->template instanceOf<ExpressionType>()) {
-            for (const auto& child : expression->getChildren()) {
+        }
+        else if (expression->template instanceOf<ExpressionType>())
+        {
+            for (const auto& child : expression->getChildren())
+            {
                 auto childCommutativeFields = fetchCommutativeFields<ExpressionType>(child->template as<ExpressionNode>());
                 commutativeFields.insert(commutativeFields.end(), childCommutativeFields.begin(), childCommutativeFields.end());
             }
@@ -111,9 +118,8 @@ class AttributeSortRule : public BaseRewriteRule {
      * @param originalExpression: the original expression
      * @param updatedExpression: the updated expression
      */
-    bool replaceCommutativeExpressions(const ExpressionNodePtr& parentExpression,
-                                       const ExpressionNodePtr& originalExpression,
-                                       const ExpressionNodePtr& updatedExpression);
+    bool replaceCommutativeExpressions(
+        const ExpressionNodePtr& parentExpression, const ExpressionNodePtr& originalExpression, const ExpressionNodePtr& updatedExpression);
 
     /**
      * @brief Fetch the value of the left most constant expression or the name of the left most field access expression within
@@ -123,5 +129,5 @@ class AttributeSortRule : public BaseRewriteRule {
      */
     static std::string fetchLeftMostConstantValueOrFieldName(ExpressionNodePtr expression);
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_ATTRIBUTESORTRULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_ATTRIBUTESORTRULE_HPP_

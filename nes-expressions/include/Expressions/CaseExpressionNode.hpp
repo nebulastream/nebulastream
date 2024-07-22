@@ -15,13 +15,15 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_
 #include <Expressions/ExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief A case expression has at least one when expression and one default expression.
  * All when expressions are evaluated and the first one with a true condition is returned.
  */
-class CaseExpressionNode : public ExpressionNode {
-  public:
+class CaseExpressionNode : public ExpressionNode
+{
+public:
     explicit CaseExpressionNode(DataTypePtr stamp);
     ~CaseExpressionNode() noexcept override = default;
 
@@ -64,9 +66,9 @@ class CaseExpressionNode : public ExpressionNode {
      */
     ExpressionNodePtr copy() final;
 
-  protected:
+protected:
     explicit CaseExpressionNode(CaseExpressionNode* other);
 };
 
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_
+} // namespace NES
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_

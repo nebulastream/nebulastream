@@ -17,7 +17,8 @@
 #include <memory>
 // TODO ALL: use this file instead of declaring types manually in every single file!
 // TODO ALL: this is only for Runtime components
-namespace NES {
+namespace NES
+{
 
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
@@ -28,6 +29,6 @@ using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_FORWARDDECLARATION_HPP_

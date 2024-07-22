@@ -13,7 +13,6 @@
 */
 
 #include <API/Schema.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -23,21 +22,28 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
-namespace NES::Runtime::Execution::MemoryProvider {
+namespace NES::Runtime::Execution::MemoryProvider
+{
 
-Nautilus::TextValue* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex) {
+Nautilus::TextValue* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex)
+{
     auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
     auto childBuffer = tb.loadChildBuffer(childIndex);
     return Nautilus::TextValue::load(childBuffer);
 }
 
-Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
-                                       Nautilus::Value<Nautilus::MemRef>& bufferReference,
-                                       Nautilus::Value<Nautilus::MemRef>& fieldReference) const {
-    if (type->isBasicType()) {
+Nautilus::Value<> MemoryProvider::load(
+    const PhysicalTypePtr& type,
+    Nautilus::Value<Nautilus::MemRef>& bufferReference,
+    Nautilus::Value<Nautilus::MemRef>& fieldReference) const
+{
+    if (type->isBasicType())
+    {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
-        switch (basicType->nativeType) {
+        switch (basicType->nativeType)
+        {
             case BasicPhysicalType::NativeType::BOOLEAN: {
                 return fieldReference.load<Nautilus::Boolean>();
             };
@@ -76,65 +82,85 @@ Nautilus::Value<> MemoryProvider::load(const PhysicalTypePtr& type,
                 NES_NOT_IMPLEMENTED();
             };
         }
-    } else if (type->isArrayType()) {
+    }
+    else if (type->isArrayType())
+    {
         NES_ERROR("Physical Type: array type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
-    } else if (type->isTextType()) {
+    }
+    else if (type->isTextType())
+    {
         auto childIndex = fieldReference.load<Nautilus::UInt32>();
-        auto variableSizeBuffer =
-            Nautilus::FunctionCall("loadAssociatedTextValue", loadAssociatedTextValue, bufferReference, childIndex);
+        auto variableSizeBuffer = Nautilus::FunctionCall("loadAssociatedTextValue", loadAssociatedTextValue, bufferReference, childIndex);
         return variableSizeBuffer;
-    } else {
+    }
+    else
+    {
         NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
     }
 }
 
-uint32_t storeAssociatedTextValue(void* tupleBuffer, const Nautilus::TextValue* textValue) {
+uint32_t storeAssociatedTextValue(void* tupleBuffer, const Nautilus::TextValue* textValue)
+{
     auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
-    auto textBuffer = TupleBuffer::reinterpretAsTupleBuffer((void*) textValue);
+    auto textBuffer = TupleBuffer::reinterpretAsTupleBuffer((void*)textValue);
     return tb.storeChildBuffer(textBuffer);
 }
 
-Nautilus::Value<> MemoryProvider::store(const NES::PhysicalTypePtr& type,
-                                        Nautilus::Value<Nautilus::MemRef>& bufferReference,
-                                        Nautilus::Value<Nautilus::MemRef>& fieldReference,
-                                        Nautilus::Value<>& value) const {
-    if (type->isBasicType()) {
+Nautilus::Value<> MemoryProvider::store(
+    const NES::PhysicalTypePtr& type,
+    Nautilus::Value<Nautilus::MemRef>& bufferReference,
+    Nautilus::Value<Nautilus::MemRef>& fieldReference,
+    Nautilus::Value<>& value) const
+{
+    if (type->isBasicType())
+    {
         fieldReference.store(value);
         return value;
-    } else if (type->isTextType()) {
+    }
+    else if (type->isTextType())
+    {
         auto textValue = value.as<Nautilus::Text>();
-        auto childIndex = Nautilus::FunctionCall("storeAssociatedTextValue",
-                                                 storeAssociatedTextValue,
-                                                 bufferReference,
-                                                 textValue->getReference());
+        auto childIndex
+            = Nautilus::FunctionCall("storeAssociatedTextValue", storeAssociatedTextValue, bufferReference, textValue->getReference());
         fieldReference.store(childIndex);
         return value;
     }
     NES_NOT_IMPLEMENTED();
 }
 
-bool MemoryProvider::includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                   const Nautilus::Record::RecordFieldIdentifier& fieldIndex) const {
-    if (projections.empty()) {
+bool MemoryProvider::includesField(
+    const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+    const Nautilus::Record::RecordFieldIdentifier& fieldIndex) const
+{
+    if (projections.empty())
+    {
         return true;
     }
     return std::find(projections.begin(), projections.end(), fieldIndex) != projections.end();
 }
 
-MemoryProvider::~MemoryProvider() {}
+MemoryProvider::~MemoryProvider()
+{
+}
 
-MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema) {
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize, const SchemaPtr schema)
+{
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    {
         auto rowMemoryLayout = MemoryLayouts::RowLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
-    } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
+    }
+    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
         auto columnMemoryLayout = MemoryLayouts::ColumnLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
-    } else {
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 }
 
-}// namespace NES::Runtime::Execution::MemoryProvider
+} // namespace NES::Runtime::Execution::MemoryProvider

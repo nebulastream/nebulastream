@@ -17,16 +17,21 @@
 
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 
-namespace NES::Runtime::Execution::Operators {
-class StreamJoinBuildBucketing : public StreamJoinBuild {
-  public:
+namespace NES::Runtime::Execution::Operators
+{
+class StreamJoinBuildBucketing : public StreamJoinBuild
+{
+public:
     /**
      * @brief This class stores the no. windows to fill and the pointer to the windows for a given range
      */
-    class LocalStateBucketing : public OperatorState {
-      public:
+    class LocalStateBucketing : public OperatorState
+    {
+    public:
         explicit LocalStateBucketing(const Value<MemRef>& allWindowsToFill)
-            : allWindowsToFill(allWindowsToFill), numWindowsToFill(0_u64), minWindowStart(0_u64), maxWindowEnd(0_u64) {}
+            : allWindowsToFill(allWindowsToFill), numWindowsToFill(0_u64), minWindowStart(0_u64), maxWindowEnd(0_u64)
+        {
+        }
 
         Value<MemRef> allWindowsToFill;
         Value<UInt64> numWindowsToFill;
@@ -47,16 +52,17 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param windowSize
      * @param windowSlide
      */
-    StreamJoinBuildBucketing(const uint64_t operatorHandlerIndex,
-                             const SchemaPtr& schema,
-                             const std::string& joinFieldName,
-                             const QueryCompilation::JoinBuildSideType joinBuildSide,
-                             const uint64_t entrySize,
-                             TimeFunctionPtr timeFunction,
-                             QueryCompilation::StreamJoinStrategy joinStrategy,
-                             QueryCompilation::WindowingStrategy windowingStrategy,
-                             uint64_t windowSize,
-                             uint64_t windowSlide);
+    StreamJoinBuildBucketing(
+        const uint64_t operatorHandlerIndex,
+        const SchemaPtr& schema,
+        const std::string& joinFieldName,
+        const QueryCompilation::JoinBuildSideType joinBuildSide,
+        const uint64_t entrySize,
+        TimeFunctionPtr timeFunction,
+        QueryCompilation::StreamJoinStrategy joinStrategy,
+        QueryCompilation::WindowingStrategy windowingStrategy,
+        uint64_t windowSize,
+        uint64_t windowSlide);
 
     ~StreamJoinBuildBucketing() override = default;
 
@@ -67,10 +73,11 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param ts
      * @param workerThreadId
      */
-    void updateLocalState(LocalStateBucketing* localStateBucketing,
-                          Value<MemRef>& opHandlerMemRef,
-                          Value<UInt64>& ts,
-                          ValueId<WorkerThreadId>& workerThreadId) const;
+    void updateLocalState(
+        LocalStateBucketing* localStateBucketing,
+        Value<MemRef>& opHandlerMemRef,
+        Value<UInt64>& ts,
+        ValueId<WorkerThreadId>& workerThreadId) const;
 
     /**
      * @brief Checks if the current local hash join state is up-to-date, meaning the correct windows are stored
@@ -105,12 +112,11 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param workerThreadId
      * @param record
      */
-    virtual void insertRecordForWindow(Value<MemRef>& allWindowsToFill,
-                                       Value<UInt64>& curIndex,
-                                       ValueId<WorkerThreadId>& workerThreadId,
-                                       Record& record) const = 0;
+    virtual void insertRecordForWindow(
+        Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex, ValueId<WorkerThreadId>& workerThreadId, Record& record) const
+        = 0;
 
-  private:
+private:
     /**
      * @brief Calculates the last start for the given timestamp (ts)
      * @param ts
@@ -128,5 +134,5 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
     uint64_t windowSize;
     uint64_t windowSlide;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILDBUCKETING_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILDBUCKETING_HPP_

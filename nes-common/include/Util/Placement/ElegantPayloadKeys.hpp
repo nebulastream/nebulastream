@@ -17,7 +17,8 @@
 
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 //Query payload constants
 const std::string OPERATOR_GRAPH_KEY = "operatorGraph";
@@ -43,6 +44,6 @@ const std::string TIME_WEIGHT_KEY = "time_weight";
 const std::string AVAILABLE_NODES_KEY = "availNodes";
 const std::string PLACEMENT_KEY = "placement";
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_PLACEMENT_ELEGANTPAYLOADKEYS_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_PLACEMENT_ELEGANTPAYLOADKEYS_HPP_

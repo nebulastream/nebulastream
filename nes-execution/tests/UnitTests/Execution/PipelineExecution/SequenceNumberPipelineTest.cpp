@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <random>
+#include <utility>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
@@ -45,29 +45,34 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-#include <random>
-#include <utility>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class SequenceNumberPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+class SequenceNumberPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SequenceNumberPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SequenceNumberPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup SequenceNumberPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
@@ -82,21 +87,26 @@ class SequenceNumberPipelineTest : public Testing::BaseUnitTest, public Abstract
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(BufferManagerPtr bm, SchemaPtr schema) {
+std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(BufferManagerPtr bm, SchemaPtr schema)
+{
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
-    for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt) {
+    for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
+    {
         auto buffer = bm->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-        for (int64_t i = 0; i < 100; ++i) {
+        for (int64_t i = 0; i < 100; ++i)
+        {
             testBuffer[i]["f1"].write(i % 10_s64);
             testBuffer[i]["f2"].write(+1_s64);
             testBuffer.setNumberOfTuples(i + 1);
         }
 
-        if (bufCnt == 1 || bufCnt == 3) {
-            for (uint64_t i = 0; i < testBuffer.getCapacity(); ++i) {
+        if (bufCnt == 1 || bufCnt == 3)
+        {
+            for (uint64_t i = 0; i < testBuffer.getCapacity(); ++i)
+            {
                 testBuffer[i]["f1"].write(+10_s64);
             }
         }
@@ -112,7 +122,8 @@ std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(BufferManagerPtr bm, Sch
  * We send four buffers and create the data so that no tuple satisfies the condition for the second, and fourth buffer.
  * Then we check if the PipelineExecutionContext has seen all sequence numbers, as we have to pass on all sequence numbers
  */
-TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted) {
+TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
+{
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -137,16 +148,19 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted) {
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataAllSeqNumbersEmitted(bm, schema)) {
+    for (auto& buf : createDataAllSeqNumbersEmitted(bm, schema))
+    {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
     executablePipeline->stop(pipelineContext);
 
     // Checking the output
     ASSERT_EQ(pipelineContext.buffers.size(), 4);
-    for (const auto& buf : pipelineContext.buffers) {
+    for (const auto& buf : pipelineContext.buffers)
+    {
         auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
-        for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++) {
+        for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++)
+        {
             ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 5);
             ASSERT_EQ(resulttestBuffer[i]["f2"].read<int64_t>(), 1);
         }
@@ -154,26 +168,28 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted) {
 
     // Checking, if we have seen all sequence numbers
     std::vector<SequenceNumber> seenSeqNumbers;
-    std::transform(pipelineContext.seenSeqChunkLastChunk.begin(),
-                   pipelineContext.seenSeqChunkLastChunk.end(),
-                   std::back_inserter(seenSeqNumbers),
-                   [](const SequenceData& item) {
-                       return item.sequenceNumber;
-                   });
+    std::transform(
+        pipelineContext.seenSeqChunkLastChunk.begin(),
+        pipelineContext.seenSeqChunkLastChunk.end(),
+        std::back_inserter(seenSeqNumbers),
+        [](const SequenceData& item) { return item.sequenceNumber; });
     ASSERT_THAT(seenSeqNumbers, ::testing::UnorderedElementsAreArray({1, 2, 3, 4}));
 }
 
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataFullWithConstantFieldValues(BufferManagerPtr bm, SchemaPtr schema) {
+std::vector<TupleBuffer> createDataFullWithConstantFieldValues(BufferManagerPtr bm, SchemaPtr schema)
+{
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
-    for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt) {
+    for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
+    {
         auto buffer = bm->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-        for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i) {
+        for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
+        {
             testBuffer[i]["f1"].write(+10_s64);
             testBuffer[i]["f2"].write(+1_s64);
             testBuffer.setNumberOfTuples(i + 1);
@@ -191,9 +207,10 @@ std::vector<TupleBuffer> createDataFullWithConstantFieldValues(BufferManagerPtr 
  * @brief Map pipeline that has creates an additional field to have a larger output schema than input. With this, we check
  * our implementation of the chunks and see, if they have been assigned correctly.
  */
-TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
-    auto inputSchema =
-        Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::INT64)->addField("f2", BasicType::INT64);
+TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
+{
+    auto inputSchema
+        = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::INT64)->addField("f2", BasicType::INT64);
     auto outputSchema = inputSchema->copy()->addField("f3", BasicType::INT64);
     auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
     auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
@@ -218,7 +235,8 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataFullWithConstantFieldValues(bm, inputSchema)) {
+    for (auto& buf : createDataFullWithConstantFieldValues(bm, inputSchema))
+    {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
     executablePipeline->stop(pipelineContext);
@@ -236,9 +254,11 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
         {4, 2, true},
     };
     auto expectedSeqChunkLastChunkIt = expectedSeqChunkLastChunk.begin();
-    for (const auto& buf : pipelineContext.buffers) {
+    for (const auto& buf : pipelineContext.buffers)
+    {
         auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayoutOutput, buf);
-        for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++) {
+        for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++)
+        {
             ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 10);
             ASSERT_EQ(resulttestBuffer[i]["f2"].read<int64_t>(), 1);
             ASSERT_EQ(resulttestBuffer[i]["f3"].read<int64_t>(), 10 + 1);
@@ -252,8 +272,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
     ASSERT_THAT(pipelineContext.seenSeqChunkLastChunk, ::testing::UnorderedElementsAreArray(expectedSeqChunkLastChunk));
 }
 
-std::shared_ptr<PhysicalOperatorPipeline> createFirstPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput,
-                                                              const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput) {
+std::shared_ptr<PhysicalOperatorPipeline>
+createFirstPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput, const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput)
+{
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -273,8 +294,9 @@ std::shared_ptr<PhysicalOperatorPipeline> createFirstPipeline(const MemoryLayout
     return pipeline;
 }
 
-std::shared_ptr<PhysicalOperatorPipeline> createSecondPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput,
-                                                               Aggregation::AggregationFunctionPtr aggregationFunction) {
+std::shared_ptr<PhysicalOperatorPipeline>
+createSecondPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput, Aggregation::AggregationFunctionPtr aggregationFunction)
+{
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
@@ -291,14 +313,14 @@ std::shared_ptr<PhysicalOperatorPipeline> createSecondPipeline(const MemoryLayou
     return pipeline;
 }
 
-std::shared_ptr<PhysicalOperatorPipeline> createThirdPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput,
-                                                              Aggregation::AggregationFunctionPtr aggregationFunction) {
+std::shared_ptr<PhysicalOperatorPipeline>
+createThirdPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput, Aggregation::AggregationFunctionPtr aggregationFunction)
+{
     std::vector<Aggregation::AggregationFunctionPtr> aggregationFunctions = {std::move(aggregationFunction)};
-    auto sliceMergingAction =
-        std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions, "start", "end", INVALID_ORIGIN_ID);
-    auto sliceMerging = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/,
-                                                                          aggregationFunctions,
-                                                                          std::move(sliceMergingAction));
+    auto sliceMergingAction
+        = std::make_unique<Operators::NonKeyedWindowEmitAction>(aggregationFunctions, "start", "end", INVALID_ORIGIN_ID);
+    auto sliceMerging
+        = std::make_shared<Operators::NonKeyedSliceMerging>(0 /*handler index*/, aggregationFunctions, std::move(sliceMergingAction));
 
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutOutput);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
@@ -318,7 +340,8 @@ std::shared_ptr<PhysicalOperatorPipeline> createThirdPipeline(const MemoryLayout
  * Additionally, we will send the output buffers of the first pipeline in a random fashion.
  * This way, we can test if a window operator waits until it has seen all chunks of a sequence number.
  */
-TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
+TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
+{
     auto inputSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                            ->addField("f1", BasicType::INT64)
                            ->addField("f2", BasicType::INT64)
@@ -337,8 +360,8 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
     const auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     const auto aggregationResultFieldName1 = "test$count";
     PhysicalTypePtr integerType = DefaultPhysicalTypeFactory().getPhysicalType(DataTypeFactory::createInt64());
-    Aggregation::AggregationFunctionPtr aggregationFunction =
-        std::make_shared<Aggregation::CountAggregationFunction>(integerType, integerType, readF1, aggregationResultFieldName1);
+    Aggregation::AggregationFunctionPtr aggregationFunction
+        = std::make_shared<Aggregation::CountAggregationFunction>(integerType, integerType, readF1, aggregationResultFieldName1);
 
     // Creating executable pipelines
     auto pipeline1 = provider->create(createFirstPipeline(memoryLayoutInput, memoryLayoutOutput), options);
@@ -349,8 +372,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
     constexpr auto windowSize = 10;
     constexpr auto windowSlide = 10;
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
-    auto preAggregationHandler =
-        std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(windowSize, windowSlide, origins);
+    auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(windowSize, windowSlide, origins);
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
     // Creating pipeline execution contexts
@@ -366,10 +388,12 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
     // Creating input data and executing the first pipeline
     constexpr auto NUM_BUFFERS = 2;
     auto ts = 0_u64;
-    for (auto bufCnt = 0_u64; bufCnt < NUM_BUFFERS; ++bufCnt) {
+    for (auto bufCnt = 0_u64; bufCnt < NUM_BUFFERS; ++bufCnt)
+    {
         auto buffer = bm->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, inputSchema);
-        for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i) {
+        for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
+        {
             testBuffer[i]["f1"].write(+10_s64);
             testBuffer[i]["f2"].write(+10_s64);
             testBuffer[i]["ts"].write(ts++);
@@ -389,38 +413,40 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
     std::shuffle(pipeline1Context.buffers.begin(), pipeline1Context.buffers.end(), gen);
 
     // Executing the second and third pipeline
-    for (auto buf : pipeline1Context.buffers) {
+    for (auto buf : pipeline1Context.buffers)
+    {
         pipeline2->execute(buf, pipeline2Context, *wc);
     }
-    for (auto buf : pipeline2Context.buffers) {
+    for (auto buf : pipeline2Context.buffers)
+    {
         pipeline3->execute(buf, pipeline3Context, *wc);
     }
 
     // We use ts as we increase the timestamp for each tuple.
     auto expectedNumberOfTuples = (ts) / windowSize;
-    auto numberOfTuples = std::accumulate(pipeline3Context.buffers.begin(),
-                                          pipeline3Context.buffers.end(),
-                                          0_u64,
-                                          [](const auto sum, const TupleBuffer& buf) {
-                                              return sum + buf.getNumberOfTuples();
-                                          });
+    auto numberOfTuples = std::accumulate(
+        pipeline3Context.buffers.begin(),
+        pipeline3Context.buffers.end(),
+        0_u64,
+        [](const auto sum, const TupleBuffer& buf) { return sum + buf.getNumberOfTuples(); });
     EXPECT_EQ(numberOfTuples, expectedNumberOfTuples);
 
     // Comparing expected output
-    for (const auto& buf : pipeline3Context.buffers) {
+    for (const auto& buf : pipeline3Context.buffers)
+    {
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, outputSchemaWindow);
-        for (auto i = 0_u64; i < testBuffer.getNumberOfTuples(); ++i) {
+        for (auto i = 0_u64; i < testBuffer.getNumberOfTuples(); ++i)
+        {
             // As we count the number of tuple per window, the count should be the window size
             EXPECT_EQ(windowSize, testBuffer[i][aggregationResultFieldName1].read<int64_t>());
         }
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        SequenceNumberPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<SequenceNumberPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    SequenceNumberPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<SequenceNumberPipelineTest::ParamType>& info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

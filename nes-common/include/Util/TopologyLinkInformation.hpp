@@ -13,16 +13,18 @@
 */
 #ifndef NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_
 #define NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_
-#include <Identifiers/Identifiers.hpp>
 #include <cstdint>
 #include <string>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief this class represents a topology edge between 2 nodes
  */
-class TopologyLinkInformation {
-  public:
+class TopologyLinkInformation
+{
+public:
     TopologyLinkInformation(WorkerId upstreamTopologyNode, WorkerId downstreamTopologyNode);
     TopologyLinkInformation(WorkerId::Underlying upstreamTopologyNode, WorkerId::Underlying downstreamTopologyNode);
     /**
@@ -41,5 +43,5 @@ class TopologyLinkInformation {
     WorkerId upstreamTopologyNode;
     WorkerId downstreamTopologyNode;
 };
-}// namespace NES
-#endif// NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_
+} // namespace NES
+#endif // NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_

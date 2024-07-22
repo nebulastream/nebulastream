@@ -15,18 +15,19 @@
 #ifndef NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_TEXTPHYSICALTYPE_HPP_
 #define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_TEXTPHYSICALTYPE_HPP_
 
-#include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <utility>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The text physical type, which represent TextType and FixedChar types in NES.
  */
-class TextPhysicalType final : public PhysicalType {
-
-  public:
-    inline TextPhysicalType(DataTypePtr type) noexcept : PhysicalType(std::move(type)) {}
+class TextPhysicalType final : public PhysicalType
+{
+public:
+    inline TextPhysicalType(DataTypePtr type) noexcept : PhysicalType(std::move(type)) { }
 
     ~TextPhysicalType() override = default;
 
@@ -43,6 +44,6 @@ class TextPhysicalType final : public PhysicalType {
     [[nodiscard]] std::string toString() const noexcept override;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_TEXTPHYSICALTYPE_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_TEXTPHYSICALTYPE_HPP_

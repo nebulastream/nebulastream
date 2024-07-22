@@ -23,49 +23,63 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
-AddScanAndEmitPhasePtr AddScanAndEmitPhase::create() { return std::make_shared<AddScanAndEmitPhase>(); }
+AddScanAndEmitPhasePtr AddScanAndEmitPhase::create()
+{
+    return std::make_shared<AddScanAndEmitPhase>();
+}
 
-PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan) {
-    for (const auto& pipeline : pipelineQueryPlan->getPipelines()) {
-        if (pipeline->isOperatorPipeline()) {
+PipelineQueryPlanPtr AddScanAndEmitPhase::apply(PipelineQueryPlanPtr pipelineQueryPlan)
+{
+    for (const auto& pipeline : pipelineQueryPlan->getPipelines())
+    {
+        if (pipeline->isOperatorPipeline())
+        {
             process(pipeline);
         }
     }
     return pipelineQueryPlan;
 }
 
-OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline) {
+OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
+{
     auto decomposedQueryPlan = pipeline->getDecomposedQueryPlan();
     auto pipelineRootOperators = decomposedQueryPlan->getRootOperators();
-    if (pipelineRootOperators.size() != 1) {
+    if (pipelineRootOperators.size() != 1)
+    {
         throw QueryCompilationException("A pipeline should only have one root operator");
     }
     auto rootOperator = pipelineRootOperators[0];
     // insert buffer scan operator to the pipeline root if necessary
-    if (!rootOperator->instanceOf<PhysicalOperators::AbstractScanOperator>()) {
-        if (rootOperator->instanceOf<PhysicalOperators::PhysicalUnaryOperator>()) {
+    if (!rootOperator->instanceOf<PhysicalOperators::AbstractScanOperator>())
+    {
+        if (rootOperator->instanceOf<PhysicalOperators::PhysicalUnaryOperator>())
+        {
             auto binaryRoot = rootOperator->as<PhysicalOperators::PhysicalUnaryOperator>();
-            auto newScan =
-                PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getStatisticId(), binaryRoot->getInputSchema());
+            auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getStatisticId(), binaryRoot->getInputSchema());
             pipeline->prependOperator(newScan);
-        } else {
+        }
+        else
+        {
             throw QueryCompilationException("Pipeline root should be a unary operator but was:" + rootOperator->toString());
         }
     }
 
     // insert emit buffer operator if necessary
     auto pipelineLeafOperators = rootOperator->getAllLeafNodes();
-    for (const auto& leaf : pipelineLeafOperators) {
+    for (const auto& leaf : pipelineLeafOperators)
+    {
         auto leafOperator = leaf->as<Operator>();
-        if (!leafOperator->instanceOf<PhysicalOperators::AbstractEmitOperator>()) {
-            auto emitOperator =
-                PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getStatisticId(), leafOperator->getOutputSchema());
+        if (!leafOperator->instanceOf<PhysicalOperators::AbstractEmitOperator>())
+        {
+            auto emitOperator
+                = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getStatisticId(), leafOperator->getOutputSchema());
             leafOperator->addChild(emitOperator);
         }
     }
     return pipeline;
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

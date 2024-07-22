@@ -18,13 +18,15 @@
 #include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
  * The DiskCollector class enables measuring and writing records of class Metrics/Gauge/DiskMetrics into a TupleBuffer.
  */
-class DiskCollector : public MetricCollector {
-  public:
+class DiskCollector : public MetricCollector
+{
+public:
     explicit DiskCollector();
 
     /**
@@ -52,13 +54,13 @@ class DiskCollector : public MetricCollector {
      */
     const MetricPtr readMetric() const override;
 
-  private:
+private:
     AbstractSystemResourcesReaderPtr resourceReader;
     SchemaPtr schema;
 };
 
 using DiskCollectorPtr = std::shared_ptr<DiskCollector>;
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_DISKCOLLECTOR_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_DISKCOLLECTOR_HPP_

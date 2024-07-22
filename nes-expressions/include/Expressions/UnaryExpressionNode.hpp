@@ -15,12 +15,14 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
 #include <Expressions/ExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief A unary expression is used to represent expressions with one child.
  */
-class UnaryExpressionNode : public ExpressionNode {
-  public:
+class UnaryExpressionNode : public ExpressionNode
+{
+public:
     explicit UnaryExpressionNode(DataTypePtr stamp);
 
     /**
@@ -41,9 +43,9 @@ class UnaryExpressionNode : public ExpressionNode {
     */
     ExpressionNodePtr copy() override = 0;
 
-  protected:
+protected:
     explicit UnaryExpressionNode(UnaryExpressionNode* other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_

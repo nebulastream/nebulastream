@@ -17,7 +17,8 @@
 
 #include <Optimizer/QueryRewrite/BaseRewriteRule.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class RenameSourceToProjectOperatorRule;
 using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProjectOperatorRule>;
@@ -25,15 +26,15 @@ using RenameSourceToProjectOperatorRulePtr = std::shared_ptr<RenameSourceToProje
 /**
  * @brief This rule is responsible for transforming Source Rename operator to the projection operator
  */
-class RenameSourceToProjectOperatorRule : public BaseRewriteRule {
-
-  public:
+class RenameSourceToProjectOperatorRule : public BaseRewriteRule
+{
+public:
     QueryPlanPtr apply(QueryPlanPtr queryPlan) override;
     virtual ~RenameSourceToProjectOperatorRule() = default;
 
     static RenameSourceToProjectOperatorRulePtr create();
 
-  private:
+private:
     RenameSourceToProjectOperatorRule() = default;
 
     /**
@@ -44,6 +45,6 @@ class RenameSourceToProjectOperatorRule : public BaseRewriteRule {
     static OperatorPtr convert(const OperatorPtr& operatorNode);
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_RENAMESOURCETOPROJECTOPERATORRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYREWRITE_RENAMESOURCETOPROJECTOPERATORRULE_HPP_

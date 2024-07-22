@@ -11,20 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BorrowedPort.hpp>
+#include <memory>
 #include <Util/Logger/Logger.hpp>
 #include <detail/PortDispatcher.hpp>
-#include <memory>
+#include <BorrowedPort.hpp>
 
-namespace NES::Testing {
+namespace NES::Testing
+{
 
 using BorrowedPortPtr = std::shared_ptr<BorrowedPort>;
 
 BorrowedPort::BorrowedPort(uint16_t port, uint32_t portIndex, detail::PortDispatcher* parent)
-    : port(port), portIndex(portIndex), parent(parent) {}
+    : port(port), portIndex(portIndex), parent(parent)
+{
+}
 
-BorrowedPort::~BorrowedPort() noexcept { parent->recyclePort(portIndex); }
+BorrowedPort::~BorrowedPort() noexcept
+{
+    parent->recyclePort(portIndex);
+}
 
-BorrowedPort::operator uint16_t() const { return port; }
+BorrowedPort::operator uint16_t() const
+{
+    return port;
+}
 
-}// namespace NES::Testing
+} // namespace NES::Testing

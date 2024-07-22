@@ -18,28 +18,31 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Util/GatheringMode.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief Descriptor defining properties used for creating physical memory source
  */
-class MemorySourceDescriptor : public SourceDescriptor {
-  public:
+class MemorySourceDescriptor : public SourceDescriptor
+{
+public:
     /**
      * @brief Ctor of a MemorySourceDescriptor
      * @param schema the schema of the source
      * @param memoryArea a non-null pointer to the area of memory to use in the source
      * @param memoryAreaSize the size of the area of memory
      */
-    explicit MemorySourceDescriptor(SchemaPtr schema,
-                                    std::shared_ptr<uint8_t> memoryArea,
-                                    size_t memoryAreaSize,
-                                    uint64_t numBuffersToProcess,
-                                    uint64_t gatheringValue,
-                                    GatheringMode gatheringMode,
-                                    uint64_t sourceAffinity,
-                                    uint64_t taskQueueId,
-                                    const std::string& logicalSourceName,
-                                    const std::string& physicalSourceName);
+    explicit MemorySourceDescriptor(
+        SchemaPtr schema,
+        std::shared_ptr<uint8_t> memoryArea,
+        size_t memoryAreaSize,
+        uint64_t numBuffersToProcess,
+        uint64_t gatheringValue,
+        GatheringMode gatheringMode,
+        uint64_t sourceAffinity,
+        uint64_t taskQueueId,
+        const std::string& logicalSourceName,
+        const std::string& physicalSourceName);
 
     /**
      * @brief Factory method to create a MemorySourceDescriptor object
@@ -48,16 +51,17 @@ class MemorySourceDescriptor : public SourceDescriptor {
      * @param memoryAreaSize the size of the area of memory
      * @return a correctly initialized shared ptr to MemorySourceDescriptor
      */
-    static std::shared_ptr<MemorySourceDescriptor> create(const SchemaPtr& schema,
-                                                          const std::shared_ptr<uint8_t>& memoryArea,
-                                                          size_t memoryAreaSize,
-                                                          uint64_t numBuffersToProcess,
-                                                          uint64_t gatheringValue,
-                                                          GatheringMode gatheringMode,
-                                                          uint64_t sourceAffinity = 0,
-                                                          uint64_t taskQueueId = 0,
-                                                          std::string logicalSourceName = "",
-                                                          std::string physicalSourceName = "");
+    static std::shared_ptr<MemorySourceDescriptor> create(
+        const SchemaPtr& schema,
+        const std::shared_ptr<uint8_t>& memoryArea,
+        size_t memoryAreaSize,
+        uint64_t numBuffersToProcess,
+        uint64_t gatheringValue,
+        GatheringMode gatheringMode,
+        uint64_t sourceAffinity = 0,
+        uint64_t taskQueueId = 0,
+        std::string logicalSourceName = "",
+        std::string physicalSourceName = "");
 
     /**
      * @brief Provides the string representation of the memory source
@@ -116,7 +120,7 @@ class MemorySourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorPtr copy() override;
 
-  private:
+private:
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
     uint64_t numBuffersToProcess;
@@ -125,5 +129,5 @@ class MemorySourceDescriptor : public SourceDescriptor {
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MEMORYSOURCEDESCRIPTOR_HPP_

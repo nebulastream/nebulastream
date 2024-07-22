@@ -17,19 +17,23 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void* getStates(void* op, WorkerThreadId workerThreadId) {
+void* getStates(void* op, WorkerThreadId workerThreadId)
+{
     auto handler = static_cast<BatchAggregationHandler*>(op);
     return handler->getThreadLocalState(workerThreadId);
 }
 
 BatchAggregationScan::BatchAggregationScan(
-    uint64_t operatorHandlerIndex,
-    const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions)
-    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions) {}
+    uint64_t operatorHandlerIndex, const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions)
+    : operatorHandlerIndex(operatorHandlerIndex), aggregationFunctions(aggregationFunctions)
+{
+}
 
-void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
+void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const
+{
     Operators::Operator::open(ctx, rb);
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -40,10 +44,11 @@ void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const {
 
     // 3. perform final aggregation.
     Record result;
-    for (const auto& aggregationFunction : aggregationFunctions) {
+    for (const auto& aggregationFunction : aggregationFunctions)
+    {
         aggregationFunction->lower(state, result);
     }
     child->execute(ctx, result);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

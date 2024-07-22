@@ -17,11 +17,13 @@
 
 #include <DataGeneration/DataGenerator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 auto constexpr GENERATOR_SEED_DEFAULT = 848566;
 
-class DefaultDataGenerator : public DataGenerator {
-  public:
+class DefaultDataGenerator : public DataGenerator
+{
+public:
     /**
      * @brief creates a DefaultDataGenerator
      * @param minValue
@@ -63,9 +65,9 @@ class DefaultDataGenerator : public DataGenerator {
      */
     std::string toString() override;
 
-  private:
+private:
     uint64_t minValue;
     uint64_t maxValue;
 };
-}// namespace NES::Benchmark::DataGeneration
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_DEFAULTDATAGENERATOR_HPP_
+} // namespace NES::Benchmark::DataGeneration
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_DEFAULTDATAGENERATOR_HPP_

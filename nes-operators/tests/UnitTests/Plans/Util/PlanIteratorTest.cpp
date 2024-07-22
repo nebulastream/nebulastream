@@ -13,9 +13,7 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
@@ -28,19 +26,25 @@
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
-class PlanIteratorTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class PlanIteratorTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("PlanIteratorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PlanIteratorTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
 
         pred1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), "1"));
@@ -65,7 +69,7 @@ class PlanIteratorTest : public Testing::BaseUnitTest {
         parents.clear();
     }
 
-  protected:
+protected:
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     LogicalOperatorPtr sourceOp1, sourceOp2;
 
@@ -82,7 +86,8 @@ class PlanIteratorTest : public Testing::BaseUnitTest {
  * --- Sink 1 --- Filter --- Source 1
  *
  */
-TEST_F(PlanIteratorTest, iterateFilterQueryPlan) {
+TEST_F(PlanIteratorTest, iterateFilterQueryPlan)
+{
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -107,7 +112,8 @@ TEST_F(PlanIteratorTest, iterateFilterQueryPlan) {
  *            --- Sink 2 ---
  *
  */
-TEST_F(PlanIteratorTest, iterateMultiSinkQueryPlan) {
+TEST_F(PlanIteratorTest, iterateMultiSinkQueryPlan)
+{
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
@@ -139,7 +145,8 @@ TEST_F(PlanIteratorTest, iterateMultiSinkQueryPlan) {
  *                            --- Filter --- Source 2
  *
  */
-TEST_F(PlanIteratorTest, iterateMultiSourceQueryPlan) {
+TEST_F(PlanIteratorTest, iterateMultiSourceQueryPlan)
+{
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp1);
     queryPlan->appendOperatorAsNewRoot(sinkOp1);
@@ -172,7 +179,8 @@ TEST_F(PlanIteratorTest, iterateMultiSourceQueryPlan) {
  *                                        --- Sink 3
  *
  */
-TEST_F(PlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
+TEST_F(PlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan)
+{
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp3);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
@@ -219,7 +227,8 @@ TEST_F(PlanIteratorTest, iterateMultiSinkMultiSourceQueryPlan) {
  *
  *
  */
-TEST_F(PlanIteratorTest, iterateMultiSinkRemergeQueryPlan) {
+TEST_F(PlanIteratorTest, iterateMultiSinkRemergeQueryPlan)
+{
     auto queryPlan = QueryPlan::create(sourceOp1);
     queryPlan->appendOperatorAsNewRoot(filterOp3);
     queryPlan->appendOperatorAsNewRoot(filterOp2);
@@ -248,4 +257,4 @@ TEST_F(PlanIteratorTest, iterateMultiSinkRemergeQueryPlan) {
     ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
 
-}// namespace NES
+} // namespace NES

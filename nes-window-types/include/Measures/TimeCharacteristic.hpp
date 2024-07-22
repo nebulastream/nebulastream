@@ -19,7 +19,8 @@
 #include <API/TimeUnit.hpp>
 #include <Expressions/ExpressionNode.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 class TimeCharacteristic;
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
@@ -27,13 +28,18 @@ using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 /**
  * @brief The time stamp characteristic represents if an window is in event or processing time.
  */
-class TimeCharacteristic final {
-  public:
+class TimeCharacteristic final
+{
+public:
     constexpr static const auto RECORD_CREATION_TS_FIELD_NAME = "$record.creationTs";
     /**
      * @brief The type as enum.
      */
-    enum class Type : uint8_t { IngestionTime, EventTime };
+    enum class Type : uint8_t
+    {
+        IngestionTime,
+        EventTime
+    };
     explicit TimeCharacteristic(Type type);
     TimeCharacteristic(Type type, AttributeFieldPtr field, TimeUnit unit);
 
@@ -83,11 +89,11 @@ class TimeCharacteristic final {
 
     void setTimeUnit(const TimeUnit& unit);
 
-  private:
+private:
     Type type;
     AttributeFieldPtr field;
     TimeUnit unit;
 };
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_

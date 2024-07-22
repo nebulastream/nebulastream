@@ -16,18 +16,20 @@
 
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Identifiers/Identifiers.hpp>
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
 /**
  * @brief This exception indicates, that a logical source was not found
  */
-class LogicalSourceNotFoundException : public RequestExecutionException {
-  public:
+class LogicalSourceNotFoundException : public RequestExecutionException
+{
+public:
     /**
      * @brief construct an exception containing a human readable message
      * @param message: A string to indicate to the user what caused the exception
      */
     explicit LogicalSourceNotFoundException(const std::string& message);
 };
-}// namespace NES::Exceptions
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_LOGICALSOURCENOTFOUNDEXCEPTION_HPP_
+} // namespace NES::Exceptions
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_LOGICALSOURCENOTFOUNDEXCEPTION_HPP_

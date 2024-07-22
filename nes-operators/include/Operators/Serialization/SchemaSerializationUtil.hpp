@@ -17,7 +17,8 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -32,8 +33,9 @@ using SerializableSchemaPtr = std::shared_ptr<SerializableSchema>;
  * @brief The SchemaSerializationUtil offers functionality to serialize and de-serialize schemas to the
  * corresponding protobuffer object.
  */
-class SchemaSerializationUtil {
-  public:
+class SchemaSerializationUtil
+{
+public:
     /**
      * @brief Serializes a schema and all its fields to a SerializableSchema object.
      * @param schema SchemaPtr.
@@ -49,6 +51,6 @@ class SchemaSerializationUtil {
     */
     static SchemaPtr deserializeSchema(const SerializableSchema& serializedSchema);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_SCHEMASERIALIZATIONUTIL_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_SCHEMASERIALIZATIONUTIL_HPP_

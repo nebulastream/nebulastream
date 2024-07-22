@@ -15,19 +15,21 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Monitoring/MonitoringForwardRefs.hpp>
-#include <Monitoring/Storage/MetricStoreType.hpp>
 #include <cstdint>
 #include <unordered_map>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Monitoring/MonitoringForwardRefs.hpp>
+#include <Monitoring/Storage/MetricStoreType.hpp>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 /**
 * @brief The LatestEntriesMetricStore that stores all the metrics for monitoring.
 */
-class AbstractMetricStore {
-  public:
+class AbstractMetricStore
+{
+public:
     //  -- dtor --
     virtual ~AbstractMetricStore() = default;
 
@@ -64,6 +66,6 @@ class AbstractMetricStore {
     */
     virtual bool hasMetrics(WorkerId nodeId) = 0;
 };
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_

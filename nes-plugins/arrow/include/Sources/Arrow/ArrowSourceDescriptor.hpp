@@ -18,17 +18,17 @@
 #include <Configurations/Worker/PhysicalSourceTypes/ArrowSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical Arrow IPC file source
  */
-class ArrowSourceDescriptor : public SourceDescriptor {
-  public:
-    static SourceDescriptorPtr create(SchemaPtr schema,
-                                      ArrowSourceTypePtr arrowSourceType,
-                                      const std::string logicalSourceName,
-                                      const std::string physicalSourceName);
+class ArrowSourceDescriptor : public SourceDescriptor
+{
+public:
+    static SourceDescriptorPtr
+    create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType, const std::string logicalSourceName, const std::string physicalSourceName);
 
     static SourceDescriptorPtr create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType);
 
@@ -43,17 +43,15 @@ class ArrowSourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorPtr copy() override;
 
-  private:
-    explicit ArrowSourceDescriptor(SchemaPtr schema,
-                                   ArrowSourceTypePtr sourceConfig,
-                                   std::string logicalSourceName,
-                                   std::string physicalSourceName);
+private:
+    explicit ArrowSourceDescriptor(
+        SchemaPtr schema, ArrowSourceTypePtr sourceConfig, std::string logicalSourceName, std::string physicalSourceName);
 
     ArrowSourceTypePtr arrowSourceType;
 };
 
 using ArrowSourceDescriptorPtr = std::shared_ptr<ArrowSourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCEDESCRIPTOR_HPP_
+#endif // NES_PLUGINS_ARROW_INCLUDE_SOURCES_ARROW_ARROWSOURCEDESCRIPTOR_HPP_

@@ -13,13 +13,14 @@
 */
 #ifndef NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_
+#include <filesystem>
+#include <vector>
 #include <Compiler/CompilerForwardDeclarations.hpp>
 #include <Compiler/LanguageCompiler.hpp>
 #include <Compiler/Util/ExecutablePath.hpp>
-#include <filesystem>
-#include <vector>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 class CPPCompilerFlags;
 class File;
 class ClangFormat;
@@ -28,8 +29,9 @@ class ClangFormat;
  * @brief A @LanguageCompiler for C++.
  * Relies on clang++ for compilation.
  */
-class CPPCompiler : public LanguageCompiler {
-  public:
+class CPPCompiler : public LanguageCompiler
+{
+public:
     CPPCompiler();
     ~CPPCompiler() noexcept;
 
@@ -50,11 +52,11 @@ class CPPCompiler : public LanguageCompiler {
     */
     [[nodiscard]] Language getLanguage() const override;
 
-  private:
+private:
     std::unique_ptr<ClangFormat> format;
     ExecutablePath::RuntimePathConfig runtimePathConfig;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_

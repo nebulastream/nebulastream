@@ -20,15 +20,17 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Events.hpp>
 
-namespace NES::Network::detail {
+namespace NES::Network::detail
+{
 
 /**
  * @brief Mixin to add event sending semantics to a base channel
  * @tparam BaseChannelType the type of the base channel
  */
-template<typename BaseChannelType>
-class NetworkEventSender : public BaseChannelType {
-  public:
+template <typename BaseChannelType>
+class NetworkEventSender : public BaseChannelType
+{
+public:
     static constexpr bool canSendData = false || BaseChannelType::canSendData;
     static constexpr bool canSendEvent = true;
 
@@ -37,11 +39,14 @@ class NetworkEventSender : public BaseChannelType {
      * @tparam Args the arguments types
      * @param args the arguments
      */
-    template<typename... Args>
-    NetworkEventSender(Args&&... args) : BaseChannelType(std::forward<Args>(args)...) {}
+    template <typename... Args>
+    NetworkEventSender(Args&&... args) : BaseChannelType(std::forward<Args>(args)...)
+    {
+    }
 
-    template<Runtime::IsNesEvent Event, typename... Arguments>
-    bool sendEvent(Arguments&&... args) {
+    template <Runtime::IsNesEvent Event, typename... Arguments>
+    bool sendEvent(Arguments&&... args)
+    {
         auto optBuffer = this->bufferManager->getUnpooledBuffer(sizeof(Event));
         auto buffer = *optBuffer;
         auto* event = new (buffer.getBuffer()) Event(std::forward<Arguments>(args)...);
@@ -49,10 +54,12 @@ class NetworkEventSender : public BaseChannelType {
         return sendEvent(std::move(buffer), event->getEventType());
     }
 
-    bool sendEvent(Runtime::TupleBuffer&& inputBuffer, Runtime::EventType eventType) {
+    bool sendEvent(Runtime::TupleBuffer&& inputBuffer, Runtime::EventType eventType)
+    {
         auto payloadSize = inputBuffer.getNumberOfTuples();
         auto* ptr = inputBuffer.getBuffer<uint8_t>();
-        if (payloadSize == 0) {
+        if (payloadSize == 0)
+        {
             return true;
         }
         sendMessage<Messages::EventBufferMessage, kZmqSendMore>(this->zmqSocket, eventType, payloadSize);
@@ -60,19 +67,20 @@ class NetworkEventSender : public BaseChannelType {
         // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
         inputBuffer.retain();
         auto const sentBytesOpt = this->zmqSocket.send(
-            zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()),
-            kZmqSendDefault);
-        if (sentBytesOpt.has_value()) {
-            NES_TRACE("DataChannel: Sending buffer with {}/{}-{}",
-                      inputBuffer.getNumberOfTuples(),
-                      inputBuffer.getBufferSize(),
-                      inputBuffer.getOriginId());
+            zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()), kZmqSendDefault);
+        if (sentBytesOpt.has_value())
+        {
+            NES_TRACE(
+                "DataChannel: Sending buffer with {}/{}-{}",
+                inputBuffer.getNumberOfTuples(),
+                inputBuffer.getBufferSize(),
+                inputBuffer.getOriginId());
             return true;
         }
         NES_ERROR("DataChannel: Error sending buffer for {}", this->channelId);
         return false;
     }
 };
-}// namespace NES::Network::detail
+} // namespace NES::Network::detail
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_

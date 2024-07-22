@@ -15,10 +15,11 @@
 #ifndef NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_
 #define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_
 
-#include <Common/ExecutableType/NESType.hpp>
 #include <cstdint>
+#include <Common/ExecutableType/NESType.hpp>
 
-namespace NES::PhysicalTypes {
+namespace NES::PhysicalTypes
+{
 
 /**
  * @brief Function to check if the physical type is a char
@@ -132,42 +133,71 @@ PhysicalTypePtr getArrayComponent(PhysicalTypePtr physicalType);
  * @param physicalType the physical type at runtime
  * @return returns true if the type is correct.
  */
-template<class Type>
-bool isSamePhysicalType(PhysicalTypePtr physicalType) {
-    if (isText(physicalType) && IsUInt32<Type>) {
+template <class Type>
+bool isSamePhysicalType(PhysicalTypePtr physicalType)
+{
+    if (isText(physicalType) && IsUInt32<Type>)
+    {
         return true;
     }
-    if constexpr (IsChar<Type>) {
+    if constexpr (IsChar<Type>)
+    {
         return isChar(std::move(physicalType));
-    } else if constexpr (IsUInt8<Type>) {
+    }
+    else if constexpr (IsUInt8<Type>)
+    {
         return isUInt8(std::move(physicalType));
-    } else if constexpr (IsBool<Type>) {
+    }
+    else if constexpr (IsBool<Type>)
+    {
         return isBool(std::move(physicalType));
-    } else if constexpr (IsUInt16<Type>) {
+    }
+    else if constexpr (IsUInt16<Type>)
+    {
         return isUInt16(std::move(physicalType));
-    } else if constexpr (IsUInt32<Type>) {
+    }
+    else if constexpr (IsUInt32<Type>)
+    {
         return isUInt32(std::move(physicalType));
-    } else if constexpr (IsUInt64<Type>) {
+    }
+    else if constexpr (IsUInt64<Type>)
+    {
         return isUInt64(std::move(physicalType));
-    } else if constexpr (IsInt8<Type>) {
+    }
+    else if constexpr (IsInt8<Type>)
+    {
         return isInt8(std::move(physicalType));
-    } else if constexpr (IsInt16<Type>) {
+    }
+    else if constexpr (IsInt16<Type>)
+    {
         return isInt16(std::move(physicalType));
-    } else if constexpr (IsInt32<Type>) {
+    }
+    else if constexpr (IsInt32<Type>)
+    {
         return isInt32(std::move(physicalType));
-    } else if constexpr (IsInt64<Type>) {
+    }
+    else if constexpr (IsInt64<Type>)
+    {
         return isInt64(std::move(physicalType));
-    } else if constexpr (IsFloat<Type>) {
+    }
+    else if constexpr (IsFloat<Type>)
+    {
         return isFloat(std::move(physicalType));
-    } else if constexpr (IsDouble<Type>) {
+    }
+    else if constexpr (IsDouble<Type>)
+    {
         return isDouble(std::move(physicalType));
-    } else if constexpr (std::is_pointer_v<Type>) {
+    }
+    else if constexpr (std::is_pointer_v<Type>)
+    {
         return isArray(physicalType) && isSamePhysicalType<std::remove_pointer_t<Type>>(getArrayComponent(physicalType));
-    } else if constexpr (std::is_base_of_v<NESType, Type>) {
+    }
+    else if constexpr (std::is_base_of_v<NESType, Type>)
+    {
         return isArray(physicalType);
     }
     return false;
 }
-}// namespace NES::PhysicalTypes
+} // namespace NES::PhysicalTypes
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_

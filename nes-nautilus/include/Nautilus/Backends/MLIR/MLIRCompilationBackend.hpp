@@ -15,16 +15,18 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
 /**
  * @brief Compilation backend that uses MLIR.
  */
-class MLIRCompilationBackend : public CompilationBackend {
-  public:
+class MLIRCompilationBackend : public CompilationBackend
+{
+public:
     std::unique_ptr<Executable>
     compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
 };
 
-}// namespace NES::Nautilus::Backends::MLIR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_
+} // namespace NES::Nautilus::Backends::MLIR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRCOMPILATIONBACKEND_HPP_

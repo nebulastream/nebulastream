@@ -19,7 +19,8 @@
 #include <RequestProcessor/RequestTypes/FailQueryRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 class TypeInferencePhase;
 using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 
@@ -34,9 +35,10 @@ using GlobalQueryPlanUpdatePhasePtr = std::shared_ptr<GlobalQueryPlanUpdatePhase
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-namespace NES {
+namespace NES
+{
 
 class QueryCatalogService;
 using QueryCatalogServicePtr = std::shared_ptr<QueryCatalogService>;
@@ -56,35 +58,42 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Catalogs {
-namespace Source {
+namespace Catalogs
+{
+namespace Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Source
+} // namespace Source
 
-namespace UDF {
+namespace UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace UDF
+} // namespace UDF
 
-namespace Query {
+namespace Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Query
+} // namespace Query
 
-}// namespace Catalogs
+} // namespace Catalogs
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 
 class StopQueryRequest;
 using StopQueryRequestPtr = std::shared_ptr<StopQueryRequest>;
 
-struct StopQueryResponse : public AbstractRequestResponse {
+struct StopQueryResponse : public AbstractRequestResponse
+{
     explicit StopQueryResponse(bool success) : success(success){};
     bool success;
 };
@@ -92,9 +101,9 @@ struct StopQueryResponse : public AbstractRequestResponse {
 /**
  * @brief This request is used for stopping a running query in NES cluster
  */
-class StopQueryRequest : public AbstractUniRequest {
-
-  public:
+class StopQueryRequest : public AbstractUniRequest
+{
+public:
     /**
      * @brief Construct a new Stop Query Request object
      * @param queryId The id of the query that we want to stop
@@ -112,7 +121,7 @@ class StopQueryRequest : public AbstractUniRequest {
 
     std::string toString();
 
-  protected:
+protected:
     /**
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
@@ -152,7 +161,7 @@ class StopQueryRequest : public AbstractUniRequest {
      */
     void postExecution(const StorageHandlerPtr& storageHandler) override;
 
-  private:
+private:
     QueryId queryId;
     Optimizer::GlobalExecutionPlanPtr globalExecutionPlan;
     TopologyPtr topology;
@@ -166,7 +175,7 @@ class StopQueryRequest : public AbstractUniRequest {
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     static constexpr uint8_t MAX_RETRIES_FOR_FAILURE = 1;
 };
-}// namespace RequestProcessor
-}// namespace NES
+} // namespace RequestProcessor
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STOPQUERYREQUEST_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_STOPQUERYREQUEST_HPP_

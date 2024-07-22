@@ -16,17 +16,19 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Double data type.
  */
-class Double : public TraceableType {
-  public:
+class Double : public TraceableType
+{
+public:
     using RawType = double;
     static const inline auto type = TypeIdentifier::create<Double>();
     Double(double value);
-    ~Double() {}
+    ~Double() { }
     Nautilus::IR::Types::StampPtr getType() const override;
     std::shared_ptr<Any> copy() override;
     std::shared_ptr<Double> add(const Double& otherValue) const;
@@ -39,9 +41,9 @@ class Double : public TraceableType {
     double getValue() const;
     std::string toString() override;
 
-  private:
+private:
     const double value;
 };
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_FLOAT_DOUBLE_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_FLOAT_DOUBLE_HPP_

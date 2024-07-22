@@ -11,16 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cmath>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/MaxExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cmath>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-MaxExpression::MaxExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
-                             const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
-    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
+MaxExpression::MaxExpression(
+    const NES::Runtime::Execution::Expressions::ExpressionPtr& leftSubExpression,
+    const NES::Runtime::Execution::Expressions::ExpressionPtr& rightSubExpression)
+    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression)
+{
+}
 
 /**
  * @brief This method calculates the maximum between x and y.
@@ -29,9 +33,13 @@ MaxExpression::MaxExpression(const NES::Runtime::Execution::Expressions::Express
  * @param y double
  * @return double
  */
-double calculateMax(double x, double y) { return std::max(x, y); }
+double calculateMax(double x, double y)
+{
+    return std::max(x, y);
+}
 
-Value<> MaxExpression::execute(NES::Nautilus::Record& record) const {
+Value<> MaxExpression::execute(NES::Nautilus::Record& record) const
+{
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.
@@ -41,32 +49,53 @@ Value<> MaxExpression::execute(NES::Nautilus::Record& record) const {
     // In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
     // primitive integer types to the double argument.
     // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
-    if (leftValue->isType<Int8>() && rightValue->isType<Int8>()) {
+    if (leftValue->isType<Int8>() && rightValue->isType<Int8>())
+    {
         // call the calculateMax function with the correct type
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Int8>(), rightValue.as<Int8>());
-    } else if (leftValue->isType<Int16>() && rightValue->isType<Int16>()) {
+    }
+    else if (leftValue->isType<Int16>() && rightValue->isType<Int16>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Int16>(), rightValue.as<Int16>());
-    } else if (leftValue->isType<Int32>() && rightValue->isType<Int32>()) {
+    }
+    else if (leftValue->isType<Int32>() && rightValue->isType<Int32>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Int32>(), rightValue.as<Int32>());
-    } else if (leftValue->isType<Int64>() && rightValue->isType<Int64>()) {
+    }
+    else if (leftValue->isType<Int64>() && rightValue->isType<Int64>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Int64>(), rightValue.as<Int64>());
-    } else if (leftValue->isType<UInt8>() && rightValue->isType<UInt8>()) {
+    }
+    else if (leftValue->isType<UInt8>() && rightValue->isType<UInt8>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<UInt8>(), rightValue.as<UInt8>());
-    } else if (leftValue->isType<UInt16>() && rightValue->isType<UInt16>()) {
+    }
+    else if (leftValue->isType<UInt16>() && rightValue->isType<UInt16>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<UInt16>(), rightValue.as<UInt16>());
-    } else if (leftValue->isType<UInt32>() && rightValue->isType<UInt32>()) {
+    }
+    else if (leftValue->isType<UInt32>() && rightValue->isType<UInt32>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<UInt32>(), rightValue.as<UInt32>());
-    } else if (leftValue->isType<UInt64>() && rightValue->isType<UInt64>()) {
+    }
+    else if (leftValue->isType<UInt64>() && rightValue->isType<UInt64>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<UInt64>(), rightValue.as<UInt64>());
-    } else if (leftValue->isType<Float>() && rightValue->isType<Float>()) {
+    }
+    else if (leftValue->isType<Float>() && rightValue->isType<Float>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Float>(), rightValue.as<Float>());
-    } else if (leftValue->isType<Double>() && rightValue->isType<Double>()) {
+    }
+    else if (leftValue->isType<Double>() && rightValue->isType<Double>())
+    {
         return FunctionCall<>("calculateMax", calculateMax, leftValue.as<Double>(), rightValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<MaxExpression>> maxFunction("max");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

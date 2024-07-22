@@ -18,14 +18,16 @@
 #include <string>
 #include <unordered_set>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief This class abstracts the collection of compiler flags. Each collected flag is unique.
  * Flags can be added, retrieved and two sets of CompilerFlags can also be merged.
  */
-class CompilerFlags {
-  public:
+class CompilerFlags
+{
+public:
     CompilerFlags() = default;
 
     /**
@@ -46,10 +48,10 @@ class CompilerFlags {
      */
     void mergeFlags(const CompilerFlags& flags);
 
-  private:
+private:
     std::unordered_set<std::string> compilerFlags;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_

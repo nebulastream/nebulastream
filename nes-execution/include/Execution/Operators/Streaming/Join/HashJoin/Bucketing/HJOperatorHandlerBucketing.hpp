@@ -18,14 +18,16 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerBucketing.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class combines the HJOperatorHandler and StreamJoinOperatorHandlerBucketing, so that a HJBuildBucketing operator can
  * use the implemented methods from both parent classes.
  */
-class HJOperatorHandlerBucketing : public HJOperatorHandler, public StreamJoinOperatorHandlerBucketing {
-  public:
+class HJOperatorHandlerBucketing : public HJOperatorHandler, public StreamJoinOperatorHandlerBucketing
+{
+public:
     /**
      * @brief Constructor for a HJOperatorHandlerBucketing
      * @param inputOrigins
@@ -40,17 +42,18 @@ class HJOperatorHandlerBucketing : public HJOperatorHandler, public StreamJoinOp
      * @param pageSize
      * @param numPartitions
      */
-    HJOperatorHandlerBucketing(const std::vector<OriginId>& inputOrigins,
-                               const OriginId outputOriginId,
-                               const uint64_t windowSize,
-                               const uint64_t windowSlide,
-                               const SchemaPtr& leftSchema,
-                               const SchemaPtr& rightSchema,
-                               const QueryCompilation::StreamJoinStrategy joinStrategy,
-                               uint64_t totalSizeForDataStructures,
-                               uint64_t preAllocPageSizeCnt,
-                               uint64_t pageSize,
-                               uint64_t numPartitions);
+    HJOperatorHandlerBucketing(
+        const std::vector<OriginId>& inputOrigins,
+        const OriginId outputOriginId,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const SchemaPtr& leftSchema,
+        const SchemaPtr& rightSchema,
+        const QueryCompilation::StreamJoinStrategy joinStrategy,
+        uint64_t totalSizeForDataStructures,
+        uint64_t preAllocPageSizeCnt,
+        uint64_t pageSize,
+        uint64_t numPartitions);
 
     /**
      * @brief Creates a HJOperatorHandlerBucketing
@@ -67,18 +70,19 @@ class HJOperatorHandlerBucketing : public HJOperatorHandler, public StreamJoinOp
      * @param numPartitions
      * @return HJOperatorHandlerPtr
      */
-    static HJOperatorHandlerPtr create(const std::vector<OriginId>& inputOrigins,
-                                       const OriginId outputOriginId,
-                                       const uint64_t windowSize,
-                                       const uint64_t windowSlide,
-                                       const SchemaPtr& leftSchema,
-                                       const SchemaPtr& rightSchema,
-                                       const QueryCompilation::StreamJoinStrategy joinStrategy,
-                                       uint64_t totalSizeForDataStructures,
-                                       uint64_t preAllocPageSizeCnt,
-                                       uint64_t pageSize,
-                                       uint64_t numPartitions);
+    static HJOperatorHandlerPtr create(
+        const std::vector<OriginId>& inputOrigins,
+        const OriginId outputOriginId,
+        const uint64_t windowSize,
+        const uint64_t windowSlide,
+        const SchemaPtr& leftSchema,
+        const SchemaPtr& rightSchema,
+        const QueryCompilation::StreamJoinStrategy joinStrategy,
+        uint64_t totalSizeForDataStructures,
+        uint64_t preAllocPageSizeCnt,
+        uint64_t pageSize,
+        uint64_t numPartitions);
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_BUCKETING_HJOPERATORHANDLERBUCKETING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_BUCKETING_HJOPERATORHANDLERBUCKETING_HPP_

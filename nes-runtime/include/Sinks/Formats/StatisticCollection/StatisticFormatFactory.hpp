@@ -18,13 +18,15 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Sinks/Formats/StatisticCollection/AbstractStatisticFormat.hpp>
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Factory for creating StatisticSinkFormat
  */
-class StatisticFormatFactory {
-  public:
+class StatisticFormatFactory
+{
+public:
     /**
      * @brief Creates the corresponding StatisticSinkFormat for the type.
      * @param schema
@@ -35,26 +37,28 @@ class StatisticFormatFactory {
     static StatisticFormatPtr
     createFromSchema(SchemaPtr schema, uint64_t bufferSize, StatisticSynopsisType type, StatisticDataCodec sinkDataCodec);
 
-  private:
+private:
     /**
      * @brief Creates a CountMinStatisticSinkFormat for this memoryLayout
      * @param memoryLayout
      * @return StatisticFormatPtr
      */
-    static StatisticFormatPtr createCountMinFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
-                                                   std::function<std::string(const std::string&)> postProcessingData,
-                                                   std::function<std::string(const std::string&)> preProcessingData);
+    static StatisticFormatPtr createCountMinFormat(
+        const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+        std::function<std::string(const std::string&)> postProcessingData,
+        std::function<std::string(const std::string&)> preProcessingData);
 
     /**
      * @brief Creates a HyperLogLogStatisticSinkFormat for this memoryLayout
      * @param memoryLayout
      * @return StatisticFormatPtr
      */
-    static StatisticFormatPtr createHyperLogLogFormat(const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
-                                                      std::function<std::string(const std::string&)> postProcessingData,
-                                                      std::function<std::string(const std::string&)> preProcessingData);
+    static StatisticFormatPtr createHyperLogLogFormat(
+        const Runtime::MemoryLayouts::MemoryLayoutPtr& memoryLayout,
+        std::function<std::string(const std::string&)> postProcessingData,
+        std::function<std::string(const std::string&)> preProcessingData);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_STATISTICFORMATFACTORY_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_STATISTICCOLLECTION_STATISTICFORMATFACTORY_HPP_

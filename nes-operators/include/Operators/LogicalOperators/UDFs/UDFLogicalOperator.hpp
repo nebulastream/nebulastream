@@ -18,18 +18,20 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
-namespace Catalogs::UDF {
+namespace NES
+{
+namespace Catalogs::UDF
+{
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
 /**
  * Logical operator node for a udf. This class acts as a parent class for any udf logical operator node
  */
-class UDFLogicalOperator : public LogicalUnaryOperator {
-
-  public:
+class UDFLogicalOperator : public LogicalUnaryOperator
+{
+public:
     /**
      * Construct a UDFLogicalOperator.
      * @param udfDescriptor The descriptor of the UDF used in the map operation.
@@ -70,7 +72,7 @@ class UDFLogicalOperator : public LogicalUnaryOperator {
      */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 
-  private:
+private:
     /**
      * Verify that the UDF input type is compatible with the schema of the child operator,
      * i.e., they contain exactly the same attributes with the same types.
@@ -85,10 +87,10 @@ class UDFLogicalOperator : public LogicalUnaryOperator {
      */
     void verifySchemaCompatibility(const Schema& udfInputSchema, const Schema& childOperatorOutputSchema) const;
 
-  protected:
+protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFLOGICALOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFLOGICALOPERATOR_HPP_

@@ -12,23 +12,28 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES {
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+namespace NES
+{
 
 CeilExpressionNode::CeilExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
 
-CeilExpressionNode::CeilExpressionNode(CeilExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
+CeilExpressionNode::CeilExpressionNode(CeilExpressionNode* other) : ArithmeticalUnaryExpressionNode(other)
+{
+}
 
-ExpressionNodePtr CeilExpressionNode::create(ExpressionNodePtr const& child) {
+ExpressionNodePtr CeilExpressionNode::create(ExpressionNodePtr const& child)
+{
     auto ceilNode = std::make_shared<CeilExpressionNode>(child->getStamp());
     ceilNode->setChild(child);
     return ceilNode;
 }
 
-void CeilExpressionNode::inferStamp(SchemaPtr schema) {
+void CeilExpressionNode::inferStamp(SchemaPtr schema)
+{
     // infer stamp of the child, check if its numerical, assume the same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
@@ -37,20 +42,26 @@ void CeilExpressionNode::inferStamp(SchemaPtr schema) {
     NES_TRACE("CeilExpressionNode: converted stamp to float: {}", toString());
 }
 
-bool CeilExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<CeilExpressionNode>()) {
+bool CeilExpressionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<CeilExpressionNode>())
+    {
         auto otherCeilNode = rhs->as<CeilExpressionNode>();
         return child()->equal(otherCeilNode->child());
     }
     return false;
 }
 
-std::string CeilExpressionNode::toString() const {
+std::string CeilExpressionNode::toString() const
+{
     std::stringstream ss;
     ss << "CEIL(" << children[0]->toString() << ")";
     return ss.str();
 }
 
-ExpressionNodePtr CeilExpressionNode::copy() { return CeilExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
+ExpressionNodePtr CeilExpressionNode::copy()
+{
+    return CeilExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
-}// namespace NES
+} // namespace NES

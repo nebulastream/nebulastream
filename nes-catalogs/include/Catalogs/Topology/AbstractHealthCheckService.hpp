@@ -15,16 +15,17 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/libcuckoo/cuckoohash_map.hh>
 #include <future>
 #include <map>
 #include <memory>
 #include <set>
-#include <stdint.h>
 #include <thread>
+#include <stdint.h>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
 
-namespace NES {
+namespace NES
+{
 
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
@@ -35,18 +36,20 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
-namespace Configurations {
+namespace Configurations
+{
 
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
-}// namespace Configurations
+} // namespace Configurations
 
 /**
  * @brief: This class is responsible for handling requests related to monitor the alive status of nodes.
  */
-class AbstractHealthCheckService {
-  public:
+class AbstractHealthCheckService
+{
+public:
     AbstractHealthCheckService();
 
     virtual ~AbstractHealthCheckService(){};
@@ -86,7 +89,7 @@ class AbstractHealthCheckService {
      */
     bool isWorkerInactive(WorkerId workerId);
 
-  protected:
+protected:
     std::shared_ptr<std::thread> healthCheckingThread;
     std::atomic<bool> isRunning = false;
     std::shared_ptr<std::promise<bool>> shutdownRPC = std::make_shared<std::promise<bool>>();
@@ -98,6 +101,6 @@ class AbstractHealthCheckService {
     std::set<WorkerId> inactiveWorkers;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_ABSTRACTHEALTHCHECKSERVICE_HPP_

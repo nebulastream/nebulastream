@@ -17,7 +17,8 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -25,13 +26,15 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
-namespace QueryCompilation {
+namespace QueryCompilation
+{
 
 class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
-}// namespace QueryCompilation
+} // namespace QueryCompilation
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class SampleCodeGenerationPhase;
 using SampleCodeGenerationPhasePtr = std::shared_ptr<SampleCodeGenerationPhase>;
@@ -39,9 +42,9 @@ using SampleCodeGenerationPhasePtr = std::shared_ptr<SampleCodeGenerationPhase>;
 /**
  * @brief: This phase allows generating C++ code for each logical operator and add it to the operator as property
  */
-class SampleCodeGenerationPhase {
-
-  public:
+class SampleCodeGenerationPhase
+{
+public:
     static SampleCodeGenerationPhasePtr create();
 
     /**
@@ -58,11 +61,11 @@ class SampleCodeGenerationPhase {
      */
     DecomposedQueryPlanPtr execute(const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
-  private:
+private:
     SampleCodeGenerationPhase();
 
     QueryCompilation::QueryCompilerPtr queryCompiler;
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_PHASES_SAMPLECODEGENERATIONPHASE_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_PHASES_SAMPLECODEGENERATIONPHASE_HPP_

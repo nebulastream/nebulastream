@@ -14,6 +14,9 @@
 
 #include <Operators/Exceptions/SignatureComputationException.hpp>
 
-namespace NES {
-SignatureComputationException::SignatureComputationException(const std::string& message) : std::runtime_error(message) {}
-}// namespace NES
+namespace NES
+{
+SignatureComputationException::SignatureComputationException(const std::string& message) : std::runtime_error(message)
+{
+}
+} // namespace NES

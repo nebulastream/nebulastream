@@ -18,13 +18,15 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Map operator, which contains an field assignment expression that manipulates a field of the record.
  */
-class LogicalMapOperator : public LogicalUnaryOperator {
-  public:
+class LogicalMapOperator : public LogicalUnaryOperator
+{
+public:
     LogicalMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression, OperatorId id);
 
     /**
@@ -48,10 +50,10 @@ class LogicalMapOperator : public LogicalUnaryOperator {
     std::string toString() const override;
     OperatorPtr copy() override;
 
-  private:
+private:
     const FieldAssignmentExpressionNodePtr mapExpression;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALMAPOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALMAPOPERATOR_HPP_

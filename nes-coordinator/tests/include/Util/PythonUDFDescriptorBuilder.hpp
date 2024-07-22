@@ -19,10 +19,11 @@
 
 using namespace std::string_literals;
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
 /**
  * Utility class to create default and non-default Python UDF descriptors for testing.
@@ -30,8 +31,9 @@ namespace NES::Catalogs::UDF {
  * The class PythonUDFDescriptor performs a number of checks in its constructor.
  * Creating the required inputs everytime a test needs a Python UDF descriptor leads to code repetition.
  */
-class PythonUDFDescriptorBuilder {
-  public:
+class PythonUDFDescriptorBuilder
+{
+public:
     /**
      * Create a new builder for a PythonUDFDescriptor with valid default values for the fields required by the PythonUDFDescriptor.
      */
@@ -76,13 +78,13 @@ class PythonUDFDescriptorBuilder {
      */
     static PythonUDFDescriptorPtr createDefaultPythonUDFDescriptor();
 
-  private:
+private:
     std::string functionName;
     std::string functionString;
     SchemaPtr inputSchema;
     SchemaPtr outputSchema;
 };
 
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_PYTHONUDFDESCRIPTORBUILDER_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_PYTHONUDFDESCRIPTORBUILDER_HPP_

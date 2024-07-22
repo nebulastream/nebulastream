@@ -15,16 +15,18 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
 
-#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <ostream>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
 /**
  * @brief The SymbolicExecutionPath represents all tags in one specific execution.
  */
-class SymbolicExecutionPath {
-  public:
+class SymbolicExecutionPath
+{
+public:
     void append(bool outcome);
     std::tuple<bool> operator[](uint64_t size);
     uint64_t getSize();
@@ -33,11 +35,11 @@ class SymbolicExecutionPath {
     [[nodiscard]] const Tag* getFinalTag() const;
     void setFinalTag(const Tag* finalTag);
 
-  private:
+private:
     std::vector<bool> path;
     const Tag* finalTag;
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_

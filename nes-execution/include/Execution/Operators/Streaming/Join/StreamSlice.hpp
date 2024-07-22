@@ -14,7 +14,6 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_
-#include <Runtime/Execution/StreamSliceInterface.hpp>
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -22,13 +21,16 @@
 #include <ostream>
 #include <span>
 #include <vector>
+#include <Runtime/Execution/StreamSliceInterface.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 /**
  * @brief This class represents a single slice for a join. It stores all values for the left and right stream.
  */
-class StreamSlice : public StreamSliceInterface {
-  public:
+class StreamSlice : public StreamSliceInterface
+{
+public:
     /**
      * @brief Constructor for creating a slice
      * @param sliceStart: Start timestamp of this slice
@@ -106,10 +108,10 @@ class StreamSlice : public StreamSliceInterface {
      */
     virtual ~StreamSlice() = default;
 
-  protected:
+protected:
     uint64_t sliceStart;
     uint64_t sliceEnd;
 };
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_

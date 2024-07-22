@@ -15,14 +15,16 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_FIXEDPAGESALLOCATOR_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_FIXEDPAGESALLOCATOR_HPP_
 
-#include <Util/Logger/Logger.hpp>
 #include <atomic>
 #include <cstddef>
 #include <cstring>
+#include <Util/Logger/Logger.hpp>
 #include <sys/mman.h>
 
-namespace NES::Runtime {
-namespace detail {
+namespace NES::Runtime
+{
+namespace detail
+{
 /**
         * @brief allocates memory that is aligned
         * @tparam T
@@ -30,11 +32,12 @@ namespace detail {
         * @param alignment
         * @return pointer to allocated memory
         */
-template<typename T = void>
-T* allocAligned(size_t size, size_t alignment = 16) {
+template <typename T = void>
+T* allocAligned(size_t size, size_t alignment = 16)
+{
     void* tmp = nullptr;
-    NES_ASSERT2_FMT(0 == posix_memalign(&tmp, alignment, sizeof(T) * size),
-                    "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
+    NES_ASSERT2_FMT(
+        0 == posix_memalign(&tmp, alignment, sizeof(T) * size), "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
     return reinterpret_cast<T*>(tmp);
 }
 
@@ -45,11 +48,13 @@ T* allocAligned(size_t size, size_t alignment = 16) {
         * @param size
         * @return pointer to allocated memory
         */
-template<typename T = void, size_t huge_page_size = 1 << 21>
-T* allocHugePages(size_t size) {
+template <typename T = void, size_t huge_page_size = 1 << 21>
+T* allocHugePages(size_t size)
+{
     void* tmp = nullptr;
-    NES_ASSERT2_FMT(0 == posix_memalign(&tmp, huge_page_size, sizeof(T) * size),
-                    "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
+    NES_ASSERT2_FMT(
+        0 == posix_memalign(&tmp, huge_page_size, sizeof(T) * size),
+        "Cannot allocate " << sizeof(T) * size << " bytes: " << strerror(errno));
 #ifdef __linux__
     madvise(tmp, size * sizeof(T), MADV_HUGEPAGE);
 #endif
@@ -59,30 +64,34 @@ T* allocHugePages(size_t size) {
     return reinterpret_cast<T*>(tmp);
 }
 
-}// namespace detail
+} // namespace detail
 
-class FixedPagesAllocator {
-  public:
-    explicit FixedPagesAllocator(size_t totalSize) {
+class FixedPagesAllocator
+{
+public:
+    explicit FixedPagesAllocator(size_t totalSize)
+    {
         head = NES::Runtime::detail::allocHugePages<uint8_t>(totalSize);
         overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSize;
         tail.store(reinterpret_cast<uintptr_t>(head));
         this->totalSize = totalSize;
     }
 
-    uint8_t* getNewPage(size_t pageSize) {
+    uint8_t* getNewPage(size_t pageSize)
+    {
         auto ptr = tail.fetch_add(pageSize);
         allocCnt++;
-        NES_ASSERT2_FMT(ptr < overrunAddress,
-                        "Invalid address " << ptr << " < " << overrunAddress << " head=" << reinterpret_cast<uintptr_t>(head)
-                                           << " total size=" << totalSize << " allocCnt=" << allocCnt);
+        NES_ASSERT2_FMT(
+            ptr < overrunAddress,
+            "Invalid address " << ptr << " < " << overrunAddress << " head=" << reinterpret_cast<uintptr_t>(head)
+                               << " total size=" << totalSize << " allocCnt=" << allocCnt);
 
         return reinterpret_cast<uint8_t*>(ptr);
     }
 
     virtual ~FixedPagesAllocator() { std::free(head); }
 
-  private:
+private:
     uint8_t* head;
     std::atomic<uint64_t> tail;
     uint64_t overrunAddress;
@@ -90,6 +99,6 @@ class FixedPagesAllocator {
     uint64_t allocCnt = 0;
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_FIXEDPAGESALLOCATOR_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_FIXEDPAGESALLOCATOR_HPP_

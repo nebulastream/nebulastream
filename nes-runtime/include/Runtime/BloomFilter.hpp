@@ -18,14 +18,15 @@
 #include <cstdint>
 #include <cstdlib>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief A bloom filter that works with 64-bit keys
  */
-class alignas(64) BloomFilter {
-
-  public:
+class alignas(64) BloomFilter
+{
+public:
     /**
      * @brief Creates a bloom filter for the expected no. entries and the false positive rate
      * @param entries
@@ -51,11 +52,11 @@ class alignas(64) BloomFilter {
      */
     ~BloomFilter();
 
-  private:
+private:
     uint32_t noBits;
     uint16_t noHashes;
     uint8_t* bitField;
 };
 
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_

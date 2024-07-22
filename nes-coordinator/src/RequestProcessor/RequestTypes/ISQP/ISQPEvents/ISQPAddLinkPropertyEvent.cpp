@@ -14,28 +14,43 @@
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPAddLinkPropertyEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-ISQPEventPtr ISQPAddLinkPropertyEvent::create(const WorkerId& parentNodeId,
-                                              const WorkerId& childWorkerId,
-                                              const uint64_t& bandwidth,
-                                              const uint64_t& latency) {
+ISQPEventPtr ISQPAddLinkPropertyEvent::create(
+    const WorkerId& parentNodeId, const WorkerId& childWorkerId, const uint64_t& bandwidth, const uint64_t& latency)
+{
     return std::make_shared<ISQPAddLinkPropertyEvent>(parentNodeId, childWorkerId, bandwidth, latency);
 };
 
-ISQPAddLinkPropertyEvent::ISQPAddLinkPropertyEvent(const WorkerId& parentNodeId,
-                                                   const WorkerId& childWorkerId,
-                                                   const uint64_t& bandwidth,
-                                                   const uint64_t& latency)
-    : ISQPEvent(ISQP_ADD_LINK_EVENT_PRIORITY), parentNodeId(parentNodeId), childNodeId(childWorkerId), bandwidth(bandwidth),
-      latency(latency) {}
+ISQPAddLinkPropertyEvent::ISQPAddLinkPropertyEvent(
+    const WorkerId& parentNodeId, const WorkerId& childWorkerId, const uint64_t& bandwidth, const uint64_t& latency)
+    : ISQPEvent(ISQP_ADD_LINK_EVENT_PRIORITY)
+    , parentNodeId(parentNodeId)
+    , childNodeId(childWorkerId)
+    , bandwidth(bandwidth)
+    , latency(latency)
+{
+}
 
-WorkerId ISQPAddLinkPropertyEvent::getParentNodeId() const { return parentNodeId; }
+WorkerId ISQPAddLinkPropertyEvent::getParentNodeId() const
+{
+    return parentNodeId;
+}
 
-WorkerId ISQPAddLinkPropertyEvent::getChildNodeId() const { return childNodeId; }
+WorkerId ISQPAddLinkPropertyEvent::getChildNodeId() const
+{
+    return childNodeId;
+}
 
-uint64_t ISQPAddLinkPropertyEvent::getBandwidth() const { return bandwidth; }
+uint64_t ISQPAddLinkPropertyEvent::getBandwidth() const
+{
+    return bandwidth;
+}
 
-uint64_t ISQPAddLinkPropertyEvent::getLatency() const { return latency; }
+uint64_t ISQPAddLinkPropertyEvent::getLatency() const
+{
+    return latency;
+}
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

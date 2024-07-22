@@ -17,7 +17,8 @@
 #include <future>
 #include <memory>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 class AbstractSubRequest;
 using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
 
@@ -26,8 +27,9 @@ using AbstractSubRequestPtr = std::shared_ptr<AbstractSubRequest>;
  * execution of the sub request has started or finished before any thread will wait on the future. This prevents
  * deadlocks in single threaded execution.
  */
-class SubRequestFuture {
-  public:
+class SubRequestFuture
+{
+public:
     /**
      * @brief Constructor
      * @param request the request which needs to be executed for the wrapped future to contain a value
@@ -43,9 +45,9 @@ class SubRequestFuture {
      */
     std::any get();
 
-  private:
+private:
     AbstractSubRequestPtr request;
     std::future<std::any> future;
 };
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_SUBREQUESTFUTURE_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_SUBREQUESTFUTURE_HPP_

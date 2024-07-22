@@ -16,14 +16,16 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_BUFFERRATE_HPP_
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Collects the rate of buffers are used on a node. A positive number means that there are more buffer being
  * freed than allocated/acquired. A negative number the opposite. The unit is buffers/second
  */
-class BufferRate : public StatisticMetric {
-  public:
+class BufferRate : public StatisticMetric
+{
+public:
     /**
      * @brief Creates a BufferRate wrapped in a MetricPtr
      * @return MetricPtr
@@ -43,13 +45,13 @@ class BufferRate : public StatisticMetric {
      */
     std::string toString() const override;
 
-  private:
+private:
     /**
      * @brief Private constructor for BufferRate
      */
     explicit BufferRate();
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_BUFFERRATE_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_BUFFERRATE_HPP_

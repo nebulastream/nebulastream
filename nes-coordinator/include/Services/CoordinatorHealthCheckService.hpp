@@ -15,28 +15,29 @@
 #ifndef NES_COORDINATOR_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
 #define NES_COORDINATOR_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
 
+#include <stdint.h>
 #include <Catalogs/Topology/AbstractHealthCheckService.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
-#include <stdint.h>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief: This class is responsible for handling requests related to monitor the alive status of nodes from the coordinator
  */
-class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
-  public:
-    CoordinatorHealthCheckService(TopologyPtr topology,
-                                  std::string healthServiceName,
-                                  Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
+class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService
+{
+public:
+    CoordinatorHealthCheckService(
+        TopologyPtr topology, std::string healthServiceName, Configurations::CoordinatorConfigurationPtr coordinatorConfiguration);
 
     /**
      * Method to start the health checking
      */
     void startHealthCheck() override;
 
-  private:
+private:
     TopologyPtr topology;
     WorkerRPCClientPtr workerRPCClient;
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
@@ -44,6 +45,6 @@ class CoordinatorHealthCheckService : public NES::AbstractHealthCheckService {
 
 using CoordinatorHealthCheckServicePtr = std::shared_ptr<CoordinatorHealthCheckService>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_SERVICES_COORDINATORHEALTHCHECKSERVICE_HPP_

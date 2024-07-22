@@ -13,17 +13,18 @@
 */
 
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Topology/Topology.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 using namespace Configurations;
 using namespace Runtime;
 
@@ -33,25 +34,28 @@ static const std::string sourceNameRight = "log_right";
 /**
  * @brief Test of distributed NEMO join
  */
-class DistributedNemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
-  public:
+class DistributedNemoJoinIntegrationTest : public Testing::BaseIntegrationTest
+{
+public:
     BufferManagerPtr bufferManager;
     QueryCompilation::StreamJoinStrategy joinStrategy = QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN;
     QueryCompilation::WindowingStrategy windowingStrategy = QueryCompilation::WindowingStrategy::SLICING;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("DistributedNemoJoinIntegrationTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DistributedNemoJoinIntegrationTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<BufferManager>();
     }
 
-    static CSVSourceTypePtr createCSVSourceType(const std::string& logicalSourceNAme,
-                                                const std::string& physicalSourceName,
-                                                const std::string& inputPath) {
+    static CSVSourceTypePtr
+    createCSVSourceType(const std::string& logicalSourceNAme, const std::string& physicalSourceName, const std::string& inputPath)
+    {
         CSVSourceTypePtr csvSourceType = CSVSourceType::create(logicalSourceNAme, physicalSourceName);
         csvSourceType->setFilePath(inputPath);
         csvSourceType->setNumberOfTuplesToProducePerBuffer(50);
@@ -70,11 +74,13 @@ class DistributedNemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
      * @param leafNodesPerNode number of leaf nodes for the parents of last layer
      * @return the TestHarness
      */
-    TestHarness createTestHarness(const Query& query,
-                                  std::function<void(CoordinatorConfigurationPtr)> crdFunctor,
-                                  uint64_t layers,
-                                  uint64_t nodesPerNode,
-                                  uint64_t leafNodesPerNode) {
+    TestHarness createTestHarness(
+        const Query& query,
+        std::function<void(CoordinatorConfigurationPtr)> crdFunctor,
+        uint64_t layers,
+        uint64_t nodesPerNode,
+        uint64_t leafNodesPerNode)
+    {
         auto inputSchema = Schema::create()
                                ->addField("key", DataTypeFactory::createUInt32())
                                ->addField("value", DataTypeFactory::createUInt32())
@@ -97,32 +103,39 @@ class DistributedNemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
         uint64_t value = 0;
 
         // create the additional layers
-        for (uint64_t i = 2; i <= layers; i++) {
+        for (uint64_t i = 2; i <= layers; i++)
+        {
             std::vector<uint64_t> newParents;
             std::string logSource;
             // iterate and set the parents of the current layer
-            for (auto parent : parents) {
+            for (auto parent : parents)
+            {
                 uint64_t nodeCnt = nodesPerNode;
-                if (i == layers) {
+                if (i == layers)
+                {
                     nodeCnt = leafNodesPerNode;
                 }
                 // set the children of the current parents
-                for (uint64_t j = 0; j < nodeCnt; j++) {
+                for (uint64_t j = 0; j < nodeCnt; j++)
+                {
                     nodeId++;
                     // if children are leaf nodes create the sources, else just create intermediate workers
-                    if (i == layers) {
+                    if (i == layers)
+                    {
                         leafNodes++;
                         // even leaf nodes are part of the LHS join, uneven of the RHS join
-                        if (leafNodes % 2 == 0) {
+                        if (leafNodes % 2 == 0)
+                        {
                             logSource = sourceNameLeft;
-                        } else {
+                        }
+                        else
+                        {
                             logSource = sourceNameRight;
                             value += 10;
                         }
 
                         auto phySource = logSource + std::to_string(leafNodes);
-                        auto csvSource =
-                            createCSVSourceType(logSource, phySource, std::string(TEST_DATA_DIRECTORY) + "window.csv");
+                        auto csvSource = createCSVSourceType(logSource, phySource, std::string(TEST_DATA_DIRECTORY) + "window.csv");
                         testHarness.attachWorkerWithCSVSourceToWorkerWithId(csvSource, WorkerId(parent));
 
                         nlohmann::json request;
@@ -133,11 +146,10 @@ class DistributedNemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
                         request["value"] = std::to_string(value);
                         distributionList.emplace_back(request);
                         NES_DEBUG("DistributedNemoJoinIntegrationTest: Adding statistics for {}", request.dump());
-                        NES_DEBUG("DistributedNemoJoinIntegrationTest: Adding CSV source:{} to {} for node:{}",
-                                  logSource,
-                                  parent,
-                                  nodeId);
-                    } else {
+                        NES_DEBUG("DistributedNemoJoinIntegrationTest: Adding CSV source:{} to {} for node:{}", logSource, parent, nodeId);
+                    }
+                    else
+                    {
                         testHarness.attachWorkerToWorkerWithId(WorkerId(parent));
                         NES_DEBUG("DistributedNemoJoinIntegrationTest: Adding worker {} to worker with ID:{}", nodeId, parent);
                     }
@@ -152,13 +164,13 @@ class DistributedNemoJoinIntegrationTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(DistributedNemoJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
+TEST_F(DistributedNemoJoinIntegrationTest, testThreeLevelsTopologyTopDown)
+{
     uint64_t layers = 3;
     uint64_t nodesPerNode = 4;
     uint64_t leafNodesPerNode = 2;
-    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config) {
-        config->optimizer.joinOptimizationMode.setValue(Optimizer::DistributedJoinOptimizationMode::NEMO);
-    };
+    std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config)
+    { config->optimizer.joinOptimizationMode.setValue(Optimizer::DistributedJoinOptimizationMode::NEMO); };
     Query query = Query::from(sourceNameLeft)
                       .joinWith(Query::from(sourceNameRight))
                       .where(Attribute("value") == Attribute("value"))
@@ -181,4 +193,4 @@ TEST_F(DistributedNemoJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
     EXPECT_EQ(nodesPerNode, countOccurrences("Join", queryPlan->toString()));
 }
 
-}// namespace NES
+} // namespace NES

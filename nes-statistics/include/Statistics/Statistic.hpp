@@ -18,7 +18,8 @@
 #include <Measures/TimeMeasure.hpp>
 #include <StatisticCollection/StatisticProbeHandling/ProbeExpression.hpp>
 #include <Statistics/StatisticValue.hpp>
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class Statistic;
 using StatisticPtr = std::shared_ptr<Statistic>;
@@ -26,8 +27,9 @@ using StatisticPtr = std::shared_ptr<Statistic>;
 /**
  * @brief This class acts as the parent class for all statistics, e.g., synopses or any other statistic
  */
-class Statistic : public std::enable_shared_from_this<Statistic> {
-  public:
+class Statistic : public std::enable_shared_from_this<Statistic>
+{
+public:
     /**
      * @brief Constructor for a Statistic
      * @param startTs
@@ -68,9 +70,11 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
      * @tparam Characteristic
      * @return bool true if node is of Characteristic
      */
-    template<class Characteristic>
-    bool instanceOf() {
-        if (dynamic_cast<Characteristic*>(this)) {
+    template <class Characteristic>
+    bool instanceOf()
+    {
+        if (dynamic_cast<Characteristic*>(this))
+        {
             return true;
         }
         return false;
@@ -81,9 +85,11 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
      * @tparam Statistic
      * @return bool true if node is of Statistic
      */
-    template<class Statistic>
-    bool instanceOf() const {
-        if (dynamic_cast<const Statistic*>(this)) {
+    template <class Statistic>
+    bool instanceOf() const
+    {
+        if (dynamic_cast<const Statistic*>(this))
+        {
             return true;
         }
         return false;
@@ -94,13 +100,14 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
     * @tparam StatisticType
     * @return returns a shared pointer of the StatisticType
     */
-    template<class StatisticType>
-    std::shared_ptr<StatisticType> as() {
-        if (instanceOf<StatisticType>()) {
+    template <class StatisticType>
+    std::shared_ptr<StatisticType> as()
+    {
+        if (instanceOf<StatisticType>())
+        {
             return std::dynamic_pointer_cast<StatisticType>(this->shared_from_this());
         }
-        throw std::logic_error("We performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(StatisticType).name());
+        throw std::logic_error("We performed an invalid cast of operator " + this->toString() + " to type " + typeid(StatisticType).name());
     }
 
     /**
@@ -108,13 +115,14 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
     * @tparam StatisticType
     * @return returns a shared pointer of the StatisticType
     */
-    template<class StatisticType>
-    std::shared_ptr<StatisticType> as() const {
-        if (instanceOf<StatisticType>()) {
+    template <class StatisticType>
+    std::shared_ptr<StatisticType> as() const
+    {
+        if (instanceOf<StatisticType>())
+        {
             return std::dynamic_pointer_cast<StatisticType>(this->shared_from_this());
         }
-        throw std::logic_error("We performed an invalid cast of operator " + this->toString() + " to type "
-                               + typeid(StatisticType).name());
+        throw std::logic_error("We performed an invalid cast of operator " + this->toString() + " to type " + typeid(StatisticType).name());
     }
 
     /**
@@ -140,11 +148,11 @@ class Statistic : public std::enable_shared_from_this<Statistic> {
      */
     virtual ~Statistic();
 
-  protected:
+protected:
     Windowing::TimeMeasure startTs;
     Windowing::TimeMeasure endTs;
     uint64_t observedTuples;
 };
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICS_STATISTIC_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICS_STATISTIC_HPP_

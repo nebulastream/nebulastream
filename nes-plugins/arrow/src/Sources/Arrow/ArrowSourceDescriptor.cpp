@@ -18,48 +18,61 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp>
 #include <Sources/Arrow/ArrowSourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
-ArrowSourceDescriptor::ArrowSourceDescriptor(SchemaPtr schema,
-                                             ArrowSourceTypePtr sourceConfig,
-                                             std::string logicalSourceName,
-                                             std::string physicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), arrowSourceType(std::move(sourceConfig)) {}
+ArrowSourceDescriptor::ArrowSourceDescriptor(
+    SchemaPtr schema, ArrowSourceTypePtr sourceConfig, std::string logicalSourceName, std::string physicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), arrowSourceType(std::move(sourceConfig))
+{
+}
 
-SourceDescriptorPtr ArrowSourceDescriptor::create(SchemaPtr schema,
-                                                  ArrowSourceTypePtr arrowSourceType,
-                                                  const std::string logicalSourceName,
-                                                  const std::string physicalSourceName) {
+SourceDescriptorPtr ArrowSourceDescriptor::create(
+    SchemaPtr schema, ArrowSourceTypePtr arrowSourceType, const std::string logicalSourceName, const std::string physicalSourceName)
+{
     return std::make_shared<ArrowSourceDescriptor>(
         ArrowSourceDescriptor(std::move(schema), std::move(arrowSourceType), logicalSourceName, physicalSourceName));
 }
 
-SourceDescriptorPtr ArrowSourceDescriptor::create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType) {
+SourceDescriptorPtr ArrowSourceDescriptor::create(SchemaPtr schema, ArrowSourceTypePtr arrowSourceType)
+{
     return std::make_shared<ArrowSourceDescriptor>(ArrowSourceDescriptor(std::move(schema), std::move(arrowSourceType), "", ""));
 }
 
-ArrowSourceTypePtr ArrowSourceDescriptor::getSourceConfig() const { return arrowSourceType; }
+ArrowSourceTypePtr ArrowSourceDescriptor::getSourceConfig() const
+{
+    return arrowSourceType;
+}
 
-bool ArrowSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-    if (!other->instanceOf<ArrowSourceDescriptor>()) {
+bool ArrowSourceDescriptor::equal(SourceDescriptorPtr const& other) const
+{
+    if (!other->instanceOf<ArrowSourceDescriptor>())
+    {
         return false;
     }
     auto otherSource = other->as<ArrowSourceDescriptor>();
     return arrowSourceType->equal(otherSource->getSourceConfig());
 }
 
-std::string ArrowSourceDescriptor::toString() const { return "ArrowSourceDescriptor(" + arrowSourceType->toString() + ")"; }
+std::string ArrowSourceDescriptor::toString() const
+{
+    return "ArrowSourceDescriptor(" + arrowSourceType->toString() + ")";
+}
 
-SourceDescriptorPtr ArrowSourceDescriptor::copy() {
+SourceDescriptorPtr ArrowSourceDescriptor::copy()
+{
     auto copy = ArrowSourceDescriptor::create(schema->copy(), arrowSourceType, logicalSourceName, physicalSourceName);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
 
-class ArrowSourceDescriptorPlugin : public SourceDescriptorPlugin {
-  public:
-    SourceDescriptorPtr create(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType) override {
-        if (physicalSourceType->getSourceType() != SourceType::ARROW_SOURCE) {
+class ArrowSourceDescriptorPlugin : public SourceDescriptorPlugin
+{
+public:
+    SourceDescriptorPtr create(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType) override
+    {
+        if (physicalSourceType->getSourceType() != SourceType::ARROW_SOURCE)
+        {
             return nullptr;
         }
         auto arrowSourceType = physicalSourceType->as<ArrowSourceType>();
@@ -70,4 +83,4 @@ class ArrowSourceDescriptorPlugin : public SourceDescriptorPlugin {
 // Register source descriptor plugin
 [[maybe_unused]] static SourceDescriptorPluginRegistry ::Add<ArrowSourceDescriptorPlugin> arrowSourceDescriptorPlugin;
 
-}// namespace NES
+} // namespace NES

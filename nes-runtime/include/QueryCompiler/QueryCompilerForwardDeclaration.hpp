@@ -14,16 +14,19 @@
 #ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_
 #define NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_
 #include <memory>
-namespace NES {
+namespace NES
+{
 
 class BasicValue;
 using BasicValuePtr = std::shared_ptr<BasicValue>;
 
-namespace Runtime {
+namespace Runtime
+{
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
-namespace Execution {
+namespace Execution
+{
 class OperatorHandler;
 using OperatorHandlerPtr = std::shared_ptr<OperatorHandler>;
 
@@ -36,9 +39,9 @@ using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
-}// namespace Execution
+} // namespace Execution
 
-}// namespace Runtime
+} // namespace Runtime
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
@@ -49,16 +52,18 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class LogicalJoinOperator;
 using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 
-namespace Join {
+namespace Join
+{
 class LogicalJoinDescriptor;
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-}// namespace Join
+} // namespace Join
 
-namespace Windowing {
+namespace Windowing
+{
 
 class LogicalWindowDescriptor;
 using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
@@ -72,7 +77,7 @@ using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescript
 class WindowAggregationDescriptor;
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
-}// namespace Windowing
+} // namespace Windowing
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
@@ -89,7 +94,8 @@ using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
-namespace QueryCompilation {
+namespace QueryCompilation
+{
 
 class PipelineContext;
 using PipelineContextPtr = std::shared_ptr<PipelineContext>;
@@ -153,23 +159,25 @@ using DataSinkProviderPtr = std::shared_ptr<DataSinkProvider>;
 
 class DefaultDataSourceProvider;
 using DataSourceProviderPtr = std::shared_ptr<DefaultDataSourceProvider>;
-namespace Phases {
+namespace Phases
+{
 
 class PhaseFactory;
 using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
 
-}// namespace Phases
+} // namespace Phases
 
-namespace PhysicalOperators {
+namespace PhysicalOperators
+{
 class PhysicalOperator;
 using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 
 class PhysicalCountMinBuildOperator;
 class PhysicalHyperLogLogBuildOperator;
-}// namespace PhysicalOperators
+} // namespace PhysicalOperators
 
-}// namespace QueryCompilation
+} // namespace QueryCompilation
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_
+#endif // NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_

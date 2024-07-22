@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 #include <Monitoring/MonitoringCatalog.hpp>
 
@@ -29,22 +29,26 @@
 #include <Monitoring/Storage/LatestEntriesMetricStore.hpp>
 #include <Monitoring/Util/MetricUtils.hpp>
 
-namespace NES {
+namespace NES
+{
 using namespace Configurations;
 using namespace Runtime;
 
-class MetricStoreTest : public Testing::BaseUnitTest {
-  public:
+class MetricStoreTest : public Testing::BaseUnitTest
+{
+public:
     Runtime::BufferManagerPtr bufferManager;
     uint64_t bufferSize = 0;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MetricStoreTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("ResourcesReaderTest: Setup MetricStoreTest test class.");
     }
 
     /* Will be called before a  test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("MetricStoreTest: Setup MetricStoreTest test case.");
 
@@ -54,7 +58,8 @@ class MetricStoreTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
+TEST_F(MetricStoreTest, testNewestEntryMetricStore)
+{
     auto nodeId = INVALID_WORKER_NODE_ID;
     auto metricStore = std::make_shared<Monitoring::LatestEntriesMetricStore>();
     auto networkCollector = Monitoring::NetworkCollector();
@@ -76,7 +81,8 @@ TEST_F(MetricStoreTest, testNewestEntryMetricStore) {
     ASSERT_FALSE(metricStore->hasMetrics(nodeId));
 }
 
-TEST_F(MetricStoreTest, testAllEntriesMetricStore) {
+TEST_F(MetricStoreTest, testAllEntriesMetricStore)
+{
     auto nodeId = INVALID_WORKER_NODE_ID;
     auto metricStore = std::make_shared<Monitoring::AllEntriesMetricStore>();
     auto networkCollector = Monitoring::NetworkCollector();
@@ -98,4 +104,4 @@ TEST_F(MetricStoreTest, testAllEntriesMetricStore) {
     ASSERT_FALSE(metricStore->hasMetrics(nodeId));
 }
 
-}// namespace NES
+} // namespace NES

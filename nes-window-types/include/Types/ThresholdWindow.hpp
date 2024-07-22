@@ -19,13 +19,15 @@
 #include <Measures/TimeMeasure.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 /*
  * Threshold window creates a window whenever an event attribute exceeds a threshold (predicate), and close the window if it is below the threshold (or the other way around)
  * Threshold windows are content based, non-overlapping windows with gaps
  */
-class ThresholdWindow : public ContentBasedWindowType {
-  public:
+class ThresholdWindow : public ContentBasedWindowType
+{
+public:
     /**
     * @brief Constructor for ThresholdWindow
     * @param predicate the filter predicate of the window, if true tuple belongs to window if false not, first occurance of true starts the window, first occurance of false closes it
@@ -59,7 +61,7 @@ class ThresholdWindow : public ContentBasedWindowType {
 
     uint64_t hash() const override;
 
-  private:
+private:
     explicit ThresholdWindow(ExpressionNodePtr predicate);
     ThresholdWindow(ExpressionNodePtr predicate, uint64_t minCount);
 
@@ -67,6 +69,6 @@ class ThresholdWindow : public ContentBasedWindowType {
     uint64_t minimumCount = 0;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_THRESHOLDWINDOW_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_THRESHOLDWINDOW_HPP_

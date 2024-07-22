@@ -18,18 +18,20 @@
 #include <iostream>
 #include <sstream>
 
-#include <Sources/DataSource.hpp>
 #include <utility>
+#include <Sources/DataSource.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this class implements the generator source
  * @Limitations:
  *    - This class can currently not be serialized/deserialized mostly due to the templates
  */
-class GeneratorSource : public DataSource {
-  public:
+class GeneratorSource : public DataSource
+{
+public:
     /**
    * @brief constructor to create a generator source
    * @param schema of the data that this source produces
@@ -44,27 +46,30 @@ class GeneratorSource : public DataSource {
    * @param physicalSourceName the name and unique identifier of a physical source
    * @param successors the subsequent operators in the pipeline to which the data is pushed
    */
-    GeneratorSource(SchemaPtr schema,
-                    Runtime::BufferManagerPtr bufferManager,
-                    Runtime::QueryManagerPtr queryManager,
-                    uint64_t numberOfBufferToProduce,
-                    OperatorId operatorId,
-                    OriginId originId,
-                    StatisticId statisticId,
-                    size_t numSourceLocalBuffers,
-                    GatheringMode gatheringMode,
-                    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
-                    const std::string& physicalSourceName = std::string("defaultPhysicalStreamName"))
-        : DataSource(std::move(schema),
-                     std::move(bufferManager),
-                     std::move(queryManager),
-                     operatorId,
-                     originId,
-                     statisticId,
-                     numSourceLocalBuffers,
-                     gatheringMode,
-                     physicalSourceName,
-                     std::move(successors)) {
+    GeneratorSource(
+        SchemaPtr schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        uint64_t numberOfBufferToProduce,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
+        const std::string& physicalSourceName = std::string("defaultPhysicalStreamName"))
+        : DataSource(
+            std::move(schema),
+            std::move(bufferManager),
+            std::move(queryManager),
+            operatorId,
+            originId,
+            statisticId,
+            numSourceLocalBuffers,
+            gatheringMode,
+            physicalSourceName,
+            std::move(successors))
+    {
         this->numberOfBuffersToProduce = numberOfBufferToProduce;
     }
     /**
@@ -81,5 +86,5 @@ class GeneratorSource : public DataSource {
     SourceType getType() const override;
 };
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_GENERATORSOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_GENERATORSOURCE_HPP_

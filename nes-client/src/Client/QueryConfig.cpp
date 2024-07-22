@@ -14,12 +14,21 @@
 
 #include <Client/QueryConfig.hpp>
 
-namespace NES::Client {
+namespace NES::Client
+{
 
-QueryConfig::QueryConfig(Optimizer::PlacementStrategy placementType) : placementType(placementType) {}
+QueryConfig::QueryConfig(Optimizer::PlacementStrategy placementType) : placementType(placementType)
+{
+}
 
-Optimizer::PlacementStrategy QueryConfig::getPlacementType() const { return placementType; }
+Optimizer::PlacementStrategy QueryConfig::getPlacementType() const
+{
+    return placementType;
+}
 
-void QueryConfig::setPlacementType(Optimizer::PlacementStrategy placementType) { QueryConfig::placementType = placementType; }
+void QueryConfig::setPlacementType(Optimizer::PlacementStrategy placementType)
+{
+    QueryConfig::placementType = placementType;
+}
 
-}// namespace NES::Client
+} // namespace NES::Client

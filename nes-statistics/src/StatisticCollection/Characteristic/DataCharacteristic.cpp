@@ -11,22 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
 #include <sstream>
 #include <utility>
-namespace NES::Statistic {
+#include <StatisticCollection/Characteristic/DataCharacteristic.hpp>
+namespace NES::Statistic
+{
 
-CharacteristicPtr
-DataCharacteristic::create(MetricPtr type, const std::string& logicalSourceName, const std::string& physicalSourceName) {
+CharacteristicPtr DataCharacteristic::create(MetricPtr type, const std::string& logicalSourceName, const std::string& physicalSourceName)
+{
     return std::make_shared<DataCharacteristic>(DataCharacteristic(std::move(type), logicalSourceName, physicalSourceName));
 }
 
-std::string DataCharacteristic::getLogicalSourceName() const { return logicalSourceName; }
+std::string DataCharacteristic::getLogicalSourceName() const
+{
+    return logicalSourceName;
+}
 
-std::string DataCharacteristic::getPhysicalSourceName() const { return physicalSourceName; }
+std::string DataCharacteristic::getPhysicalSourceName() const
+{
+    return physicalSourceName;
+}
 
-bool DataCharacteristic::operator==(const Characteristic& rhs) const {
-    if (this->Characteristic::operator==(rhs) && rhs.instanceOf<DataCharacteristic>()) {
+bool DataCharacteristic::operator==(const Characteristic& rhs) const
+{
+    if (this->Characteristic::operator==(rhs) && rhs.instanceOf<DataCharacteristic>())
+    {
         auto rhsDataCharacteristic = dynamic_cast<const DataCharacteristic&>(rhs);
         return logicalSourceName == rhsDataCharacteristic.logicalSourceName
             && physicalSourceName == rhsDataCharacteristic.physicalSourceName;
@@ -34,14 +43,16 @@ bool DataCharacteristic::operator==(const Characteristic& rhs) const {
     return false;
 }
 
-std::string DataCharacteristic::toString() const {
+std::string DataCharacteristic::toString() const
+{
     std::ostringstream oss;
     oss << "{ LogicalSourceName: " << logicalSourceName << " "
         << "PhysicalSourceName: " << physicalSourceName << "}";
     return oss.str();
 }
 
-size_t DataCharacteristic::hash() const {
+size_t DataCharacteristic::hash() const
+{
     size_t hash = 0;
     hash ^= std::hash<std::string>{}(logicalSourceName);
     hash ^= std::hash<std::string>{}(physicalSourceName);
@@ -49,6 +60,8 @@ size_t DataCharacteristic::hash() const {
 }
 
 DataCharacteristic::DataCharacteristic(MetricPtr type, std::string logicalSourceName, const std::string& physicalSourceName)
-    : Characteristic(std::move(type)), logicalSourceName(std::move(logicalSourceName)), physicalSourceName(physicalSourceName) {}
+    : Characteristic(std::move(type)), logicalSourceName(std::move(logicalSourceName)), physicalSourceName(physicalSourceName)
+{
+}
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

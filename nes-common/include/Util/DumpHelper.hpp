@@ -15,13 +15,15 @@
 #define NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
 #include <memory>
 #include <string>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This is a utility, which provides an context, to dump state (e.g., query plans or irs) to a file or the console.
  */
-class DumpHelper {
-  public:
+class DumpHelper
+{
+public:
     /**
      * @brief Factory method to create the dump utility.
      * @param contextIdentifier the global identifier for all elements that are dumped by this context
@@ -30,10 +32,8 @@ class DumpHelper {
      * @param outputPath output path if content is dumped to a file
      * @return DumpHelper
      */
-    static DumpHelper create(const std::string& contextIdentifier,
-                             bool dumpToConsole,
-                             bool dumpToFile,
-                             const std::string& outputPath = std::string());
+    static DumpHelper
+    create(const std::string& contextIdentifier, bool dumpToConsole, bool dumpToFile, const std::string& outputPath = std::string());
 
     /**
      * @brief Function to dump a specific entity using this context.
@@ -42,13 +42,13 @@ class DumpHelper {
      */
     void dump(const std::string_view& name, const std::string_view& output) const;
 
-  private:
+private:
     explicit DumpHelper(std::string contextIdentifier, bool dumpToConsole, bool dumpToFile, std::string outputPath);
     const std::string contextIdentifier;
     const bool dumpToConsole;
     const bool dumpToFile;
     const std::string outputPath;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_

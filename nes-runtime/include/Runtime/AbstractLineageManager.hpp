@@ -14,17 +14,19 @@
 
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
-#include <Util/BufferSequenceNumber.hpp>
 #include <cstddef>
+#include <Util/BufferSequenceNumber.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief The Abstract Lineage Manager class is used to map of all tuples that got their sequence number changed
  * by stateful operators
  */
-class AbstractLineageManager {
-  public:
+class AbstractLineageManager
+{
+public:
     virtual ~AbstractLineageManager() noexcept = default;
 
     /**
@@ -47,5 +49,5 @@ class AbstractLineageManager {
      */
     virtual size_t getLineageSize() const = 0;
 };
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_

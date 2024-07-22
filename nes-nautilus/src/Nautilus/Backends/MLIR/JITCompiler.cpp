@@ -17,13 +17,16 @@
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
-namespace NES::Nautilus::Backends::MLIR {
+namespace NES::Nautilus::Backends::MLIR
+{
 
-void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOptions, const DumpHelper& dumpHelper) {
+void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOptions, const DumpHelper& dumpHelper)
+{
     // Convert the module to LLVM IR in a new LLVM IR context.
     llvm::LLVMContext llvmContext;
     auto llvmModule = mlir::translateModuleToLLVMIR(mlirModule, llvmContext);
-    if (!llvmModule) {
+    if (!llvmModule)
+    {
         llvm::errs() << "Failed to emit LLVM IR\n";
         return;
     }
@@ -35,7 +38,8 @@ void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOpt
         /*optLevel=*/compilerOptions.isOptimize() ? 3 : 0,
         /*sizeLevel=*/0,
         /*targetMachine=*/nullptr);
-    if (auto err = optPipeline(llvmModule.get())) {
+    if (auto err = optPipeline(llvmModule.get()))
+    {
         llvm::errs() << "Failed to optimize LLVM IR " << err << "\n";
         return;
     }
@@ -45,20 +49,22 @@ void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOpt
     dumpHelper.dump("4. AfterLLVMGeneration.ll", result);
 }
 
-std::unique_ptr<mlir::ExecutionEngine>
-JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
-                              const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
-                              const std::vector<std::string>& jitProxyFunctionSymbols,
-                              const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses,
-                              const CompilationOptions& compilerOptions,
-                              const DumpHelper& dumpHelper) {
+std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
+    mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
+    const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
+    const std::vector<std::string>& jitProxyFunctionSymbols,
+    const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses,
+    const CompilationOptions& compilerOptions,
+    const DumpHelper& dumpHelper)
+{
     // Initialize information about the local machine in LLVM.
     LLVMInitializeNativeTarget();
     LLVMInitializeNativeAsmPrinter();
     // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*mlirModule->getContext());
 
-    if (compilerOptions.isDumpToConsole() || compilerOptions.isDumpToFile()) {
+    if (compilerOptions.isDumpToConsole() || compilerOptions.isDumpToFile())
+    {
         dumpLLVMIR(mlirModule.get(), compilerOptions, dumpHelper);
     }
 
@@ -71,23 +77,27 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
 
     // TODO in issue #3710 we aim to add a proxy function catalog that contains the information on all proxy functions.
     // right now, we have to statically list all proxy functions here, and in 'ExtractFunctionsFromLLVMIR.cpp'.
-    const std::unordered_set<std::string> ProxyInliningFunctions{"NES__Runtime__TupleBuffer__getNumberOfTuples",
-                                                                 "NES__Runtime__TupleBuffer__setNumberOfTuples",
-                                                                 "NES__Runtime__TupleBuffer__getBuffer",
-                                                                 "NES__Runtime__TupleBuffer__getBufferSize",
-                                                                 "NES__Runtime__TupleBuffer__getWatermark",
-                                                                 "NES__Runtime__TupleBuffer__setWatermark",
-                                                                 "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
-                                                                 "NES__Runtime__TupleBuffer__setSequenceNumber",
-                                                                 "NES__Runtime__TupleBuffer__getSequenceNumber",
-                                                                 "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
+    const std::unordered_set<std::string> ProxyInliningFunctions{
+        "NES__Runtime__TupleBuffer__getNumberOfTuples",
+        "NES__Runtime__TupleBuffer__setNumberOfTuples",
+        "NES__Runtime__TupleBuffer__getBuffer",
+        "NES__Runtime__TupleBuffer__getBufferSize",
+        "NES__Runtime__TupleBuffer__getWatermark",
+        "NES__Runtime__TupleBuffer__setWatermark",
+        "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
+        "NES__Runtime__TupleBuffer__setSequenceNumber",
+        "NES__Runtime__TupleBuffer__getSequenceNumber",
+        "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
     // We register all external functions (symbols) that we do not inline.
-    const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner) {
+    const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner)
+    {
         auto symbolMap = llvm::orc::SymbolMap();
-        for (int i = 0; i < (int) jitProxyFunctionSymbols.size(); ++i) {
-            if (!(compilerOptions.isProxyInlining() && ProxyInliningFunctions.contains(jitProxyFunctionSymbols.at(i)))) {
-                symbolMap[interner(jitProxyFunctionSymbols.at(i))] =
-                    llvm::JITEvaluatedSymbol(jitProxyFunctionTargetAddresses.at(i), llvm::JITSymbolFlags::Callable);
+        for (int i = 0; i < (int)jitProxyFunctionSymbols.size(); ++i)
+        {
+            if (!(compilerOptions.isProxyInlining() && ProxyInliningFunctions.contains(jitProxyFunctionSymbols.at(i))))
+            {
+                symbolMap[interner(jitProxyFunctionSymbols.at(i))]
+                    = llvm::JITEvaluatedSymbol(jitProxyFunctionTargetAddresses.at(i), llvm::JITSymbolFlags::Callable);
             }
         }
         return symbolMap;
@@ -96,4 +106,4 @@ JITCompiler::jitCompileModule(mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
     engine->registerSymbols(runtimeSymbolMap);
     return std::move(engine);
 }
-}// namespace NES::Nautilus::Backends::MLIR
+} // namespace NES::Nautilus::Backends::MLIR

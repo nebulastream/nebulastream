@@ -16,19 +16,28 @@
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/IR/Types/VoidStamp.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
 StoreOperation::StoreOperation(OperationPtr value, OperationPtr address)
-    : Operation(OperationType::StoreOp, std::make_shared<Types::VoidStamp>()), value(value), address(address) {
+    : Operation(OperationType::StoreOp, std::make_shared<Types::VoidStamp>()), value(value), address(address)
+{
     address->addUsage(this);
     value->addUsage(this);
 }
 
-OperationPtr StoreOperation::getValue() { return value.lock(); }
+OperationPtr StoreOperation::getValue()
+{
+    return value.lock();
+}
 
-OperationPtr StoreOperation::getAddress() { return address.lock(); }
+OperationPtr StoreOperation::getAddress()
+{
+    return address.lock();
+}
 
-std::string StoreOperation::toString() {
+std::string StoreOperation::toString()
+{
     return "store(" + getValue()->getIdentifier() + ", " + getAddress()->getIdentifier() + ")";
 }
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

@@ -14,16 +14,18 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_
 #include <Nautilus/Backends/CompilationBackend.hpp>
-namespace NES::Nautilus::Backends::CPP {
+namespace NES::Nautilus::Backends::CPP
+{
 
 /**
  * @brief Compilation backend that generates cpp code and compiles it at runtime
  */
-class CPPCompilationBackend : public CompilationBackend {
-  public:
+class CPPCompilationBackend : public CompilationBackend
+{
+public:
     std::unique_ptr<Executable>
     compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
 };
 
-}// namespace NES::Nautilus::Backends::CPP
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_
+} // namespace NES::Nautilus::Backends::CPP
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_

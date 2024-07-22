@@ -14,15 +14,27 @@
 
 #include <Util/Mobility/Waypoint.hpp>
 
-namespace NES::Spatial::DataTypes::Experimental {
+namespace NES::Spatial::DataTypes::Experimental
+{
 
 Waypoint::Waypoint(GeoLocation location) : location(location), timestamp(std::nullopt){};
 
-Waypoint::Waypoint(GeoLocation location, Timestamp timestamp) : location(location), timestamp(timestamp) {}
+Waypoint::Waypoint(GeoLocation location, Timestamp timestamp) : location(location), timestamp(timestamp)
+{
+}
 
-Waypoint Waypoint::invalid() { return Waypoint(GeoLocation()); };
+Waypoint Waypoint::invalid()
+{
+    return Waypoint(GeoLocation());
+};
 
-GeoLocation Waypoint::getLocation() const { return location; }
+GeoLocation Waypoint::getLocation() const
+{
+    return location;
+}
 
-std::optional<Timestamp> Waypoint::getTimestamp() const { return timestamp; }
-}// namespace NES::Spatial::DataTypes::Experimental
+std::optional<Timestamp> Waypoint::getTimestamp() const
+{
+    return timestamp;
+}
+} // namespace NES::Spatial::DataTypes::Experimental

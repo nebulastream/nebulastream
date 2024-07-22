@@ -17,13 +17,15 @@
 
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Filter operator, which contains an expression as a predicate.
  */
-class LogicalFilterOperator : public LogicalUnaryOperator {
-  public:
+class LogicalFilterOperator : public LogicalUnaryOperator
+{
+public:
     explicit LogicalFilterOperator(ExpressionNodePtr const&, OperatorId id);
     ~LogicalFilterOperator() override = default;
 
@@ -65,10 +67,10 @@ class LogicalFilterOperator : public LogicalUnaryOperator {
      */
     std::vector<std::string> getFieldNamesUsedByFilterPredicate() const;
 
-  private:
+private:
     ExpressionNodePtr predicate;
     float selectivity = 1.0f;
 };
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALFILTEROPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALFILTEROPERATOR_HPP_

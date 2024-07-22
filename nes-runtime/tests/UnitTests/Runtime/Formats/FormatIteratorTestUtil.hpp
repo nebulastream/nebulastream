@@ -20,16 +20,18 @@
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief Provides utility function to write multiple tuples to a test tuple buffer and to create expected output.
  *        Currently, the functionality is limited to a single buffer containing all test tuples.
  * @tparam ExpectedType: the type of the expected data that is validated in the final step of the test.
  */
-template<typename ExpectedType>
-class FormatIteratorTestUtil {
-  public:
+template <typename ExpectedType>
+class FormatIteratorTestUtil
+{
+public:
     BufferManagerPtr bufferManager;
 
     /**
@@ -37,7 +39,8 @@ class FormatIteratorTestUtil {
      * @param schema the schema of the tuple containing the field name
      * @return a test tuple buffer that the test tuples will be written into
      */
-    auto createTestTupleBuffer(SchemaPtr schema) const {
+    auto createTestTupleBuffer(SchemaPtr schema) const
+    {
         auto tupleBuffer = bufferManager->getBufferBlocking();
         MemoryLayouts::RowLayoutPtr rowLayout = MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         return std::make_unique<Runtime::MemoryLayouts::TestTupleBuffer>(rowLayout, tupleBuffer);
@@ -49,14 +52,12 @@ class FormatIteratorTestUtil {
      * @param value the value for the current field
      * @return the value for the current field, which is inserted into a tuple
      */
-    template<typename CreateExpectedTypeFunc, typename T>
-    auto setExpectedValue(T value,
-                          const SchemaPtr& schema,
-                          std::vector<ExpectedType>& expectedKVPairs,
-                          CreateExpectedTypeFunc createExpectedType) {
+    template <typename CreateExpectedTypeFunc, typename T>
+    auto setExpectedValue(
+        T value, const SchemaPtr& schema, std::vector<ExpectedType>& expectedKVPairs, CreateExpectedTypeFunc createExpectedType)
+    {
         assert(expectedKVPairs.size() < schema->getFieldNames().size());
-        expectedKVPairs.emplace_back(
-            createExpectedType(std::make_pair(schema->getFieldNames().at(expectedKVPairs.size()), value)));
+        expectedKVPairs.emplace_back(createExpectedType(std::make_pair(schema->getFieldNames().at(expectedKVPairs.size()), value)));
         return value;
     }
 
@@ -67,12 +68,14 @@ class FormatIteratorTestUtil {
      * @param expectedKVPairs the vector in which we store vectors for the expected output
      * @param values the values of the current tuple
      */
-    template<typename CreateExpectedTypeFunc, typename... Values>
-    auto processTuple(SchemaPtr schema,
-                      NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
-                      std::vector<std::vector<ExpectedType>>& expectedKVPairs,
-                      CreateExpectedTypeFunc createExpectedType,
-                      const Values&... values) {
+    template <typename CreateExpectedTypeFunc, typename... Values>
+    auto processTuple(
+        SchemaPtr schema,
+        NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
+        std::vector<std::vector<ExpectedType>>& expectedKVPairs,
+        CreateExpectedTypeFunc createExpectedType,
+        const Values&... values)
+    {
         // Iterate over all values in the current tuple and add them to the expected KV pairs.
         expectedKVPairs.push_back(std::vector<ExpectedType>());
         auto testTuple = std::make_tuple(setExpectedValue(values, schema, expectedKVPairs.back(), createExpectedType)...);
@@ -85,16 +88,16 @@ class FormatIteratorTestUtil {
      * @param expectedKVPairs the vector in which we store vectors for the expected output
      * @param tuples the tuples created in the current test that are written to the testTupleBuffer
      */
-    template<typename CreateExpectedTypeFunc, typename... Tuples>
-    auto processTuples(SchemaPtr schema,
-                       std::vector<std::vector<ExpectedType>>& expectedKVPairs,
-                       CreateExpectedTypeFunc createExpectedType,
-                       const Tuples&... tuples) {
+    template <typename CreateExpectedTypeFunc, typename... Tuples>
+    auto processTuples(
+        SchemaPtr schema,
+        std::vector<std::vector<ExpectedType>>& expectedKVPairs,
+        CreateExpectedTypeFunc createExpectedType,
+        const Tuples&... tuples)
+    {
         auto testTupleBuffer = createTestTupleBuffer(schema);
         (std::apply(
-             [&](const auto&... values) {
-                 processTuple(schema, testTupleBuffer.get(), expectedKVPairs, createExpectedType, values...);
-             },
+             [&](const auto&... values) { processTuple(schema, testTupleBuffer.get(), expectedKVPairs, createExpectedType, values...); },
              tuples),
          ...);
         return testTupleBuffer;
@@ -107,12 +110,14 @@ class FormatIteratorTestUtil {
      * @param expectedKVPairs the vector in which we store vectors for the expected output
      * @param values the values of the current tuple
      */
-    template<typename CreateExpectedTypeFunc, typename... Values>
-    auto processTupleWithString(SchemaPtr schema,
-                                NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
-                                std::vector<std::vector<ExpectedType>>& expectedKVPairs,
-                                CreateExpectedTypeFunc createExpectedType,
-                                const Values&... values) {
+    template <typename CreateExpectedTypeFunc, typename... Values>
+    auto processTupleWithString(
+        SchemaPtr schema,
+        NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
+        std::vector<std::vector<ExpectedType>>& expectedKVPairs,
+        CreateExpectedTypeFunc createExpectedType,
+        const Values&... values)
+    {
         expectedKVPairs.push_back(std::vector<ExpectedType>());
         auto testTuple = std::make_tuple(setExpectedValue(values, schema, expectedKVPairs.back(), createExpectedType)...);
         testTupleBuffer->pushRecordToBuffer(testTuple, bufferManager.get());
@@ -124,16 +129,17 @@ class FormatIteratorTestUtil {
      * @param expectedKVPairs the vector in which we store the expected output
      * @param tuples the tuples created in the current test that are written to the testTupleBuffer
      */
-    template<typename CreateExpectedTypeFunc, typename... Tuples>
-    auto processTuplesWithString(SchemaPtr schema,
-                                 std::vector<std::vector<ExpectedType>>& expectedKVPairs,
-                                 CreateExpectedTypeFunc createExpectedType,
-                                 const Tuples&... tuples) {
+    template <typename CreateExpectedTypeFunc, typename... Tuples>
+    auto processTuplesWithString(
+        SchemaPtr schema,
+        std::vector<std::vector<ExpectedType>>& expectedKVPairs,
+        CreateExpectedTypeFunc createExpectedType,
+        const Tuples&... tuples)
+    {
         auto testTupleBuffer = createTestTupleBuffer(schema);
         (std::apply(
-             [&](const auto&... values) {
-                 processTupleWithString(schema, testTupleBuffer.get(), expectedKVPairs, createExpectedType, values...);
-             },
+             [&](const auto&... values)
+             { processTupleWithString(schema, testTupleBuffer.get(), expectedKVPairs, createExpectedType, values...); },
              tuples),
          ...);
         return testTupleBuffer;
@@ -146,40 +152,65 @@ class FormatIteratorTestUtil {
      * @param checkExpectedValueFunc: The function that is used to check if the value is in the expected values.
      * @return auto: true, if the value is in the expected values, false if not.
      */
-    template<typename CheckExpectedValueFunc>
-    auto validateExpectedKVPairForVariant(const ExpectedType& expectedKVPair,
-                                          CheckExpectedValueFunc checkExpectedValueFunc) const {
-        if (std::holds_alternative<uint8_t>(expectedKVPair.value)) {
+    template <typename CheckExpectedValueFunc>
+    auto validateExpectedKVPairForVariant(const ExpectedType& expectedKVPair, CheckExpectedValueFunc checkExpectedValueFunc) const
+    {
+        if (std::holds_alternative<uint8_t>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<uint8_t>(expectedKVPair.value));
-        } else if (std::holds_alternative<uint16_t>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<uint16_t>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<uint16_t>(expectedKVPair.value));
-        } else if (std::holds_alternative<uint32_t>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<uint32_t>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<uint32_t>(expectedKVPair.value));
-        } else if (std::holds_alternative<uint64_t>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<uint64_t>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<uint64_t>(expectedKVPair.value));
-        } else if (std::holds_alternative<int8_t>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<int8_t>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<int8_t>(expectedKVPair.value));
-        } else if (std::holds_alternative<int16_t>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<int16_t>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<int16_t>(expectedKVPair.value));
-        } else if (std::holds_alternative<int32_t>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<int32_t>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<int32_t>(expectedKVPair.value));
-        } else if (std::holds_alternative<int64_t>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<int64_t>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<int64_t>(expectedKVPair.value));
-        } else if (std::holds_alternative<float>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<float>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<float>(expectedKVPair.value));
-        } else if (std::holds_alternative<double>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<double>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<double>(expectedKVPair.value));
-        } else if (std::holds_alternative<bool>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<bool>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<bool>(expectedKVPair.value));
-        } else if (std::holds_alternative<char>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<char>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<char>(expectedKVPair.value));
-        } else if (std::holds_alternative<std::string>(expectedKVPair.value)) {
+        }
+        else if (std::holds_alternative<std::string>(expectedKVPair.value))
+        {
             return checkExpectedValueFunc(std::get<std::string>(expectedKVPair.value));
         }
         return false;
     }
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_TESTS_UNITTESTS_RUNTIME_FORMATS_FORMATITERATORTESTUTIL_HPP_
+#endif // NES_RUNTIME_TESTS_UNITTESTS_RUNTIME_FORMATS_FORMATITERATORTESTUTIL_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <memory>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -26,24 +25,29 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-struct Output {
+struct Output
+{
     float iris0;
     float iris1;
     float iris2;
 };
 
-class TensorflowOperatorTest : public Testing::BaseUnitTest {
-  public:
+class TensorflowOperatorTest : public Testing::BaseUnitTest
+{
+public:
     std::vector<Expressions::ExpressionPtr> aggFieldAccessExpressionsVector;
     std::vector<Nautilus::Record::RecordFieldIdentifier> resultFieldVector;
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TensorflowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup TensorflowOperatorTest test class.");
     }
@@ -55,7 +59,8 @@ class TensorflowOperatorTest : public Testing::BaseUnitTest {
 /**
  * @brief Tests the infer model operator for bool input.
  */
-TEST_F(TensorflowOperatorTest, testInferModelForBoolInput) {
+TEST_F(TensorflowOperatorTest, testInferModelForBoolInput)
+{
     std::string f1 = "f1";
     std::string f2 = "f2";
     std::string f3 = "f3";
@@ -81,11 +86,10 @@ TEST_F(TensorflowOperatorTest, testInferModelForBoolInput) {
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);
 
-    auto handler =
-        std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
+    auto handler = std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
 
     inferModelOperator->setup(ctx);
 
@@ -120,7 +124,8 @@ TEST_F(TensorflowOperatorTest, testInferModelForBoolInput) {
 /**
  * @brief Tests the infer model operator for float input.
  */
-TEST_F(TensorflowOperatorTest, testInferModelForFloatInput) {
+TEST_F(TensorflowOperatorTest, testInferModelForFloatInput)
+{
     std::string f1 = "f1";
     std::string f2 = "f2";
     std::string f3 = "f3";
@@ -146,40 +151,44 @@ TEST_F(TensorflowOperatorTest, testInferModelForFloatInput) {
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);
 
-    auto handler =
-        std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
+    auto handler = std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
 
     inferModelOperator->setup(ctx);
 
-    auto firstRecord = Record({{"f1", Value<Float>((float_t) 5.1)},
-                               {"f2", Value<Float>((float_t) 3.5)},
-                               {"f3", Value<Float>((float_t) 1.4)},
-                               {"f4", Value<Float>((float_t) 0.2)}});
-    auto secondRecord = Record({{"f1", Value<Float>((float_t) 4.9)},
-                                {"f2", Value<Float>((float_t) 3.0)},
-                                {"f3", Value<Float>((float_t) 1.4)},
-                                {"f4", Value<Float>((float_t) 0.2)}});
-    auto thirdRecord = Record({{"f1", Value<Float>((float_t) 4.7)},
-                               {"f2", Value<Float>((float_t) 3.2)},
-                               {"f3", Value<Float>((float_t) 1.3)},
-                               {"f4", Value<Float>((float_t) 0.2)}});
-    auto fourthRecord = Record({{"f1", Value<Float>((float_t) 4.6)},
-                                {"f2", Value<Float>((float_t) 3.1)},
-                                {"f3", Value<Float>((float_t) 1.5)},
-                                {"f4", Value<Float>((float_t) 0.2)}});
+    auto firstRecord = Record(
+        {{"f1", Value<Float>((float_t)5.1)},
+         {"f2", Value<Float>((float_t)3.5)},
+         {"f3", Value<Float>((float_t)1.4)},
+         {"f4", Value<Float>((float_t)0.2)}});
+    auto secondRecord = Record(
+        {{"f1", Value<Float>((float_t)4.9)},
+         {"f2", Value<Float>((float_t)3.0)},
+         {"f3", Value<Float>((float_t)1.4)},
+         {"f4", Value<Float>((float_t)0.2)}});
+    auto thirdRecord = Record(
+        {{"f1", Value<Float>((float_t)4.7)},
+         {"f2", Value<Float>((float_t)3.2)},
+         {"f3", Value<Float>((float_t)1.3)},
+         {"f4", Value<Float>((float_t)0.2)}});
+    auto fourthRecord = Record(
+        {{"f1", Value<Float>((float_t)4.6)},
+         {"f2", Value<Float>((float_t)3.1)},
+         {"f3", Value<Float>((float_t)1.5)},
+         {"f4", Value<Float>((float_t)0.2)}});
     inferModelOperator->execute(ctx, firstRecord);
     inferModelOperator->execute(ctx, secondRecord);
     inferModelOperator->execute(ctx, thirdRecord);
     inferModelOperator->execute(ctx, fourthRecord);
 
     //Assertion
-    std::vector<Output> expectedOutput{{0.86352879, 0.12861125, 0.0078599472},
-                                       {0.82480621, 0.16215269, 0.0130410725},
-                                       {0.84584343, 0.14335836, 0.010798273},
-                                       {0.81788188, 0.16869366, 0.013424426}};
+    std::vector<Output> expectedOutput{
+        {0.86352879, 0.12861125, 0.0078599472},
+        {0.82480621, 0.16215269, 0.0130410725},
+        {0.84584343, 0.14335836, 0.010798273},
+        {0.81788188, 0.16869366, 0.013424426}};
     auto delta = 0.0000001;
     EXPECT_EQ(collector->records.size(), 4);
     EXPECT_EQ(collector->records[0].read(f1), firstRecord.read(f1));
@@ -220,7 +229,8 @@ TEST_F(TensorflowOperatorTest, testInferModelForFloatInput) {
 /**
  * @brief Tests the infer model operator for int input.
  */
-TEST_F(TensorflowOperatorTest, testInferModelForIntInput) {
+TEST_F(TensorflowOperatorTest, testInferModelForIntInput)
+{
     std::string f1 = "f1";
     std::string f2 = "f2";
     std::string f3 = "f3";
@@ -246,11 +256,10 @@ TEST_F(TensorflowOperatorTest, testInferModelForIntInput) {
     auto collector = std::make_shared<CollectOperator>();
     inferModelOperator->setChild(collector);
 
-    auto handler =
-        std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
+    auto handler = std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
 
     inferModelOperator->setup(ctx);
 
@@ -283,4 +292,4 @@ TEST_F(TensorflowOperatorTest, testInferModelForIntInput) {
     inferModelOperator->terminate(ctx);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

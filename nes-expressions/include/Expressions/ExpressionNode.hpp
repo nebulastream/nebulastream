@@ -15,10 +15,11 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_
 
-#include <Nodes/Node.hpp>
 #include <memory>
+#include <Nodes/Node.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -34,9 +35,9 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
  * Each expression declares a stamp, which expresses the data type of this expression.
  * A stamp can be of a concrete type or invalid if the data type was not yet inferred.
  */
-class ExpressionNode : public Node {
-
-  public:
+class ExpressionNode : public Node
+{
+public:
     explicit ExpressionNode(DataTypePtr stamp);
 
     ~ExpressionNode() override = default;
@@ -72,7 +73,7 @@ class ExpressionNode : public Node {
      */
     virtual ExpressionNodePtr copy() = 0;
 
-  protected:
+protected:
     explicit ExpressionNode(const ExpressionNode* other);
 
     /**
@@ -81,5 +82,5 @@ class ExpressionNode : public Node {
      */
     DataTypePtr stamp;
 };
-}// namespace NES
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_
+} // namespace NES
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_

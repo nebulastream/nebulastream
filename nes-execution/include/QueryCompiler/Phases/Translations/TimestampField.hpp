@@ -14,26 +14,29 @@
 
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TIMESTAMPFIELD_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TIMESTAMPFIELD_HPP_
-#include <API/TimeUnit.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <cstdint>
 #include <ostream>
 #include <string>
 #include <utility>
+#include <API/TimeUnit.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 /**
  * A TimestampField is a wrapper around a FieldName and a Unit of time.
  * This enforces fields carrying time values to be evaluated with respect to a specific timeunit.
  */
-class TimestampField {
-    enum TimeFunctionType {
+class TimestampField
+{
+    enum TimeFunctionType
+    {
         EVENT_TIME,
         INGESTION_TIME,
     };
 
-  public:
+public:
     friend std::ostream& operator<<(std::ostream& os, const TimestampField& obj);
     /**
      * The multiplier is the value which converts from the underlying time value to milliseconds.
@@ -58,12 +61,12 @@ class TimestampField {
     static TimestampField IngestionTime();
     static TimestampField EventTime(std::string fieldName, Windowing::TimeUnit tm);
 
-  private:
+private:
     std::string fieldName;
     Windowing::TimeUnit unit;
     TimeFunctionType timeFunctionType;
     TimestampField(std::string fieldName, Windowing::TimeUnit unit, TimeFunctionType timeFunctionType);
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TIMESTAMPFIELD_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_TIMESTAMPFIELD_HPP_

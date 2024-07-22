@@ -14,22 +14,26 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORSFORWARDDECLARATION_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORSFORWARDDECLARATION_HPP_
 #include <memory>
-namespace NES {
+namespace NES
+{
 
-namespace Join {
+namespace Join
+{
 class LogicalJoinDescriptor;
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-namespace Experimental {
+namespace Experimental
+{
 class BatchJoinOperatorHandler;
 using BatchJoinOperatorHandlerPtr = std::shared_ptr<BatchJoinOperatorHandler>;
-}// namespace Experimental
-}// namespace Join
+} // namespace Experimental
+} // namespace Join
 
-namespace Windowing {
+namespace Windowing
+{
 
 class LogicalWindowDescriptor;
 using LogicalWindowDescriptorPtr = std::shared_ptr<LogicalWindowDescriptor>;
@@ -40,9 +44,10 @@ using WindowOperatorHandlerPtr = std::shared_ptr<WindowOperatorHandler>;
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 
-}// namespace Windowing
+} // namespace Windowing
 
-namespace QueryCompilation::PhysicalOperators {
+namespace QueryCompilation::PhysicalOperators
+{
 
 class PhysicalOperator;
 using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
@@ -98,7 +103,7 @@ using PhysicalWatermarkAssignmentOperatorPtr = std::shared_ptr<PhysicalWatermark
 class PhysicalJoinSinkOperator;
 using PhysicalJoinSinkOperatorPtr = std::shared_ptr<PhysicalJoinSinkOperator>;
 
-}// namespace QueryCompilation::PhysicalOperators
-}// namespace NES
+} // namespace QueryCompilation::PhysicalOperators
+} // namespace NES
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORSFORWARDDECLARATION_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORSFORWARDDECLARATION_HPP_

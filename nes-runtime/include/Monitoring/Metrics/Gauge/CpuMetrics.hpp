@@ -15,20 +15,23 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
 
+#include <string>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <string>
-#include <vector>
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Monitoring {
+namespace Monitoring
+{
 
 /**
  * @brief This class represents the metrics read from /proc/stat:
@@ -42,8 +45,9 @@ namespace Monitoring {
     * %guest – % CPU usage spent running a virtual processor
     * %idle – % CPU usage on idle time (no processes, and not waiting on a disk read/write)
  */
-class CpuMetrics {
-  public:
+class CpuMetrics
+{
+public:
     CpuMetrics();
 
     /**
@@ -130,6 +134,6 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
  */
 nlohmann::json asJson(const CpuMetrics& metrics);
 
-}// namespace Monitoring
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_
+} // namespace Monitoring
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_

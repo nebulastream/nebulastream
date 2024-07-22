@@ -15,38 +15,43 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Mobility/SpatialType.hpp>
 #include <any>
-#include <folly/Synchronized.h>
 #include <map>
 #include <memory>
 #include <mutex>
-#include <nlohmann/json.hpp>
 #include <optional>
 #include <set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Mobility/SpatialType.hpp>
+#include <folly/Synchronized.h>
+#include <nlohmann/json.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Spatial {
+namespace Spatial
+{
 
-namespace Index::Experimental {
+namespace Index::Experimental
+{
 enum class NodeType;
 
 class LocationIndex;
 using LocationIndexPtr = std::shared_ptr<LocationIndex>;
-}// namespace Index::Experimental
+} // namespace Index::Experimental
 
-namespace DataTypes::Experimental {
+namespace DataTypes::Experimental
+{
 class GeoLocation;
 }
 
-namespace Mobility::Experimental {
+namespace Mobility::Experimental
+{
 struct ReconnectPoint;
 }
 
-}// namespace Spatial
+} // namespace Spatial
 
 class TopologyNode;
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
@@ -59,9 +64,9 @@ using TopologyNodeWLock = std::shared_ptr<folly::Synchronized<TopologyNodePtr>::
 /**
  * @brief This class represents the overall physical infrastructure with different nodes
  */
-class Topology {
-
-  public:
+class Topology
+{
+public:
     /**
      * @brief Factory to create instance of topology
      * @return shared pointer to the topology
@@ -92,14 +97,15 @@ class Topology {
      * @param latencyInMs: latency in ms
      * @return worker id
      */
-    WorkerId registerWorkerAsRoot(WorkerId newRootWorkerId,
-                                  const std::string& address,
-                                  const int64_t grpcPort,
-                                  const int64_t dataPort,
-                                  const uint16_t numberOfSlots,
-                                  std::map<std::string, std::any> workerProperties,
-                                  uint32_t bandwidthInMbps,
-                                  uint32_t latencyInMs);
+    WorkerId registerWorkerAsRoot(
+        WorkerId newRootWorkerId,
+        const std::string& address,
+        const int64_t grpcPort,
+        const int64_t dataPort,
+        const uint16_t numberOfSlots,
+        std::map<std::string, std::any> workerProperties,
+        uint32_t bandwidthInMbps,
+        uint32_t latencyInMs);
 
     /**
      * @brief Register a new topology node in the topology
@@ -113,14 +119,15 @@ class Topology {
      * @param latencyInMs: latency in ms
      * @return worker id
      */
-    WorkerId registerWorker(WorkerId workerId,
-                            const std::string& address,
-                            const int64_t grpcPort,
-                            const int64_t dataPort,
-                            const uint16_t numberOfSlots,
-                            std::map<std::string, std::any> workerProperties,
-                            uint32_t bandwidthInMbps,
-                            uint32_t latencyInMs);
+    WorkerId registerWorker(
+        WorkerId workerId,
+        const std::string& address,
+        const int64_t grpcPort,
+        const int64_t dataPort,
+        const uint16_t numberOfSlots,
+        std::map<std::string, std::any> workerProperties,
+        uint32_t bandwidthInMbps,
+        uint32_t latencyInMs);
 
     /**
      * @brief returns a vector of parent topology node ids connected to the specified topology node
@@ -244,8 +251,8 @@ class Topology {
      * @param destinationTopologyNodeIds: the topology nodes where to end the path identification
      * @return a vector of start/upstream topology nodes of the sub-graph if all start nodes can connect to all destination nodes else an empty vector
      */
-    std::vector<TopologyNodePtr> findPathBetween(const std::vector<WorkerId>& sourceTopologyNodeIds,
-                                                 const std::vector<WorkerId>& destinationTopologyNodeIds);
+    std::vector<TopologyNodePtr>
+    findPathBetween(const std::vector<WorkerId>& sourceTopologyNodeIds, const std::vector<WorkerId>& destinationTopologyNodeIds);
 
     /**
      * @brief Get topology nodes with the given radius of the geo location
@@ -361,11 +368,9 @@ class Topology {
      * @return true if all needed locks could be acquired, false if the iteration was aborted because a node could not
      * be locked
      */
-    bool findAllDownstreamNodes(const WorkerId& startNode,
-                                std::set<WorkerId>& reachableDownstreamNodes,
-                                std::vector<WorkerId> targetNodes);
+    bool findAllDownstreamNodes(const WorkerId& startNode, std::set<WorkerId>& reachableDownstreamNodes, std::vector<WorkerId> targetNodes);
 
-  private:
+private:
     explicit Topology();
 
     /**
@@ -392,8 +397,7 @@ class Topology {
             ]
         }
      */
-    static nlohmann::json convertNodeLocationInfoToJson(WorkerId workerId,
-                                                        NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
+    static nlohmann::json convertNodeLocationInfoToJson(WorkerId workerId, NES::Spatial::DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * @brief Merge the sub graphs starting from the nodes into a single sub-graph
@@ -424,5 +428,5 @@ class Topology {
     static constexpr int BASE_MULTIPLIER = 10000;
     std::atomic_uint64_t topologyNodeIdCounter = INITIAL_WORKER_NODE_ID.getRawValue();
 };
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_TOPOLOGY_TOPOLOGY_HPP_

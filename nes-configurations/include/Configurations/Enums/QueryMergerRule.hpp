@@ -16,8 +16,10 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYMERGERRULE_HPP_
 #include <cstdint>
 
-namespace NES::Optimizer {
-enum class QueryMergerRule : uint8_t {
+namespace NES::Optimizer
+{
+enum class QueryMergerRule : uint8_t
+{
     SyntaxBasedCompleteQueryMergerRule,
     SyntaxBasedPartialQueryMergerRule,
     Z3SignatureBasedCompleteQueryMergerRule,
@@ -33,4 +35,4 @@ enum class QueryMergerRule : uint8_t {
     Z3SignatureBasedTopDownQueryContainmentMergerRule
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYMERGERRULE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYMERGERRULE_HPP_

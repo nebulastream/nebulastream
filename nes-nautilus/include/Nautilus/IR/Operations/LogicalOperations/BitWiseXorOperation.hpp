@@ -17,10 +17,12 @@
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-class BitWiseXorOperation : public Operation {
-  public:
+class BitWiseXorOperation : public Operation
+{
+public:
     /**
      * @brief Constructor for a BitWiseXorOperation
      * @param identifier
@@ -59,9 +61,9 @@ class BitWiseXorOperation : public Operation {
      */
     bool classof(const Operation* Op);
 
-  private:
+private:
     OperationWPtr leftInput;
     OperationWPtr rightInput;
 };
-}// namespace NES::Nautilus::IR::Operations
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISEXOROPERATION_HPP_
+} // namespace NES::Nautilus::IR::Operations
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_BITWISEXOROPERATION_HPP_

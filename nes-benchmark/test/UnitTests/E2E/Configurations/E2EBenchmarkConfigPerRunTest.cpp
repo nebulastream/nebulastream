@@ -12,28 +12,33 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Benchmark {
-class E2EBenchmarkConfigPerRunTest : public Testing::BaseIntegrationTest {
-  public:
+namespace NES::Benchmark
+{
+class E2EBenchmarkConfigPerRunTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("E2EBenchmarkConfigPerRunTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2EBenchmarkConfigPerRunTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_INFO("Setup E2EBenchmarkConfigPerRunTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down E2EBenchmarkConfigPerRunTest test case.");
         Testing::BaseIntegrationTest::TearDown();
     }
@@ -45,7 +50,8 @@ class E2EBenchmarkConfigPerRunTest : public Testing::BaseIntegrationTest {
 /**
      * @brief Testing if E2EBenchmarkConfigPerRun::toString() is correct by testing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigPerRunTest, toStringTest) {
+TEST_F(E2EBenchmarkConfigPerRunTest, toStringTest)
+{
     std::stringstream oss;
     E2EBenchmarkConfigPerRun defaultConfigPerRun;
 
@@ -55,10 +61,10 @@ TEST_F(E2EBenchmarkConfigPerRunTest, toStringTest) {
         << "- bufferSizeInBytes: " << defaultConfigPerRun.bufferSizeInBytes->getValueAsString() << std::endl
         << "- numberOfQueriesToDeploy: " << defaultConfigPerRun.numberOfQueriesToDeploy->getValueAsString() << std::endl
         << "- numberOfSources: " << defaultConfigPerRun.getStringLogicalSourceToNumberOfPhysicalSources() << std::endl
-        << "- numberOfBuffersInGlobalBufferManager: "
-        << defaultConfigPerRun.numberOfBuffersInGlobalBufferManager->getValueAsString() << std::endl
-        << "- numberOfBuffersInSourceLocalBufferPool: "
-        << defaultConfigPerRun.numberOfBuffersInSourceLocalBufferPool->getValueAsString() << std::endl
+        << "- numberOfBuffersInGlobalBufferManager: " << defaultConfigPerRun.numberOfBuffersInGlobalBufferManager->getValueAsString()
+        << std::endl
+        << "- numberOfBuffersInSourceLocalBufferPool: " << defaultConfigPerRun.numberOfBuffersInSourceLocalBufferPool->getValueAsString()
+        << std::endl
         << "- pageSize: " << defaultConfigPerRun.pageSize->getValueAsString() << std::endl
         << "- preAllocPageCnt: " << defaultConfigPerRun.preAllocPageCnt->getValueAsString() << std::endl
         << "- numberOfPartitions: " << defaultConfigPerRun.numberOfPartitions->getValueAsString() << std::endl
@@ -72,8 +78,8 @@ TEST_F(E2EBenchmarkConfigPerRunTest, toStringTest) {
      * @brief Testing if E2EBenchmarkConfigPerRun::generateAllConfigsPerRunTest() is correct by parsing from a yaml file and
      * comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest) {
-
+TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest)
+{
     Yaml::Node yamlConfig;
     std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/join_multiple_phys_and_logical_sources.yaml";
     Yaml::Parse(yamlConfig, configPath.c_str());
@@ -90,26 +96,32 @@ TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest) {
     ASSERT_EQ(allE2EBenchmarkPerRun[1].bufferSizeInBytes->getValue(), 5120);
     ASSERT_EQ(allE2EBenchmarkPerRun[2].bufferSizeInBytes->getValue(), 5120);
 
-    ASSERT_EQ(allE2EBenchmarkPerRun[0].numberOfBuffersInGlobalBufferManager->getValue(),
-              allE2EBenchmarkPerRun[0].numberOfBuffersInGlobalBufferManager->getDefaultValue());
-    ASSERT_EQ(allE2EBenchmarkPerRun[1].numberOfBuffersInGlobalBufferManager->getValue(),
-              allE2EBenchmarkPerRun[1].numberOfBuffersInGlobalBufferManager->getDefaultValue());
-    ASSERT_EQ(allE2EBenchmarkPerRun[2].numberOfBuffersInGlobalBufferManager->getValue(),
-              allE2EBenchmarkPerRun[2].numberOfBuffersInGlobalBufferManager->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[0].numberOfBuffersInGlobalBufferManager->getValue(),
+        allE2EBenchmarkPerRun[0].numberOfBuffersInGlobalBufferManager->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[1].numberOfBuffersInGlobalBufferManager->getValue(),
+        allE2EBenchmarkPerRun[1].numberOfBuffersInGlobalBufferManager->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[2].numberOfBuffersInGlobalBufferManager->getValue(),
+        allE2EBenchmarkPerRun[2].numberOfBuffersInGlobalBufferManager->getDefaultValue());
 
-    ASSERT_EQ(allE2EBenchmarkPerRun[0].numberOfBuffersInSourceLocalBufferPool->getValue(),
-              allE2EBenchmarkPerRun[0].numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
-    ASSERT_EQ(allE2EBenchmarkPerRun[1].numberOfBuffersInSourceLocalBufferPool->getValue(),
-              allE2EBenchmarkPerRun[1].numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
-    ASSERT_EQ(allE2EBenchmarkPerRun[2].numberOfBuffersInSourceLocalBufferPool->getValue(),
-              allE2EBenchmarkPerRun[2].numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[0].numberOfBuffersInSourceLocalBufferPool->getValue(),
+        allE2EBenchmarkPerRun[0].numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[1].numberOfBuffersInSourceLocalBufferPool->getValue(),
+        allE2EBenchmarkPerRun[1].numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[2].numberOfBuffersInSourceLocalBufferPool->getValue(),
+        allE2EBenchmarkPerRun[2].numberOfBuffersInSourceLocalBufferPool->getDefaultValue());
 
-    ASSERT_EQ(allE2EBenchmarkPerRun[0].numberOfQueriesToDeploy->getValue(),
-              allE2EBenchmarkPerRun[0].numberOfQueriesToDeploy->getDefaultValue());
-    ASSERT_EQ(allE2EBenchmarkPerRun[1].numberOfQueriesToDeploy->getValue(),
-              allE2EBenchmarkPerRun[1].numberOfQueriesToDeploy->getDefaultValue());
-    ASSERT_EQ(allE2EBenchmarkPerRun[2].numberOfQueriesToDeploy->getValue(),
-              allE2EBenchmarkPerRun[2].numberOfQueriesToDeploy->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[0].numberOfQueriesToDeploy->getValue(), allE2EBenchmarkPerRun[0].numberOfQueriesToDeploy->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[1].numberOfQueriesToDeploy->getValue(), allE2EBenchmarkPerRun[1].numberOfQueriesToDeploy->getDefaultValue());
+    ASSERT_EQ(
+        allE2EBenchmarkPerRun[2].numberOfQueriesToDeploy->getValue(), allE2EBenchmarkPerRun[2].numberOfQueriesToDeploy->getDefaultValue());
 
     ASSERT_EQ(allE2EBenchmarkPerRun[0].getStringLogicalSourceToNumberOfPhysicalSources(), "input1: 1, input2: 2, input3: 1");
     ASSERT_EQ(allE2EBenchmarkPerRun[1].getStringLogicalSourceToNumberOfPhysicalSources(), "input1: 2, input2: 2, input3: 1");
@@ -120,7 +132,8 @@ TEST_F(E2EBenchmarkConfigPerRunTest, generateAllConfigsPerRunTest) {
      * @brief Testing if E2EBenchmarkConfigPerRun::getStrLogicalSrcToNumberOfPhysicalSrcTest() is correct by
      * comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigPerRunTest, getStrLogicalSrcToNumberOfPhysicalSrcTest) {
+TEST_F(E2EBenchmarkConfigPerRunTest, getStrLogicalSrcToNumberOfPhysicalSrcTest)
+{
     std::stringstream expectedString;
     E2EBenchmarkConfigPerRun configPerRun;
     configPerRun.logicalSrcToNoPhysicalSrc = {{"input1", 2}, {"input2", 1}, {"some other source", 23456}};
@@ -132,8 +145,8 @@ TEST_F(E2EBenchmarkConfigPerRunTest, getStrLogicalSrcToNumberOfPhysicalSrcTest) 
      * @brief Testing if E2EBenchmarkConfigPerRun::generateMapsLogicalSrcPhysicalSourcesTest() is correct by parsing a yaml file
      * and comparing against a hardcoded truth
      */
-TEST_F(E2EBenchmarkConfigPerRunTest, generateMapsLogicalSrcPhysicalSourcesTest) {
-
+TEST_F(E2EBenchmarkConfigPerRunTest, generateMapsLogicalSrcPhysicalSourcesTest)
+{
     Yaml::Node yamlConfig;
     std::string configPath = std::string(TEST_CONFIGS_DIRECTORY) + "/join_multiple_sources.yaml";
     Yaml::Parse(yamlConfig, configPath.c_str());
@@ -155,4 +168,4 @@ TEST_F(E2EBenchmarkConfigPerRunTest, generateMapsLogicalSrcPhysicalSourcesTest) 
     ASSERT_EQ(allLogicalSrcPhysicalSources[2]["input2"], 1);
 }
 
-}//namespace NES::Benchmark
+} //namespace NES::Benchmark

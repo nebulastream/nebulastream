@@ -12,43 +12,55 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
-LogicalLimitOperator::LogicalLimitOperator(uint64_t limit, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), limit(limit) {}
+LogicalLimitOperator::LogicalLimitOperator(uint64_t limit, OperatorId id) : Operator(id), LogicalUnaryOperator(id), limit(limit)
+{
+}
 
-uint64_t LogicalLimitOperator::getLimit() const { return limit; }
+uint64_t LogicalLimitOperator::getLimit() const
+{
+    return limit;
+}
 
-bool LogicalLimitOperator::isIdentical(NodePtr const& rhs) const {
+bool LogicalLimitOperator::isIdentical(NodePtr const& rhs) const
+{
     return equal(rhs) && rhs->as<LogicalLimitOperator>()->getId() == id;
 }
 
-bool LogicalLimitOperator::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LogicalLimitOperator>()) {
+bool LogicalLimitOperator::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<LogicalLimitOperator>())
+    {
         auto limitOperator = rhs->as<LogicalLimitOperator>();
         return limit == limitOperator->limit;
     }
     return false;
 };
 
-std::string LogicalLimitOperator::toString() const {
+std::string LogicalLimitOperator::toString() const
+{
     std::stringstream ss;
     ss << "LIMIT" << id << ")";
     return ss.str();
 }
 
-bool LogicalLimitOperator::inferSchema() {
-    if (!LogicalUnaryOperator::inferSchema()) {
+bool LogicalLimitOperator::inferSchema()
+{
+    if (!LogicalUnaryOperator::inferSchema())
+    {
         return false;
     }
     return true;
 }
 
-OperatorPtr LogicalLimitOperator::copy() {
+OperatorPtr LogicalLimitOperator::copy()
+{
     auto copy = LogicalOperatorFactory::createLimitOperator(limit, id);
     copy->setInputOriginIds(inputOriginIds);
     copy->setInputSchema(inputSchema);
@@ -56,19 +68,22 @@ OperatorPtr LogicalLimitOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
+    for (const auto& [key, value] : properties)
+    {
         copy->addProperty(key, value);
     }
     return copy;
 }
 
-void LogicalLimitOperator::inferStringSignature() {
+void LogicalLimitOperator::inferStringSignature()
+{
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalLimitOperator: Limit should have children");
 
     //Infer query signatures for child operators
-    for (const auto& child : children) {
+    for (const auto& child : children)
+    {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
@@ -81,4 +96,4 @@ void LogicalLimitOperator::inferStringSignature() {
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-}// namespace NES
+} // namespace NES

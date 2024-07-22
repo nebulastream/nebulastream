@@ -18,20 +18,22 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expression returns the square root of the subExpression.
  */
-class SqrtExpression : public Expression {
-  public:
+class SqrtExpression : public Expression
+{
+public:
     SqrtExpression(const ExpressionPtr& subExpression);
     Value<> execute(Record& record) const override;
 
-  private:
+private:
     const ExpressionPtr subExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_SQRTEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_SQRTEXPRESSION_HPP_

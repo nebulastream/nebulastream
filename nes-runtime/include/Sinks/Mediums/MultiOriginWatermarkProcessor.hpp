@@ -19,13 +19,15 @@
 #include <memory>
 #include <mutex>
 
-namespace NES {
+namespace NES
+{
 using WatermarkTs = uint64_t;
 using OriginId = uint64_t;
 using SequenceNumber = uint64_t;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 class WatermarkProcessor;
 
@@ -43,8 +45,9 @@ class WatermarkProcessor;
  * <1>, <2>, <2>, <2>, <5>, <6>
  *
  */
-class MultiOriginWatermarkProcessor {
-  public:
+class MultiOriginWatermarkProcessor
+{
+public:
     /**
      * @brief Creates a new watermark processor, for a specific number of origins.
      * @param numberOfOrigins
@@ -78,13 +81,13 @@ class MultiOriginWatermarkProcessor {
      */
     bool isWatermarkSynchronized(OriginId originId) const;
 
-  private:
+private:
     mutable std::mutex watermarkLatch;
     const uint64_t numberOfOrigins;
     // The watermark processor maintains a local watermark processor for each origin.
     std::map<uint64_t, std::unique_ptr<WatermarkProcessor>> localWatermarkProcessor;
 };
 using MultiOriginWatermarkProcessorPtr = std::unique_ptr<MultiOriginWatermarkProcessor>;
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MULTIORIGINWATERMARKPROCESSOR_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MULTIORIGINWATERMARKPROCESSOR_HPP_

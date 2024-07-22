@@ -15,22 +15,23 @@
 #ifndef NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIG_HPP_
 #define NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIG_HPP_
 
+#include <memory>
+#include <vector>
 #include <Configurations/ConfigurationOption.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <E2E/Configurations/E2EBenchmarkConfigPerRun.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <memory>
-#include <vector>
 
-namespace NES::Benchmark {
+namespace NES::Benchmark
+{
 
 /**
  * @brief this class saves all the configuration parameters and
  * creates benchmarks from a provided yaml file
  */
-class E2EBenchmarkConfig {
-
-  public:
+class E2EBenchmarkConfig
+{
+public:
     /**
      * @brief creates benchmarks from the yaml file. Expects that yamlConfigFile exists
      * @param configPath
@@ -54,10 +55,10 @@ class E2EBenchmarkConfig {
     [[nodiscard]] std::vector<E2EBenchmarkConfigPerRun>& getAllConfigPerRuns() { return allConfigPerRuns; }
     E2EBenchmarkConfigOverAllRuns& getConfigOverAllRuns() { return configOverAllRuns; }
 
-  private:
+private:
     std::vector<E2EBenchmarkConfigPerRun> allConfigPerRuns;
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
 };
-}// namespace NES::Benchmark
+} // namespace NES::Benchmark
 
-#endif// NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIG_HPP_
+#endif // NES_BENCHMARK_INCLUDE_E2E_CONFIGURATIONS_E2EBENCHMARKCONFIG_HPP_

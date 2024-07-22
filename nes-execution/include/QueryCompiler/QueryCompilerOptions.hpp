@@ -14,6 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
 
+#include <cstdint>
+#include <string>
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
 #include <Configurations/Enums/NautilusBackend.hpp>
@@ -24,25 +26,27 @@
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/Common.hpp>
-#include <cstdint>
-#include <string>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
 /**
  * @brief Set of common options for the query compiler
  */
-class QueryCompilerOptions {
-  public:
-    enum class FilterProcessingStrategy : uint8_t {
+class QueryCompilerOptions
+{
+public:
+    enum class FilterProcessingStrategy : uint8_t
+    {
         // Uses a branches to process filter expressions
         BRANCHED,
         // Uses predication for filter expressions if possible
         PREDICATION
     };
 
-    class StreamHashJoinOptions {
-      public:
+    class StreamHashJoinOptions
+    {
+    public:
         /**
          * @brief getter for max hash table size
          * @return
@@ -91,7 +95,7 @@ class QueryCompilerOptions {
         */
         void setPreAllocPageCnt(uint64_t cnt);
 
-      private:
+    private:
         uint64_t numberOfPartitions;
         uint64_t pageSize;
         uint64_t preAllocPageCnt;
@@ -189,7 +193,7 @@ class QueryCompilerOptions {
      */
     const std::string getCUDASdkPath() const;
 
-  protected:
+protected:
     uint64_t numSourceLocalBuffers;
     OutputBufferOptimizationLevel outputBufferOptimizationLevel;
     PipeliningStrategy pipeliningStrategy;
@@ -203,6 +207,6 @@ class QueryCompilerOptions {
     std::string cudaSdkPath;
     StreamJoinStrategy joinStrategy;
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_

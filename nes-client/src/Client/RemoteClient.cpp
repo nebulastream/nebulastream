@@ -21,31 +21,34 @@
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <SerializableQueryPlan.pb.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 #include <cpr/cpr.h>
 #include <nlohmann/json.hpp>
+#include <SerializableQueryPlan.pb.h>
 
 using namespace std::string_literals;
 
-namespace NES::Client {
+namespace NES::Client
+{
 
-RemoteClient::RemoteClient(const std::string& coordinatorHost,
-                           uint16_t coordinatorRESTPort,
-                           std::chrono::seconds requestTimeout,
-                           bool disableLogging)
-    : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort), requestTimeout(requestTimeout) {
-    if (!disableLogging) {
+RemoteClient::RemoteClient(
+    const std::string& coordinatorHost, uint16_t coordinatorRESTPort, std::chrono::seconds requestTimeout, bool disableLogging)
+    : coordinatorHost(coordinatorHost), coordinatorRESTPort(coordinatorRESTPort), requestTimeout(requestTimeout)
+{
+    if (!disableLogging)
+    {
         NES::Logger::setupLogging("nesRemoteClientStarter.log", LogLevel::LOG_DEBUG);
     }
 
-    if (coordinatorHost.empty()) {
+    if (coordinatorHost.empty())
+    {
         throw ClientException("host name for coordinator is empty");
     }
 }
 
-QueryId RemoteClient::submitQuery(const Query& query, QueryConfig config) {
+QueryId RemoteClient::submitQuery(const Query& query, QueryConfig config)
+{
     auto queryPlan = query.getQueryPlan();
     SubmitQueryRequest request;
     auto* serializedQueryPlan = request.mutable_queryplan();
@@ -61,32 +64,43 @@ QueryId RemoteClient::submitQuery(const Query& query, QueryConfig config) {
     auto path = "query/execute-query-ex";
 
     nlohmann::json resultJson;
-    auto future = cpr::PostAsync(cpr::Url{getHostName() + path},
-                                 cpr::Header{{"Content-Type", "application/json"}},
-                                 cpr::Body{message},
-                                 cpr::Timeout{requestTimeout});
+    auto future = cpr::PostAsync(
+        cpr::Url{getHostName() + path},
+        cpr::Header{{"Content-Type", "application/json"}},
+        cpr::Body{message},
+        cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
 
-    if (response.status_code == cpr::status::HTTP_ACCEPTED) {
-        if (result.contains("queryId")) {
+    if (response.status_code == cpr::status::HTTP_ACCEPTED)
+    {
+        if (result.contains("queryId"))
+        {
             return result["queryId"].get<QueryId>();
-        } else {
+        }
+        else
+        {
             throw ClientException("Invalid response format queryId is not contained in: " + result.dump());
         }
-    } else {
+    }
+    else
+    {
         NES_ERROR("Received response with error code: {}", response.status_code);
-        if (result.contains("message")) {
+        if (result.contains("message"))
+        {
             throw ClientException(result["message"]);
-        } else {
+        }
+        else
+        {
             throw ClientException("Invalid response format for error message");
         }
     }
 }
 
-bool RemoteClient::testConnection() {
+bool RemoteClient::testConnection()
+{
     auto path = "connectivity/check";
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
@@ -96,13 +110,15 @@ bool RemoteClient::testConnection() {
     nlohmann::json result = nlohmann::json::parse(response.text);
     NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
 
-    if (result.contains("success")) {
+    if (result.contains("success"))
+    {
         return result["success"].get<bool>();
     }
     throw ClientException("Invalid response format");
 }
 
-std::string RemoteClient::getQueryPlan(QueryId queryId) {
+std::string RemoteClient::getQueryPlan(QueryId queryId)
+{
     auto path = "query/query-plan?queryId=" + queryId.toString();
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
@@ -114,7 +130,8 @@ std::string RemoteClient::getQueryPlan(QueryId queryId) {
     return result.dump();
 }
 
-std::string RemoteClient::getQueryExecutionPlan(QueryId queryId) {
+std::string RemoteClient::getQueryExecutionPlan(QueryId queryId)
+{
     auto path = "query/execution-plan?queryId=" + queryId.toString();
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
@@ -126,7 +143,8 @@ std::string RemoteClient::getQueryExecutionPlan(QueryId queryId) {
     return result.dump();
 }
 
-std::string RemoteClient::getQueryStatus(QueryId queryId) {
+std::string RemoteClient::getQueryStatus(QueryId queryId)
+{
     auto path = "query/query-status?queryId=" + queryId.toString();
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
@@ -134,16 +152,22 @@ std::string RemoteClient::getQueryStatus(QueryId queryId) {
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
-    if (response.status_code == cpr::status::HTTP_OK && result.contains("status")) {
+    if (response.status_code == cpr::status::HTTP_OK && result.contains("status"))
+    {
         return result["status"].get<std::string>();
-    } else if (result.contains("message")) {
+    }
+    else if (result.contains("message"))
+    {
         throw ClientException(result["message"]);
-    } else {
+    }
+    else
+    {
         throw ClientException("Invalid response format for error message");
     }
 }
 
-RemoteClient::QueryStopResult RemoteClient::stopQuery(QueryId queryId) {
+RemoteClient::QueryStopResult RemoteClient::stopQuery(QueryId queryId)
+{
     auto path = "query/stop-query?queryId="s + queryId.toString();
 
     auto future = cpr::DeleteAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
@@ -153,14 +177,16 @@ RemoteClient::QueryStopResult RemoteClient::stopQuery(QueryId queryId) {
     nlohmann::json result = nlohmann::json::parse(response.text);
     QueryStopResult r;
     auto withError = !result.contains("success");
-    if (withError) {
+    if (withError)
+    {
         r.errorMessage = (result.contains("detail")) ? result["detail"].get<std::string>() : result["message"].get<std::string>();
     }
     r.withError = withError;
     return r;
 }
 
-std::string RemoteClient::getTopology() {
+std::string RemoteClient::getTopology()
+{
     auto path = "topology";
 
     auto future = cpr::GetAsync(cpr::Url{getHostName() + path}, cpr::Timeout{requestTimeout});
@@ -171,7 +197,8 @@ std::string RemoteClient::getTopology() {
     return result.dump();
 }
 
-std::string RemoteClient::getQueries() {
+std::string RemoteClient::getQueries()
+{
     auto path = "queryCatalog/allRegisteredQueries";
 
     nlohmann::json jsonReturn;
@@ -183,11 +210,11 @@ std::string RemoteClient::getQueries() {
     return result.dump();
 }
 
-std::string RemoteClient::getQueries(QueryState status) {
+std::string RemoteClient::getQueries(QueryState status)
+{
     std::string queryStatus = std::string(magic_enum::enum_name(status));
 
-    cpr::AsyncResponse future =
-        cpr::GetAsync(cpr::Url{getHostName() + "queryCatalog/queries"}, cpr::Parameters{{"status", queryStatus}});
+    cpr::AsyncResponse future = cpr::GetAsync(cpr::Url{getHostName() + "queryCatalog/queries"}, cpr::Parameters{{"status", queryStatus}});
 
     future.wait();
     auto response = future.get();
@@ -195,7 +222,8 @@ std::string RemoteClient::getQueries(QueryState status) {
     return jsonResponse.dump();
 }
 
-std::string RemoteClient::getPhysicalSources(std::string logicalSourceName) {
+std::string RemoteClient::getPhysicalSources(std::string logicalSourceName)
+{
     NES_ASSERT2_FMT(!logicalSourceName.empty(), "Empty logicalSourceName");
     auto path = "sourceCatalog/allPhysicalSource?logicalSourceName=" + logicalSourceName;
 
@@ -208,7 +236,8 @@ std::string RemoteClient::getPhysicalSources(std::string logicalSourceName) {
     return result.dump();
 }
 
-bool RemoteClient::addLogicalSource(const SchemaPtr schema, const std::string& sourceName) {
+bool RemoteClient::addLogicalSource(const SchemaPtr schema, const std::string& sourceName)
+{
     auto path = "sourceCatalog/addLogicalSource-ex";
 
     auto serializableSchema = SchemaSerializationUtil::serializeSchema(schema, new SerializableSchema());
@@ -219,24 +248,28 @@ bool RemoteClient::addLogicalSource(const SchemaPtr schema, const std::string& s
     auto _ = request.release_schema();
 
     nlohmann::json resultJson;
-    auto future = cpr::PostAsync(cpr::Url{getHostName() + path},
-                                 cpr::Header{{"Content-Type", "application/json"}},
-                                 cpr::Body{msg},
-                                 cpr::Timeout{requestTimeout});
+    auto future = cpr::PostAsync(
+        cpr::Url{getHostName() + path}, cpr::Header{{"Content-Type", "application/json"}}, cpr::Body{msg}, cpr::Timeout{requestTimeout});
     NES_DEBUG("RemoteClient::send: {} {}", this->coordinatorHost, this->coordinatorRESTPort);
     future.wait();
     auto response = future.get();
     nlohmann::json result = nlohmann::json::parse(response.text);
-    if (response.status_code == cpr::status::HTTP_OK && result.contains("success")) {
+    if (response.status_code == cpr::status::HTTP_OK && result.contains("success"))
+    {
         return result["success"].get<bool>();
-    } else if (result.contains("message")) {
+    }
+    else if (result.contains("message"))
+    {
         throw ClientException(result["message"]);
-    } else {
+    }
+    else
+    {
         throw ClientException("Invalid response format for error message");
     }
 }
 
-std::string RemoteClient::getLogicalSources() {
+std::string RemoteClient::getLogicalSources()
+{
     auto path = "sourceCatalog/allLogicalSource";
 
     nlohmann::json jsonReturn;
@@ -248,7 +281,8 @@ std::string RemoteClient::getLogicalSources() {
     return result.dump();
 }
 
-std::string RemoteClient::getHostName() {
+std::string RemoteClient::getHostName()
+{
     return "http://" + coordinatorHost + ":" + std::to_string(coordinatorRESTPort) + "/v1/nes/";
 }
-}// namespace NES::Client
+} // namespace NES::Client

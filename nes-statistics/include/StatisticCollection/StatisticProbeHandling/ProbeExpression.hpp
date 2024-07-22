@@ -17,7 +17,8 @@
 
 #include <Expressions/ExpressionNode.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /*
  * @brief This class is being used as a container to store a probeExpression. As we do not want to limit ourselves to
@@ -28,16 +29,17 @@ namespace NES::Statistic {
  * ConstantValueExpressionNode and the other expression the tracked field name. A sample is a little bit more powerful
  * in terms of what expression it can expect and evaluate, as it stores all fields of the data stream.
  */
-class ProbeExpression {
-  public:
+class ProbeExpression
+{
+public:
     explicit ProbeExpression(const ExpressionNodePtr& probeExpression);
 
     const ExpressionNodePtr& getProbeExpression() const;
 
-  private:
+private:
     ExpressionNodePtr probeExpression;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_PROBEEXPRESSION_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_PROBEEXPRESSION_HPP_

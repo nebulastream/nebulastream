@@ -15,43 +15,52 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
-TCPSourceDescriptor::TCPSourceDescriptor(SchemaPtr schema,
-                                         TCPSourceTypePtr tcpSourceType,
-                                         const std::string& logicalSourceName,
-                                         const std::string& physicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), tcpSourceType(std::move(tcpSourceType)) {}
+TCPSourceDescriptor::TCPSourceDescriptor(
+    SchemaPtr schema, TCPSourceTypePtr tcpSourceType, const std::string& logicalSourceName, const std::string& physicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), tcpSourceType(std::move(tcpSourceType))
+{
+}
 
-SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema,
-                                                TCPSourceTypePtr sourceConfig,
-                                                const std::string& logicalSourceName,
-                                                const std::string& physicalSourceName) {
+SourceDescriptorPtr TCPSourceDescriptor::create(
+    SchemaPtr schema, TCPSourceTypePtr sourceConfig, const std::string& logicalSourceName, const std::string& physicalSourceName)
+{
     return std::make_shared<TCPSourceDescriptor>(
         TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), logicalSourceName, physicalSourceName));
 }
 
-SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig) {
+SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig)
+{
     return std::make_shared<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), "", ""));
 }
 
-TCPSourceTypePtr TCPSourceDescriptor::getSourceConfig() const { return tcpSourceType; }
+TCPSourceTypePtr TCPSourceDescriptor::getSourceConfig() const
+{
+    return tcpSourceType;
+}
 
-std::string TCPSourceDescriptor::toString() const { return "TCPSourceDescriptor(" + tcpSourceType->toString() + ")"; }
+std::string TCPSourceDescriptor::toString() const
+{
+    return "TCPSourceDescriptor(" + tcpSourceType->toString() + ")";
+}
 
-bool TCPSourceDescriptor::equal(SourceDescriptorPtr const& other) const {
-
-    if (!other->instanceOf<TCPSourceDescriptor>()) {
+bool TCPSourceDescriptor::equal(SourceDescriptorPtr const& other) const
+{
+    if (!other->instanceOf<TCPSourceDescriptor>())
+    {
         return false;
     }
     auto otherTCPSource = other->as<TCPSourceDescriptor>();
     return tcpSourceType->equal(otherTCPSource->tcpSourceType);
 }
 
-SourceDescriptorPtr TCPSourceDescriptor::copy() {
+SourceDescriptorPtr TCPSourceDescriptor::copy()
+{
     auto copy = TCPSourceDescriptor::create(schema->copy(), tcpSourceType);
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
 
-}// namespace NES
+} // namespace NES

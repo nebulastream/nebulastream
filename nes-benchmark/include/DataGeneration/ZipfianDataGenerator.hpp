@@ -17,12 +17,13 @@
 
 #include <DataGeneration/DataGenerator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 auto constexpr GENERATOR_SEED_ZIPFIAN = 848566;
 
-class ZipfianDataGenerator : public DataGenerator {
-
-  public:
+class ZipfianDataGenerator : public DataGenerator
+{
+public:
     explicit ZipfianDataGenerator(double alpha, uint64_t minValue, uint64_t maxValue);
 
     /**
@@ -55,10 +56,10 @@ class ZipfianDataGenerator : public DataGenerator {
      */
     std::string toString() override;
 
-  private:
+private:
     double alpha;
     uint64_t minValue;
     uint64_t maxValue;
 };
-}// namespace NES::Benchmark::DataGeneration
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_
+} // namespace NES::Benchmark::DataGeneration
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_ZIPFIANDATAGENERATOR_HPP_

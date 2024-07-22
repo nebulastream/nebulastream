@@ -28,10 +28,12 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/TestPhaseProvider.hpp>
 
-namespace NES::TestUtils {
+namespace NES::TestUtils
+{
 
-class TestSourceDescriptor : public SourceDescriptor {
-  public:
+class TestSourceDescriptor : public SourceDescriptor
+{
+public:
     /**
      * @brief Constructor for a TestSourceDescriptor
      * @param schema
@@ -39,14 +41,15 @@ class TestSourceDescriptor : public SourceDescriptor {
      */
     TestSourceDescriptor(
         SchemaPtr schema,
-        std::function<DataSourcePtr(SchemaPtr schema,
-                                    OperatorId,
-                                    OriginId,
-                                    StatisticId,
-                                    SourceDescriptorPtr,
-                                    Runtime::NodeEnginePtr,
-                                    size_t,
-                                    std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction);
+        std::function<DataSourcePtr(
+            SchemaPtr schema,
+            OperatorId,
+            OriginId,
+            StatisticId,
+            SourceDescriptorPtr,
+            Runtime::NodeEnginePtr,
+            size_t,
+            std::vector<Runtime::Execution::SuccessorExecutablePipeline>)> createSourceFunction);
     /**
      * @brief Factory method for creating a DataSource
      * @param operatorId
@@ -57,13 +60,14 @@ class TestSourceDescriptor : public SourceDescriptor {
      * @param successors
      * @return DataSource
      */
-    DataSourcePtr create(OperatorId operatorId,
-                         OriginId originId,
-                         StatisticId statisticId,
-                         SourceDescriptorPtr sourceDescriptor,
-                         Runtime::NodeEnginePtr nodeEngine,
-                         size_t numSourceLocalBuffers,
-                         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+    DataSourcePtr create(
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        SourceDescriptorPtr sourceDescriptor,
+        Runtime::NodeEnginePtr nodeEngine,
+        size_t numSourceLocalBuffers,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief Creates a string representation
@@ -83,18 +87,19 @@ class TestSourceDescriptor : public SourceDescriptor {
      */
     SourceDescriptorPtr copy() override;
 
-  private:
-    std::function<DataSourcePtr(SchemaPtr schema,
-                                OperatorId,
-                                OriginId,
-                                StatisticId,
-                                SourceDescriptorPtr,
-                                Runtime::NodeEnginePtr,
-                                size_t,
-                                std::vector<Runtime::Execution::SuccessorExecutablePipeline>)>
+private:
+    std::function<DataSourcePtr(
+        SchemaPtr schema,
+        OperatorId,
+        OriginId,
+        StatisticId,
+        SourceDescriptorPtr,
+        Runtime::NodeEnginePtr,
+        size_t,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline>)>
         createSourceFunction;
 };
 
-}// namespace NES::TestUtils
+} // namespace NES::TestUtils
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEDESCRIPTOR_HPP_

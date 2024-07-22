@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 #include <Util/CircularBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class CircularBufferTest : public Testing::BaseUnitTest {
-  public:
+class CircularBufferTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("CircularBufferTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup CircularBufferTest test class.");
     }
@@ -33,7 +36,8 @@ class CircularBufferTest : public Testing::BaseUnitTest {
     int testValue = 1;
 };
 
-TEST_F(CircularBufferTest, initialState) {
+TEST_F(CircularBufferTest, initialState)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
     EXPECT_EQ(circularBuffer.capacity(), testCapacity);
     EXPECT_EQ(circularBuffer.size(), 0u);
@@ -43,13 +47,15 @@ TEST_F(CircularBufferTest, initialState) {
     EXPECT_TRUE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, randomAccessInitial) {
+TEST_F(CircularBufferTest, randomAccessInitial)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
     EXPECT_EQ(circularBuffer.at(0), 0);
     EXPECT_EQ(circularBuffer[0], circularBuffer.at(0));
 }
 
-TEST_F(CircularBufferTest, pushFrontOnce) {
+TEST_F(CircularBufferTest, pushFrontOnce)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
     circularBuffer.push(testValue);
     EXPECT_EQ(circularBuffer.size(), 1u);
@@ -57,7 +63,8 @@ TEST_F(CircularBufferTest, pushFrontOnce) {
     EXPECT_FALSE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, emplaceFrontOnce) {
+TEST_F(CircularBufferTest, emplaceFrontOnce)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
     circularBuffer.emplace(testValue);
     EXPECT_EQ(circularBuffer.size(), 1u);
@@ -65,12 +72,13 @@ TEST_F(CircularBufferTest, emplaceFrontOnce) {
     EXPECT_FALSE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, emplaceFrontFull) {
+TEST_F(CircularBufferTest, emplaceFrontFull)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
 
-    circularBuffer.emplace(testValue);    // at 2 in the end
-    circularBuffer.emplace(testValue + 1);// at 1
-    circularBuffer.emplace(testValue + 2);// at 0
+    circularBuffer.emplace(testValue); // at 2 in the end
+    circularBuffer.emplace(testValue + 1); // at 1
+    circularBuffer.emplace(testValue + 2); // at 0
 
     EXPECT_TRUE(circularBuffer.full());
     EXPECT_EQ(circularBuffer.size(), testCapacity);
@@ -79,13 +87,14 @@ TEST_F(CircularBufferTest, emplaceFrontFull) {
     EXPECT_EQ(circularBuffer.at(2), testValue);
 }
 
-TEST_F(CircularBufferTest, emplaceFrontOneOverCapacity) {
+TEST_F(CircularBufferTest, emplaceFrontOneOverCapacity)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
 
     circularBuffer.emplace(testValue);
-    circularBuffer.emplace(testValue + 1);// at 2
-    circularBuffer.emplace(testValue + 2);// at 1
-    circularBuffer.emplace(testValue + 3);// at 0
+    circularBuffer.emplace(testValue + 1); // at 2
+    circularBuffer.emplace(testValue + 2); // at 1
+    circularBuffer.emplace(testValue + 3); // at 0
 
     EXPECT_TRUE(circularBuffer.full());
     EXPECT_EQ(circularBuffer.size(), testCapacity);
@@ -94,10 +103,12 @@ TEST_F(CircularBufferTest, emplaceFrontOneOverCapacity) {
     EXPECT_EQ(circularBuffer.at(2), testValue + 1);
 }
 
-TEST_F(CircularBufferTest, pushUntilFull) {
+TEST_F(CircularBufferTest, pushUntilFull)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
 
-    while (!circularBuffer.full()) {
+    while (!circularBuffer.full())
+    {
         circularBuffer.push(testValue);
     }
 
@@ -106,10 +117,12 @@ TEST_F(CircularBufferTest, pushUntilFull) {
     EXPECT_FALSE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, emplaceUntilFull) {
+TEST_F(CircularBufferTest, emplaceUntilFull)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
 
-    while (!circularBuffer.full()) {
+    while (!circularBuffer.full())
+    {
         circularBuffer.emplace(testValue);
     }
 
@@ -118,7 +131,8 @@ TEST_F(CircularBufferTest, emplaceUntilFull) {
     EXPECT_FALSE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, iterateAutoNotFull) {
+TEST_F(CircularBufferTest, iterateAutoNotFull)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
 
     circularBuffer.push(testValue + 1);
@@ -127,13 +141,15 @@ TEST_F(CircularBufferTest, iterateAutoNotFull) {
     EXPECT_FALSE(circularBuffer.full());
 
     int i = 0;
-    for (auto c : circularBuffer) {
+    for (auto c : circularBuffer)
+    {
         EXPECT_EQ(c, testValue + i++);
     }
     EXPECT_EQ(static_cast<std::size_t>(i), circularBuffer.size());
 }
 
-TEST_F(CircularBufferTest, popAfterPushOnce) {
+TEST_F(CircularBufferTest, popAfterPushOnce)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
     circularBuffer.push(testValue);
     circularBuffer.pop();
@@ -141,7 +157,8 @@ TEST_F(CircularBufferTest, popAfterPushOnce) {
     EXPECT_TRUE(circularBuffer.empty());
 }
 
-TEST_F(CircularBufferTest, popAfterTwoPushes) {
+TEST_F(CircularBufferTest, popAfterTwoPushes)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
     circularBuffer.push(testValue + 1);
     circularBuffer.push(testValue);
@@ -151,11 +168,12 @@ TEST_F(CircularBufferTest, popAfterTwoPushes) {
     EXPECT_EQ(circularBuffer.capacity(), testCapacity);
 }
 
-TEST_F(CircularBufferTest, popOnEmpty) {
+TEST_F(CircularBufferTest, popOnEmpty)
+{
     CircularBuffer<int> circularBuffer(testCapacity);
     auto val = circularBuffer.pop();
     EXPECT_TRUE(circularBuffer.empty());
     EXPECT_EQ(val, 0);
 }
 
-}// namespace NES
+} // namespace NES

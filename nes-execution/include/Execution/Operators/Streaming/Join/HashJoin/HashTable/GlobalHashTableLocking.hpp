@@ -15,6 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKING_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKING_HPP_
 
+#include <atomic>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
@@ -22,16 +23,16 @@
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
-#include <atomic>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class represents a hash map and ensures thread safety by a mutex
  */
-class GlobalHashTableLocking : public StreamJoinHashTable {
-
-  public:
+class GlobalHashTableLocking : public StreamJoinHashTable
+{
+public:
     /**
      * @brief Constructor for a GlobalHashTableLocking that
      * @param sizeOfRecord
@@ -40,11 +41,8 @@ class GlobalHashTableLocking : public StreamJoinHashTable {
      * @param pageSize
      * @param preAllocPageSizeCnt
      */
-    explicit GlobalHashTableLocking(size_t sizeOfRecord,
-                                    size_t numPartitions,
-                                    FixedPagesAllocator& fixedPagesAllocator,
-                                    size_t pageSize,
-                                    size_t preAllocPageSizeCnt);
+    explicit GlobalHashTableLocking(
+        size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize, size_t preAllocPageSizeCnt);
 
     GlobalHashTableLocking(const GlobalHashTableLocking&) = delete;
 
@@ -59,5 +57,5 @@ class GlobalHashTableLocking : public StreamJoinHashTable {
      */
     virtual uint8_t* insert(uint64_t key) const override;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKING_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKING_HPP_

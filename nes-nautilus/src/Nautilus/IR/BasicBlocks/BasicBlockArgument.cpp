@@ -13,13 +13,20 @@
 */
 #include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 BasicBlockArgument::BasicBlockArgument(const OperationIdentifier identifier, Types::StampPtr stamp)
-    : Operation(OperationType::BasicBlockArgument, identifier, stamp) {}
-std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument) {
+    : Operation(OperationType::BasicBlockArgument, identifier, stamp)
+{
+}
+std::ostream& operator<<(std::ostream& os, const BasicBlockArgument& argument)
+{
     os << argument.identifier;
     return os;
 }
 
-std::string BasicBlockArgument::toString() { return identifier; }
-}// namespace NES::Nautilus::IR::Operations
+std::string BasicBlockArgument::toString()
+{
+    return identifier;
+}
+} // namespace NES::Nautilus::IR::Operations

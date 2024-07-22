@@ -12,19 +12,22 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/Functions/CeilExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class CeilExpressionTest : public Testing::BaseUnitTest {
-  public:
+class CeilExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("CeilExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup CeilExpressionTest test class.");
     }
@@ -33,18 +36,19 @@ class CeilExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down CeilExpressionTest test class."); }
 };
 
-TEST_F(CeilExpressionTest, evaluateCeilExpressionFloat) {
+TEST_F(CeilExpressionTest, evaluateCeilExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<CeilExpression>();
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 4.3));
-        ASSERT_EQ(resultValue, (float) 5);
+        auto resultValue = expression.eval(Value<Double>((double)4.3));
+        ASSERT_EQ(resultValue, (float)5);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 4.8));
-        ASSERT_EQ(resultValue, (float) 5);
+        auto resultValue = expression.eval(Value<Float>((float)4.8));
+        ASSERT_EQ(resultValue, (float)5);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -52,9 +56,10 @@ TEST_F(CeilExpressionTest, evaluateCeilExpressionFloat) {
 /**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
-TEST_F(CeilExpressionTest, evaluateCeilExpressionOnWrongType) {
+TEST_F(CeilExpressionTest, evaluateCeilExpressionOnWrongType)
+{
     auto expression = UnaryExpressionWrapper<CeilExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

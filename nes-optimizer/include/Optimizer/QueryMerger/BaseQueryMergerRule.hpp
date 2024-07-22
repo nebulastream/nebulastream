@@ -17,15 +17,17 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
-class BaseQueryMergerRule {
-
-  public:
+namespace NES::Optimizer
+{
+class BaseQueryMergerRule
+{
+public:
     /**
      * @brief apply the rule on Global Query Plan
      * @param globalQueryPlan: the global query plan
@@ -39,5 +41,5 @@ class BaseQueryMergerRule {
     virtual ~BaseQueryMergerRule() = default;
 };
 using BaseQueryMergerRulePtr = std::shared_ptr<BaseQueryMergerRule>;
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_BASEQUERYMERGERRULE_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_BASEQUERYMERGERRULE_HPP_

@@ -12,41 +12,45 @@
     limitations under the License.
 */
 
-#define _TURN_OFF_PLATFORM_STRING// for cpprest/details/basic_types.h
-#include <BaseIntegrationTest.hpp>
+#define _TURN_OFF_PLATFORM_STRING // for cpprest/details/basic_types.h
+#include <sstream>
+#include <string>
+#include <stdio.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
-#include <sstream>
-#include <stdio.h>
-#include <string>
+#include <BaseIntegrationTest.hpp>
 
 using namespace std;
-namespace NES {
+namespace NES
+{
 
-class E2ECoordinatorSingleWorkerTest : public Testing::BaseIntegrationTest {
-  public:
+class E2ECoordinatorSingleWorkerTest : public Testing::BaseIntegrationTest
+{
+public:
     uint16_t timeout = 10;
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("E2ECoordinatorSingleWorkerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
 };
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput) {
-
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutput)
+{
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -66,7 +70,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithPrintOutpu
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput)
+{
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
@@ -74,12 +79,13 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -127,7 +133,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVariableSizeWithFileOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVariableSizeWithFileOutput)
+{
     //TODO: This is part of issue #3146 and will be addressed there
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputTestResult.txt";
@@ -136,12 +143,13 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVaria
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -189,19 +197,21 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingValidUserQueryVaria
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputWithFilter)
+{
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "UserQueryWithFileOutputWithFilterTestResult.txt";
     remove(outputFilePath.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -244,21 +254,23 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_EQ(expected, content);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhysource) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputAndRegisterPhysource)
+{
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithFileOutputAndRegisterPhysourceTestResult.txt";
     remove(outputFilePath.c_str());
 
     auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::physicalSourceName("test_stream"),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::numberOfBuffersToProduce(2),
-                                          TestUtils::sourceGatheringInterval(1)});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::physicalSourceName("test_stream"),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::numberOfBuffersToProduce(2),
+         TestUtils::sourceGatheringInterval(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -305,7 +317,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputKTMUseCase) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutputKTMUseCase)
+{
     NES_INFO("start coordinator");
     std::string testFile = "ktm-results.csv";
     remove(testFile.c_str());
@@ -320,7 +333,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
               "addField(createField(\\\"Dist\\\",BasicType::UINT64))->"
               "addField(createField(\\\"ABS_Front_Wheel_Press\\\",BasicType::FLOAT64))->"
               "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",BasicType::FLOAT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",BasicType::FLOAT64))->"// 5th col.
+              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",BasicType::FLOAT64))->" // 5th col.
               "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",BasicType::FLOAT64))->"
               "addField(createField(\\\"V_GPS\\\",BasicType::FLOAT64))->"
               "addField(createField(\\\"MMDD\\\",BasicType::FLOAT64))->"
@@ -328,8 +341,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
               "addField(createField(\\\"LAS_Ax1\\\",BasicType::FLOAT64))->"
               "addField(createField(\\\"LAS_Ay1\\\",BasicType::FLOAT64))->"
               "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",BasicType::FLOAT64))->"
-              "addField(createField(\\\"ABS_Lean_Angle\\\",BasicType::FLOAT64))->"// 13th col.
-              "addField(createField(\\\"ABS_Pitch_Info\\\",BasicType::FLOAT64))->"// 14th col.
+              "addField(createField(\\\"ABS_Lean_Angle\\\",BasicType::FLOAT64))->" // 13th col.
+              "addField(createField(\\\"ABS_Pitch_Info\\\",BasicType::FLOAT64))->" // 14th col.
               "addField(createField(\\\"ECU_Gear_Position\\\",BasicType::FLOAT64))->"
               "addField(createField(\\\"ECU_Accel_Position\\\",BasicType::FLOAT64))->"
               "addField(createField(\\\"ECU_Engine_Rpm\\\",BasicType::FLOAT64))->"
@@ -343,18 +356,19 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "ktm.csv"),
-                                          TestUtils::physicalSourceName("test_stream"),
-                                          TestUtils::logicalSourceName("ktm"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(3),
-                                          TestUtils::enableNautilusWorker(),
-                                          TestUtils::sourceGatheringInterval(1),
-                                          TestUtils::enableSlicingWindowing()});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "ktm.csv"),
+         TestUtils::physicalSourceName("test_stream"),
+         TestUtils::logicalSourceName("ktm"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::numberOfTuplesToProducePerBuffer(3),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::sourceGatheringInterval(1),
+         TestUtils::enableSlicingWindowing()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -388,7 +402,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithFileOutput
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWindowFileOutput)
+{
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
@@ -405,16 +420,17 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     NES_INFO("schema submit={}", schema.str());
     EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
-                                          TestUtils::physicalSourceName("test_stream"),
-                                          TestUtils::logicalSourceName("window"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::sourceGatheringInterval(1)});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
+         TestUtils::physicalSourceName("test_stream"),
+         TestUtils::logicalSourceName("window"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::numberOfTuplesToProducePerBuffer(28),
+         TestUtils::sourceGatheringInterval(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -440,19 +456,20 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithTumblingWi
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
     // if filter is applied correctly, no output is generated
-    string expectedContent =
-        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,10000,1,51\n"
-        "0,10000,12,1\n"
-        "0,10000,4,1\n"
-        "0,10000,16,2\n"
-        "0,10000,11,5\n"
-        "10000,20000,1,145\n"
-        "20000,30000,1,41\n";
+    string expectedContent
+        = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+          "0,10000,1,51\n"
+          "0,10000,12,1\n"
+          "0,10000,4,1\n"
+          "0,10000,16,2\n"
+          "0,10000,11,5\n"
+          "10000,20000,1,145\n"
+          "20000,30000,1,41\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWindowFileOutput)
+{
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     remove(outputFilePath.c_str());
@@ -469,16 +486,17 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     NES_INFO("schema submit={}", schema.str());
     EXPECT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
-                                          TestUtils::physicalSourceName("test_stream"),
-                                          TestUtils::logicalSourceName("window"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::sourceGatheringInterval(1)});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
+         TestUtils::physicalSourceName("test_stream"),
+         TestUtils::logicalSourceName("window"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::numberOfTuplesToProducePerBuffer(28),
+         TestUtils::sourceGatheringInterval(1)});
 
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
@@ -504,36 +522,39 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithSlidingWin
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
     //EXPECT_TRUE(TestUtils::stopQueryViaRest(queryId, std::to_string(*restPort)));
 
-    string expectedContent =
-        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,10000,1,51\n"
-        "0,10000,12,1\n"
-        "0,10000,4,1\n"
-        "0,10000,11,5\n"
-        "0,10000,16,2\n"
-        "5000,15000,1,95\n"
-        "10000,20000,1,145\n"
-        "15000,25000,1,126\n"
-        "20000,30000,1,41\n";
+    string expectedContent
+        = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+          "0,10000,1,51\n"
+          "0,10000,12,1\n"
+          "0,10000,4,1\n"
+          "0,10000,11,5\n"
+          "0,10000,16,2\n"
+          "5000,15000,1,95\n"
+          "10000,20000,1,145\n"
+          "15000,25000,1,126\n"
+          "20000,30000,1,41\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::coordinatorHealthCheckWaitTime(1),
-                                                    TestUtils::enableDebug()});
+TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery)
+{
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort),
+         TestUtils::restPort(*restPort),
+         TestUtils::coordinatorHealthCheckWaitTime(1),
+         TestUtils::enableDebug()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test"),
-                                          TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test"),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid={}", worker.getPid());
     sleep(5);
@@ -541,19 +562,21 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithoutQuery) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister)
+{
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test"),
-                                          TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test"),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid={}", worker.getPid());
     std::stringstream ss;
@@ -573,19 +596,21 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryAfterUnregister) {
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed)
+{
     auto coordinator = TestUtils::startCoordinator(
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::coordinatorHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test"),
-                                          TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test"),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid={}", worker.getPid());
 
@@ -608,7 +633,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillWorkerWithQueryDeployed) {
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery)
+{
     remove("nesWorkerStarter.log");
 
     auto coordinator = TestUtils::startCoordinator(
@@ -616,13 +642,14 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test"),
-                                          TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test"),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid={}", worker.getPid());
     sleep(5);
@@ -635,17 +662,20 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
 
     inFile.open("nesWorkerStarter.log");
 
-    if (!inFile) {
+    if (!inFile)
+    {
         cout << "Unable to open file" << endl;
         exit(1);
     }
 
     size_t pos;
     bool found = false;
-    while (inFile.good()) {
+    while (inFile.good())
+    {
         getline(inFile, line);
         pos = line.find(searchStr);
-        if (pos != string::npos) {
+        if (pos != string::npos)
+        {
             cout << "Found line";
             found = true;
             break;
@@ -654,7 +684,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithoutQuery) {
     ASSERT_TRUE(found);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning)
+{
     remove("nesWorkerStarter.log");
 
     auto coordinator = TestUtils::startCoordinator(
@@ -662,13 +693,14 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
     NES_DEBUG("start crd with pid={}", coordinator.getPid());
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test"),
-                                          TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test"),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
     NES_DEBUG("start worker with pid={}", worker.getPid());
 
@@ -695,17 +727,20 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
 
     inFile.open("nesWorkerStarter.log");
 
-    if (!inFile) {
+    if (!inFile)
+    {
         cout << "Unable to open file" << endl;
         exit(1);
     }
 
     size_t pos;
     bool found = false;
-    while (inFile.good()) {
+    while (inFile.good())
+    {
         getline(inFile, line);
         pos = line.find(searchStr);
-        if (pos != string::npos) {
+        if (pos != string::npos)
+        {
             cout << "Found line";
             found = true;
             break;
@@ -714,7 +749,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testKillCoordinatorWithQueryRunning) {
     ASSERT_TRUE(found);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdWindowFileOutputKTMUseCase) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdWindowFileOutputKTMUseCase)
+{
     NES_INFO("start coordinator");
     std::string testFile = getTestResourceFolder() / "ktm-results.csv";
     NES_INFO("testFile = {}", testFile);
@@ -732,7 +768,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
            "addField(createField(\\\"Dist\\\",BasicType::UINT64))->"
            "addField(createField(\\\"ABS_Front_Wheel_Press\\\",BasicType::UINT64))->"
            "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",BasicType::FLOAT64))->"
-           "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",BasicType::FLOAT64))->"// 5th col.
+           "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",BasicType::FLOAT64))->" // 5th col.
            "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"V_GPS\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"MMDD\\\",BasicType::FLOAT64))->"
@@ -740,13 +776,13 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
            "addField(createField(\\\"LAS_Ax1\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"LAS_Ay1\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",BasicType::FLOAT64))->"
-           "addField(createField(\\\"ABS_Lean_Angle\\\",BasicType::FLOAT32))->"// 13th col.
-           "addField(createField(\\\"ABS_Pitch_Info\\\",BasicType::FLOAT64))->"// 14th col.
+           "addField(createField(\\\"ABS_Lean_Angle\\\",BasicType::FLOAT32))->" // 13th col.
+           "addField(createField(\\\"ABS_Pitch_Info\\\",BasicType::FLOAT64))->" // 14th col.
            "addField(createField(\\\"ECU_Gear_Position\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"ECU_Accel_Position\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"ECU_Engine_Rpm\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"ECU_Water_Temperature\\\",BasicType::FLOAT64))->"
-           "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",BasicType::INT32))->"//TODO I changed that to i32 to prevent failure because of different data types
+           "addField(createField(\\\"ECU_Oil_Temp_Sensor_Data\\\",BasicType::INT32))->" //TODO I changed that to i32 to prevent failure because of different data types
            "addField(createField(\\\"ECU_Side_StanD\\\",BasicType::INT32))->"
            "addField(createField(\\\"Longitude\\\",BasicType::FLOAT64))->"
            "addField(createField(\\\"Latitude\\\",BasicType::FLOAT64))->"
@@ -760,8 +796,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
          TestUtils::dataPort(0),
          TestUtils::coordinatorPort(*rpcCoordinatorPort),
          TestUtils::sourceType(SourceType::CSV_SOURCE),
-         TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY)
-                                      + "ktm_thresholdtest.csv"),//I created a new file to open and close a threshold window
+         TestUtils::csvSourceFilePath(
+             std::string(TEST_DATA_DIRECTORY) + "ktm_thresholdtest.csv"), //I created a new file to open and close a threshold window
          TestUtils::physicalSourceName("test_stream"),
          TestUtils::logicalSourceName("ktm"),
          TestUtils::numberOfBuffersToProduce(1),
@@ -794,9 +830,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
 
     EXPECT_TRUE(TestUtils::checkCompleteOrTimeout(queryId, 1, std::to_string(*restPort)));
 
-    string expectedContent =
-        "ktm$ABS_Lean_Angle:Float(32 bits),ktm$ABS_Front_Wheel_Speed:Float(64 bits),ktm$count:INTEGER(64 bits)\n"
-        "14.300000,0.500000,2\n";
+    string expectedContent = "ktm$ABS_Lean_Angle:Float(32 bits),ktm$ABS_Front_Wheel_Speed:Float(64 bits),ktm$count:INTEGER(64 bits)\n"
+                             "14.300000,0.500000,2\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, testFile));
 
@@ -804,7 +839,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testExecutingValidUserQueryWithThresholdW
     EXPECT_TRUE(response == 0);
 }
 
-TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits) {
+TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits)
+{
     NES_INFO("start coordinator");
     std::string testFile = getTestResourceFolder() / "testWindowExecutionWithDifferentTimeUnits_output.csv";
     NES_INFO("testFile = {}", testFile);
@@ -829,7 +865,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
          TestUtils::sourceType(SourceType::CSV_SOURCE),
          TestUtils::csvSourceFilePath(
              std::string(TEST_DATA_DIRECTORY)
-             + "window_increasing_timesteps.csv"),//I created a new file to open and close a threshold window
+             + "window_increasing_timesteps.csv"), //I created a new file to open and close a threshold window
          TestUtils::physicalSourceName("window_data"),
          TestUtils::logicalSourceName("window_data"),
          TestUtils::enableNautilusWorker(),
@@ -837,14 +873,12 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     // Generates and runs testcase for different TimeUnits
-    auto testWithUnits = [&](const auto& event, const auto& size, const auto& slide, const auto& expectedContent) {
+    auto testWithUnits = [&](const auto& event, const auto& size, const auto& slide, const auto& expectedContent)
+    {
         std::stringstream ss;
         ss << "{\"userQuery\" : ";
         ss << R"("Query::from(\"window_data\"))";
-        ss << fmt::format(".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\"), {}()), {}(2), {}(1)))",
-                          event,
-                          size,
-                          slide);
+        ss << fmt::format(".window(SlidingWindow::of(EventTime(Attribute(\\\"timestamp\\\"), {}()), {}(2), {}(1)))", event, size, slide);
         ss << R"(.apply(Count()))";
         ss << R"(.sink(FileSinkDescriptor::create(\")";
         ss << testFile;
@@ -872,10 +906,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
     // TODO #4864: The windowing logic does no agree with Flink
     // Tests combiniations of different TimeUnits in WindowDefinitation and EventTimeField.
     // Equal Units
-    testWithUnits("Milliseconds",
-                  "Milliseconds",
-                  "Milliseconds",
-                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+    testWithUnits(
+        "Milliseconds",
+        "Milliseconds",
+        "Milliseconds",
+        R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
 1,3,2
 2,4,2
 3,5,1
@@ -895,10 +930,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
 
     // WindoeDefintiation Unit > EventTime
     // Items in Window 1(0s-2s): [1ms,2ms,3ms,1000ms], 2(1s-3s): [1000ms, 2000ms]...
-    testWithUnits("Milliseconds",
-                  "Seconds",
-                  "Seconds",
-                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+    testWithUnits(
+        "Milliseconds",
+        "Seconds",
+        "Seconds",
+        R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
 0,2000,4
 1000,3000,2
 2000,4000,2
@@ -916,10 +952,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
 
     // Equal Units, but different from the internal milliseconds used by nautilus
     // Items in Window 1(1s-3s): [1s, 2s], 2(2s-4s): [2s, 3s]...
-    testWithUnits("Seconds",
-                  "Seconds",
-                  "Seconds",
-                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+    testWithUnits(
+        "Seconds",
+        "Seconds",
+        "Seconds",
+        R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
 1000,3000,2
 2000,4000,2
 3000,5000,1
@@ -939,10 +976,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
 
     // WindoeDefintiation Unit >> EventTime. More obscure unit multiplier because of minutes
     // Items in Window 1(0min-2min): [1ms, 2ms, 3ms, 1s, 2s, 3s, 1min], 2(2min-4min): [2min, 3min]...
-    testWithUnits("Milliseconds",
-                  "Minutes",
-                  "Minutes",
-                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+    testWithUnits(
+        "Milliseconds",
+        "Minutes",
+        "Minutes",
+        R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
 0,120000,7
 60000,180000,2
 120000,240000,2
@@ -957,10 +995,11 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
 
     // EventTime > WindowDefinitation
     // Items in Window 1(1000ms-1002ms): [1s], 2(2000ms-2002ms): [2s]...
-    testWithUnits("Seconds",
-                  "Milliseconds",
-                  "Milliseconds",
-                  R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
+    testWithUnits(
+        "Seconds",
+        "Milliseconds",
+        "Milliseconds",
+        R"(window_data$start:INTEGER(64 bits),window_data$end:INTEGER(64 bits),window_data$count:INTEGER(64 bits)
 1000,1002,1
 2000,2002,1
 3000,3002,1
@@ -980,7 +1019,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, testWindowExecutionWithDifferentTimeUnits
 }
 
 //TODO #3801 fixing bykey()
-TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMByKey) {
+TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMByKey)
+{
     NES_INFO("start coordinator");
     std::string testFile = getTestResourceFolder() / "ktm-results.csv";
     NES_INFO("testFile = {}", testFile);
@@ -995,7 +1035,7 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
               ":\"Schema::create()->addField(createField(\\\"Time\\\",INT32))->addField(createField(\\\"Dist\\\",UINT64))->"
               "addField(createField(\\\"ABS_Front_Wheel_Press\\\",UINT64))->"
               "addField(createField(\\\"ABS_Rear_Wheel_Press\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->"// 5th col.
+              "addField(createField(\\\"ABS_Front_Wheel_Speed\\\",FLOAT64))->" // 5th col.
               "addField(createField(\\\"ABS_Rear_Wheel_Speed\\\",FLOAT64))->"
               "addField(createField(\\\"V_GPS\\\",FLOAT64))->"
               "addField(createField(\\\"MMDD\\\",FLOAT64))->"
@@ -1003,8 +1043,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
               "addField(createField(\\\"LAS_Ax1\\\",FLOAT64))->"
               "addField(createField(\\\"LAS_Ay1\\\",FLOAT64))->"
               "addField(createField(\\\"LAS_Az_Vertical_Acc\\\",FLOAT64))->"
-              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT32))->"// 13th col.
-              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->"// 14th col.
+              "addField(createField(\\\"ABS_Lean_Angle\\\",FLOAT32))->" // 13th col.
+              "addField(createField(\\\"ABS_Pitch_Info\\\",FLOAT64))->" // 14th col.
               "addField(createField(\\\"ECU_Gear_Position\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Accel_Position\\\",FLOAT64))->"
               "addField(createField(\\\"ECU_Engine_Rpm\\\",FLOAT64))->"
@@ -1023,8 +1063,8 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
          TestUtils::dataPort(0),
          TestUtils::coordinatorPort(*rpcCoordinatorPort),
          TestUtils::sourceType(SourceType::CSV_SOURCE),
-         TestUtils::csvSourceFilePath(std::string(TEST_DATA_DIRECTORY)
-                                      + "ktm_thresholdtest.csv"),//I created a new file to open and close a threshold window
+         TestUtils::csvSourceFilePath(
+             std::string(TEST_DATA_DIRECTORY) + "ktm_thresholdtest.csv"), //I created a new file to open and close a threshold window
          TestUtils::physicalSourceName("test_stream"),
          TestUtils::logicalSourceName("ktm"),
          TestUtils::numberOfBuffersToProduce(1),
@@ -1066,4 +1106,4 @@ TEST_F(E2ECoordinatorSingleWorkerTest, DISABLED_testExecutingThresholdWindowKTMB
     EXPECT_TRUE(response == 0);
 }
 
-}// namespace NES
+} // namespace NES

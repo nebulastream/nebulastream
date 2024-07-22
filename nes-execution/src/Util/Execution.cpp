@@ -12,35 +12,36 @@
     limitations under the License.
 */
 
+#include <tuple>
 #include <API/AttributeField.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Execution.hpp>
-#include <tuple>
 
-namespace NES::QueryCompilation::Util {
+namespace NES::QueryCompilation::Util
+{
 std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
-getWindowingParameters(Windowing::TimeBasedWindowType& windowType) {
+getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
+{
     const auto& windowSize = windowType.getSize().getTime();
     const auto& windowSlide = windowType.getSlide().getTime();
     const auto type = windowType.getTimeCharacteristic()->getType();
 
-    switch (type) {
+    switch (type)
+    {
         case Windowing::TimeCharacteristic::Type::IngestionTime: {
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
             return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
         }
         case Windowing::TimeCharacteristic::Type::EventTime: {
             const auto& timeStampFieldName = windowType.getTimeCharacteristic()->getField()->getName();
-            auto timeStampFieldRecord =
-                std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeStampFieldName);
+            auto timeStampFieldRecord = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeStampFieldName);
             auto timeFunction = std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
-                timeStampFieldRecord,
-                windowType.getTimeCharacteristic()->getTimeUnit());
+                timeStampFieldRecord, windowType.getTimeCharacteristic()->getTimeUnit());
             return std::make_tuple(windowSize, windowSlide, std::move(timeFunction));
         }
     }
 }
-}// namespace NES::QueryCompilation::Util
+} // namespace NES::QueryCompilation::Util

@@ -14,15 +14,17 @@
 
 #ifndef NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_
 #define NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_
-#include <Measures/WindowMeasure.hpp>
 #include <cstdint>
-namespace NES::Windowing {
+#include <Measures/WindowMeasure.hpp>
+namespace NES::Windowing
+{
 
 /**
  * A time based window measure.
  */
-class TimeMeasure : public WindowMeasure {
-  public:
+class TimeMeasure : public WindowMeasure
+{
+public:
     /**
      * @brief Constructor for a TimeMeasure
      * @param milliseconds
@@ -65,10 +67,10 @@ class TimeMeasure : public WindowMeasure {
      */
     bool operator==(const TimeMeasure& other) const;
 
-  private:
+private:
     const uint64_t milliSeconds;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_

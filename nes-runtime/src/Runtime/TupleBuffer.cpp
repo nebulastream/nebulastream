@@ -16,9 +16,11 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
-TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer) {
+TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
+{
     auto controlBlockSize = alignBufferSize(sizeof(Runtime::detail::BufferControlBlock), 64);
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - controlBlockSize);
@@ -28,8 +30,10 @@ TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer) {
     return tb;
 }
 
-TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent) {
-    auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler) {
+TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent)
+{
+    auto callback = [](detail::MemorySegment* segment, BufferRecycler* recycler)
+    {
         recycler->recyclePooledBuffer(segment);
         delete segment;
     };
@@ -37,13 +41,14 @@ TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, BufferRecycler*
     return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
 }
 
-TupleBuffer
-TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback) {
+TupleBuffer TupleBuffer::wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment*, BufferRecycler*)>&& callback)
+{
     auto* memSegment = new detail::MemorySegment(ptr, length, nullptr, std::move(callback), true);
     return TupleBuffer(memSegment->controlBlock.get(), ptr, length);
 }
 
-uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept {
+uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept
+{
     TupleBuffer empty;
     auto* control = buffer.controlBlock;
     NES_ASSERT2_FMT(controlBlock != control, "Cannot attach buffer to self");
@@ -52,24 +57,29 @@ uint32_t TupleBuffer::storeChildBuffer(TupleBuffer& buffer) const noexcept {
     return index;
 }
 
-TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept {
+TupleBuffer TupleBuffer::loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept
+{
     TupleBuffer childBuffer;
-    NES_ASSERT(controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size),
-               "Cannot load tuple buffer");
+    NES_ASSERT(
+        controlBlock->loadChildBuffer(bufferIndex, childBuffer.controlBlock, childBuffer.ptr, childBuffer.size),
+        "Cannot load tuple buffer");
     return childBuffer;
 }
 
-bool recycleTupleBuffer(void* bufferPointer) {
+bool recycleTupleBuffer(void* bufferPointer)
+{
     NES_ASSERT2_FMT(bufferPointer, "invalid bufferPointer");
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
     auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - sizeof(Runtime::detail::BufferControlBlock));
     return block->release();
 }
 
-bool TupleBuffer::hasSpaceLeft(uint64_t used, uint64_t needed) const {
-    if (used + needed <= this->size) {
+bool TupleBuffer::hasSpaceLeft(uint64_t used, uint64_t needed) const
+{
+    if (used + needed <= this->size)
+    {
         return true;
     }
     return false;
 }
-}// namespace NES::Runtime
+} // namespace NES::Runtime

@@ -12,33 +12,38 @@
     limitations under the License.
 */
 
+#include <random>
+#include <vector>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <DataGeneration/DefaultDataGenerator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <random>
-#include <vector>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Benchmark::DataGeneration {
-class DefaultDataGeneratorTest : public Testing::BaseIntegrationTest {
-  public:
+namespace NES::Benchmark::DataGeneration
+{
+class DefaultDataGeneratorTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("DefaultDataGeneratorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DefaultDataGeneratorTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_INFO("Setup DefaultDataGeneratorTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         NES_INFO("Tear down DefaultDataGeneratorTest test case.");
         Testing::BaseIntegrationTest::TearDown();
     }
@@ -53,7 +58,8 @@ const auto maxValue = 1000;
 /**
      * @brief Testing if DefaultDataGenerator::getSchema() works by comparing versus a hardcoded truth
      */
-TEST_F(DefaultDataGeneratorTest, getSchemaTest) {
+TEST_F(DefaultDataGeneratorTest, getSchemaTest)
+{
     auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
     auto schemaDefault = defaultDataGenerator->getSchema();
 
@@ -69,7 +75,8 @@ TEST_F(DefaultDataGeneratorTest, getSchemaTest) {
 /**
      * @brief Testing if DefaultDataGenerator::getName() works by comparing versus a hardcoded truth
      */
-TEST_F(DefaultDataGeneratorTest, getNameTest) {
+TEST_F(DefaultDataGeneratorTest, getNameTest)
+{
     auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
     auto nameDefault = defaultDataGenerator->getName();
 
@@ -81,7 +88,8 @@ TEST_F(DefaultDataGeneratorTest, getNameTest) {
 /**
      * @brief Testing if DefaultDataGenerator::toString() works by comparing versus a hardcoded truth
      */
-TEST_F(DefaultDataGeneratorTest, toStringTest) {
+TEST_F(DefaultDataGeneratorTest, toStringTest)
+{
     std::ostringstream oss;
 
     auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
@@ -97,7 +105,8 @@ TEST_F(DefaultDataGeneratorTest, toStringTest) {
      * @brief Testing if DefaultDataGenerator::createData() works by creating tuples and then comparing the expected tupleBuffers
      * with the created one's from the DefaultDataGenerator
      */
-TEST_F(DefaultDataGeneratorTest, createDataTest) {
+TEST_F(DefaultDataGeneratorTest, createDataTest)
+{
     size_t numberOfBuffers = 10;
 
     auto defaultDataGenerator = std::make_unique<DefaultDataGenerator>(minValue, maxValue);
@@ -110,14 +119,16 @@ TEST_F(DefaultDataGeneratorTest, createDataTest) {
 
     auto memoryLayout = defaultDataGenerator->getMemoryLayout(bufferManager->getBufferSize());
 
-    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer) {
+    for (uint64_t curBuffer = 0; curBuffer < numberOfBuffers; ++curBuffer)
+    {
         Runtime::TupleBuffer bufferRef = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, bufferRef);
 
         std::mt19937 generator(GENERATOR_SEED_DEFAULT);
         std::uniform_int_distribution<uint64_t> uniformIntDistribution(minValue, maxValue);
 
-        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord) {
+        for (uint64_t curRecord = 0; curRecord < testBuffer.getCapacity(); ++curRecord)
+        {
             auto value = uniformIntDistribution(generator);
             testBuffer[curRecord]["id"].write<uint64_t>(curRecord);
             testBuffer[curRecord]["value"].write<uint64_t>(value);
@@ -131,7 +142,8 @@ TEST_F(DefaultDataGeneratorTest, createDataTest) {
 
     ASSERT_EQ(dataDefault.size(), expectedData.size());
 
-    for (uint64_t i = 0; i < dataDefault.size(); ++i) {
+    for (uint64_t i = 0; i < dataDefault.size(); ++i)
+    {
         auto dataBuffer = dataDefault[i];
         auto expectedBuffer = expectedData[i];
 
@@ -139,4 +151,4 @@ TEST_F(DefaultDataGeneratorTest, createDataTest) {
         ASSERT_TRUE(memcmp(dataBuffer.getBuffer(), expectedBuffer.getBuffer(), dataBuffer.getBufferSize()) == 0);
     }
 }
-}//namespace NES::Benchmark::DataGeneration
+} //namespace NES::Benchmark::DataGeneration

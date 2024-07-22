@@ -19,23 +19,26 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Data type to represent a reference to an underling typed pointer that is managed by Nautilus.
  */
-template<typename T>
-class TypedRef final : public BaseTypedRef {
-  public:
+template <typename T>
+class TypedRef final : public BaseTypedRef
+{
+public:
     using element_type = T;
 
-    static void destructReference(void* value) {
-        auto* typedPtr = (T*) value;
+    static void destructReference(void* value)
+    {
+        auto* typedPtr = (T*)value;
         typedPtr->~T();
     }
     static const inline auto type = TypeIdentifier::create<TypedRef<T>>();
     TypedRef() : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>(Value<MemRef>(std::make_unique<MemRef>(nullptr)))){};
-    TypedRef(T* t) : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>((int8_t*) t)){};
+    TypedRef(T* t) : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>((int8_t*)t)){};
 
     // copy constructor
     TypedRef(const TypedRef<T>& t) : BaseTypedRef(&type), value(t.value){};
@@ -47,7 +50,8 @@ class TypedRef final : public BaseTypedRef {
     TypedRef<T>& operator=(const TypedRef<T>& other) { return *this = TypedRef<T>(other); };
 
     // move assignment
-    TypedRef<T>& operator=(const TypedRef<T>&& other) {
+    TypedRef<T>& operator=(const TypedRef<T>&& other)
+    {
         std::swap(value, other.value);
         return *this;
     };
@@ -56,13 +60,15 @@ class TypedRef final : public BaseTypedRef {
     T* get() { return reinterpret_cast<T*>(value->value->value); }
     Nautilus::IR::Types::StampPtr getType() const override { return Nautilus::IR::Types::StampFactory::createAddressStamp(); }
     std::shared_ptr<Value<MemRef>> value;
-    ~TypedRef() {
-        if (value.use_count() == 1) {
+    ~TypedRef()
+    {
+        if (value.use_count() == 1)
+        {
             FunctionCall<>("DestructTypedRef", destructReference, *value.get());
         }
     }
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TYPEDREF_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TYPEDREF_HPP_

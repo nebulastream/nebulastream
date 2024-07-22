@@ -12,20 +12,23 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <iostream>
+#include <strstream>
 #include <Runtime/Profiler/PAPIProfiler.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <strstream>
+#include <BaseIntegrationTest.hpp>
 
 using namespace std;
-namespace NES {
+namespace NES
+{
 
-class PapiProfilerTest : public Testing::BaseUnitTest {
-  public:
+class PapiProfilerTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("PapiProfilerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("SetUpTestCase PapiProfilerTest test case.");
     }
@@ -34,7 +37,8 @@ class PapiProfilerTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("TearDownTestCase PapiProfilerTest test case."); }
 };
 
-TEST_F(PapiProfilerTest, testSampling) {
+TEST_F(PapiProfilerTest, testSampling)
+{
     using namespace Runtime::Profiler;
     std::ofstream buffer("/dev/null");
     Runtime::Profiler::PapiCpuProfiler profiler(PapiCpuProfiler::Presets::CachePresets, std::move(buffer), 0, 0);
@@ -43,4 +47,4 @@ TEST_F(PapiProfilerTest, testSampling) {
     auto stopTs = profiler.stopSampling(1);
     ASSERT_TRUE(startTs > 0 && stopTs > 0);
 }
-}// namespace NES
+} // namespace NES

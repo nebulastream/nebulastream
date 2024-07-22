@@ -19,19 +19,40 @@
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <Nautilus/IR/Types/VoidStamp.hpp>
 
-namespace NES::Nautilus::IR::Types {
+namespace NES::Nautilus::IR::Types
+{
 
-Stamp::Stamp(const TypeIdentifier* typeIdentifier) : Typed(typeIdentifier) {}
+Stamp::Stamp(const TypeIdentifier* typeIdentifier) : Typed(typeIdentifier)
+{
+}
 
-bool Stamp::isInteger() { return isa<IntegerStamp>(*this); }
+bool Stamp::isInteger()
+{
+    return isa<IntegerStamp>(*this);
+}
 
-bool Stamp::isFloat() { return isa<FloatStamp>(*this); }
+bool Stamp::isFloat()
+{
+    return isa<FloatStamp>(*this);
+}
 
-bool Stamp::isArray() { return isa<ArrayStamp>(*this); }
-bool Stamp::isAddress() { return isa<AddressStamp>(*this); }
+bool Stamp::isArray()
+{
+    return isa<ArrayStamp>(*this);
+}
+bool Stamp::isAddress()
+{
+    return isa<AddressStamp>(*this);
+}
 
-bool Stamp::isBoolean() { return isa<BooleanStamp>(*this); }
+bool Stamp::isBoolean()
+{
+    return isa<BooleanStamp>(*this);
+}
 
-bool Stamp::isVoid() { return isa<VoidStamp>(*this); }
+bool Stamp::isVoid()
+{
+    return isa<VoidStamp>(*this);
+}
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types

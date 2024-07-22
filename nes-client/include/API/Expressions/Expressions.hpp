@@ -15,12 +15,13 @@
 #ifndef NES_CLIENT_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
 #define NES_CLIENT_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
 
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <string>
 #include <vector>
+#include <Common/DataTypes/BasicTypes.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This file contains the user facing api to create expression nodes in a fluent and easy way.
@@ -39,22 +40,23 @@ using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressi
  * @brief A expression item represents the leaf in an expression tree.
  * It is converted to an constant value expression or a field access expression.
  */
-class ExpressionItem {
-  public:
-    ExpressionItem(int8_t value);            //NOLINT(google-explicit-constructor)
-    ExpressionItem(uint8_t value);           //NOLINT(google-explicit-constructor)
-    ExpressionItem(int16_t value);           //NOLINT(google-explicit-constructor)
-    ExpressionItem(uint16_t value);          //NOLINT(google-explicit-constructor)
-    ExpressionItem(int32_t value);           //NOLINT(google-explicit-constructor)
-    ExpressionItem(uint32_t value);          //NOLINT(google-explicit-constructor)
-    ExpressionItem(int64_t value);           //NOLINT(google-explicit-constructor)
-    ExpressionItem(uint64_t value);          //NOLINT(google-explicit-constructor)
-    ExpressionItem(float value);             //NOLINT(google-explicit-constructor)
-    ExpressionItem(double value);            //NOLINT(google-explicit-constructor)
-    ExpressionItem(bool value);              //NOLINT(google-explicit-constructor)
-    ExpressionItem(const char* value);       //NOLINT(google-explicit-constructor)
-    ExpressionItem(std::string const& value);//NOLINT(google-explicit-constructor)
-    ExpressionItem(ValueTypePtr value);      //NOLINT(google-explicit-constructor)
+class ExpressionItem
+{
+public:
+    ExpressionItem(int8_t value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint8_t value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(int16_t value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint16_t value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(int32_t value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint32_t value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(int64_t value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(uint64_t value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(float value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(double value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(bool value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(const char* value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(std::string const& value); //NOLINT(google-explicit-constructor)
+    ExpressionItem(ValueTypePtr value); //NOLINT(google-explicit-constructor)
     ExpressionItem(ExpressionNodePtr exp);
 
     ExpressionItem(ExpressionItem const&) = default;
@@ -76,7 +78,7 @@ class ExpressionItem {
      */
     ExpressionItem as(std::string name);
 
-  private:
+private:
     ExpressionNodePtr expression;
 };
 
@@ -118,5 +120,5 @@ ExpressionNodePtr WHEN(ExpressionItem conditionExp, ExpressionItem valueExp);
 ExpressionNodePtr CASE(const std::vector<ExpressionNodePtr>& whenExpressions, ExpressionNodePtr defaultValueExp);
 ExpressionNodePtr CASE(std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem defaultValueExp);
 
-}//end of namespace NES
-#endif// NES_CLIENT_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
+} //end of namespace NES
+#endif // NES_CLIENT_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_

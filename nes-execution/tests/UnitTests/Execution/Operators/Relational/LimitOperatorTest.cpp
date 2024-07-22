@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -22,14 +23,16 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class LimitOperatorTest : public testing::Test {
-  public:
+class LimitOperatorTest : public testing::Test
+{
+public:
     /* Will be called before any test in this class is executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("LimitOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LimitOperatorTest test class.");
     }
@@ -41,7 +44,8 @@ class LimitOperatorTest : public testing::Test {
 /**
  * @brief Tests if we limit the number of tuples
  */
-TEST_F(LimitOperatorTest, TestLimit) {
+TEST_F(LimitOperatorTest, TestLimit)
+{
     constexpr uint64_t LIMIT = 10;
     constexpr uint64_t TUPLES = 20;
 
@@ -52,13 +56,14 @@ TEST_F(LimitOperatorTest, TestLimit) {
 
     auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx
+        = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto limitOperator = Limit(0);
     auto collector = std::make_shared<CollectOperator>();
     limitOperator.setChild(collector);
-    for (uint64_t i = 0; i < TUPLES; ++i) {
+    for (uint64_t i = 0; i < TUPLES; ++i)
+    {
         auto record = Record({{"f1", Value<>(0)}});
         limitOperator.execute(ctx, record);
     }
@@ -69,7 +74,8 @@ TEST_F(LimitOperatorTest, TestLimit) {
 /**
  * @brief Tests with a limit of 0
  */
-TEST_F(LimitOperatorTest, TestLimitZero) {
+TEST_F(LimitOperatorTest, TestLimitZero)
+{
     constexpr uint64_t LIMIT = 0;
     constexpr uint64_t TUPLES = 20;
 
@@ -80,13 +86,14 @@ TEST_F(LimitOperatorTest, TestLimitZero) {
 
     auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx
+        = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto limitOperator = Limit(0);
     auto collector = std::make_shared<CollectOperator>();
     limitOperator.setChild(collector);
-    for (uint64_t i = 0; i < TUPLES; ++i) {
+    for (uint64_t i = 0; i < TUPLES; ++i)
+    {
         auto record = Record({{"f1", Value<>(0)}});
         limitOperator.execute(ctx, record);
     }
@@ -94,4 +101,4 @@ TEST_F(LimitOperatorTest, TestLimitZero) {
     ASSERT_EQ(collector->records.size(), LIMIT);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

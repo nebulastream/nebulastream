@@ -14,13 +14,15 @@
 
 #ifndef NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
 #define NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
-#include <Identifiers/Identifiers.hpp>
 #include <sstream>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class SequenceData {
-  public:
+class SequenceData
+{
+public:
     /**
      * @brief Constructs
      * @param sequenceNumber
@@ -32,9 +34,9 @@ class SequenceData {
 
     [[nodiscard]] std::string toString() const;
 
-    friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj) {
-        os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk
-           << "}";
+    friend std::ostream& operator<<(std::ostream& os, const SequenceData& obj)
+    {
+        os << "{SeqNumber: " << obj.sequenceNumber << ", ChunkNumber: " << obj.chunkNumber << ", LastChunk: " << obj.lastChunk << "}";
         return os;
     }
 
@@ -65,6 +67,6 @@ class SequenceData {
     bool lastChunk;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
+#endif // NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_

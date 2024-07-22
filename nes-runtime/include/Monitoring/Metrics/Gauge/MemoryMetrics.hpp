@@ -19,20 +19,24 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Monitoring {
+namespace Monitoring
+{
 
 /**
  * @brief MemoryMetrics class, that is responsible for collecting and managing memory metrics.
  */
-class MemoryMetrics {
-  public:
+class MemoryMetrics
+{
+public:
     MemoryMetrics();
 
     /**
@@ -114,6 +118,6 @@ void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t 
  */
 nlohmann::json asJson(const MemoryMetrics& metrics);
 
-}// namespace Monitoring
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_MEMORYMETRICS_HPP_
+} // namespace Monitoring
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_MEMORYMETRICS_HPP_

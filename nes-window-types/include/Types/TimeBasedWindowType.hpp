@@ -15,18 +15,19 @@
 #ifndef NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_
 #define NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_
 
+#include <vector>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/WindowType.hpp>
-#include <vector>
-namespace NES::Windowing {
+namespace NES::Windowing
+{
 
 class TimeBasedWindowType;
 using TimeBasedWindowTypePtr = std::shared_ptr<TimeBasedWindowType>;
 
-class TimeBasedWindowType : public WindowType {
-
-  public:
+class TimeBasedWindowType : public WindowType
+{
+public:
     explicit TimeBasedWindowType(TimeCharacteristicPtr timeCharacteristic);
 
     ~TimeBasedWindowType() override = default;
@@ -55,10 +56,10 @@ class TimeBasedWindowType : public WindowType {
      */
     bool inferStamp(const SchemaPtr& schema) override;
 
-  protected:
+protected:
     TimeCharacteristicPtr timeCharacteristic;
 };
 
-}// namespace NES::Windowing
+} // namespace NES::Windowing
 
-#endif// NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_
+#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_

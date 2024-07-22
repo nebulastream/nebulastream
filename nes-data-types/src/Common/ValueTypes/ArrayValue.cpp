@@ -15,12 +15,17 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 
-namespace NES {
+namespace NES
+{
 
-std::string ArrayValue::toString() const noexcept { return "ArrayValue"; }
+std::string ArrayValue::toString() const noexcept
+{
+    return "ArrayValue";
+}
 
-bool ArrayValue::isEquals(ValueTypePtr other) const noexcept {
+bool ArrayValue::isEquals(ValueTypePtr other) const noexcept
+{
     return dataType->equals(other->dataType) && values == std::dynamic_pointer_cast<ArrayValue>(other)->values;
 }
 
-}// namespace NES
+} // namespace NES

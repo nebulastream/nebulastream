@@ -15,15 +15,16 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
 
+#include <vector>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/AbstractBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
-#include <vector>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 class MultiOriginWatermarkProcessor;
 class State;
@@ -34,8 +35,9 @@ class State;
  * For each processed tuple buffer triggerThreadLocalState is called, which checks if the thread-local slice store should be triggered.
  * This is decided by the current watermark timestamp.
  */
-class KeyedBucketPreAggregationHandler : public AbstractBucketPreAggregationHandler<KeyedSlice, KeyedBucketStore> {
-  public:
+class KeyedBucketPreAggregationHandler : public AbstractBucketPreAggregationHandler<KeyedSlice, KeyedBucketStore>
+{
+public:
     /**
      * @brief Creates the operator handler with a specific window definition, a set of origins, and access to the slice staging object.
      * @param windowDefinition logical window definition
@@ -53,5 +55,5 @@ class KeyedBucketPreAggregationHandler : public AbstractBucketPreAggregationHand
 
     ~KeyedBucketPreAggregationHandler() override;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_

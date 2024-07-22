@@ -1,11 +1,38 @@
 # Which checks are disabled and why?
-# - Disable project-specific checks (abseil, fuchsia, goolge, zircon, llvm)
+# - Disable project-specific checks (abseil, fuchsia, google, zircon, llvm)
 # - Also disable modernization to trailing return types because this would cause a lot of unnecessary
 #   refactoring
 # - Implicit conversions sometimes make the code more readable
 # - readability-named-parameter does not improve readability
-Checks:          '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion,-readability-named-parameter,-readability-implicit-bool-conversion,-readability-magic-numbers,-hicpp-named-parameter,-readability-magic-numbers,-readability-uppercase-literal-suffix'
-WarningsAsErrors: ''
-HeaderFilterRegex: ''
-FormatStyle:     none
-IgnoreClassesWithAllMemberVariablesBeingPublic: true
+
+Checks:  '*,-abseil-*,-fuchsia-*,-google-*,-zircon-*,-llvm*,-modernize-use-trailing-return-type,-readability-implicit-conversion,-readability-named-parameter,-readability-implicit-bool-conversion,-readability-magic-numbers,-hicpp-named-parameter,-readability-magic-numbers,-readability-uppercase-literal-suffix'
+WarningsAsErrors: '*'
+HeaderFilterRegex: '.*\/nes-.*' # Only check files in nes- directories
+
+
+# We choose the following naming conventions that are quite similar to the ClickHouse naming conventions
+CheckOptions:
+  cppcoreguidelines-non-private-member-variables-in-classes.IgnoreClassesWithAllMemberVariablesBeingPublic: 'true'
+  readability-identifier-naming.ClassCase: CamelCase
+  readability-identifier-naming.StructCase: CamelCase
+  readability-identifier-naming.EnumCase: CamelCase
+  readability-identifier-naming.LocalVariableCase: camelBack
+  readability-identifier-naming.StaticConstantCase: CamelCase
+  readability-identifier-naming.MemberCase: camelBack
+  readability-identifier-naming.PrivateMemberPrefix: ''
+  readability-identifier-naming.ProtectedMemberPrefix: ''
+  readability-identifier-naming.PublicMemberCase: camelBack
+  readability-identifier-naming.MethodCase: camelBack
+  readability-identifier-naming.PrivateMethodPrefix: ''
+  readability-identifier-naming.ProtectedMethodPrefix: ''
+  readability-identifier-naming.ParameterPackCase: camelBack
+  readability-identifier-naming.TemplateTemplateParameterCase: CamelCase
+  readability-identifier-naming.TemplateParameterCase: CamelCase
+  readability-identifier-naming.TypeTemplateParameterCase: CamelCase
+  readability-identifier-naming.TypedefCase: CamelCase
+  readability-identifier-naming.UnionCase: CamelCase
+  modernize-loop-convert.UseCxx20ReverseRanges: false
+  performance-move-const-arg.CheckTriviallyCopyableMove: false
+  # Workaround clang-tidy bug: https://github.com/llvm/llvm-project/issues/46097
+  readability-identifier-naming.TypeTemplateParameterIgnoredRegexp: expr-type
+  cppcoreguidelines-avoid-do-while.IgnoreMacros: 'true'

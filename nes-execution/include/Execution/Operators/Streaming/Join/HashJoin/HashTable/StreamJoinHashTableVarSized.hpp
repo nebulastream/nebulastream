@@ -17,14 +17,16 @@
 
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class represents a hash map that is not thread safe. It consists of multiple buckets each
  * consisting of a PagedVectorVarSized.
  */
-class StreamJoinHashTableVarSized {
-  public:
+class StreamJoinHashTableVarSized
+{
+public:
     /**
       * @brief Constructor for a StreamJoinHashTableVarSized
       * @param numPartitions
@@ -32,10 +34,7 @@ class StreamJoinHashTableVarSized {
       * @param pageSize
       * @param schema
       */
-    explicit StreamJoinHashTableVarSized(size_t numPartitions,
-                                         BufferManagerPtr& bufferManager,
-                                         size_t pageSize,
-                                         SchemaPtr& schema);
+    explicit StreamJoinHashTableVarSized(size_t numPartitions, BufferManagerPtr& bufferManager, size_t pageSize, SchemaPtr& schema);
 
     StreamJoinHashTableVarSized(const StreamJoinHashTableVarSized&) = delete;
 
@@ -90,10 +89,10 @@ class StreamJoinHashTableVarSized {
      */
     size_t getNumBuckets() const;
 
-  private:
+private:
     std::vector<Nautilus::Interface::PagedVectorVarSizedPtr> buckets;
     size_t mask;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_STREAMJOINHASHTABLEVARSIZED_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_STREAMJOINHASHTABLEVARSIZED_HPP_

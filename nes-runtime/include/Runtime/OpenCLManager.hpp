@@ -15,34 +15,38 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_
 
-#include <Runtime/OpenCLDeviceInfo.hpp>
 #include <vector>
+#include <Runtime/OpenCLDeviceInfo.hpp>
 
 #ifdef ENABLE_OPENCL
-#ifdef __APPLE__
-#include <OpenCL/cl.h>
-#else
-#include <CL/cl.h>
-#endif
+#    ifdef __APPLE__
+#        include <OpenCL/cl.h>
+#    else
+#        include <CL/cl.h>
+#    endif
 #else
 // Define some OpenCL types, so that this header file compiles, and we don't need #ifdef's everywhere.
 using cl_platform_id = unsigned;
 using cl_device_id = unsigned;
 #endif
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * Data structure to hold the information about the available OpenCL devices in a worker.
  *
  * In contrast to OpenCLDeviceInfo, this struct also holds the OpenCL platform ID and device ID to access the device using the OpenCL API.
  */
-struct WorkerOpenCLDeviceInfo {
-  public:
+struct WorkerOpenCLDeviceInfo
+{
+public:
     WorkerOpenCLDeviceInfo(const cl_platform_id platformId, const cl_device_id deviceId, const OpenCLDeviceInfo& deviceInfo)
-        : platformId(platformId), deviceId(deviceId), deviceInfo(deviceInfo) {}
+        : platformId(platformId), deviceId(deviceId), deviceInfo(deviceInfo)
+    {
+    }
 
-  public:
+public:
     const cl_platform_id platformId;
     const cl_device_id deviceId;
     const OpenCLDeviceInfo deviceInfo;
@@ -51,16 +55,17 @@ struct WorkerOpenCLDeviceInfo {
 /**
  * Retrieve and store information about installed OpenCL devices.
  */
-class OpenCLManager {
-  public:
+class OpenCLManager
+{
+public:
     OpenCLManager();
 
     const std::vector<WorkerOpenCLDeviceInfo>& getDevices() const;
 
-  private:
+private:
     std::vector<WorkerOpenCLDeviceInfo> devices;
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_

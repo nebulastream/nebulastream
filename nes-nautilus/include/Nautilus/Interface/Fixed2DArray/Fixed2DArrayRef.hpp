@@ -18,16 +18,17 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 #include <cstdint>
-namespace NES::Nautilus::Interface {
+namespace NES::Nautilus::Interface
+{
 
 class Fixed2DArrayRowRef;
 
 /**
  * @brief This is a nautilus wrapper for Fixed2DArray. It wraps a memref to the underlying fixed array and provides access methods
  */
-class Fixed2DArrayRef {
-
-  public:
+class Fixed2DArrayRef
+{
+public:
     /**
      * @brief Constructor for a Fixed2DArrayRef object
      * @param fixed2DArrayRef
@@ -42,7 +43,7 @@ class Fixed2DArrayRef {
      */
     Fixed2DArrayRowRef operator[](const Value<>& rowIndex) const;
 
-  private:
+private:
     Value<MemRef> fixed2DArrayRef;
     const uint64_t entrySize;
     const uint64_t sizeOfOneRow;
@@ -51,8 +52,9 @@ class Fixed2DArrayRef {
 /**
  * @brief This class represents a single row of the Fixed2DArray
  */
-class Fixed2DArrayRowRef {
-  public:
+class Fixed2DArrayRowRef
+{
+public:
     /**
      * @brief Constructor for a Fixed2DArrayRowRef object
      * @param baseAddress
@@ -67,10 +69,10 @@ class Fixed2DArrayRowRef {
      */
     Value<MemRef> operator[](const Value<>& colIndex) const;
 
-  private:
+private:
     Value<MemRef> baseAddress;
     const uint64_t entrySize;
 };
 
-}// namespace NES::Nautilus::Interface
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAYREF_HPP_
+} // namespace NES::Nautilus::Interface
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAYREF_HPP_

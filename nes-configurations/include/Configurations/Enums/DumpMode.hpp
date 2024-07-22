@@ -17,8 +17,10 @@
 
 #include <cstdint>
 
-namespace NES::QueryCompilation {
-enum class DumpMode : uint8_t {
+namespace NES::QueryCompilation
+{
+enum class DumpMode : uint8_t
+{
     // Disables all dumping
     NONE,
     // Dumps intermediate representations to console, std:out
@@ -29,4 +31,4 @@ enum class DumpMode : uint8_t {
     FILE_AND_CONSOLE
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DUMPMODE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DUMPMODE_HPP_

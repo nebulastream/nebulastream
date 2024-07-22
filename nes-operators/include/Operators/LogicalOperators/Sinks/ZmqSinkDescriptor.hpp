@@ -17,14 +17,15 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical zmq sink
  */
-class ZmqSinkDescriptor : public SinkDescriptor {
-
-  public:
+class ZmqSinkDescriptor : public SinkDescriptor
+{
+public:
     /**
      * @brief Creates the ZMQ sink description
      * @param host: address name for connecting to zmq
@@ -57,7 +58,7 @@ class ZmqSinkDescriptor : public SinkDescriptor {
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
     std::string toString() const override;
 
-  private:
+private:
     explicit ZmqSinkDescriptor(std::string host, uint16_t port, bool internal, uint64_t numberOfOrigins);
 
     std::string host;
@@ -67,6 +68,6 @@ class ZmqSinkDescriptor : public SinkDescriptor {
 
 using ZmqSinkDescriptorPtr = std::shared_ptr<ZmqSinkDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_ZMQSINKDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_ZMQSINKDESCRIPTOR_HPP_

@@ -15,12 +15,13 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Nodes/Node.hpp>
 #include <any>
 #include <unordered_map>
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -41,8 +42,9 @@ OperatorId getNextOperatorId();
  */
 StatisticId getNextStatisticId();
 
-class Operator : public Node {
-  public:
+class Operator : public Node
+{
+public:
     explicit Operator(OperatorId id);
     explicit Operator(OperatorId id, StatisticId statisticId);
 
@@ -204,7 +206,7 @@ class Operator : public Node {
      */
     std::string toString() const override;
 
-  protected:
+protected:
     /**
      * @brief get duplicate of the input operator and all its ancestors
      * @param operatorNode: the input operator
@@ -235,6 +237,6 @@ class Operator : public Node {
     OperatorProperties properties;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_

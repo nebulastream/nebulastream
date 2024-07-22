@@ -16,8 +16,10 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_OUTPUTBUFFEROPTIMIZATIONLEVEL_HPP_
 #include <cstdint>
 
-namespace NES::QueryCompilation {
-enum class OutputBufferOptimizationLevel : uint8_t {
+namespace NES::QueryCompilation
+{
+enum class OutputBufferOptimizationLevel : uint8_t
+{
     // Use highest optimization available.
     ALL,
     // create separate result buffer and copy everything over after all operations are applied.
@@ -36,4 +38,4 @@ enum class OutputBufferOptimizationLevel : uint8_t {
     BITMASK
 };
 }
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_OUTPUTBUFFEROPTIMIZATIONLEVEL_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_OUTPUTBUFFEROPTIMIZATIONLEVEL_HPP_

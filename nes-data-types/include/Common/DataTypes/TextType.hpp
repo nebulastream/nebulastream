@@ -17,14 +17,16 @@
 
 #include <Common/DataTypes/DataType.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The Text type represents a variable-sized text field.
  */
-class TextType : public DataType {
-  public:
-    inline TextType() noexcept {}
+class TextType : public DataType
+{
+public:
+    inline TextType() noexcept { }
 
     ~TextType() override = default;
 
@@ -37,5 +39,5 @@ class TextType : public DataType {
     std::string toString() override;
 };
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_TEXTTYPE_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_TEXTTYPE_HPP_

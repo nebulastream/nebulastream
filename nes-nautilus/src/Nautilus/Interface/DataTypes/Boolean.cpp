@@ -14,16 +14,32 @@
 
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 Boolean::Boolean(bool value) : TraceableType(&type), value(value){};
 
-std::shared_ptr<Any> Boolean::copy() { return std::make_unique<Boolean>(this->value); }
+std::shared_ptr<Any> Boolean::copy()
+{
+    return std::make_unique<Boolean>(this->value);
+}
 
-Boolean::operator bool() const { return value; }
+Boolean::operator bool() const
+{
+    return value;
+}
 
-bool Boolean::getValue() const { return value; }
+bool Boolean::getValue() const
+{
+    return value;
+}
 
-Nautilus::IR::Types::StampPtr Boolean::getType() const { return Nautilus::IR::Types::StampFactory::createBooleanStamp(); }
-std::string Boolean::toString() { return std::to_string(value); }
-}// namespace NES::Nautilus
+Nautilus::IR::Types::StampPtr Boolean::getType() const
+{
+    return Nautilus::IR::Types::StampFactory::createBooleanStamp();
+}
+std::string Boolean::toString()
+{
+    return std::to_string(value);
+}
+} // namespace NES::Nautilus

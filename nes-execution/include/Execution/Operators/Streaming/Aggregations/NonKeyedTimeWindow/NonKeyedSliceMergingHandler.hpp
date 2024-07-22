@@ -17,7 +17,8 @@
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 class State;
 class NonKeyedSlice;
 using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
@@ -26,8 +27,9 @@ class MultiOriginWatermarkProcessor;
  * @brief The NonKeyedSliceMergingHandler merges thread local pre-aggregated slices for non-keyed
  * tumbling and sliding window aggregations.
  */
-class NonKeyedSliceMergingHandler : public OperatorHandler {
-  public:
+class NonKeyedSliceMergingHandler : public OperatorHandler
+{
+public:
     /**
      * @brief Constructor for the NonKeyedSliceMergingHandler
      * @param windowDefinition
@@ -38,8 +40,8 @@ class NonKeyedSliceMergingHandler : public OperatorHandler {
 
     void start(Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext, uint32_t localStateVariableId) override;
 
-    void stop(Runtime::QueryTerminationType queryTerminationType,
-              Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext) override;
+    void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr pipelineExecutionContext)
+        override;
 
     /**
      * @brief Creates a new global slice for a specific slice merge task
@@ -51,10 +53,10 @@ class NonKeyedSliceMergingHandler : public OperatorHandler {
 
     ~NonKeyedSliceMergingHandler();
 
-  private:
+private:
     uint64_t entrySize;
     std::unique_ptr<State> defaultState;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGINGHANDLER_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICEMERGINGHANDLER_HPP_

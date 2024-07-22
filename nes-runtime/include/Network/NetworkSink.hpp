@@ -15,23 +15,25 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
 
+#include <string>
 #include <Network/NetworkForwardRefs.hpp>
 #include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <string>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
 /**
  * @brief This represent a sink operator that acts as a connecting API between query processing and network stack.
  */
-class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
+class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener
+{
     using inherited0 = SinkMedium;
     using inherited1 = Runtime::RuntimeEventListener;
 
-  public:
+public:
     /**
     * @brief constructor for the network sink
     * @param schema
@@ -40,18 +42,19 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     * @param nesPartition
     * @param version The initial version of this sink when it starts
     */
-    explicit NetworkSink(const SchemaPtr& schema,
-                         OperatorId uniqueNetworkSinkDescriptorId,
-                         SharedQueryId sharedQueryId,
-                         DecomposedQueryPlanId decomposedQueryPlanId,
-                         NodeLocation const& destination,
-                         NesPartition nesPartition,
-                         Runtime::NodeEnginePtr nodeEngine,
-                         size_t numOfProducers,
-                         std::chrono::milliseconds waitTime,
-                         uint8_t retryTimes,
-                         uint64_t numberOfOrigins,
-                         DecomposedQueryPlanVersion version);
+    explicit NetworkSink(
+        const SchemaPtr& schema,
+        OperatorId uniqueNetworkSinkDescriptorId,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        NodeLocation const& destination,
+        NesPartition nesPartition,
+        Runtime::NodeEnginePtr nodeEngine,
+        size_t numOfProducers,
+        std::chrono::milliseconds waitTime,
+        uint8_t retryTimes,
+        uint64_t numberOfOrigins,
+        DecomposedQueryPlanVersion version);
 
     /**
     * @brief Writes data to the underlying output channel
@@ -61,7 +64,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     */
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) override;
 
-  protected:
+protected:
     /**
      * @brief This method is called once an event is triggered for the current sink
      * @param event
@@ -75,7 +78,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      */
     void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
 
-  public:
+public:
     /**
     * @return the string representation of the network sink
     */
@@ -147,7 +150,7 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
 
     friend bool operator<(const NetworkSink& lhs, const NetworkSink& rhs) { return lhs.nesPartition < rhs.nesPartition; }
 
-  private:
+private:
     /**
      * @brief store a future in the worker context, spawn a new thread that will create a new network channel and on establishing
      * a connection pass the the new channel into the future and pass a reconfiguration message to the sink to signal that the
@@ -157,10 +160,11 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
      * @param newNesPartition the partition of the source to which the connection is to be established
      * @param newVersion The new version number used by the receiver to determine if it can already accept this channel
      */
-    void clearOldAndConnectToNewChannelAsync(Runtime::WorkerContext& workerContext,
-                                             const NodeLocation& newNodeLocation,
-                                             NesPartition newNesPartition,
-                                             DecomposedQueryPlanVersion newVersion);
+    void clearOldAndConnectToNewChannelAsync(
+        Runtime::WorkerContext& workerContext,
+        const NodeLocation& newNodeLocation,
+        NesPartition newNesPartition,
+        DecomposedQueryPlanVersion newVersion);
 
     /**
      * @brief write all data from the reconnect buffer to the currently active network channel
@@ -189,5 +193,5 @@ class NetworkSink : public SinkMedium, public Runtime::RuntimeEventListener {
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
 };
-}// namespace NES::Network
-#endif// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_
+} // namespace NES::Network
+#endif // NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

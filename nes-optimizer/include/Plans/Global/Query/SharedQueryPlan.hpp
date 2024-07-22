@@ -15,15 +15,16 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/Placement/PlacementStrategy.hpp>
-#include <Util/SharedQueryPlanStatus.hpp>
 #include <memory>
 #include <queue>
 #include <set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Placement/PlacementStrategy.hpp>
+#include <Util/SharedQueryPlanStatus.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -37,23 +38,26 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class MatchedOperatorPair;
 using MatchedOperatorPairPtr = std::unique_ptr<MatchedOperatorPair>;
 
-namespace Experimental {
+namespace Experimental
+{
 class ChangeLog;
 using ChangeLogPtr = std::unique_ptr<ChangeLog>;
 
 class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
-}// namespace Experimental
-}// namespace Optimizer
+} // namespace Experimental
+} // namespace Optimizer
 
 using Timestamp = uint64_t;
 
-struct RemovedEdge {
+struct RemovedEdge
+{
     WorkerId downstreamWorkerId;
     WorkerId upstreamWorkerId;
 };
@@ -113,9 +117,9 @@ using ChangeLogEntries = std::vector<std::pair<Timestamp, Optimizer::Experimenta
  * - newMetaData : A boolean flag indicating if the meta data is a newly created one (i.e. it was never deployed before).
  *
  */
-class SharedQueryPlan {
-
-  public:
+class SharedQueryPlan
+{
+public:
     static SharedQueryPlanPtr create(const QueryPlanPtr& queryPlan);
 
     /**
@@ -143,8 +147,7 @@ class SharedQueryPlan {
      * @param upstreamOperatorIds: upstream operator ids
      * @param downstreamOperatorIds: downstream Operator ids
      */
-    void performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds,
-                                    const std::set<OperatorId>& downstreamOperatorIds);
+    void performReOperatorPlacement(const std::set<OperatorId>& upstreamOperatorIds, const std::set<OperatorId>& downstreamOperatorIds);
 
     /**
      * @brief Method to update the placement information and state of the shared query plan operators
@@ -240,7 +243,7 @@ class SharedQueryPlan {
      */
     [[nodiscard]] Optimizer::PlacementStrategy getPlacementStrategy() const;
 
-  private:
+private:
     explicit SharedQueryPlan(const QueryPlanPtr& queryPlan);
 
     /**
@@ -274,6 +277,6 @@ class SharedQueryPlan {
     Optimizer::PlacementStrategy placementStrategy;
     Optimizer::Experimental::ChangeLogPtr changeLog;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_GLOBAL_QUERY_SHAREDQUERYPLAN_HPP_

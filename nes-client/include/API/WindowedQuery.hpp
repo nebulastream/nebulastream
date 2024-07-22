@@ -16,7 +16,8 @@
 #define NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_
 
 #include <string>
-namespace NES {
+namespace NES
+{
 
 class Query;
 class Operator;
@@ -30,12 +31,14 @@ using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 class FieldAssignmentExpressionNode;
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
-namespace API {
+namespace API
+{
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-}// namespace API
+} // namespace API
 
-namespace WindowOperatorBuilder {
+namespace WindowOperatorBuilder
+{
 
 class WindowedQuery;
 class KeyedWindowedQuery;
@@ -43,8 +46,9 @@ class KeyedWindowedQuery;
 /**
  * @brief A fragment of the query, which is windowed according to a window type and specific keys.
  */
-class KeyedWindowedQuery {
-  public:
+class KeyedWindowedQuery
+{
+public:
     /**
     * @brief: Constructor. Initialises always originalQuery, windowType, onKey
     * @param originalQuery
@@ -57,14 +61,15 @@ class KeyedWindowedQuery {
     * @param aggregations list of aggregation functions.
     * @return Query
     */
-    template<class... WindowAggregations>
-    [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
+    template <class... WindowAggregations>
+    [[nodiscard]] Query& apply(WindowAggregations... aggregations)
+    {
         std::vector<API::WindowAggregationPtr> windowAggregations;
         (windowAggregations.emplace_back(std::forward<API::WindowAggregationPtr>(aggregations)), ...);
         return originalQuery.windowByKey(keys, windowType, windowAggregations);
     }
 
-  private:
+private:
     Query& originalQuery;
     Windowing::WindowTypePtr windowType;
     std::vector<ExpressionNodePtr> keys;
@@ -73,8 +78,9 @@ class KeyedWindowedQuery {
 /**
  * @brief A fragment of the query, which is windowed according to a window type.
  */
-class WindowedQuery {
-  public:
+class WindowedQuery
+{
+public:
     /**
     * @brief: Constructor. Initialises always originalQuery, windowType
     * @param originalQuery
@@ -88,8 +94,9 @@ class WindowedQuery {
     * @param onKeys list of keys
     * @return KeyedWindowedQuery
     */
-    template<class... ExpressionItems>
-    [[nodiscard]] KeyedWindowedQuery byKey(ExpressionItems... onKeys) {
+    template <class... ExpressionItems>
+    [[nodiscard]] KeyedWindowedQuery byKey(ExpressionItems... onKeys)
+    {
         std::vector<ExpressionNodePtr> keyExpressions;
         (keyExpressions.emplace_back(std::forward<ExpressionItems>(onKeys).getExpressionNode()), ...);
         return KeyedWindowedQuery(originalQuery, windowType, keyExpressions);
@@ -100,19 +107,20 @@ class WindowedQuery {
     * @param aggregations list of aggregation functions.
     * @return Query
     */
-    template<class... WindowAggregations>
-    [[nodiscard]] Query& apply(WindowAggregations... aggregations) {
+    template <class... WindowAggregations>
+    [[nodiscard]] Query& apply(WindowAggregations... aggregations)
+    {
         std::vector<API::WindowAggregationPtr> windowAggregations;
         (windowAggregations.emplace_back(std::forward<API::WindowAggregationPtr>(aggregations)), ...);
         return originalQuery.window(windowType, windowAggregations);
     }
 
-  private:
+private:
     Query& originalQuery;
     Windowing::WindowTypePtr windowType;
 };
 
-}// namespace WindowOperatorBuilder
-}// namespace NES
+} // namespace WindowOperatorBuilder
+} // namespace NES
 
-#endif// NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_
+#endif // NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_

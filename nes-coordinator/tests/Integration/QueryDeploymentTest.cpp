@@ -13,24 +13,27 @@
 */
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class QueryDeploymentTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class QueryDeploymentTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("QueryDeploymentTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryDeploymentTest test class.");
     }
@@ -39,15 +42,18 @@ class QueryDeploymentTest : public Testing::BaseIntegrationTest {
 /**
  * Test deploying unionWith query with source on two different worker node using bottom up strategy.
  */
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
-    struct ResultRecord {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp)
+{
+    struct ResultRecord
+    {
         uint32_t id;
         uint32_t value;
 
         // overload the == operator to check if two instances are the same
         bool operator==(ResultRecord const& other) const { return (id == other.id && value == other.value); }
 
-        std::string asCSVString() const {
+        std::string asCSVString() const
+        {
             std::ostringstream oss;
             oss << id << ", " << value;
             return oss.str();
@@ -66,7 +72,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 
     // Expected output
     std::stringstream expectedOutput;
-    for (auto i = 0_u32; i < 10; ++i) {
+    for (auto i = 0_u32; i < 10; ++i)
+    {
         // Creating two new elements, one for each stream
         ResultRecord elementCarStream = {i % 3, i};
         ResultRecord elementTruckStream = {i + 1000, i % 5};
@@ -90,15 +97,18 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingBottomUp) {
 /**
  * Test deploying unionWith query with source on two different worker node using top down strategy.
  */
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
-    struct ResultRecord {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown)
+{
+    struct ResultRecord
+    {
         uint32_t id;
         uint32_t value;
 
         // overload the == operator to check if two instances are the same
         bool operator==(ResultRecord const& other) const { return (id == other.id && value == other.value); }
 
-        std::string asCSVString() const {
+        std::string asCSVString() const
+        {
             std::ostringstream oss;
             oss << id << ", " << value;
             return oss.str();
@@ -118,7 +128,8 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
 
     // Expected output
     std::stringstream expectedOutput;
-    for (auto i = 0_u32; i < 10; ++i) {
+    for (auto i = 0_u32; i < 10; ++i)
+    {
         // Creating two new elements, one for each stream
         ResultRecord elementCarStream = {i % 3, i};
         ResultRecord elementTruckStream = {i + 1000, i % 5};
@@ -139,8 +150,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerMergeUsingTopDown) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
-    struct Test {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput)
+{
+    struct Test
+    {
         uint32_t id;
         uint32_t value;
     };
@@ -156,14 +169,16 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     const auto noTuplesInBuffer = workerConfig->bufferSizeInBytes / defaultLogicalSchema->getSchemaSizeInBytes();
     const auto tuplesForThreeBuffers = noTuplesInBuffer * 3;
-    for (uint32_t i = 0; i < tuplesForThreeBuffers; ++i) {
-        testHarness.pushElement<Test>({1, i}, 2);// fills record store of source with id 0-(noTuplesInBuffer * 3)
+    for (uint32_t i = 0; i < tuplesForThreeBuffers; ++i)
+    {
+        testHarness.pushElement<Test>({1, i}, 2); // fills record store of source with id 0-(noTuplesInBuffer * 3)
     }
     testHarness.validate().setupTopology();
 
     // Expected output
     std::ostringstream expectedOutput;
-    for (auto rec = 0_u64; rec < tuplesForThreeBuffers; ++rec) {
+    for (auto rec = 0_u64; rec < tuplesForThreeBuffers; ++rec)
+    {
         expectedOutput << "1, " << rec << std::endl;
     }
 
@@ -172,8 +187,7 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 
     // Comparing equality
     const auto outputSchema = testHarness.getOutputSchema();
-    auto tmpBuffers =
-        TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
+    auto tmpBuffers = TestUtils::createExpectedBufferFromCSVString(expectedOutput.str(), outputSchema, testHarness.getBufferManager());
     auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffers, outputSchema);
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
@@ -181,8 +195,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutput) {
 /**
  * @brief Test deploy query with print sink with one worker using top down strategy
  */
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
-    struct Test {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy)
+{
+    struct Test
+    {
         uint32_t id;
         uint32_t value;
     };
@@ -195,7 +211,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i)
+    {
         testHarness.pushElement<Test>({1, 1}, 2);
     }
     testHarness.validate().setupTopology();
@@ -222,8 +239,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
-    struct Test {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput)
+{
+    struct Test
+    {
         uint32_t id;
         uint32_t value;
     };
@@ -236,9 +255,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     TestHarness testHarness = TestHarness(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test") //2
-                                  .attachWorkerWithMemorySourceToCoordinator("test");//3
+                                  .attachWorkerWithMemorySourceToCoordinator("test"); //3
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i)
+    {
         testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
     testHarness.validate().setupTopology();
@@ -277,15 +297,15 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutput) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(QueryDeploymentTest, testSourceSharing) {
+TEST_F(QueryDeploymentTest, testSourceSharing)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
 
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails = {{"id", "UINT64", "0"},
-                                                                         {"value", "UINT64", "0"},
-                                                                         {"timestamp", "UINT64", "0"}};
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails
+        = {{"id", "UINT64", "0"}, {"value", "UINT64", "0"}, {"timestamp", "UINT64", "0"}};
     auto schemaType = Configurations::SchemaType::create(schemaFiledDetails);
 
     auto logicalSource = Configurations::LogicalSourceType::create("window1", schemaType);
@@ -297,20 +317,24 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
 
     std::promise<bool> start;
     bool started = false;
-    auto func1 = [&start, &started](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples) {
-        struct Record {
+    auto func1 = [&start, &started](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples)
+    {
+        struct Record
+        {
             uint64_t id;
             uint64_t value;
             uint64_t timestamp;
         };
 
-        if (!started) {
+        if (!started)
+        {
             start.get_future().get();
             started = true;
         }
 
         auto* records = buffer.getBuffer<Record>();
-        for (auto u = 0u; u < numTuples; ++u) {
+        for (auto u = 0u; u < numTuples; ++u)
+        {
             records[u].id = u;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
             records[u].value = u % 10;
@@ -318,12 +342,11 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
         }
     };
 
-    auto lambdaSourceType1 =
-        LambdaSourceType::create("window1", "test_stream1", std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType1 = LambdaSourceType::create("window1", "test_stream1", std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
     coordinatorConfig->worker.physicalSourceTypes.add(lambdaSourceType1);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
 
     std::string outputFilePath1 = getTestResourceFolder() / "testOutput1.out";
@@ -339,14 +362,12 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
 
     auto query1 = Query::from("window1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    QueryId queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
 
     auto query2 = Query::from("window1").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    QueryId queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     start.set_value(true);
@@ -452,7 +473,8 @@ TEST_F(QueryDeploymentTest, testSourceSharing) {
     NES_DEBUG("testSourceSharing: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
+TEST_F(QueryDeploymentTest, testSourceSharingWithFilter)
+{
     std::string outputFilePath1 = getTestResourceFolder() / "testOutput1.out";
     remove(outputFilePath1.c_str());
 
@@ -464,9 +486,8 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.bufferSizeInBytes = 1024;
 
-    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails = {{"id", "UINT64", ""},
-                                                                         {"value", "UINT64", ""},
-                                                                         {"timestamp", "UINT64", ""}};
+    std::vector<Configurations::SchemaFieldDetail> schemaFiledDetails
+        = {{"id", "UINT64", ""}, {"value", "UINT64", ""}, {"timestamp", "UINT64", ""}};
     auto schemaType = Configurations::SchemaType::create(schemaFiledDetails);
 
     auto logicalSource = Configurations::LogicalSourceType::create("window1", schemaType);
@@ -479,20 +500,24 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
 
     std::promise<bool> start;
     bool started = false;
-    auto func1 = [&start, &started](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples) {
-        struct Record {
+    auto func1 = [&start, &started](NES::Runtime::TupleBuffer& buffer, uint64_t numTuples)
+    {
+        struct Record
+        {
             uint64_t id;
             uint64_t value;
             uint64_t timestamp;
         };
 
-        if (!started) {
+        if (!started)
+        {
             start.get_future().get();
             started = true;
         }
 
         auto* records = buffer.getBuffer<Record>();
-        for (auto u = 0u; u < numTuples; ++u) {
+        for (auto u = 0u; u < numTuples; ++u)
+        {
             records[u].id = u;
             //values between 0..9 and the predicate is > 5 so roughly 50% selectivity
             records[u].value = u % 10;
@@ -500,12 +525,11 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
         }
     };
 
-    auto lambdaSourceType1 =
-        LambdaSourceType::create("window1", "test_stream1", std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
+    auto lambdaSourceType1 = LambdaSourceType::create("window1", "test_stream1", std::move(func1), 2, 2, GatheringMode::INTERVAL_MODE);
     coordinatorConfig->worker.physicalSourceTypes.add(lambdaSourceType1);
 
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
 
     RequestHandlerServicePtr requestHandlerService = crd->getRequestHandlerService();
@@ -513,20 +537,16 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
 
     NES_INFO("testSourceSharing: Submit query");
 
-    auto query1 = Query::from("window1")
-                      .filter(Attribute("id") < 5)
-                      .sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
+    auto query1
+        = Query::from("window1").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    QueryId queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
 
-    auto query2 = Query::from("window1")
-                      .filter(Attribute("id") > 5)
-                      .sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
+    auto query2
+        = Query::from("window1").filter(Attribute("id") > 5).sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
+    QueryId queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::TopDown);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
 
     start.set_value(true);
@@ -632,8 +652,10 @@ TEST_F(QueryDeploymentTest, testSourceSharingWithFilter) {
     NES_DEBUG("testSourceSharing: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
-    struct Test {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy)
+{
+    struct Test
+    {
         uint32_t id;
         uint32_t value;
     };
@@ -647,9 +669,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
 
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test") //2
-                           .attachWorkerWithMemorySourceToCoordinator("test");//3
+                           .attachWorkerWithMemorySourceToCoordinator("test"); //3
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i)
+    {
         testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({1, 1}, 3);
     }
 
@@ -689,8 +712,10 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerFileOutputUsingTopDownStrategy) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
-    struct Test {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter)
+{
+    struct Test
+    {
         uint32_t id;
         uint32_t value;
     };
@@ -705,7 +730,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
                            .addLogicalSource("test", defaultLogicalSchema)
                            .attachWorkerWithMemorySourceToCoordinator("test");
 
-    for (int i = 0; i < 5; ++i) {
+    for (int i = 0; i < 5; ++i)
+    {
         testHarness.pushElement<Test>({1, 1}, 2).pushElement<Test>({5, 1}, 2);
     }
 
@@ -728,13 +754,14 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilter) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenTwoSourcesRunning) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenTwoSourcesRunning)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -762,11 +789,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    auto query = Query::from("stream")
-                     .filter(Attribute("id") < 5)
-                     .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    auto query = Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
@@ -784,13 +808,14 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenOneSourceRunning) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenOneSourceRunning)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -818,11 +843,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    auto query = Query::from("stream")
-                     .filter(Attribute("id") < 5)
-                     .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    auto query = Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
@@ -839,13 +861,14 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenNoSourceRunning) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcessTerminationWhenNoSourceRunning)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -873,11 +896,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    auto query = Query::from("stream")
-                     .filter(Attribute("id") < 5)
-                     .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    auto query = Query::from("stream").filter(Attribute("id") < 5).sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
     sleep(2);
@@ -894,8 +914,10 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithFilterWithInProcess
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
-    struct Test {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection)
+{
+    struct Test
+    {
         uint32_t id;
         uint32_t value;
     };
@@ -910,7 +932,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
                                   .addLogicalSource("test", defaultLogicalSchema)
                                   .attachWorkerWithMemorySourceToCoordinator("test");
 
-    for (int i = 0; i < 10; ++i) {
+    for (int i = 0; i < 10; ++i)
+    {
         testHarness.pushElement<Test>({1, 1}, 2);
     }
     testHarness.validate().setupTopology();
@@ -937,14 +960,15 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithProjection) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
+TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->coordinatorHealthCheckWaitTime = 1;
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -965,9 +989,8 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    auto query = Query::from("default_logical")
-                     .project(Attribute("asd"))
-                     .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
+    auto query
+        = Query::from("default_logical").project(Attribute("asd")).sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
     EXPECT_THROW(
         requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp),
@@ -983,13 +1006,14 @@ TEST_F(QueryDeploymentTest, testDeployOneWorkerFileOutputWithWrongProjection) {
     NES_INFO("QueryDeploymentTest: Test finished");
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput) {
+TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -1025,11 +1049,11 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
 
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("default_logical").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
-    QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId1
+        = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     auto query2 = Query::from("default_logical").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
-    QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId2
+        = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     string expectedContent = "default_logical$id:INTEGER(32 bits),default_logical$value:INTEGER(64 bits)\n"
@@ -1083,13 +1107,14 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesTwoWorkerFileOutput
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
+TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -1134,12 +1159,12 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
-    QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId1
+        = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
-    QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId2
+        = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     string expectedContent1 = "stream1$id:INTEGER(64 bits),stream1$value:INTEGER(64 bits),stream1$timestamp:INTEGER(64 bits)\n"
@@ -1169,13 +1194,14 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithOutput) {
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
+TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -1221,12 +1247,12 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
-    QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId1
+        = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
-    QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId2
+        = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
@@ -1256,13 +1282,14 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdownAndStatic) {
     EXPECT_EQ(response2, 0);
 }
 
-TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging) {
+TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutputWithQueryMerging)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
 
@@ -1293,11 +1320,11 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
 
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query1 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath1
-        + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query1
+        = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp);
-    string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
-        + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query2
+        = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
@@ -1357,8 +1384,10 @@ TEST_F(QueryDeploymentTest, testDeployUndeployMultipleQueriesOnTwoWorkerFileOutp
 /**
  * Test deploying joinWith query with source on two different worker node using top down strategy
  */
-TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
-    struct Test {
+TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema)
+{
+    struct Test
+    {
         uint64_t id;
         uint64_t value;
         uint64_t timestamp;
@@ -1413,13 +1442,14 @@ TEST_F(QueryDeploymentTest, testDeployTwoWorkerJoinUsingTopDownOnSameSchema) {
     EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
 }
 
-TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
+TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -1465,12 +1495,12 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
 
     NES_INFO("QueryDeploymentTest: Submit query");
     auto query1 = Query::from("stream1").sink(FileSinkDescriptor::create(outputFilePath1, "CSV_FORMAT", "APPEND"));
-    QueryId queryId1 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId1
+        = requestHandlerService->validateAndQueueAddQueryRequest(query1.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     auto query2 = Query::from("stream2").sink(FileSinkDescriptor::create(outputFilePath2, "CSV_FORMAT", "APPEND"));
-    QueryId queryId2 =
-        requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId2
+        = requestHandlerService->validateAndQueueAddQueryRequest(query2.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
 
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId1, queryCatalog));
@@ -1505,9 +1535,10 @@ TEST_F(QueryDeploymentTest, testOneQueuePerQueryWithHardShutdown) {
  */
 //TODO: this test will be enabled once we have the renaming function using as
 //TODO: prevent self join #3686
-TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
-
-    struct Window {
+TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow)
+{
+    struct Window
+    {
         uint64_t value;
         uint64_t id;
         uint64_t timestamp;
@@ -1554,14 +1585,17 @@ TEST_F(QueryDeploymentTest, DISABLED_testSelfJoinTumblingWindow) {
 /**
  * Test deploying join with different sources and different Speed
  */
-TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWindow) {
-    struct Window {
+TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWindow)
+{
+    struct Window
+    {
         int64_t win1;
         uint64_t id1;
         uint64_t timestamp1;
     };
 
-    struct Window2 {
+    struct Window2
+    {
         int64_t win2;
         uint64_t id2;
         uint64_t timestamp2;
@@ -1619,8 +1653,10 @@ TEST_F(QueryDeploymentTest, testJoinWithDifferentSourceDifferentSpeedTumblingWin
 /*
  * @brief Test if sliding windows properly trigger the join
  */
-TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
-    struct Car {
+TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow)
+{
+    struct Car
+    {
         uint64_t id;
         uint64_t value;
         uint64_t value2;
@@ -1631,15 +1667,15 @@ TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
 
     ASSERT_EQ(sizeof(Car), carSchema->getSchemaSizeInBytes());
 
-    auto queryWithWindowOperator =
-        Query::from("car1")
-            .joinWith(Query::from("car2")
-                          .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
-                          .byKey(Attribute("id"))
-                          .apply(Count())
-                          .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("id"), Attribute("count")))
-            .where(Attribute("id") == Attribute("id"))
-            .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)));
+    auto queryWithWindowOperator
+        = Query::from("car1")
+              .joinWith(Query::from("car2")
+                            .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
+                            .byKey(Attribute("id"))
+                            .apply(Count())
+                            .project(Attribute("start").as("timestamp"), Attribute("end"), Attribute("id"), Attribute("count")))
+              .where(Attribute("id") == Attribute("id"))
+              .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Seconds(1)));
 
     auto testHarness = TestHarness(queryWithWindowOperator, *restPort, *rpcCoordinatorPort, getTestResourceFolder())
                            .addLogicalSource("car1", carSchema)
@@ -1691,14 +1727,17 @@ TEST_F(QueryDeploymentTest, testJoinWithSlidingWindow) {
 /**
  * Test deploying join with different three sources
  */
-TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
-    struct Window {
+TEST_F(QueryDeploymentTest, testJoinWithThreeSources)
+{
+    struct Window
+    {
         int64_t win1;
         uint64_t id1;
         uint64_t timestamp;
     };
 
-    struct Window2 {
+    struct Window2
+    {
         int64_t win2;
         uint64_t id2;
         uint64_t timestamp;
@@ -1765,14 +1804,17 @@ TEST_F(QueryDeploymentTest, testJoinWithThreeSources) {
 /**
  * Test deploying join with four different sources
  */
-TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
-    struct Window {
+TEST_F(QueryDeploymentTest, testJoinWithFourSources)
+{
+    struct Window
+    {
         int64_t win1;
         uint64_t id1;
         uint64_t timestamp;
     };
 
-    struct Window2 {
+    struct Window2
+    {
         int64_t win2;
         uint64_t id2;
         uint64_t timestamp;
@@ -1865,13 +1907,14 @@ TEST_F(QueryDeploymentTest, testJoinWithFourSources) {
  */
 //TODO: this test will be enabled once the following issue is resolved
 //TODO: Distributed Window Aggregation #4557
-TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowDistributed) {
+TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowDistributed)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto window = Schema::create()
@@ -1961,8 +2004,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
                      .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -2021,13 +2063,14 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceTumblingWindowD
  */
 //TODO: this test will be enabled once the following issue is resolved
 //TODO: Distributed Window Aggregation #4557
-TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDistributed) {
+TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDistributed)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     //register logical source qnv
     auto window = Schema::create()
@@ -2116,8 +2159,7 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
                      .window(SlidingWindow::of(EventTime(Attribute("timestamp")), Seconds(1), Milliseconds(500)))
                      .sink(FileSinkDescriptor::create(outputFilePath, "CSV_FORMAT", "APPEND"));
 
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
 
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -2173,4 +2215,4 @@ TEST_F(QueryDeploymentTest, DISABLED_testJoin2WithDifferentSourceSlidingWindowDi
     EXPECT_TRUE(retStopCord);
     NES_DEBUG("QueryDeploymentTest: Test finished");
 }
-}// namespace NES
+} // namespace NES

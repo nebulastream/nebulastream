@@ -12,30 +12,35 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::Execution::Aggregation {
+namespace NES::Runtime::Execution::Aggregation
+{
 
-AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
-                                               const PhysicalTypePtr& resultType,
-                                               const Expressions::ExpressionPtr& inputExpression,
-                                               const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
-    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {
+AvgAggregationFunction::AvgAggregationFunction(
+    const PhysicalTypePtr& inputType,
+    const PhysicalTypePtr& resultType,
+    const Expressions::ExpressionPtr& inputExpression,
+    const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
+    : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier)
+{
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
 
     // assuming that the count is always of Int64
     countType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 }
 
-Nautilus::Value<Nautilus::MemRef> AvgAggregationFunction::loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref) {
-    const static int64_t sizeOfCountInBytes = 8L;// the sum is stored after the count, and the count is of type uint64
+Nautilus::Value<Nautilus::MemRef> AvgAggregationFunction::loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref)
+{
+    const static int64_t sizeOfCountInBytes = 8L; // the sum is stored after the count, and the count is of type uint64
     return (memref + sizeOfCountInBytes).as<Nautilus::MemRef>();
 }
 
-void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& record) {
+void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& record)
+{
     // load memref
     auto oldCount = AggregationFunction::loadFromMemref(state, countType);
     // calc the offset to get Memref of the count value
@@ -51,7 +56,8 @@ void AvgAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nauti
     oldSumMemref.store(newSum);
 }
 
-void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
+void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2)
+{
     // load memref1
     auto countLeft = AggregationFunction::loadFromMemref(state1, countType);
     // calc the offset to get Memref of the count value
@@ -71,7 +77,8 @@ void AvgAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, N
     sumLeftMemref.store(tmpSum);
 }
 
-void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord) {
+void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord)
+{
     // load memrefs
     auto count = AggregationFunction::loadFromMemref(memref, countType);
     auto sumMemref = loadSumMemRef(memref);
@@ -87,15 +94,17 @@ void AvgAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> memref, Nau
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
-void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
+void AvgAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref)
+{
     auto zero = createConstValue(0L, inputType);
     auto sumMemref = loadSumMemRef(memref);
 
     memref.store(zero);
     sumMemref.store(zero);
 }
-uint64_t AvgAggregationFunction::getSize() {
-    return inputType->size() + 8L;// the count is always uint64, hence always 8bytes
+uint64_t AvgAggregationFunction::getSize()
+{
+    return inputType->size() + 8L; // the count is always uint64, hence always 8bytes
 }
 
-}// namespace NES::Runtime::Execution::Aggregation
+} // namespace NES::Runtime::Execution::Aggregation

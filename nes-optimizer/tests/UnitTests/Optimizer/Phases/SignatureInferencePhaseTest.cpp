@@ -15,7 +15,6 @@
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -35,20 +34,25 @@
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/QuerySignatures/QuerySignature.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 #include <z3++.h>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-class SignatureInferencePhaseTest : public Testing::BaseUnitTest {
-  public:
+class SignatureInferencePhaseTest : public Testing::BaseUnitTest
+{
+public:
     std::shared_ptr<Catalogs::UDF::UDFCatalog> udfCatalog;
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SignatureInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SignatureInferencePhaseTest test case.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         udfCatalog = Catalogs::UDF::UDFCatalog::create();
     }
@@ -57,8 +61,8 @@ class SignatureInferencePhaseTest : public Testing::BaseUnitTest {
 /**
  * @brief In this test we execute query merger phase on a single invalid query plan.
  */
-TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan) {
-
+TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQueryPlan)
+{
     //Prepare
     NES_INFO("SignatureInferencePhaseTest: Create a new query without assigning it a query id.");
 
@@ -76,8 +80,7 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
 
     auto typeInferencePhase = TypeInferencePhase::create(sourceCatalog, udfCatalog);
     z3::ContextPtr context = std::make_shared<z3::context>();
-    auto signatureInferencePhase =
-        SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
+    auto signatureInferencePhase = SignatureInferencePhase::create(context, QueryMergerRule::Z3SignatureBasedCompleteQueryMergerRule);
 
     auto query1 = Query::from("default_logical").map(Attribute("f3") = Attribute("id")++).sink(FileSinkDescriptor::create(""));
     auto plan1 = query1.getQueryPlan();
@@ -109,4 +112,4 @@ TEST_F(SignatureInferencePhaseTest, executeQueryMergerPhaseForSingleInvalidQuery
 
     EXPECT_TRUE(signatureEqualityChecker->checkEquality(srcOperators1[0]->getZ3Signature(), srcOperators2[0]->getZ3Signature()));
 }
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

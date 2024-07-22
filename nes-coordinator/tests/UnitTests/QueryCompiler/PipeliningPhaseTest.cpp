@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -38,23 +37,27 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace NES::API;
 using namespace NES::QueryCompilation::PhysicalOperators;
 
-class PipeliningPhaseTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class PipeliningPhaseTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("PipeliningPhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PipeliningPhaseTest test class.");
     }
 
-  protected:
+protected:
     ExpressionNodePtr pred1, pred2, pred3, pred4, pred5, pred6, pred7;
     LogicalOperatorPtr sourceOp1, sourceOp2, sourceOp3, sourceOp4, unionOp1;
     LogicalOperatorPtr watermarkAssigner1, centralWindowOperator, sliceCreationOperator, windowComputation, sliceMerging;
@@ -76,8 +79,8 @@ class PipeliningPhaseTest : public Testing::BaseUnitTest {
  * --- | Physical Sink 1 | --- | Physical Filter | --- | Physical Source 1 |
  *
  */
-TEST_F(PipeliningPhaseTest, pipelineFilterQuery) {
-
+TEST_F(PipeliningPhaseTest, pipelineFilterQuery)
+{
     auto source = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto filter = PhysicalFilterOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
     auto sink = PhysicalSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
@@ -85,10 +88,8 @@ TEST_F(PipeliningPhaseTest, pipelineFilterQuery) {
     queryPlan->appendOperatorAsNewRoot(filter);
     queryPlan->appendOperatorAsNewRoot(sink);
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     NES_DEBUG("{}", queryPlan->toString());
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
@@ -116,7 +117,8 @@ TEST_F(PipeliningPhaseTest, pipelineFilterQuery) {
  * --- | Physical Sink 1 | --- | Physical Filter - Physical Map | --- | Physical Source 1 |
  *
  */
-TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
+TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery)
+{
     auto source = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto filter = PhysicalFilterOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
     auto map = PhysicalMapOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), FieldAssignmentExpressionNodePtr());
@@ -128,10 +130,8 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -160,7 +160,8 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMapQuery) {
  *                              --- | Physical Source 2 |
  *
  */
-TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
+TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery)
+{
     auto source1 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto multiplex = PhysicalUnionOperator::create(++statisticId, SchemaPtr());
@@ -172,10 +173,8 @@ TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
     source2->addParent(multiplex);
 
     NES_DEBUG("{}", queryPlan->toString());
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -206,7 +205,8 @@ TEST_F(PipeliningPhaseTest, pipelineMultiplexQuery) {
  *                                                 --- | Physical Source 2 |
  *
  */
-TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
+TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery)
+{
     auto source1 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto multiplex = PhysicalUnionOperator::create(++statisticId, SchemaPtr());
@@ -220,10 +220,8 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
     source2->addParent(multiplex);
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -256,21 +254,15 @@ TEST_F(PipeliningPhaseTest, pipelineFilterMultiplexQuery) {
  *                                                    --- | Physical Join Build --- Physical Source 2 |
  *
  */
-TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
+TEST_F(PipeliningPhaseTest, pipelineJoinQuery)
+{
     auto source1 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
-    auto joinBuildLeft = PhysicalJoinBuildOperator::create(++statisticId,
-                                                           SchemaPtr(),
-                                                           SchemaPtr(),
-                                                           Join::JoinOperatorHandlerPtr(),
-                                                           QueryCompilation::JoinBuildSideType::Left);
-    auto joinBuildRight = PhysicalJoinBuildOperator::create(++statisticId,
-                                                            SchemaPtr(),
-                                                            SchemaPtr(),
-                                                            Join::JoinOperatorHandlerPtr(),
-                                                            QueryCompilation::JoinBuildSideType::Right);
-    auto joinSink =
-        PhysicalJoinSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
+    auto joinBuildLeft = PhysicalJoinBuildOperator::create(
+        ++statisticId, SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::JoinBuildSideType::Left);
+    auto joinBuildRight = PhysicalJoinBuildOperator::create(
+        ++statisticId, SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::JoinBuildSideType::Right);
+    auto joinSink = PhysicalJoinSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
     auto sink = PhysicalSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);
@@ -282,10 +274,8 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -319,23 +309,17 @@ TEST_F(PipeliningPhaseTest, pipelineJoinQuery) {
  *                                                                                                      \
  *                                                                                                       --- Physical Source 3
  */
-TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
+TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery)
+{
     auto source1 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source2 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto source3 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto multiplex = PhysicalUnionOperator::create(++statisticId, SchemaPtr());
-    auto joinBuildLeft = PhysicalJoinBuildOperator::create(++statisticId,
-                                                           SchemaPtr(),
-                                                           SchemaPtr(),
-                                                           Join::JoinOperatorHandlerPtr(),
-                                                           QueryCompilation::JoinBuildSideType::Left);
-    auto joinBuildRight = PhysicalJoinBuildOperator::create(++statisticId,
-                                                            SchemaPtr(),
-                                                            SchemaPtr(),
-                                                            Join::JoinOperatorHandlerPtr(),
-                                                            QueryCompilation::JoinBuildSideType::Right);
-    auto joinSink =
-        PhysicalJoinSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
+    auto joinBuildLeft = PhysicalJoinBuildOperator::create(
+        ++statisticId, SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::JoinBuildSideType::Left);
+    auto joinBuildRight = PhysicalJoinBuildOperator::create(
+        ++statisticId, SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr(), QueryCompilation::JoinBuildSideType::Right);
+    auto joinSink = PhysicalJoinSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SchemaPtr(), Join::JoinOperatorHandlerPtr());
     auto sink = PhysicalSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);
@@ -349,10 +333,8 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -392,20 +374,15 @@ TEST_F(PipeliningPhaseTest, pipelineJoinWithMultiplexQuery) {
  * --- | Physical Sink 1 | --- | Physical Window Sink | --- | Physical Window Pre Aggregation --- Watermark Assigner | --- | Physical Source 1 |
  *
  */
-TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
+TEST_F(PipeliningPhaseTest, pipelineWindowQuery)
+{
     auto source1 = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
-    auto windowAssignment =
-        PhysicalWatermarkAssignmentOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), WatermarkStrategyDescriptorPtr());
-    auto slicePreAggregation = PhysicalSlicePreAggregationOperator::create(getNextOperatorId(),
-                                                                           ++statisticId,
-                                                                           SchemaPtr(),
-                                                                           SchemaPtr(),
-                                                                           LogicalWindowDescriptorPtr());
-    auto windowSink = PhysicalWindowSinkOperator::create(getNextOperatorId(),
-                                                         ++statisticId,
-                                                         SchemaPtr(),
-                                                         SchemaPtr(),
-                                                         LogicalWindowDescriptorPtr());
+    auto windowAssignment
+        = PhysicalWatermarkAssignmentOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), WatermarkStrategyDescriptorPtr());
+    auto slicePreAggregation = PhysicalSlicePreAggregationOperator::create(
+        getNextOperatorId(), ++statisticId, SchemaPtr(), SchemaPtr(), LogicalWindowDescriptorPtr());
+    auto windowSink
+        = PhysicalWindowSinkOperator::create(getNextOperatorId(), ++statisticId, SchemaPtr(), SchemaPtr(), LogicalWindowDescriptorPtr());
     auto sink = PhysicalSinkOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SinkDescriptorPtr());
 
     auto queryPlan = QueryPlan::create(source1);
@@ -416,10 +393,8 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -432,8 +407,7 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
     ASSERT_INSTANCE_OF(sourcePipeline1->getDecomposedQueryPlan()->getRootOperators()[0], PhysicalSourceOperator);
 
     auto preAggregationPipeline = sourcePipeline1->getSuccessors()[0];
-    ASSERT_INSTANCE_OF(preAggregationPipeline->getDecomposedQueryPlan()->getRootOperators()[0],
-                       PhysicalWatermarkAssignmentOperator);
+    ASSERT_INSTANCE_OF(preAggregationPipeline->getDecomposedQueryPlan()->getRootOperators()[0], PhysicalWatermarkAssignmentOperator);
 
     auto windowSinkPipeline = preAggregationPipeline->getSuccessors()[0];
     ASSERT_INSTANCE_OF(windowSinkPipeline->getDecomposedQueryPlan()->getRootOperators()[0], PhysicalWindowSinkOperator);
@@ -451,7 +425,8 @@ TEST_F(PipeliningPhaseTest, pipelineWindowQuery) {
  * --- | Physical Sink 1 | --- | Physical Map --- Physical Filter --- Physical Project |--- | Physical Source 1 |
  *
  */
-TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
+TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery)
+{
     auto source = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto project = PhysicalProjectOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), std::vector<ExpressionNodePtr>());
     auto filter = PhysicalFilterOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
@@ -466,10 +441,8 @@ TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -504,7 +477,8 @@ TEST_F(PipeliningPhaseTest, pipelineMapFilterProjectQuery) {
  *
  *
  */
-TEST_F(PipeliningPhaseTest, pipelineDemultiplex) {
+TEST_F(PipeliningPhaseTest, pipelineDemultiplex)
+{
     auto source = PhysicalSourceOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), SourceDescriptorPtr());
     auto filter = PhysicalFilterOperator::create(++statisticId, SchemaPtr(), SchemaPtr(), ExpressionNodePtr());
     auto demultiplex = PhysicalDemultiplexOperator::create(++statisticId, SchemaPtr());
@@ -520,10 +494,8 @@ TEST_F(PipeliningPhaseTest, pipelineDemultiplex) {
 
     NES_DEBUG("{}", queryPlan->toString());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(defaultDecomposedQueryPlanId,
-                                                           defaultSharedQueryId,
-                                                           INVALID_WORKER_NODE_ID,
-                                                           queryPlan->getRootOperators());
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(
+        defaultDecomposedQueryPlanId, defaultSharedQueryId, INVALID_WORKER_NODE_ID, queryPlan->getRootOperators());
 
     auto policy = QueryCompilation::FuseNonPipelineBreakerPolicy::create();
     auto phase = QueryCompilation::DefaultPipeliningPhase::create(policy);
@@ -548,4 +520,4 @@ TEST_F(PipeliningPhaseTest, pipelineDemultiplex) {
     ASSERT_INSTANCE_OF(sinkPipeline2->getDecomposedQueryPlan()->getRootOperators()[0], PhysicalSinkOperator);
 }
 
-}// namespace NES
+} // namespace NES

@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/Functions/AtanExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-namespace NES::Runtime::Execution::Expressions {
+#include <BaseIntegrationTest.hpp>
+namespace NES::Runtime::Execution::Expressions
+{
 
-class AtanExpressionTest : public Testing::BaseUnitTest {
-  public:
+class AtanExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("AtanExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup AtanExpressionTest test class.");
     }
@@ -32,7 +35,8 @@ class AtanExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down AtanExpressionTest test class."); }
 };
 
-TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {
+TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble)
+{
     auto expression = UnaryExpressionWrapper<AtanExpression>();
     // Double
     {
@@ -42,12 +46,13 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble) {
     }
 }
 
-TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat) {
+TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<AtanExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 0.5));
-        ASSERT_EQ(resultValue, std::atan((float) 0.5));
+        auto resultValue = expression.eval(Value<Float>((float)0.5));
+        ASSERT_EQ(resultValue, std::atan((float)0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -55,10 +60,11 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat) {
 /**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
-TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType) {
+TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType)
+{
     auto expression = UnaryExpressionWrapper<AtanExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
-    ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8) 1)););
+    ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8)1)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

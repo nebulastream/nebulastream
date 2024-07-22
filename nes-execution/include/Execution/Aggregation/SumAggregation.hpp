@@ -17,14 +17,16 @@
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
 
-namespace NES::Runtime::Execution::Aggregation {
-class SumAggregationFunction : public AggregationFunction {
-
-  public:
-    SumAggregationFunction(const PhysicalTypePtr& inputType,
-                           const PhysicalTypePtr& resultType,
-                           const Expressions::ExpressionPtr& inputExpression,
-                           const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
+namespace NES::Runtime::Execution::Aggregation
+{
+class SumAggregationFunction : public AggregationFunction
+{
+public:
+    SumAggregationFunction(
+        const PhysicalTypePtr& inputType,
+        const PhysicalTypePtr& resultType,
+        const Expressions::ExpressionPtr& inputExpression,
+        const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
     void lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) override;
     void combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) override;
@@ -32,6 +34,6 @@ class SumAggregationFunction : public AggregationFunction {
     void reset(Nautilus::Value<Nautilus::MemRef> state) override;
     uint64_t getSize() override;
 };
-}// namespace NES::Runtime::Execution::Aggregation
+} // namespace NES::Runtime::Execution::Aggregation
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP_

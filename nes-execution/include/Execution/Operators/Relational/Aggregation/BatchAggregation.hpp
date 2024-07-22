@@ -18,30 +18,33 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Batch Aggregation operator.
  */
-class BatchAggregation : public ExecutableOperator {
-  public:
+class BatchAggregation : public ExecutableOperator
+{
+public:
     /**
      * @brief Creates a batch aggregation operator with a expression.
      * @param operatorHandlerIndex index of the operator handler.
      * @param aggregationExpressions expression to derive the aggregation values.
      * @param aggregationFunctions functions for the aggregations.
      */
-    BatchAggregation(uint64_t operatorHandlerIndex,
-                     const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions);
+    BatchAggregation(
+        uint64_t operatorHandlerIndex,
+        const std::vector<std::shared_ptr<Execution::Aggregation::AggregationFunction>>& aggregationFunctions);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void terminate(ExecutionContext& executionCtx) const override;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATION_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATION_HPP_

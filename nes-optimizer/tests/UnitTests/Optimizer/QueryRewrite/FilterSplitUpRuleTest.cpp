@@ -16,6 +16,7 @@
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 // clang-format on
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -35,27 +36,29 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <iostream>
 
 using namespace NES;
 
-class FilterSplitUpRuleTest : public Testing::BaseIntegrationTest {
-
-  public:
+class FilterSplitUpRuleTest : public Testing::BaseIntegrationTest
+{
+public:
     SchemaPtr schema;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("FilterSplitUpRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup FilterSplitUpRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
+    {
         NES_INFO("Setup FilterSplitUpRuleTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -69,19 +72,23 @@ class FilterSplitUpRuleTest : public Testing::BaseIntegrationTest {
         sourceCatalog->addPhysicalSource("default_logical", sce1);
     }
 
-    bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> accessedFields) {
-        if (!filter->instanceOf<LogicalFilterOperator>()) {
+    bool isFilterAndAccessesCorrectFields(NodePtr filter, std::vector<std::string> accessedFields)
+    {
+        if (!filter->instanceOf<LogicalFilterOperator>())
+        {
             return false;
         }
 
         auto count = accessedFields.size();
 
         DepthFirstNodeIterator depthFirstNodeIterator(filter->as<LogicalFilterOperator>()->getPredicate());
-        for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr) {
-            if ((*itr)->instanceOf<FieldAccessExpressionNode>()) {
+        for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
+        {
+            if ((*itr)->instanceOf<FieldAccessExpressionNode>())
+            {
                 const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
-                if (std::find(accessedFields.begin(), accessedFields.end(), accessExpressionNode->getFieldName())
-                    == accessedFields.end()) {
+                if (std::find(accessedFields.begin(), accessedFields.end(), accessExpressionNode->getFieldName()) == accessedFields.end())
+                {
                     return false;
                 }
                 count--;
@@ -91,7 +98,8 @@ class FilterSplitUpRuleTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithOneAnd) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithOneAnd)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -128,16 +136,16 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithOneAnd) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithThreeAnd) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithThreeAnd)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query =
-        Query::from("default_logical")
-            .filter(Attribute("id") == 1 && Attribute("ts") == 2 && Attribute("fictional") == 3 && Attribute("fictional2") == 4)
-            .sink(printSinkDescriptor);
+    Query query = Query::from("default_logical")
+                      .filter(Attribute("id") == 1 && Attribute("ts") == 2 && Attribute("fictional") == 3 && Attribute("fictional2") == 4)
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -177,16 +185,16 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithThreeAnd) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOr) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOr)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query =
-        Query::from("default_logical")
-            .filter(Attribute("id") == 1 && (Attribute("ts") == 2 || Attribute("fictional") == 3 && Attribute("fictional2") == 4))
-            .sink(printSinkDescriptor);
+    Query query = Query::from("default_logical")
+                      .filter(Attribute("id") == 1 && (Attribute("ts") == 2 || Attribute("fictional") == 3 && Attribute("fictional2") == 4))
+                      .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -221,16 +229,17 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOr) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOrImpossible) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOrImpossible)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query = Query::from("default_logical")
-                      .filter((Attribute("id") == 1 && Attribute("ts") == 2)
-                              || (Attribute("fictional") == 3 && Attribute("fictional2") == 4))
-                      .sink(printSinkDescriptor);
+    Query query
+        = Query::from("default_logical")
+              .filter((Attribute("id") == 1 && Attribute("ts") == 2) || (Attribute("fictional") == 3 && Attribute("fictional2") == 4))
+              .sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -261,14 +270,14 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterWithAndOrImpossible) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleNotAnd) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleNotAnd)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query =
-        Query::from("default_logical").filter(!(Attribute("id") == 1 && Attribute("ts") == 2)).sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").filter(!(Attribute("id") == 1 && Attribute("ts") == 2)).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -297,14 +306,14 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleNotAnd) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotOr) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotOr)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query =
-        Query::from("default_logical").filter(!(Attribute("id") == 1 || Attribute("ts") == 2)).sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").filter(!(Attribute("id") == 1 || Attribute("ts") == 2)).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);
@@ -338,7 +347,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotOr) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterOrImpossible) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterOrImpossible)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -370,7 +380,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterOrImpossible) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotTwoOrs) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotTwoOrs)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -417,7 +428,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotTwoOrs) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleAndOrNot) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleAndOrNot)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -451,7 +463,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterImpossibleAndOrNot) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterAndOrNot) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterAndOrNot)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -494,7 +507,8 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterAndOrNot) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterDoubleNot) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterDoubleNot)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -528,14 +542,14 @@ TEST_F(FilterSplitUpRuleTest, testSplittingFilterDoubleNot) {
 }
 
 //filter(!(!e1) || (!e2)) translates temporarily to filter( !(!(e1)) && !(!(e2)) ) which translates to filter(e1)->filter(e2)
-TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotNegatedOr) {
+TEST_F(FilterSplitUpRuleTest, testSplittingFilterNotNegatedOr)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
     // Prepare
     SinkDescriptorPtr printSinkDescriptor = PrintSinkDescriptor::create();
-    Query query =
-        Query::from("default_logical").filter(!(!(Attribute("id") == 1) || !(Attribute("id2") == 2))).sink(printSinkDescriptor);
+    Query query = Query::from("default_logical").filter(!(!(Attribute("id") == 1) || !(Attribute("id2") == 2))).sink(printSinkDescriptor);
     const QueryPlanPtr queryPlan = query.getQueryPlan();
 
     DepthFirstNodeIterator queryPlanNodeIterator(queryPlan->getRootOperators()[0]);

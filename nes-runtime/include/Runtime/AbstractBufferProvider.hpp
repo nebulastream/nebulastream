@@ -14,11 +14,11 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
 
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <chrono>
 #include <cstddef>
 #include <optional>
 #include <vector>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 /**
  * This enum reflects the different types of buffer managers in the system
@@ -26,11 +26,19 @@
  * local: buffer manager that we give to the processing
  * fixed: buffer manager that we use for sources
  */
-namespace NES::Runtime {
-enum class BufferManagerType : uint8_t { GLOBAL, LOCAL, FIXED };
-class AbstractBufferProvider {
-  public:
-    virtual ~AbstractBufferProvider() {
+namespace NES::Runtime
+{
+enum class BufferManagerType : uint8_t
+{
+    GLOBAL,
+    LOCAL,
+    FIXED
+};
+class AbstractBufferProvider
+{
+public:
+    virtual ~AbstractBufferProvider()
+    {
         // nop
     }
 
@@ -84,8 +92,9 @@ class AbstractBufferProvider {
     virtual std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) = 0;
 };
 
-class AbstractPoolProvider {
-  public:
+class AbstractPoolProvider
+{
+public:
     /**
      * @brief Create a local buffer manager that is assigned to one pipeline or thread
      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
@@ -111,5 +120,5 @@ class AbstractPoolProvider {
  */
 TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
 
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_

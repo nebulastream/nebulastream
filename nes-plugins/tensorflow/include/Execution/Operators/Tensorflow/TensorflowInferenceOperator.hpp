@@ -17,32 +17,34 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief this is the nautilus implementation of infer model operator. This operator allows for inferring (currently only tensorflow) machine learning model over incoming data stream.
  */
-class TensorflowInferenceOperator : public ExecutableOperator {
-
-  public:
+class TensorflowInferenceOperator : public ExecutableOperator
+{
+public:
     /**
      * @brief Creates a infer model operator.
      * @param inferModelHandlerIndex index of infer model handler.
      * @param inputFieldNames names of input fields for the model inference
      * @param outputFieldNames names of output fields from the model inference
      */
-    TensorflowInferenceOperator(const uint32_t inferModelHandlerIndex,
-                                const std::vector<std::string>& inputFieldNames,
-                                const std::vector<std::string>& outputFieldNames)
+    TensorflowInferenceOperator(
+        const uint32_t inferModelHandlerIndex,
+        const std::vector<std::string>& inputFieldNames,
+        const std::vector<std::string>& outputFieldNames)
         : inferModelHandlerIndex(inferModelHandlerIndex), inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames){};
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+private:
     const uint32_t inferModelHandlerIndex;
     const std::vector<std::string> inputFieldNames;
     const std::vector<std::string> outputFieldNames;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_PLUGINS_TENSORFLOW_INCLUDE_EXECUTION_OPERATORS_TENSORFLOW_TENSORFLOWINFERENCEOPERATOR_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_PLUGINS_TENSORFLOW_INCLUDE_EXECUTION_OPERATORS_TENSORFLOW_TENSORFLOWINFERENCEOPERATOR_HPP_

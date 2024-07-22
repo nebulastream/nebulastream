@@ -17,17 +17,19 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical Unary operator combines the PhysicalOperator and UnaryOperator interfaces.
  * A physical unary operator has exactly one child operators.
  */
-class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator {
-  protected:
+class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator
+{
+protected:
     PhysicalUnaryOperator(OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema);
 
-  public:
+public:
     ~PhysicalUnaryOperator() noexcept override = default;
 
     /**
@@ -37,6 +39,6 @@ class PhysicalUnaryOperator : public PhysicalOperator, public UnaryOperator {
     std::string toString() const override;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNARYOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALUNARYOPERATOR_HPP_

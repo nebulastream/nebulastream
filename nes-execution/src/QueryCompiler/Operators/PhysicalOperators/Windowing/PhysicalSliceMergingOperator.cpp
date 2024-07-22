@@ -11,29 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 #include <sstream>
 #include <utility>
+#include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalSliceMergingOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalOperatorPtr PhysicalSliceMergingOperator::create(OperatorId id,
-                                                         StatisticId statisticId,
-                                                         const SchemaPtr& inputSchema,
-                                                         const SchemaPtr& outputSchema,
-                                                         const Windowing::LogicalWindowDescriptorPtr& windowDefinition) {
+PhysicalOperatorPtr PhysicalSliceMergingOperator::create(
+    OperatorId id,
+    StatisticId statisticId,
+    const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema,
+    const Windowing::LogicalWindowDescriptorPtr& windowDefinition)
+{
     return std::make_shared<PhysicalSliceMergingOperator>(id, statisticId, inputSchema, outputSchema, windowDefinition);
 }
 
-PhysicalSliceMergingOperator::PhysicalSliceMergingOperator(OperatorId id,
-                                                           StatisticId statisticId,
-                                                           SchemaPtr inputSchema,
-                                                           SchemaPtr outputSchema,
-                                                           Windowing::LogicalWindowDescriptorPtr windowDefinition)
-    : Operator(id),
-      PhysicalWindowOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
+PhysicalSliceMergingOperator::PhysicalSliceMergingOperator(
+    OperatorId id,
+    StatisticId statisticId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    Windowing::LogicalWindowDescriptorPtr windowDefinition)
+    : Operator(id), PhysicalWindowOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema), std::move(windowDefinition)){};
 
-std::string PhysicalSliceMergingOperator::toString() const {
+std::string PhysicalSliceMergingOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalSliceMergingOperator:\n";
@@ -41,6 +45,9 @@ std::string PhysicalSliceMergingOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalSliceMergingOperator::copy() { return create(id, statisticId, inputSchema, outputSchema, windowDefinition); }
+OperatorPtr PhysicalSliceMergingOperator::copy()
+{
+    return create(id, statisticId, inputSchema, outputSchema, windowDefinition);
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

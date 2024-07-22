@@ -15,24 +15,32 @@
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
 UDFDescriptor::UDFDescriptor(const std::string& methodName, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema)
-    : methodName(methodName), inputSchema(inputSchema), outputSchema(outputSchema) {
-    if (methodName.empty()) {
+    : methodName(methodName), inputSchema(inputSchema), outputSchema(outputSchema)
+{
+    if (methodName.empty())
+    {
         throw UDFException("The method name of a UDF must not be empty");
     }
-    if (outputSchema->empty()) {
+    if (outputSchema->empty())
+    {
         throw UDFException("The output schema of a UDF must not be empty");
     }
 
     // We allow the input schema to be empty for now so that we don't have to serialize it in the client
 }
 
-void UDFDescriptor::setInputSchema(const SchemaPtr& inputSchema) { UDFDescriptor::inputSchema = inputSchema; }
+void UDFDescriptor::setInputSchema(const SchemaPtr& inputSchema)
+{
+    UDFDescriptor::inputSchema = inputSchema;
+}
 
-bool UDFDescriptor::operator==(const UDFDescriptor& other) const {
+bool UDFDescriptor::operator==(const UDFDescriptor& other) const
+{
     return getMethodName() == other.getMethodName() && inputSchema->equals(other.inputSchema, true)
         && outputSchema->equals(other.outputSchema, true);
 }
-}// namespace NES::Catalogs::UDF
+} // namespace NES::Catalogs::UDF

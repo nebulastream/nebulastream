@@ -14,45 +14,49 @@
 #ifndef NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_
 #define NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_
 
+#include <memory>
+#include <vector>
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/LocationProviderType.hpp>
 #include <Util/Mobility/SpatialType.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/TimeMeasurement.hpp>
-#include <memory>
-#include <vector>
 #ifdef S2DEF
-#include <s2/s1chord_angle.h>
-#include <s2/s2point.h>
-#include <s2/s2point_index.h>
+#    include <s2/s1chord_angle.h>
+#    include <s2/s2point.h>
+#    include <s2/s2point_index.h>
 #endif
 
-namespace NES {
-namespace Configurations {
+namespace NES
+{
+namespace Configurations
+{
 class WorkerConfiguration;
 using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Spatial::DataTypes::Experimental {
+namespace Spatial::DataTypes::Experimental
+{
 class Waypoint;
-}// namespace Spatial::DataTypes::Experimental
+} // namespace Spatial::DataTypes::Experimental
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
 /**
  * @brief this class is the worker-side interface to access all location related information. It allows querying for the fixed position of a field node or the current position of a mobile node.
  */
-class LocationProvider {
-  public:
+class LocationProvider
+{
+public:
     /**
      * Constructor
      * @param spatialType the type of worker: NO_LOCATION, FIXED_LOCATION (fixed location), MOBILE_NODE or INVALID
      * @param geoLocation the location of this worker node. Will be ignored if the spatial type is not FIXED_LOCATION
      */
-    explicit LocationProvider(NES::Spatial::Experimental::SpatialType spatialType,
-                              DataTypes::Experimental::GeoLocation geoLocation);
+    explicit LocationProvider(NES::Spatial::Experimental::SpatialType spatialType, DataTypes::Experimental::GeoLocation geoLocation);
 
     /**
      * @brief default destructor
@@ -80,10 +84,10 @@ class LocationProvider {
      * */
     virtual DataTypes::Experimental::Waypoint getCurrentWaypoint();
 
-  private:
+private:
     DataTypes::Experimental::GeoLocation workerGeoLocation;
     NES::Spatial::Experimental::SpatialType spatialType;
 };
-}// namespace Spatial::Mobility::Experimental
-}// namespace NES
-#endif// NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_
+} // namespace Spatial::Mobility::Experimental
+} // namespace NES
+#endif // NES_WORKER_INCLUDE_MOBILITY_LOCATIONPROVIDERS_LOCATIONPROVIDER_HPP_

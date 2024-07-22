@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/TextFunctions/PatternMatching/ReplacingRegex.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -20,19 +20,23 @@
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class ReplacingRegexTest : public Testing::BaseUnitTest {
-  public:
+class ReplacingRegexTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ReplacingRegexTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ReplacingRegexTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
@@ -46,7 +50,8 @@ class ReplacingRegexTest : public Testing::BaseUnitTest {
 
 /** @brief The ReplacingRegex Class provides functionality that replaces the first occurrence of regex with the replacement */
 
-TEST_F(ReplacingRegexTest, evaluateReplacingRegex1) {
+TEST_F(ReplacingRegexTest, evaluateReplacingRegex1)
+{
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
     // Simple Replace
     {
@@ -58,7 +63,8 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex1) {
         EXPECT_EQ(resultValue, Value<Text>("aXX"));
     }
 }
-TEST_F(ReplacingRegexTest, evaluateReplacingRegex2) {
+TEST_F(ReplacingRegexTest, evaluateReplacingRegex2)
+{
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
     // Replacement notation for groups
     {
@@ -69,7 +75,8 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex2) {
         EXPECT_EQ(resultValue, Value<Text>("aXc"));
     }
 }
-TEST_F(ReplacingRegexTest, evaluateReplacingRegex3) {
+TEST_F(ReplacingRegexTest, evaluateReplacingRegex3)
+{
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
     // Regex string correction
     {
@@ -80,7 +87,8 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex3) {
         EXPECT_EQ(resultValue, Value<Text>("there is a sub-sequence in the string"));
     }
 }
-TEST_F(ReplacingRegexTest, evaluateReplacingRegex4) {
+TEST_F(ReplacingRegexTest, evaluateReplacingRegex4)
+{
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
     // Regex swap
     {
@@ -92,4 +100,4 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex4) {
     }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

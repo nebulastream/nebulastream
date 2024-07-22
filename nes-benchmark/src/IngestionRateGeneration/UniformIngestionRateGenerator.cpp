@@ -14,18 +14,21 @@
 
 #include <IngestionRateGeneration/UniformIngestionRateGenerator.hpp>
 
-namespace NES::Benchmark::IngestionRateGeneration {
+namespace NES::Benchmark::IngestionRateGeneration
+{
 UniformIngestionRateGenerator::UniformIngestionRateGenerator(uint64_t ingestionRateInBuffers, uint64_t ingestionRateCount)
-    : IngestionRateGenerator(), ingestionRateInBuffers(ingestionRateInBuffers) {
-
+    : IngestionRateGenerator(), ingestionRateInBuffers(ingestionRateInBuffers)
+{
     IngestionRateGenerator::ingestionRateCount = ingestionRateCount;
 }
 
-std::vector<std::uint64_t> UniformIngestionRateGenerator::generateIngestionRates() {
-    for (uint64_t i = 0; i < ingestionRateCount; ++i) {
+std::vector<std::uint64_t> UniformIngestionRateGenerator::generateIngestionRates()
+{
+    for (uint64_t i = 0; i < ingestionRateCount; ++i)
+    {
         predefinedIngestionRates.push_back(ingestionRateInBuffers);
     }
 
     return predefinedIngestionRates;
 }
-}// namespace NES::Benchmark::IngestionRateGeneration
+} // namespace NES::Benchmark::IngestionRateGeneration

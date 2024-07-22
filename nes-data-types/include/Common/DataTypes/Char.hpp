@@ -16,13 +16,15 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_CHAR_HPP_
 
 #include <Common/DataTypes/DataType.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief The char type represents a single character.
  */
-class Char final : public DataType {
-  public:
+class Char final : public DataType
+{
+public:
     ~Char() override = default;
 
     /**
@@ -52,5 +54,5 @@ class Char final : public DataType {
     std::string toString() override;
 };
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_CHAR_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_CHAR_HPP_

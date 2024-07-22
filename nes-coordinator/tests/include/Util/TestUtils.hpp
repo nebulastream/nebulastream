@@ -15,6 +15,10 @@
 #ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTUTILS_HPP_
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTUTILS_HPP_
 
+#include <chrono>
+#include <fstream>
+#include <iostream>
+#include <memory>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -30,11 +34,7 @@
 #include <Util/StdInt.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <chrono>
-#include <fstream>
 #include <gtest/gtest.h>
-#include <iostream>
-#include <memory>
 #include <nlohmann/json.hpp>
 
 using Clock = std::chrono::high_resolution_clock;
@@ -43,29 +43,32 @@ using std::endl;
 using std::string;
 using namespace std::string_literals;
 
-namespace NES {
+namespace NES
+{
 static const char* BASE_URL = "http://127.0.0.1:";
 
-namespace Runtime {
+namespace Runtime
+{
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
-}// namespace Runtime
+} // namespace Runtime
 
 /**
  * @brief This define states all join strategies that will be tested in all join-specific tests
  */
-#define ALL_JOIN_STRATEGIES                                                                                                      \
-    ::testing::Values(QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,                                                    \
-                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING,                                            \
-                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE,                                          \
-                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,                                                     \
-                      QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED)
+#define ALL_JOIN_STRATEGIES \
+    ::testing::Values( \
+        QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN, \
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING, \
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE, \
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL, \
+        QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED)
 
 /**
  * @brief This define states all window strategies that will be tested in all join-specific tests. Note that BUCKETING
  * is not supported for HASH_JOIN_VAR_SIZED
  */
-#define ALL_WINDOW_STRATEGIES                                                                                                    \
+#define ALL_WINDOW_STRATEGIES \
     ::testing::Values(QueryCompilation::WindowingStrategy::SLICING, QueryCompilation::WindowingStrategy::BUCKETING)
 
 /**
@@ -76,23 +79,30 @@ using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 /**
  * @brief this is a util class for the tests
  */
-namespace TestUtils {
+namespace TestUtils
+{
 
 /**
  * @brief Struct for storing all csv file params for tests. It is solely a container for grouping csv files.
  */
-struct CsvFileParams {
+struct CsvFileParams
+{
     CsvFileParams(const string& csvFileLeft, const string& csvFileRight, const string& expectedFile)
-        : inputCsvFiles({csvFileLeft, csvFileRight}), expectedFile(expectedFile) {}
+        : inputCsvFiles({csvFileLeft, csvFileRight}), expectedFile(expectedFile)
+    {
+    }
 
     explicit CsvFileParams(const std::vector<std::string>& inputCsvFiles, const string& expectedFile = "")
-        : inputCsvFiles(inputCsvFiles), expectedFile(expectedFile) {}
+        : inputCsvFiles(inputCsvFiles), expectedFile(expectedFile)
+    {
+    }
 
     const std::vector<std::string> inputCsvFiles;
     const std::string expectedFile;
 };
 
-struct SourceTypeConfigCSV {
+struct SourceTypeConfigCSV
+{
     const std::string logicalSourceName;
     const std::string physicalSourceName;
     const std::string fileName;
@@ -105,16 +115,20 @@ struct SourceTypeConfigCSV {
 /**
  * @brief Struct for storing all parameter for the join
  */
-struct JoinParams {
-    JoinParams(const std::vector<SchemaPtr>& inputSchemas) : inputSchemas(inputSchemas) {
+struct JoinParams
+{
+    JoinParams(const std::vector<SchemaPtr>& inputSchemas) : inputSchemas(inputSchemas)
+    {
         NES_ASSERT(inputSchemas.size() >= 2, "JoinParams expect to have at least two input schemas");
         const std::shared_ptr<Schema>& inputSchema1 = inputSchemas[0];
         const std::shared_ptr<Schema>& inputSchema2 = inputSchemas[1];
         outputSchema = Runtime::Execution::Util::createJoinSchema(inputSchema1, inputSchema2);
 
-        if (inputSchemas.size() > 2) {
+        if (inputSchemas.size() > 2)
+        {
             auto cnt = 0_u64;
-            for (auto it = inputSchemas.begin() + 2; it != inputSchemas.end(); ++it) {
+            for (auto it = inputSchemas.begin() + 2; it != inputSchemas.end(); ++it)
+            {
                 const std::shared_ptr<Schema>& inputSchema = *it;
                 outputSchema = Runtime::Execution::Util::createJoinSchema(outputSchema, inputSchema);
                 cnt++;
@@ -127,9 +141,9 @@ struct JoinParams {
 };
 
 static constexpr auto defaultTimeout = std::chrono::seconds(60);
-static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180);// starting a query requires time
+static constexpr auto defaultStartQueryTimeout = std::chrono::seconds(180); // starting a query requires time
 static constexpr auto sleepDuration = std::chrono::milliseconds(250);
-static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last processed task, the query should be done.
+static constexpr auto defaultCooldown = std::chrono::seconds(3); // 3s after last processed task, the query should be done.
 
 /**
  * Create a command line parameter for a configuration option for the coordinator or worker.
@@ -147,8 +161,9 @@ static constexpr auto defaultCooldown = std::chrono::seconds(3);// 3s after last
  * @param prefix If true, prefix the name of the option with "worker." to configure the internal worker of the coordinator.
 * @return A string representing the command line parameter.
  */
-template<typename T>
-[[nodiscard]] std::string configOption(const std::string& name, T value, bool prefix = false) {
+template <typename T>
+[[nodiscard]] std::string configOption(const std::string& name, T value, bool prefix = false)
+{
     return configOption(name, std::to_string(value), prefix);
 }
 
@@ -401,9 +416,10 @@ template<typename T>
  * @param timeoutInSec: time to wait before stop checking
  * @return true if query gets into running status else false
  */
-[[nodiscard]] bool waitForQueryToStart(QueryId queryId,
-                                       const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                       std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
+[[nodiscard]] bool waitForQueryToStart(
+    QueryId queryId,
+    const Catalogs::Query::QueryCatalogPtr& queryCatalog,
+    std::chrono::seconds timeoutInSec = std::chrono::seconds(defaultStartQueryTimeout));
 
 /**
  * @brief method to check the produced buffers and tasks for n seconds and either return true or timeout
@@ -413,14 +429,13 @@ template<typename T>
  * @param expectedResult
  * @return bool indicating if the expected results are matched
  */
-template<typename Predicate = std::equal_to<uint64_t>>
-[[nodiscard]] bool checkCompleteOrTimeout(const NesWorkerPtr& nesWorker,
-                                          QueryId queryId,
-                                          const GlobalQueryPlanPtr& globalQueryPlan,
-                                          uint64_t expectedResult) {
-
+template <typename Predicate = std::equal_to<uint64_t>>
+[[nodiscard]] bool
+checkCompleteOrTimeout(const NesWorkerPtr& nesWorker, QueryId queryId, const GlobalQueryPlanPtr& globalQueryPlan, uint64_t expectedResult)
+{
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
-    if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+    if (sharedQueryId == INVALID_SHARED_QUERY_ID)
+    {
         NES_ERROR("Unable to find global query Id for user query id {}", queryId);
         return false;
     }
@@ -428,34 +443,40 @@ template<typename Predicate = std::equal_to<uint64_t>>
     NES_INFO("Found global query id {} for user query {}", sharedQueryId, queryId);
     auto timeoutInSec = std::chrono::seconds(defaultTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec)
+    {
         NES_TRACE("checkCompleteOrTimeout: check result NesWorkerPtr");
         //FIXME: handle vector of statistics properly in #977
         auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
-        if (statistics.empty()) {
+        if (statistics.empty())
+        {
             NES_TRACE("checkCompleteOrTimeout: query={} stats size={}", sharedQueryId, statistics.size());
             std::this_thread::sleep_for(sleepDuration);
             continue;
         }
         uint64_t processed = statistics[0]->getProcessedBuffers();
-        if (processed >= expectedResult) {
-            NES_TRACE("checkCompleteOrTimeout: results are correct procBuffer={} procTasks={} procWatermarks={}",
-                      statistics[0]->getProcessedBuffers(),
-                      statistics[0]->getProcessedTasks(),
-                      statistics[0]->getProcessedWatermarks());
+        if (processed >= expectedResult)
+        {
+            NES_TRACE(
+                "checkCompleteOrTimeout: results are correct procBuffer={} procTasks={} procWatermarks={}",
+                statistics[0]->getProcessedBuffers(),
+                statistics[0]->getProcessedTasks(),
+                statistics[0]->getProcessedWatermarks());
             return true;
         }
-        NES_TRACE("checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer={} procTasks={} procWatermarks={}",
-                  statistics[0]->getProcessedBuffers(),
-                  statistics[0]->getProcessedTasks(),
-                  statistics[0]->getProcessedWatermarks());
+        NES_TRACE(
+            "checkCompleteOrTimeout: NesWorkerPtr results are incomplete procBuffer={} procTasks={} procWatermarks={}",
+            statistics[0]->getProcessedBuffers(),
+            statistics[0]->getProcessedTasks(),
+            statistics[0]->getProcessedWatermarks());
         std::this_thread::sleep_for(sleepDuration);
     }
     auto statistics = nesWorker->getQueryStatistics(sharedQueryId);
     uint64_t processed = statistics[0]->getProcessedBuffers();
-    NES_TRACE("checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected={} final result={}",
-              expectedResult,
-              processed);
+    NES_TRACE(
+        "checkCompleteOrTimeout: NesWorkerPtr expected results are not reached after timeout expected={} final result={}",
+        expectedResult,
+        processed);
     return false;
 }
 
@@ -467,65 +488,75 @@ template<typename Predicate = std::equal_to<uint64_t>>
  * @param expectedResult
  * @return bool indicating if the expected results are matched
  */
-template<typename Predicate = std::equal_to<uint64_t>>
-[[nodiscard]] bool checkCompleteOrTimeout(const NesCoordinatorPtr& nesCoordinator,
-                                          QueryId queryId,
-                                          const GlobalQueryPlanPtr& globalQueryPlan,
-                                          uint64_t expectedResult,
-                                          bool minOneProcessedTask = false,
-                                          std::chrono::seconds timeoutSeconds = defaultTimeout) {
+template <typename Predicate = std::equal_to<uint64_t>>
+[[nodiscard]] bool checkCompleteOrTimeout(
+    const NesCoordinatorPtr& nesCoordinator,
+    QueryId queryId,
+    const GlobalQueryPlanPtr& globalQueryPlan,
+    uint64_t expectedResult,
+    bool minOneProcessedTask = false,
+    std::chrono::seconds timeoutSeconds = defaultTimeout)
+{
     SharedQueryId sharedQueryId = globalQueryPlan->getSharedQueryId(queryId);
-    if (sharedQueryId == INVALID_SHARED_QUERY_ID) {
+    if (sharedQueryId == INVALID_SHARED_QUERY_ID)
+    {
         NES_ERROR("Unable to find global query Id for user query id {}", queryId);
         return false;
     }
 
     NES_INFO("Found global query id {} for user query {}", sharedQueryId, queryId);
     auto start_timestamp = std::chrono::system_clock::now();
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutSeconds) {
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutSeconds)
+    {
         NES_TRACE("checkCompleteOrTimeout: check result NesCoordinatorPtr");
 
         //FIXME: handle vector of statistics properly in #977
         auto statistics = nesCoordinator->getQueryStatistics(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId));
-        if (statistics.empty()) {
+        if (statistics.empty())
+        {
             continue;
         }
 
-        uint64_t now =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch())
-                .count();
+        uint64_t now
+            = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
         auto timeoutMillisec = std::chrono::milliseconds(defaultTimeout);
 
         // wait for another iteration if the last processed task was very recent.
         if (minOneProcessedTask
             && (statistics[0]->getTimestampLastProcessedTask() == 0 || statistics[0]->getTimestampFirstProcessedTask() == 0
-                || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count())) {
-            NES_TRACE("checkCompleteOrTimeout: A task was processed within the last {}ms, the query may still be active. "
-                      "Restart the timeout period.",
-                      timeoutMillisec.count());
+                || statistics[0]->getTimestampLastProcessedTask() > now - defaultCooldown.count()))
+        {
+            NES_TRACE(
+                "checkCompleteOrTimeout: A task was processed within the last {}ms, the query may still be active. "
+                "Restart the timeout period.",
+                timeoutMillisec.count());
         }
         // return if enough buffer have been received
-        else if (statistics[0]->getProcessedBuffers() >= expectedResult) {
-            NES_TRACE("checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats={} procTasks={} procWatermarks={}",
-                      statistics[0]->getProcessedBuffers(),
-                      statistics[0]->getProcessedTasks(),
-                      statistics[0]->getProcessedWatermarks());
+        else if (statistics[0]->getProcessedBuffers() >= expectedResult)
+        {
+            NES_TRACE(
+                "checkCompleteOrTimeout: NesCoordinatorPtr results are correct stats={} procTasks={} procWatermarks={}",
+                statistics[0]->getProcessedBuffers(),
+                statistics[0]->getProcessedTasks(),
+                statistics[0]->getProcessedWatermarks());
             return true;
         }
-        NES_TRACE("checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer={} procTasks={} expected={}",
-                  statistics[0]->getProcessedBuffers(),
-                  statistics[0]->getProcessedTasks(),
-                  expectedResult);
+        NES_TRACE(
+            "checkCompleteOrTimeout: NesCoordinatorPtr results are incomplete procBuffer={} procTasks={} expected={}",
+            statistics[0]->getProcessedBuffers(),
+            statistics[0]->getProcessedTasks(),
+            expectedResult);
 
         std::this_thread::sleep_for(sleepDuration);
     }
     //FIXME: handle vector of statistics properly in #977
-    NES_TRACE("checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result={}"
-              "processedBuffer={} processedTasks={} procWatermarks={}",
-              expectedResult,
-              nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers(),
-              nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks(),
-              nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
+    NES_TRACE(
+        "checkCompleteOrTimeout: NesCoordinatorPtr expected results are not reached after timeout expected result={}"
+        "processedBuffer={} processedTasks={} procWatermarks={}",
+        expectedResult,
+        nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedBuffers(),
+        nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedTasks(),
+        nesCoordinator->getQueryStatistics(queryId)[0]->getProcessedWatermarks());
     return false;
 }
 
@@ -535,9 +566,8 @@ template<typename Predicate = std::equal_to<uint64_t>>
  * @param queryCatalog: the catalog containig the queries in the system
  * @return true if successful
  */
-[[nodiscard]] bool checkStoppedOrTimeout(QueryId queryId,
-                                         const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                         std::chrono::seconds timeout = defaultTimeout);
+[[nodiscard]] bool
+checkStoppedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& queryCatalog, std::chrono::seconds timeout = defaultTimeout);
 
 /**
      * @brief Check if the query is been stopped successfully within the timeout.
@@ -554,9 +584,8 @@ checkStoppedOrTimeoutAtWorker(SharedQueryId sharedQueryId, NesWorkerPtr worker, 
  * @param queryCatalog: the catalog containig the queries in the system
  * @return true if successful
  */
-[[nodiscard]] bool checkFailedOrTimeout(QueryId queryId,
-                                        const Catalogs::Query::QueryCatalogPtr& queryCatalog,
-                                        std::chrono::seconds timeout = defaultTimeout);
+[[nodiscard]] bool
+checkFailedOrTimeout(QueryId queryId, const Catalogs::Query::QueryCatalogPtr& queryCatalog, std::chrono::seconds timeout = defaultTimeout);
 
 /**
  * @brief Check if the query result was produced
@@ -564,16 +593,14 @@ checkStoppedOrTimeoutAtWorker(SharedQueryId sharedQueryId, NesWorkerPtr worker, 
  * @param outputFilePath
  * @return true if successful
  */
-[[nodiscard]] bool
-checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeoutInSeconds = 0);
+[[nodiscard]] bool checkOutputOrTimeout(string expectedContent, const string& outputFilePath, uint64_t customTimeoutInSeconds = 0);
 
 /**
  * @brief Check if any query result was produced
  * @param outputFilePath
  * @return true if successful
  */
-[[nodiscard]] bool
-checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0);
+[[nodiscard]] bool checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFilePath, uint64_t customTimeout = 0);
 
 /**
   * @brief Check if the query result was produced
@@ -584,19 +611,23 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
   * @param testTimeout
   * @return True if numberOfRecordsToExpect have been seen
   */
-[[nodiscard]] bool checkOutputContentLengthOrTimeout(QueryId queryId,
-                                                     Catalogs::Query::QueryCatalogPtr queryCatalog,
-                                                     uint64_t numberOfRecordsToExpect,
-                                                     const string& outputFilePath,
-                                                     auto testTimeout = defaultTimeout) {
+[[nodiscard]] bool checkOutputContentLengthOrTimeout(
+    QueryId queryId,
+    Catalogs::Query::QueryCatalogPtr queryCatalog,
+    uint64_t numberOfRecordsToExpect,
+    const string& outputFilePath,
+    auto testTimeout = defaultTimeout)
+{
     auto timeoutInSec = std::chrono::seconds(testTimeout);
     auto start_timestamp = std::chrono::system_clock::now();
-    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec) {
+    while (std::chrono::system_clock::now() < start_timestamp + timeoutInSec)
+    {
         std::this_thread::sleep_for(sleepDuration);
         NES_TRACE("TestUtil:checkBinaryOutputContentLengthOrTimeout: check content for file {}", outputFilePath);
 
         auto currentQueryState = queryCatalog->getQueryState(queryId);
-        if (currentQueryState == QueryState::FAILED) {
+        if (currentQueryState == QueryState::FAILED)
+        {
             // the query failed, so we return true as a failure append during execution.
             NES_TRACE("checkStoppedOrTimeout: status reached failed");
             return false;
@@ -604,32 +635,38 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
 
         auto isQueryStopped = currentQueryState == QueryState::STOPPED;
 
-        if (std::filesystem::exists(outputFilePath) && std::filesystem::is_regular_file(outputFilePath)) {
-
+        if (std::filesystem::exists(outputFilePath) && std::filesystem::is_regular_file(outputFilePath))
+        {
             // As we are writing a header in the output csv file of the query, we have to subtract one line
             std::ifstream outFile(outputFilePath);
             uint64_t currentContentSize = Util::countLines(outFile);
-            if (currentContentSize > 0) {
+            if (currentContentSize > 0)
+            {
                 currentContentSize -= 1;
             }
 
             // File exists, now checking if we have seen the expected number of tuples
-            if (currentContentSize > numberOfRecordsToExpect) {
-                NES_DEBUG("content is larger than expected result: currentContentSize: {} - expectedNumberOfContent: {}",
-                          currentContentSize,
-                          numberOfRecordsToExpect);
+            if (currentContentSize > numberOfRecordsToExpect)
+            {
+                NES_DEBUG(
+                    "content is larger than expected result: currentContentSize: {} - expectedNumberOfContent: {}",
+                    currentContentSize,
+                    numberOfRecordsToExpect);
                 return false;
-            } else if (currentContentSize < numberOfRecordsToExpect) {
-                NES_DEBUG("number of expected lines {} not reached yet with {} lines",
-                          numberOfRecordsToExpect,
-                          currentContentSize);
-            } else {
+            }
+            else if (currentContentSize < numberOfRecordsToExpect)
+            {
+                NES_DEBUG("number of expected lines {} not reached yet with {} lines", numberOfRecordsToExpect, currentContentSize);
+            }
+            else
+            {
                 NES_DEBUG("number of content in output file match expected number of content!");
                 return true;
             }
         }
 
-        if (isQueryStopped) {
+        if (isQueryStopped)
+        {
             NES_DEBUG("query stopped but content not ready");
             return false;
         }
@@ -722,10 +759,8 @@ bool waitForWorkers(uint64_t restPort, uint16_t maxTimeout, uint16_t expectedWor
  * @param numTuplesPerBuffer
  * @return Vector of TupleBuffers
  */
-std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(const std::string& csvFileName,
-                                                               const SchemaPtr& schema,
-                                                               const Runtime::BufferManagerPtr& bufferManager,
-                                                               uint64_t numTuplesPerBuffer);
+std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(
+    const std::string& csvFileName, const SchemaPtr& schema, const Runtime::BufferManagerPtr& bufferManager, uint64_t numTuplesPerBuffer);
 
 /**
  * @brief Creates the expected buffers from the csv file
@@ -737,12 +772,13 @@ std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(const std::string
  * @param delimiter
  * @return Vector of TupleBuffers
  */
-std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(const std::string& csvFileName,
-                                                               const SchemaPtr& schema,
-                                                               const Runtime::BufferManagerPtr& bufferManager,
-                                                               bool skipHeader = false,
-                                                               uint64_t numTuplesPerBuffer = 0,
-                                                               const std::string& delimiter = ",");
+std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(
+    const std::string& csvFileName,
+    const SchemaPtr& schema,
+    const Runtime::BufferManagerPtr& bufferManager,
+    bool skipHeader = false,
+    uint64_t numTuplesPerBuffer = 0,
+    const std::string& delimiter = ",");
 
 /**
  * @brief Fills the buffer from a stream
@@ -754,12 +790,13 @@ std::vector<Runtime::TupleBuffer> createExpectedBuffersFromCsv(const std::string
  * @param delimiter
  * @return Vector of TupleBuffers
  */
-std::vector<Runtime::TupleBuffer> createExpectedBufferFromStream(std::istream& istream,
-                                                                 const SchemaPtr& schema,
-                                                                 const Runtime::BufferManagerPtr& bufferManager,
-                                                                 bool skipHeader = false,
-                                                                 uint64_t numTuplesPerBuffer = 0,
-                                                                 const std::string& delimiter = ",");
+std::vector<Runtime::TupleBuffer> createExpectedBufferFromStream(
+    std::istream& istream,
+    const SchemaPtr& schema,
+    const Runtime::BufferManagerPtr& bufferManager,
+    bool skipHeader = false,
+    uint64_t numTuplesPerBuffer = 0,
+    const std::string& delimiter = ",");
 
 /**
  * @brief Fills the buffer from a stream
@@ -771,12 +808,13 @@ std::vector<Runtime::TupleBuffer> createExpectedBufferFromStream(std::istream& i
  * @param delimiter
  * @return Vector of TupleBuffers
  */
-std::vector<Runtime::TupleBuffer> createExpectedBufferFromCSVString(std::string str,
-                                                                    const SchemaPtr& schema,
-                                                                    const Runtime::BufferManagerPtr& bufferManager,
-                                                                    bool skipHeader = false,
-                                                                    uint64_t numTuplesPerBuffer = 0,
-                                                                    const std::string& delimiter = ",");
+std::vector<Runtime::TupleBuffer> createExpectedBufferFromCSVString(
+    std::string str,
+    const SchemaPtr& schema,
+    const Runtime::BufferManagerPtr& bufferManager,
+    bool skipHeader = false,
+    uint64_t numTuplesPerBuffer = 0,
+    const std::string& delimiter = ",");
 
 /**
  * @brief Counts the tuple in all buffers
@@ -793,8 +831,8 @@ uint64_t countTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& buffe
  * @param schema
  * @return Vector of TestTupleBuffer
  */
-std::vector<Runtime::MemoryLayouts::TestTupleBuffer> createTestTupleBuffers(std::vector<Runtime::TupleBuffer>& buffers,
-                                                                            const SchemaPtr& schema);
+std::vector<Runtime::MemoryLayouts::TestTupleBuffer>
+createTestTupleBuffers(std::vector<Runtime::TupleBuffer>& buffers, const SchemaPtr& schema);
 
 /**
  * @brief Compares if leftBuffers contain the same tuples as rightBuffers
@@ -803,9 +841,10 @@ std::vector<Runtime::MemoryLayouts::TestTupleBuffer> createTestTupleBuffers(std:
  * @param orderSensitive: If set to true, the order is taken into account
  * @return True if the leftBuffers contain the same tuples in the rightBuffer
  */
-bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& expectedBuffers,
-                              std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
-                              bool orderSensitive = false);
+bool buffersContainSameTuples(
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& expectedBuffers,
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer>& actualBuffers,
+    bool orderSensitive = false);
 
 /**
  * @brief Creates a vector for the memory [startPtr, endPtr]
@@ -814,8 +853,9 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffe
  * @param endPtr
  * @return Vector for the memory [startPtr, endPtr]
  */
-template<typename T>
-inline std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
+template <typename T>
+inline std::vector<T> createVecFromPointer(T* startPtr, T* endPtr)
+{
     return std::vector<T>(startPtr, endPtr);
 }
 
@@ -826,8 +866,9 @@ inline std::vector<T> createVecFromPointer(T* startPtr, T* endPtr) {
  * @param numItems
  * @return Vector for the memory [startPtr, startPtr + numItems]
  */
-template<typename T>
-inline std::vector<T> createVecFromPointer(T* startPtr, uint64_t numItems) {
+template <typename T>
+inline std::vector<T> createVecFromPointer(T* startPtr, uint64_t numItems)
+{
     return createVecFromPointer<T>(startPtr, startPtr + numItems);
 }
 
@@ -838,8 +879,9 @@ inline std::vector<T> createVecFromPointer(T* startPtr, uint64_t numItems) {
  * @param numItems
  * @return Vector
  */
-template<typename T>
-inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
+template <typename T>
+inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer)
+{
     return createVecFromPointer<T>(buffer.getBuffer<T>(), buffer.getBuffer<T>() + buffer.getNumberOfTuples());
 }
 
@@ -851,20 +893,18 @@ inline std::vector<T> createVecFromTupleBuffer(Runtime::TupleBuffer buffer) {
 CSVSourceTypePtr createSourceTypeCSV(const SourceTypeConfigCSV& sourceTypeConfigCSV);
 
 std::vector<PhysicalTypePtr> getPhysicalTypes(const SchemaPtr& schema);
-};// namespace TestUtils
+}; // namespace TestUtils
 
-class DummyQueryListener : public AbstractQueryStatusListener {
-  public:
-    virtual ~DummyQueryListener() {}
+class DummyQueryListener : public AbstractQueryStatusListener
+{
+public:
+    virtual ~DummyQueryListener() { }
 
-    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
-        return true;
-    }
-    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override {
-        return true;
-    }
+    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
+    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
     bool notifyQueryFailure(SharedQueryId, DecomposedQueryPlanId, std::string) override { return true; }
-    bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override {
+    bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override
+    {
         return true;
     }
     bool notifyEpochTermination(uint64_t, uint64_t) override { return false; }
@@ -883,8 +923,7 @@ std::vector<NES::Spatial::DataTypes::Experimental::Waypoint> getWaypointsFromCsv
  * @param csvPath path to the output file
  * @param waypoints a vector of waypoints to be written to the file
  */
-void writeWaypointsToCsv(const std::string& csvPath,
-                         const std::vector<NES::Spatial::DataTypes::Experimental::Waypoint>& waypoints);
+void writeWaypointsToCsv(const std::string& csvPath, const std::vector<NES::Spatial::DataTypes::Experimental::Waypoint>& waypoints);
 
 /**
  * This function counts the number of times the search string appears within the
@@ -896,5 +935,5 @@ void writeWaypointsToCsv(const std::string& csvPath,
  */
 uint64_t countOccurrences(const std::string& searchString, const std::string& targetString);
 
-}// namespace NES
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTUTILS_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTUTILS_HPP_

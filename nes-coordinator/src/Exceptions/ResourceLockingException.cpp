@@ -12,10 +12,15 @@
     limitations under the License.
 */
 #include <Exceptions/ResourceLockingException.hpp>
-namespace NES::Exceptions {
-ResourceLockingException::ResourceLockingException(const std::string& message,
-                                                   RequestProcessor::Experimental::ResourceType resourceType)
-    : RequestExecutionException(message), resourceType(resourceType) {}
+namespace NES::Exceptions
+{
+ResourceLockingException::ResourceLockingException(const std::string& message, RequestProcessor::Experimental::ResourceType resourceType)
+    : RequestExecutionException(message), resourceType(resourceType)
+{
+}
 
-RequestProcessor::Experimental::ResourceType ResourceLockingException::getResourceType() const { return resourceType; }
-}// namespace NES::Exceptions
+RequestProcessor::Experimental::ResourceType ResourceLockingException::getResourceType() const
+{
+    return resourceType;
+}
+} // namespace NES::Exceptions

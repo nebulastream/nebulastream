@@ -15,6 +15,10 @@
 #ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
 
+#include <cstring>
+#include <filesystem>
+#include <type_traits>
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Query.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -26,15 +30,12 @@
 #include <Util/Core.hpp>
 #include <Util/TestHarness/TestHarnessWorkerConfiguration.hpp>
 #include <Util/TestUtils.hpp>
-#include <cstring>
-#include <filesystem>
-#include <type_traits>
-#include <utility>
 
 /**
  * @brief This test harness wrap query deployment test in our test framework.
  */
-namespace NES {
+namespace NES
+{
 
 class CSVSourceType;
 using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
@@ -46,36 +47,47 @@ using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
 /// Note that the non-type compile time checks for the non-type template arguments are limited to consteval-
 /// constructible and non-floating point types.
 /// Another limitation is that as of now, type and non type template argument tests cannot be mixed.
-#define SETUP_COMPILE_TIME_TESTS(name, f)                                                                                        \
-    SETUP_COMPILE_TIME_TEST(name, f);                                                                                            \
+#define SETUP_COMPILE_TIME_TESTS(name, f) \
+    SETUP_COMPILE_TIME_TEST(name, f); \
     SETUP_COMPILE_TIME_TEST_ARGS(name, f)
 
 /// Check if function #func compiles from constexpr arguments and produce the expected return type that is provided
 /// as the check's first template argument.
-#define SETUP_COMPILE_TIME_TEST_ARGS(name, func)                                                                                 \
-    namespace detail {                                                                                                           \
-    template<typename, auto...>                                                                                                  \
-    struct name##FromArgs : std::false_type {};                                                                                  \
-    template<auto... args>                                                                                                       \
-    struct name##FromArgs<decltype(func(args...)), args...> : std::true_type {};                                                 \
-    }                                                                                                                            \
-    template<typename R, auto... a>                                                                                              \
+#define SETUP_COMPILE_TIME_TEST_ARGS(name, func) \
+    namespace detail \
+    { \
+    template <typename, auto...> \
+    struct name##FromArgs : std::false_type \
+    { \
+    }; \
+    template <auto... args> \
+    struct name##FromArgs<decltype(func(args...)), args...> : std::true_type \
+    { \
+    }; \
+    } \
+    template <typename R, auto... a> \
     using name##Compiles = detail::name##FromArgs<R, a...>
 
 /// Check if function #func compiles from argument of given types produce the expected return type that is provided as
 /// the check's first template argument.
-#define SETUP_COMPILE_TIME_TEST(name, func)                                                                                      \
-    namespace detail {                                                                                                           \
-    template<typename, typename...>                                                                                              \
-    struct name##FromType : std::false_type {};                                                                                  \
-    template<typename... Ts>                                                                                                     \
-    struct name##FromType<decltype(func(std::declval<Ts>()...)), Ts...> : std::true_type {};                                     \
-    }                                                                                                                            \
-    template<typename... Args>                                                                                                   \
+#define SETUP_COMPILE_TIME_TEST(name, func) \
+    namespace detail \
+    { \
+    template <typename, typename...> \
+    struct name##FromType : std::false_type \
+    { \
+    }; \
+    template <typename... Ts> \
+    struct name##FromType<decltype(func(std::declval<Ts>()...)), Ts...> : std::true_type \
+    { \
+    }; \
+    } \
+    template <typename... Args> \
     using name##CompilesFromType = detail::name##FromType<Args...>
 
-class TestHarness {
-  public:
+class TestHarness
+{
+public:
     /**
      * @brief The constructor of TestHarness
      * @param numWorkers number of worker (each for one physical source) to be used in the test
@@ -83,12 +95,13 @@ class TestHarness {
      * @param restPort port for the rest service
      * @param rpcPort for for the grpc
      */
-    explicit TestHarness(Query queryWithoutSink,
-                         uint16_t restPort,
-                         uint16_t rpcPort,
-                         std::filesystem::path testHarnessResourcePath,
-                         uint64_t memSrcFrequency = 0,
-                         uint64_t memSrcNumBuffToProcess = 1);
+    explicit TestHarness(
+        Query queryWithoutSink,
+        uint16_t restPort,
+        uint16_t rpcPort,
+        std::filesystem::path testHarnessResourcePath,
+        uint64_t memSrcFrequency = 0,
+        uint64_t memSrcNumBuffToProcess = 1);
 
     /**
      * @brief Sets the join strategy
@@ -109,8 +122,9 @@ class TestHarness {
          * @param element element of Record to push
          * @param workerId id of the worker whose source will produce the pushed element
          */
-    template<typename T>
-    TestHarness& pushElement(T element, WorkerId::Underlying workerId) {
+    template <typename T>
+    TestHarness& pushElement(T element, WorkerId::Underlying workerId)
+    {
         return pushElement(element, WorkerId(workerId));
     }
 
@@ -119,40 +133,49 @@ class TestHarness {
          * @param element element of Record to push
          * @param workerId id of the worker whose source will produce the pushed element
          */
-    template<typename T>
-    TestHarness& pushElement(T element, WorkerId workerId) {
-        if (workerId > topologyId) {
+    template <typename T>
+    TestHarness& pushElement(T element, WorkerId workerId)
+    {
+        if (workerId > topologyId)
+        {
             NES_THROW_RUNTIME_ERROR("TestHarness: workerId " + workerId.toString() + " does not exists");
         }
 
         bool found = false;
-        for (const auto& harnessWorkerConfig : testHarnessWorkerConfigurations) {
-            if (harnessWorkerConfig->getWorkerId() == workerId) {
+        for (const auto& harnessWorkerConfig : testHarnessWorkerConfigurations)
+        {
+            if (harnessWorkerConfig->getWorkerId() == workerId)
+            {
                 found = true;
-                if (!std::is_class<T>::value) {
+                if (!std::is_class<T>::value)
+                {
                     NES_THROW_RUNTIME_ERROR("TestHarness: tuples must be instances of struct");
                 }
 
-                if (harnessWorkerConfig->getSourceType()
-                    != TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource) {
+                if (harnessWorkerConfig->getSourceType() != TestHarnessWorkerConfiguration::TestHarnessWorkerSourceType::MemorySource)
+                {
                     NES_THROW_RUNTIME_ERROR("TestHarness: Record can be pushed only for source of Memory type.");
                 }
 
                 SchemaPtr schema;
-                for (const auto& logicalSource : logicalSources) {
-                    if (logicalSource->getLogicalSourceName() == harnessWorkerConfig->getLogicalSourceName()) {
+                for (const auto& logicalSource : logicalSources)
+                {
+                    if (logicalSource->getLogicalSourceName() == harnessWorkerConfig->getLogicalSourceName())
+                    {
                         schema = logicalSource->getSchema();
                         break;
                     }
                 }
 
-                if (!schema) {
-                    NES_THROW_RUNTIME_ERROR("TestHarness: Unable to find schema for logical source "
-                                            + harnessWorkerConfig->getLogicalSourceName()
-                                            + ". Make sure you have defined a logical source with this name in test harness");
+                if (!schema)
+                {
+                    NES_THROW_RUNTIME_ERROR(
+                        "TestHarness: Unable to find schema for logical source " + harnessWorkerConfig->getLogicalSourceName()
+                        + ". Make sure you have defined a logical source with this name in test harness");
                 }
 
-                if (sizeof(T) != schema->getSchemaSizeInBytes()) {
+                if (sizeof(T) != schema->getSchemaSizeInBytes())
+                {
                     NES_THROW_RUNTIME_ERROR("TestHarness: tuple size and schema size does not match");
                 }
 
@@ -163,7 +186,8 @@ class TestHarness {
             }
         }
 
-        if (!found) {
+        if (!found)
+        {
             NES_THROW_RUNTIME_ERROR("TestHarness: Unable to locate worker with id " + workerId.toString());
         }
 
@@ -187,10 +211,10 @@ class TestHarness {
      * @param physical source name
      * @param parentId id of the parent to connect
      */
-    TestHarness&
-    attachWorkerWithMemorySourceToWorkerWithId(const std::string& logicalSourceName,
-                                               WorkerId parentId,
-                                               WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create());
+    TestHarness& attachWorkerWithMemorySourceToWorkerWithId(
+        const std::string& logicalSourceName,
+        WorkerId parentId,
+        WorkerConfigurationPtr workerConfiguration = WorkerConfiguration::create());
 
     /**
      * @brief add a memory source to be used in the test
@@ -205,8 +229,8 @@ class TestHarness {
      * @param physicalSourceType schema of the source
      * @param workerConfiguration source name
      */
-    TestHarness& attachWorkerWithLambdaSourceToCoordinator(PhysicalSourceTypePtr physicalSourceType,
-                                                           WorkerConfigurationPtr workerConfiguration);
+    TestHarness&
+    attachWorkerWithLambdaSourceToCoordinator(PhysicalSourceTypePtr physicalSourceType, WorkerConfigurationPtr workerConfiguration);
 
     /**
      * @brief add a csv source to be used in the test and connect to parent with specific parent id
@@ -264,9 +288,7 @@ class TestHarness {
      * @return the TestHarness
      */
     TestHarness& setupTopology(
-        std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor =
-            [](CoordinatorConfigurationPtr) {
-            },
+        std::function<void(CoordinatorConfigurationPtr)> crdConfigFunctor = [](CoordinatorConfigurationPtr) {},
         const std::vector<nlohmann::json>& distributionList = {});
 
     /**
@@ -280,8 +302,8 @@ class TestHarness {
      * @param placementStrategy The placement strategy for the query.
      * @return This test harness.
      */
-    TestHarness& validateAndQueueAddQueryRequest(
-        const Optimizer::PlacementStrategy& placementStrategy = Optimizer::PlacementStrategy::BottomUp);
+    TestHarness&
+    validateAndQueueAddQueryRequest(const Optimizer::PlacementStrategy& placementStrategy = Optimizer::PlacementStrategy::BottomUp);
 
     /**
      * @brief Runs the query based on the given operator, pushed elements, and number of workers.
@@ -290,9 +312,8 @@ class TestHarness {
      * @param testTimeoutInSeconds
      * @return TestHarness
      */
-    TestHarness& runQuery(uint64_t numberOfBytesToExpect,
-                          const std::string& placementStrategyName = "BottomUp",
-                          uint64_t testTimeoutInSeconds = 60);
+    TestHarness&
+    runQuery(uint64_t numberOfBytesToExpect, const std::string& placementStrategyName = "BottomUp", uint64_t testTimeoutInSeconds = 60);
 
     /**
      * Check if the query has failed.
@@ -323,7 +344,7 @@ class TestHarness {
 
     Runtime::BufferManagerPtr getBufferManager() const;
 
-  private:
+private:
     std::string getNextPhysicalSourceName();
     WorkerId getNextTopologyId();
 
@@ -351,6 +372,6 @@ class TestHarness {
     QueryId queryId = INVALID_QUERY_ID;
     Runtime::BufferManagerPtr bufferManager;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTHARNESS_TESTHARNESS_HPP_

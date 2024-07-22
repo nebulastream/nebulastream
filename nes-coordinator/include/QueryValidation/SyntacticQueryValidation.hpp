@@ -15,10 +15,11 @@
 #ifndef NES_COORDINATOR_INCLUDE_QUERYVALIDATION_SYNTACTICQUERYVALIDATION_HPP_
 #define NES_COORDINATOR_INCLUDE_QUERYVALIDATION_SYNTACTICQUERYVALIDATION_HPP_
 
-#include <Plans/Query/QueryPlan.hpp>
 #include <memory>
+#include <Plans/Query/QueryPlan.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Query;
 using QueryPtr = std::shared_ptr<Query>;
@@ -29,9 +30,10 @@ using PatternPtr = std::shared_ptr<Pattern>;
 class QueryParsingService;
 using QueryParsingServicePtr = std::shared_ptr<QueryParsingService>;
 
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class SyntacticQueryValidation;
 using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
@@ -39,8 +41,9 @@ using SyntacticQueryValidationPtr = std::shared_ptr<SyntacticQueryValidation>;
 /**
  * @brief This class is responsible for Syntactic Query Validation
  */
-class SyntacticQueryValidation {
-  public:
+class SyntacticQueryValidation
+{
+public:
     SyntacticQueryValidation(QueryParsingServicePtr queryParsingService);
 
     static SyntacticQueryValidationPtr create(QueryParsingServicePtr queryParsingService);
@@ -50,7 +53,7 @@ class SyntacticQueryValidation {
      */
     QueryPlanPtr validate(const std::string& inputQuery);
 
-  private:
+private:
     QueryParsingServicePtr queryParsingService;
     /**
      * @brief Throws InvalidQueryException with formatted exception message
@@ -58,6 +61,6 @@ class SyntacticQueryValidation {
     static void handleException(const std::exception& ex);
 };
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_COORDINATOR_INCLUDE_QUERYVALIDATION_SYNTACTICQUERYVALIDATION_HPP_
+#endif // NES_COORDINATOR_INCLUDE_QUERYVALIDATION_SYNTACTICQUERYVALIDATION_HPP_

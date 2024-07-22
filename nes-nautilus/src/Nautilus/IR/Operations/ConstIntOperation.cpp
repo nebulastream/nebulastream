@@ -12,20 +12,32 @@
     limitations under the License.
 */
 
+#include <cstdint>
+#include <string>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
-#include <cstdint>
-#include <string>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
 ConstIntOperation::ConstIntOperation(OperationIdentifier identifier, int64_t constantValue, Types::StampPtr stamp)
-    : Operation(OperationType::ConstIntOp, identifier, stamp), constantValue(constantValue) {}
+    : Operation(OperationType::ConstIntOp, identifier, stamp), constantValue(constantValue)
+{
+}
 
-int64_t ConstIntOperation::getValue() { return constantValue; }
-bool ConstIntOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::ConstIntOp; }
+int64_t ConstIntOperation::getValue()
+{
+    return constantValue;
+}
+bool ConstIntOperation::classof(const Operation* Op)
+{
+    return Op->getOperationType() == OperationType::ConstIntOp;
+}
 
-std::string ConstIntOperation::toString() { return identifier + " = " + std::to_string(constantValue); }
+std::string ConstIntOperation::toString()
+{
+    return identifier + " = " + std::to_string(constantValue);
+}
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

@@ -15,16 +15,18 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <memory>
 #include <set>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer::Experimental {
+namespace NES::Optimizer::Experimental
+{
 
 class ChangeLogEntry;
 using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
@@ -34,17 +36,16 @@ using ChangeLogEntryPtr = std::shared_ptr<ChangeLogEntry>;
  * to a shared query plan after applying the query or topology updates (node removal, link removal, query addition, query removal).
  * This change can be visualized as a sub-query plan and is represented by the change log entry using sets of upstream and downstream operators.
  */
-class ChangeLogEntry {
-
-  public:
+class ChangeLogEntry
+{
+public:
     /**
      * @param: Create change log entry
      * @param upstreamOperators: upstream operator set
      * @param downstreamOperators: downstream operator set
      * @return shared pointer to change log entry
      */
-    static ChangeLogEntryPtr create(std::set<LogicalOperatorPtr> upstreamOperators,
-                                    std::set<LogicalOperatorPtr> downstreamOperators);
+    static ChangeLogEntryPtr create(std::set<LogicalOperatorPtr> upstreamOperators, std::set<LogicalOperatorPtr> downstreamOperators);
 
     // Impacted upstream operators
     const std::set<LogicalOperatorPtr> upstreamOperators;
@@ -53,7 +54,7 @@ class ChangeLogEntry {
     // A partially ordered set (poset) of operator ids that represent the sub-query plan captured in the changelog entry
     const std::set<OperatorId> poSetOfSubQueryPlan;
 
-  private:
+private:
     ChangeLogEntry(std::set<LogicalOperatorPtr> upstreamOperators, std::set<LogicalOperatorPtr> downstreamOperators);
 
     /**
@@ -63,5 +64,5 @@ class ChangeLogEntry {
      */
     std::set<OperatorId> computePoSet();
 };
-}// namespace NES::Optimizer::Experimental
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_
+} // namespace NES::Optimizer::Experimental
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOGENTRY_HPP_

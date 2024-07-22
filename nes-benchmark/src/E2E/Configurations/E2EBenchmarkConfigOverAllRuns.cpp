@@ -16,15 +16,18 @@
 #include <E2E/Configurations/E2EBenchmarkConfigOverAllRuns.hpp>
 #include <Util/yaml/Yaml.hpp>
 
-namespace NES::Benchmark {
+namespace NES::Benchmark
+{
 
-std::ostream& operator<<(std::ostream& os, const E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig& config) {
+std::ostream& operator<<(std::ostream& os, const E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig& config)
+{
     os << config.queryString;
     return os;
 }
 
 E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig&
-E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::operator=(const E2EBenchmarkQueryConfig& other) {
+E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::operator=(const E2EBenchmarkQueryConfig& other)
+{
     if (this == &other)
         return *this;
     queryString = other.queryString;
@@ -33,7 +36,8 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::operator=(const E2EBench
 }
 
 E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig&
-E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::operator=(E2EBenchmarkQueryConfig&& other) {
+E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::operator=(E2EBenchmarkQueryConfig&& other)
+{
     if (this == &other)
         return *this;
     queryString = std::move(other.queryString);
@@ -41,50 +45,50 @@ E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::operator=(E2EBenchmarkQu
     return *this;
 }
 
-[[nodiscard]] const std::string& E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::getQueryString() const {
+[[nodiscard]] const std::string& E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::getQueryString() const
+{
     return queryString;
 }
-[[nodiscard]] uint32_t E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::getCustomDelayInSeconds() const {
+[[nodiscard]] uint32_t E2EBenchmarkConfigOverAllRuns::E2EBenchmarkQueryConfig::getCustomDelayInSeconds() const
+{
     return customDelayInSeconds;
 }
 
-E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns() {
+E2EBenchmarkConfigOverAllRuns::E2EBenchmarkConfigOverAllRuns()
+{
     using namespace Configurations;
-    startupSleepIntervalInSeconds = ConfigurationOption<uint32_t>::create("startupSleepIntervalInSeconds",
-                                                                          5,
-                                                                          "Time the benchmark waits after query submission");
-    numMeasurementsToCollect =
-        ConfigurationOption<uint32_t>::create("numMeasurementsToCollect",
-                                              10,
-                                              "Number of measurements taken before terminating a benchmark!");
-    experimentMeasureIntervalInSeconds =
-        ConfigurationOption<uint32_t>::create("experimentMeasureIntervalInSeconds", 1, "Measuring duration of one sample");
+    startupSleepIntervalInSeconds
+        = ConfigurationOption<uint32_t>::create("startupSleepIntervalInSeconds", 5, "Time the benchmark waits after query submission");
+    numMeasurementsToCollect = ConfigurationOption<uint32_t>::create(
+        "numMeasurementsToCollect", 10, "Number of measurements taken before terminating a benchmark!");
+    experimentMeasureIntervalInSeconds
+        = ConfigurationOption<uint32_t>::create("experimentMeasureIntervalInSeconds", 1, "Measuring duration of one sample");
 
     numberOfPreAllocatedBuffer = ConfigurationOption<uint32_t>::create("numberOfPreAllocatedBuffer", 1, "Pre-allocated buffer");
     outputFile = ConfigurationOption<std::string>::create("outputFile", "e2eBenchmarkRunner", "Filename of the output");
     benchmarkName = ConfigurationOption<std::string>::create("benchmarkName", "E2ERunner", "Name of the benchmark");
     inputType = ConfigurationOption<std::string>::create("inputType", "Auto", "If sources are shared");
     sourceSharing = ConfigurationOption<std::string>::create("sourceSharing", "off", "How to read the input data");
-    dataProviderMode =
-        ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
+    dataProviderMode
+        = ConfigurationOption<std::string>::create("dataProviderMode", "ZeroCopy", "DataProviderMode either ZeroCopy or MemCopy");
     connectionString = ConfigurationOption<std::string>::create("connectionString", "", "Optional string to connect to source");
     numberOfBuffersToProduce = ConfigurationOption<uint32_t>::create("numBuffersToProduce", 5000000, "No. buffers to produce");
     batchSize = ConfigurationOption<uint32_t>::create("batchSize", 1, "Number of messages pulled in one chunk");
     sourceNameToDataGenerator["input1"] = std::make_unique<DataGeneration::DefaultDataGenerator>(0, 1000);
-    ingestionRateInBuffers =
-        ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 50000, "Number of buffers ingested per time interval");
-    ingestionRateCount =
-        ConfigurationOption<uint32_t>::create("ingestionRateCount", 10000, "Number of potentially different ingestion rates");
-    numberOfPeriods =
-        ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
-    ingestionRateDistribution =
-        ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
+    ingestionRateInBuffers
+        = ConfigurationOption<uint32_t>::create("ingestionRateInBuffers", 50000, "Number of buffers ingested per time interval");
+    ingestionRateCount
+        = ConfigurationOption<uint32_t>::create("ingestionRateCount", 10000, "Number of potentially different ingestion rates");
+    numberOfPeriods = ConfigurationOption<uint32_t>::create("numberOfPeriods", 1, "Number of periods for sine and cosine distribution");
+    ingestionRateDistribution
+        = ConfigurationOption<std::string>::create("ingestionRateDistribution", "Uniform", "Type of ingestion rate distribution");
     customValues = ConfigurationOption<std::string>::create("customValues", "50000", "A vector of custom ingestion rates");
     dataProvider = ConfigurationOption<std::string>::create("dataProvider", "Internal", "Type of data provider");
     joinStrategy = ConfigurationOption<std::string>::create("joinStrategy", "HASH_JOIN_LOCAL", "Applied Join Algorithm");
 }
 
-std::string E2EBenchmarkConfigOverAllRuns::toString() const {
+std::string E2EBenchmarkConfigOverAllRuns::toString() const
+{
     std::stringstream oss;
     oss << "- startupSleepIntervalInSeconds: " << startupSleepIntervalInSeconds->getValueAsString() << std::endl
         << "- numMeasurementsToCollect: " << numMeasurementsToCollect->getValueAsString() << std::endl
@@ -111,7 +115,8 @@ std::string E2EBenchmarkConfigOverAllRuns::toString() const {
     return oss.str();
 }
 
-E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(Yaml::Node yamlConfig) {
+E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverAllRuns(Yaml::Node yamlConfig)
+{
     E2EBenchmarkConfigOverAllRuns configOverAllRuns;
 
     configOverAllRuns.startupSleepIntervalInSeconds->setValueIfDefined(yamlConfig["startupSleepIntervalInSeconds"]);
@@ -129,12 +134,14 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     configOverAllRuns.numberOfBuffersToProduce->setValueIfDefined(yamlConfig["numberOfBuffersToProduce"]);
 
     auto dataProviderNode = yamlConfig["dataProvider"];
-    if (!dataProviderNode.IsNone()) {
+    if (!dataProviderNode.IsNone())
+    {
         configOverAllRuns.dataProvider->setValueIfDefined(dataProviderNode["name"]);
         configOverAllRuns.ingestionRateCount->setValueIfDefined(dataProviderNode["ingestionRateCount"]);
 
         auto ingestionRateDistributionNode = dataProviderNode["ingestionRateDistribution"];
-        if (!ingestionRateDistributionNode.IsNone()) {
+        if (!ingestionRateDistributionNode.IsNone())
+        {
             configOverAllRuns.ingestionRateDistribution->setValueIfDefined(ingestionRateDistributionNode["type"]);
             configOverAllRuns.ingestionRateInBuffers->setValueIfDefined(ingestionRateDistributionNode["ingestionRateInBuffers"]);
             configOverAllRuns.numberOfPeriods->setValueIfDefined(ingestionRateDistributionNode["numberOfPeriods"]);
@@ -143,43 +150,55 @@ E2EBenchmarkConfigOverAllRuns E2EBenchmarkConfigOverAllRuns::generateConfigOverA
     }
 
     auto logicalSourcesNode = yamlConfig["logicalSources"];
-    if (logicalSourcesNode.IsSequence()) {
+    if (logicalSourcesNode.IsSequence())
+    {
         configOverAllRuns.sourceNameToDataGenerator.clear();
-        for (auto entry = logicalSourcesNode.Begin(); entry != logicalSourcesNode.End(); entry++) {
+        for (auto entry = logicalSourcesNode.Begin(); entry != logicalSourcesNode.End(); entry++)
+        {
             auto node = (*entry).second;
             auto sourceName = node["name"].As<std::string>();
-            if (configOverAllRuns.sourceNameToDataGenerator.contains(sourceName)) {
+            if (configOverAllRuns.sourceNameToDataGenerator.contains(sourceName))
+            {
                 NES_THROW_RUNTIME_ERROR("Logical source name has to be unique. " << sourceName << " is not unique!");
             }
 
-            configOverAllRuns.sourceNameToDataGenerator[sourceName] =
-                DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
+            configOverAllRuns.sourceNameToDataGenerator[sourceName]
+                = DataGeneration::DataGenerator::createGeneratorByName(node["type"].As<std::string>(), node);
             ;
         }
         NES_DEBUG("No additional sources have been added!");
     }
 
     configOverAllRuns.queries.clear();
-    if (!yamlConfig["query"].IsNone()) {
+    if (!yamlConfig["query"].IsNone())
+    {
         configOverAllRuns.queries.push_back({yamlConfig["query"].As<std::string>(), defaultCustomDelayInSeconds});
-    } else if (!yamlConfig["querySet"].IsNone() && yamlConfig["querySet"].Size() > 0) {
+    }
+    else if (!yamlConfig["querySet"].IsNone() && yamlConfig["querySet"].Size() > 0)
+    {
         Yaml::Node queriesNode = yamlConfig["querySet"];
-        for (size_t i = 0; i < queriesNode.Size(); i++) {
+        for (size_t i = 0; i < queriesNode.Size(); i++)
+        {
             configOverAllRuns.queries.push_back(
                 {queriesNode[i]["query"].As<std::string>(),
                  queriesNode[i]["customDelayInSeconds"].IsNone() ? 0 : queriesNode[i]["customDelayInSeconds"].As<uint32_t>()});
         }
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("No query or queries defined!");
     }
 
     return configOverAllRuns;
 }
 
-std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() const {
+std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() const
+{
     std::stringstream stringStream;
-    for (auto it = sourceNameToDataGenerator.begin(); it != sourceNameToDataGenerator.end(); ++it) {
-        if (it != sourceNameToDataGenerator.begin()) {
+    for (auto it = sourceNameToDataGenerator.begin(); it != sourceNameToDataGenerator.end(); ++it)
+    {
+        if (it != sourceNameToDataGenerator.begin())
+        {
             stringStream << ", ";
         }
         stringStream << it->first << ": " << it->second->getName();
@@ -188,10 +207,13 @@ std::string E2EBenchmarkConfigOverAllRuns::getStrLogicalSrcDataGenerators() cons
     return stringStream.str();
 }
 
-std::string E2EBenchmarkConfigOverAllRuns::getStrQueries() const {
+std::string E2EBenchmarkConfigOverAllRuns::getStrQueries() const
+{
     std::stringstream stringStream;
-    for (auto it = queries.begin(); it != queries.end(); ++it) {
-        if (it != queries.begin()) {
+    for (auto it = queries.begin(); it != queries.end(); ++it)
+    {
+        if (it != queries.begin())
+        {
             stringStream << "\n";
         }
         stringStream << *it;
@@ -200,13 +222,15 @@ std::string E2EBenchmarkConfigOverAllRuns::getStrQueries() const {
     return stringStream.str();
 }
 
-size_t E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize() {
+size_t E2EBenchmarkConfigOverAllRuns::getTotalSchemaSize()
+{
     size_t size = 0;
-    for (auto&& item : sourceNameToDataGenerator) {
+    for (auto&& item : sourceNameToDataGenerator)
+    {
         auto dataGenerator = item.second.get();
         size += dataGenerator->getSchema()->getSchemaSizeInBytes();
     }
 
     return size;
 }
-}// namespace NES::Benchmark
+} // namespace NES::Benchmark

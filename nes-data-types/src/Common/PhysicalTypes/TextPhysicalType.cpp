@@ -12,24 +12,29 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/TextPhysicalType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/core.h>
+#include <Common/PhysicalTypes/TextPhysicalType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-uint64_t TextPhysicalType::size() const {
+uint64_t TextPhysicalType::size() const
+{
     // returning the size of the index to the child buffer that contains the text data
     return sizeof(uint32_t);
 }
 
-std::string TextPhysicalType::convertRawToString(void const* data) const noexcept {
+std::string TextPhysicalType::convertRawToString(void const* data) const noexcept
+{
     // We always read the exact number of bytes contained by the Text.
     return convertRawToStringWithoutFill(data);
 }
 
-std::string TextPhysicalType::convertRawToStringWithoutFill(void const* data) const noexcept {
-    if (!data) {
+std::string TextPhysicalType::convertRawToStringWithoutFill(void const* data) const noexcept
+{
+    if (!data)
+    {
         NES_ERROR("Pointer to variable sized data is invalid. Buffer must at least contain the length (0 if empty).");
         return "";
     }
@@ -39,13 +44,17 @@ std::string TextPhysicalType::convertRawToStringWithoutFill(void const* data) co
     StringLengthType textLength = *static_cast<uint32_t const*>(data);
     const auto* textPointer = static_cast<char const*>(data);
     textPointer += sizeof(StringLengthType);
-    if (!textPointer) {
+    if (!textPointer)
+    {
         NES_ERROR("Pointer to text is invalid.");
         return "";
     }
     return std::string(textPointer, textLength);
 }
 
-std::string TextPhysicalType::toString() const noexcept { return "TEXT"; }
+std::string TextPhysicalType::toString() const noexcept
+{
+    return "TEXT";
+}
 
-}// namespace NES
+} // namespace NES

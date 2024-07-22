@@ -11,35 +11,64 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <utility>
+#include <QueryCompiler/QueryCompilationRequest.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
-QueryCompilationRequestPtr QueryCompilationRequest::create(DecomposedQueryPlanPtr decomposedQueryPlan,
-                                                           Runtime::NodeEnginePtr nodeEngine) {
-    return std::make_shared<QueryCompilationRequest>(
-        QueryCompilationRequest(std::move(decomposedQueryPlan), std::move(nodeEngine)));
+QueryCompilationRequestPtr QueryCompilationRequest::create(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine)
+{
+    return std::make_shared<QueryCompilationRequest>(QueryCompilationRequest(std::move(decomposedQueryPlan), std::move(nodeEngine)));
 }
 
 QueryCompilationRequest::QueryCompilationRequest(DecomposedQueryPlanPtr decomposedQueryPlan, Runtime::NodeEnginePtr nodeEngine)
-    : decomposedQueryPlan(std::move(decomposedQueryPlan)), nodeEngine(std::move(nodeEngine)), debug(false), optimize(false),
-      dumpQueryPlans(false) {}
+    : decomposedQueryPlan(std::move(decomposedQueryPlan))
+    , nodeEngine(std::move(nodeEngine))
+    , debug(false)
+    , optimize(false)
+    , dumpQueryPlans(false)
+{
+}
 
-void QueryCompilationRequest::enableDump() { this->dumpQueryPlans = true; }
+void QueryCompilationRequest::enableDump()
+{
+    this->dumpQueryPlans = true;
+}
 
-void QueryCompilationRequest::enableDebugging() { this->debug = true; }
+void QueryCompilationRequest::enableDebugging()
+{
+    this->debug = true;
+}
 
-void QueryCompilationRequest::enableOptimizations() { this->optimize = true; }
+void QueryCompilationRequest::enableOptimizations()
+{
+    this->optimize = true;
+}
 
-bool QueryCompilationRequest::isDebugEnabled() const { return debug; }
+bool QueryCompilationRequest::isDebugEnabled() const
+{
+    return debug;
+}
 
-bool QueryCompilationRequest::isOptimizeEnabled() const { return optimize; }
+bool QueryCompilationRequest::isOptimizeEnabled() const
+{
+    return optimize;
+}
 
-bool QueryCompilationRequest::isDumpEnabled() const { return dumpQueryPlans; }
+bool QueryCompilationRequest::isDumpEnabled() const
+{
+    return dumpQueryPlans;
+}
 
-DecomposedQueryPlanPtr QueryCompilationRequest::getDecomposedQueryPlan() { return decomposedQueryPlan; }
+DecomposedQueryPlanPtr QueryCompilationRequest::getDecomposedQueryPlan()
+{
+    return decomposedQueryPlan;
+}
 
-Runtime::NodeEnginePtr QueryCompilationRequest::getNodeEngine() { return nodeEngine; }
+Runtime::NodeEnginePtr QueryCompilationRequest::getNodeEngine()
+{
+    return nodeEngine;
+}
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

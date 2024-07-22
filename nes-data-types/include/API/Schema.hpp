@@ -15,17 +15,19 @@
 #ifndef NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_
 #define NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_
 
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <string>
 #include <vector>
+#include <Common/DataTypes/BasicTypes.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -36,12 +38,17 @@ using DataTypePtr = std::shared_ptr<DataType>;
 class AttributeField;
 using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
-class Schema {
-  public:
+class Schema
+{
+public:
     /**
      * @brief Enum to identify the memory layout in which we want to represent the schema physically.
      */
-    enum class MemoryLayoutType : uint8_t { ROW_LAYOUT = 0, COLUMNAR_LAYOUT = 1 };
+    enum class MemoryLayoutType : uint8_t
+    {
+        ROW_LAYOUT = 0,
+        COLUMNAR_LAYOUT = 1
+    };
 
     explicit Schema(MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
     Schema(SchemaPtr const& query, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
@@ -61,8 +68,8 @@ class Schema {
      * @brief Factory method to create a new SchemaPtr from schema type.
      * @return SchemaPtr
      */
-    static SchemaPtr createFromSchemaType(const Configurations::SchemaTypePtr& schemaType,
-                                          MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
+    static SchemaPtr
+    createFromSchemaType(const Configurations::SchemaTypePtr& schemaType, MemoryLayoutType layoutType = MemoryLayoutType::ROW_LAYOUT);
 
     /**
      * @brief Prepends the srcName to the substring after the last occurrence of ATTRIBUTE_NAME_SEPARATOR
@@ -195,8 +202,7 @@ class Schema {
      * @param suffix, for the end of the string
      * @return schema as string
      */
-    [[nodiscard]] std::string
-    toString(const std::string& prefix = "", const std::string& sep = " ", const std::string& suffix = "") const;
+    [[nodiscard]] std::string toString(const std::string& prefix = "", const std::string& sep = " ", const std::string& suffix = "") const;
 
     /**
      * @brief returns the string representation of layout
@@ -254,7 +260,7 @@ class Schema {
 
     std::vector<AttributeFieldPtr> fields;
 
-  private:
+private:
     /**
      * Return the appropriate NES type from yaml string configuration. Ignores
      * fieldLength if it doesn't make sense, errors length is missing and type
@@ -272,5 +278,5 @@ AttributeFieldPtr createField(const std::string& name, BasicType type);
 
 AttributeFieldPtr createField(const std::string& name, DataTypePtr type);
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_

@@ -13,10 +13,12 @@
 */
 #ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEXMARKCOMMON_HPP_
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEXMARKCOMMON_HPP_
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-class NexmarkCommon {
-  public:
+class NexmarkCommon
+{
+public:
     static constexpr long PERSON_EVENT_RATIO = 1;
     static constexpr long AUCTION_EVENT_RATIO = 4;
     static constexpr long BID_EVENT_RATIO = 4;
@@ -36,5 +38,5 @@ class NexmarkCommon {
     static constexpr int HOT_AUCTION_RATIO = 100;
 };
 
-}// namespace NES::Benchmark::DataGeneration
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEXMARKCOMMON_HPP_
+} // namespace NES::Benchmark::DataGeneration
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_NEXTMARK_NEXMARKCOMMON_HPP_

@@ -17,14 +17,15 @@
 
 #include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This class is responsible for generating identifiers for query plans
  */
-class PlanIdGenerator {
-
-  public:
+class PlanIdGenerator
+{
+public:
     /**
      * @brief Returns the next free global query Id
      * @return global query id
@@ -43,5 +44,5 @@ class PlanIdGenerator {
      */
     static QueryId getNextQueryId();
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_

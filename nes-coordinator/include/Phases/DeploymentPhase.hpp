@@ -15,23 +15,26 @@
 #ifndef NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_
 #define NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Util/RequestType.hpp>
 #include <iostream>
 #include <memory>
 #include <set>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/RequestType.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Optimizer {
+namespace Optimizer
+{
 class DeploymentContext;
 using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
-}// namespace Optimizer
+} // namespace Optimizer
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
@@ -39,10 +42,11 @@ using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 class DeploymentPhase;
 using DeploymentPhasePtr = std::shared_ptr<DeploymentPhase>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
@@ -50,8 +54,9 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 /**
  * @brief This class contains logic to transmit a collection of query sub plans to the desired worker nodes.
  */
-class DeploymentPhase {
-  public:
+class DeploymentPhase
+{
+public:
     /**
      * @brief Returns a smart pointer to the QueryDeploymentPhase
      * @return shared pointer to the instance of QueryDeploymentPhase
@@ -68,7 +73,7 @@ class DeploymentPhase {
      */
     void execute(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
 
-  private:
+private:
     /**
      * @brief method send query to nodes
      * @param sharedQueryId
@@ -78,19 +83,18 @@ class DeploymentPhase {
      * @throws QueryDeploymentException: Error in call to Elegant acceleration service with code
      * @throws QueryDeploymentException: QueryDeploymentPhase : unable to find query sub plan with id
      */
-    void registerOrStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
-                                           RequestType requestType);
+    void registerOrStopDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, RequestType requestType);
 
     /**
      * @brief
      * @param deploymentContexts
      * @param requestType
      */
-    void startOrUnregisterDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts,
-                                              NES::RequestType requestType);
+    void
+    startOrUnregisterDecomposedQueryPlan(const std::set<Optimizer::DeploymentContextPtr>& deploymentContexts, NES::RequestType requestType);
 
     WorkerRPCClientPtr workerRPCClient;
     Catalogs::Query::QueryCatalogPtr queryCatalog;
 };
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_PHASES_DEPLOYMENTPHASE_HPP_

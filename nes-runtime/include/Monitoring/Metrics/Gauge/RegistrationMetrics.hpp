@@ -22,14 +22,17 @@
 class SerializableRegistrationMetrics;
 using SerializableRegistrationMetricsPtr = std::shared_ptr<SerializableRegistrationMetrics>;
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Monitoring {
+namespace Monitoring
+{
 
 /**
  * Class representing the static metrics that are transmitted during node registration in NES.
@@ -41,8 +44,9 @@ namespace Monitoring {
  * isMoving; flag to indicate if the node is changing geo-location
  * hasBattery; flag to indicate if the node is running on a battery
  */
-class RegistrationMetrics {
-  public:
+class RegistrationMetrics
+{
+public:
     RegistrationMetrics();
     RegistrationMetrics(bool isMoving, bool hasBattery);
     /**
@@ -97,9 +101,9 @@ class RegistrationMetrics {
     WorkerId nodeId;
     uint64_t totalMemoryBytes;
     uint64_t cpuCoreNum;
-    uint64_t totalCPUJiffies;//user+idle+system (This value can change everytime it is read via AbstractSystemResourcesReader)
+    uint64_t totalCPUJiffies; //user+idle+system (This value can change everytime it is read via AbstractSystemResourcesReader)
     // Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
-    int64_t cpuPeriodUS;//the CPU CFS scheduler period in microseconds
+    int64_t cpuPeriodUS; //the CPU CFS scheduler period in microseconds
     int64_t cpuQuotaUS; // CPU CFS quota in microseconds
 
     bool isMoving;
@@ -133,6 +137,6 @@ void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uin
  */
 nlohmann::json asJson(const RegistrationMetrics& metrics);
 
-}// namespace Monitoring
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_REGISTRATIONMETRICS_HPP_
+} // namespace Monitoring
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_REGISTRATIONMETRICS_HPP_

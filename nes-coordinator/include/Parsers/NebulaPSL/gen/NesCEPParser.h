@@ -6,11 +6,14 @@
 
 #include <antlr4-runtime.h>
 
-namespace NES::Parsers {
+namespace NES::Parsers
+{
 
-class NesCEPParser : public antlr4::Parser {
-  public:
-    enum {
+class NesCEPParser : public antlr4::Parser
+{
+public:
+    enum
+    {
         T__0 = 1,
         T__1 = 2,
         T__2 = 3,
@@ -89,7 +92,8 @@ class NesCEPParser : public antlr4::Parser {
         ID = 76
     };
 
-    enum {
+    enum
+    {
         RuleQuery = 0,
         RuleCepPattern = 1,
         RuleInputStreams = 2,
@@ -141,9 +145,7 @@ class NesCEPParser : public antlr4::Parser {
 
     virtual std::string getGrammarFileName() const override;
     virtual const antlr4::atn::ATN& getATN() const override { return _atn; };
-    virtual const std::vector<std::string>& getTokenNames() const override {
-        return _tokenNames;
-    };// deprecated: use vocabulary instead.
+    virtual const std::vector<std::string>& getTokenNames() const override { return _tokenNames; }; // deprecated: use vocabulary instead.
     virtual const std::vector<std::string>& getRuleNames() const override;
     virtual antlr4::dfa::Vocabulary& getVocabulary() const override;
 
@@ -192,8 +194,9 @@ class NesCEPParser : public antlr4::Parser {
     class BitOperatorContext;
     class MathOperatorContext;
 
-    class QueryContext : public antlr4::ParserRuleContext {
-      public:
+    class QueryContext : public antlr4::ParserRuleContext
+    {
+    public:
         QueryContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* EOF();
@@ -206,8 +209,9 @@ class NesCEPParser : public antlr4::Parser {
 
     QueryContext* query();
 
-    class CepPatternContext : public antlr4::ParserRuleContext {
-      public:
+    class CepPatternContext : public antlr4::ParserRuleContext
+    {
+    public:
         CepPatternContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* PATTERN();
@@ -233,8 +237,9 @@ class NesCEPParser : public antlr4::Parser {
 
     CepPatternContext* cepPattern();
 
-    class InputStreamsContext : public antlr4::ParserRuleContext {
-      public:
+    class InputStreamsContext : public antlr4::ParserRuleContext
+    {
+    public:
         InputStreamsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         std::vector<InputStreamContext*> inputStream();
@@ -248,8 +253,9 @@ class NesCEPParser : public antlr4::Parser {
 
     InputStreamsContext* inputStreams();
 
-    class InputStreamContext : public antlr4::ParserRuleContext {
-      public:
+    class InputStreamContext : public antlr4::ParserRuleContext
+    {
+    public:
         InputStreamContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         std::vector<antlr4::tree::TerminalNode*> NAME();
@@ -262,8 +268,9 @@ class NesCEPParser : public antlr4::Parser {
 
     InputStreamContext* inputStream();
 
-    class CompositeEventExpressionsContext : public antlr4::ParserRuleContext {
-      public:
+    class CompositeEventExpressionsContext : public antlr4::ParserRuleContext
+    {
+    public:
         CompositeEventExpressionsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* LPARENTHESIS();
@@ -276,8 +283,9 @@ class NesCEPParser : public antlr4::Parser {
 
     CompositeEventExpressionsContext* compositeEventExpressions();
 
-    class WhereExpContext : public antlr4::ParserRuleContext {
-      public:
+    class WhereExpContext : public antlr4::ParserRuleContext
+    {
+    public:
         WhereExpContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         ExpressionContext* expression();
@@ -288,8 +296,9 @@ class NesCEPParser : public antlr4::Parser {
 
     WhereExpContext* whereExp();
 
-    class TimeConstraintsContext : public antlr4::ParserRuleContext {
-      public:
+    class TimeConstraintsContext : public antlr4::ParserRuleContext
+    {
+    public:
         TimeConstraintsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* LBRACKET();
@@ -302,8 +311,9 @@ class NesCEPParser : public antlr4::Parser {
 
     TimeConstraintsContext* timeConstraints();
 
-    class IntervalContext : public antlr4::ParserRuleContext {
-      public:
+    class IntervalContext : public antlr4::ParserRuleContext
+    {
+    public:
         IntervalContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* INT();
@@ -315,8 +325,9 @@ class NesCEPParser : public antlr4::Parser {
 
     IntervalContext* interval();
 
-    class IntervalTypeContext : public antlr4::ParserRuleContext {
-      public:
+    class IntervalTypeContext : public antlr4::ParserRuleContext
+    {
+    public:
         IntervalTypeContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* QUARTER();
@@ -334,8 +345,9 @@ class NesCEPParser : public antlr4::Parser {
 
     IntervalTypeContext* intervalType();
 
-    class OptionContext : public antlr4::ParserRuleContext {
-      public:
+    class OptionContext : public antlr4::ParserRuleContext
+    {
+    public:
         OptionContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* ALL();
@@ -347,8 +359,9 @@ class NesCEPParser : public antlr4::Parser {
 
     OptionContext* option();
 
-    class OutputExpressionContext : public antlr4::ParserRuleContext {
-      public:
+    class OutputExpressionContext : public antlr4::ParserRuleContext
+    {
+    public:
         OutputExpressionContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* NAME();
@@ -366,8 +379,9 @@ class NesCEPParser : public antlr4::Parser {
 
     OutputExpressionContext* outputExpression();
 
-    class OutAttributeContext : public antlr4::ParserRuleContext {
-      public:
+    class OutAttributeContext : public antlr4::ParserRuleContext
+    {
+    public:
         OutAttributeContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* NAME();
@@ -380,8 +394,9 @@ class NesCEPParser : public antlr4::Parser {
 
     OutAttributeContext* outAttribute();
 
-    class SinkListContext : public antlr4::ParserRuleContext {
-      public:
+    class SinkListContext : public antlr4::ParserRuleContext
+    {
+    public:
         SinkListContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         std::vector<SinkContext*> sink();
@@ -395,8 +410,9 @@ class NesCEPParser : public antlr4::Parser {
 
     SinkListContext* sinkList();
 
-    class SinkContext : public antlr4::ParserRuleContext {
-      public:
+    class SinkContext : public antlr4::ParserRuleContext
+    {
+    public:
         SinkContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         SinkTypeContext* sinkType();
@@ -409,8 +425,9 @@ class NesCEPParser : public antlr4::Parser {
 
     SinkContext* sink();
 
-    class ListEventsContext : public antlr4::ParserRuleContext {
-      public:
+    class ListEventsContext : public antlr4::ParserRuleContext
+    {
+    public:
         ListEventsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         std::vector<EventElemContext*> eventElem();
@@ -424,8 +441,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ListEventsContext* listEvents();
 
-    class EventElemContext : public antlr4::ParserRuleContext {
-      public:
+    class EventElemContext : public antlr4::ParserRuleContext
+    {
+    public:
         EventElemContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         EventContext* event();
@@ -440,8 +458,9 @@ class NesCEPParser : public antlr4::Parser {
 
     EventElemContext* eventElem();
 
-    class EventContext : public antlr4::ParserRuleContext {
-      public:
+    class EventContext : public antlr4::ParserRuleContext
+    {
+    public:
         EventContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* NAME();
@@ -453,8 +472,9 @@ class NesCEPParser : public antlr4::Parser {
 
     EventContext* event();
 
-    class QuantifiersContext : public antlr4::ParserRuleContext {
-      public:
+    class QuantifiersContext : public antlr4::ParserRuleContext
+    {
+    public:
         QuantifiersContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* STAR();
@@ -473,8 +493,9 @@ class NesCEPParser : public antlr4::Parser {
 
     QuantifiersContext* quantifiers();
 
-    class IterMaxContext : public antlr4::ParserRuleContext {
-      public:
+    class IterMaxContext : public antlr4::ParserRuleContext
+    {
+    public:
         IterMaxContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* INT();
@@ -485,8 +506,9 @@ class NesCEPParser : public antlr4::Parser {
 
     IterMaxContext* iterMax();
 
-    class IterMinContext : public antlr4::ParserRuleContext {
-      public:
+    class IterMinContext : public antlr4::ParserRuleContext
+    {
+    public:
         IterMinContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* INT();
@@ -497,8 +519,9 @@ class NesCEPParser : public antlr4::Parser {
 
     IterMinContext* iterMin();
 
-    class ConsecutiveOptionContext : public antlr4::ParserRuleContext {
-      public:
+    class ConsecutiveOptionContext : public antlr4::ParserRuleContext
+    {
+    public:
         ConsecutiveOptionContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* NEXT();
@@ -510,8 +533,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ConsecutiveOptionContext* consecutiveOption();
 
-    class OperatorRuleContext : public antlr4::ParserRuleContext {
-      public:
+    class OperatorRuleContext : public antlr4::ParserRuleContext
+    {
+    public:
         OperatorRuleContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* AND();
@@ -524,8 +548,9 @@ class NesCEPParser : public antlr4::Parser {
 
     OperatorRuleContext* operatorRule();
 
-    class SequenceContext : public antlr4::ParserRuleContext {
-      public:
+    class SequenceContext : public antlr4::ParserRuleContext
+    {
+    public:
         SequenceContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* SEQ();
@@ -537,8 +562,9 @@ class NesCEPParser : public antlr4::Parser {
 
     SequenceContext* sequence();
 
-    class ContiguityContext : public antlr4::ParserRuleContext {
-      public:
+    class ContiguityContext : public antlr4::ParserRuleContext
+    {
+    public:
         ContiguityContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* NEXT();
@@ -550,8 +576,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ContiguityContext* contiguity();
 
-    class SinkTypeContext : public antlr4::ParserRuleContext {
-      public:
+    class SinkTypeContext : public antlr4::ParserRuleContext
+    {
+    public:
         SinkTypeContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* KAFKA();
@@ -569,8 +596,9 @@ class NesCEPParser : public antlr4::Parser {
 
     SinkTypeContext* sinkType();
 
-    class NullNotnullContext : public antlr4::ParserRuleContext {
-      public:
+    class NullNotnullContext : public antlr4::ParserRuleContext
+    {
+    public:
         NullNotnullContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* NULLTOKEN();
@@ -582,8 +610,9 @@ class NesCEPParser : public antlr4::Parser {
 
     NullNotnullContext* nullNotnull();
 
-    class ConstantContext : public antlr4::ParserRuleContext {
-      public:
+    class ConstantContext : public antlr4::ParserRuleContext
+    {
+    public:
         ConstantContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         std::vector<antlr4::tree::TerminalNode*> QUOTE();
@@ -597,8 +626,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ConstantContext* constant();
 
-    class ExpressionsContext : public antlr4::ParserRuleContext {
-      public:
+    class ExpressionsContext : public antlr4::ParserRuleContext
+    {
+    public:
         ExpressionsContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         std::vector<ExpressionContext*> expression();
@@ -612,8 +642,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ExpressionsContext* expressions();
 
-    class ExpressionContext : public antlr4::ParserRuleContext {
-      public:
+    class ExpressionContext : public antlr4::ParserRuleContext
+    {
+    public:
         ExpressionContext(antlr4::ParserRuleContext* parent, size_t invokingState);
 
         ExpressionContext() = default;
@@ -623,8 +654,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual size_t getRuleIndex() const override;
     };
 
-    class IsExpressionContext : public ExpressionContext {
-      public:
+    class IsExpressionContext : public ExpressionContext
+    {
+    public:
         IsExpressionContext(ExpressionContext* ctx);
 
         antlr4::Token* testValue = nullptr;
@@ -638,8 +670,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class NotExpressionContext : public ExpressionContext {
-      public:
+    class NotExpressionContext : public ExpressionContext
+    {
+    public:
         NotExpressionContext(ExpressionContext* ctx);
 
         antlr4::tree::TerminalNode* NOT_OP();
@@ -648,8 +681,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class LogicalExpressionContext : public ExpressionContext {
-      public:
+    class LogicalExpressionContext : public ExpressionContext
+    {
+    public:
         LogicalExpressionContext(ExpressionContext* ctx);
 
         std::vector<ExpressionContext*> expression();
@@ -659,8 +693,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class PredicateExpressionContext : public ExpressionContext {
-      public:
+    class PredicateExpressionContext : public ExpressionContext
+    {
+    public:
         PredicateExpressionContext(ExpressionContext* ctx);
 
         PredicateContext* predicate();
@@ -670,8 +705,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ExpressionContext* expression();
     ExpressionContext* expression(int precedence);
-    class PredicateContext : public antlr4::ParserRuleContext {
-      public:
+    class PredicateContext : public antlr4::ParserRuleContext
+    {
+    public:
         PredicateContext(antlr4::ParserRuleContext* parent, size_t invokingState);
 
         PredicateContext() = default;
@@ -681,8 +717,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual size_t getRuleIndex() const override;
     };
 
-    class ExpressionAtomPredicateContext : public PredicateContext {
-      public:
+    class ExpressionAtomPredicateContext : public PredicateContext
+    {
+    public:
         ExpressionAtomPredicateContext(PredicateContext* ctx);
 
         ExpressionAtomContext* expressionAtom();
@@ -690,8 +727,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class InPredicateContext : public PredicateContext {
-      public:
+    class InPredicateContext : public PredicateContext
+    {
+    public:
         InPredicateContext(PredicateContext* ctx);
 
         PredicateContext* predicate();
@@ -704,8 +742,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class BinaryComparasionPredicateContext : public PredicateContext {
-      public:
+    class BinaryComparasionPredicateContext : public PredicateContext
+    {
+    public:
         BinaryComparasionPredicateContext(PredicateContext* ctx);
 
         NesCEPParser::PredicateContext* left = nullptr;
@@ -717,8 +756,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class IsNullPredicateContext : public PredicateContext {
-      public:
+    class IsNullPredicateContext : public PredicateContext
+    {
+    public:
         IsNullPredicateContext(PredicateContext* ctx);
 
         PredicateContext* predicate();
@@ -730,8 +770,9 @@ class NesCEPParser : public antlr4::Parser {
 
     PredicateContext* predicate();
     PredicateContext* predicate(int precedence);
-    class ExpressionAtomContext : public antlr4::ParserRuleContext {
-      public:
+    class ExpressionAtomContext : public antlr4::ParserRuleContext
+    {
+    public:
         ExpressionAtomContext(antlr4::ParserRuleContext* parent, size_t invokingState);
 
         ExpressionAtomContext() = default;
@@ -741,8 +782,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual size_t getRuleIndex() const override;
     };
 
-    class UnaryExpressionAtomContext : public ExpressionAtomContext {
-      public:
+    class UnaryExpressionAtomContext : public ExpressionAtomContext
+    {
+    public:
         UnaryExpressionAtomContext(ExpressionAtomContext* ctx);
 
         UnaryOperatorContext* unaryOperator();
@@ -751,8 +793,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class AttributeAtomContext : public ExpressionAtomContext {
-      public:
+    class AttributeAtomContext : public ExpressionAtomContext
+    {
+    public:
         AttributeAtomContext(ExpressionAtomContext* ctx);
 
         EventAttributeContext* eventAttribute();
@@ -760,8 +803,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class ConstantExpressionAtomContext : public ExpressionAtomContext {
-      public:
+    class ConstantExpressionAtomContext : public ExpressionAtomContext
+    {
+    public:
         ConstantExpressionAtomContext(ExpressionAtomContext* ctx);
 
         ConstantContext* constant();
@@ -769,8 +813,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class BinaryExpressionAtomContext : public ExpressionAtomContext {
-      public:
+    class BinaryExpressionAtomContext : public ExpressionAtomContext
+    {
+    public:
         BinaryExpressionAtomContext(ExpressionAtomContext* ctx);
 
         antlr4::tree::TerminalNode* BINARY();
@@ -779,8 +824,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class BitExpressionAtomContext : public ExpressionAtomContext {
-      public:
+    class BitExpressionAtomContext : public ExpressionAtomContext
+    {
+    public:
         BitExpressionAtomContext(ExpressionAtomContext* ctx);
 
         NesCEPParser::ExpressionAtomContext* left = nullptr;
@@ -792,8 +838,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class NestedExpressionAtomContext : public ExpressionAtomContext {
-      public:
+    class NestedExpressionAtomContext : public ExpressionAtomContext
+    {
+    public:
         NestedExpressionAtomContext(ExpressionAtomContext* ctx);
 
         antlr4::tree::TerminalNode* LPARENTHESIS();
@@ -806,8 +853,9 @@ class NesCEPParser : public antlr4::Parser {
         virtual void exitRule(antlr4::tree::ParseTreeListener* listener) override;
     };
 
-    class MathExpressionAtomContext : public ExpressionAtomContext {
-      public:
+    class MathExpressionAtomContext : public ExpressionAtomContext
+    {
+    public:
         MathExpressionAtomContext(ExpressionAtomContext* ctx);
 
         NesCEPParser::ExpressionAtomContext* left = nullptr;
@@ -821,8 +869,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ExpressionAtomContext* expressionAtom();
     ExpressionAtomContext* expressionAtom(int precedence);
-    class EventAttributeContext : public antlr4::ParserRuleContext {
-      public:
+    class EventAttributeContext : public antlr4::ParserRuleContext
+    {
+    public:
         EventAttributeContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         AggregationContext* aggregation();
@@ -840,8 +889,9 @@ class NesCEPParser : public antlr4::Parser {
 
     EventAttributeContext* eventAttribute();
 
-    class EventIterationContext : public antlr4::ParserRuleContext {
-      public:
+    class EventIterationContext : public antlr4::ParserRuleContext
+    {
+    public:
         EventIterationContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* NAME();
@@ -855,8 +905,9 @@ class NesCEPParser : public antlr4::Parser {
 
     EventIterationContext* eventIteration();
 
-    class MathExpressionContext : public antlr4::ParserRuleContext {
-      public:
+    class MathExpressionContext : public antlr4::ParserRuleContext
+    {
+    public:
         NesCEPParser::ExpressionAtomContext* left = nullptr;
         NesCEPParser::ExpressionAtomContext* right = nullptr;
         MathExpressionContext(antlr4::ParserRuleContext* parent, size_t invokingState);
@@ -874,8 +925,9 @@ class NesCEPParser : public antlr4::Parser {
 
     MathExpressionContext* mathExpression();
 
-    class AggregationContext : public antlr4::ParserRuleContext {
-      public:
+    class AggregationContext : public antlr4::ParserRuleContext
+    {
+    public:
         AggregationContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* AVGNode();
@@ -890,8 +942,9 @@ class NesCEPParser : public antlr4::Parser {
 
     AggregationContext* aggregation();
 
-    class AttributeContext : public antlr4::ParserRuleContext {
-      public:
+    class AttributeContext : public antlr4::ParserRuleContext
+    {
+    public:
         AttributeContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* NAME();
@@ -902,8 +955,9 @@ class NesCEPParser : public antlr4::Parser {
 
     AttributeContext* attribute();
 
-    class AttValContext : public antlr4::ParserRuleContext {
-      public:
+    class AttValContext : public antlr4::ParserRuleContext
+    {
+    public:
         AttValContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* IF();
@@ -919,8 +973,9 @@ class NesCEPParser : public antlr4::Parser {
 
     AttValContext* attVal();
 
-    class BoolRuleContext : public antlr4::ParserRuleContext {
-      public:
+    class BoolRuleContext : public antlr4::ParserRuleContext
+    {
+    public:
         BoolRuleContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* TRUE();
@@ -932,8 +987,9 @@ class NesCEPParser : public antlr4::Parser {
 
     BoolRuleContext* boolRule();
 
-    class ConditionContext : public antlr4::ParserRuleContext {
-      public:
+    class ConditionContext : public antlr4::ParserRuleContext
+    {
+    public:
         ConditionContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* LPARENTHESIS();
@@ -950,8 +1006,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ConditionContext* condition();
 
-    class UnaryOperatorContext : public antlr4::ParserRuleContext {
-      public:
+    class UnaryOperatorContext : public antlr4::ParserRuleContext
+    {
+    public:
         UnaryOperatorContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* PLUS();
@@ -963,8 +1020,9 @@ class NesCEPParser : public antlr4::Parser {
 
     UnaryOperatorContext* unaryOperator();
 
-    class ComparisonOperatorContext : public antlr4::ParserRuleContext {
-      public:
+    class ComparisonOperatorContext : public antlr4::ParserRuleContext
+    {
+    public:
         ComparisonOperatorContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         std::vector<antlr4::tree::TerminalNode*> EQUAL();
@@ -977,8 +1035,9 @@ class NesCEPParser : public antlr4::Parser {
 
     ComparisonOperatorContext* comparisonOperator();
 
-    class LogicalOperatorContext : public antlr4::ParserRuleContext {
-      public:
+    class LogicalOperatorContext : public antlr4::ParserRuleContext
+    {
+    public:
         LogicalOperatorContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* LOGAND();
@@ -991,8 +1050,9 @@ class NesCEPParser : public antlr4::Parser {
 
     LogicalOperatorContext* logicalOperator();
 
-    class BitOperatorContext : public antlr4::ParserRuleContext {
-      public:
+    class BitOperatorContext : public antlr4::ParserRuleContext
+    {
+    public:
         BitOperatorContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* LOGXOR();
@@ -1003,8 +1063,9 @@ class NesCEPParser : public antlr4::Parser {
 
     BitOperatorContext* bitOperator();
 
-    class MathOperatorContext : public antlr4::ParserRuleContext {
-      public:
+    class MathOperatorContext : public antlr4::ParserRuleContext
+    {
+    public:
         MathOperatorContext(antlr4::ParserRuleContext* parent, size_t invokingState);
         virtual size_t getRuleIndex() const override;
         antlr4::tree::TerminalNode* STAR();
@@ -1021,7 +1082,7 @@ class NesCEPParser : public antlr4::Parser {
     bool predicateSempred(PredicateContext* _localctx, size_t predicateIndex);
     bool expressionAtomSempred(ExpressionAtomContext* _localctx, size_t predicateIndex);
 
-  private:
+private:
     static std::vector<antlr4::dfa::DFA> _decisionToDFA;
     static antlr4::atn::PredictionContextCache _sharedContextCache;
     static std::vector<std::string> _ruleNames;
@@ -1033,11 +1094,12 @@ class NesCEPParser : public antlr4::Parser {
     static antlr4::atn::ATN _atn;
     static std::vector<uint16_t> _serializedATN;
 
-    struct Initializer {
+    struct Initializer
+    {
         Initializer();
     };
     static Initializer _init;
 };
 
-}// namespace NES::Parsers
-#endif// NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPPARSER_H_
+} // namespace NES::Parsers
+#endif // NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_GEN_NESCEPPARSER_H_

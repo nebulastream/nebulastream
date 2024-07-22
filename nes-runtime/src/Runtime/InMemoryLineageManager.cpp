@@ -16,42 +16,53 @@
 #include <Util/BufferSequenceNumber.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
-void InMemoryLineageManager::insert(BufferSequenceNumber newBufferSequenceNumber, BufferSequenceNumber oldBufferSequenceNumber) {
+void InMemoryLineageManager::insert(BufferSequenceNumber newBufferSequenceNumber, BufferSequenceNumber oldBufferSequenceNumber)
+{
     std::unique_lock<std::mutex> lock(mutex);
-    NES_TRACE("Insert tuple<{},{}> into bufferAncestorMapping manager",
-              newBufferSequenceNumber.getSequenceNumber(),
-              oldBufferSequenceNumber.getOriginId());
+    NES_TRACE(
+        "Insert tuple<{},{}> into bufferAncestorMapping manager",
+        newBufferSequenceNumber.getSequenceNumber(),
+        oldBufferSequenceNumber.getOriginId());
     this->bufferAncestorMapping[newBufferSequenceNumber].push_back(oldBufferSequenceNumber);
 }
 
-bool InMemoryLineageManager::trim(BufferSequenceNumber bufferSequenceNumber) {
+bool InMemoryLineageManager::trim(BufferSequenceNumber bufferSequenceNumber)
+{
     std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->bufferAncestorMapping.find(bufferSequenceNumber);
-    if (iterator != this->bufferAncestorMapping.end()) {
-        NES_TRACE("Trim tuple<{},{}> from bufferAncestorMapping manager",
-                  bufferSequenceNumber.getSequenceNumber(),
-                  bufferSequenceNumber.getOriginId());
+    if (iterator != this->bufferAncestorMapping.end())
+    {
+        NES_TRACE(
+            "Trim tuple<{},{}> from bufferAncestorMapping manager",
+            bufferSequenceNumber.getSequenceNumber(),
+            bufferSequenceNumber.getOriginId());
         this->bufferAncestorMapping.erase(iterator);
         return true;
     }
     return false;
 }
 
-std::vector<BufferSequenceNumber> InMemoryLineageManager::findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber) {
+std::vector<BufferSequenceNumber> InMemoryLineageManager::findTupleBufferAncestor(BufferSequenceNumber bufferSequenceNumber)
+{
     std::unique_lock<std::mutex> lock(mutex);
     auto iterator = this->bufferAncestorMapping.find(bufferSequenceNumber);
-    if (iterator != this->bufferAncestorMapping.end()) {
+    if (iterator != this->bufferAncestorMapping.end())
+    {
         return iterator->second;
-    } else {
+    }
+    else
+    {
         //if a tuple buffer was not found return empty vector
         return std::vector<BufferSequenceNumber>(0);
     }
 }
 
-size_t InMemoryLineageManager::getLineageSize() const {
+size_t InMemoryLineageManager::getLineageSize() const
+{
     std::unique_lock<std::mutex> lock(mutex);
     return this->bufferAncestorMapping.size();
 }
-}// namespace NES::Runtime
+} // namespace NES::Runtime

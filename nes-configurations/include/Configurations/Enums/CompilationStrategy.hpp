@@ -17,8 +17,10 @@
 
 #include <cstdint>
 
-namespace NES::QueryCompilation {
-enum class CompilationStrategy : uint8_t {
+namespace NES::QueryCompilation
+{
+enum class CompilationStrategy : uint8_t
+{
     // Use fast compilation strategy, i.e., does not apply any optimizations and omits debug output.
     FAST,
     // Creates debug output i.e., source code files and applies formatting. No code optimizations.
@@ -30,4 +32,4 @@ enum class CompilationStrategy : uint8_t {
 };
 }
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_COMPILATIONSTRATEGY_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_COMPILATIONSTRATEGY_HPP_

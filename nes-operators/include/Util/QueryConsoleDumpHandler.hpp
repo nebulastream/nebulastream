@@ -17,7 +17,8 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -27,9 +28,9 @@ using NodePtr = std::shared_ptr<Node>;
 /**
  * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
  */
-class QueryConsoleDumpHandler {
-
-  public:
+class QueryConsoleDumpHandler
+{
+public:
     virtual ~QueryConsoleDumpHandler() = default;
     static std::shared_ptr<QueryConsoleDumpHandler> create(std::ostream& out);
     explicit QueryConsoleDumpHandler(std::ostream& out);
@@ -51,12 +52,12 @@ class QueryConsoleDumpHandler {
      */
     void dump(std::string context, std::string scope, QueryPlanPtr plan);
 
-  private:
+private:
     std::ostream& out;
     void dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
     void multilineDumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_UTIL_QUERYCONSOLEDUMPHANDLER_HPP_
+#endif // NES_OPERATORS_INCLUDE_UTIL_QUERYCONSOLEDUMPHANDLER_HPP_

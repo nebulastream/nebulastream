@@ -14,15 +14,27 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
-namespace NES {
-SinkDescriptor::SinkDescriptor() : SinkDescriptor(1) {}
+namespace NES
+{
+SinkDescriptor::SinkDescriptor() : SinkDescriptor(1)
+{
+}
 
-SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins) : SinkDescriptor(numberOfOrigins, false) {}
+SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins) : SinkDescriptor(numberOfOrigins, false)
+{
+}
 
-SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp)
-    : numberOfOrigins(numberOfOrigins), addTimestamp(addTimestamp) {}
+SinkDescriptor::SinkDescriptor(uint64_t numberOfOrigins, bool addTimestamp) : numberOfOrigins(numberOfOrigins), addTimestamp(addTimestamp)
+{
+}
 
-uint64_t SinkDescriptor::getNumberOfOrigins() const { return numberOfOrigins; }
+uint64_t SinkDescriptor::getNumberOfOrigins() const
+{
+    return numberOfOrigins;
+}
 
-bool SinkDescriptor::getAddTimestamp() const { return addTimestamp; }
-}// namespace NES
+bool SinkDescriptor::getAddTimestamp() const
+{
+    return addTimestamp;
+}
+} // namespace NES

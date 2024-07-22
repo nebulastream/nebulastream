@@ -23,12 +23,15 @@
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class LogicalOperatorFactory {
-  public:
-    template<typename Operator, typename... Arguments>
-    static std::shared_ptr<Operator> create(Arguments&&... args) {
+class LogicalOperatorFactory
+{
+public:
+    template <typename Operator, typename... Arguments>
+    static std::shared_ptr<Operator> create(Arguments&&... args)
+    {
         return std::shared_ptr<Operator>(std::forward<Arguments>(args)...);
     }
 
@@ -45,8 +48,7 @@ class LogicalOperatorFactory {
      * @param new source name
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createRenameSourceOperator(std::string const& newSourceName,
-                                                              OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createRenameSourceOperator(std::string const& newSourceName, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new logical limit operator.
@@ -62,8 +64,8 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorPtr
     */
-    static LogicalUnaryOperatorPtr createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions,
-                                                            OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr
+    createProjectionOperator(const std::vector<ExpressionNodePtr>& expressions, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new sink operator with a specific sink descriptor.
@@ -72,9 +74,8 @@ class LogicalOperatorFactory {
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return LogicalOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createSinkOperator(SinkDescriptorPtr const& sinkDescriptor,
-                                                      WorkerId workerId = INVALID_WORKER_NODE_ID,
-                                                      OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createSinkOperator(
+        SinkDescriptorPtr const& sinkDescriptor, WorkerId workerId = INVALID_WORKER_NODE_ID, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new map operator with a field assignment expression as a map expression.
@@ -82,8 +83,8 @@ class LogicalOperatorFactory {
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression,
-                                                     OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr
+    createMapOperator(FieldAssignmentExpressionNodePtr const& mapExpression, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new infer model operator.
@@ -93,10 +94,11 @@ class LogicalOperatorFactory {
      * @param id: The id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createInferModelOperator(std::string model,
-                                                            std::vector<ExpressionNodePtr> inputFields,
-                                                            std::vector<ExpressionNodePtr> outputFields,
-                                                            OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createInferModelOperator(
+        std::string model,
+        std::vector<ExpressionNodePtr> inputFields,
+        std::vector<ExpressionNodePtr> outputFields,
+        OperatorId id = getNextOperatorId());
 
     /**
      * @brief Creates a synopsis build operator
@@ -108,13 +110,13 @@ class LogicalOperatorFactory {
      * @param id: The id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorNodePtr
      */
-    static LogicalUnaryOperatorPtr
-    createStatisticBuildOperator(const Windowing::WindowTypePtr& window,
-                                 const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
-                                 const Statistic::StatisticMetricHash metricHash,
-                                 const Statistic::SendingPolicyPtr sendingPolicy,
-                                 const Statistic::TriggerConditionPtr triggerCondition,
-                                 OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createStatisticBuildOperator(
+        const Windowing::WindowTypePtr& window,
+        const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
+        const Statistic::StatisticMetricHash metricHash,
+        const Statistic::SendingPolicyPtr sendingPolicy,
+        const Statistic::TriggerConditionPtr triggerCondition,
+        OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new source operator with source descriptor.
@@ -122,9 +124,8 @@ class LogicalOperatorFactory {
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createSourceOperator(SourceDescriptorPtr const& sourceDescriptor,
-                                                        OperatorId id = getNextOperatorId(),
-                                                        OriginId originId = INVALID_ORIGIN_ID);
+    static LogicalUnaryOperatorPtr createSourceOperator(
+        SourceDescriptorPtr const& sourceDescriptor, OperatorId id = getNextOperatorId(), OriginId originId = INVALID_ORIGIN_ID);
 
     /**
     * @brief Create a specialized watermark assigner operator.
@@ -132,17 +133,16 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return LogicalOperatorPtr
     */
-    static LogicalUnaryOperatorPtr
-    createWatermarkAssignerOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor,
-                                    OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr createWatermarkAssignerOperator(
+        Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id = getNextOperatorId());
     /**
      * @brief Create a new window operator with window definition.
      * @param windowDefinition the LogicalWindowDescriptorPtr.
      * @param id: the id of the operator if not defined then next free operator id is used.
      * @return UnaryOperatorPtr
      */
-    static LogicalUnaryOperatorPtr createWindowOperator(Windowing::LogicalWindowDescriptorPtr const& windowDefinition,
-                                                        OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr
+    createWindowOperator(Windowing::LogicalWindowDescriptorPtr const& windowDefinition, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a specialized union operator.
@@ -156,8 +156,8 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return BinaryOperator
     */
-    static LogicalBinaryOperatorPtr createJoinOperator(const Join::LogicalJoinDescriptorPtr& joinDefinition,
-                                                       OperatorId id = getNextOperatorId());
+    static LogicalBinaryOperatorPtr
+    createJoinOperator(const Join::LogicalJoinDescriptorPtr& joinDefinition, OperatorId id = getNextOperatorId());
 
     // todo put in experimental namespace
     /**
@@ -165,9 +165,8 @@ class LogicalOperatorFactory {
     * @param id: the id of the operator if not defined then next free operator id is used.
     * @return BinaryOperator
     */
-    static LogicalBinaryOperatorPtr
-    createBatchJoinOperator(const Join::Experimental::LogicalBatchJoinDescriptorPtr& batchJoinDefinition,
-                            OperatorId id = getNextOperatorId());
+    static LogicalBinaryOperatorPtr createBatchJoinOperator(
+        const Join::Experimental::LogicalBatchJoinDescriptorPtr& batchJoinDefinition, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new MapJavaUDFLogicalOperator.
@@ -175,8 +174,8 @@ class LogicalOperatorFactory {
      * @param id The operator ID.
      * @return A logical operator node which encapsulates the Java UDF.
      */
-    static LogicalUnaryOperatorPtr createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
-                                                               OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr
+    createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new FlatMapJavaUDFLogicalOperator.
@@ -184,8 +183,8 @@ class LogicalOperatorFactory {
      * @param id The operator ID.
      * @return A logical operator node which encapsulates the Java UDF.
      */
-    static LogicalUnaryOperatorPtr createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor,
-                                                                   OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr
+    createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id = getNextOperatorId());
 
     /**
      * @brief Create a new OpenCL logical operator
@@ -193,10 +192,10 @@ class LogicalOperatorFactory {
      * @param id : the id of the operator
      * @return a logical operator of type OpenCL logical operator
      */
-    static LogicalUnaryOperatorPtr createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor,
-                                                               OperatorId id = getNextOperatorId());
+    static LogicalUnaryOperatorPtr
+    createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id = getNextOperatorId());
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_

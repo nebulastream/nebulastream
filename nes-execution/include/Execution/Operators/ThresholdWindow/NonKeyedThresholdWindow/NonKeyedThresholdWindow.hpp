@@ -14,17 +14,19 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_HPP_
+#include <utility>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <utility>
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Threshold window operator that compute aggregation of tuples satisfying the threshold.
  */
-class NonKeyedThresholdWindow : public ExecutableOperator {
-  public:
+class NonKeyedThresholdWindow : public ExecutableOperator
+{
+public:
     /**
      * @brief Creates a threshold window operator.
      * @param predicateExpression boolean predicate expression which check if a tuple satisfy the threshold
@@ -33,15 +35,16 @@ class NonKeyedThresholdWindow : public ExecutableOperator {
      * @param aggregationFunctions vector of aggregation functiosn to apply to the threshold window
      * @param operatorHandlerIndex index of the handler of this operator in the pipeline execution context
      */
-    NonKeyedThresholdWindow(Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
-                            const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
-                            uint64_t minCount,
-                            const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                            uint64_t operatorHandlerIndex);
+    NonKeyedThresholdWindow(
+        Runtime::Execution::Expressions::ExpressionPtr predicateExpression,
+        const std::vector<Nautilus::Record::RecordFieldIdentifier>& aggregationResultFieldIdentifiers,
+        uint64_t minCount,
+        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+        uint64_t operatorHandlerIndex);
 
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+private:
     const Runtime::Execution::Expressions::ExpressionPtr predicateExpression;
     const std::vector<Expressions::ExpressionPtr> aggregatedFieldAccessExpressions;
     const std::vector<Nautilus::Record::RecordFieldIdentifier> aggregationResultFieldIdentifiers;
@@ -49,6 +52,6 @@ class NonKeyedThresholdWindow : public ExecutableOperator {
     uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_HPP_

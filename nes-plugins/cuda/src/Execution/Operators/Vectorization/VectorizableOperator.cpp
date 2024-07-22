@@ -15,11 +15,12 @@
 #include <Exceptions/RuntimeException.hpp>
 #include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void VectorizableOperator::execute(ExecutionContext&, Record&) const {
-    throw Exceptions::RuntimeException(
-        "VectorizableOperator: Non-vectorized record input is not allowed in vectorizable operator");
+void VectorizableOperator::execute(ExecutionContext&, Record&) const
+{
+    throw Exceptions::RuntimeException("VectorizableOperator: Non-vectorized record input is not allowed in vectorizable operator");
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

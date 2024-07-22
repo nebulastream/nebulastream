@@ -15,13 +15,15 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEXPRESSIONNODE_HPP_
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This node represents a less comparision between the two children.
  */
-class LessExpressionNode : public LogicalBinaryExpressionNode {
-  public:
+class LessExpressionNode : public LogicalBinaryExpressionNode
+{
+public:
     LessExpressionNode() = default;
     ~LessExpressionNode() override = default;
     /**
@@ -39,9 +41,9 @@ class LessExpressionNode : public LogicalBinaryExpressionNode {
     */
     ExpressionNodePtr copy() override;
 
-  protected:
+protected:
     explicit LessExpressionNode(LessExpressionNode* other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEXPRESSIONNODE_HPP_

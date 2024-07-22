@@ -15,30 +15,33 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_ABSTRACTJAVAUDFOPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_ABSTRACTJAVAUDFOPERATOR_HPP_
 
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/OperatorState.hpp>
-#include <utility>
+#include <Common/DataTypes/DataType.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief An abstract java udf operator, which is used by the Map and Flatmap operator.
  * Its state is managed inside a JavaUDFOperatorHandler.
  */
-class AbstractJavaUDFOperator : public ExecutableOperator {
-  protected:
-    class LocalUDFState : public OperatorState {
-      public:
-        explicit LocalUDFState(Value<MemRef>& handler, Value<MemRef>& instance) : handler(handler), instance(instance) {}
+class AbstractJavaUDFOperator : public ExecutableOperator
+{
+protected:
+    class LocalUDFState : public OperatorState
+    {
+    public:
+        explicit LocalUDFState(Value<MemRef>& handler, Value<MemRef>& instance) : handler(handler), instance(instance) { }
         Value<MemRef> handler;
         Value<MemRef> instance;
     };
 
-  public:
+public:
     /**
      * @brief Creates a AbstractJavaUDFOperator operator
      * @param operatorHandlerIndex The index to a valid JavaUDFOperatorHandler
@@ -50,7 +53,7 @@ class AbstractJavaUDFOperator : public ExecutableOperator {
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
-  protected:
+protected:
     const uint64_t operatorHandlerIndex;
 
     // These needs to be the same Schemas as used in the operator handler.
@@ -61,6 +64,6 @@ class AbstractJavaUDFOperator : public ExecutableOperator {
     Record extractRecordFromPojo(const Value<MemRef>& handler, const Value<MemRef>& outputPojoPtr) const;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_ABSTRACTJAVAUDFOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_ABSTRACTJAVAUDFOPERATOR_HPP_

@@ -11,42 +11,47 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
 #include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-class DummyResponse : public AbstractRequestResponse {
-  public:
+class DummyResponse : public AbstractRequestResponse
+{
+public:
     explicit DummyResponse(uint32_t number) : number(number){};
     uint32_t number;
 };
 
-class DummyRequest : public AbstractUniRequest {
-  public:
+class DummyRequest : public AbstractUniRequest
+{
+public:
     DummyRequest(const std::vector<ResourceType>& requiredResources, uint8_t maxRetries, uint32_t responseValue)
         : AbstractUniRequest(requiredResources, maxRetries), responseValue(responseValue){};
 
-    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override {
+    std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr&) override
+    {
         responsePromise.set_value(std::make_shared<DummyResponse>(responseValue));
         return {};
     }
 
     std::vector<AbstractRequestPtr> rollBack(std::exception_ptr, const StorageHandlerPtr&) override { return {}; }
 
-  protected:
-    void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-    void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override {}
-    void postExecution(const StorageHandlerPtr&) override {}
+protected:
+    void preRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override { }
+    void postRollbackHandle(std::exception_ptr, const StorageHandlerPtr&) override { }
+    void postExecution(const StorageHandlerPtr&) override { }
 
-  private:
+private:
     uint32_t responseValue;
 };
 
-class DummyStorageHandler : public StorageHandler {
-  public:
+class DummyStorageHandler : public StorageHandler
+{
+public:
     explicit DummyStorageHandler() = default;
     Optimizer::GlobalExecutionPlanPtr getGlobalExecutionPlanHandle(RequestId) override { return nullptr; };
 
@@ -63,12 +68,14 @@ class DummyStorageHandler : public StorageHandler {
     Configurations::CoordinatorConfigurationPtr getCoordinatorConfiguration(RequestId) override { return nullptr; }
 };
 
-class AbstractRequestTest : public Testing::BaseUnitTest {
-  public:
+class AbstractRequestTest : public Testing::BaseUnitTest
+{
+public:
     static void SetUpTestCase() { NES::Logger::setupLogging("AbstractRequestTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
-TEST_F(AbstractRequestTest, testPromise) {
+TEST_F(AbstractRequestTest, testPromise)
+{
     constexpr uint32_t responseValue = 20;
     auto requestId = RequestId(1);
     std::vector<ResourceType> requiredResources;
@@ -76,11 +83,13 @@ TEST_F(AbstractRequestTest, testPromise) {
     DummyRequest request(requiredResources, maxRetries, responseValue);
     request.setId(requestId);
     auto future = request.getFuture();
-    auto thread = std::make_shared<std::thread>([&request]() {
-        std::shared_ptr<DummyStorageHandler> storageHandler;
-        request.executeRequestLogic(storageHandler);
-    });
+    auto thread = std::make_shared<std::thread>(
+        [&request]()
+        {
+            std::shared_ptr<DummyStorageHandler> storageHandler;
+            request.executeRequestLogic(storageHandler);
+        });
     thread->join();
     EXPECT_EQ(std::static_pointer_cast<DummyResponse>(future.get())->number, responseValue);
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

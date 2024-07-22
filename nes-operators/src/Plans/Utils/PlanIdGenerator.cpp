@@ -12,23 +12,27 @@
     limitations under the License.
 */
 
-#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <atomic>
+#include <Plans/Utils/PlanIdGenerator.hpp>
 
-namespace NES {
-QueryId PlanIdGenerator::getNextQueryId() {
+namespace NES
+{
+QueryId PlanIdGenerator::getNextQueryId()
+{
     static std::atomic_uint64_t id = INITIAL_QUERY_ID.getRawValue();
     return QueryId(id++);
 }
 
-SharedQueryId PlanIdGenerator::getNextSharedQueryId() {
+SharedQueryId PlanIdGenerator::getNextSharedQueryId()
+{
     static std::atomic_uint64_t id = INITIAL_SHARED_QUERY_ID.getRawValue();
     return SharedQueryId(id++);
 }
 
-DecomposedQueryPlanId PlanIdGenerator::getNextDecomposedQueryPlanId() {
+DecomposedQueryPlanId PlanIdGenerator::getNextDecomposedQueryPlanId()
+{
     static std::atomic_uint64_t id = INITIAL_DECOMPOSED_QUERY_PLAN_ID.getRawValue();
     return DecomposedQueryPlanId(id++);
 }
 
-}// namespace NES
+} // namespace NES

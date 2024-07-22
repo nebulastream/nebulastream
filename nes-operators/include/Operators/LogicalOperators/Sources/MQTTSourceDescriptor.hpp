@@ -17,22 +17,24 @@
 
 #ifdef ENABLE_MQTT_BUILD
 
-#include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#    include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
+#    include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical mqtt source
  */
-class MQTTSourceDescriptor : public SourceDescriptor {
-
-  public:
-    enum class ServiceQualities : uint8_t {
+class MQTTSourceDescriptor : public SourceDescriptor
+{
+public:
+    enum class ServiceQualities : uint8_t
+    {
         atMostOnce,
         atLeastOnce,
         exactlyOnce
-    };//cleanSession requires atLeastOnce or exactlyOnce
+    }; //cleanSession requires atLeastOnce or exactlyOnce
     /**
    * @brief create a source descriptor pointer for MQTT source
    * @param schema the schema of the data
@@ -58,7 +60,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
 
     SourceDescriptorPtr copy() override;
 
-  private:
+private:
     /**
      * @brief mqtt source descriptor constructor
      * @param schema the schema of the data
@@ -72,7 +74,7 @@ class MQTTSourceDescriptor : public SourceDescriptor {
 
 using MQTTSourceDescriptorPtr = std::shared_ptr<MQTTSourceDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
 #endif
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MQTTSOURCEDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MQTTSOURCEDESCRIPTOR_HPP_

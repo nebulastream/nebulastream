@@ -14,17 +14,25 @@
 
 #include <RequestProcessor/StorageHandles/StorageDataStructures.hpp>
 
-namespace NES::RequestProcessor {
-StorageDataStructures::StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                                             TopologyPtr topology,
-                                             Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                                             GlobalQueryPlanPtr globalQueryPlan,
-                                             Catalogs::Query::QueryCatalogPtr queryCatalog,
-                                             Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                                             Catalogs::UDF::UDFCatalogPtr udfCatalog,
-                                             Statistic::StatisticProbeHandlerPtr statisticProbeHandler)
-    : coordinatorConfiguration(std::move(coordinatorConfiguration)), topology(std::move(topology)),
-      globalExecutionPlan(std::move(globalExecutionPlan)), globalQueryPlan(std::move(globalQueryPlan)),
-      queryCatalog(std::move(queryCatalog)), sourceCatalog(std::move(sourceCatalog)), udfCatalog(std::move(udfCatalog)),
-      statisticProbeHandler(std::move(statisticProbeHandler)) {}
-}// namespace NES::RequestProcessor
+namespace NES::RequestProcessor
+{
+StorageDataStructures::StorageDataStructures(
+    Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+    TopologyPtr topology,
+    Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+    GlobalQueryPlanPtr globalQueryPlan,
+    Catalogs::Query::QueryCatalogPtr queryCatalog,
+    Catalogs::Source::SourceCatalogPtr sourceCatalog,
+    Catalogs::UDF::UDFCatalogPtr udfCatalog,
+    Statistic::StatisticProbeHandlerPtr statisticProbeHandler)
+    : coordinatorConfiguration(std::move(coordinatorConfiguration))
+    , topology(std::move(topology))
+    , globalExecutionPlan(std::move(globalExecutionPlan))
+    , globalQueryPlan(std::move(globalQueryPlan))
+    , queryCatalog(std::move(queryCatalog))
+    , sourceCatalog(std::move(sourceCatalog))
+    , udfCatalog(std::move(udfCatalog))
+    , statisticProbeHandler(std::move(statisticProbeHandler))
+{
+}
+} // namespace NES::RequestProcessor

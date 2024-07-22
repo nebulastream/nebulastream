@@ -12,24 +12,28 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Optimizer/Phases/QueryPlacementRefinementPhase.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
-QueryPlacementRefinementPhasePtr QueryPlacementRefinementPhase::create(GlobalExecutionPlanPtr globalPlan) {
+QueryPlacementRefinementPhasePtr QueryPlacementRefinementPhase::create(GlobalExecutionPlanPtr globalPlan)
+{
     return std::make_shared<QueryPlacementRefinementPhase>(QueryPlacementRefinementPhase(std::move(globalPlan)));
 }
 
-QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan) {
+QueryPlacementRefinementPhase::QueryPlacementRefinementPhase(GlobalExecutionPlanPtr globalPlan)
+{
     NES_DEBUG("QueryPlacementRefinementPhase()");
     globalExecutionPlan = std::move(globalPlan);
 }
 
-bool QueryPlacementRefinementPhase::execute(QueryId queryId) {
+bool QueryPlacementRefinementPhase::execute(QueryId queryId)
+{
     NES_DEBUG("QueryPlacementRefinementPhase() execute for query  {}", queryId);
     return true;
 }
 
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer

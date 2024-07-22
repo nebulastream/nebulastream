@@ -20,10 +20,12 @@
 #include <arrow/ipc/type_fwd.h>
 #include <arrow/type_fwd.h>
 
-namespace NES {
+namespace NES
+{
 
-class ArrowFormat : public SinkFormat {
-  public:
+class ArrowFormat : public SinkFormat
+{
+public:
     ArrowFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
     virtual ~ArrowFormat() noexcept = default;
 
@@ -72,12 +74,12 @@ class ArrowFormat : public SinkFormat {
      */
     FormatTypes getSinkFormat() override;
 
-  private:
+private:
     /**
     * @brief method that creates arrow arrays based on the schema
     * @return a vector of empty arrow arrays
     */
     std::vector<std::shared_ptr<arrow::Array>> buildArrowArrays();
 };
-}// namespace NES
-#endif// NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFORMAT_HPP_
+} // namespace NES
+#endif // NES_PLUGINS_ARROW_INCLUDE_SINKS_ARROW_ARROWFORMAT_HPP_

@@ -14,12 +14,15 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Abstract Emit operator.
  */
-class AbstractEmitOperator {};
-}// namespace NES::QueryCompilation::PhysicalOperators
+class AbstractEmitOperator
+{
+};
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_

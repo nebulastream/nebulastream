@@ -14,36 +14,40 @@
 #ifndef NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 #define NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
 
-#include <Identifiers/Identifiers.hpp>
-#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
-#include <Util/Mobility/GeoLocation.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <atomic>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <thread>
+#include <Identifiers/Identifiers.hpp>
+#include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/TimeMeasurement.hpp>
 
 #ifdef S2DEF
-#include <s2/s1angle.h>
-#include <s2/s2point.h>
+#    include <s2/s1angle.h>
+#    include <s2/s2point.h>
 #endif
 
-namespace NES {
+namespace NES
+{
 class CoordinatorRPCClient;
 using CoordinatorRPCCLientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
-namespace Runtime {
+namespace Runtime
+{
 class NodeEngine;
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
-}// namespace Runtime
+} // namespace Runtime
 
-namespace Configurations::Spatial::Mobility::Experimental {
+namespace Configurations::Spatial::Mobility::Experimental
+{
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}// namespace Configurations::Spatial::Mobility::Experimental
+} // namespace Configurations::Spatial::Mobility::Experimental
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 class ReconnectSchedulePredictor;
 using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor>;
 
@@ -61,8 +65,9 @@ struct ReconnectPoint;
  * 4. Initiates mechanisms to prevent query interruption (Un-/buffering, reconfigure sink operators)
  * This class is not thread safe!
 */
-class WorkerMobilityHandler {
-  public:
+class WorkerMobilityHandler
+{
+public:
     /**
      * Constructor
      * @param locationProvider the location provider from which the workers current locations can be obtained
@@ -89,7 +94,7 @@ class WorkerMobilityHandler {
      */
     bool stop();
 
-  private:
+private:
     /**
      * @brief check if the device has moved further than the defined threshold from the last position that was communicated to the coordinator
      * and if so, send the new location and the time it was recorded to the coordinator and safe it as the last transmitted position
@@ -108,9 +113,9 @@ class WorkerMobilityHandler {
      * removed on the coordinator side or nullopt if there are not old predcitions that need to be removed
      * @return true if the the data was succesfully sent
      */
-    bool
-    sendNextPredictedReconnect(const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& scheduledReconnects,
-                               const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& removedReconnects);
+    bool sendNextPredictedReconnect(
+        const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& scheduledReconnects,
+        const std::optional<NES::Spatial::Mobility::Experimental::ReconnectSchedule>& removedReconnects);
 
     /**
      * @brief Buffer outgoing data, perform reconnect and unbuffer data once reconnect succeeded
@@ -130,8 +135,7 @@ class WorkerMobilityHandler {
      * @param radius: radius in km to define query area
      * @return list of node IDs and their corresponding GeographicalLocations
      */
-    DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location,
-                                                                      double radius);
+    DataTypes::Experimental::NodeIdToGeoLocationMap getNodeIdsInRange(const DataTypes::Experimental::GeoLocation& location, double radius);
 
 #ifdef S2DEF
     /**
@@ -150,9 +154,10 @@ class WorkerMobilityHandler {
      * @param neighbourWorkerSpatialIndex : the spatial index to be updated
      * @return true if the received list of node positions was not empty
      */
-    bool updateNeighbourWorkerInformation(const DataTypes::Experimental::GeoLocation& currentLocation,
-                                          std::unordered_map<WorkerId, S2Point>& neighbourWorkerIdToLocationMap,
-                                          S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
+    bool updateNeighbourWorkerInformation(
+        const DataTypes::Experimental::GeoLocation& currentLocation,
+        std::unordered_map<WorkerId, S2Point>& neighbourWorkerIdToLocationMap,
+        S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
 
     /**
      * @brief checks if the supplied position is less then the defined threshold away from the fringe of the area covered by the
@@ -162,8 +167,8 @@ class WorkerMobilityHandler {
      * @param currentWaypoint: current location of this worker
      * @return true if the device is close to the fringe and the index should be updated
      */
-    bool shouldUpdateNeighbouringWorkerInformation(const std::optional<S2Point>& centroidOfNeighbouringWorkerSpatialIndex,
-                                                   const DataTypes::Experimental::Waypoint& currentWaypoint);
+    bool shouldUpdateNeighbouringWorkerInformation(
+        const std::optional<S2Point>& centroidOfNeighbouringWorkerSpatialIndex, const DataTypes::Experimental::Waypoint& currentWaypoint);
 
     /**
      * @brief Fetch the next reconnect point where this worker needs to connect
@@ -175,11 +180,11 @@ class WorkerMobilityHandler {
      * potential new parents
      * @return nothing if no reconnection point is available else returns the new reconnection point
      */
-    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint>
-    getNextReconnectPoint(std::optional<ReconnectSchedule>& reconnectSchedule,
-                          const DataTypes::Experimental::GeoLocation& currentOwnLocation,
-                          const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,
-                          const S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
+    std::optional<NES::Spatial::Mobility::Experimental::ReconnectPoint> getNextReconnectPoint(
+        std::optional<ReconnectSchedule>& reconnectSchedule,
+        const DataTypes::Experimental::GeoLocation& currentOwnLocation,
+        const std::optional<NES::Spatial::DataTypes::Experimental::GeoLocation>& currentParentLocation,
+        const S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
 
     /**
      * @brief checks if the position supplied as an argument is further than the configured threshold from the last position
@@ -188,8 +193,8 @@ class WorkerMobilityHandler {
      * @param currentWaypoint: current waypoint of the worker node
      * @return true if the distance is larger than the threshold
      */
-    bool shouldSendCurrentWaypointToCoordinator(const std::optional<S2Point>& lastTransmittedLocation,
-                                                const DataTypes::Experimental::GeoLocation& currentLocation);
+    bool shouldSendCurrentWaypointToCoordinator(
+        const std::optional<S2Point>& lastTransmittedLocation, const DataTypes::Experimental::GeoLocation& currentLocation);
 
     /**
      * @brief retrieves the id of the closest node within the supplied radius in the neighbouring workers index if such a node exists.
@@ -198,9 +203,10 @@ class WorkerMobilityHandler {
      * @param neighbourWorkerSpatialIndex a spatial index containing other workers in the vicinity
      * @return An optional containing the node id of the closest node or nullopt if no node could be found with the radius
      */
-    std::optional<WorkerId> getClosestNodeId(const DataTypes::Experimental::GeoLocation& currentOwnLocation,
-                                             S1Angle radius,
-                                             const S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
+    std::optional<WorkerId> getClosestNodeId(
+        const DataTypes::Experimental::GeoLocation& currentOwnLocation,
+        S1Angle radius,
+        const S2PointIndex<WorkerId>& neighbourWorkerSpatialIndex);
 #endif
 
     /**
@@ -239,7 +245,7 @@ class WorkerMobilityHandler {
     CoordinatorRPCCLientPtr coordinatorRpcClient;
 };
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
-}// namespace Spatial::Mobility::Experimental
-}// namespace NES
+} // namespace Spatial::Mobility::Experimental
+} // namespace NES
 
-#endif// NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_
+#endif // NES_WORKER_INCLUDE_MOBILITY_WORKERMOBILITYHANDLER_HPP_

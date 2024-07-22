@@ -20,13 +20,15 @@
 
 #include <string>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief This exception is thrown when an error occurs during UDF processing.
  */
-class UDFException : public Exceptions::RequestExecutionException {
-  public:
+class UDFException : public Exceptions::RequestExecutionException
+{
+public:
     /**
      * @brief Construct a UDF exception from a message and include the current stack trace.
      * @param message The exception message.
@@ -42,9 +44,9 @@ class UDFException : public Exceptions::RequestExecutionException {
      */
     [[nodiscard]] const std::string& getMessage() const { return message; }
 
-  private:
+private:
     const std::string message;
 };
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_

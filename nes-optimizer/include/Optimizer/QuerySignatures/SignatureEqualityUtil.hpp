@@ -17,15 +17,17 @@
 
 #include <memory>
 
-namespace z3 {
+namespace z3
+{
 class solver;
 using SolverPtr = std::shared_ptr<solver>;
 
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
@@ -36,9 +38,9 @@ using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
 /**
  * @brief This is a utility to compare two signatures
  */
-class SignatureEqualityUtil {
-
-  public:
+class SignatureEqualityUtil
+{
+public:
     static SignatureEqualityUtilPtr create(const z3::ContextPtr& context);
 
     explicit SignatureEqualityUtil(const z3::ContextPtr& context);
@@ -57,11 +59,11 @@ class SignatureEqualityUtil {
      */
     bool resetSolver();
 
-  private:
+private:
     z3::ContextPtr context;
     z3::SolverPtr solver;
     uint64_t counter;
     const uint16_t RESET_SOLVER_THRESHOLD = 20050;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATUREEQUALITYUTIL_HPP_

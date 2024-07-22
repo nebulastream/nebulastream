@@ -18,7 +18,8 @@
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/GatheringMode.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class MemorySourceType;
 using MemorySourceTypePtr = std::shared_ptr<MemorySourceType>;
@@ -26,8 +27,9 @@ using MemorySourceTypePtr = std::shared_ptr<MemorySourceType>;
 /**
  * @brief A source config for a memory source
  */
-class MemorySourceType : public PhysicalSourceType {
-  public:
+class MemorySourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief Factory method of MemorySourceType
      * @param memoryArea : location from where to read data
@@ -39,15 +41,16 @@ class MemorySourceType : public PhysicalSourceType {
      * @param taskQueueId: taskQueueId
      * @return a constructed MemorySourceType
      */
-    static MemorySourceTypePtr create(const std::string& logicalSourceName,
-                                      const std::string& physicalSourceName,
-                                      uint8_t* memoryArea,
-                                      size_t memoryAreaSize,
-                                      uint64_t numBuffersToProduce,
-                                      uint64_t gatheringValue,
-                                      GatheringMode gatheringMode,
-                                      uint64_t sourceAffinity = 0,
-                                      uint64_t taskQueueId = 0);
+    static MemorySourceTypePtr create(
+        const std::string& logicalSourceName,
+        const std::string& physicalSourceName,
+        uint8_t* memoryArea,
+        size_t memoryAreaSize,
+        uint64_t numBuffersToProduce,
+        uint64_t gatheringValue,
+        GatheringMode gatheringMode,
+        uint64_t sourceAffinity = 0,
+        uint64_t taskQueueId = 0);
 
     const std::shared_ptr<uint8_t>& getMemoryArea() const;
 
@@ -73,7 +76,7 @@ class MemorySourceType : public PhysicalSourceType {
 
     void reset() override;
 
-  private:
+private:
     /**
      * @brief Create a MemorySourceType using a set of parameters
      * @param memoryArea the pointer to the memory area
@@ -84,15 +87,16 @@ class MemorySourceType : public PhysicalSourceType {
      * @param sourceAffinity: sourceAffinity
      * @param taskQueueId: taskQueueId
      */
-    explicit MemorySourceType(const std::string& logicalSourceName,
-                              const std::string& physicalSourceName,
-                              uint8_t* memoryArea,
-                              size_t memoryAreaSize,
-                              uint64_t numBuffersToProduce,
-                              uint64_t gatheringValue,
-                              GatheringMode gatheringMode,
-                              uint64_t sourceAffinity,
-                              uint64_t taskQueueId);
+    explicit MemorySourceType(
+        const std::string& logicalSourceName,
+        const std::string& physicalSourceName,
+        uint8_t* memoryArea,
+        size_t memoryAreaSize,
+        uint64_t numBuffersToProduce,
+        uint64_t gatheringValue,
+        GatheringMode gatheringMode,
+        uint64_t sourceAffinity,
+        uint64_t taskQueueId);
 
     std::shared_ptr<uint8_t> memoryArea;
     size_t memoryAreaSize;
@@ -102,5 +106,5 @@ class MemorySourceType : public PhysicalSourceType {
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MEMORYSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MEMORYSOURCETYPE_HPP_

@@ -12,22 +12,25 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryStateException.hpp>
 #include <Catalogs/Exceptions/QueryNotFoundException.hpp>
 #include <Exceptions/QueryUndeploymentException.hpp>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 using Exceptions::InvalidQueryStateException;
 using Exceptions::QueryNotFoundException;
 using Exceptions::RequestExecutionException;
 
-class RequestExecutionExceptionTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class RequestExecutionExceptionTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("Config.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RequestExecutionException test class.");
     }
@@ -38,7 +41,8 @@ class RequestExecutionExceptionTest : public Testing::BaseUnitTest {
 /**
  * @brief Checks if the instanceOf() function returns true only for the actual class of the object
  */
-TEST_F(RequestExecutionExceptionTest, testInstanceOf) {
+TEST_F(RequestExecutionExceptionTest, testInstanceOf)
+{
     InvalidQueryStateException invalidQueryStatusException({QueryState::STOPPED}, QueryState::MARKED_FOR_FAILURE);
     RequestExecutionException& test1 = invalidQueryStatusException;
     ASSERT_TRUE(test1.instanceOf<InvalidQueryStateException>());
@@ -57,4 +61,4 @@ TEST_F(RequestExecutionExceptionTest, testInstanceOf) {
     ASSERT_FALSE(test3.instanceOf<QueryNotFoundException>());
     ASSERT_TRUE(test3.instanceOf<Exceptions::QueryUndeploymentException>());
 }
-}// namespace NES
+} // namespace NES

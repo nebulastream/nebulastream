@@ -14,14 +14,16 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <memory>
-namespace NES {
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+namespace NES
+{
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Nautilus::MemRefUtils {
+namespace NES::Nautilus::MemRefUtils
+{
 
 /**
  * @brief Loads a value from a memref according to a physical type.
@@ -55,8 +57,8 @@ void memCopy(Value<MemRef>&& destination, Value<MemRef>&& source, Value<UInt64>&
  * @param classType type of a class or struct
  * @param member a member that is part of the classType
  */
-#define getMember(objectReference, classType, member)                                                                            \
+#define getMember(objectReference, classType, member) \
     (objectReference + ((uint64_t) __builtin_offsetof(classType, member))).as<NES::Nautilus::MemRef>()
 
-}// namespace NES::Nautilus::MemRefUtils
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_
+} // namespace NES::Nautilus::MemRefUtils
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_

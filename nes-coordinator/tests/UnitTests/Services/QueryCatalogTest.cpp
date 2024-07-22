@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/Query.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Query/QueryCatalog.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
@@ -24,7 +24,7 @@
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 using namespace std;
@@ -33,18 +33,21 @@ using namespace Catalogs::Query;
 std::string ip = "127.0.0.1";
 std::string host = "localhost";
 
-class QueryCatalogTest : public Testing::BaseUnitTest {
-  public:
+class QueryCatalogTest : public Testing::BaseUnitTest
+{
+public:
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("QueryCatalogTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup QueryCatalogTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
         NES_DEBUG("Setup QueryCatalogTest test case.");
@@ -54,11 +57,10 @@ class QueryCatalogTest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(QueryCatalogTest, testAddNewQuery) {
-
+TEST_F(QueryCatalogTest, testAddNewQuery)
+{
     //Prepare
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
@@ -72,19 +74,15 @@ TEST_F(QueryCatalogTest, testAddNewQuery) {
     EXPECT_TRUE(allQueryEntries.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewPattern) {
-
+TEST_F(QueryCatalogTest, testAddNewPattern)
+{
     //Prepare
-    std::string patternString =
-        "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed< A.allowedSpeed INTO Print :: testSink ";
+    std::string patternString = "PATTERN test:= (A) FROM default_logical AS A WHERE A.currentSpeed< A.allowedSpeed INTO Print :: testSink ";
     const QueryPlanPtr queryPlan = queryParsingService->createPatternFromCodeString(patternString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
     QueryCatalogPtr queryCatalog = std::make_shared<QueryCatalog>();
-    queryCatalog->createQueryCatalogEntry(patternString,
-                                          queryPlan,
-                                          Optimizer::PlacementStrategy::BottomUp,
-                                          QueryState::REGISTERED);
+    queryCatalog->createQueryCatalogEntry(patternString, queryPlan, Optimizer::PlacementStrategy::BottomUp, QueryState::REGISTERED);
 
     //Assert
     auto reg = queryCatalog->getAllQueryEntries();
@@ -93,11 +91,10 @@ TEST_F(QueryCatalogTest, testAddNewPattern) {
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
-
+TEST_F(QueryCatalogTest, testAddNewQueryAndStop)
+{
     //Prepare
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
@@ -120,11 +117,10 @@ TEST_F(QueryCatalogTest, testAddNewQueryAndStop) {
     EXPECT_TRUE(queriesMarkedForStop.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testPrintQuery) {
-
+TEST_F(QueryCatalogTest, testPrintQuery)
+{
     //Prepare
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
@@ -136,11 +132,11 @@ TEST_F(QueryCatalogTest, testPrintQuery) {
     EXPECT_TRUE(reg.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, testAddNewQueryWithMultipleSinks) {
-
+TEST_F(QueryCatalogTest, testAddNewQueryWithMultipleSinks)
+{
     //Prepare
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()); )";
+    std::string queryString
+        = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()).sink(PrintSinkDescriptor::create()); )";
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
@@ -154,19 +150,19 @@ TEST_F(QueryCatalogTest, testAddNewQueryWithMultipleSinks) {
     EXPECT_TRUE(run.size() == 1U);
 }
 
-TEST_F(QueryCatalogTest, getAllQueriesWithoutAnyQueryRegistration) {
+TEST_F(QueryCatalogTest, getAllQueriesWithoutAnyQueryRegistration)
+{
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     auto allRegisteredQueries = queryCatalog->getAllQueryEntries();
     EXPECT_TRUE(allRegisteredQueries.empty());
 }
 
-TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
-
+TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration)
+{
     //Prepare
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
@@ -177,13 +173,12 @@ TEST_F(QueryCatalogTest, getAllQueriesAfterQueryRegistration) {
     EXPECT_EQ(allRegisteredQueries.size(), 1U);
 }
 
-TEST_F(QueryCatalogTest, getAllRunningQueries) {
-
+TEST_F(QueryCatalogTest, getAllRunningQueries)
+{
     //Prepare
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
 
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
     const QueryPlanPtr queryPlan = queryParsingService->createQueryFromCodeString(queryString);
     QueryId queryId = PlanIdGenerator::getNextQueryId();
     queryPlan->setQueryId(queryId);
@@ -195,7 +190,8 @@ TEST_F(QueryCatalogTest, getAllRunningQueries) {
     EXPECT_EQ(queries.size(), 1U);
 }
 
-TEST_F(QueryCatalogTest, throInvalidArgumentExceptionWhenQueryStatusIsUnknown) {
+TEST_F(QueryCatalogTest, throInvalidArgumentExceptionWhenQueryStatusIsUnknown)
+{
     //Prepare
     QueryCatalogPtr queryCatalog = std::make_shared<Catalogs::Query::QueryCatalog>();
     EXPECT_THROW(queryCatalog->getQueryEntriesWithStatus("something_random"), InvalidArgumentException);

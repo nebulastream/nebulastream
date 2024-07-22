@@ -18,15 +18,17 @@
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 constexpr int SECONDS_TO_MILLISECONDS = 1000;
 
 /**
 * @brief TimeStamp data type. Customized data type, currently simply holds the timestamp as milliseconds.
 */
-class TimeStamp : public Any {
-  public:
+class TimeStamp : public Any
+{
+public:
     static const inline auto type = TypeIdentifier::create<TimeStamp>();
 
     TimeStamp(Value<> milliseconds);
@@ -138,10 +140,10 @@ class TimeStamp : public Any {
     */
     Value<Text> interval();
 
-  private:
+private:
     Value<> milliseconds;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TIMESTAMP_TIMESTAMP_HPP_
