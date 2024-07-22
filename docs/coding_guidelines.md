@@ -275,7 +275,8 @@ flowchart TD
     - Throw if the function cannot do what is advertised.
     - Throw if the function cannot handle the error properly on its own because it needs more context.
     - In performance-sensitive code paths, ask yourself: Can your error be resolved by returning a `std::optional` or a `std::expected` instead?
-- Use asserts to check preconditions and invariants of functions. We include asserts in our code if compiled with `DEBUG` mode.
+- Exceptions should be catched were they can be handled. 
+- Use asserts to check preconditions and invariants of functions. We exclude asserts in our code if not compiled with `DEBUG` mode.
 - Write test cases that trigger exceptions.
     ```C++
     try {
@@ -315,7 +316,7 @@ flowchart TD
 
 ## How to define new exceptions?
 - All our exceptions are in a central file, `ExceptionDefinitions.hpp`. Do not define them somewhere else.
-- An exception type represents an 'error source' that needs to be handled in a specific way. Each exception type should represent a unique error requiring a specific handling approach. Thus, a new exception type should only be created if the error must be handled differently than all existing exceptions. This enables the reuse of handling methods.
+- An exception type represents an 'error source' that needs to be handled in a specific way. Each exception type should represent a unique error requiring a specific handling approach. Thus, a new exception type should only be created if the error must be handled differently than all existing exceptions. This enables the reuse of handling approaches.
 - The exception name and description should very concisely describe i) which condition led to the error ("UnknownSourceType") or ii) which operation failed ("CannotConnectToCoordinator"). The former is preferred to the latter.
 - When writing error messages (which are `description` and optional context), we follow the [Postgres Error Message Style Guide](https://www.postgresql.org/docs/current/error-style-guide.html).
 

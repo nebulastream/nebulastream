@@ -90,50 +90,49 @@ It can be appended when needed (by modifying `what()`) to add context informatio
 
 *File `ExceptionDefinitions.hpp`:*
 ``` C++
-
 // 1XXX Configuration Errors
-EXCEPTION(InvalidConfigParameter, 1000, "Invalid configuration parameter")
-EXCEPTION(MissingConfigParameter, 1001, "Missing configuration parameter")
-EXCEPTION(CannotLoadConfig, 1002, "Cannot load configuration")
+EXCEPTION(InvalidConfigParameter, 1000, "invalid configuration parameter")
+EXCEPTION(MissingConfigParameter, 1001, "missing configuration parameter")
+EXCEPTION(CannotLoadConfig, 1002, "cannot load configuration")
 
 // 2XXX Errors during query registration and compilation
-EXCEPTION(InvalidQuerySyntax, 2000, "Invalid query syntax")
-EXCEPTION(UnknownSource, 2001, "Unknown source specified")
-EXCEPTION(CannotSerialize, 2002, "Serialization failed")
-EXCEPTION(CannotDeserialize, 2003, "Deserialization failed")
-EXCEPTION(CannotCompileQuery, 2004, "Cannot compile query")
-EXCEPTION(CannotInferSchema, 2005, "Cannot infer schema")
-EXCEPTION(InvalidPhysicalOperator, 2006, "Cannot lower operator")
+EXCEPTION(InvalidQuerySyntax, 2000, "invalid query syntax")
+EXCEPTION(UnknownSource, 2001, "unknown source specified")
+EXCEPTION(CannotSerialize, 2002, "serialization failed")
+EXCEPTION(CannotDeserialize, 2003, "deserialization failed")
+EXCEPTION(CannotCompileQuery, 2004, "cannot compile query")
+EXCEPTION(CannotInferSchema, 2005, "cannot infer schema")
+EXCEPTION(InvalidPhysicalOperator, 2006, "cannot lower operator")
 
 // 3XXX Errors during query runtime
-EXCEPTION(BufferAllocationFailure, 3000, "Buffer allocation failed")
-EXCEPTION(JavaUDFExcecutionFailure, 3001, "Java UDF execution failure")
-EXCEPTION(PythonUDFExcecutionFailure, 3002, "Python UDF execution failure")
-EXCEPTION(CannotStartNodeEngine, 3003, "Cannot start node engine")
-EXCEPTION(CannotStopNodeEngine, 3004, "Cannot stop node engine")
+EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failed")
+EXCEPTION(JavaUDFExcecutionFailure, 3001, "java UDF execution failure")
+EXCEPTION(PythonUDFExcecutionFailure, 3002, "python UDF execution failure")
+EXCEPTION(CannotStartNodeEngine, 3003, "cannot start node engine")
+EXCEPTION(CannotStopNodeEngine, 3004, "cannot stop node engine")
 
 // 4XXX Errors interpreting data stream, sources and sinks 
-EXCEPTION(CannotOpenSourceFile, 4000, "Cannot open source file")
-EXCEPTION(CannotFormatSourceData, 4001, "Cannot format source data")
-EXCEPTION(MalformatedTuple, 4002, "Malformed tuple")
+EXCEPTION(CannotOpenSourceFile, 4000, "cannot open source file")
+EXCEPTION(CannotFormatSourceData, 4001, "cannot format source data")
+EXCEPTION(MalformatedTuple, 4002, "malformed tuple")
 
 // 5XXX Network errors
-EXCEPTION(CannotConnectToCoordinator, 5000, "Cannot connect to coordinator")
-EXCEPTION(CoordinatorConnectionLost, 5001, "Lost connection to coordinator")
+EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")
+EXCEPTION(CoordinatorConnectionLost, 5001, "lost connection to coordinator")
 
 // 6XXX API error
-EXCEPTION(BadRequest, 6000, "Invalid Request")
-EXCEPTION(UnauthorizedRequest, 6001, "Unauthorized Request")
+EXCEPTION(BadRequest, 6000, "invalid request")
+EXCEPTION(UnauthorizedRequest, 6001, "unauthorized request")
 
 // 9XXX Internal errors (e.g. bugs)
-EXCEPTION(InternalErrorAssert, 9000, "Internal error: assert failed")
-EXCEPTION(FunctionNotImplemented, 9001, "Function not implemented")
-EXCEPTION(UnknownWindowingStrategy, 9002, "Unknown windowing strategy")
-EXCEPTION(UnknownWindowType, 9003, "Unknown window type")
-EXCEPTION(UnknownPhysicalType, 9004, "Unknown physical type")
-EXCEPTION(UnknownJoinStrategy, 9005, "Unknown join strategy")
-EXCEPTION(UnknownPluginType, 9006, "Unknown plugin type")
-EXCEPTION(DeprecatedFeature, 9007, "Deprecated operator used")
+EXCEPTION(InternalErrorAssert, 9000, "internal error: assert failed")
+EXCEPTION(FunctionNotImplemented, 9001, "function not implemented")
+EXCEPTION(UnknownWindowingStrategy, 9002, "unknown windowing strategy")
+EXCEPTION(UnknownWindowType, 9003, "unknown window type")
+EXCEPTION(UnknownPhysicalType, 9004, "unknown physical type")
+EXCEPTION(UnknownJoinStrategy, 9005, "unknown join strategy")
+EXCEPTION(UnknownPluginType, 9006, "unknown plugin type")
+EXCEPTION(DeprecatedFeature, 9007, "deprecated operator used")
 ```
 
 `Exception.hpp` provides the central exception class and a helper macro. 
@@ -146,13 +145,13 @@ public:
               const uint16_t code,
               const std::source_location& loc,
               const std::string& trace)
-      :message(message), code(code), location_{loc}, stacktrace_{trace}{}
+      :message(message), code(code), location_(loc), stacktrace_(trace){}
 
-    std::string& what() {return message;}
-    const std::string& what() const noexcept {return message;}
-    const uint16_t code() const {return errorCode;}
-    const std::source_location& where() const {return location_;}
-    const std::string& stack() const {return stacktrace_;}
+    std::string& what() { return message; }
+    const std::string& what() const noexcept { return message; }
+    const uint16_t code() const { return errorCode; }
+    const std::source_location& where() const { return location_; }
+    const std::string& stack() const { return stacktrace_; }
     
 private:
     std::string message;
@@ -163,22 +162,22 @@ private:
 
 #define EXCEPTION(name, code, message)   \
 	inline Exception name(const std::source_location& loc = std::source_location::current(),  \
-			      std::string trace = collectStacktrace()) {  \
-		return Exception(message, code , loc, trace);  \
+			              std::string trace = collectStacktrace()) {  \
+		return Exception(message, code, loc, trace);  \
 	}; \
-	namespace ErrorCodes { enum { name = code }; }
+	namespace ErrorCode { enum { name = code }; }
 ```
 
 We provide `tryLogCurrentException()`to log the current exception and `getCurrentExceptionCode()` to get its error code:
 ``` C++
 inline void tryLogCurrentException() {
-   NES_ERROR("Failed to process with error code ({}) : {}\n {}\n", e.code(), e.what(), e.where());
+   NES_ERROR("failed to process with error code ({}) : {}\n {}\n", e.code(), e.what(), e.where());
 }
 ```
 
 Which prints:
 ```
-Failed to process with code (1000) : Invalid config parameter "CoordinatorID"
+failed to process with code (1000) : invalid config parameter "CoordinatorID"
 /Configuration.cpp(76:69), function `void ParseYAML(std::string)`
 ```
 
@@ -197,7 +196,7 @@ At the level in the stack where we want to add additional context information:
 try {
     /* code from above that throws CannotConnectToCoordinator */ 
 } catch (const Exception& e) {    
-    if (e.code() == CannotConnectToCoordinator) {
+    if (e.code() == ErrorCode::CannotConnectToCoordinator) {
         e.what() += " for query " + queryId;
 	throw;
     } else if (e.code < 1000) {
@@ -211,7 +210,7 @@ At the level in the stack where we want/can resume the exceution:
 try {
     /* code from above that throws CannotConnectToCoordinator */ 
 } catch (const Exception& e) {
-    if (e.code() == CannotConnectToCoordinator) {
+    if (e.code() == ErrorCode::CannotConnectToCoordinator) {
         /* handle exception, e.g. restore state, try to reconnect, etc. */
         tryLogCurrentException();
     }
@@ -232,7 +231,7 @@ flowchart TD
     U("`**Add asserts for invariants.** They notify about bugs in the function code.`")
     X{{"`Are there cases where preconditions and invariants are met, but the function cannot do what was promised? An error condition that must be reported to the calling code path in order to resolve it?`"}}
     C["`You have to add error handling to recover from that error. Is it a performance critical code path?`"]
-    O["`**Throw the exception in your function.** Check if it is catched and handled appropriately.`"]
+    O["`**Throw the exception in your function.** Check if it is caught and handled appropriately.`"]
     P["`**Add a new exception type.** Throw the exception in your function and catch and handle it appropriately.`"]
     D{{"`Can you recover from that error at the caller? Can you use std::optional or std::expected as return values?`"}}
     K["`**Return std::optional or std::expected. Handle the return value appropriately.**`"]
@@ -273,7 +272,7 @@ flowchart TD
     - Throw if the function cannot do what is advertised.
     - Throw if the function cannot handle the error properly on its own because it needs more context.
     - In performance-sensitive code paths, ask yourself: Can your error be resolved by returning a `std::optional` or a `std::expected` instead?
-- Use asserts to check preconditions and invariants of functions. We include asserts in our code if compiled with `DEBUG` mode.
+- Use asserts to check preconditions and invariants of functions. We exclude asserts in our code if not compiled with `DEBUG` mode.
 - Write test cases that trigger exceptions.
     ```C++
     try {
