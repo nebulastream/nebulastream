@@ -66,95 +66,49 @@ jobs:
           fi
 
   test:
-    name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
+    name: ubuntu-22_04 ${{ matrix.arch }} default
     needs: [ pre-build-checks ]
     timeout-minutes: 40
     runs-on:
-      group: ${{ matrix.runner_group }}
+      group: default
       labels: [ self-hosted, linux, '${{ matrix.arch }}', Build]
+    container:
+      image: nebulastream/nes-build-image:latest
+      volumes:
+        # TODO periodicly clean? (e.g. via docker volume prune)
+        - cmake-deps-cache:/cmake-deps-cache
+        - ccache-cache:/ccache_dir
+      env:
+        CCACHE_DIR: /ccache_dir
+        CCACHE_MAXSIZE: 10G
     strategy:
       fail-fast: false
       matrix:
         include:
-          - osversion: ubuntu-22_04
-            arch: "X64"
-            require_build: "true"
-            require_test: "true"
+          - arch: "X64"
             build_parallelism: "16"
             test_parallelism: "4"
-            runner_group: "default"
-          - osversion: ubuntu-22_04
-            arch: "arm64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "32" # As we have over 200 cores on the arm server, this should be fine.
-            test_parallelism: "8"   # As we have over 200 cores on the arm server, this should be fine.
-            runner_group: "default"
+          - arch: "arm64"
+            # As we have over 200 cores on the arm server, this should be fine.
+            build_parallelism: "32"
+            test_parallelism: "8"
     steps:
-      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
-      - name: Build Docker for CleanUp
-        id: builddocker_cleanup
-        continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-      - name: "Perform cleanup, if necessary"
+      # TODO have ccache installed in docker image
+      - name: install ccache
+        run: apt update && apt install -y ccache
+      # TODO have JAVA_HOME set in docker image
+      - name: build
         run: |
-          os_version_arch="${{ matrix.osversion }}_${{ matrix.arch }}"
-          cache_dir="/data/nes-ci/tmp/nes-ccache_$os_version_arch"
-          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker_image_name="nes_build_${{ matrix.osversion }}"
-          github_workspace=${{ github.workspace }}
-          file="/data/nes-ci/tmp/last_checked_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}.txt"
-
-          # We check, if we have to perform some cleanup.
-          perform_cleanup=$(bash $github_workspace/scripts/check_cleanup.sh $file)
-          if [ $perform_cleanup -eq 1 ]; then
-            echo "Performing cleanup!"
-            # Running the script in the docker container, as otherwise, we will have permission issues
-            docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
-            docker rm ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
-            echo "Cleanup done!"
-          else
-            echo "We will not perform any cleanup!"
-          fi
-
-      - name: Build Docker
-        id: builddocker
-        continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
-      - name: Build Nebulastream
-        # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
-        run: |
-          GPU_RUNNER_PARAMS=""
-          if [ "${{ matrix.runner_group }}" == "gpu" ]; then
-            GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/nvidia:/usr/lib/nvidia:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/nvidia:${LD_LIBRARY_PATH}"
-          fi
-          cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
-          echo "cache_dir=$cache_dir"
-          mkdir -p $cache_dir
-          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          echo "build_dir=$build_dir"
-          mkdir -p $build_dir
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
-      - name: Run tests
-        run: |
-          GPU_RUNNER_PARAMS=""
-          if [ "${{ matrix.runner_group }}" == "gpu" ]; then
-            GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
-          fi
-          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
-        shell: bash
-      - name: docker cleanup
-        if: ${{ always() }}
-        run: |
-          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
-          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test
+          ccache -s
+          # We set JAVA_HOME to ensure that cmake finds the JNI libraries
+          # https://www.baeldung.com/find-java-home#platform-independent
+          export JAVA_HOME=$(java -XshowSettings:properties -version 2>&1 > /dev/null | grep 'java.home' | awk '{ print $3 }')
+          cmake -S . -B build -DCMAKE_BUILD_TYPE=Release -DNES_USE_CCACHE=1 -DNES_USE_MQTT=1 -DNES_USE_KAFKA=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_JNI=1 -DNES_TEST_PARALLELISM=${{ matrix.test_parallelism }} -DNES_USE_S2=1 -DNES_USE_OPENCL=1 -DNES_BUILD_PLUGIN_ONNX=1 -DNES_BUILD_PLUGIN_TENSORFLOW=1 -DNES_BUILD_PLUGIN_ARROW=1
+          cmake --build build -j${{ matrix.build_parallelism }}
+          ccache -s
+      - name: test
+        run: ctest --test-dir build -E "__GPU$" -j${{ matrix.test_parallelism }} --test-load 90 --output-junit /junit.xml
 
   test-gpu:
     name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
