@@ -24,7 +24,7 @@ There might be ways around this by carefully setting warning flags to all CMake 
 ## Problems with VCPKG
 
 When using VCPKG we are limited to the set of currently supported libraries in VCPKG (which is quite large). 
-A potential issue, and probably the reason why the external-repository approach has been used in the past, is the fact that vcpkg just provides a standardized collection of build scripts to configure and build dependencies locally. This means whenever someone wants to build NebulaStream, all its dependencies need to be built first. However, this is also true for the previous two approaches. Currently, VCPKG does not offer a binary cache out of the box, but [some implementation](https://github.com/lesomnus/vcpkg-cache-http) exists that could run self-hosted. 
+A potential issue, and probably the reason why the external-repository approach has been used in the past, is the fact that VCPKG just provides a standardized collection of build scripts to configure and build dependencies locally. This means whenever someone wants to build NebulaStream, all its dependencies need to be built first. However, this is also true for the previous two approaches. Currently, VCPKG does not offer a binary cache out of the box, but [some implementation](https://github.com/lesomnus/VCPKG-cache-http) exists that could run self-hosted. 
 
 VCPKG, however, allows the specification of different toolchains that could be used to build dependencies with different sets of flags, which would require building NebulaStream properly with sanitizers.
 
@@ -42,11 +42,11 @@ Currently, we build LLVM and clang in an external repository. The CMake configur
 
 (**G1**) Easy onboarding for new developers:  After cloning the repository, the developer should be able to build the system following the build guide, without running into issues with missing locally installed libraries, or missing toolchains. We achieve this by offering docker based Development Environment. The build guide explains how to configure the Development Image in CLion, the CMake build system will build without further configuration.
 
-(**G2**) Runtime Analyzer, like sanitizer, requires changes to our dependencies: It should be possible to add additional build configurations for our dependencies. Currently, we use different vcpkg toolchains for x64, arm, Linux, and macOS for all of these configurations, we require the dependencies to build and link with different sanitizer flags: `-fsanitize=thread`, etc...
+(**G2**) Runtime Analyzer, like sanitizer, requires changes to our dependencies: It should be possible to add additional build configurations for our dependencies. Currently, we use different VCPKG toolchains for x64, arm, Linux, and macOS for all of these configurations, we require the dependencies to build and link with different sanitizer flags: `-fsanitize=thread`, etc...
 
 (**G3**) Overview of Dependencies: One central source of truth over which dependencies are used, which version, and if there are patches.
 
-(**G4**) Easy modification: Dependencies should be extendable (or shrinkable), Upgradable, and modifyable (with custom patches).  It should not require cross-repository efforts to change dependencies and create mismatches between 
+(**G4**) Easy modification: Dependencies should be extendable (or shrinkable), upgradable, and modifiable (with custom patches).  It should not require cross-repository efforts to change dependencies and create mismatches between 
 
 (**G5**) Enable alternative tooling: different compilers and different standard libraries.
 
@@ -58,7 +58,7 @@ Currently, we build LLVM and clang in an external repository. The CMake configur
 
 # Proposed Solution
 
-We want to shift all dependencies exclusively into vcpkg. The `vcpkg-repository` can be maintained independently or via a submodule in the CMake build directory. A `vcpkg` directory in the root directory will list all dependencies in the `vcpkg.json` manifest and the currently used vcpkg `builtin-baseline`.
+We want to shift all dependencies exclusively into VCPKG. The `vcpkg-repository` can be maintained independently or via a submodule in the CMake build directory. A `vcpkg` directory in the root directory will list all dependencies in the `vcpkg.json` manifest and the currently used VCPKG `builtin-baseline`.
 
 ```
 nebulastream/
@@ -75,7 +75,7 @@ nebulastream/
             folly
 ```
 
-We use the VCPKG Manifest mode to keep a `sbom` in the `vcpkg.json,` which contains all dependencies (**G3**). The actual version can either be fixed using an override or be the recent version of the vcpkg manifest-baseline commit.
+We use the VCPKG Manifest mode to keep a `sbom` in the `vcpkg.json,` which contains all dependencies (**G3**). The actual version can either be fixed using an override or be the recent version of the VCPKG manifest-baseline commit.
 ```json
 {
   "name": "nebulastream-dependencies",
@@ -100,9 +100,9 @@ We use the VCPKG Manifest mode to keep a `sbom` in the `vcpkg.json,` which conta
   ]
 ```
 
-Bumping the vcpkg  `builtin-baseline` to a more recent commit updates dependencies (**G4**,  **G6**). However, incompatibilities can still arise, which may require conversions to be pinned to specific versions.
+Bumping the VCPKG `builtin-baseline` to a more recent commit updates dependencies (**G4**,  **G6**). However, incompatibilities can still arise, which may require conversions to be pinned to specific versions.
 
-During the initial CMake configuration, the build system checks if a `-DCMAKE_TOOLCHAIN_FILE` was provided, which could point to an independently maintained `vcpkg-repository` somewhere on the developer's system. If the flag is not present, the CMake configuration will checkout, bootstrap the vcpkg repository, and manually set up the toolchain path before initializing the CMake project.
+During the initial CMake configuration, the build system checks if a `-DCMAKE_TOOLCHAIN_FILE` was provided, which could point to an independently maintained `vcpkg-repository` somewhere on the developer's system. If the flag is not present, the CMake configuration will checkout, bootstrap the VCPKG repository, and manually set up the toolchain path before initializing the CMake project.
 
 ```cmake
 if (CMAKE_TOOLCHAIN_FILE)
@@ -115,7 +115,7 @@ endif ()
 
 ```
 
-The internal vcpkg toolchain (identified by the host triplet) needs to be set before the Project initialization, this means CMake Options regarding sanitizers and other hardening techniques influencing the choice of dependencies need to be evaluated before initializing the CMake project aswell. (**G5**, **G2**)
+The internal VCPKG toolchain (identified by the host triplet) needs to be set before the Project initialization, this means CMake Options regarding sanitizers and other hardening techniques influencing the choice of dependencies need to be evaluated before initializing the CMake project as well. (**G5**, **G2**)
 
 ```cmake
 elseif (NES_ENABLE_ADDRESS_SANITIZER)
@@ -128,16 +128,15 @@ else ()
     SET(VCPKG_HOST_TRIPLET "x64-linux")
 endif ()
 
-SET(VCPKG_MANIFEST_DIR ON)
 SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 SET(VCPKG_OVERLAY_TRIPLETS "${CMAKE_SOURCE_DIR}/vcpkg/triplets")
 SET(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/vcpkg/ports")
 
 project(nes)
 ```
-This would allow the new developer to set up the NebulaStream system using a plain `cmake -B build -S . ` command, which would internally fetch the vcpkg-registry(**G1**). It would also allow developers already using vcpkg, maybe for a different project, to reuse an already locally installed vcpkg registry `cmake -B build -S .  -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/vcpkg.cmake`
+This would allow the new developer to set up the NebulaStream system using a plain `cmake -B build -S . ` command, which would internally fetch the VCPKG-registry(**G1**). It would also allow developers already using VCPKG, maybe for a different project, to reuse an already locally installed VCPKG registry `cmake -B build -S .  -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/vcpkg.cmake`
 
-To enable dependencies to be built with different compiler flags (Sanitizer, Hardening Mode), the toolchain files inside the `vcpkg/toolchain` folder set a vcpkg toolchain. usually, this just includes setting additional C/C++ Flags propagated to the individual dependency builds.
+To enable dependencies to be built with different compiler flags (Sanitizer, Hardening Mode), the toolchain files inside the `VCPKG/toolchain` folder set a VCPKG toolchain. usually, this just includes setting additional C/C++ Flags propagated to the individual dependency builds.
 
 Contents of `x64-linux-asan.cmake` 
 ```cmake
@@ -151,32 +150,32 @@ set(VCPKG_C_FLAGS "-fsanitize=address")
 
 ## Clang and LLVM
 
-In its current state, we require the clang binary to compile NebulaStream queries and the C++-Backend; on the other side, we require LLVM and MLIR for the MLIR backend. We could investigate to lift the strict requirement of a fixed C++ clang compiler and thus drop the Clang dependency. LLVM and MLIR are supported within vcpkg and can thus be built like any other dependency. The development docker image still contains the well-working clang compiler version.
+In its current state, we require the clang binary to compile NebulaStream queries and the C++-Backend; on the other side, we require LLVM and MLIR for the MLIR backend. We could investigate to lift the strict requirement of a fixed C++ clang compiler and thus drop the Clang dependency. LLVM and MLIR are supported within VCPKG and can thus be built like any other dependency. The development docker image still contains the well-working clang compiler version.
 
 # Prototype
 
-The [NebuLI](https://github.com/ls-1801/NebuLI) project uses the approach. Using a local vcpkg repository requires the user to specify it as a CMake configuration parameter.
+The [NebuLI](https://github.com/ls-1801/NebuLI) project uses the approach. Using a local VCPKG repository requires the user to specify it as a CMake configuration parameter.
 
-> cmake -DCMAKE_TOOLCHAIN_FILE=/PATH/TO/vcpkg/scripts/buildsystems/vcpkg.cmake
+> cmake -DCMAKE_TOOLCHAIN_FILE=/PATH/TO/VCPKG/scripts/buildsystems/vcpkg.cmake
 
-If no local vcpkg toolchain file was specified, the CMake system creates a new vcpkg registry and starts a fresh dependency build.
+If no local VCPKG toolchain file was specified, the CMake system creates a new VCPKG registry and starts a fresh dependency build.
 
-Lastly, a docker image at `Lukas/nebula stream:alpine` contains a set of prebuilt dependencies and the required build tools.
+Lastly, a docker image at `luukas/nebula stream:alpine` contains a set of prebuilt dependencies and the required build tools.
 
 > docker pull docker pull luukas/nebulastream:alpine
 
-A new docker-based toolchain needs to be created in CLion. A CMake build inside the docker container will pick up the destination of the pre-installed vcpkg-registry based on the `VCPKG_ROOT` environment variable, so no further CMake configuration parameters are required.
+A new docker-based toolchain needs to be created in CLion. A CMake build inside the docker container will pick up the destination of the pre-installed VCPKG-registry based on the `VCPKG_ROOT` environment variable, so no further CMake configuration parameters are required.
 
 
 # Open Questions
 
 ## Missing libraries dependencies
 
-The `vcpkg` registry can be extended, offering templates for the most common software distribution methods. Arguably, using `FetchContent` in the NebulaStream CMake configuration would be simpler, but allowing the vcpkg.json to be local in the NebulaStream repository removes some of the impedance previously encountered when managing two external dependencies.
+The `VCPKG` registry can be extended, offering templates for the most common software distribution methods. Arguably, using `FetchContent` in the NebulaStream CMake configuration would be simpler, but allowing the VCPKG.json to be local in the NebulaStream repository removes some of the impedance previously encountered when managing two external dependencies.
 
 ## Binary Caching
 
-In the current iteration, the initial vcpkg would require the vcpkg dependencies to be built locally (for each toolchain), this is a significant time investment we impose on any new developer. To prevent this we could host a binary cache for dependencies: [vcpkg-cache-http](https://github.com/lesomnus/vcpkg-cache-http), but this would only be available internally to DIMA.
+In the current iteration, the initial VCPKG would require the VCPKG dependencies to be built locally (for each toolchain), this is a significant time investment we impose on any new developer. To prevent this we could host a binary cache for dependencies: [VCPKG-cache-http](https://github.com/lesomnus/VCPKG-cache-http), but this would only be available internally to DIMA.
 
-An alternative would be integrating a prepopulated vcpkg registry into our docker development image. When we distribute the development docker image to use in `CLion,` the developer needs to specify the CMAKE_TOOLCHAIN_FILE, which resides internally in the docker container. The docker development image needs to be rebuilt whenever we detect changes to the dependencies. 
+An alternative would be integrating a prepopulated VCPKG registry into our docker development image. When we distribute the development docker image to use in `CLion,` the developer needs to specify the CMAKE_TOOLCHAIN_FILE, which resides internally in the docker container. The docker development image needs to be rebuilt whenever we detect changes to the dependencies. 
 
