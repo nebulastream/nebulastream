@@ -73,7 +73,7 @@ void writeNautilusRecord(
 }
 
 Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
+mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
 {
     auto retBuffer = bufferManager->getBufferBlocking();
     auto retBufferPtr = retBuffer.getBuffer();
@@ -265,7 +265,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    Runtime::BufferManagerPtr bufferManager,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
     uint64_t originId,
     const std::string& timestampFieldName,
     bool skipFirstLine)
@@ -340,7 +340,7 @@ void writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    const Runtime::BufferManagerPtr& bufferManager)
+    const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
 {
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();

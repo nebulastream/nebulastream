@@ -28,6 +28,9 @@
 #include <fmt/std.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
+#include <Runtime/QueryManager.hpp>
+#include <Util/TestTupleBuffer.hpp>
+
 namespace NES
 {
 

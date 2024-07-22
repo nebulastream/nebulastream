@@ -20,6 +20,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>
+#include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -39,7 +40,7 @@ void Parser::writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    const Runtime::BufferManagerPtr& bufferManager)
+    const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
 {
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();

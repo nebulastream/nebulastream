@@ -17,7 +17,6 @@
 #include <memory>
 #include <vector>
 #include <API/Schema.hpp>
-#include <Runtime/Allocator/MemoryResource.hpp>
 namespace NES::Nautilus::Interface
 {
 class PagedVectorRef;

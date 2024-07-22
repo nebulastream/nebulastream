@@ -14,7 +14,7 @@
 
 #include <bitset>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/detail/TupleBufferImpl.hpp>
+#include "TupleBufferImpl.hpp"
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
 

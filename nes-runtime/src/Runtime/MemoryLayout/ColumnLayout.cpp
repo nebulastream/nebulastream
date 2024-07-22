@@ -30,7 +30,7 @@ ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout
     }
 }
 
-ColumnLayoutPtr ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize)
+std::shared_ptr<ColumnLayout> ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize)
 {
     return std::make_shared<ColumnLayout>(schema, bufferSize);
 }

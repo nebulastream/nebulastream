@@ -55,7 +55,7 @@ public:
     }
 
     static std::unique_ptr<Table>
-    load(const std::string& tableDir, const Runtime::BufferManagerPtr& bm, const MemoryLayouts::MemoryLayoutPtr& layout)
+    load(const std::string& tableDir, const std::shared_ptr<Runtime::AbstractBufferProvider>& bm, const MemoryLayouts::MemoryLayoutPtr& layout)
     {
         auto table = std::make_unique<Table>(layout);
         for (const auto& chunkFile : std::filesystem::directory_iterator(tableDir))
@@ -96,7 +96,7 @@ private:
 class TableBuilder
 {
 public:
-    TableBuilder(Runtime::BufferManagerPtr bm, const MemoryLayouts::MemoryLayoutPtr& layout)
+    TableBuilder(std::shared_ptr<Runtime::AbstractBufferProvider> bm, const MemoryLayouts::MemoryLayoutPtr& layout)
         : bm(std::move(bm)), table(std::make_unique<Table>(layout))
     {
         appendBuffer();
@@ -132,7 +132,7 @@ private:
     }
 
 private:
-    Runtime::BufferManagerPtr bm;
+    std::shared_ptr<Runtime::AbstractBufferProvider> bm;
     std::unique_ptr<Table> table;
     std::unique_ptr<MemoryLayouts::TestTupleBuffer> currentBuffer;
 };

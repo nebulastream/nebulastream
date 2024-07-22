@@ -22,7 +22,6 @@
 #include <optional>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <folly/MPMCQueue.h>
 
 namespace NES::Runtime

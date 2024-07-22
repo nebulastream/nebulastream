@@ -18,9 +18,11 @@
 #include <unordered_map>
 #include <vector>
 #include <Exceptions/RuntimeException.hpp>
+#include <Execution/ExecutableQueryPlan.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+
 
 namespace NES::Runtime
 {

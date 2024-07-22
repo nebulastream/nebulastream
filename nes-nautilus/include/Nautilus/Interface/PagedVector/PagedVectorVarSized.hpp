@@ -60,7 +60,7 @@ public:
      * @param schema - schema of tuples associated with paged vector
      * @param pageSize - size of page to get from buffer manager
      */
-    PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
+    PagedVectorVarSized(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
 
     /**
      * @brief Constructor. Recreated PagedVectorVarSized from tuple buffers [Recreation not implemented for variable sized pages right now]
@@ -70,7 +70,7 @@ public:
      * @param pageSize - size of page to get from buffer manager
      */
     PagedVectorVarSized(
-        Runtime::BufferManagerPtr bufferManager,
+        std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
         SchemaPtr schema,
         std::span<const Runtime::TupleBuffer> buffers,
         uint64_t pageSize = PAGE_SIZE);
@@ -170,7 +170,7 @@ private:
     void setEntrySizeAndCapacityPerPage();
 
     friend PagedVectorVarSizedRef;
-    Runtime::BufferManagerPtr bufferManager;
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;
     SchemaPtr schema;
     uint64_t pageSize;
     uint64_t entrySize;
