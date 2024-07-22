@@ -21,6 +21,10 @@ on:
       - CHANGELOG.md
       - 'docs/**'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validateTrigger:
     if: ${{ !github.event.pull_request.draft }}
@@ -43,10 +47,6 @@ jobs:
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.1
-        with:
-          access_token: ${{ secrets.NES_CI_SECRET }}
       - name: Build Docker for CleanUp
         id: builddocker_prebuild
         working-directory: ${{ github.workspace }}/docker/buildImage
@@ -103,10 +103,6 @@ jobs:
     steps:
       - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.1
-        with:
-          access_token: ${{ secrets.NES_CI_SECRET }}
       - name: Build Docker for CleanUp
         id: builddocker_cleanup
         continue-on-error: true
