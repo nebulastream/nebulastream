@@ -34,7 +34,7 @@ Currently, many dependencies are built in an [external repository](https://githu
 
 Especially if we plan to have more build configurations for different types of runtime checkers in the future, we need to allow the dependencies to be built with a more flexible set of configurations. Updating dependencies should happen more frequently.
 
-## LLVM and Clang
+### LLVM and Clang
 
 Currently, we build LLVM and clang in an external repository. The CMake configuration downloads our version of Clang and sets up the CMake compiler toolchain accordingly. Specifying a very concrete toolchain during our build brings the advantage of not only supporting a specific toolchain but also losing diagnostics and robustness of using different compilers.
 
@@ -153,7 +153,22 @@ set(VCPKG_C_FLAGS "-fsanitize=address")
 
 In its current state, we require the clang binary to compile NebulaStream queries and the C++-Backend; on the other side, we require LLVM and MLIR for the MLIR backend. We could investigate to lift the strict requirement of a fixed C++ clang compiler and thus drop the Clang dependency. LLVM and MLIR are supported within vcpkg and can thus be built like any other dependency. The development docker image still contains the well-working clang compiler version.
 
-# Problems
+# Prototype
+
+The [NebuLI](https://github.com/ls-1801/NebuLI) project uses the approach. Using a local vcpkg repository requires the user to specify it as a CMake configuration parameter.
+
+> cmake -DCMAKE_TOOLCHAIN_FILE=/PATH/TO/vcpkg/scripts/buildsystems/vcpkg.cmake
+
+If no local vcpkg toolchain file was specified, the CMake system creates a new vcpkg registry and starts a fresh dependency build.
+
+Lastly, a docker image at `Lukas/nebula stream:alpine` contains a set of prebuilt dependencies and the required build tools.
+
+> docker pull docker pull luukas/nebulastream:alpine
+
+A new docker-based toolchain needs to be created in CLion. A CMake build inside the docker container will pick up the destination of the pre-installed vcpkg-registry based on the `VCPKG_ROOT` environment variable, so no further CMake configuration parameters are required.
+
+
+# Open Questions
 
 ## Missing libraries dependencies
 
