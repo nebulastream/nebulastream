@@ -41,7 +41,7 @@ using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 class WorkerContext
 {
 private:
-    using WorkerContextBufferProviderPtr = LocalBufferPoolPtr;
+    using WorkerContextBufferProviderPtr = std::shared_ptr<AbstractBufferProvider>;
     using WorkerContextBufferProvider = WorkerContextBufferProviderPtr::element_type;
     using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
 

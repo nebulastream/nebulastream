@@ -23,7 +23,6 @@
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
@@ -38,7 +37,7 @@ namespace NES
 
 TCPSource::TCPSource(
     SchemaPtr schema,
-    Runtime::BufferManagerPtr bufferManager,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
     Runtime::QueryManagerPtr queryManager,
     TCPSourceTypePtr tcpSourceType,
     OperatorId operatorId,

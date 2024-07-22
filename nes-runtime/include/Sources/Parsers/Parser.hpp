@@ -17,7 +17,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <API/Schema.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 
 namespace NES
 {
@@ -62,7 +63,7 @@ public:
         uint64_t tupleCount,
         Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
-        const Runtime::BufferManagerPtr& bufferManager)
+        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
         = 0;
 
     /**
@@ -81,7 +82,7 @@ public:
         Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
         uint64_t tupleCount,
-        const Runtime::BufferManagerPtr& bufferManager);
+        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager);
 
 private:
     std::vector<PhysicalTypePtr> physicalTypes;

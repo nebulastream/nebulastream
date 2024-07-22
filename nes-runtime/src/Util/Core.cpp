@@ -148,7 +148,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
 std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    Runtime::BufferManagerPtr bufferManager,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
     const std::string& timeStampFieldName,
     uint64_t lastTimeStamp)
 {

@@ -47,7 +47,7 @@ public:
      * @param bufferSize the expected buffer size.
      * @return ColumnLayoutPtr
      */
-    static ColumnLayoutPtr create(SchemaPtr schema, uint64_t bufferSize);
+    static std::shared_ptr<ColumnLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
     /**
      * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.

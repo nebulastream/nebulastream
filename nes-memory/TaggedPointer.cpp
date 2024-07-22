@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Runtime/TaggedPointer.hpp>
-#include <Runtime/detail/TupleBufferImpl.hpp>
+#include "TaggedPointer.hpp"
 #include <Util/Logger/Logger.hpp>
+#include "TupleBufferImpl.hpp"
 
 namespace NES
 {

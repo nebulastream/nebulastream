@@ -14,10 +14,10 @@
 
 #include <Exceptions/Exception.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <LocalBufferPool.hpp>
+#include "TupleBufferImpl.hpp"
 
 namespace NES::Runtime
 {

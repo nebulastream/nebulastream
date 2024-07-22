@@ -16,7 +16,7 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_
 
 #include <memory>
-#include <Runtime/Allocator/MemoryResource.hpp>
+#include "MemoryResource.hpp"
 namespace NES::Runtime
 {
 /**

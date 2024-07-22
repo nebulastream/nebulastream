@@ -18,7 +18,6 @@
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -33,7 +32,7 @@ namespace NES
 
 CSVSource::CSVSource(
     SchemaPtr schema,
-    Runtime::BufferManagerPtr bufferManager,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
     Runtime::QueryManagerPtr queryManager,
     CSVSourceTypePtr csvSourceType,
     OperatorId operatorId,

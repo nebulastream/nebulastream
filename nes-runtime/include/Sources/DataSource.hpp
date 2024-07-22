@@ -24,10 +24,10 @@
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/GatheringMode.hpp>
 
 namespace NES::Runtime::MemoryLayouts
@@ -70,7 +70,7 @@ public:
      */
     explicit DataSource(
         SchemaPtr schema,
-        Runtime::BufferManagerPtr bufferManager,
+        std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
         Runtime::QueryManagerPtr queryManager,
         OperatorId operatorId,
         OriginId originId,

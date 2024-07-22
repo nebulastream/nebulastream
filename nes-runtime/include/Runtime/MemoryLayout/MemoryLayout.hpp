@@ -18,7 +18,10 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <API/Schema.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
@@ -41,7 +44,7 @@ std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx)
  * @param bufferManager
  * @return Index of the child buffer
  */
-std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, BufferManager& bufferManager);
+std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferManager);
 
 /**
  * @brief A MemoryLayout defines a strategy in which a specific schema / a individual tuple is mapped to a tuple buffer.
@@ -142,5 +145,5 @@ protected:
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
 } /// namespace NES::Runtime::MemoryLayouts
-
+using MemoryLayoutPtr = std::shared_ptr<NES::Runtime::MemoryLayouts::MemoryLayout>;
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_

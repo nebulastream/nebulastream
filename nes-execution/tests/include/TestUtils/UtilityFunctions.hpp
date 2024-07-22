@@ -63,8 +63,10 @@ void writeNautilusRecord(
 * @param bufferManager
 * @return merged TupleBuffer
 */
-Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+Runtime::TupleBuffer mergeBuffers(
+    std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
+    const SchemaPtr schema,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
 
 /**
 * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
@@ -123,7 +125,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    Runtime::BufferManagerPtr bufferManager,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
     uint64_t originId = 0,
     const std::string& timestampFieldname = "ts",
     bool skipFirstLine = false);
@@ -145,7 +147,7 @@ void writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    const Runtime::BufferManagerPtr& bufferManager);
+    const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager);
 
 /**
 * @brief function to replace all string occurrences

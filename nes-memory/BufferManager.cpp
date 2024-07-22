@@ -19,23 +19,25 @@
 #include <Exceptions/Exception.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
+
+#include <NesDefaultMemoryAllocator.hpp>
+
+#include "FixedSizeBufferPool.hpp"
+#include "LocalBufferPool.hpp"
+#include "TupleBufferImpl.hpp"
 
 namespace NES::Runtime
 {
 
-BufferManager::BufferManager(
-    uint32_t bufferSize, uint32_t numOfBuffers, std::shared_ptr<std::pmr::memory_resource> memoryResource, uint32_t withAlignment)
+BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment)
     : availableBuffers(numOfBuffers)
     , numOfAvailableBuffers(numOfBuffers)
     , bufferSize(bufferSize)
     , numOfBuffers(numOfBuffers)
-    , memoryResource(memoryResource)
+    , memoryResource(std::make_unique<NesDefaultMemoryAllocator>())
 {
     ((void)withAlignment);
     initialize(DEFAULT_ALIGNMENT);
@@ -380,7 +382,7 @@ void BufferManager::UnpooledBufferHolder::markFree()
     free = true;
 }
 
-LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers)
+std::shared_ptr<AbstractBufferProvider> BufferManager::createLocalBufferPool(size_t numberOfReservedBuffers)
 {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
@@ -401,7 +403,7 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
     return ret;
 }
 
-FixedSizeBufferPoolPtr BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers)
+std::shared_ptr<AbstractBufferProvider> BufferManager::createFixedSizeBufferPool(size_t numberOfReservedBuffers)
 {
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;

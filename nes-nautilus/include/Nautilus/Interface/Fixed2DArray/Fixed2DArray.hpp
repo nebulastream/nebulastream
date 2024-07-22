@@ -14,9 +14,9 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_
-#include <Runtime/Allocator/MemoryResource.hpp>
 
 #include <cstdint>
+#include <memory_resource>
 namespace NES::Nautilus::Interface
 {
 

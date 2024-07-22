@@ -47,7 +47,7 @@ public:
         uint64_t tupleCount,
         Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
-        const Runtime::BufferManagerPtr& bufferManager) override;
+        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
 };
 
 } /// namespace NES
