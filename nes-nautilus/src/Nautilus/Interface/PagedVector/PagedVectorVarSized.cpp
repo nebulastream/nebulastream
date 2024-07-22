@@ -44,13 +44,13 @@ void PagedVectorVarSized::setEntrySizeAndCapacityPerPage()
     capacityPerPage = pageSize / entrySize;
 }
 
-PagedVectorVarSized::PagedVectorVarSized(Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, uint64_t pageSize)
+PagedVectorVarSized::PagedVectorVarSized(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, SchemaPtr schema, uint64_t pageSize)
     : PagedVectorVarSized(bufferManager, schema, {}, pageSize)
 {
 }
 
 PagedVectorVarSized::PagedVectorVarSized(
-    Runtime::BufferManagerPtr bufferManager, SchemaPtr schema, std::span<const Runtime::TupleBuffer> buffers, uint64_t pageSize)
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, SchemaPtr schema, std::span<const Runtime::TupleBuffer> buffers, uint64_t pageSize)
     : bufferManager(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize)
 {
     appendVarSizedDataPage();

@@ -29,6 +29,7 @@
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
+#include <Runtime/QueryManager.hpp>
 namespace NES
 {
 

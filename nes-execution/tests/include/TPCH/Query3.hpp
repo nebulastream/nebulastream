@@ -55,7 +55,7 @@ class TPCH_Query3
 {
 public:
     static PipelinePlan
-    getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, Runtime::BufferManagerPtr)
+    getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, std::shared_ptr<Runtime::AbstractBufferProvider>)
     {
         PipelinePlan plan;
         auto joinHandler = createPipeline1(plan, tables);

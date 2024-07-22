@@ -28,8 +28,8 @@ public:
      * @param bufferManager Ptr to the buffer manager
      * @param addTimestamp Flag, to indicate if timestamp shall be added when formatting
      */
-    CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp);
-    CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+    CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, bool addTimestamp);
+    CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
     virtual ~CsvFormat() noexcept = default;
 
     /**

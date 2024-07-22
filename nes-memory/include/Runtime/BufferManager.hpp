@@ -24,9 +24,7 @@
 #include <optional>
 #include <vector>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <folly/MPMCQueue.h>
 
 namespace NES::Runtime
@@ -98,7 +96,6 @@ public:
     explicit BufferManager(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
-        std::shared_ptr<std::pmr::memory_resource> memoryResource = std::make_shared<NesDefaultMemoryAllocator>(),
         uint32_t withAlignment = DEFAULT_ALIGNMENT);
 
     BufferManager(const BufferManager&) = delete;
@@ -174,14 +171,14 @@ public:
      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
      * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
      */
-    LocalBufferPoolPtr createLocalBufferPool(size_t numberOfReservedBuffers) override;
+    std::shared_ptr<AbstractBufferProvider> createLocalBufferPool(size_t numberOfReservedBuffers) override;
 
     /**
       * @brief Create a local buffer manager that is assigned to one pipeline or thread
       * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
       * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
       */
-    FixedSizeBufferPoolPtr createFixedSizeBufferPool(size_t numberOfReservedBuffers) override;
+    std::shared_ptr<AbstractBufferProvider> createFixedSizeBufferPool(size_t numberOfReservedBuffers) override;
 
     /**
      * @brief Recycle a pooled buffer by making it available to others
@@ -223,6 +220,8 @@ private:
     std::shared_ptr<std::pmr::memory_resource> memoryResource;
     std::atomic<bool> isDestroyed{false};
 };
+
+using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
 } /// namespace NES::Runtime
 

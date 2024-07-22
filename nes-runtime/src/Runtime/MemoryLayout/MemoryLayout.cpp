@@ -36,7 +36,7 @@ std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx)
     return varSizedData;
 }
 
-std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, BufferManager& bufferManager)
+std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferManager)
 {
     const auto valueLength = value.length();
     auto childBuffer = bufferManager.getUnpooledBuffer(valueLength + sizeof(uint32_t));

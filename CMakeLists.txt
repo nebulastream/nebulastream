@@ -565,6 +565,8 @@ add_subdirectory(nes-nautilus)
 add_subdirectory(nes-expressions)
 add_subdirectory(nes-window-types)
 
+add_subdirectory(nes-memory)
+
 add_subdirectory(nes-single-node-worker)
 
 # Documentation

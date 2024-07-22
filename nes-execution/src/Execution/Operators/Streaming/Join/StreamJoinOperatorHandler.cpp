@@ -369,7 +369,7 @@ uint64_t StreamJoinOperatorHandler::getWindowSize() const
     return sliceAssigner.getWindowSize();
 }
 
-void StreamJoinOperatorHandler::setBufferManager(const NES::Runtime::BufferManagerPtr& bufManager)
+void StreamJoinOperatorHandler::setBufferManager(const NES::std::shared_ptr<Runtime::AbstractBufferProvider>& bufManager)
 {
     this->bufferManager = bufManager;
 }
