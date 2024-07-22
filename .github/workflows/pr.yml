@@ -109,6 +109,11 @@ jobs:
           ccache -s
       - name: test
         run: ctest --test-dir build -E "__GPU$" -j${{ matrix.test_parallelism }} --test-load 90 --output-junit /junit.xml
+      - uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: junit-${{ matrix.arch }}.xml
+          path: /junit.xml
 
   test-gpu:
     name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
