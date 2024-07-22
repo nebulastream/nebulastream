@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief return the equiJoinName contained in all joinExpressions
  * @param joinExpression : a set of potenitally nested binary expressions
  * @param the keyFieldNames as pair
  */
-std::pair<std::basic_string<char>, std::basic_string<char>>
-findEquiJoinKeyNames(std::shared_ptr<NES::ExpressionNode> joinExpression);
-}// namespace NES
+std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames(std::shared_ptr<NES::ExpressionNode> joinExpression);
+} // namespace NES

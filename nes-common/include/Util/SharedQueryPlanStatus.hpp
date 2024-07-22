@@ -16,11 +16,12 @@
 #define NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
 
 #include <cinttypes>
-#include <stdint.h>
 #include <string>
 #include <unordered_map>
+#include <stdint.h>
 
-namespace NES {
+namespace NES
+{
 /**
      * @brief Represents various states a Shared query Plan goes through.
      *
@@ -33,7 +34,8 @@ namespace NES {
      * FAILED: Shared Query Plan failed because of some reason.
      * MIGRATING: shared query plan is currently being migrated
      */
-enum class SharedQueryPlanStatus : uint8_t {
+enum class SharedQueryPlanStatus : uint8_t
+{
     CREATED = 0,
     DEPLOYED,
     PROCESSED,
@@ -44,6 +46,6 @@ enum class SharedQueryPlanStatus : uint8_t {
     MIGRATING
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_

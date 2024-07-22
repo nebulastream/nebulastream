@@ -17,15 +17,17 @@
 
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 
-namespace NES {
+namespace NES
+{
 class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class SignatureEqualityUtil;
 using SignatureEqualityUtilPtr = std::shared_ptr<SignatureEqualityUtil>;
@@ -74,28 +76,28 @@ using HashSignatureBasedPartialQueryMergerRulePtr = std::shared_ptr<HashSignatur
  *                                                GQN4({Source(Car)},{Q1,Q2})
  *
  */
-class HashSignatureBasedPartialQueryMergerRule final : public BaseQueryMergerRule {
-
-  public:
+class HashSignatureBasedPartialQueryMergerRule final : public BaseQueryMergerRule
+{
+public:
     static HashSignatureBasedPartialQueryMergerRulePtr create();
 
     bool apply(GlobalQueryPlanPtr globalQueryPlan) override;
 
     ~HashSignatureBasedPartialQueryMergerRule() final = default;
 
-  private:
+private:
     /**
      * @brief identify if the query plans are equal or not
      * @param targetQueryPlan : target query plan
      * @param hostQueryPlan : host query plan
      * @return Map containing matching pair of target and host operators
      */
-    std::map<LogicalOperatorPtr, LogicalOperatorPtr> areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan,
-                                                                        const QueryPlanPtr& hostQueryPlan);
+    std::map<LogicalOperatorPtr, LogicalOperatorPtr>
+    areQueryPlansEqual(const QueryPlanPtr& targetQueryPlan, const QueryPlanPtr& hostQueryPlan);
 
-    std::map<LogicalOperatorPtr, LogicalOperatorPtr> areOperatorEqual(const LogicalOperatorPtr& targetOperator,
-                                                                      const LogicalOperatorPtr& hostOperator);
+    std::map<LogicalOperatorPtr, LogicalOperatorPtr>
+    areOperatorEqual(const LogicalOperatorPtr& targetOperator, const LogicalOperatorPtr& hostOperator);
 };
-}// namespace NES::Optimizer
+} // namespace NES::Optimizer
 
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_HASHSIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP_
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_HASHSIGNATUREBASEDPARTIALQUERYMERGERRULE_HPP_

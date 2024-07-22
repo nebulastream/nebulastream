@@ -17,8 +17,10 @@
 
 #include <cinttypes>
 
-namespace NES::Optimizer {
-enum class PlacementStrategy : uint8_t {
+namespace NES::Optimizer
+{
+enum class PlacementStrategy : uint8_t
+{
     TopDown = 0,
     BottomUp = 1,
     IFCOP = 2,
@@ -28,5 +30,5 @@ enum class PlacementStrategy : uint8_t {
     ELEGANT_ENERGY = 6,
     ELEGANT_BALANCED = 7
 };
-}// namespace NES::Optimizer
-#endif// NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTSTRATEGY_HPP_
+} // namespace NES::Optimizer
+#endif // NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTSTRATEGY_HPP_

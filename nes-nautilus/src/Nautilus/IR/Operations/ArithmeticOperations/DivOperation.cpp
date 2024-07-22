@@ -12,21 +12,32 @@
     limitations under the License.
 */
 
-#include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <string>
-namespace NES::Nautilus::IR::Operations {
+#include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
+namespace NES::Nautilus::IR::Operations
+{
 DivOperation::DivOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)
-    : Operation(OperationType::DivOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)),
-      rightInput(std::move(rightInput)) {
+    : Operation(OperationType::DivOp, identifier, leftInput->getStamp()), leftInput(std::move(leftInput)), rightInput(std::move(rightInput))
+{
     leftInput->addUsage(this);
     rightInput->addUsage(this);
 }
 
-std::string DivOperation::toString() {
+std::string DivOperation::toString()
+{
     return getIdentifier() + " = " + getLeftInput()->getIdentifier() + " / " + getRightInput()->getIdentifier();
 }
-bool DivOperation::classof(const Operation* Op) { return Op->getOperationType() == OperationType::DivOp; }
+bool DivOperation::classof(const Operation* Op)
+{
+    return Op->getOperationType() == OperationType::DivOp;
+}
 
-OperationPtr DivOperation::getLeftInput() { return leftInput.lock(); }
-OperationPtr DivOperation::getRightInput() { return rightInput.lock(); }
-}// namespace NES::Nautilus::IR::Operations
+OperationPtr DivOperation::getLeftInput()
+{
+    return leftInput.lock();
+}
+OperationPtr DivOperation::getRightInput()
+{
+    return rightInput.lock();
+}
+} // namespace NES::Nautilus::IR::Operations

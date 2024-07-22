@@ -15,6 +15,7 @@
 #include <Optimizer/QueryPlacementAddition/CostBasedOptimizer/AbstractCostBasedOptimizer.hpp>
 
 NES::Optimizer::AbstractCostBasedOptimizer::AbstractCostBasedOptimizer(
-    const std::set<LogicalOperatorPtr>& pinnedUpstreamOperators,
-    const std::set<LogicalOperatorPtr>& pinnedDownstreamOperators)
-    : pinnedUpstreamOperators(pinnedUpstreamOperators), pinnedDownstreamOperators(pinnedDownstreamOperators) {}
+    const std::set<LogicalOperatorPtr>& pinnedUpstreamOperators, const std::set<LogicalOperatorPtr>& pinnedDownstreamOperators)
+    : pinnedUpstreamOperators(pinnedUpstreamOperators), pinnedDownstreamOperators(pinnedDownstreamOperators)
+{
+}

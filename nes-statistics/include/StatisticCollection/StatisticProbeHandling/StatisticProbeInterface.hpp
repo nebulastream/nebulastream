@@ -15,14 +15,16 @@
 #ifndef NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEINTERFACE_HPP_
 #define NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEINTERFACE_HPP_
 
+#include <memory>
 #include <Statistics/StatisticRequests.hpp>
 #include <Statistics/StatisticValue.hpp>
-#include <memory>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-class StatisticProbeInterface {
-  public:
+class StatisticProbeInterface
+{
+public:
     /**
      * @brief Creates a request to probe a specific statistic and returns the statistic in a ProbeResult
      * @param probeRequest
@@ -30,9 +32,9 @@ class StatisticProbeInterface {
      * @param aggFunction
      * @return ProbeResult<> containing at least one StatisticValue
      */
-    virtual ProbeResult<> probeStatistic(const StatisticProbeRequest& probeRequest,
-                                         const bool& estimationAllowed,
-                                         std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction) = 0;
+    virtual ProbeResult<> probeStatistic(
+        const StatisticProbeRequest& probeRequest, const bool& estimationAllowed, std::function<ProbeResult<>(ProbeResult<>)>&& aggFunction)
+        = 0;
 
     /**
      * @brief Virtual destructor
@@ -40,6 +42,6 @@ class StatisticProbeInterface {
     virtual ~StatisticProbeInterface() = default;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEINTERFACE_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_STATISTICPROBEINTERFACE_HPP_

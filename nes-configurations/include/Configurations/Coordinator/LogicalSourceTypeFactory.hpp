@@ -15,12 +15,13 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_
 
-#include "Util/yaml/Yaml.hpp"
 #include <map>
 #include <memory>
 #include <string>
+#include "Util/yaml/Yaml.hpp"
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 class LogicalSourceType;
 using LogicalSourceTypePtr = std::shared_ptr<LogicalSourceType>;
@@ -28,8 +29,9 @@ using LogicalSourceTypePtr = std::shared_ptr<LogicalSourceType>;
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
 
-class LogicalSourceTypeFactory {
-  public:
+class LogicalSourceTypeFactory
+{
+public:
     /**
      * Create logical source config from string parameters (yaml/cli)
      * @param identifier
@@ -44,6 +46,6 @@ class LogicalSourceTypeFactory {
      */
     static LogicalSourceTypePtr createFromYaml(Yaml::Node& yamlConfig);
 };
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_

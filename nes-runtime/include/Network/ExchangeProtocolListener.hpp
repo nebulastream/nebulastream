@@ -19,12 +19,14 @@
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Network {
+namespace NES::Network
+{
 /**
  * @brief Listener for network stack events
  */
-class ExchangeProtocolListener {
-  public:
+class ExchangeProtocolListener
+{
+public:
     virtual ~ExchangeProtocolListener() = default;
 
     /**
@@ -57,5 +59,5 @@ class ExchangeProtocolListener {
      */
     virtual void onChannelError(Messages::ErrorMessage) = 0;
 };
-}// namespace NES::Network
-#endif// NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_
+} // namespace NES::Network
+#endif // NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOLLISTENER_HPP_

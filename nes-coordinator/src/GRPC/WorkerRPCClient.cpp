@@ -17,7 +17,6 @@
 #include <Expressions/ExpressionSerializationUtil.hpp>
 #include <GRPC/CoordinatorRPCClient.hpp>
 #include <GRPC/WorkerRPCClient.hpp>
-#include <Health.grpc.pb.h>
 #include <Monitoring/MonitoringPlan.hpp>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -25,18 +24,25 @@
 #include <Util/Mobility/GeoLocation.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <Health.grpc.pb.h>
 
-namespace NES {
+namespace NES
+{
 
-WorkerRPCClientPtr WorkerRPCClient::create() { return std::make_shared<WorkerRPCClient>(WorkerRPCClient()); }
+WorkerRPCClientPtr WorkerRPCClient::create()
+{
+    return std::make_shared<WorkerRPCClient>(WorkerRPCClient());
+}
 
-bool WorkerRPCClient::registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan) {
+bool WorkerRPCClient::registerQuery(const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan)
+{
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     auto decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
-              address,
-              sharedQueryId,
-              decomposedQueryPlanId);
+    NES_DEBUG(
+        "WorkerRPCClient::registerQuery address={} sharedQueryId={} decomposedQueryPlanId = {} ",
+        address,
+        sharedQueryId,
+        decomposedQueryPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
@@ -53,26 +59,29 @@ bool WorkerRPCClient::registerQuery(const std::string& address, const Decomposed
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->RegisterQuery(&context, request, &reply);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::registerQuery: status ok return success={}", reply.success());
         return reply.success();
     }
-    NES_DEBUG(" WorkerRPCClient::registerQuery "
-              "error={}: {}",
-              status.error_code(),
-              status.error_message());
+    NES_DEBUG(
+        " WorkerRPCClient::registerQuery "
+        "error={}: {}",
+        status.error_code(),
+        status.error_message());
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::registerQuery");
 }
 
-void WorkerRPCClient::registerQueryAsync(const std::string& address,
-                                         const DecomposedQueryPlanPtr& decomposedQueryPlan,
-                                         const CompletionQueuePtr& cq) {
+void WorkerRPCClient::registerQueryAsync(
+    const std::string& address, const DecomposedQueryPlanPtr& decomposedQueryPlan, const CompletionQueuePtr& cq)
+{
     SharedQueryId sharedQueryId = decomposedQueryPlan->getSharedQueryId();
     DecomposedQueryPlanId decomposedQueryPlanId = decomposedQueryPlan->getDecomposedQueryPlanId();
-    NES_DEBUG("WorkerRPCClient::registerQueryAsync address={} sharedQueryId={} decomposedQueryPlanId = {}",
-              address,
-              sharedQueryId,
-              decomposedQueryPlanId);
+    NES_DEBUG(
+        "WorkerRPCClient::registerQueryAsync address={} sharedQueryId={} decomposedQueryPlanId = {}",
+        address,
+        sharedQueryId,
+        decomposedQueryPlanId);
 
     // wrap the query id and the query operators in the protobuf register query request object.
     RegisterQueryRequest request;
@@ -104,13 +113,15 @@ void WorkerRPCClient::registerQueryAsync(const std::string& address,
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
-    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+    call->responseReader->Finish(&call->reply, &call->status, (void*)call);
 }
 
-void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAsyncRequests) {
+void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAsyncRequests)
+{
     NES_DEBUG("start checkAsyncResult for {} requests", rpcAsyncRequests.size());
     std::vector<RpcAsyncRequest> failedRPCCalls;
-    for (const auto& rpcAsyncRequest : rpcAsyncRequests) {
+    for (const auto& rpcAsyncRequest : rpcAsyncRequests)
+    {
         //wait for all deploys to come back
         void* got_tag = nullptr;
         bool ok = false;
@@ -119,39 +130,49 @@ void WorkerRPCClient::checkAsyncResult(const std::vector<RpcAsyncRequest>& rpcAs
         // The tag in this example is the memory location of the call object
         bool status;
         auto requestClientMode = rpcAsyncRequest.rpcClientMode;
-        if (requestClientMode == RpcClientMode::Register) {
+        if (requestClientMode == RpcClientMode::Register)
+        {
             auto* call = static_cast<AsyncClientCall<RegisterQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
-        } else if (requestClientMode == RpcClientMode::Unregister) {
+        }
+        else if (requestClientMode == RpcClientMode::Unregister)
+        {
             auto* call = static_cast<AsyncClientCall<UnregisterQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
-        } else if (requestClientMode == RpcClientMode::Start) {
+        }
+        else if (requestClientMode == RpcClientMode::Start)
+        {
             auto* call = static_cast<AsyncClientCall<StartQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
-        } else if (requestClientMode == RpcClientMode::Stop) {
+        }
+        else if (requestClientMode == RpcClientMode::Stop)
+        {
             auto* call = static_cast<AsyncClientCall<StopQueryReply>*>(got_tag);
             status = call->status.ok();
             delete call;
-        } else {
+        }
+        else
+        {
             NES_NOT_IMPLEMENTED();
         }
 
-        if (!status) {
+        if (!status)
+        {
             failedRPCCalls.push_back(rpcAsyncRequest);
         }
     }
-    if (!failedRPCCalls.empty()) {
+    if (!failedRPCCalls.empty())
+    {
         throw Exceptions::RpcException("Some RPCs did not succeed", failedRPCCalls);
     }
     NES_DEBUG("All rpc async requests succeeded");
 }
 
-void WorkerRPCClient::unregisterQueryAsync(const std::string& address,
-                                           SharedQueryId sharedQueryId,
-                                           const CompletionQueuePtr& cq) {
+void WorkerRPCClient::unregisterQueryAsync(const std::string& address, SharedQueryId sharedQueryId, const CompletionQueuePtr& cq)
+{
     NES_DEBUG("WorkerRPCClient::unregisterQueryAsync address={} queryId={}", address, sharedQueryId);
 
     UnregisterQueryRequest request;
@@ -178,10 +199,11 @@ void WorkerRPCClient::unregisterQueryAsync(const std::string& address,
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
-    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+    call->responseReader->Finish(&call->reply, &call->status, (void*)call);
 }
 
-bool WorkerRPCClient::unregisterQuery(const std::string& address, SharedQueryId sharedQueryId) {
+bool WorkerRPCClient::unregisterQuery(const std::string& address, SharedQueryId sharedQueryId)
+{
     NES_DEBUG("WorkerRPCClient::unregisterQuery address={} queryId={}", address, sharedQueryId);
 
     UnregisterQueryRequest request;
@@ -194,7 +216,8 @@ bool WorkerRPCClient::unregisterQuery(const std::string& address, SharedQueryId 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->UnregisterQuery(&context, request, &reply);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::unregisterQuery: status ok return success={}", reply.success());
         return reply.success();
     }
@@ -202,13 +225,10 @@ bool WorkerRPCClient::unregisterQuery(const std::string& address, SharedQueryId 
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::unregisterQuery");
 }
 
-bool WorkerRPCClient::startQuery(const std::string& address,
-                                 SharedQueryId sharedQueryId,
-                                 DecomposedQueryPlanId decomposedQueryPlanId) {
-    NES_DEBUG("WorkerRPCClient::startQuery address={} shared queryId={} decomposed query plan {}",
-              address,
-              sharedQueryId,
-              decomposedQueryPlanId);
+bool WorkerRPCClient::startQuery(const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId)
+{
+    NES_DEBUG(
+        "WorkerRPCClient::startQuery address={} shared queryId={} decomposed query plan {}", address, sharedQueryId, decomposedQueryPlanId);
 
     StartQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
@@ -222,7 +242,8 @@ bool WorkerRPCClient::startQuery(const std::string& address,
 
     Status status = workerStub->StartQuery(&context, request, &reply);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::startQuery: status ok return success={}", reply.success());
         return reply.success();
     }
@@ -230,14 +251,14 @@ bool WorkerRPCClient::startQuery(const std::string& address,
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::startQuery");
 }
 
-void WorkerRPCClient::startQueryAsync(const std::string& address,
-                                      SharedQueryId sharedQueryId,
-                                      DecomposedQueryPlanId decomposedQueryPlanId,
-                                      const CompletionQueuePtr& cq) {
-    NES_DEBUG("WorkerRPCClient::startQueryAsync address={} shared queryId={} decomposed queryId={}",
-              address,
-              sharedQueryId,
-              decomposedQueryPlanId);
+void WorkerRPCClient::startQueryAsync(
+    const std::string& address, SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, const CompletionQueuePtr& cq)
+{
+    NES_DEBUG(
+        "WorkerRPCClient::startQueryAsync address={} shared queryId={} decomposed queryId={}",
+        address,
+        sharedQueryId,
+        decomposedQueryPlanId);
 
     StartQueryRequest request;
     request.set_sharedqueryid(sharedQueryId.getRawValue());
@@ -264,13 +285,15 @@ void WorkerRPCClient::startQueryAsync(const std::string& address,
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
-    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+    call->responseReader->Finish(&call->reply, &call->status, (void*)call);
 }
 
-bool WorkerRPCClient::stopQuery(const std::string& address,
-                                SharedQueryId sharedQueryId,
-                                DecomposedQueryPlanId decomposedQueryPlanId,
-                                Runtime::QueryTerminationType terminationType) {
+bool WorkerRPCClient::stopQuery(
+    const std::string& address,
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    Runtime::QueryTerminationType terminationType)
+{
     NES_DEBUG("WorkerRPCClient::markQueryForStop address={} shared queryId={}", address, sharedQueryId);
 
     StopQueryRequest request;
@@ -285,7 +308,8 @@ bool WorkerRPCClient::stopQuery(const std::string& address,
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->StopQuery(&context, request, &reply);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::markQueryForStop: status ok return success={}", reply.success());
         return reply.success();
     }
@@ -293,11 +317,13 @@ bool WorkerRPCClient::stopQuery(const std::string& address,
     throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
 }
 
-void WorkerRPCClient::stopQueryAsync(const std::string& address,
-                                     SharedQueryId sharedQueryId,
-                                     DecomposedQueryPlanId decomposedQueryPlanId,
-                                     Runtime::QueryTerminationType terminationType,
-                                     const CompletionQueuePtr& cq) {
+void WorkerRPCClient::stopQueryAsync(
+    const std::string& address,
+    SharedQueryId sharedQueryId,
+    DecomposedQueryPlanId decomposedQueryPlanId,
+    Runtime::QueryTerminationType terminationType,
+    const CompletionQueuePtr& cq)
+{
     NES_DEBUG("WorkerRPCClient::stopQueryAsync address={} shared queryId={}", address, sharedQueryId);
 
     StopQueryRequest request;
@@ -326,14 +352,16 @@ void WorkerRPCClient::stopQueryAsync(const std::string& address,
     // Request that, upon completion of the RPC, "reply" be updated with the
     // server's response; "status" with the indication of whether the operation
     // was successful. Tag the request with the memory address of the call object.
-    call->responseReader->Finish(&call->reply, &call->status, (void*) call);
+    call->responseReader->Finish(&call->reply, &call->status, (void*)call);
 }
 
-bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan) {
+bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const Monitoring::MonitoringPlanPtr& plan)
+{
     NES_DEBUG("WorkerRPCClient: Monitoring request address={}", address);
 
     MonitoringRegistrationRequest request;
-    for (auto metric : plan->getMetricTypes()) {
+    for (auto metric : plan->getMetricTypes())
+    {
         request.mutable_metrictypes()->Add(magic_enum::enum_integer(metric));
     }
     ClientContext context;
@@ -343,16 +371,18 @@ bool WorkerRPCClient::registerMonitoringPlan(const std::string& address, const M
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->RegisterMonitoringPlan(&context, request, &reply);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: status ok");
         return true;
     }
-    NES_THROW_RUNTIME_ERROR(" WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": "
-                            + status.error_message());
+    NES_THROW_RUNTIME_ERROR(
+        " WorkerRPCClient::RequestMonitoringData error=" + std::to_string(status.error_code()) + ": " + status.error_message());
     return false;
 }
 
-std::string WorkerRPCClient::requestMonitoringData(const std::string& address) {
+std::string WorkerRPCClient::requestMonitoringData(const std::string& address)
+{
     NES_DEBUG("WorkerRPCClient: Monitoring request address={}", address);
     MonitoringDataRequest request;
     ClientContext context;
@@ -362,15 +392,17 @@ std::string WorkerRPCClient::requestMonitoringData(const std::string& address) {
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetMonitoringData(&context, request, &reply);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::RequestMonitoringData: metrics received {}", reply.metricsasjson());
         return reply.metricsasjson();
     }
-    NES_THROW_RUNTIME_ERROR("WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": "
-                                                                            << status.error_message());
+    NES_THROW_RUNTIME_ERROR(
+        "WorkerRPCClient::RequestMonitoringData error=" << std::to_string(status.error_code()) << ": " << status.error_message());
 }
 
-bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address) {
+bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, const std::string& address)
+{
     EpochBarrierNotification request;
     request.set_timestamp(timestamp);
     request.set_queryid(queryId);
@@ -380,14 +412,16 @@ bool WorkerRPCClient::injectEpochBarrier(uint64_t timestamp, uint64_t queryId, c
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->InjectEpochBarrier(&context, request, &reply);
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::PropagatePunctuation: status ok");
         return true;
     }
     return false;
 }
 
-bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId) {
+bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPlanId, uint64_t uniqueNetworkSinDescriptorId)
+{
     NES_DEBUG("WorkerRPCClient::buffering Data on address={}", address);
     BufferRequest request;
     request.set_querysubplanid(querySubPlanId);
@@ -398,24 +432,30 @@ bool WorkerRPCClient::bufferData(const std::string& address, uint64_t querySubPl
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->BeginBuffer(&context, request, &reply);
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::BeginBuffer: status ok return success={}", reply.success());
         return reply.success();
-    } else {
-        NES_ERROR(" WorkerRPCClient::BeginBuffer "
-                  "error={} : {}",
-                  status.error_code(),
-                  status.error_message());
+    }
+    else
+    {
+        NES_ERROR(
+            " WorkerRPCClient::BeginBuffer "
+            "error={} : {}",
+            status.error_code(),
+            status.error_message());
         throw Exceptions::RuntimeException("Error while WorkerRPCClient::markQueryForStop");
     }
 }
 
-bool WorkerRPCClient::updateNetworkSink(const std::string& address,
-                                        uint64_t newNodeId,
-                                        const std::string& newHostname,
-                                        uint32_t newPort,
-                                        uint64_t querySubPlanId,
-                                        uint64_t uniqueNetworkSinDescriptorId) {
+bool WorkerRPCClient::updateNetworkSink(
+    const std::string& address,
+    uint64_t newNodeId,
+    const std::string& newHostname,
+    uint32_t newPort,
+    uint64_t querySubPlanId,
+    uint64_t uniqueNetworkSinDescriptorId)
+{
     UpdateNetworkSinkRequest request;
     request.set_newnodeid(newNodeId);
     request.set_newhostname(newHostname);
@@ -428,16 +468,20 @@ bool WorkerRPCClient::updateNetworkSink(const std::string& address,
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->UpdateNetworkSink(&context, request, &reply);
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_DEBUG("WorkerRPCClient::UpdateNetworkSinks: status ok return success={}", reply.success());
         return reply.success();
-    } else {
+    }
+    else
+    {
         NES_ERROR(" WorkerRPCClient::UpdateNetworkSinks error={}: {}", status.error_code(), status.error_message());
         throw Exceptions::RuntimeException("Error while WorkerRPCClient::updateNetworkSinks");
     }
 }
 
-bool WorkerRPCClient::checkHealth(const std::string& address, std::string healthServiceName) {
+bool WorkerRPCClient::checkHealth(const std::string& address, std::string healthServiceName)
+{
     std::shared_ptr<::grpc::Channel> chan = grpc::CreateChannel(address, grpc::InsecureChannelCredentials());
     std::unique_ptr<grpc::health::v1::Health::Stub> workerStub = grpc::health::v1::Health::NewStub(chan);
 
@@ -447,16 +491,20 @@ bool WorkerRPCClient::checkHealth(const std::string& address, std::string health
     ClientContext context;
     Status status = workerStub->Check(&context, request, &response);
 
-    if (status.ok()) {
+    if (status.ok())
+    {
         NES_TRACE("WorkerRPCClient::checkHealth: status ok return success={}", response.status());
         return response.status();
-    } else {
+    }
+    else
+    {
         NES_ERROR(" WorkerRPCClient::checkHealth error={}: {}", status.error_code(), status.error_message());
         return response.status();
     }
 }
 
-Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const std::string& address) {
+Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const std::string& address)
+{
     NES_DEBUG("WorkerRPCClient: Requesting location from {}", address)
     ClientContext context;
     GetLocationRequest request;
@@ -465,12 +513,14 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
 
     std::unique_ptr<WorkerRPCService::Stub> workerStub = WorkerRPCService::NewStub(chan);
     Status status = workerStub->GetLocation(&context, request, &reply);
-    if (reply.has_waypoint()) {
+    if (reply.has_waypoint())
+    {
         auto waypoint = reply.waypoint();
         auto timestamp = waypoint.timestamp();
         auto geoLocation = waypoint.geolocation();
         //if timestamp is valid, include it in waypoint
-        if (timestamp != 0) {
+        if (timestamp != 0)
+        {
             return {Spatial::DataTypes::Experimental::GeoLocation(geoLocation.lat(), geoLocation.lng()), timestamp};
         }
         //no valid timestamp to include
@@ -480,4 +530,4 @@ Spatial::DataTypes::Experimental::Waypoint WorkerRPCClient::getWaypoint(const st
     //location is invalid
     return Spatial::DataTypes::Experimental::Waypoint(Spatial::DataTypes::Experimental::Waypoint::invalid());
 }
-}// namespace NES
+} // namespace NES

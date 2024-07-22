@@ -14,8 +14,11 @@
 
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
-OperationRef::OperationRef(uint32_t blockId, uint32_t operationId) : blockId(blockId), operationId(operationId) {}
+OperationRef::OperationRef(uint32_t blockId, uint32_t operationId) : blockId(blockId), operationId(operationId)
+{
+}
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/AttributeField.hpp>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
@@ -20,8 +21,6 @@
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
 #include <API/Windowing.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/DivExpressionNode.hpp>
@@ -71,95 +70,87 @@
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <SerializableOperator.pb.h>
-#include <SerializableQueryPlan.pb.h>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <google/protobuf/util/json_util.h>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <SerializableOperator.pb.h>
+#include <SerializableQueryPlan.pb.h>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace NES;
 using namespace Configurations;
 static constexpr auto NSOURCE_RETRIES = 100;
 static constexpr auto NSOURCE_RETRY_WAIT = std::chrono::milliseconds(5);
-class SerializationUtilTest : public Testing::BaseUnitTest {
-
-  public:
+class SerializationUtilTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SerializationUtilTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SerializationUtilTest test class.");
     }
 };
 
-TEST_F(SerializationUtilTest, dataTypeSerialization) {
-
+TEST_F(SerializationUtilTest, dataTypeSerialization)
+{
     // serialize and deserialize int8
     auto serializedInt8 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt8(), new SerializableDataType());
     auto deserializedInt8 = DataTypeSerializationUtil::deserializeDataType(*serializedInt8);
     EXPECT_TRUE(DataTypeFactory::createInt8()->equals(deserializedInt8));
 
     // serialize and deserialize int16
-    auto serializedInt16 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt16(), new SerializableDataType());
+    auto serializedInt16 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt16(), new SerializableDataType());
     auto deserializedInt16 = DataTypeSerializationUtil::deserializeDataType(*serializedInt16);
     EXPECT_TRUE(DataTypeFactory::createInt16()->equals(deserializedInt16));
 
     // serialize and deserialize int32
-    auto serializedInt32 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt32(), new SerializableDataType());
+    auto serializedInt32 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt32(), new SerializableDataType());
     auto deserializedInt32 = DataTypeSerializationUtil::deserializeDataType(*serializedInt32);
     EXPECT_TRUE(DataTypeFactory::createInt32()->equals(deserializedInt32));
 
     // serialize and deserialize int64
-    auto serializedInt64 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt64(), new SerializableDataType());
+    auto serializedInt64 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createInt64(), new SerializableDataType());
     auto deserializedInt64 = DataTypeSerializationUtil::deserializeDataType(*serializedInt64);
     EXPECT_TRUE(DataTypeFactory::createInt64()->equals(deserializedInt64));
 
     // serialize and deserialize uint8
-    auto serializedUInt8 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt8(), new SerializableDataType());
+    auto serializedUInt8 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt8(), new SerializableDataType());
     auto deserializedUInt8 = DataTypeSerializationUtil::deserializeDataType(*serializedUInt8);
     EXPECT_TRUE(DataTypeFactory::createUInt8()->equals(deserializedUInt8));
 
     // serialize and deserialize uint16
-    auto serializedUInt16 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt16(), new SerializableDataType());
+    auto serializedUInt16 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt16(), new SerializableDataType());
     auto deserializedUInt16 = DataTypeSerializationUtil::deserializeDataType(*serializedUInt16);
     EXPECT_TRUE(DataTypeFactory::createUInt16()->equals(deserializedUInt16));
 
     // serialize and deserialize uint32
-    auto serializedUInt32 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt32(), new SerializableDataType());
+    auto serializedUInt32 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt32(), new SerializableDataType());
     auto deserializedUInt32 = DataTypeSerializationUtil::deserializeDataType(*serializedUInt32);
     EXPECT_TRUE(DataTypeFactory::createUInt32()->equals(deserializedUInt32));
 
     // serialize and deserialize uint64
-    auto serializedUInt64 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt64(), new SerializableDataType());
+    auto serializedUInt64 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createUInt64(), new SerializableDataType());
     auto deserializedUInt64 = DataTypeSerializationUtil::deserializeDataType(*serializedUInt64);
     EXPECT_TRUE(DataTypeFactory::createUInt64()->equals(deserializedUInt64));
 
     // serialize and deserialize float32
-    auto serializedFloat32 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createFloat(), new SerializableDataType());
+    auto serializedFloat32 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createFloat(), new SerializableDataType());
     auto deserializedFloat32 = DataTypeSerializationUtil::deserializeDataType(*serializedFloat32);
     EXPECT_TRUE(DataTypeFactory::createFloat()->equals(deserializedFloat32));
 
     // serialize and deserialize float64
-    auto serializedFloat64 =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createDouble(), new SerializableDataType());
+    auto serializedFloat64 = DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createDouble(), new SerializableDataType());
     auto deserializedFloat64 = DataTypeSerializationUtil::deserializeDataType(*serializedFloat64);
     EXPECT_TRUE(DataTypeFactory::createDouble()->equals(deserializedFloat64));
 
     // serialize and deserialize array
-    auto serializedArray =
-        DataTypeSerializationUtil::serializeDataType(DataTypeFactory::createArray(42, DataTypeFactory::createInt8()),
-                                                     new SerializableDataType());
+    auto serializedArray = DataTypeSerializationUtil::serializeDataType(
+        DataTypeFactory::createArray(42, DataTypeFactory::createInt8()), new SerializableDataType());
     auto deserializedArray = DataTypeSerializationUtil::deserializeDataType(*serializedArray);
     EXPECT_TRUE(DataTypeFactory::createArray(42, DataTypeFactory::createInt8())->equals(deserializedArray));
 
@@ -169,8 +160,8 @@ TEST_F(SerializationUtilTest, dataTypeSerialization) {
     EXPECT_TRUE(DataTypeFactory::createText()->equals(deserializedText));
 }
 
-TEST_F(SerializationUtilTest, schemaSerializationTest) {
-
+TEST_F(SerializationUtilTest, schemaSerializationTest)
+{
     auto schema = Schema::create();
     schema->addField("f1", DataTypeFactory::createDouble());
     schema->addField("f2", DataTypeFactory::createInt32());
@@ -182,8 +173,8 @@ TEST_F(SerializationUtilTest, schemaSerializationTest) {
     EXPECT_TRUE(deserializedSchema->equals(schema));
 }
 
-TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {
-
+TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout)
+{
     auto schema = Schema::create();
     schema->addField("f1", DataTypeFactory::createDouble());
     schema->addField("f2", DataTypeFactory::createInt32());
@@ -197,7 +188,8 @@ TEST_F(SerializationUtilTest, schemaSerializationTestColumnLayout) {
     EXPECT_EQ(deserializedSchema->getLayoutType(), NES::Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
 }
 
-TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
+TEST_F(SerializationUtilTest, sourceDescriptorSerialization)
+{
     auto schema = Schema::create();
     schema->addField("f1", BasicType::INT32);
 
@@ -211,7 +203,7 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
 
 #if ENABLE_OPC_BUILD
     {
-        UA_NodeId nodeId = UA_NODEID_STRING(1, (char*) "the.answer");
+        UA_NodeId nodeId = UA_NODEID_STRING(1, (char*)"the.answer");
         auto source = OPCSourceDescriptor::create(schema, "localhost", nodeId, "", "");
         SerializableOperator_SourceDetails sourceDetails;
         OperatorSerializationUtil::serializeSourceDescriptor(*source, sourceDetails);
@@ -276,13 +268,8 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
         Network::NesPartition nesPartition{SharedQueryId(1), OperatorId(22), PartitionId(33), SubpartitionId(44)};
         uint16_t version = 55;
         auto uniqueId = 66;
-        auto source = Network::NetworkSourceDescriptor::create(schema,
-                                                               nesPartition,
-                                                               nodeLocation,
-                                                               NSOURCE_RETRY_WAIT,
-                                                               NSOURCE_RETRIES,
-                                                               version,
-                                                               OperatorId(uniqueId));
+        auto source = Network::NetworkSourceDescriptor::create(
+            schema, nesPartition, nodeLocation, NSOURCE_RETRY_WAIT, NSOURCE_RETRIES, version, OperatorId(uniqueId));
         SerializableOperator_SourceDetails sourceDetails;
         OperatorSerializationUtil::serializeSourceDescriptor(*source, sourceDetails);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSourceDescriptor(sourceDetails);
@@ -299,8 +286,8 @@ TEST_F(SerializationUtilTest, sourceDescriptorSerialization) {
     }
 }
 
-TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
-
+TEST_F(SerializationUtilTest, sinkDescriptorSerialization)
+{
     {
         auto sink = ZmqSinkDescriptor::create("localhost", 42);
         SerializableOperator_SinkDetails sinkDetails;
@@ -311,7 +298,7 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
 
 #if ENABLE_OPC_BUILD
     {
-        UA_NodeId nodeId = UA_NODEID_STRING(1, (char*) "the.answer");
+        UA_NodeId nodeId = UA_NODEID_STRING(1, (char*)"the.answer");
         auto sink = OPCSinkDescriptor::create("localhost", nodeId, "", "");
         SerializableOperator_SinkDetails sinkDescriptor;
         OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, 0);
@@ -385,13 +372,8 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
         DecomposedQueryPlanVersion version = 5;
         auto numberOfOrigins = 6;
         OperatorId uniqueId = OperatorId(7);
-        auto sink = Network::NetworkSinkDescriptor::create(nodeLocation,
-                                                           nesPartition,
-                                                           std::chrono::seconds(1),
-                                                           retryTimes,
-                                                           version,
-                                                           numberOfOrigins,
-                                                           uniqueId);
+        auto sink = Network::NetworkSinkDescriptor::create(
+            nodeLocation, nesPartition, std::chrono::seconds(1), retryTimes, version, numberOfOrigins, uniqueId);
         SerializableOperator_SinkDetails sinkDescriptor;
         OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, 0);
         auto deserializedSourceDescriptor = OperatorSerializationUtil::deserializeSinkDescriptor(sinkDescriptor);
@@ -400,9 +382,11 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
 
     {
         // Testing for all StatisticSinkFormatType, if we can serialize a statistic sink
-        constexpr auto numberOfOrigins = 42;// just some arbitrary number
-        for (auto sinkFormatType : magic_enum::enum_values<Statistic::StatisticSynopsisType>()) {
-            for (auto sinkDataCodec : magic_enum::enum_values<Statistic::StatisticDataCodec>()) {
+        constexpr auto numberOfOrigins = 42; // just some arbitrary number
+        for (auto sinkFormatType : magic_enum::enum_values<Statistic::StatisticSynopsisType>())
+        {
+            for (auto sinkDataCodec : magic_enum::enum_values<Statistic::StatisticDataCodec>())
+            {
                 auto sink = Statistic::StatisticSinkDescriptor::create(sinkFormatType, sinkDataCodec, numberOfOrigins);
                 SerializableOperator_SinkDetails sinkDescriptor;
                 OperatorSerializationUtil::serializeSinkDescriptor(*sink, sinkDescriptor, numberOfOrigins);
@@ -413,8 +397,8 @@ TEST_F(SerializationUtilTest, sinkDescriptorSerialization) {
     }
 }
 
-TEST_F(SerializationUtilTest, expressionSerialization) {
-
+TEST_F(SerializationUtilTest, expressionSerialization)
+{
     {
         auto fieldAccess = FieldAccessExpressionNode::create(DataTypeFactory::createInt32(), "f1");
         auto serializedExpression = ExpressionSerializationUtil::serializeExpression(fieldAccess, new SerializableExpression());
@@ -523,7 +507,8 @@ TEST_F(SerializationUtilTest, expressionSerialization) {
     }
 }
 
-TEST_F(SerializationUtilTest, functionExpressionSerialization) {
+TEST_F(SerializationUtilTest, functionExpressionSerialization)
+{
     auto argument1 = ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt64(), "1"));
     auto expression = FunctionExpression::create(argument1->getStamp(), "ln", {argument1});
     auto* serializedExpression = ExpressionSerializationUtil::serializeExpression(expression, new SerializableExpression());
@@ -531,8 +516,8 @@ TEST_F(SerializationUtilTest, functionExpressionSerialization) {
     EXPECT_TRUE(expression->equal(deserializedExpression));
 }
 
-TEST_F(SerializationUtilTest, operatorSerialization) {
-
+TEST_F(SerializationUtilTest, operatorSerialization)
+{
     {
         auto javaUDFDescriptor = NES::Catalogs::UDF::JavaUDFDescriptorBuilder::createDefaultJavaUDFDescriptor();
         auto javaUDFMap = LogicalOperatorFactory::createMapUDFLogicalOperator(javaUDFDescriptor);
@@ -579,7 +564,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
         auto inferModelOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
         EXPECT_TRUE(inferModel->equal(inferModelOperator));
     }
-#endif// TFDEF
+#endif // TFDEF
 
     {
         auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
@@ -672,8 +657,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-        auto windowDefinition =
-            Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
+        auto windowDefinition = Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto tumblingWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(tumblingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -682,8 +666,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
 
     {
         auto windowType = Windowing::SlidingWindow::of(EventTime(Attribute("ts")), Seconds(10), Hours(200));
-        auto windowDefinition =
-            Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
+        auto windowDefinition = Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto slidingWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(slidingWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -693,8 +676,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     // threshold window operator
     {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45);
-        auto windowDefinition =
-            Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
+        auto windowDefinition = Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto thresholdWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -704,8 +686,7 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     // threshold window operator with minimum count
     {
         auto windowType = Windowing::ThresholdWindow::of(Attribute("f1") < 45, 5);
-        auto windowDefinition =
-            Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
+        auto windowDefinition = Windowing::LogicalWindowDescriptor::create({API::Sum(Attribute("test"))->aggregation}, windowType, 0);
         auto thresholdWindow = LogicalOperatorFactory::createWindowOperator(windowDefinition);
         auto serializedOperator = OperatorSerializationUtil::serializeOperator(thresholdWindow);
         auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -715,20 +696,20 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     {
         // Testing for all possible combinations of sending policies and trigger conditions, if we can serialize a
         // statistic build operator correctly
-        auto allPossibleSendingPolicies = {Statistic::SENDING_ASAP(Statistic::StatisticDataCodec::DEFAULT),
-                                           Statistic::SENDING_ADAPTIVE(Statistic::StatisticDataCodec::DEFAULT),
-                                           Statistic::SENDING_LAZY(Statistic::StatisticDataCodec::DEFAULT)};
+        auto allPossibleSendingPolicies
+            = {Statistic::SENDING_ASAP(Statistic::StatisticDataCodec::DEFAULT),
+               Statistic::SENDING_ADAPTIVE(Statistic::StatisticDataCodec::DEFAULT),
+               Statistic::SENDING_LAZY(Statistic::StatisticDataCodec::DEFAULT)};
         auto allPossibleTriggerCondition = {Statistic::NeverTrigger::create()};
-        for (auto sendingPolicy : allPossibleSendingPolicies) {
-            for (auto triggerCondition : allPossibleTriggerCondition) {
+        for (auto sendingPolicy : allPossibleSendingPolicies)
+        {
+            for (auto triggerCondition : allPossibleTriggerCondition)
+            {
                 auto metric = Statistic::IngestionRate::create();
                 auto statisticDescriptor = Statistic::CountMinDescriptor::create(metric->getField());
                 auto windowType = Windowing::TumblingWindow::of(EventTime(Attribute("ts")), Seconds(10));
-                auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(windowType,
-                                                                                                   statisticDescriptor,
-                                                                                                   metric->hash(),
-                                                                                                   sendingPolicy,
-                                                                                                   triggerCondition);
+                auto statisticBuildOperator = LogicalOperatorFactory::createStatisticBuildOperator(
+                    windowType, statisticDescriptor, metric->hash(), sendingPolicy, triggerCondition);
                 statisticBuildOperator->setStatisticId(getNextStatisticId());
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(statisticBuildOperator);
                 auto deserializedOperator = OperatorSerializationUtil::deserializeOperator(serializedOperator);
@@ -738,8 +719,8 @@ TEST_F(SerializationUtilTest, operatorSerialization) {
     }
 }
 
-TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
-
+TEST_F(SerializationUtilTest, queryPlanSerDeSerialization)
+{
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
@@ -758,7 +739,8 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerialization) {
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
-TEST_F(SerializationUtilTest, queryPlanSerDeSerializationMultipleFilters) {
+TEST_F(SerializationUtilTest, queryPlanSerDeSerializationMultipleFilters)
+{
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
     auto filter1 = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     auto filter2 = LogicalOperatorFactory::createFilterOperator(Attribute("f2") == 20);
@@ -780,7 +762,8 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationMultipleFilters) {
     EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->equal(queryPlan->getRootOperators()[0]));
 }
 
-TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
+TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout)
+{
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
@@ -800,11 +783,11 @@ TEST_F(SerializationUtilTest, queryPlanSerDeSerializationColumnarLayout) {
 }
 
 #if ENABLE_OPC_BUILD
-TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
-
+TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization)
+{
     auto schema = Schema::create();
     schema->addField("f1", BasicType::INT32);
-    UA_NodeId nodeId = UA_NODEID_STRING(1, (char*) "the.answer");
+    UA_NodeId nodeId = UA_NODEID_STRING(1, (char*)"the.answer");
     auto source = LogicalOperatorFactory::createSourceOperator(OPCSourceDescriptor::create(schema, "localhost", nodeId, "", ""));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
@@ -825,8 +808,8 @@ TEST_F(SerializationUtilTest, queryPlanWithOPCSerDeSerialization) {
 }
 #endif
 
-TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
-
+TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization)
+{
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
     filter->addChild(source);
@@ -846,10 +829,13 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
 
     std::vector<OperatorPtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
-    for (const auto& actualRootOperator : actualRootOperators) {
+    for (const auto& actualRootOperator : actualRootOperators)
+    {
         bool found = false;
-        for (const auto& queryRoot : queryPlan->getRootOperators()) {
-            if (actualRootOperator->equal(queryRoot)) {
+        for (const auto& queryRoot : queryPlan->getRootOperators())
+        {
+            if (actualRootOperator->equal(queryRoot))
+            {
                 EXPECT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
                 found = true;
             }
@@ -858,7 +844,8 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleRootSerDeSerialization) {
     }
 }
 
-TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
+TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization)
+{
     auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
     auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("testStream"));
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("f1") == 10);
@@ -880,27 +867,34 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     EXPECT_TRUE(deserializedQueryPlan->getQueryId() == queryPlan->getQueryId());
 
     std::vector<OperatorPtr> actualRootOperators = deserializedQueryPlan->getRootOperators();
-    for (const auto& actualRootOperator : actualRootOperators) {
+    for (const auto& actualRootOperator : actualRootOperators)
+    {
         bool found = false;
-        for (const auto& queryRoot : queryPlan->getRootOperators()) {
-            if (actualRootOperator->equal(queryRoot)) {
+        for (const auto& queryRoot : queryPlan->getRootOperators())
+        {
+            if (actualRootOperator->equal(queryRoot))
+            {
                 EXPECT_TRUE(actualRootOperator->equalWithAllChildren(queryRoot));
                 found = true;
             }
         }
         EXPECT_TRUE(found);
     }
-    EXPECT_TRUE(actualRootOperators[0]->getChildren()[0]->as<Operator>()->getId()
-                == actualRootOperators[1]->getChildren()[0]->as<Operator>()->getId());
+    EXPECT_TRUE(
+        actualRootOperators[0]->getChildren()[0]->as<Operator>()->getId()
+        == actualRootOperators[1]->getChildren()[0]->as<Operator>()->getId());
     EXPECT_TRUE(actualRootOperators[0]->getChildren()[0].get() == actualRootOperators[1]->getChildren()[0].get());
     std::vector<NodePtr> sourceOperatorsForRoot1 = actualRootOperators[0]->getAllLeafNodes();
     std::vector<NodePtr> sourceOperatorsForRoot2 = actualRootOperators[1]->getAllLeafNodes();
     EXPECT_TRUE(sourceOperatorsForRoot1.size() == 2);
     EXPECT_TRUE(sourceOperatorsForRoot2.size() == 2);
-    for (const auto& sourceOperatorForRoot1 : sourceOperatorsForRoot1) {
+    for (const auto& sourceOperatorForRoot1 : sourceOperatorsForRoot1)
+    {
         bool found = false;
-        for (const auto& sourceOperatorForRoot2 : sourceOperatorsForRoot2) {
-            if (sourceOperatorForRoot1->equal(sourceOperatorForRoot2)) {
+        for (const auto& sourceOperatorForRoot2 : sourceOperatorsForRoot2)
+        {
+            if (sourceOperatorForRoot1->equal(sourceOperatorForRoot2))
+            {
                 found = true;
             }
         }
@@ -908,8 +902,8 @@ TEST_F(SerializationUtilTest, queryPlanWithMultipleSourceSerDeSerialization) {
     }
 }
 
-TEST_F(SerializationUtilTest, testSerializeDeserializeCilentOriginatedQueryPlan) {
-
+TEST_F(SerializationUtilTest, testSerializeDeserializeCilentOriginatedQueryPlan)
+{
     auto query = Query::from("default_logical").sink(PrintSinkDescriptor::create());
     auto queryPlan = query.getQueryPlan();
 
@@ -923,11 +917,11 @@ TEST_F(SerializationUtilTest, testSerializeDeserializeCilentOriginatedQueryPlan)
 
     // Expect that the child of the root operator from the original and deserialized query plan are the same
     // i.e., the source operator from  original and deserialized query plan are the same
-    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->equal(
-        queryPlan->getRootOperators()[0]->getChildren()[0]));
+    EXPECT_TRUE(deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->equal(queryPlan->getRootOperators()[0]->getChildren()[0]));
 
     // Expect that the id of operators in the deserialized query plan are different to the original query plan, because the initial IDs are client-generated and NES should provide its own IDs
     EXPECT_FALSE(queryPlan->getRootOperators()[0]->getId() == deserializedQueryPlan->getRootOperators()[0]->getId());
-    EXPECT_FALSE(queryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperator>()->getId()
-                 == deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperator>()->getId());
+    EXPECT_FALSE(
+        queryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperator>()->getId()
+        == deserializedQueryPlan->getRootOperators()[0]->getChildren()[0]->as<LogicalOperator>()->getId());
 }

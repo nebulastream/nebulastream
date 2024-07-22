@@ -13,12 +13,13 @@
 */
 
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
 // This test fixtures creates the following test harness during test setup:
 // - A memory source is attached to a logical source. The memory source contains exactly one tuple with the value 1 (UINT64).
@@ -26,44 +27,49 @@ namespace NES {
 // Additionally, there are two methods to run tests:
 // - runQueryAndVerifyExpectedResults to check that expected output was written to a file sink.
 // - runQueryAndVerifyFailureState to check that writing to the file sink caused the query to fail.
-class FileSinkIntegrationTest : public Testing::BaseIntegrationTest {
-  public:
+class FileSinkIntegrationTest : public Testing::BaseIntegrationTest
+{
+public:
     static void SetUpTestCase() { NES::Logger::setupLogging("FileSinkIntegrationTest.log", NES::LogLevel::LOG_DEBUG); }
-    void SetUp() override {
+    void SetUp() override
+    {
         BaseIntegrationTest::SetUp();
         createTestHarnessWithMemorySource();
     }
-    void runQueryAndVerifyExpectedResults(const std::string& expectedOutput) const {
+    void runQueryAndVerifyExpectedResults(const std::string& expectedOutput) const
+    {
         testHarness->runQuery(NES::Util::countLines(expectedOutput));
         auto actualBuffers = testHarness->getOutput();
-        auto tmpBuffer = TestUtils::createExpectedBufferFromCSVString(expectedOutput,
-                                                                      testHarness->getOutputSchema(),
-                                                                      testHarness->getBufferManager());
+        auto tmpBuffer
+            = TestUtils::createExpectedBufferFromCSVString(expectedOutput, testHarness->getOutputSchema(), testHarness->getBufferManager());
         auto expectedBuffers = TestUtils::createTestTupleBuffers(tmpBuffer, testHarness->getOutputSchema());
         EXPECT_TRUE(TestUtils::buffersContainSameTuples(expectedBuffers, actualBuffers));
     }
-    void runQueryAndVerifyFailureState() const {
+    void runQueryAndVerifyFailureState() const
+    {
         testHarness->addFileSink();
         testHarness->validateAndQueueAddQueryRequest();
         EXPECT_TRUE(testHarness->checkFailedOrTimeout());
         testHarness->stopCoordinatorAndWorkers();
     }
 
-  private:
-    void createTestHarnessWithMemorySource() {
+private:
+    void createTestHarnessWithMemorySource()
+    {
         const std::string logicalSourceName = "logicalSource";
         Query query = Query::from(logicalSourceName);
         testHarness = std::make_unique<TestHarness>(query, *restPort, *rpcCoordinatorPort, getTestResourceFolder());
         const auto schema = TestSchemas::getSchemaTemplate("id_u64")->updateSourceName(logicalSourceName);
         testHarness->addLogicalSource(logicalSourceName, schema).attachWorkerWithMemorySourceToCoordinator(logicalSourceName);
-        struct Input {
+        struct Input
+        {
             uint64_t id;
         };
         testHarness->pushElement<Input>({1}, 2);
         testHarness->validate().setupTopology();
     }
 
-  protected:
+protected:
     std::unique_ptr<TestHarness> testHarness;
 };
 
@@ -71,7 +77,8 @@ class FileSinkIntegrationTest : public Testing::BaseIntegrationTest {
 // We create a file that already contains a tuple with a value 3, and set it as the output file of the test harness.
 // When the test harness executes the query in APPEND mode, the output file should contain both the tuple with value 3
 // that we created in the beginning and the value 1 that was read from the memory source of the test harness.
-TEST_F(FileSinkIntegrationTest, DISABLED_canWriteToOutputFileInAppendMode) {
+TEST_F(FileSinkIntegrationTest, DISABLED_canWriteToOutputFileInAppendMode)
+{
     // Prepare output file
     const std::string outputFilePath = getTestResourceFolder() / "output.csv";
     std::ofstream outputFile{outputFilePath};
@@ -88,7 +95,8 @@ TEST_F(FileSinkIntegrationTest, DISABLED_canWriteToOutputFileInAppendMode) {
 // We create a file that already contains a tuple with a value 3, and set it as the output file of the test harness.
 // When the test harness executes the query in OVERWRITE mode, the output file should only contain the tuple with value 1
 // that was read from the memory source of the test harness.
-TEST_F(FileSinkIntegrationTest, canWriteToOutputFileInOverWriteMode) {
+TEST_F(FileSinkIntegrationTest, canWriteToOutputFileInOverWriteMode)
+{
     // Prepare output file
     const std::string outputFilePath = getTestResourceFolder() / "output.csv";
     std::ofstream outputFile{outputFilePath};
@@ -103,7 +111,8 @@ TEST_F(FileSinkIntegrationTest, canWriteToOutputFileInOverWriteMode) {
 
 // This test sets the output file to a filename that cannot be created because it is in a folder that does not exist.
 // The query should fail.
-TEST_F(FileSinkIntegrationTest, cannotOpenOutputFile) {
+TEST_F(FileSinkIntegrationTest, cannotOpenOutputFile)
+{
     const std::string outputFilePath = getTestResourceFolder() / "bad_folder" / "output.csv";
     testHarness->setOutputFilePath(outputFilePath);
     runQueryAndVerifyFailureState();
@@ -111,7 +120,8 @@ TEST_F(FileSinkIntegrationTest, cannotOpenOutputFile) {
 
 // This test creates an output file that cannot be removed. We simulate this by creating a non-empty folder and set it as output
 // file (std::filesystem::remove will not remove this folder). The query should fail.
-TEST_F(FileSinkIntegrationTest, cannotRemoveOutputFileInOverwriteMode) {
+TEST_F(FileSinkIntegrationTest, cannotRemoveOutputFileInOverwriteMode)
+{
     // Prepare output file
     auto folder = getTestResourceFolder() / "folder";
     std::filesystem::create_directory(folder);
@@ -123,4 +133,4 @@ TEST_F(FileSinkIntegrationTest, cannotRemoveOutputFileInOverwriteMode) {
     runQueryAndVerifyFailureState();
 }
 
-};// namespace NES
+}; // namespace NES

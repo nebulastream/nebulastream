@@ -17,12 +17,14 @@
 
 #include <cstdint>
 
-namespace NES::Runtime::Profiler {
+namespace NES::Runtime::Profiler
+{
 /**
  * @brief This is base profiler class to implement own profiler (e.g., PAPI)
  */
-class BaseProfiler {
-  public:
+class BaseProfiler
+{
+public:
     /**
      * @brief start sampling
      * @return the tsc representing the moment we start sampling
@@ -36,6 +38,6 @@ class BaseProfiler {
      */
     virtual uint64_t stopSampling(std::size_t numItems) = 0;
 };
-}// namespace NES::Runtime::Profiler
+} // namespace NES::Runtime::Profiler
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_

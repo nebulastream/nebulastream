@@ -18,9 +18,11 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-bool IncrementThreadSaveAndCheckLimit(void* op) {
+bool IncrementThreadSaveAndCheckLimit(void* op)
+{
     NES_ASSERT2_FMT(op != nullptr, "operator handler context should not be null");
     auto* opHandler = static_cast<LimitOperatorHandler*>(op);
 
@@ -29,17 +31,21 @@ bool IncrementThreadSaveAndCheckLimit(void* op) {
     return value < opHandler->limit;
 }
 
-void Limit::execute(ExecutionContext& ctx, Record& record) const {
+void Limit::execute(ExecutionContext& ctx, Record& record) const
+{
     // 1) get the global operator state
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 2) check if the limit was reached
-    if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit", IncrementThreadSaveAndCheckLimit, globalOperatorHandler)) {
+    if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit", IncrementThreadSaveAndCheckLimit, globalOperatorHandler))
+    {
         child->execute(ctx, record);
-    } else {
+    }
+    else
+    {
         // In the future we need here to somehow signal the parent or data source that we already finished
         return;
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

@@ -13,14 +13,20 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_
-#include <Nautilus/IR/Types/Stamp.hpp>
 #include <cstdint>
-namespace NES::Nautilus::IR::Types {
+#include <Nautilus/IR/Types/Stamp.hpp>
+namespace NES::Nautilus::IR::Types
+{
 
-class FloatStamp : public Stamp {
-  public:
+class FloatStamp : public Stamp
+{
+public:
     // Bit width for the float
-    enum class BitWidth : uint32_t { F32, F64 };
+    enum class BitWidth : uint32_t
+    {
+        F32,
+        F64
+    };
 
     static const inline auto type = TypeIdentifier::create<FloatStamp>();
     /**
@@ -42,10 +48,10 @@ class FloatStamp : public Stamp {
     uint32_t getNumberOfBits() const;
     const std::string toString() const override;
 
-  private:
+private:
     const BitWidth bitWidth;
 };
 
-}// namespace NES::Nautilus::IR::Types
+} // namespace NES::Nautilus::IR::Types
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_

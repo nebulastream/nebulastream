@@ -15,18 +15,19 @@
 #ifndef NES_RUNTIME_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_
 
-#include <Network/NetworkForwardRefs.hpp>
-#include <Network/PartitionRegistrationStatus.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <memory>
 #include <mutex>
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Network/NetworkForwardRefs.hpp>
+#include <Network/PartitionRegistrationStatus.hpp>
+#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
 /**
  * @brief this class keeps track of all ready partitions (and their subpartitions)
@@ -37,14 +38,16 @@ namespace NES::Network {
  * Producer: there are n "emitters" that are to produce the data for a partition
  * When the reference counter reaches 0, it means that none requires a partition.
  */
-class PartitionManager {
-  public:
-  private:
+class PartitionManager
+{
+public:
+private:
     /**
      * @brief Helper class to store a partition's ref cnt and data emitter
      */
-    class PartitionProducerEntry {
-      public:
+    class PartitionProducerEntry
+    {
+    public:
         /**
          * @brief Creates a new partition entry info with ref cnt = 1
          * @param emitter the data emitter that must be notified upon arrival of new data
@@ -77,7 +80,7 @@ class PartitionManager {
          */
         Runtime::RuntimeEventListenerPtr getEventListener() const;
 
-      private:
+    private:
         uint64_t partitionCounter{1};
         NodeLocation receiverLocation;
         Runtime::RuntimeEventListenerPtr eventListener;
@@ -86,8 +89,9 @@ class PartitionManager {
     /**
      * @brief Helper class to store a partition's ref cnt and data emitter
      */
-    class PartitionConsumerEntry {
-      public:
+    class PartitionConsumerEntry
+    {
+    public:
         /**
          * @brief Creates a new partition entry info with ref cnt = 1
          * @param emitter the data emitter that must be notified upon arrival of new data
@@ -125,13 +129,13 @@ class PartitionManager {
          */
         DecomposedQueryPlanVersion getVersion();
 
-      private:
+    private:
         uint64_t partitionCounter{1};
         NodeLocation senderLocation;
         DataEmitterPtr consumer{nullptr};
     };
 
-  public:
+public:
     PartitionManager() = default;
 
     ~PartitionManager();
@@ -232,9 +236,7 @@ class PartitionManager {
      * @param eventListener
      * @return true if successful
      */
-    bool addSubpartitionEventListener(NesPartition partition,
-                                      NodeLocation nodeLocation,
-                                      Runtime::RuntimeEventListenerPtr eventListener);
+    bool addSubpartitionEventListener(NesPartition partition, NodeLocation nodeLocation, Runtime::RuntimeEventListenerPtr eventListener);
 
     /**
      * @brief Retrieve event listener for a partition
@@ -248,13 +250,13 @@ class PartitionManager {
      */
     void clear();
 
-  private:
+private:
     std::unordered_map<NesPartition, PartitionProducerEntry> producerPartitions;
     std::unordered_map<NesPartition, PartitionConsumerEntry> consumerPartitions;
     mutable std::recursive_mutex producerPartitionsMutex;
     mutable std::recursive_mutex consumerPartitionsMutex;
 };
 using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
-}// namespace NES::Network
+} // namespace NES::Network
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_

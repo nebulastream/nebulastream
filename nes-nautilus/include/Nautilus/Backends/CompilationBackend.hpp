@@ -19,14 +19,16 @@
 #include <Util/DumpHelper.hpp>
 #include <Util/PluginRegistry.hpp>
 
-namespace NES::Nautilus::Backends {
+namespace NES::Nautilus::Backends
+{
 class Executable;
 
 /**
  * @brief The compilation backend, compiles a ir graph to an executable.
  */
-class CompilationBackend {
-  public:
+class CompilationBackend
+{
+public:
     /**
      * @brief Compiles ir graph to executable.
      * @return std::unique_ptr<Executable>
@@ -38,6 +40,6 @@ class CompilationBackend {
 
 using CompilationBackendRegistry = Util::NamedPluginRegistry<CompilationBackend>;
 
-}// namespace NES::Nautilus::Backends
+} // namespace NES::Nautilus::Backends
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_

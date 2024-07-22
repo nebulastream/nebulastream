@@ -19,7 +19,8 @@
 #include <string>
 #include <unordered_map>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief Represents various states the operator goes through.
  *
@@ -29,8 +30,15 @@ namespace NES {
  * PLACED: Operator is placed and deployed.
  * REMOVED: operator is undeployed and is removed.
  */
-enum class OperatorState : uint8_t { TO_BE_PLACED = 0, TO_BE_REMOVED, TO_BE_REPLACED, PLACED, REMOVED };
+enum class OperatorState : uint8_t
+{
+    TO_BE_PLACED = 0,
+    TO_BE_REMOVED,
+    TO_BE_REPLACED,
+    PLACED,
+    REMOVED
+};
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_

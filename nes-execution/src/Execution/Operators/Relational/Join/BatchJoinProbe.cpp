@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinProbe.hpp>
@@ -22,43 +22,58 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <utility>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void* getProbeHashMapProxy(void* op) {
+void* getProbeHashMapProxy(void* op)
+{
     auto handler = static_cast<BatchJoinHandler*>(op);
     return handler->getGlobalHashMap();
 }
 
-class LocalJoinProbeState : public Operators::OperatorState {
-  public:
+class LocalJoinProbeState : public Operators::OperatorState
+{
+public:
     explicit LocalJoinProbeState(Interface::ChainedHashMapRef hashMap) : hashMap(std::move(hashMap)){};
 
     Interface::ChainedHashMapRef hashMap;
 };
 
-BatchJoinProbe::BatchJoinProbe(uint64_t operatorHandlerIndex,
-                               const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                               const std::vector<PhysicalTypePtr>& keyDataTypes,
-                               const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
-                               const std::vector<PhysicalTypePtr>& valueDataTypes,
-                               std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
-    : operatorHandlerIndex(operatorHandlerIndex), keyExpressions(keyExpressions), keyDataTypes(keyDataTypes),
-      probeFieldIdentifiers(probeFieldIdentifiers), valueDataTypes(valueDataTypes), hashFunction(std::move(hashFunction)),
-      keySize(0), valueSize(0) {
-
-    for (auto& keyType : keyDataTypes) {
+BatchJoinProbe::BatchJoinProbe(
+    uint64_t operatorHandlerIndex,
+    const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+    const std::vector<PhysicalTypePtr>& keyDataTypes,
+    const std::vector<Record::RecordFieldIdentifier>& probeFieldIdentifiers,
+    const std::vector<PhysicalTypePtr>& valueDataTypes,
+    std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
+    : operatorHandlerIndex(operatorHandlerIndex)
+    , keyExpressions(keyExpressions)
+    , keyDataTypes(keyDataTypes)
+    , probeFieldIdentifiers(probeFieldIdentifiers)
+    , valueDataTypes(valueDataTypes)
+    , hashFunction(std::move(hashFunction))
+    , keySize(0)
+    , valueSize(0)
+{
+    for (auto& keyType : keyDataTypes)
+    {
         keySize = keySize + keyType->size();
     }
-    for (auto& valueType : valueDataTypes) {
+    for (auto& valueType : valueDataTypes)
+    {
         valueSize = valueSize + valueType->size();
     }
 }
 
-void BatchJoinProbe::setup(ExecutionContext& executionCtx) const { ExecutableOperator::setup(executionCtx); }
+void BatchJoinProbe::setup(ExecutionContext& executionCtx) const
+{
+    ExecutableOperator::setup(executionCtx);
+}
 
-void BatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const {
+void BatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const
+{
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the global probe hash table.
     // 1. get the operator handler
@@ -72,10 +87,12 @@ void BatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const {
     ExecutableOperator::open(ctx, rb);
 }
 
-void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
+void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const
+{
     // 1. derive key values
     std::vector<Value<>> keyValues;
-    for (const auto& exp : keyExpressions) {
+    for (const auto& exp : keyExpressions)
+    {
         keyValues.emplace_back(exp->execute(record));
     }
 
@@ -90,11 +107,13 @@ void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
     auto entry = hashMap.find(hash, keyValues);
 
     // 6. check if join partner was found
-    if (entry != nullptr) {
+    if (entry != nullptr)
+    {
         // 7. Create result record
         // 7.1 load values from the probe side and store them in the record.
         auto valuePtr = entry.getValuePtr();
-        for (size_t i = 0; i < probeFieldIdentifiers.size(); i++) {
+        for (size_t i = 0; i < probeFieldIdentifiers.size(); i++)
+        {
             auto value = MemRefUtils::loadValue(valuePtr, valueDataTypes[i]);
             record.write(probeFieldIdentifiers[i], value);
             valuePtr = valuePtr + valueDataTypes[i]->size();
@@ -103,4 +122,4 @@ void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

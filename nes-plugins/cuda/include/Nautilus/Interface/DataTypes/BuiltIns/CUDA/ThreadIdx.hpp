@@ -17,12 +17,14 @@
 
 #include <Nautilus/Interface/DataTypes/BuiltIns/BuiltInVariable.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 class FieldAccess;
 
-class ThreadIdx : public BuiltInVariable {
-  public:
+class ThreadIdx : public BuiltInVariable
+{
+public:
     static const inline auto type = TypeIdentifier::create<ThreadIdx>();
 
     ThreadIdx();
@@ -41,6 +43,6 @@ class ThreadIdx : public BuiltInVariable {
     std::shared_ptr<FieldAccess> x();
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_THREADIDX_HPP_
+#endif // NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_THREADIDX_HPP_

@@ -22,13 +22,15 @@
 
 #include <vector>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 /**
  * @brief Wrapper class to represent a tuple buffer with multiple NetworkMetrics objects.
  */
-class NetworkMetricsWrapper {
-  public:
+class NetworkMetricsWrapper
+{
+public:
     NetworkMetricsWrapper();
     NetworkMetricsWrapper(WorkerId nodeId);
     NetworkMetricsWrapper(std::vector<NetworkMetrics>&& arr);
@@ -72,7 +74,7 @@ class NetworkMetricsWrapper {
     bool operator==(const NetworkMetricsWrapper& rhs) const;
     bool operator!=(const NetworkMetricsWrapper& rhs) const;
 
-  private:
+private:
     std::vector<NetworkMetrics> networkMetrics;
     WorkerId nodeId;
     uint64_t timestamp;
@@ -101,6 +103,6 @@ void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, u
  */
 nlohmann::json asJson(const NetworkMetricsWrapper& metrics);
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP_

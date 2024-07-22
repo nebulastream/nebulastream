@@ -15,23 +15,26 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPREQUEST_HPP_
 
-#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 #include <thread>
+#include <RequestProcessor/RequestTypes/AbstractUniRequest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Statistic {
+namespace Statistic
+{
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-}// namespace Statistic
+} // namespace Statistic
 
-namespace Optimizer {
+namespace Optimizer
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 class PlacementAmendmentHandler;
 using PlacementAmendmentHandlerPtr = std::shared_ptr<PlacementAmendmentHandler>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
@@ -39,15 +42,17 @@ using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 
 class ISQPRequest;
 using ISQPRequestPtr = std::shared_ptr<ISQPRequest>;
@@ -70,15 +75,21 @@ using ISQPRemoveLinkEventPtr = std::shared_ptr<ISQPRemoveLinkEvent>;
 /**
  * @brief Response to the execution of the ISQP request with the success, start time, and end time.
  */
-struct ISQPRequestResponse : AbstractRequestResponse {
-    explicit ISQPRequestResponse(uint64_t processingStartTime,
-                                 uint64_t amendmentStartTime,
-                                 uint64_t processingEndTime,
-                                 uint64_t numOfSQPAffected,
-                                 uint64_t numOfFailedPlacements,
-                                 bool success)
-        : processingStartTime(processingStartTime), amendmentStartTime(amendmentStartTime), processingEndTime(processingEndTime),
-          numOfSQPAffected(numOfSQPAffected), numOfFailedPlacements(numOfFailedPlacements), success(success){};
+struct ISQPRequestResponse : AbstractRequestResponse
+{
+    explicit ISQPRequestResponse(
+        uint64_t processingStartTime,
+        uint64_t amendmentStartTime,
+        uint64_t processingEndTime,
+        uint64_t numOfSQPAffected,
+        uint64_t numOfFailedPlacements,
+        bool success)
+        : processingStartTime(processingStartTime)
+        , amendmentStartTime(amendmentStartTime)
+        , processingEndTime(processingEndTime)
+        , numOfSQPAffected(numOfSQPAffected)
+        , numOfFailedPlacements(numOfFailedPlacements)
+        , success(success){};
     uint64_t processingStartTime;
     uint64_t amendmentStartTime;
     uint64_t processingEndTime;
@@ -97,13 +108,14 @@ using PlacementAmendmentInstancePtr = std::shared_ptr<PlacementAmendmentInstance
  * Both will result in deployment of 10 queries. However, batch based deployment will result in a lower deployment latency.
  * Similarly, we can submit an arbitrary batch consisting of AddQuery, RemoveQuery, AddNode, RemoveNode, AddLink, or RemoveLink events.
  */
-class ISQPRequest : public AbstractUniRequest {
-
-  public:
-    ISQPRequest(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                const z3::ContextPtr& z3Context,
-                std::vector<ISQPEventPtr> events,
-                uint8_t maxRetries);
+class ISQPRequest : public AbstractUniRequest
+{
+public:
+    ISQPRequest(
+        const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+        const z3::ContextPtr& z3Context,
+        std::vector<ISQPEventPtr> events,
+        uint8_t maxRetries);
 
     /**
      * @brief Create shared instance of the ISQP request
@@ -113,22 +125,23 @@ class ISQPRequest : public AbstractUniRequest {
      * @param maxRetries : the number of retries in case of failure
      * @return the shared instance
      */
-    static ISQPRequestPtr create(const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
-                                 const z3::ContextPtr& z3Context,
-                                 std::vector<ISQPEventPtr> events,
-                                 uint8_t maxRetries);
+    static ISQPRequestPtr create(
+        const Optimizer::PlacementAmendmentHandlerPtr& placementAmendmentHandler,
+        const z3::ContextPtr& z3Context,
+        std::vector<ISQPEventPtr> events,
+        uint8_t maxRetries);
 
-  protected:
+protected:
     std::vector<AbstractRequestPtr> executeRequestLogic(const StorageHandlerPtr& storageHandle) override;
 
-  public:
+public:
     std::vector<AbstractRequestPtr> rollBack(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 
-  protected:
+protected:
     void preRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
     void postRollbackHandle(std::exception_ptr ex, const StorageHandlerPtr& storageHandle) override;
 
-  private:
+private:
     /**
      * @brief handle add query event by marking the affected operators for placement
      * @param addQueryEvent
@@ -167,7 +180,7 @@ class ISQPRequest : public AbstractUniRequest {
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
 
-}// namespace RequestProcessor
-}// namespace NES
+} // namespace RequestProcessor
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPREQUEST_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPREQUEST_HPP_

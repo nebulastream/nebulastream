@@ -14,24 +14,28 @@
 #ifndef NES_COORDINATOR_INCLUDE_SERVICES_QUERYPARSINGSERVICE_HPP_
 #define NES_COORDINATOR_INCLUDE_SERVICES_QUERYPARSINGSERVICE_HPP_
 
-#include <API/QueryAPI.hpp>
 #include <memory>
+#include <API/QueryAPI.hpp>
 
-namespace NES {
+namespace NES
+{
 class Query;
 using QueryPtr = std::shared_ptr<Query>;
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 class JITCompiler;
 }
-namespace NES {
+namespace NES
+{
 
-class QueryParsingService {
-  public:
+class QueryParsingService
+{
+public:
     explicit QueryParsingService(std::shared_ptr<Compiler::JITCompiler> jitCompiler);
     static std::shared_ptr<QueryParsingService> create(std::shared_ptr<Compiler::JITCompiler>);
 
@@ -59,10 +63,10 @@ class QueryParsingService {
     */
     SchemaPtr createSchemaFromCode(const std::string& schemaCodeSnippet);
 
-  private:
+private:
     std::shared_ptr<Compiler::JITCompiler> jitCompiler;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_INCLUDE_SERVICES_QUERYPARSINGSERVICE_HPP_
+#endif // NES_COORDINATOR_INCLUDE_SERVICES_QUERYPARSINGSERVICE_HPP_

@@ -15,30 +15,39 @@
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-namespace NES {
+namespace NES
+{
 
-LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id) : Operator(id), LogicalOperator(id), UnaryOperator(id) {}
+LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id) : Operator(id), LogicalOperator(id), UnaryOperator(id)
+{
+}
 
-bool LogicalUnaryOperator::inferSchema() {
-
+bool LogicalUnaryOperator::inferSchema()
+{
     // We assume that all children operators have the same output schema otherwise this plan is not valid
-    for (const auto& child : children) {
-        if (!child->as<LogicalOperator>()->inferSchema()) {
+    for (const auto& child : children)
+    {
+        if (!child->as<LogicalOperator>()->inferSchema())
+        {
             return false;
         }
     }
 
-    if (children.empty()) {
+    if (children.empty())
+    {
         NES_THROW_RUNTIME_ERROR("UnaryOperator: this operator should have at least one child operator");
     }
 
     auto childSchema = children[0]->as<Operator>()->getOutputSchema();
-    for (const auto& child : children) {
-        if (!child->as<Operator>()->getOutputSchema()->equals(childSchema)) {
-            NES_ERROR("UnaryOperator: infer schema failed. The schema has to be the same across all child operators."
-                      "this op schema= {} child schema={}",
-                      child->as<Operator>()->getOutputSchema()->toString(),
-                      childSchema->toString());
+    for (const auto& child : children)
+    {
+        if (!child->as<Operator>()->getOutputSchema()->equals(childSchema))
+        {
+            NES_ERROR(
+                "UnaryOperator: infer schema failed. The schema has to be the same across all child operators."
+                "this op schema= {} child schema={}",
+                child->as<Operator>()->getOutputSchema()->toString(),
+                childSchema->toString());
             return false;
         }
     }
@@ -53,10 +62,12 @@ bool LogicalUnaryOperator::inferSchema() {
     return true;
 }
 
-void LogicalUnaryOperator::inferInputOrigins() {
+void LogicalUnaryOperator::inferInputOrigins()
+{
     // in the default case we collect all input origins from the children/upstream operators
     std::vector<OriginId> inputOriginIds;
-    for (auto child : this->children) {
+    for (auto child : this->children)
+    {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferInputOrigins();
         auto childInputOriginIds = childOperator->getOutputOriginIds();
@@ -65,4 +76,4 @@ void LogicalUnaryOperator::inferInputOrigins() {
     this->inputOriginIds = inputOriginIds;
 }
 
-}// namespace NES
+} // namespace NES

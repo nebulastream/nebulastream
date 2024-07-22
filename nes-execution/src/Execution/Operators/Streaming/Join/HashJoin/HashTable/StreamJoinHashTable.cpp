@@ -17,41 +17,45 @@
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Util/Common.hpp>
 
-namespace NES::Runtime::Execution::Operators {
-StreamJoinHashTable::StreamJoinHashTable(size_t sizeOfRecord,
-                                         size_t numPartitions,
-                                         FixedPagesAllocator& fixedPagesAllocator,
-                                         size_t pageSize,
-                                         size_t preAllocPageSizeCnt)
-    : mask(numPartitions - 1), numPartitions(numPartitions) {
-
-    for (auto i = 0UL; i < numPartitions; ++i) {
-        buckets.emplace_back(
-            std::make_unique<FixedPagesLinkedList>(fixedPagesAllocator, sizeOfRecord, pageSize, preAllocPageSizeCnt));
+namespace NES::Runtime::Execution::Operators
+{
+StreamJoinHashTable::StreamJoinHashTable(
+    size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize, size_t preAllocPageSizeCnt)
+    : mask(numPartitions - 1), numPartitions(numPartitions)
+{
+    for (auto i = 0UL; i < numPartitions; ++i)
+    {
+        buckets.emplace_back(std::make_unique<FixedPagesLinkedList>(fixedPagesAllocator, sizeOfRecord, pageSize, preAllocPageSizeCnt));
     }
 }
 
-size_t StreamJoinHashTable::getBucketPos(uint64_t hash) const {
-    if (mask == 0) {
+size_t StreamJoinHashTable::getBucketPos(uint64_t hash) const
+{
+    if (mask == 0)
+    {
         return 0;
     }
     return hash % mask;
 }
 
-FixedPagesLinkedList* StreamJoinHashTable::getBucketLinkedList(size_t bucketPos) {
+FixedPagesLinkedList* StreamJoinHashTable::getBucketLinkedList(size_t bucketPos)
+{
     NES_ASSERT2_FMT(bucketPos < buckets.size(), "Tried to access a bucket that does not exist in StreamJoinHashTable!");
     return buckets[bucketPos].get();
 }
 
-std::string StreamJoinHashTable::getContentAsString(SchemaPtr schema) const {
+std::string StreamJoinHashTable::getContentAsString(SchemaPtr schema) const
+{
     std::stringstream ss;
     //for every bucket
     size_t bucketCnt = 0;
-    for (auto& bucket : buckets) {
+    for (auto& bucket : buckets)
+    {
         ss << "bucket no=" << bucketCnt++;
         //for every page
         size_t pageCnt = 0;
-        for (auto& page : bucket->getPages()) {
+        for (auto& page : bucket->getPages())
+        {
             ss << " pageNo=" << pageCnt++ << " ";
             ss << page->getContentAsString(schema);
         }
@@ -59,14 +63,17 @@ std::string StreamJoinHashTable::getContentAsString(SchemaPtr schema) const {
     return ss.str();
 }
 
-uint64_t StreamJoinHashTable::getNumberOfTuples() {
+uint64_t StreamJoinHashTable::getNumberOfTuples()
+{
     size_t cnt = 0;
     size_t bucketPos = 0;
 
-    for (auto& bucket : buckets) {
+    for (auto& bucket : buckets)
+    {
         size_t cntBucket = cnt;
         size_t pagePos = 0;
-        for (auto& page : bucket->getPages()) {
+        for (auto& page : bucket->getPages())
+        {
             cnt += page->size();
             NES_DEBUG("Page {} has {} tuples", pagePos++, page->size());
         }
@@ -77,31 +84,42 @@ uint64_t StreamJoinHashTable::getNumberOfTuples() {
     return cnt;
 }
 
-std::string StreamJoinHashTable::getStatistics() {
+std::string StreamJoinHashTable::getStatistics()
+{
     size_t cnt = 0;
     std::stringstream ss;
     ss << " numPartitions=" << numPartitions;
-    for (auto& bucket : buckets) {
+    for (auto& bucket : buckets)
+    {
         ss << " BUCKET " << cnt++ << bucket->getStatistics();
     }
     return ss.str();
 }
 
-const std::vector<Nautilus::Interface::FixedPagePtr>& StreamJoinHashTable::getPagesForBucket(size_t bucketPos) const {
+const std::vector<Nautilus::Interface::FixedPagePtr>& StreamJoinHashTable::getPagesForBucket(size_t bucketPos) const
+{
     return buckets[bucketPos]->getPages();
 }
 
-size_t StreamJoinHashTable::getNumItems(size_t bucketPos) const {
+size_t StreamJoinHashTable::getNumItems(size_t bucketPos) const
+{
     auto pages = getPagesForBucket(bucketPos);
     uint64_t cnt = 0;
-    for (auto& elem : pages) {
+    for (auto& elem : pages)
+    {
         cnt += elem->size();
     }
     return cnt;
 }
 
-size_t StreamJoinHashTable::getNumPages(size_t bucketPos) const { return buckets[bucketPos]->getPages().size(); }
+size_t StreamJoinHashTable::getNumPages(size_t bucketPos) const
+{
+    return buckets[bucketPos]->getPages().size();
+}
 
-size_t StreamJoinHashTable::getNumBuckets() const { return buckets.size(); }
+size_t StreamJoinHashTable::getNumBuckets() const
+{
+    return buckets.size();
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

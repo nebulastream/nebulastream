@@ -11,22 +11,26 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
-class UtilFunctionTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+namespace NES
+{
+class UtilFunctionTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("UtilFunctionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("UtilFunctionTest test class SetUpTestCase.");
     }
     static void TearDownTestCase() { NES_INFO("UtilFunctionTest test class TearDownTestCase."); }
 };
 
-TEST(UtilFunctionTest, replaceNothing) {
+TEST(UtilFunctionTest, replaceNothing)
+{
     std::string origin = "I do not have the search string in me.";
     std::string search = "nebula";
     std::string replace = "replacing";
@@ -34,14 +38,16 @@ TEST(UtilFunctionTest, replaceNothing) {
     EXPECT_TRUE(replacedString == origin);
 }
 
-TEST(UtilFunctionTest, trimWhiteSpaces) {
+TEST(UtilFunctionTest, trimWhiteSpaces)
+{
     EXPECT_EQ(NES::Util::trimWhiteSpaces("   1234  "), "1234");
     EXPECT_EQ(NES::Util::trimWhiteSpaces("   12  34  "), "12  34");
     EXPECT_EQ(NES::Util::trimWhiteSpaces("     "), "");
     EXPECT_EQ(NES::Util::trimWhiteSpaces(""), "");
 }
 
-TEST(UtilFunctionTest, trimChar) {
+TEST(UtilFunctionTest, trimChar)
+{
     EXPECT_EQ(NES::Util::trimChar("   1234  ", ' '), "1234");
     EXPECT_EQ(NES::Util::trimChar("   12  34  ", ' '), "12  34");
     EXPECT_EQ(NES::Util::trimChar("     ", ' '), "");
@@ -52,7 +58,8 @@ TEST(UtilFunctionTest, trimChar) {
     EXPECT_EQ(NES::Util::trimWhiteSpaces(Util::trimChar(" 1234 ,", ',')), "1234");
 }
 
-TEST(UtilFunctionTest, replaceOnceWithOneFinding) {
+TEST(UtilFunctionTest, replaceOnceWithOneFinding)
+{
     std::string origin = "I do  have the search string nebula in me, but only once.";
     std::string search = "nebula";
     std::string replace = "replacing";
@@ -61,7 +68,8 @@ TEST(UtilFunctionTest, replaceOnceWithOneFinding) {
     EXPECT_TRUE(replacedString == expectedReplacedString);
 }
 
-TEST(UtilFunctionTest, replaceOnceWithMultipleFindings) {
+TEST(UtilFunctionTest, replaceOnceWithMultipleFindings)
+{
     std::string origin = "I do  have the search string nebula in me, but multiple times nebula";
     std::string search = "nebula";
     std::string replace = "replacing";
@@ -70,7 +78,8 @@ TEST(UtilFunctionTest, replaceOnceWithMultipleFindings) {
     EXPECT_TRUE(replacedString == expectedReplacedString);
 }
 
-TEST(UtilFunctionTest, splitWithStringDelimiterNothing) {
+TEST(UtilFunctionTest, splitWithStringDelimiterNothing)
+{
     std::vector<std::string> tokens;
     std::vector<std::string> test;
     test.emplace_back("This is a random test line with no delimiter.");
@@ -80,7 +89,8 @@ TEST(UtilFunctionTest, splitWithStringDelimiterNothing) {
     EXPECT_TRUE(tokens == test);
 }
 
-TEST(UtilFunctionTest, splitWithStringDelimiterOnce) {
+TEST(UtilFunctionTest, splitWithStringDelimiterOnce)
+{
     std::vector<std::string> tokens;
     std::vector<std::string> test;
     test.emplace_back("This is a random test line with ");
@@ -91,7 +101,8 @@ TEST(UtilFunctionTest, splitWithStringDelimiterOnce) {
     EXPECT_TRUE(tokens == test);
 }
 
-TEST(UtilFunctionTest, splitWithStringDelimiterTwice) {
+TEST(UtilFunctionTest, splitWithStringDelimiterTwice)
+{
     std::vector<std::string> tokens;
     std::vector<std::string> test;
     test.emplace_back("This is a random ");
@@ -103,7 +114,8 @@ TEST(UtilFunctionTest, splitWithStringDelimiterTwice) {
     EXPECT_TRUE(tokens == test);
 }
 
-TEST(UtilFunctionTest, splitWithOmittingEmptyLast) {
+TEST(UtilFunctionTest, splitWithOmittingEmptyLast)
+{
     std::vector<std::string> tokens;
     std::vector<std::string> test;
     test.emplace_back("This is a random ");
@@ -115,4 +127,4 @@ TEST(UtilFunctionTest, splitWithOmittingEmptyLast) {
     EXPECT_TRUE(tokens == test);
 }
 
-}// namespace NES
+} // namespace NES

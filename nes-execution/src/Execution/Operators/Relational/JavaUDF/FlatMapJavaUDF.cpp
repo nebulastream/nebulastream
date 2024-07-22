@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include <filesystem>
+#include <fstream>
+#include <utility>
+#include <jni.h>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/JavaUDF/AbstractJavaUDFOperator.hpp>
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
@@ -22,58 +26,58 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/JNI/JNI.hpp>
 #include <Util/JNI/JNIUtils.hpp>
-#include <filesystem>
-#include <fstream>
-#include <jni.h>
-#include <utility>
 #if not(defined(__APPLE__))
-#include <experimental/source_location>
+#    include <experimental/source_location>
 #endif
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void* executeFlatMapUDF(void* state, void* instance, void* pojoObjectPtr) {
+void* executeFlatMapUDF(void* state, void* instance, void* pojoObjectPtr)
+{
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
     // Call udf function
-    jobject udfResult = jni::getEnv()->CallObjectMethod((jobject) instance, handler->getUDFMethodId(), pojoObjectPtr);
+    jobject udfResult = jni::getEnv()->CallObjectMethod((jobject)instance, handler->getUDFMethodId(), pojoObjectPtr);
     jni::jniErrorCheck();
     return udfResult;
 }
 
-bool hasNext(void*, void* instance) {
+bool hasNext(void*, void* instance)
+{
     auto env = jni::getEnv();
     jclass iteratorInterface = env->FindClass("java/util/Iterator");
     jmethodID hasNextMethod = env->GetMethodID(iteratorInterface, "hasNext", "()Z");
     // TODO check for exception
-    return env->CallBooleanMethod((jobject) instance, hasNextMethod);
+    return env->CallBooleanMethod((jobject)instance, hasNextMethod);
 }
 
-void* next(void*, void* instance) {
+void* next(void*, void* instance)
+{
     auto env = jni::getEnv();
     jclass iteratorInterface = env->FindClass("java/util/Iterator");
     jmethodID nextMethod = env->GetMethodID(iteratorInterface, "next", "()Ljava/lang/Object;");
-    jobject element = env->CallObjectMethod((jobject) instance, nextMethod);
+    jobject element = env->CallObjectMethod((jobject)instance, nextMethod);
     return element;
 }
 
-void* getIteratorFromCollection(void*, void* collection) {
+void* getIteratorFromCollection(void*, void* collection)
+{
     auto env = jni::getEnv();
     jclass collectionInterface = env->FindClass("java/util/Collection");
     jmethodID iteratorMethod = env->GetMethodID(collectionInterface, "iterator", "()Ljava/util/Iterator;");
-    jobject iterator = env->CallObjectMethod((jobject) collection, iteratorMethod);
+    jobject iterator = env->CallObjectMethod((jobject)collection, iteratorMethod);
     // TODO check for exception
     return iterator;
 }
 
-FlatMapJavaUDF::FlatMapJavaUDF(uint64_t operatorHandlerIndex,
-                               NES::SchemaPtr operatorInputSchema,
-                               NES::SchemaPtr operatorOutputSchema)
+FlatMapJavaUDF::FlatMapJavaUDF(uint64_t operatorHandlerIndex, NES::SchemaPtr operatorInputSchema, NES::SchemaPtr operatorOutputSchema)
     : AbstractJavaUDFOperator(operatorHandlerIndex, std::move(operatorInputSchema), std::move(operatorOutputSchema)){};
 
-void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
-    auto state = (LocalUDFState*) ctx.getLocalState(this);
+void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const
+{
+    auto state = (LocalUDFState*)ctx.getLocalState(this);
     auto handler = state->handler;
 
     // create variables for input pojo ptr java input class
@@ -89,7 +93,8 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     auto iterator = FunctionCall("getIteratorFromCollection", getIteratorFromCollection, handler, outputPojoPtr);
 
     // iterate over all elements in iterator.
-    while (FunctionCall("hasNext", hasNext, handler, iterator)) {
+    while (FunctionCall("hasNext", hasNext, handler, iterator))
+    {
         auto element = FunctionCall("next", next, handler, iterator);
         auto resultRecord = extractRecordFromPojo(handler, element);
         FunctionCall<>("freeObject", freeObject, element);
@@ -100,4 +105,4 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const {
     FunctionCall<>("freeObject", freeObject, outputPojoPtr);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

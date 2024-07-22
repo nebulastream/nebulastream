@@ -17,7 +17,8 @@
 #include <memory>
 #include <string>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 class ErrorListener;
 
 /**
@@ -53,6 +54,6 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener);
  */
 void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener);
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions
 
-#endif// NES_COMMON_INCLUDE_EXCEPTIONS_SIGNALHANDLING_HPP_
+#endif // NES_COMMON_INCLUDE_EXCEPTIONS_SIGNALHANDLING_HPP_

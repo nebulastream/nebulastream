@@ -17,22 +17,35 @@
 #include <Nautilus/Interface/DataTypes/BuiltIns/CUDA/FieldAccess.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 FieldAccess::FieldAccess(std::shared_ptr<BuiltInVariable> builtInVariable, std::string fieldName)
-    : BuiltInVariable(&type), builtInVariable(std::move(builtInVariable)), fieldName(std::move(fieldName)){
+    : BuiltInVariable(&type)
+    , builtInVariable(std::move(builtInVariable))
+    , fieldName(std::move(fieldName)){
 
-                                                                           };
+      };
 
-const std::string FieldAccess::getIdentifier() const { return builtInVariable->getIdentifier() + "." + fieldName; }
+const std::string FieldAccess::getIdentifier() const
+{
+    return builtInVariable->getIdentifier() + "." + fieldName;
+}
 
-IR::Types::StampPtr FieldAccess::getType() const {
+IR::Types::StampPtr FieldAccess::getType() const
+{
     // TODO #4832: Not always correct, as there are also vector types for float, double, signed ints
     return IR::Types::StampFactory::createUInt64Stamp();
 }
 
-std::shared_ptr<Any> FieldAccess::copy() { return create<FieldAccess>(builtInVariable, fieldName); }
+std::shared_ptr<Any> FieldAccess::copy()
+{
+    return create<FieldAccess>(builtInVariable, fieldName);
+}
 
-const Value<> FieldAccess::getAsValue() const { return Value<>((uint64_t) 0); }
+const Value<> FieldAccess::getAsValue() const
+{
+    return Value<>((uint64_t)0);
+}
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus

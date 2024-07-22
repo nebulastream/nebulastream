@@ -23,98 +23,130 @@
 #include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
-void StatisticSerializationUtil::serializeSendingPolicy(const Statistic::SendingPolicy& sendingPolicy,
-                                                        SendingPolicyMessage& sendingPolicyMessage) {
-    sendingPolicyMessage.set_codec((SendingPolicyMessage_StatisticDataCodec) sendingPolicy.getSinkDataCodec());
-    if (sendingPolicy.instanceOf<const Statistic::SendingPolicyAdaptive>()) {
+namespace NES
+{
+void StatisticSerializationUtil::serializeSendingPolicy(
+    const Statistic::SendingPolicy& sendingPolicy, SendingPolicyMessage& sendingPolicyMessage)
+{
+    sendingPolicyMessage.set_codec((SendingPolicyMessage_StatisticDataCodec)sendingPolicy.getSinkDataCodec());
+    if (sendingPolicy.instanceOf<const Statistic::SendingPolicyAdaptive>())
+    {
         sendingPolicyMessage.mutable_details()->PackFrom(SendingPolicyMessage_SendingPolicyAdaptive());
-    } else if (sendingPolicy.instanceOf<const Statistic::SendingPolicyASAP>()) {
+    }
+    else if (sendingPolicy.instanceOf<const Statistic::SendingPolicyASAP>())
+    {
         sendingPolicyMessage.mutable_details()->PackFrom(SendingPolicyMessage_SendingPolicyASAP());
-    } else if (sendingPolicy.instanceOf<const Statistic::SendingPolicyLazy>()) {
+    }
+    else if (sendingPolicy.instanceOf<const Statistic::SendingPolicyLazy>())
+    {
         sendingPolicyMessage.mutable_details()->PackFrom(SendingPolicyMessage_SendingPolicyLazy());
-    } else {
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 }
 
-void StatisticSerializationUtil::serializeTriggerCondition(const Statistic::TriggerCondition& triggerCondition,
-                                                           TriggerConditionMessage& triggerConditionMessage) {
-
-    if (triggerCondition.instanceOf<const Statistic::NeverTrigger>()) {
+void StatisticSerializationUtil::serializeTriggerCondition(
+    const Statistic::TriggerCondition& triggerCondition, TriggerConditionMessage& triggerConditionMessage)
+{
+    if (triggerCondition.instanceOf<const Statistic::NeverTrigger>())
+    {
         triggerConditionMessage.mutable_details()->PackFrom(TriggerConditionMessage_NeverTrigger());
-    } else {
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 }
 
-void StatisticSerializationUtil::serializeDescriptorDetails(const Statistic::WindowStatisticDescriptor& descriptor,
-                                                            StatisticWindowDescriptorMessage& descriptorMessage) {
-
-    if (descriptor.instanceOf<const Statistic::CountMinDescriptor>()) {
+void StatisticSerializationUtil::serializeDescriptorDetails(
+    const Statistic::WindowStatisticDescriptor& descriptor, StatisticWindowDescriptorMessage& descriptorMessage)
+{
+    if (descriptor.instanceOf<const Statistic::CountMinDescriptor>())
+    {
         auto countMinDescriptor = descriptor.as<const Statistic::CountMinDescriptor>();
         StatisticWindowDescriptorMessage_CountMinDetails countMinDetails;
         countMinDetails.set_depth(countMinDescriptor->getDepth());
         descriptorMessage.mutable_details()->PackFrom(countMinDetails);
-    } else if (descriptor.instanceOf<const Statistic::HyperLogLogDescriptor>()) {
+    }
+    else if (descriptor.instanceOf<const Statistic::HyperLogLogDescriptor>())
+    {
         descriptorMessage.mutable_details()->PackFrom(StatisticWindowDescriptorMessage_HyperLogLogDetails());
-    } else {
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 }
 
-Statistic::SendingPolicyPtr
-StatisticSerializationUtil::deserializeSendingPolicy(const SendingPolicyMessage& sendingPolicyMessage) {
-    const auto codec = (Statistic::StatisticDataCodec) sendingPolicyMessage.codec();
-    if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyAdaptive>()) {
+Statistic::SendingPolicyPtr StatisticSerializationUtil::deserializeSendingPolicy(const SendingPolicyMessage& sendingPolicyMessage)
+{
+    const auto codec = (Statistic::StatisticDataCodec)sendingPolicyMessage.codec();
+    if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyAdaptive>())
+    {
         return Statistic::SendingPolicyAdaptive::create(codec);
-    } else if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyLazy>()) {
+    }
+    else if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyLazy>())
+    {
         return Statistic::SendingPolicyLazy::create(codec);
-    } else if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyASAP>()) {
+    }
+    else if (sendingPolicyMessage.details().Is<SendingPolicyMessage_SendingPolicyASAP>())
+    {
         return Statistic::SendingPolicyASAP::create(codec);
-    } else {
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 }
 
 Statistic::TriggerConditionPtr
-StatisticSerializationUtil::deserializeTriggerCondition(const TriggerConditionMessage& triggerConditionMessage) {
-    if (triggerConditionMessage.details().Is<TriggerConditionMessage_NeverTrigger>()) {
+StatisticSerializationUtil::deserializeTriggerCondition(const TriggerConditionMessage& triggerConditionMessage)
+{
+    if (triggerConditionMessage.details().Is<TriggerConditionMessage_NeverTrigger>())
+    {
         return Statistic::NeverTrigger::create();
-    } else {
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 }
 
 Statistic::WindowStatisticDescriptorPtr
-StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescriptorMessage& descriptorMessage) {
-
+StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescriptorMessage& descriptorMessage)
+{
     Statistic::WindowStatisticDescriptorPtr statisticDescriptor;
 
     // 1. Deserializing the field expression
     auto expression = ExpressionSerializationUtil::deserializeExpression(descriptorMessage.field());
-    if (!expression->instanceOf<FieldAccessExpressionNode>()) {
+    if (!expression->instanceOf<FieldAccessExpressionNode>())
+    {
         NES_THROW_RUNTIME_ERROR("Expects a FieldAccessExpressionNode for deserializing a WindowStatisticDescriptor!");
     }
 
     // 2. Deserializing the descriptor details
-    if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_CountMinDetails>()) {
+    if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_CountMinDetails>())
+    {
         StatisticWindowDescriptorMessage_CountMinDetails countMinDetails;
         descriptorMessage.details().UnpackTo(&countMinDetails);
-        statisticDescriptor = Statistic::CountMinDescriptor::create(expression->as<FieldAccessExpressionNode>(),
-                                                                    descriptorMessage.width(),
-                                                                    countMinDetails.depth());
-
-    } else if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_HyperLogLogDetails>()) {
+        statisticDescriptor = Statistic::CountMinDescriptor::create(
+            expression->as<FieldAccessExpressionNode>(), descriptorMessage.width(), countMinDetails.depth());
+    }
+    else if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_HyperLogLogDetails>())
+    {
         StatisticWindowDescriptorMessage_HyperLogLogDetails hyperLogLogDetails;
         descriptorMessage.details().UnpackTo(&hyperLogLogDetails);
-        statisticDescriptor =
-            Statistic::HyperLogLogDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width());
-    } else {
+        statisticDescriptor
+            = Statistic::HyperLogLogDescriptor::create(expression->as<FieldAccessExpressionNode>(), descriptorMessage.width());
+    }
+    else
+    {
         NES_NOT_IMPLEMENTED();
     }
 
     return statisticDescriptor;
 }
 
-}// namespace NES
+} // namespace NES

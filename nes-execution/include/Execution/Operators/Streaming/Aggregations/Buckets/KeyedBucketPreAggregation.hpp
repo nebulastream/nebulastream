@@ -20,28 +20,31 @@
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
 * @brief NonKeyedBucketPreAggregation operator that performs the pre-aggregation step for a global window aggregation.
 */
-class KeyedBucketPreAggregation : public ExecutableOperator {
-  public:
+class KeyedBucketPreAggregation : public ExecutableOperator
+{
+public:
     /**
     * @brief Creates a NonKeyedBucketPreAggregation operator
     */
-    KeyedBucketPreAggregation(uint64_t operatorHandlerIndex,
-                              TimeFunctionPtr timeFunction,
-                              const std::vector<Expressions::ExpressionPtr>& keyExpressions,
-                              const std::vector<PhysicalTypePtr>& keyDataTypes,
-                              const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
-                              const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
+    KeyedBucketPreAggregation(
+        uint64_t operatorHandlerIndex,
+        TimeFunctionPtr timeFunction,
+        const std::vector<Expressions::ExpressionPtr>& keyExpressions,
+        const std::vector<PhysicalTypePtr>& keyDataTypes,
+        const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
+        const std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction);
     void setup(ExecutionContext& executionCtx) const override;
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
 
-  private:
+private:
     const uint64_t operatorHandlerIndex;
     const TimeFunctionPtr timeFunction;
     const std::vector<Expressions::ExpressionPtr> keyExpressions;
@@ -52,6 +55,6 @@ class KeyedBucketPreAggregation : public ExecutableOperator {
     uint64_t valueSize;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATION_HPP_

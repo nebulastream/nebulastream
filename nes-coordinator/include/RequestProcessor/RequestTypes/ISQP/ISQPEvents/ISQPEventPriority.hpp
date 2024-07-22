@@ -17,7 +17,8 @@
 
 #include <cstdint>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 // smallest number has the highest priority
 constexpr uint8_t ISQP_ADD_NODE_EVENT_PRIORITY = 0;
 constexpr uint8_t ISQP_ADD_LINK_EVENT_PRIORITY = 1;
@@ -25,5 +26,5 @@ constexpr uint8_t ISQP_REMOVE_LINK_EVENT_PRIORITY = 2;
 constexpr uint8_t ISQP_REMOVE_NODE_EVENT_PRIORITY = 3;
 constexpr uint8_t ISQP_ADD_QUERY_EVENT_PRIORITY = 4;
 constexpr uint8_t ISQP_REMOVE_QUERY_EVENT_PRIORITY = 5;
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENTPRIORITY_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPEVENTPRIORITY_HPP_

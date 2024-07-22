@@ -16,13 +16,15 @@
 #include <memory>
 #include <mutex>
 #include <string>
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief Represents for a file at a specific path
  */
-class File {
-  public:
+class File
+{
+public:
     /**
      * @brief Constructor for a file at a specific path
      * @param path
@@ -60,11 +62,11 @@ class File {
      */
     std::mutex& getFileMutex();
 
-  private:
+private:
     const std::string path;
     mutable std::mutex fileMutex;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_UTIL_FILE_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_UTIL_FILE_HPP_

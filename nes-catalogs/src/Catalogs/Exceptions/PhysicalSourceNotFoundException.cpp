@@ -13,9 +13,11 @@
 */
 #include <Catalogs/Exceptions/PhysicalSourceNotFoundException.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 
-PhysicalSourceNotFoundException::PhysicalSourceNotFoundException(const std::string& message)
-    : RequestExecutionException(message) {}
+PhysicalSourceNotFoundException::PhysicalSourceNotFoundException(const std::string& message) : RequestExecutionException(message)
+{
+}
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions

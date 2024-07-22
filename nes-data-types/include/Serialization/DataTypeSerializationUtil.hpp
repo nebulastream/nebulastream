@@ -17,7 +17,8 @@
 
 #include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class ArrayType;
 class TextType;
@@ -35,8 +36,9 @@ class SerializableDataValue;
  * @brief The DataTypeSerializationUtil offers functionality to serialize and de-serialize data types and value types to a
  * corresponding protobuffer object.
  */
-class DataTypeSerializationUtil {
-  public:
+class DataTypeSerializationUtil
+{
+public:
     /**
      * @brief Serializes a data type and all its children to a SerializableDataType object.
      * @param dataType The data type.
@@ -70,6 +72,6 @@ class DataTypeSerializationUtil {
     */
     static ValueTypePtr deserializeDataValue(const SerializableDataValue& serializedDataValue);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_SERIALIZATION_DATATYPESERIALIZATIONUTIL_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_SERIALIZATION_DATATYPESERIALIZATIONUTIL_HPP_

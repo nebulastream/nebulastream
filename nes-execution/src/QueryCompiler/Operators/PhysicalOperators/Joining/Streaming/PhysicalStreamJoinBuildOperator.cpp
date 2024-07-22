@@ -17,50 +17,55 @@
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
-PhysicalOperatorPtr
-PhysicalStreamJoinBuildOperator::create(OperatorId id,
-                                        StatisticId statisticId,
-                                        const SchemaPtr& inputSchema,
-                                        const SchemaPtr& outputSchema,
-                                        const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                        const JoinBuildSideType buildSide,
-                                        TimestampField timeStampField,
-                                        const std::string& joinFieldName,
-                                        QueryCompilation::StreamJoinStrategy joinStrategy,
-                                        QueryCompilation::WindowingStrategy windowingStrategy) {
-    return std::make_shared<PhysicalStreamJoinBuildOperator>(id,
-                                                             statisticId,
-                                                             inputSchema,
-                                                             outputSchema,
-                                                             operatorHandler,
-                                                             buildSide,
-                                                             std::move(timeStampField),
-                                                             joinFieldName,
-                                                             joinStrategy,
-                                                             windowingStrategy);
+PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(
+    OperatorId id,
+    StatisticId statisticId,
+    const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema,
+    const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
+    const JoinBuildSideType buildSide,
+    TimestampField timeStampField,
+    const std::string& joinFieldName,
+    QueryCompilation::StreamJoinStrategy joinStrategy,
+    QueryCompilation::WindowingStrategy windowingStrategy)
+{
+    return std::make_shared<PhysicalStreamJoinBuildOperator>(
+        id,
+        statisticId,
+        inputSchema,
+        outputSchema,
+        operatorHandler,
+        buildSide,
+        std::move(timeStampField),
+        joinFieldName,
+        joinStrategy,
+        windowingStrategy);
 }
-PhysicalOperatorPtr
-PhysicalStreamJoinBuildOperator::create(StatisticId statisticId,
-                                        const SchemaPtr& inputSchema,
-                                        const SchemaPtr& outputSchema,
-                                        const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-                                        const JoinBuildSideType buildSide,
-                                        TimestampField timeStampField,
-                                        const std::string& joinFieldName,
-                                        QueryCompilation::StreamJoinStrategy joinStrategy,
-                                        QueryCompilation::WindowingStrategy windowingStrategy) {
-    return create(getNextOperatorId(),
-                  statisticId,
-                  inputSchema,
-                  outputSchema,
-                  operatorHandler,
-                  buildSide,
-                  std::move(timeStampField),
-                  joinFieldName,
-                  joinStrategy,
-                  windowingStrategy);
+PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(
+    StatisticId statisticId,
+    const SchemaPtr& inputSchema,
+    const SchemaPtr& outputSchema,
+    const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
+    const JoinBuildSideType buildSide,
+    TimestampField timeStampField,
+    const std::string& joinFieldName,
+    QueryCompilation::StreamJoinStrategy joinStrategy,
+    QueryCompilation::WindowingStrategy windowingStrategy)
+{
+    return create(
+        getNextOperatorId(),
+        statisticId,
+        inputSchema,
+        outputSchema,
+        operatorHandler,
+        buildSide,
+        std::move(timeStampField),
+        joinFieldName,
+        joinStrategy,
+        windowingStrategy);
 }
 
 PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
@@ -74,11 +79,17 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const std::string& joinFieldName,
     QueryCompilation::StreamJoinStrategy joinStrategy,
     QueryCompilation::WindowingStrategy windowingStrategy)
-    : Operator(id), PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy),
-      PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema), timeStampField(std::move(timeStampField)),
-      joinFieldName(joinFieldName), buildSide(buildSide) {}
+    : Operator(id)
+    , PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy)
+    , PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema)
+    , timeStampField(std::move(timeStampField))
+    , joinFieldName(joinFieldName)
+    , buildSide(buildSide)
+{
+}
 
-std::string PhysicalStreamJoinBuildOperator::toString() const {
+std::string PhysicalStreamJoinBuildOperator::toString() const
+{
     std::stringstream out;
     out << std::endl;
     out << "PhysicalStreamJoinBuildOperator:\n";
@@ -90,25 +101,36 @@ std::string PhysicalStreamJoinBuildOperator::toString() const {
     return out.str();
 }
 
-OperatorPtr PhysicalStreamJoinBuildOperator::copy() {
-    auto result = create(id,
-                         statisticId,
-                         inputSchema,
-                         outputSchema,
-                         joinOperatorHandler,
-                         buildSide,
-                         timeStampField,
-                         joinFieldName,
-                         getJoinStrategy(),
-                         getWindowingStrategy());
+OperatorPtr PhysicalStreamJoinBuildOperator::copy()
+{
+    auto result = create(
+        id,
+        statisticId,
+        inputSchema,
+        outputSchema,
+        joinOperatorHandler,
+        buildSide,
+        timeStampField,
+        joinFieldName,
+        getJoinStrategy(),
+        getWindowingStrategy());
     result->addAllProperties(properties);
     return result;
 }
 
-JoinBuildSideType PhysicalStreamJoinBuildOperator::getBuildSide() const { return buildSide; }
+JoinBuildSideType PhysicalStreamJoinBuildOperator::getBuildSide() const
+{
+    return buildSide;
+}
 
-const TimestampField& PhysicalStreamJoinBuildOperator::getTimeStampField() const { return timeStampField; }
+const TimestampField& PhysicalStreamJoinBuildOperator::getTimeStampField() const
+{
+    return timeStampField;
+}
 
-const std::string& PhysicalStreamJoinBuildOperator::getJoinFieldName() const { return joinFieldName; }
+const std::string& PhysicalStreamJoinBuildOperator::getJoinFieldName() const
+{
+    return joinFieldName;
+}
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

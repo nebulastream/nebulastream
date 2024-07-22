@@ -18,17 +18,20 @@
 #include <Optimizer/QueryMerger/BaseQueryMergerRule.hpp>
 #include <Optimizer/QuerySignatures/SignatureContainmentCheck.hpp>
 
-namespace z3 {
+namespace z3
+{
 class context;
 using ContextPtr = std::shared_ptr<context>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class SignatureContainmentCheck;
 using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
@@ -77,16 +80,15 @@ using Z3SignatureBasedBottomUpQueryContainmentRulePtr = std::shared_ptr<Z3Signat
  * Additionally information: As it traverses the query plan in a bottom up fashion an exits as soon as it identified a containment relationship
  * other than equivalent, the algorithm is not very good at identifying sharing abilities
  */
-class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMergerRule {
-
-  public:
+class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMergerRule
+{
+public:
     /**
      * @brief create an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      * @param context The Z3 context for the SMT solver
      * @return an instance of Z3SignatureBasedContainmentBasedCompleteQueryMergerRule
      */
-    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context,
-                                                                  bool allowExhaustiveContainmentCheck);
+    static Z3SignatureBasedBottomUpQueryContainmentRulePtr create(const z3::ContextPtr& context, bool allowExhaustiveContainmentCheck);
 
     /**
      * @brief checks for containment between the globalQueryPlan and the currently newly added query
@@ -100,7 +102,7 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
      */
     ~Z3SignatureBasedBottomUpQueryContainmentRule() noexcept final = default;
 
-  private:
+private:
     /**
      * @brief explicit constructor
      * @param context The Z3 context for the SMT solver
@@ -135,6 +137,6 @@ class Z3SignatureBasedBottomUpQueryContainmentRule final : public BaseQueryMerge
 
     SignatureContainmentCheckPtr signatureContainmentUtil;
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDBOTTOMUPQUERYCONTAINMENTRULE_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYMERGER_Z3SIGNATUREBASEDBOTTOMUPQUERYCONTAINMENTRULE_HPP_

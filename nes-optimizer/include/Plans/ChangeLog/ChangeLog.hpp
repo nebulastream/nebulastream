@@ -15,12 +15,13 @@
 #ifndef NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_
 #define NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_
 
-#include <Plans/ChangeLog/ChangeLogEntry.hpp>
-#include <absl/container/btree_map.h>
 #include <memory>
 #include <vector>
+#include <Plans/ChangeLog/ChangeLogEntry.hpp>
+#include <absl/container/btree_map.h>
 
-namespace NES::Optimizer::Experimental {
+namespace NES::Optimizer::Experimental
+{
 
 class ChangeLog;
 using ChangeLogPtr = std::unique_ptr<ChangeLog>;
@@ -31,9 +32,9 @@ using Timestamp = uint64_t;
  * @brief: ChangeLog records changes occurring to a shared query plan due to dynamism in the underlying topology, or due to incoming and outgoing stream queries.
  * For each external event we create a @see ChangeLogEntry with a timestamp when the change occurred. We store this information in a B-Tree where key is the timestamp when he change log entry was created.
  */
-class ChangeLog {
-
-  public:
+class ChangeLog
+{
+public:
     static ChangeLogPtr create();
 
     /**
@@ -56,7 +57,7 @@ class ChangeLog {
      */
     void updateProcessedChangeLogTimestamp(Timestamp timestamp);
 
-  protected:
+protected:
     /**
      * @brief Get all non-overlapping change log entries created after the indicated timestamp
      * @param timestamp : the timestamp after which the change log entries need to be retrieved
@@ -64,7 +65,7 @@ class ChangeLog {
      */
     std::vector<std::pair<Timestamp, ChangeLogEntryPtr>> getChangeLogEntriesBeforeTimestamp(Timestamp timestamp);
 
-  private:
+private:
     ChangeLog() = default;
 
     /**
@@ -92,5 +93,5 @@ class ChangeLog {
     Timestamp lastProcessedChangeLogTimestamp;
     absl::btree_map<Timestamp, ChangeLogEntryPtr> changeLogEntries;
 };
-}// namespace NES::Optimizer::Experimental
-#endif// NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_
+} // namespace NES::Optimizer::Experimental
+#endif // NES_OPTIMIZER_INCLUDE_PLANS_CHANGELOG_CHANGELOG_HPP_

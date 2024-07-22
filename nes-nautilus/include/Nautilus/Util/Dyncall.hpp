@@ -19,7 +19,8 @@
 #include <cstdint>
 
 typedef struct DCCallVM_ DCCallVM;
-namespace NES::Nautilus::Backends::BC {
+namespace NES::Nautilus::Backends::BC
+{
 
 /**
  * @class Dyncall
@@ -37,8 +38,9 @@ namespace NES::Nautilus::Backends::BC {
  * int32_t result = dyncall.callI32(someFunctionPointer);
  * @endcode
  */
-class Dyncall {
-  public:
+class Dyncall
+{
+public:
     /**
    * @brief Default stack size for the Dyncall virtual machine (VM).
    */
@@ -169,12 +171,12 @@ class Dyncall {
    */
     void* callPtr(void* value);
 
-  private:
+private:
     /**
    * @brief Pointer to the underlying dyncall VM instance.
    */
     DCCallVM* vm;
 };
-}// namespace NES::Nautilus::Backends::BC
+} // namespace NES::Nautilus::Backends::BC
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_

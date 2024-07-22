@@ -14,22 +14,24 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
+#include <variant>
+#include <vector>
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
 #include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
 #include <Nautilus/Tracing/Trace/InputVariant.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
-#include <variant>
-#include <vector>
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
 class OperationRef;
 /**
  * @brief Represents an individual operation in a trace.
  */
-class TraceOperation {
-  public:
+class TraceOperation
+{
+public:
     TraceOperation(OpCode op);
     TraceOperation(OpCode op, const std::vector<InputVariant>& input);
     TraceOperation(OpCode op, ValueRef result, const std::vector<InputVariant>& input);
@@ -45,6 +47,6 @@ class TraceOperation {
     friend std::ostream& operator<<(std::ostream& os, const TraceOperation& operation);
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_

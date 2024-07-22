@@ -17,14 +17,16 @@
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief Basic emit operator that receives records from an upstream operator and
  * writes them to a tuple buffer according to a memory layout.
  */
-class Emit : public ExecutableOperator {
-  public:
+class Emit : public ExecutableOperator
+{
+public:
     /**
      * @brief Constructor for the emit operator.
      * @param resultMemoryLayout memory layout.
@@ -33,15 +35,13 @@ class Emit : public ExecutableOperator {
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
-    void emitRecordBuffer(ExecutionContext& ctx,
-                          RecordBuffer& recordBuffer,
-                          const Value<UInt64>& numRecords,
-                          const Value<Boolean>& lastChunk) const;
+    void emitRecordBuffer(
+        ExecutionContext& ctx, RecordBuffer& recordBuffer, const Value<UInt64>& numRecords, const Value<Boolean>& lastChunk) const;
 
-  private:
+private:
     uint64_t maxRecordsPerBuffer;
     std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EMIT_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EMIT_HPP_

@@ -16,9 +16,11 @@
 
 #include <stdint.h>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-enum class PrimitiveStamp : uint8_t {
+enum class PrimitiveStamp : uint8_t
+{
     //BasicTypes
     // Type < 5 is INT
     INT1 = 0,
@@ -51,4 +53,4 @@ enum class PrimitiveStamp : uint8_t {
 };
 
 }
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_BASICTYPES_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_BASICTYPES_HPP_

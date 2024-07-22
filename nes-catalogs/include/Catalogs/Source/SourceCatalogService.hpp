@@ -15,14 +15,15 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
 
-#include <Identifiers/Identifiers.hpp>
 #include <map>
 #include <memory>
 #include <mutex>
 #include <set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -30,20 +31,21 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class LogicalSource;
 using LogicalSourcePtr = std::shared_ptr<LogicalSource>;
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 
 class SourceCatalogEntry;
 using SourceCatalogEntryPtr = std::shared_ptr<SourceCatalogEntry>;
-}// namespace Catalogs::Source
+} // namespace Catalogs::Source
 
 /**
  * @brief: This class is responsible for registering/unregistering physical and logical sources.
  */
-class SourceCatalogService {
-
-  public:
+class SourceCatalogService
+{
+public:
     SourceCatalogService(Catalogs::Source::SourceCatalogPtr sourceCatalog);
 
     /**
@@ -63,9 +65,7 @@ class SourceCatalogService {
      * @param topologyNodeId : the topology node id
      * @return bool indicating success
      */
-    bool unregisterPhysicalSource(const std::string& physicalSourceName,
-                                  const std::string& logicalSourceName,
-                                  WorkerId topologyNodeId);
+    bool unregisterPhysicalSource(const std::string& physicalSourceName, const std::string& logicalSourceName, WorkerId topologyNodeId);
 
     /**
      * @brief method to register a logical source
@@ -131,10 +131,10 @@ class SourceCatalogService {
 
     bool reset();
 
-  private:
+private:
     Catalogs::Source::SourceCatalogPtr sourceCatalog;
     std::mutex sourceCatalogMutex;
 };
 using SourceCatalogServicePtr = std::shared_ptr<SourceCatalogService>;
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_SOURCE_SOURCECATALOGSERVICE_HPP_

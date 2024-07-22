@@ -12,24 +12,27 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <cstdio>
+#include <sstream>
+#include <string>
+#include <unistd.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongTypeJson.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <cstdio>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
-#include <sstream>
-#include <string>
-#include <unistd.h>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
-class E2ECoordinatorMultiQueryTest : public Testing::BaseIntegrationTest {
-  public:
+class E2ECoordinatorMultiQueryTest : public Testing::BaseIntegrationTest
+{
+public:
     uint16_t timeout = 5;
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("E2ECoordinatorMultiQueryTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2e test class.");
     }
@@ -40,7 +43,8 @@ class E2ECoordinatorMultiQueryTest : public Testing::BaseIntegrationTest {
 /**
  * @brief This test starts two workers and a coordinator and submit the same query but will output the results in different files
  */
-TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTwoQueries) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTwoQueries)
+{
     NES_INFO("start coordinator");
     std::string pathQuery1 = getTestResourceFolder() / "query1.out";
     std::string pathQuery2 = getTestResourceFolder() / "query2.out";
@@ -48,20 +52,22 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
     remove(pathQuery1.c_str());
     remove(pathQuery2.c_str());
 
-    auto coordinator = TestUtils::startCoordinator({TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableDebug(),
-                                                    TestUtils::numberOfSlots(8, true)});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::rpcPort(*rpcCoordinatorPort),
+         TestUtils::restPort(*restPort),
+         TestUtils::enableDebug(),
+         TestUtils::numberOfSlots(8, true)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::enableDebug(),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::numberOfSlots(8),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::enableDebug(),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::numberOfSlots(8),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -123,7 +129,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTw
 /**
  * @brief This test starts two workers and a coordinator and submit too many queryIdAndCatalogEntryMapping such that we test if the error-prone process
  */
-TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputThreeQueriesWithErrorTest)
+{
     NES_INFO("start coordinator");
     std::string pathQuery1 = getTestResourceFolder() / "query1.out";
     std::string pathQuery2 = getTestResourceFolder() / "query2.out";
@@ -137,12 +144,13 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
         {TestUtils::rpcPort(*rpcCoordinatorPort), TestUtils::restPort(*restPort), TestUtils::enableNautilusCoordinator()});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
-                                          TestUtils::logicalSourceName("default_logical"),
-                                          TestUtils::physicalSourceName("test")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::sourceType(SourceType::DEFAULT_SOURCE),
+         TestUtils::logicalSourceName("default_logical"),
+         TestUtils::physicalSourceName("test")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -219,7 +227,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithFileOutputTh
 /**
  * @brief This test starts two workers and a coordinator and submits two different queryIdAndCatalogEntryMapping
  */
-TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput)
+{
     NES_INFO("start coordinator");
     std::string Qpath1 = getTestResourceFolder() / "QueryQnV1.out";
     std::string Qpath2 = getTestResourceFolder() / "QueryQnV2.out";
@@ -239,17 +248,17 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker =
-        TestUtils::startWorker({TestUtils::rpcPort(0),
-                                TestUtils::dataPort(0),
-                                TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                TestUtils::logicalSourceName("QnV"),
-                                TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
-                                TestUtils::numberOfBuffersToProduce(1),
-                                TestUtils::numberOfTuplesToProducePerBuffer(0),
-                                TestUtils::sourceGatheringInterval(1000),
-                                TestUtils::physicalSourceName("test_stream")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::logicalSourceName("QnV"),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "QnV_short.csv"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::numberOfTuplesToProducePerBuffer(0),
+         TestUtils::sourceGatheringInterval(1000),
+         TestUtils::physicalSourceName("test_stream")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ssQuery1;
@@ -291,21 +300,21 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId1, 1, std::to_string(*restPort)));
     ASSERT_TRUE(TestUtils::checkCompleteOrTimeout(queryId2, 1, std::to_string(*restPort)));
 
-    string ASSERTedContent1 =
-        "QnV$sensor_id:Text,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
-        "R2000073,1543624020000,102.629631,8\n"
-        "R2000070,1543625280000,108.166664,5\n";
+    string ASSERTedContent1
+        = "QnV$sensor_id:Text,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+          "R2000073,1543624020000,102.629631,8\n"
+          "R2000070,1543625280000,108.166664,5\n";
 
-    string ASSERTedContent2 =
-        "QnV$sensor_id:Text,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
-        "R2000073,1543622760000,63.277779,11\n"
-        "R2000073,1543622940000,66.222221,12\n"
-        "R2000073,1543623000000,74.666664,11\n"
-        "R2000073,1543623480000,62.444443,13\n"
-        "R2000073,1543624200000,64.611115,12\n"
-        "R2000073,1543624260000,68.407410,11\n"
-        "R2000073,1543625040000,56.666668,11\n"
-        "R2000073,1543625400000,62.333332,11\n";
+    string ASSERTedContent2
+        = "QnV$sensor_id:Text,QnV$timestamp:INTEGER(64 bits),QnV$velocity:Float(32 bits),QnV$quantity:INTEGER(64 bits)\n"
+          "R2000073,1543622760000,63.277779,11\n"
+          "R2000073,1543622940000,66.222221,12\n"
+          "R2000073,1543623000000,74.666664,11\n"
+          "R2000073,1543623480000,62.444443,13\n"
+          "R2000073,1543624200000,64.611115,12\n"
+          "R2000073,1543624260000,68.407410,11\n"
+          "R2000073,1543625040000,56.666668,11\n"
+          "R2000073,1543625400000,62.333332,11\n";
 
     std::ifstream ifsQ1(Qpath1.c_str());
     ASSERT_TRUE(ifsQ1.good());
@@ -322,7 +331,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testTwoQueriesWithFileOutput) {
     ASSERT_EQ(contentQ2, ASSERTedContent2);
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWindowFileOutput)
+{
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithTumbWindowFileOutputTestResult2.txt";
@@ -343,16 +353,17 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::logicalSourceName("window"),
-                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::sourceGatheringInterval(1000),
-                                          TestUtils::physicalSourceName("test_stream")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::logicalSourceName("window"),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::numberOfTuplesToProducePerBuffer(28),
+         TestUtils::sourceGatheringInterval(1000),
+         TestUtils::physicalSourceName("test_stream")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -427,7 +438,8 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithTumblingWind
     ASSERT_EQ(contentQ2, ASSERTedContent2);
 }
 
-TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput) {
+TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindowFileOutput)
+{
     NES_INFO("start coordinator");
     std::string outputFilePath = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult.txt";
     std::string outputFilePath2 = getTestResourceFolder() / "ValidUserQueryWithSlidWindowFileOutputTestResult2.txt";
@@ -446,16 +458,17 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     NES_INFO("schema submit={}", schema.str());
     ASSERT_TRUE(TestUtils::addLogicalSource(schema.str(), std::to_string(*restPort)));
 
-    auto worker = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                          TestUtils::dataPort(0),
-                                          TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                          TestUtils::logicalSourceName("window"),
-                                          TestUtils::sourceType(SourceType::CSV_SOURCE),
-                                          TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
-                                          TestUtils::numberOfBuffersToProduce(1),
-                                          TestUtils::sourceGatheringInterval(1000),
-                                          TestUtils::numberOfTuplesToProducePerBuffer(28),
-                                          TestUtils::physicalSourceName("test_stream")});
+    auto worker = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::logicalSourceName("window"),
+         TestUtils::sourceType(SourceType::CSV_SOURCE),
+         TestUtils::csvSourceFilePath(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv"),
+         TestUtils::numberOfBuffersToProduce(1),
+         TestUtils::sourceGatheringInterval(1000),
+         TestUtils::numberOfTuplesToProducePerBuffer(28),
+         TestUtils::physicalSourceName("test_stream")});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
     std::stringstream ss;
@@ -526,4 +539,4 @@ TEST_F(E2ECoordinatorMultiQueryTest, testExecutingValidUserQueryWithSlidingWindo
     ASSERT_TRUE(TestUtils::checkOutputOrTimeout(ASSERTedContent2, outputFilePath2));
 }
 
-}// namespace NES
+} // namespace NES

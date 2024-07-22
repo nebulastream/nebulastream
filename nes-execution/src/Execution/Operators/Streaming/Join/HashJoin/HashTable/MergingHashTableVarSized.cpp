@@ -15,39 +15,57 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/MergingHashTableVarSized.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::Execution::Operators {
-void MergingHashTableVarSized::insertBucket(size_t bucketPos, Nautilus::Interface::PagedVectorVarSizedPtr pagedVector) {
+namespace NES::Runtime::Execution::Operators
+{
+void MergingHashTableVarSized::insertBucket(size_t bucketPos, Nautilus::Interface::PagedVectorVarSizedPtr pagedVector)
+{
     auto& numItems = bucketNumItems[bucketPos];
     auto& numPages = bucketNumPages[bucketPos];
     auto lockedBucketHeads = bucketHeads[bucketPos].wlock();
 
-    if (*lockedBucketHeads == nullptr) {
+    if (*lockedBucketHeads == nullptr)
+    {
         (*lockedBucketHeads) = pagedVector;
-    } else {
+    }
+    else
+    {
         (*lockedBucketHeads)->appendAllPages(*pagedVector);
     }
     numItems += pagedVector->getNumberOfEntries();
     numPages += pagedVector->getPages().size();
 }
 
-void* MergingHashTableVarSized::getBucketAtPos(size_t bucketPos) const {
+void* MergingHashTableVarSized::getBucketAtPos(size_t bucketPos) const
+{
     auto lockedBucketHeads = bucketHeads[bucketPos].rlock();
     return lockedBucketHeads->get();
 }
 
-uint64_t MergingHashTableVarSized::getNumberOfTuplesForPage(size_t bucketPos, size_t pageNo) const {
+uint64_t MergingHashTableVarSized::getNumberOfTuplesForPage(size_t bucketPos, size_t pageNo) const
+{
     auto lockedBucketHeads = bucketHeads[bucketPos].rlock();
     NES_ASSERT2_FMT(lockedBucketHeads->get()->getNumberOfPages() > pageNo, "Accessing a page that does not exist!");
     return lockedBucketHeads->get()->getPages()[pageNo].getNumberOfTuples();
 }
 
-size_t MergingHashTableVarSized::getNumItems(size_t bucketPos) const { return bucketNumItems[bucketPos].load(); }
+size_t MergingHashTableVarSized::getNumItems(size_t bucketPos) const
+{
+    return bucketNumItems[bucketPos].load();
+}
 
-size_t MergingHashTableVarSized::getNumPages(size_t bucketPos) const { return bucketNumPages[bucketPos].load(); }
+size_t MergingHashTableVarSized::getNumPages(size_t bucketPos) const
+{
+    return bucketNumPages[bucketPos].load();
+}
 
-size_t MergingHashTableVarSized::getNumBuckets() const { return bucketNumPages.size(); }
+size_t MergingHashTableVarSized::getNumBuckets() const
+{
+    return bucketNumPages.size();
+}
 
 MergingHashTableVarSized::MergingHashTableVarSized(size_t numBuckets)
-    : bucketHeads(numBuckets), bucketNumItems(numBuckets), bucketNumPages(numBuckets) {}
+    : bucketHeads(numBuckets), bucketNumItems(numBuckets), bucketNumPages(numBuckets)
+{
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

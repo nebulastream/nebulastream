@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/Functions/FloorExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class FloorExpressionTest : public Testing::BaseUnitTest {
-  public:
+class FloorExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("FloorExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup FloorExpressionTest test class.");
     }
@@ -32,18 +35,19 @@ class FloorExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down FloorExpressionTest test class."); }
 };
 
-TEST_F(FloorExpressionTest, evaluateFloorExpressionFloat) {
+TEST_F(FloorExpressionTest, evaluateFloorExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<FloorExpression>();
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 17.9));
-        ASSERT_EQ(resultValue, (float) 17);
+        auto resultValue = expression.eval(Value<Double>((double)17.9));
+        ASSERT_EQ(resultValue, (float)17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 17.5));
-        ASSERT_EQ(resultValue, (float) 17);
+        auto resultValue = expression.eval(Value<Float>((float)17.5));
+        ASSERT_EQ(resultValue, (float)17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -51,9 +55,10 @@ TEST_F(FloorExpressionTest, evaluateFloorExpressionFloat) {
 /**
 * @brief If we execute the expression on a boolean it should throw an exception.
 */
-TEST_F(FloorExpressionTest, evaluateFloorExpressionOnWrongType) {
+TEST_F(FloorExpressionTest, evaluateFloorExpressionOnWrongType)
+{
     auto expression = UnaryExpressionWrapper<FloorExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

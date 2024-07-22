@@ -13,28 +13,87 @@
 */
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
-std::optional<Value<>> InvocationPlugin::Add(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::Mul(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::Sub(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::Div(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::Mod(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::Equals(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::LessThan(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::GreaterThan(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::Negate(const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::And(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::Or(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::BitWiseAnd(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::BitWiseOr(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::BitWiseXor(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::BitWiseLeftShift(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::BitWiseRightShift(const Value<>&, const Value<>&) const { return std::nullopt; }
-std::optional<Value<>> InvocationPlugin::CastTo(const Value<>&, const TypeIdentifier*) const { return std::nullopt; }
-bool InvocationPlugin::IsCastable(const Value<>&, const TypeIdentifier*) const { return false; }
-std::optional<Value<>> InvocationPlugin::WriteArrayIndex(const Value<>&, Value<UInt32>, const Value<>&) const {
+std::optional<Value<>> InvocationPlugin::Add(const Value<>&, const Value<>&) const
+{
     return std::nullopt;
 }
-std::optional<Value<>> InvocationPlugin::ReadArrayIndex(const Value<>&, Value<UInt32>) const { return std::nullopt; }
-}// namespace NES::Nautilus
+std::optional<Value<>> InvocationPlugin::Mul(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::Sub(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::Div(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::Mod(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::Equals(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::LessThan(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::GreaterThan(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::Negate(const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::And(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::Or(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::BitWiseAnd(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::BitWiseOr(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::BitWiseXor(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::BitWiseLeftShift(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::BitWiseRightShift(const Value<>&, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::CastTo(const Value<>&, const TypeIdentifier*) const
+{
+    return std::nullopt;
+}
+bool InvocationPlugin::IsCastable(const Value<>&, const TypeIdentifier*) const
+{
+    return false;
+}
+std::optional<Value<>> InvocationPlugin::WriteArrayIndex(const Value<>&, Value<UInt32>, const Value<>&) const
+{
+    return std::nullopt;
+}
+std::optional<Value<>> InvocationPlugin::ReadArrayIndex(const Value<>&, Value<UInt32>) const
+{
+    return std::nullopt;
+}
+} // namespace NES::Nautilus

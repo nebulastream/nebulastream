@@ -14,17 +14,19 @@
 
 #ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <memory>
 #include <string>
-namespace NES {
-class DummySink : public SinkDescriptor {
-  public:
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+namespace NES
+{
+class DummySink : public SinkDescriptor
+{
+public:
     static SinkDescriptorPtr create() { return std::make_shared<DummySink>(); }
     DummySink() = default;
     ~DummySink() override = default;
     [[nodiscard]] std::string toString() const override { return std::string(); }
     [[nodiscard]] bool equal(SinkDescriptorPtr const&) override { return false; }
 };
-}// namespace NES
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_
+} // namespace NES
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_DUMMYSINK_HPP_

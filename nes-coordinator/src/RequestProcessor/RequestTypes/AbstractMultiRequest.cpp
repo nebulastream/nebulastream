@@ -11,6 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/AbstractMultiRequest.hpp>
@@ -19,18 +20,22 @@
 #include <RequestProcessor/StorageHandles/ResourceType.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <utility>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-AbstractMultiRequest::AbstractMultiRequest(const uint8_t maxRetries) : AbstractRequest(maxRetries) {}
+AbstractMultiRequest::AbstractMultiRequest(const uint8_t maxRetries) : AbstractRequest(maxRetries)
+{
+}
 
-std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandlerPtr& storageHandle) {
+std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandlerPtr& storageHandle)
+{
     std::vector<AbstractRequestPtr> result;
 
     //let the first acquired thread execute the main thread and set the done member variable afterwards
     bool expected = false;
-    if (initialThreadAcquired.compare_exchange_strong(expected, true)) {
+    if (initialThreadAcquired.compare_exchange_strong(expected, true))
+    {
         this->storageHandle = storageHandle;
         result = executeRequestLogic();
         std::unique_lock lock(workMutex);
@@ -38,8 +43,10 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
         lock.unlock();
 
         //verify that all requests have been executed
-        if (!subRequestQueue.empty()) {
-            for (auto& subRequedt : subRequestQueue) {
+        if (!subRequestQueue.empty())
+        {
+            for (auto& subRequedt : subRequestQueue)
+            {
                 NES_ASSERT(subRequedt->executionHasStarted(), "Not all scheduled requests were executed");
             }
         }
@@ -47,18 +54,25 @@ std::vector<AbstractRequestPtr> AbstractMultiRequest::execute(const StorageHandl
         return result;
     }
 
-    while (!done) {
+    while (!done)
+    {
         executeSubRequest();
     }
     return {};
 }
 
-bool AbstractMultiRequest::isDone() { return done; }
+bool AbstractMultiRequest::isDone()
+{
+    return done;
+}
 
-bool AbstractMultiRequest::executeSubRequest() {
+bool AbstractMultiRequest::executeSubRequest()
+{
     std::unique_lock lock(workMutex);
-    while (subRequestQueue.empty()) {
-        if (done) {
+    while (subRequestQueue.empty())
+    {
+        if (done)
+        {
             return false;
         }
         cv.wait(lock);
@@ -70,7 +84,8 @@ bool AbstractMultiRequest::executeSubRequest() {
     return true;
 }
 
-SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest) {
+SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr subRequest)
+{
     NES_ASSERT(!done, "Cannot schedule sub request is parent request is marked as done");
     auto future = subRequest->getFuture();
 
@@ -81,4 +96,4 @@ SubRequestFuture AbstractMultiRequest::scheduleSubRequest(AbstractSubRequestPtr 
     cv.notify_all();
     return SubRequestFuture(subRequest, std::move(future));
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

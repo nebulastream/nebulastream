@@ -12,61 +12,84 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
-#include <iostream>
 
-namespace NES {
+namespace NES
+{
 
-QueryConsoleDumpHandler::QueryConsoleDumpHandler(std::ostream& out) : out(out) {}
+QueryConsoleDumpHandler::QueryConsoleDumpHandler(std::ostream& out) : out(out)
+{
+}
 
-std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::ostream& out) {
+std::shared_ptr<QueryConsoleDumpHandler> QueryConsoleDumpHandler::create(std::ostream& out)
+{
     return std::make_shared<QueryConsoleDumpHandler>(out);
 }
 
-void QueryConsoleDumpHandler::dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const {
+void QueryConsoleDumpHandler::dumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const
+{
     out << std::string(indent * depth, ' ') << op->toString() << std::endl;
     ++depth;
     auto children = op->getChildren();
-    for (auto&& child : children) {
+    for (auto&& child : children)
+    {
         dumpHelper(child, depth, indent, out);
     }
 }
 
-void QueryConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, uint64_t indent, std::ostream& out) const {
-
+void QueryConsoleDumpHandler::multilineDumpHelper(const NodePtr& op, uint64_t depth, uint64_t indent, std::ostream& out) const
+{
     std::vector<std::string> multiLineNodeString = op->toMultilineString();
-    for (const std::string& line : multiLineNodeString) {
-        for (auto i{0ULL}; i < indent * depth; ++i) {
-            if (i % indent == 0) {
+    for (const std::string& line : multiLineNodeString)
+    {
+        for (auto i{0ULL}; i < indent * depth; ++i)
+        {
+            if (i % indent == 0)
+            {
                 out << '|';
-            } else {
-                if (line == multiLineNodeString.front() && i >= indent * depth - 1) {
+            }
+            else
+            {
+                if (line == multiLineNodeString.front() && i >= indent * depth - 1)
+                {
                     out << std::string(indent, '-');
-                } else {
+                }
+                else
+                {
                     out << std::string(indent, ' ');
                 }
             }
         }
-        if (line != multiLineNodeString.front()) {
+        if (line != multiLineNodeString.front())
+        {
             out << '|' << ' ';
         }
         out << line << std::endl;
     }
     ++depth;
     auto children = op->getChildren();
-    for (auto&& child : children) {
+    for (auto&& child : children)
+    {
         multilineDumpHelper(child, depth, indent, out);
     }
 }
 
-void QueryConsoleDumpHandler::dump(const NodePtr node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
+void QueryConsoleDumpHandler::dump(const NodePtr node)
+{
+    multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
+}
 
-void QueryConsoleDumpHandler::multilineDump(const NodePtr& node) { multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out); }
+void QueryConsoleDumpHandler::multilineDump(const NodePtr& node)
+{
+    multilineDumpHelper(node, /*depth*/ 0, /*indent*/ 2, out);
+}
 
-void QueryConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr queryPlan) {
+void QueryConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr queryPlan)
+{
     out << "Dumping queryPlan: " << queryPlan->toString() << std::endl;
 }
-}// namespace NES
+} // namespace NES

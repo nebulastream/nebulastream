@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
+#include <iostream>
 #include <API/TestSchemas.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
@@ -25,22 +26,25 @@
 #include <Services/RequestHandlerService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
-#include <iostream>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
-class MultipleWindowsTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class MultipleWindowsTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("MultipleWindowsTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup MultipleWindowsTest test class.");
     }
 };
 
-TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
+TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     auto workerConfig = WorkerConfiguration::create();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
@@ -49,7 +53,7 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
 
     NES_INFO("MultipleWindowsTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -91,11 +95,11 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,2000,1,1\n"
-        "0,2000,4,1\n"
-        "2000,4000,1,8\n";
+    string expectedContent
+        = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+          "0,2000,1,1\n"
+          "0,2000,4,1\n"
+          "2000,4000,1,8\n";
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
     NES_INFO("MultipleWindowsTest: Remove query");
@@ -112,14 +116,15 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingWindows) {
     NES_INFO("MultipleWindowsTest: Test finished");
 }
 
-TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
+TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = 12;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -175,11 +180,11 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,2000,1,2\n"
-        "0,2000,4,2\n"
-        "2000,4000,1,16\n";
+    string expectedContent
+        = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+          "0,2000,1,2\n"
+          "0,2000,4,2\n"
+          "2000,4000,1,16\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -204,14 +209,15 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingWindows) {
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
+TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.numberOfSlots = 12;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -241,14 +247,13 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     remove(outputFilePath.c_str());
 
     NES_INFO("MultipleWindowsTest: Submit query");
-    string query =
-        "Query::from(\"window\")"
-        ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)))"
-        ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
-        ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"start\"), Milliseconds(0), Milliseconds()))"
-        ".window(SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5))) "
-        ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
-        ".sink(FileSinkDescriptor::create(\""
+    string query = "Query::from(\"window\")"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"timestamp\")),Seconds(5),Seconds(5)))"
+                   ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
+                   ".assignWatermark(EventTimeWatermarkStrategyDescriptor::create(Attribute(\"start\"), Milliseconds(0), Milliseconds()))"
+                   ".window(SlidingWindow::of(EventTime(Attribute(\"start\")),Seconds(10),Seconds(5))) "
+                   ".byKey(Attribute(\"id\")).apply(Sum(Attribute(\"value\")))"
+                   ".sink(FileSinkDescriptor::create(\""
         + outputFilePath + R"(","CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
@@ -256,17 +261,17 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,10000,1,51\n"
-        "0,10000,4,1\n"
-        "0,10000,11,5\n"
-        "0,10000,12,1\n"
-        "0,10000,16,2\n"
-        "5000,15000,1,95\n"
-        "10000,20000,1,145\n"
-        "15000,25000,1,126\n"
-        "20000,30000,1,41\n";
+    string expectedContent
+        = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+          "0,10000,1,51\n"
+          "0,10000,4,1\n"
+          "0,10000,11,5\n"
+          "0,10000,12,1\n"
+          "0,10000,16,2\n"
+          "5000,15000,1,95\n"
+          "10000,20000,1,145\n"
+          "15000,25000,1,126\n"
+          "20000,30000,1,41\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -287,13 +292,14 @@ TEST_F(MultipleWindowsTest, testTwoCentralSlidingWindowEventTime) {
 /**
  * @brief test central sliding window and event time
  */
-TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
+TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -350,17 +356,17 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "5000,15000,1,102\n"
-        "5000,15000,12,2\n"
-        "5000,15000,4,2\n"
-        "5000,15000,11,10\n"
-        "5000,15000,16,4\n"
-        "10000,20000,1,190\n"
-        "15000,25000,1,290\n"
-        "20000,30000,1,252\n"
-        "25000,35000,1,82\n";
+    string expectedContent
+        = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+          "5000,15000,1,102\n"
+          "5000,15000,12,2\n"
+          "5000,15000,4,2\n"
+          "5000,15000,11,10\n"
+          "5000,15000,16,4\n"
+          "10000,20000,1,190\n"
+          "15000,25000,1,290\n"
+          "20000,30000,1,252\n"
+          "25000,35000,1,82\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -382,13 +388,14 @@ TEST_F(MultipleWindowsTest, testTwoDistributedSlidingWindowEventTime) {
     NES_INFO("MultipleWindowsTest: Test finished");
 }
 
-TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
+TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows)
+{
     auto coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -431,20 +438,20 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,1000,1,1\n"
-        "0,1000,4,1\n"
-        "2000,3000,1,11\n"
-        "4000,5000,1,9\n"
-        "6000,7000,1,13\n"
-        "8000,9000,1,17\n"
-        "10000,11000,1,21\n"
-        "12000,13000,1,25\n"
-        "14000,15000,1,29\n"
-        "16000,17000,1,33\n"
-        "18000,19000,1,37\n"
-        "20000,21000,1,41\n";
+    string expectedContent
+        = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+          "0,1000,1,1\n"
+          "0,1000,4,1\n"
+          "2000,3000,1,11\n"
+          "4000,5000,1,9\n"
+          "6000,7000,1,13\n"
+          "8000,9000,1,17\n"
+          "10000,11000,1,21\n"
+          "12000,13000,1,25\n"
+          "14000,15000,1,29\n"
+          "16000,17000,1,33\n"
+          "18000,19000,1,37\n"
+          "20000,21000,1,41\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -462,13 +469,14 @@ TEST_F(MultipleWindowsTest, testTwoCentralTumblingAndSlidingWindows) {
     NES_INFO("MultipleWindowsTest: Test finished");
 }
 
-TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
+TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -524,19 +532,19 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
-        "0,2000,1,6\n"
-        "0,2000,12,2\n"
-        "0,2000,4,2\n"
-        "0,2000,11,4\n"
-        "0,2000,16,4\n"
-        "2000,4000,1,48\n"
-        "2000,4000,11,16\n"
-        "2000,4000,16,4\n"
-        "4000,6000,1,40\n"
-        "6000,8000,1,56\n"
-        "8000,10000,1,16\n";
+    string expectedContent
+        = "window$start:INTEGER(64 bits),window$end:INTEGER(64 bits),window$id:INTEGER(64 bits),window$value:INTEGER(64 bits)\n"
+          "0,2000,1,6\n"
+          "0,2000,12,2\n"
+          "0,2000,4,2\n"
+          "0,2000,11,4\n"
+          "0,2000,16,4\n"
+          "2000,4000,1,48\n"
+          "2000,4000,11,16\n"
+          "2000,4000,16,4\n"
+          "4000,6000,1,40\n"
+          "6000,8000,1,56\n"
+          "8000,10000,1,16\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -561,13 +569,14 @@ TEST_F(MultipleWindowsTest, testTwoDistributedTumblingAndSlidingWindows) {
 /**
  * @brief Test all three windows in a row
  */
-TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
+TEST_F(MultipleWindowsTest, testThreeDifferentWindows)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -651,7 +660,8 @@ TEST_F(MultipleWindowsTest, testThreeDifferentWindows) {
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
+TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow)
+{
     /**
      * @Ankit this should lso not happen, node 2 has a slot count of 3 but 5 operators are deployed
      * ExecutionNode(id:1, ip:127.0.0.1, topologyId:1)
@@ -684,7 +694,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -800,7 +810,8 @@ TEST_F(MultipleWindowsTest, DISABLED_testSeparatedWindow) {
     |  |--PhysicalNode[id=5, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
     |  |--PhysicalNode[id=4, ip=127.0.0.1, resourceCapacity=12, usedResource=0]
  */
-TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
+TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery)
+{
     /**
      * @Ankit this plan should not happen, it spearates the slicer from the source
      * ExecutionNode(id:1, ip:127.0.0.1, topologyId:1)
@@ -839,7 +850,7 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -912,14 +923,14 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
-    string expectedContent =
-        "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
-        "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
-        "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
-        "INTEGER,window3$timestamp:INTEGER\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
-        "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
-        "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
+    string expectedContent
+        = "window1window2window3$start:INTEGER,window1window2window3$end:INTEGER,window1window2window3$key:INTEGER,window1window2$"
+          "start:INTEGER,window1window2$end:INTEGER,window1window2$key:INTEGER,window1$win1:INTEGER,window1$id1:INTEGER,window1$"
+          "timestamp:INTEGER,window2$win2:INTEGER,window2$id2:INTEGER,window2$timestamp:INTEGER,window3$win3:INTEGER,window3$id3:"
+          "INTEGER,window3$timestamp:INTEGER\n"
+          "1000,2000,4,1000,2000,4,1,4,1002,3,4,1102,4,4,1001\n"
+          "1000,2000,4,1000,2000,4,1,4,1002,3,4,1112,4,4,1001\n"
+          "1000,2000,12,1000,2000,12,1,12,1001,5,12,1011,1,12,1300\n";
 
     EXPECT_TRUE(TestUtils::checkOutputOrTimeout(expectedContent, outputFilePath));
 
@@ -945,4 +956,4 @@ TEST_F(MultipleWindowsTest, DISABLED_testNotVaildQuery) {
     NES_DEBUG("MultipleWindowsTest: Test finished");
 }
 
-}// namespace NES
+} // namespace NES

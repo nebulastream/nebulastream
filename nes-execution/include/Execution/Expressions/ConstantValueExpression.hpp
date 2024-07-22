@@ -13,23 +13,25 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
+#include <type_traits>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <type_traits>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expression returns a specific constant values.
  */
-template<typename T>
-    requires std::is_integral_v<T> || std::is_floating_point_v<T>
-class ConstantValueExpression : public Expression {
-  public:
+template <typename T>
+requires std::is_integral_v<T> || std::is_floating_point_v<T>
+class ConstantValueExpression : public Expression
+{
+public:
     explicit ConstantValueExpression(T value);
     Value<> execute(Record& record) const override;
 
-  private:
+private:
     const T value;
 };
 
@@ -45,6 +47,6 @@ using ConstantFloatValueExpression = ConstantValueExpression<float>;
 using ConstantDoubleValueExpression = ConstantValueExpression<double>;
 using ConstantBooleanValueExpression = ConstantValueExpression<bool>;
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_

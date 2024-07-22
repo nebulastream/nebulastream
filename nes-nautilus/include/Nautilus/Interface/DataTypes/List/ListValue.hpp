@@ -14,11 +14,14 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_
 
-#include <Runtime/TupleBuffer.hpp>
 #include <string>
-namespace NES::Nautilus {
+#include <Runtime/TupleBuffer.hpp>
+namespace NES::Nautilus
+{
 
-class BaseListValue {};
+class BaseListValue
+{
+};
 
 /**
  * @brief Physical data type that represents a ListValue.
@@ -26,9 +29,10 @@ class BaseListValue {};
  * Physical layout:
  * | ----- size 4 byte ----- | ----- variable length data
  */
-template<class T>
-class ListValue final : public BaseListValue {
-  public:
+template <class T>
+class ListValue final : public BaseListValue
+{
+public:
     using RawType = T;
     static constexpr size_t DATA_FIELD_OFFSET = sizeof(uint32_t);
     static constexpr size_t FIELD_SIZE = sizeof(T);
@@ -129,7 +133,7 @@ class ListValue final : public BaseListValue {
      */
     ~ListValue();
 
-  private:
+private:
     /**
      * @brief Private constructor to initialize a new text
      * @param size
@@ -138,15 +142,17 @@ class ListValue final : public BaseListValue {
     const uint32_t size;
 };
 
-template<class T>
-uint32_t getLength(const ListValue<T>* list) {
+template <class T>
+uint32_t getLength(const ListValue<T>* list)
+{
     return list->length();
 }
 
-template<class T>
-bool listEquals(const ListValue<T>* left, const ListValue<T>* right) {
+template <class T>
+bool listEquals(const ListValue<T>* left, const ListValue<T>* right)
+{
     return left->equals(right);
 }
 
-}// namespace NES::Nautilus
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_
+} // namespace NES::Nautilus
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_

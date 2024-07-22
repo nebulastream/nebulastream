@@ -15,6 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINPROBE_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINPROBE_HPP_
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
@@ -24,17 +25,18 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
-#include <utility>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class is the second phase of the stream join. The actual implementation (nested-loops, probing hash tables)
  * is not part of this class. This class takes care of the close() functionality as this universal.
  * Furthermore, it provides a method of creating the joined tuple
  */
-class StreamJoinProbe : public StreamJoinOperator, public Operator {
-  public:
+class StreamJoinProbe : public StreamJoinOperator, public Operator
+{
+public:
     /**
      * @brief Constructor for a StreamJoinProbe
      * @param operatorHandlerIndex
@@ -46,13 +48,14 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
      * @param windowingStrategy
      * @param withDeletion
      */
-    StreamJoinProbe(const uint64_t operatorHandlerIndex,
-                    const JoinSchema& joinSchema,
-                    Expressions::ExpressionPtr joinExpression,
-                    const WindowMetaData& windowMetaData,
-                    QueryCompilation::StreamJoinStrategy joinStrategy,
-                    QueryCompilation::WindowingStrategy windowingStrategy,
-                    bool withDeletion = true);
+    StreamJoinProbe(
+        const uint64_t operatorHandlerIndex,
+        const JoinSchema& joinSchema,
+        Expressions::ExpressionPtr joinExpression,
+        const WindowMetaData& windowMetaData,
+        QueryCompilation::StreamJoinStrategy joinStrategy,
+        QueryCompilation::WindowingStrategy windowingStrategy,
+        bool withDeletion = true);
 
     /**
      * @brief Checks the current watermark and then deletes all slices/windows that are not valid anymore
@@ -75,13 +78,14 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
      * @param windowStart
      * @param windowEnd
      */
-    void createJoinedRecord(Record& joinedRecord,
-                            Record& leftRecord,
-                            Record& rightRecord,
-                            const Value<UInt64>& windowStart,
-                            const Value<UInt64>& windowEnd) const;
+    void createJoinedRecord(
+        Record& joinedRecord,
+        Record& leftRecord,
+        Record& rightRecord,
+        const Value<UInt64>& windowStart,
+        const Value<UInt64>& windowEnd) const;
 
-  protected:
+protected:
     const uint64_t operatorHandlerIndex;
     const JoinSchema joinSchema;
     bool withDeletion;
@@ -93,6 +97,6 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
 
     const WindowMetaData windowMetaData;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINPROBE_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINPROBE_HPP_

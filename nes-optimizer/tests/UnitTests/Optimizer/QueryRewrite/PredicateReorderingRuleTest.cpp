@@ -35,23 +35,26 @@
 
 using namespace NES;
 
-class PredicateReorderingRuleTest : public Testing::BaseIntegrationTest {
-
-  public:
+class PredicateReorderingRuleTest : public Testing::BaseIntegrationTest
+{
+public:
     SchemaPtr schema;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("PredicateReorderingRuleTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup PredicateReorderingRuleTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         schema = Schema::create()->addField("id", BasicType::UINT32)->addField("value", BasicType::UINT64);
     }
 
-    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+    void setupSensorNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
+    {
         NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -66,7 +69,8 @@ class PredicateReorderingRuleTest : public Testing::BaseIntegrationTest {
     }
 };
 
-TEST_F(PredicateReorderingRuleTest, testReorderingChain) {
+TEST_F(PredicateReorderingRuleTest, testReorderingChain)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -113,7 +117,8 @@ TEST_F(PredicateReorderingRuleTest, testReorderingChain) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(PredicateReorderingRuleTest, testReorderingChainNotApplicable) {
+TEST_F(PredicateReorderingRuleTest, testReorderingChainNotApplicable)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -154,7 +159,8 @@ TEST_F(PredicateReorderingRuleTest, testReorderingChainNotApplicable) {
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively) {
+TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 
@@ -235,7 +241,8 @@ TEST_F(PredicateReorderingRuleTest, testReorderingFiltersNotAlignedConsecutively
     EXPECT_TRUE(srcOperator->equal((*itr)));
 }
 
-TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator) {
+TEST_F(PredicateReorderingRuleTest, testReorderingFiltersAfterBinaryOperator)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     setupSensorNodeAndSourceCatalog(sourceCatalog);
 

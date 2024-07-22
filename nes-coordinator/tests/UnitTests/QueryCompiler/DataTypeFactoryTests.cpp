@@ -12,23 +12,26 @@
     limitations under the License.
 */
 
+#include <limits>
 #include <API/Expressions/Expressions.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <gtest/gtest.h>
-#include <limits>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
-class DataTypeFactoryTests : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class DataTypeFactoryTests : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("DataTypeFactory.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DataTypeFactory test class.");
     }
@@ -43,7 +46,8 @@ class DataTypeFactoryTests : public Testing::BaseUnitTest {
  * | Physical Source |
  *
  */
-TEST_F(DataTypeFactoryTests, stampModificationTest) {
+TEST_F(DataTypeFactoryTests, stampModificationTest)
+{
     // increase lower bound
     {
         auto stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypeFactory::createInt32(), -200.0);
@@ -163,4 +167,4 @@ TEST_F(DataTypeFactoryTests, stampModificationTest) {
     }
 }
 
-}// namespace NES
+} // namespace NES

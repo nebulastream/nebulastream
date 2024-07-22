@@ -16,11 +16,9 @@
 
 #include <API/QueryAPI.hpp>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/UDF/UDFCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Compiler/CPPCompiler/CPPCompiler.hpp>
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -55,8 +53,11 @@
 #include <Util/TestQueryCompiler.hpp>
 #include <Util/TestSink.hpp>
 #include <Util/TestUtils.hpp>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Testing {
+namespace NES::Testing
+{
 class NonRunnableDataSource;
 class TestSourceDescriptor;
 
@@ -70,8 +71,9 @@ constexpr auto DEFAULT_NO_BUFFERS_IN_SOURCE_BM_PER_THREAD = 512;
 /**
  * @brief A simple stand alone query execution engine for testing.
  */
-class TestExecutionEngine {
-  public:
+class TestExecutionEngine
+{
+public:
     explicit TestExecutionEngine(
         const QueryCompilation::DumpMode& dumpMode = QueryCompilation::DumpMode::NONE,
         const uint64_t numWorkerThreads = 1,
@@ -80,8 +82,9 @@ class TestExecutionEngine {
 
     std::shared_ptr<TestSink> createDataSink(const SchemaPtr& outputSchema, uint32_t expectedTuples = 1);
 
-    template<class Type>
-    auto createCollectSink(SchemaPtr outputSchema) {
+    template <class Type>
+    auto createCollectSink(SchemaPtr outputSchema)
+    {
         return CollectTestSink<Type>::create(outputSchema, nodeEngine);
     }
 
@@ -89,13 +92,13 @@ class TestExecutionEngine {
 
     std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> submitQuery(DecomposedQueryPlanPtr decomposedQueryPlan);
 
-    std::shared_ptr<NonRunnableDataSource> getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
-                                                         uint32_t source);
+    std::shared_ptr<NonRunnableDataSource> getDataSource(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, uint32_t source);
 
     void emitBuffer(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan, Runtime::TupleBuffer buffer);
 
-    bool stopQuery(std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
-                   Runtime::QueryTerminationType type = Runtime::QueryTerminationType::HardStop);
+    bool stopQuery(
+        std::shared_ptr<Runtime::Execution::ExecutableQueryPlan> plan,
+        Runtime::QueryTerminationType type = Runtime::QueryTerminationType::HardStop);
 
     Runtime::MemoryLayouts::TestTupleBuffer getBuffer(const SchemaPtr& schema);
 
@@ -105,13 +108,13 @@ class TestExecutionEngine {
 
     Runtime::NodeEnginePtr getNodeEngine() const;
 
-  private:
+private:
     Runtime::NodeEnginePtr nodeEngine;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::OriginIdInferencePhasePtr originIdInferencePhase;
     Optimizer::StatisticIdInferencePhasePtr statisticIdInferencePhase;
 };
 
-}// namespace NES::Testing
+} // namespace NES::Testing
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTEXECUTIONENGINE_HPP_

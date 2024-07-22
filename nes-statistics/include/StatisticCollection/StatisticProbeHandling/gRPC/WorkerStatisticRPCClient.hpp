@@ -17,24 +17,27 @@
 
 #include <Statistics/StatisticRequests.hpp>
 #include <Statistics/StatisticValue.hpp>
+#include <grpcpp/grpcpp.h>
 #include <WorkerRPCService.grpc.pb.h>
 #include <WorkerRPCService.pb.h>
-#include <grpcpp/grpcpp.h>
 
 using grpc::Channel;
 using grpc::ClientAsyncResponseReader;
 using grpc::ClientContext;
 using grpc::CompletionQueue;
 using grpc::Status;
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 class WorkerStatisticRPCClient;
 using WorkerStatisticRPCClientPtr = std::shared_ptr<WorkerStatisticRPCClient>;
 
-class WorkerStatisticRPCClient {
-  public:
-    template<typename ReplayType>
-    struct AsyncClientCall {
+class WorkerStatisticRPCClient
+{
+public:
+    template <typename ReplayType>
+    struct AsyncClientCall
+    {
         // Container for the data we expect from the server.
         ReplayType reply;
 
@@ -58,10 +61,10 @@ class WorkerStatisticRPCClient {
      */
     std::vector<StatisticValue<>> probeStatistics(const StatisticProbeRequestGRPC& probeRequest, const std::string& gRPCAddress);
 
-  private:
+private:
     WorkerStatisticRPCClient() = default;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_GRPC_WORKERSTATISTICRPCCLIENT_HPP_
+#endif // NES_STATISTICS_INCLUDE_STATISTICCOLLECTION_STATISTICPROBEHANDLING_GRPC_WORKERSTATISTICRPCCLIENT_HPP_

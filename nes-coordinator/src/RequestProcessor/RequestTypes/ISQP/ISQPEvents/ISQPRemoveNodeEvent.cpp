@@ -14,24 +14,37 @@
 
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPRemoveNodeEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-ISQPRemoveNodeEvent::ISQPRemoveNodeEvent(const WorkerId& workerId,
-                                         const std::vector<WorkerId>& downstreamWorkerIds,
-                                         const std::vector<WorkerId>& upstreamWorkerIds)
-    : ISQPEvent(ISQP_REMOVE_NODE_EVENT_PRIORITY), workerId(workerId), downstreamWorkerIds(downstreamWorkerIds),
-      upstreamWorkerIds(upstreamWorkerIds) {}
+ISQPRemoveNodeEvent::ISQPRemoveNodeEvent(
+    const WorkerId& workerId, const std::vector<WorkerId>& downstreamWorkerIds, const std::vector<WorkerId>& upstreamWorkerIds)
+    : ISQPEvent(ISQP_REMOVE_NODE_EVENT_PRIORITY)
+    , workerId(workerId)
+    , downstreamWorkerIds(downstreamWorkerIds)
+    , upstreamWorkerIds(upstreamWorkerIds)
+{
+}
 
-ISQPEventPtr ISQPRemoveNodeEvent::create(const WorkerId& workerId,
-                                         const std::vector<WorkerId>& downstreamWorkerIds,
-                                         const std::vector<WorkerId>& upstreamWorkerIds) {
+ISQPEventPtr ISQPRemoveNodeEvent::create(
+    const WorkerId& workerId, const std::vector<WorkerId>& downstreamWorkerIds, const std::vector<WorkerId>& upstreamWorkerIds)
+{
     return std::make_shared<ISQPRemoveNodeEvent>(workerId, downstreamWorkerIds, upstreamWorkerIds);
 }
 
-WorkerId ISQPRemoveNodeEvent::getWorkerId() const { return workerId; }
+WorkerId ISQPRemoveNodeEvent::getWorkerId() const
+{
+    return workerId;
+}
 
-const std::vector<WorkerId>& ISQPRemoveNodeEvent::getDownstreamWorkerIds() const { return downstreamWorkerIds; }
+const std::vector<WorkerId>& ISQPRemoveNodeEvent::getDownstreamWorkerIds() const
+{
+    return downstreamWorkerIds;
+}
 
-const std::vector<WorkerId>& ISQPRemoveNodeEvent::getUpstreamWorkerIds() const { return upstreamWorkerIds; }
+const std::vector<WorkerId>& ISQPRemoveNodeEvent::getUpstreamWorkerIds() const
+{
+    return upstreamWorkerIds;
+}
 
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

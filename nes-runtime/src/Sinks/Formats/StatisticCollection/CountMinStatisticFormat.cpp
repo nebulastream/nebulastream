@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <utility>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -20,34 +22,40 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <utility>
-#include <vector>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-StatisticFormatPtr CountMinStatisticFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                   std::function<std::string(const std::string&)> postProcessingData,
-                                                   std::function<std::string(const std::string&)> preProcessingData) {
+StatisticFormatPtr CountMinStatisticFormat::create(
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+    std::function<std::string(const std::string&)> postProcessingData,
+    std::function<std::string(const std::string&)> preProcessingData)
+{
     const auto qualifierNameWithSeparator = memoryLayout->getSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     return std::make_shared<CountMinStatisticFormat>(
         CountMinStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData));
 }
 
-CountMinStatisticFormat::CountMinStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                                 Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                 std::function<std::string(const std::string&)> postProcessingData,
-                                                 std::function<std::string(const std::string&)> preProcessingData)
-    : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData),
-      widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
-      depthFieldName(qualifierNameWithSeparator + DEPTH_FIELD_NAME),
-      numberOfBitsInKeyFieldName(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY),
-      countMinDataFieldName(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME) {}
+CountMinStatisticFormat::CountMinStatisticFormat(
+    const std::string& qualifierNameWithSeparator,
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+    std::function<std::string(const std::string&)> postProcessingData,
+    std::function<std::string(const std::string&)> preProcessingData)
+    : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData)
+    , widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME)
+    , depthFieldName(qualifierNameWithSeparator + DEPTH_FIELD_NAME)
+    , numberOfBitsInKeyFieldName(qualifierNameWithSeparator + NUMBER_OF_BITS_IN_KEY)
+    , countMinDataFieldName(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME)
+{
+}
 
-std::vector<HashStatisticPair> CountMinStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) {
+std::vector<HashStatisticPair> CountMinStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffer)
+{
     std::vector<HashStatisticPair> createdStatisticsWithTheirHash;
 
     // Each tuple represents one CountMin-Sketch
-    for (auto curTupleCnt = 0_u64; curTupleCnt < buffer.getNumberOfTuples(); ++curTupleCnt) {
+    for (auto curTupleCnt = 0_u64; curTupleCnt < buffer.getNumberOfTuples(); ++curTupleCnt)
+    {
         // Calculating / Getting the field offset for each of the fields we need
         const auto startTsFieldOffset = memoryLayout->getFieldOffset(curTupleCnt, startTsFieldName);
         const auto endTsFieldOffset = memoryLayout->getFieldOffset(curTupleCnt, endTsFieldName);
@@ -61,10 +69,12 @@ std::vector<HashStatisticPair> CountMinStatisticFormat::readStatisticsFromBuffer
         // Checking if all field offsets are valid and have a value
         if (!startTsFieldOffset.has_value() || !endTsFieldOffset.has_value() || !hashFieldOffset.has_value()
             || !observedTuplesFieldOffset.has_value() || !widthFieldOffset.has_value() || !depthFieldOffset.has_value()
-            || !numberOfBitsInKeyOffset.has_value() || !countMinDataFieldOffset.has_value()) {
-            NES_ERROR("Expected to receive an offset for all required fields! Skipping creating a statistic for "
-                      "the {}th tuple in the buffer!",
-                      curTupleCnt);
+            || !numberOfBitsInKeyOffset.has_value() || !countMinDataFieldOffset.has_value())
+        {
+            NES_ERROR(
+                "Expected to receive an offset for all required fields! Skipping creating a statistic for "
+                "the {}th tuple in the buffer!",
+                curTupleCnt);
             continue;
         }
 
@@ -80,32 +90,32 @@ std::vector<HashStatisticPair> CountMinStatisticFormat::readStatisticsFromBuffer
 
         // Reading the CountMinData that is stored as a string
         const auto countMinDataChildIdx = *reinterpret_cast<uint32_t*>(buffer.getBuffer() + countMinDataFieldOffset.value());
-        const auto countMinDataString =
-            postProcessingData(Runtime::MemoryLayouts::readVarSizedData(buffer, countMinDataChildIdx));
+        const auto countMinDataString = postProcessingData(Runtime::MemoryLayouts::readVarSizedData(buffer, countMinDataChildIdx));
 
         // Creating now a CountMinStatistic from this
-        auto countMinStatistic = CountMinStatistic::create(Windowing::TimeMeasure(startTs),
-                                                           Windowing::TimeMeasure(endTs),
-                                                           observedTuples,
-                                                           width,
-                                                           depth,
-                                                           numberOfBitsInKey,
-                                                           countMinDataString);
+        auto countMinStatistic = CountMinStatistic::create(
+            Windowing::TimeMeasure(startTs),
+            Windowing::TimeMeasure(endTs),
+            observedTuples,
+            width,
+            depth,
+            numberOfBitsInKey,
+            countMinDataString);
         createdStatisticsWithTheirHash.emplace_back(hash, countMinStatistic);
     }
 
     return createdStatisticsWithTheirHash;
 }
 
-std::vector<Runtime::TupleBuffer>
-CountMinStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
-                                                    Runtime::BufferManager& bufferManager) {
-
+std::vector<Runtime::TupleBuffer> CountMinStatisticFormat::writeStatisticsIntoBuffers(
+    const std::vector<HashStatisticPair>& statisticsPlusHashes, Runtime::BufferManager& bufferManager)
+{
     std::vector<Runtime::TupleBuffer> createdTupleBuffers;
     uint64_t insertedStatistics = 0;
     const auto capacityOfTupleBuffer = memoryLayout->getCapacity();
     auto buffer = bufferManager.getBufferBlocking();
-    for (auto& [statisticHash, statistic] : statisticsPlusHashes) {
+    for (auto& [statisticHash, statistic] : statisticsPlusHashes)
+    {
         // 1. Calculating the offset for each field
         const auto startTsFieldOffset = memoryLayout->getFieldOffset(insertedStatistics, startTsFieldName);
         const auto endTsFieldOffset = memoryLayout->getFieldOffset(insertedStatistics, endTsFieldName);
@@ -119,16 +129,18 @@ CountMinStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatis
         // 2. Checking if all field offsets are valid and have a value
         if (!startTsFieldOffset.has_value() || !endTsFieldOffset.has_value() || !hashFieldOffset.has_value()
             || !observedTuplesFieldOffset.has_value() || !widthFieldOffset.has_value() || !depthFieldOffset.has_value()
-            || !numberOfBitsInKeyOffset.has_value() || !countMinDataFieldOffset.has_value()) {
-            NES_ERROR("Expected to receive an offset for all required fields! Skipping creating a statistic for "
-                      "the {}th tuple in the buffer!",
-                      insertedStatistics);
+            || !numberOfBitsInKeyOffset.has_value() || !countMinDataFieldOffset.has_value())
+        {
+            NES_ERROR(
+                "Expected to receive an offset for all required fields! Skipping creating a statistic for "
+                "the {}th tuple in the buffer!",
+                insertedStatistics);
             continue;
         }
 
         // 3. Getting all values from the statistic
-        NES_ASSERT2_FMT(statistic->instanceOf<CountMinStatistic>(),
-                        "CountMinStatisticSinkFormat knows only how to write CountMinStatistics!");
+        NES_ASSERT2_FMT(
+            statistic->instanceOf<CountMinStatistic>(), "CountMinStatisticSinkFormat knows only how to write CountMinStatistics!");
         const auto countMinStatistic = statistic->as<CountMinStatistic>();
         const auto startTs = countMinStatistic->getStartTs();
         const auto endTs = countMinStatistic->getEndTs();
@@ -151,10 +163,12 @@ CountMinStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatis
 
         // 5. Writing the CountMinData that we store as a string
         const auto countMinDataChildIdx = Runtime::MemoryLayouts::writeVarSizedData(buffer, data, bufferManager);
-        if (!countMinDataChildIdx.has_value()) {
-            NES_ERROR("Expected to store the count min data as a string! Skipping creating a statistic for "
-                      "the {}th tuple in the buffer!",
-                      insertedStatistics);
+        if (!countMinDataChildIdx.has_value())
+        {
+            NES_ERROR(
+                "Expected to store the count min data as a string! Skipping creating a statistic for "
+                "the {}th tuple in the buffer!",
+                insertedStatistics);
             continue;
         }
         *reinterpret_cast<uint32_t*>(buffer.getBuffer() + countMinDataFieldOffset.value()) = countMinDataChildIdx.value();
@@ -162,7 +176,8 @@ CountMinStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatis
         // 6. Incrementing the position in the tuple buffer and setting the number of tuples
         insertedStatistics += 1;
 
-        if (insertedStatistics >= capacityOfTupleBuffer) {
+        if (insertedStatistics >= capacityOfTupleBuffer)
+        {
             buffer.setNumberOfTuples(insertedStatistics);
             createdTupleBuffers.emplace_back(buffer);
 
@@ -173,7 +188,8 @@ CountMinStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatis
 
     // In the loop, we only insert into the createdTupleBuffers, if the buffer is full. Thus, we need to check, if we
     // have created a buffer that has not been inserted into createdTupleBuffers
-    if (insertedStatistics > 0) {
+    if (insertedStatistics > 0)
+    {
         buffer.setNumberOfTuples(insertedStatistics);
         createdTupleBuffers.emplace_back(buffer);
     }
@@ -181,7 +197,8 @@ CountMinStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatis
     return createdTupleBuffers;
 }
 
-std::string CountMinStatisticFormat::toString() const {
+std::string CountMinStatisticFormat::toString() const
+{
     std::ostringstream oss;
     oss << "startTsFieldName: " << startTsFieldName << " ";
     oss << "endTsFieldName: " << endTsFieldName << " ";
@@ -196,4 +213,4 @@ std::string CountMinStatisticFormat::toString() const {
 
 CountMinStatisticFormat::~CountMinStatisticFormat() = default;
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

@@ -15,31 +15,47 @@
 #include <StatisticCollection/Characteristic/WorkloadCharacteristic.hpp>
 #include <fmt/format.h>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-CharacteristicPtr WorkloadCharacteristic::create(MetricPtr type, QueryId queryId, OperatorId operatorId) {
+CharacteristicPtr WorkloadCharacteristic::create(MetricPtr type, QueryId queryId, OperatorId operatorId)
+{
     return std::make_shared<WorkloadCharacteristic>(WorkloadCharacteristic(type, queryId, operatorId));
 }
 
-QueryId WorkloadCharacteristic::getQueryId() const { return queryId; }
+QueryId WorkloadCharacteristic::getQueryId() const
+{
+    return queryId;
+}
 
-OperatorId WorkloadCharacteristic::getOperatorId() const { return operatorId; }
+OperatorId WorkloadCharacteristic::getOperatorId() const
+{
+    return operatorId;
+}
 
-bool WorkloadCharacteristic::operator==(const Characteristic& rhs) const {
-    if (this->Characteristic::operator==(rhs) && rhs.instanceOf<WorkloadCharacteristic>()) {
+bool WorkloadCharacteristic::operator==(const Characteristic& rhs) const
+{
+    if (this->Characteristic::operator==(rhs) && rhs.instanceOf<WorkloadCharacteristic>())
+    {
         auto rhsWorkloadCharacteristic = dynamic_cast<const WorkloadCharacteristic&>(rhs);
         return queryId == rhsWorkloadCharacteristic.queryId && operatorId == rhsWorkloadCharacteristic.operatorId;
     }
     return false;
 }
 
-size_t WorkloadCharacteristic::hash() const { return std::hash<QueryId>{}(queryId) ^ std::hash<OperatorId>{}(operatorId); }
+size_t WorkloadCharacteristic::hash() const
+{
+    return std::hash<QueryId>{}(queryId) ^ std::hash<OperatorId>{}(operatorId);
+}
 
-std::string WorkloadCharacteristic::toString() const {
+std::string WorkloadCharacteristic::toString() const
+{
     return fmt::format("{{ QueryId: {} OperatorId: {} }}", queryId, operatorId);
 }
 
 WorkloadCharacteristic::WorkloadCharacteristic(MetricPtr type, QueryId queryId, OperatorId operatorId)
-    : Characteristic(type), queryId(queryId), operatorId(operatorId) {}
+    : Characteristic(type), queryId(queryId), operatorId(operatorId)
+{
+}
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

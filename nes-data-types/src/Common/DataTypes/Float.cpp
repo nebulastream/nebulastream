@@ -12,32 +12,38 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Float.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <algorithm>
 #include <cmath>
 #include <fmt/format.h>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Float.hpp>
+#include <Common/DataTypes/Integer.hpp>
 
-namespace NES {
+namespace NES
+{
 
-bool Float::equals(DataTypePtr otherDataType) {
-    if (otherDataType->isFloat()) {
+bool Float::equals(DataTypePtr otherDataType)
+{
+    if (otherDataType->isFloat())
+    {
         auto otherFloat = as<Float>(otherDataType);
         return bits == otherFloat->bits && lowerBound == otherFloat->lowerBound && upperBound == otherFloat->upperBound;
     }
     return false;
 }
 
-DataTypePtr Float::join(DataTypePtr otherDataType) {
-    if (otherDataType->isFloat()) {
+DataTypePtr Float::join(DataTypePtr otherDataType)
+{
+    if (otherDataType->isFloat())
+    {
         auto otherFloat = as<Float>(otherDataType);
         auto newBits = std::max(bits, otherFloat->getBits());
         auto newUpperBound = fmax(upperBound, otherFloat->upperBound);
         auto newLowerBound = fmin(lowerBound, otherFloat->lowerBound);
         return DataTypeFactory::createFloat(newBits, newLowerBound, newUpperBound);
     }
-    if (otherDataType->isInteger()) {
+    if (otherDataType->isInteger())
+    {
         auto otherInteger = as<Integer>(otherDataType);
         auto newBits = std::max(bits, otherInteger->getBits());
         auto newUpperBound = fmax(upperBound, static_cast<double>(otherInteger->upperBound));
@@ -47,6 +53,9 @@ DataTypePtr Float::join(DataTypePtr otherDataType) {
     return DataTypeFactory::createUndefined();
 }
 
-std::string Float::toString() { return fmt::format("Float({} bits)", bits); }
+std::string Float::toString()
+{
+    return fmt::format("Float({} bits)", bits);
+}
 
-}// namespace NES
+} // namespace NES

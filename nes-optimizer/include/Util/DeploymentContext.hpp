@@ -15,34 +15,36 @@
 #ifndef NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
 #define NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
 
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/QueryState.hpp>
-#include <memory>
 
-namespace NES {
+namespace NES
+{
 
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 
 class DeploymentContext;
 using DeploymentContextPtr = std::shared_ptr<DeploymentContext>;
 
-class DeploymentContext {
+class DeploymentContext
+{
+public:
+    static DeploymentContextPtr create(const std::string& ipAddress, uint32_t grpcPort, const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
-  public:
-    static DeploymentContextPtr
-    create(const std::string& ipAddress, uint32_t grpcPort, const DecomposedQueryPlanPtr& decomposedQueryPlan);
-
-    DeploymentContext(const std::string& ipAddress,
-                      uint32_t grpcPort,
-                      SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
-                      DecomposedQueryPlanVersion decomposedQueryPlanVersion,
-                      WorkerId workerId,
-                      QueryState decomposedQueryState,
-                      const DecomposedQueryPlanPtr& decomposedQueryPlan);
+    DeploymentContext(
+        const std::string& ipAddress,
+        uint32_t grpcPort,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        DecomposedQueryPlanVersion decomposedQueryPlanVersion,
+        WorkerId workerId,
+        QueryState decomposedQueryState,
+        const DecomposedQueryPlanPtr& decomposedQueryPlan);
 
     /**
      * @brief Get the id of the shared query plan
@@ -86,7 +88,7 @@ class DeploymentContext {
      */
     std::string getGrpcAddress() const;
 
-  private:
+private:
     std::string ipAddress;
     uint32_t grpcPort;
     SharedQueryId sharedQueryId;
@@ -96,6 +98,6 @@ class DeploymentContext {
     QueryState decomposedQueryState;
     DecomposedQueryPlanPtr decomposedQueryPlan;
 };
-}// namespace Optimizer
-}// namespace NES
-#endif// NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_
+} // namespace Optimizer
+} // namespace NES
+#endif // NES_OPTIMIZER_INCLUDE_UTIL_DEPLOYMENTCONTEXT_HPP_

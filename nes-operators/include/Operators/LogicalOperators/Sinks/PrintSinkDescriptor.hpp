@@ -17,14 +17,15 @@
 
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical print sink
  */
-class PrintSinkDescriptor : public SinkDescriptor {
-
-  public:
+class PrintSinkDescriptor : public SinkDescriptor
+{
+public:
     /**
      * @brief Factory method to create a new prink sink descriptor
      * @param numberOfOrigins: number of origins of a given query
@@ -34,12 +35,12 @@ class PrintSinkDescriptor : public SinkDescriptor {
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
 
-  private:
+private:
     explicit PrintSinkDescriptor(uint64_t numberOfOrigins);
 };
 
 using PrintSinkDescriptorPtr = std::shared_ptr<PrintSinkDescriptor>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_PRINTSINKDESCRIPTOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_PRINTSINKDESCRIPTOR_HPP_

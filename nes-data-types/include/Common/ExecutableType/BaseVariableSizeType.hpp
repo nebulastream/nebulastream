@@ -16,15 +16,18 @@
 #define NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_BASEVARIABLESIZETYPE_HPP_
 #include <type_traits>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief Base class for all nes specific variable-sized data types
  */
-class BaseVariableSizeType {};
+class BaseVariableSizeType
+{
+};
 
-template<class Type>
-concept IsVariableSizeType =
-    std::is_base_of_v<BaseVariableSizeType, Type> || std::is_base_of_v<BaseVariableSizeType, std::remove_pointer_t<Type>>;
+template <class Type>
+concept IsVariableSizeType
+    = std::is_base_of_v<BaseVariableSizeType, Type> || std::is_base_of_v<BaseVariableSizeType, std::remove_pointer_t<Type>>;
 
-}// namespace NES
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_BASEVARIABLESIZETYPE_HPP_
+} // namespace NES
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_BASEVARIABLESIZETYPE_HPP_

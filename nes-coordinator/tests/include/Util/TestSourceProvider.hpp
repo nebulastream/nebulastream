@@ -15,10 +15,12 @@
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
 
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
-namespace NES::TestUtils {
+namespace NES::TestUtils
+{
 
-class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
-  public:
+class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider
+{
+public:
     /**
      * @brief Constructor of a TestSourceProvider
      * @param options
@@ -34,12 +36,13 @@ class TestSourceProvider : public QueryCompilation::DefaultDataSourceProvider {
      * @param successors
      * @return DataSourcePtr
      */
-    DataSourcePtr lower(OperatorId operatorId,
-                        OriginId originId,
-                        StatisticId statisticId,
-                        SourceDescriptorPtr sourceDescriptor,
-                        Runtime::NodeEnginePtr nodeEngine,
-                        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override;
+    DataSourcePtr lower(
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        SourceDescriptorPtr sourceDescriptor,
+        Runtime::NodeEnginePtr nodeEngine,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors) override;
 };
-}// namespace NES::TestUtils
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_
+} // namespace NES::TestUtils
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTSOURCEPROVIDER_HPP_

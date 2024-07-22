@@ -16,12 +16,14 @@
 
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
-class QueryCompilationError {
-  public:
+class QueryCompilationError
+{
+public:
     QueryCompilationError();
 };
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONERROR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONERROR_HPP_

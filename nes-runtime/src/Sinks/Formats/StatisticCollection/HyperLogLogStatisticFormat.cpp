@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <API/Schema.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -21,24 +22,27 @@
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <sstream>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-StatisticFormatPtr HyperLogLogStatisticFormat::create(Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                      std::function<std::string(const std::string&)> postProcessingData,
-                                                      std::function<std::string(const std::string&)> preProcessingData) {
+StatisticFormatPtr HyperLogLogStatisticFormat::create(
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+    std::function<std::string(const std::string&)> postProcessingData,
+    std::function<std::string(const std::string&)> preProcessingData)
+{
     const auto qualifierNameWithSeparator = memoryLayout->getSchema()->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     return std::make_shared<HyperLogLogStatisticFormat>(
         HyperLogLogStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData));
 }
 
-std::vector<std::pair<StatisticHash, StatisticPtr>>
-HyperLogLogStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffer) {
+std::vector<std::pair<StatisticHash, StatisticPtr>> HyperLogLogStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffer)
+{
     std::vector<HashStatisticPair> createdStatisticsWithTheirHash;
 
     // Each tuple represents one HyperLogLog-Sketch
-    for (auto curTupleCnt = 0_u64; curTupleCnt < buffer.getNumberOfTuples(); ++curTupleCnt) {
+    for (auto curTupleCnt = 0_u64; curTupleCnt < buffer.getNumberOfTuples(); ++curTupleCnt)
+    {
         // Calculating / Getting the field offset for each of the fields we need
         const auto startTsFieldOffset = memoryLayout->getFieldOffset(curTupleCnt, startTsFieldName);
         const auto endTsFieldOffset = memoryLayout->getFieldOffset(curTupleCnt, endTsFieldName);
@@ -51,10 +55,12 @@ HyperLogLogStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffe
         // Checking if all field offsets are valid and have a value
         if (!startTsFieldOffset.has_value() || !endTsFieldOffset.has_value() || !hashFieldOffset.has_value()
             || !observedTuplesFieldOffset.has_value() || !widthFieldOffset.has_value() || !estimateFieldOffset.has_value()
-            || !hyperLogLogDataFieldOffset.has_value()) {
-            NES_ERROR("Expected to receive an offset for all required fields! Skipping creating a statistic for "
-                      "the {}th tuple in the buffer!",
-                      curTupleCnt);
+            || !hyperLogLogDataFieldOffset.has_value())
+        {
+            NES_ERROR(
+                "Expected to receive an offset for all required fields! Skipping creating a statistic for "
+                "the {}th tuple in the buffer!",
+                curTupleCnt);
             continue;
         }
 
@@ -68,25 +74,20 @@ HyperLogLogStatisticFormat::readStatisticsFromBuffer(Runtime::TupleBuffer& buffe
         const auto estimate = *reinterpret_cast<double*>(buffer.getBuffer() + estimateFieldOffset.value());
 
         // Reading the HyperLogLogData that is stored as a string
-        const auto hyperLogLogDataChildIdx =
-            *reinterpret_cast<uint32_t*>(buffer.getBuffer() + hyperLogLogDataFieldOffset.value());
-        const auto hyperLogLogDataString =
-            postProcessingData(Runtime::MemoryLayouts::readVarSizedData(buffer, hyperLogLogDataChildIdx));
+        const auto hyperLogLogDataChildIdx = *reinterpret_cast<uint32_t*>(buffer.getBuffer() + hyperLogLogDataFieldOffset.value());
+        const auto hyperLogLogDataString = postProcessingData(Runtime::MemoryLayouts::readVarSizedData(buffer, hyperLogLogDataChildIdx));
 
         // Creating now a HyperLogLogStatistic from this
-        auto hyperLogLog = HyperLogLogStatistic::create(Windowing::TimeMeasure(startTs),
-                                                        Windowing::TimeMeasure(endTs),
-                                                        observedTuples,
-                                                        width,
-                                                        hyperLogLogDataString,
-                                                        estimate);
+        auto hyperLogLog = HyperLogLogStatistic::create(
+            Windowing::TimeMeasure(startTs), Windowing::TimeMeasure(endTs), observedTuples, width, hyperLogLogDataString, estimate);
         createdStatisticsWithTheirHash.emplace_back(hash, hyperLogLog);
     }
 
     return createdStatisticsWithTheirHash;
 }
 
-std::string HyperLogLogStatisticFormat::toString() const {
+std::string HyperLogLogStatisticFormat::toString() const
+{
     std::ostringstream oss;
     oss << "startTsFieldName: " << startTsFieldName << " ";
     oss << "endTsFieldName: " << endTsFieldName << " ";
@@ -99,15 +100,15 @@ std::string HyperLogLogStatisticFormat::toString() const {
     return oss.str();
 }
 
-std::vector<Runtime::TupleBuffer>
-HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashStatisticPair>& statisticsPlusHashes,
-                                                       Runtime::BufferManager& bufferManager) {
-
+std::vector<Runtime::TupleBuffer> HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(
+    const std::vector<HashStatisticPair>& statisticsPlusHashes, Runtime::BufferManager& bufferManager)
+{
     std::vector<Runtime::TupleBuffer> createdTupleBuffers;
     uint64_t insertedStatistics = 0;
     const auto capacityOfTupleBuffer = memoryLayout->getCapacity();
     auto buffer = bufferManager.getBufferBlocking();
-    for (auto& [statisticHash, statistic] : statisticsPlusHashes) {
+    for (auto& [statisticHash, statistic] : statisticsPlusHashes)
+    {
         // 1. Calculating the offset for each field
         const auto startTsFieldOffset = memoryLayout->getFieldOffset(insertedStatistics, startTsFieldName);
         const auto endTsFieldOffset = memoryLayout->getFieldOffset(insertedStatistics, endTsFieldName);
@@ -120,16 +121,18 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
         // Checking if all field offsets are valid and have a value
         if (!startTsFieldOffset.has_value() || !endTsFieldOffset.has_value() || !hashFieldOffset.has_value()
             || !observedTuplesFieldOffset.has_value() || !widthFieldOffset.has_value() || !estimateFieldOffset.has_value()
-            || !hyperLogLogDataFieldOffset.has_value()) {
-            NES_ERROR("Expected to receive an offset for all required fields! Skipping creating a statistic for "
-                      "the {}th tuple in the buffer!",
-                      insertedStatistics);
+            || !hyperLogLogDataFieldOffset.has_value())
+        {
+            NES_ERROR(
+                "Expected to receive an offset for all required fields! Skipping creating a statistic for "
+                "the {}th tuple in the buffer!",
+                insertedStatistics);
             continue;
         }
 
         // 3. Getting all values from the statistic
-        NES_ASSERT2_FMT(statistic->instanceOf<HyperLogLogStatistic>(),
-                        "HyperLogLogStatisticFormat knows only how to write HyperLogLogStatistic!");
+        NES_ASSERT2_FMT(
+            statistic->instanceOf<HyperLogLogStatistic>(), "HyperLogLogStatisticFormat knows only how to write HyperLogLogStatistic!");
         const auto hyperLogLogStatistic = statistic->as<HyperLogLogStatistic>();
         const auto startTs = hyperLogLogStatistic->getStartTs();
         const auto endTs = hyperLogLogStatistic->getEndTs();
@@ -150,10 +153,12 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
 
         // 5. Writing the HyperLogLogData that we store as a string
         const auto hyperLogLogDataChildIdx = Runtime::MemoryLayouts::writeVarSizedData(buffer, data, bufferManager);
-        if (!hyperLogLogDataChildIdx.has_value()) {
-            NES_ERROR("Expected to store the count min data as a string! Skipping creating a statistic for "
-                      "the {}th tuple in the buffer!",
-                      insertedStatistics);
+        if (!hyperLogLogDataChildIdx.has_value())
+        {
+            NES_ERROR(
+                "Expected to store the count min data as a string! Skipping creating a statistic for "
+                "the {}th tuple in the buffer!",
+                insertedStatistics);
             continue;
         }
         *reinterpret_cast<uint32_t*>(buffer.getBuffer() + hyperLogLogDataFieldOffset.value()) = hyperLogLogDataChildIdx.value();
@@ -161,7 +166,8 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
         // 6. Incrementing the position in the tuple buffer and setting the number of tuples
         insertedStatistics += 1;
 
-        if (insertedStatistics >= capacityOfTupleBuffer) {
+        if (insertedStatistics >= capacityOfTupleBuffer)
+        {
             buffer.setNumberOfTuples(insertedStatistics);
             createdTupleBuffers.emplace_back(buffer);
 
@@ -172,7 +178,8 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
 
     // In the loop, we only insert into the createdTupleBuffers, if the buffer is full. Thus, we need to check, if we
     // have created a buffer that has not been inserted into createdTupleBuffers
-    if (insertedStatistics > 0) {
+    if (insertedStatistics > 0)
+    {
         buffer.setNumberOfTuples(insertedStatistics);
         createdTupleBuffers.emplace_back(buffer);
     }
@@ -180,15 +187,18 @@ HyperLogLogStatisticFormat::writeStatisticsIntoBuffers(const std::vector<HashSta
     return createdTupleBuffers;
 }
 
-HyperLogLogStatisticFormat::HyperLogLogStatisticFormat(const std::string& qualifierNameWithSeparator,
-                                                       Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
-                                                       std::function<std::string(const std::string&)> postProcessingData,
-                                                       std::function<std::string(const std::string&)> preProcessingData)
-    : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData),
-      widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME),
-      estimateFieldName(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME),
-      hyperLogLogDataFieldName(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME) {}
+HyperLogLogStatisticFormat::HyperLogLogStatisticFormat(
+    const std::string& qualifierNameWithSeparator,
+    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout,
+    std::function<std::string(const std::string&)> postProcessingData,
+    std::function<std::string(const std::string&)> preProcessingData)
+    : AbstractStatisticFormat(qualifierNameWithSeparator, std::move(memoryLayout), postProcessingData, preProcessingData)
+    , widthFieldName(qualifierNameWithSeparator + WIDTH_FIELD_NAME)
+    , estimateFieldName(qualifierNameWithSeparator + ESTIMATE_FIELD_NAME)
+    , hyperLogLogDataFieldName(qualifierNameWithSeparator + STATISTIC_DATA_FIELD_NAME)
+{
+}
 
 HyperLogLogStatisticFormat::~HyperLogLogStatisticFormat() = default;
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

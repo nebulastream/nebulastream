@@ -15,11 +15,12 @@
 #ifndef NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTCHECK_HPP_
 #define NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTCHECK_HPP_
 
-#include <Optimizer/QuerySignatures/ContainmentRelationshipAndOperatorChain.hpp>
 #include <memory>
+#include <Optimizer/QuerySignatures/ContainmentRelationshipAndOperatorChain.hpp>
 #include <z3++.h>
 
-namespace z3 {
+namespace z3
+{
 class solver;
 using SolverPtr = std::shared_ptr<solver>;
 
@@ -28,17 +29,19 @@ using ContextPtr = std::shared_ptr<context>;
 
 class expr;
 using ExprPtr = std::shared_ptr<expr>;
-}// namespace z3
+} // namespace z3
 
-namespace NES {
+namespace NES
+{
 class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
-}// namespace NES
+} // namespace NES
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
@@ -49,9 +52,9 @@ using SignatureContainmentCheckPtr = std::shared_ptr<SignatureContainmentCheck>;
 /**
  * @brief This is a utility to compare two signatures
  */
-class SignatureContainmentCheck {
-
-  public:
+class SignatureContainmentCheck
+{
+public:
     /**
      * @brief creates an instance of the SignatureContainmentUtil
      * @param context The Z3 context for the SMT solver
@@ -80,8 +83,8 @@ class SignatureContainmentCheck {
      * @param rightOperator the current operator of the right query
      * @return enum with containment relationships
      */
-    ContainmentRelationshipAndOperatorChainPtr checkContainmentForBottomUpMerging(const LogicalOperatorPtr& leftSignature,
-                                                                                  const LogicalOperatorPtr& rightSignature);
+    ContainmentRelationshipAndOperatorChainPtr
+    checkContainmentForBottomUpMerging(const LogicalOperatorPtr& leftSignature, const LogicalOperatorPtr& rightSignature);
 
     /**
      * @brief Check containment relationships for the given signatures as follows
@@ -97,10 +100,9 @@ class SignatureContainmentCheck {
      * equivalence or no containment was detected.
      */
     ContainmentRelationshipAndOperatorChainPtr
-    checkContainmentRelationshipForTopDownMerging(const LogicalOperatorPtr& leftOperator,
-                                                  const LogicalOperatorPtr& rightOperator);
+    checkContainmentRelationshipForTopDownMerging(const LogicalOperatorPtr& leftOperator, const LogicalOperatorPtr& rightOperator);
 
-  private:
+private:
     /**
      * @brief check for projection containment as follows:
      * if (!rightFOL && leftFOL == unsat, aka leftFOL ⊆ rightFOL
@@ -116,8 +118,7 @@ class SignatureContainmentCheck {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentRelationship checkProjectionContainment(const QuerySignaturePtr& leftSignature,
-                                                       const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkProjectionContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief check for filter containment as follows:
@@ -132,8 +133,7 @@ class SignatureContainmentCheck {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentRelationship checkFilterContainment(const QuerySignaturePtr& leftSignature,
-                                                   const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkFilterContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief check for window containment as follows:
@@ -165,8 +165,7 @@ class SignatureContainmentCheck {
      * @param rightSignature
      * @return enum with containment relationships
      */
-    ContainmentRelationship checkWindowContainment(const QuerySignaturePtr& leftSignature,
-                                                   const QuerySignaturePtr& rightSignature);
+    ContainmentRelationship checkWindowContainment(const QuerySignaturePtr& leftSignature, const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief creates conditions for checking projection containment:
@@ -195,10 +194,11 @@ class SignatureContainmentCheck {
      * @param rightSignature right query signature for filter check
      * @return true if all conditions for window containment are met, false otherwise
      */
-    bool checkWindowContainmentPossible(const std::map<std::string, z3::ExprPtr>& containerWindow,
-                                        const std::map<std::string, z3::ExprPtr>& containedWindow,
-                                        const QuerySignaturePtr& leftSignature,
-                                        const QuerySignaturePtr& rightSignature);
+    bool checkWindowContainmentPossible(
+        const std::map<std::string, z3::ExprPtr>& containerWindow,
+        const std::map<std::string, z3::ExprPtr>& containedWindow,
+        const QuerySignaturePtr& leftSignature,
+        const QuerySignaturePtr& rightSignature);
 
     /**
      * @brief checks whether for the remaining attributes all map and aggregation functions are equal
@@ -215,10 +215,11 @@ class SignatureContainmentCheck {
      * @param leftQueryWindowFOL expression vector for left query
      * @param rightQueryWindowFOL expression vector for right query
      */
-    void combineWindowAndProjectionFOL(const QuerySignaturePtr& leftSignature,
-                                       const QuerySignaturePtr& rightSignature,
-                                       z3::expr_vector& leftQueryWindowFOL,
-                                       z3::expr_vector& rightQueryWindowFOL);
+    void combineWindowAndProjectionFOL(
+        const QuerySignaturePtr& leftSignature,
+        const QuerySignaturePtr& rightSignature,
+        z3::expr_vector& leftQueryWindowFOL,
+        z3::expr_vector& rightQueryWindowFOL);
 
     /**
      * @brief checks if a smaller attribute list is contained in a larger attribute
@@ -248,5 +249,5 @@ class SignatureContainmentCheck {
     const uint16_t RESET_SOLVER_THRESHOLD = 20050;
     const uint8_t NUMBER_OF_CONDITIONS_TO_POP_FROM_SOLVER = 2;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTCHECK_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYSIGNATURES_SIGNATURECONTAINMENTCHECK_HPP_

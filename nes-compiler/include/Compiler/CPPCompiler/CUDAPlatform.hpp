@@ -16,22 +16,24 @@
 
 #include <Compiler/ExternalAPI.hpp>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 /**
  * @brief This class specifies the compiler flags for the CUDA platform.
  * Note that the compiler flags are only viable for clang.
  */
-class CUDAPlatform : public ExternalAPI {
-  public:
+class CUDAPlatform : public ExternalAPI
+{
+public:
     explicit CUDAPlatform(const std::string& cudaSdkPath);
 
     const CompilerFlags getCompilerFlags() const override;
 
-  private:
+private:
     std::string cudaSdkPath;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CUDAPLATFORM_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CUDAPLATFORM_HPP_

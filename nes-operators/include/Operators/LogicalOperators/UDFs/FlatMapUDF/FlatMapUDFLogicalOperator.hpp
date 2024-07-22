@@ -17,7 +17,8 @@
 
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * Logical operator node for a flat map operation which uses a UDF.
@@ -25,8 +26,9 @@ namespace NES {
  * The operation completely replaces the stream tuple based on the result of the UDF method. Therefore, the output schema is
  * determined by the UDF method signature.
  */
-class FlatMapUDFLogicalOperator : public UDFLogicalOperator {
-  public:
+class FlatMapUDFLogicalOperator : public UDFLogicalOperator
+{
+public:
     /**
      * @brief Construct a FlatMapUdfLogicalOperator.
      * @param udfDescriptor The descriptor of the UDF used in the map operation.
@@ -39,5 +41,5 @@ class FlatMapUDFLogicalOperator : public UDFLogicalOperator {
     [[nodiscard]] bool equal(const NodePtr& other) const override;
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_FLATMAPUDF_FLATMAPUDFLOGICALOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_FLATMAPUDF_FLATMAPUDFLOGICALOPERATOR_HPP_

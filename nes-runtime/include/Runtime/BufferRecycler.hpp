@@ -15,16 +15,18 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_
 
-namespace NES::Runtime {
-namespace detail {
+namespace NES::Runtime
+{
+namespace detail
+{
 class MemorySegment;
 }
 /**
  * @brief Interface for buffer recycling mechanism
  */
-class BufferRecycler {
-
-  public:
+class BufferRecycler
+{
+public:
     /**
      * @brief Interface method for pooled buffer recycling
      * @param buffer the buffer to recycle
@@ -38,6 +40,6 @@ class BufferRecycler {
     virtual void recycleUnpooledBuffer(detail::MemorySegment* buffer) = 0;
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_

@@ -14,31 +14,36 @@
 
 #include <API/AttributeField.hpp>
 
+#include <filesystem>
+#include <utility>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <filesystem>
-#include <utility>
 
-namespace NES::InferModel {
+namespace NES::InferModel
+{
 
-LogicalInferModelOperator::LogicalInferModelOperator(std::string model,
-                                                     std::vector<ExpressionNodePtr> inputFields,
-                                                     std::vector<ExpressionNodePtr> outputFields,
-                                                     OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), model(std::move(model)), inputFields(std::move(inputFields)),
-      outputFields(std::move(outputFields)) {
+LogicalInferModelOperator::LogicalInferModelOperator(
+    std::string model, std::vector<ExpressionNodePtr> inputFields, std::vector<ExpressionNodePtr> outputFields, OperatorId id)
+    : Operator(id)
+    , LogicalUnaryOperator(id)
+    , model(std::move(model))
+    , inputFields(std::move(inputFields))
+    , outputFields(std::move(outputFields))
+{
     NES_DEBUG("LogicalInferModelOperator: reading from model {}", this->model);
 }
 
-std::string LogicalInferModelOperator::toString() const {
+std::string LogicalInferModelOperator::toString() const
+{
     std::stringstream ss;
     ss << "INFER_MODEL(" << id << ")";
     return ss.str();
 }
 
-OperatorPtr LogicalInferModelOperator::copy() {
+OperatorPtr LogicalInferModelOperator::copy()
+{
     auto copy = LogicalOperatorFactory::createInferModelOperator(model, inputFields, outputFields, id);
     copy->setInputSchema(inputSchema);
     copy->setOutputSchema(outputSchema);
@@ -46,48 +51,62 @@ OperatorPtr LogicalInferModelOperator::copy() {
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setStatisticId(statisticId);
-    for (const auto& [key, value] : properties) {
+    for (const auto& [key, value] : properties)
+    {
         copy->addProperty(key, value);
     }
     return copy;
 }
-bool LogicalInferModelOperator::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<LogicalInferModelOperator>()) {
+bool LogicalInferModelOperator::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<LogicalInferModelOperator>())
+    {
         auto inferModelOperator = rhs->as<LogicalInferModelOperator>();
         return this->getDeployedModelPath() == inferModelOperator->getDeployedModelPath();
     }
     return false;
 }
 
-bool LogicalInferModelOperator::isIdentical(NodePtr const& rhs) const {
+bool LogicalInferModelOperator::isIdentical(NodePtr const& rhs) const
+{
     return equal(rhs) && rhs->as<LogicalInferModelOperator>()->getId() == id;
 }
 
-void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) const {
+void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessExpressionNodePtr field) const
+{
     auto schema = getInputSchema();
     auto fieldName = field->getFieldName();
     auto existingField = schema->getField(fieldName);
-    if (existingField) {
+    if (existingField)
+    {
         field->updateFieldName(existingField->getName());
-    } else {
+    }
+    else
+    {
         //Since this is a new field add the stream name from schema
         //Check if field name is already fully qualified
-        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos) {
+        if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
+        {
             field->updateFieldName(fieldName);
-        } else {
+        }
+        else
+        {
             field->updateFieldName(schema->getQualifierNameForSystemGeneratedFieldsWithSeparator() + fieldName);
         }
     }
 }
 
-bool LogicalInferModelOperator::inferSchema() {
-    if (!LogicalUnaryOperator::inferSchema()) {
+bool LogicalInferModelOperator::inferSchema()
+{
+    if (!LogicalUnaryOperator::inferSchema())
+    {
         return false;
     }
 
     auto inputSchema = getInputSchema();
 
-    for (auto inputField : inputFields) {
+    for (auto inputField : inputFields)
+    {
         auto inputExpression = inputField->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(inputExpression);
         inputExpression->inferStamp(inputSchema);
@@ -95,16 +114,20 @@ bool LogicalInferModelOperator::inferSchema() {
         inputSchema->replaceField(fieldName, inputExpression->getStamp());
     }
 
-    for (auto outputField : outputFields) {
+    for (auto outputField : outputFields)
+    {
         auto outputExpression = outputField->as<FieldAccessExpressionNode>();
         updateToFullyQualifiedFieldName(outputExpression);
         auto fieldName = outputExpression->getFieldName();
-        if (outputSchema->getField(fieldName)) {
+        if (outputSchema->getField(fieldName))
+        {
             // The assigned field is part of the current schema.
             // Thus we check if it has the correct type.
             NES_TRACE("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
             outputSchema->replaceField(fieldName, outputExpression->getStamp());
-        } else {
+        }
+        else
+        {
             // The assigned field is not part of the current schema.
             // Thus we extend the schema by the new attribute.
             NES_TRACE("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
@@ -115,12 +138,14 @@ bool LogicalInferModelOperator::inferSchema() {
     return true;
 }
 
-void LogicalInferModelOperator::inferStringSignature() {
+void LogicalInferModelOperator::inferStringSignature()
+{
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("InferModelOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalInferModelOperator: InferModel should have children (?)");
     //Infer query signatures for child operators
-    for (const auto& child : children) {
+    for (const auto& child : children)
+    {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
         childOperator->inferStringSignature();
     }
@@ -133,14 +158,19 @@ void LogicalInferModelOperator::inferStringSignature() {
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-const std::string& LogicalInferModelOperator::getModel() const { return model; }
+const std::string& LogicalInferModelOperator::getModel() const
+{
+    return model;
+}
 
-const std::string LogicalInferModelOperator::getDeployedModelPath() const {
+const std::string LogicalInferModelOperator::getDeployedModelPath() const
+{
     auto idx = model.find_last_of('/');
     auto path = model;
 
     // If there exist a / in the model path name. If so, then we have to remove the path to only get the file name
-    if (idx != std::string::npos) {
+    if (idx != std::string::npos)
+    {
         path = model.substr(idx + 1);
     }
 
@@ -148,8 +178,14 @@ const std::string LogicalInferModelOperator::getDeployedModelPath() const {
     return path;
 }
 
-const std::vector<ExpressionNodePtr>& LogicalInferModelOperator::getInputFields() const { return inputFields; }
+const std::vector<ExpressionNodePtr>& LogicalInferModelOperator::getInputFields() const
+{
+    return inputFields;
+}
 
-const std::vector<ExpressionNodePtr>& LogicalInferModelOperator::getOutputFields() const { return outputFields; }
+const std::vector<ExpressionNodePtr>& LogicalInferModelOperator::getOutputFields() const
+{
+    return outputFields;
+}
 
-}// namespace NES::InferModel
+} // namespace NES::InferModel

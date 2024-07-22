@@ -20,7 +20,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <zmq.hpp>
 
-namespace NES::Network {
+namespace NES::Network
+{
 
 #if CPPZMQ_VERSION_MAJOR >= 4 && CPPZMQ_VERSION_MINOR >= 3
 static constexpr zmq::send_flags kZmqSendMore = zmq::send_flags::sndmore;
@@ -39,12 +40,13 @@ static constexpr int KZmqRecvDefault = 0;
      * @param zmqSocket
      * @param args
      */
-template<typename MessageType, decltype(kZmqSendDefault) flags = kZmqSendDefault, typename... Arguments>
-void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
+template <typename MessageType, decltype(kZmqSendDefault) flags = kZmqSendDefault, typename... Arguments>
+void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args)
+{
     // create a header message for MessageType
     Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
     // create a payload MessageType object to send via zmq
-    MessageType message(std::forward<Arguments>(args)...);// perfect forwarding
+    MessageType message(std::forward<Arguments>(args)...); // perfect forwarding
     // create zmq envelopes
     zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
     zmq::message_t sendMsg(&message, sizeof(MessageType));
@@ -62,10 +64,11 @@ void sendMessage(zmq::socket_t& zmqSocket, Arguments&&... args) {
      * @param zmqSocket
      * @param args
      */
-template<typename MessageType, decltype(kZmqSendDefault) flags = kZmqSendDefault, typename... Arguments>
-void sendMessageNoHeader(zmq::socket_t& zmqSocket, Arguments&&... args) {
+template <typename MessageType, decltype(kZmqSendDefault) flags = kZmqSendDefault, typename... Arguments>
+void sendMessageNoHeader(zmq::socket_t& zmqSocket, Arguments&&... args)
+{
     // create a payload MessageType object to send via zmq
-    MessageType message(std::forward<Arguments>(args)...);// perfect forwarding
+    MessageType message(std::forward<Arguments>(args)...); // perfect forwarding
     // create zmq envelopes
     zmq::message_t sendMsg(&message, sizeof(MessageType));
     // send msg messages in one shot
@@ -79,12 +82,13 @@ void sendMessageNoHeader(zmq::socket_t& zmqSocket, Arguments&&... args) {
      * @param zmqSocket
      * @param args
      */
-template<typename MessageType, typename... Arguments>
-void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdentity, Arguments&&... args) {
+template <typename MessageType, typename... Arguments>
+void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdentity, Arguments&&... args)
+{
     // create a header message for MessageType
     Messages::MessageHeader header(MessageType::MESSAGE_TYPE, sizeof(MessageType));
     // create a payload MessageType object using args
-    MessageType message(std::forward<Arguments>(args)...);// perfect forwarding
+    MessageType message(std::forward<Arguments>(args)...); // perfect forwarding
     // create zmq envelopes
     zmq::message_t sendHeader(&header, sizeof(Messages::MessageHeader));
     zmq::message_t sendMsg(&message, sizeof(MessageType));
@@ -97,6 +101,6 @@ void sendMessageWithIdentity(zmq::socket_t& zmqSocket, zmq::message_t& zmqIdenti
     NES_ASSERT2_FMT(ret.has_value(), "send failed");
 }
 
-}// namespace NES::Network
+} // namespace NES::Network
 
-#endif// NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_
+#endif // NES_RUNTIME_INCLUDE_NETWORK_ZMQUTILS_HPP_

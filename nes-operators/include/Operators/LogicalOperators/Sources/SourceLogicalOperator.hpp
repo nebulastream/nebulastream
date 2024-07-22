@@ -18,13 +18,15 @@
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Node representing logical source operator
  */
-class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator {
-  public:
+class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
+{
+public:
     explicit SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id);
     explicit SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id, OriginId originId);
 
@@ -57,12 +59,12 @@ class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssign
     void inferInputOrigins() override;
     std::vector<OriginId> getOutputOriginIds() const override;
 
-  private:
+private:
     SourceDescriptorPtr sourceDescriptor;
     SchemaPtr projectSchema;
 };
 
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
-}// namespace NES
+} // namespace NES
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCELOGICALOPERATOR_HPP_

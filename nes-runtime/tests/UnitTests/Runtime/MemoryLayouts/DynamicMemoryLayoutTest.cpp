@@ -13,43 +13,47 @@
 */
 
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/ExecutableType/Array.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
-namespace NES::Runtime::MemoryLayouts {
+#include <BaseIntegrationTest.hpp>
+#include <Common/ExecutableType/Array.hpp>
+namespace NES::Runtime::MemoryLayouts
+{
 
-class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest,
-                                             public testing::WithParamInterface<Schema::MemoryLayoutType> {
-  public:
+class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
+{
+public:
     BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("DynamicMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup DynamicMemoryLayoutTest test class.");
     }
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bufferManager = std::make_shared<BufferManager>(4096, 10);
 
-        schema = Schema::create()
-                     ->addField("t1", BasicType::UINT16)
-                     ->addField("t2", BasicType::BOOLEAN)
-                     ->addField("t3", BasicType::FLOAT64);
-        if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT) {
+        schema
+            = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
+        if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
+        {
             RowLayoutPtr layout;
             ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
             auto tupleBuffer = bufferManager->getBufferBlocking();
             testBuffer = std::make_unique<TestTupleBuffer>(layout, tupleBuffer);
-        } else {
+        }
+        else
+        {
             ColumnLayoutPtr layout;
             ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
@@ -60,28 +64,35 @@ class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest,
     }
 };
 
-TEST_P(DynamicMemoryLayoutTestParameterized, readWriteColumnartestBufferTest) {
-    for (int i = 0; i < 10; i++) {
-        auto testTuple = std::make_tuple((uint16_t) i, true, i * 2.0);
+TEST_P(DynamicMemoryLayoutTestParameterized, readWriteColumnartestBufferTest)
+{
+    for (int i = 0; i < 10; i++)
+    {
+        auto testTuple = std::make_tuple((uint16_t)i, true, i * 2.0);
         testBuffer->pushRecordToBuffer(testTuple);
         ASSERT_EQ((testBuffer->readRecordFromBuffer<uint16_t, bool, double>(i)), testTuple);
     }
 }
 
-TEST_P(DynamicMemoryLayoutTestParameterized, iteratetestBufferTest) {
-    for (int i = 0; i < 10; i++) {
+TEST_P(DynamicMemoryLayoutTestParameterized, iteratetestBufferTest)
+{
+    for (int i = 0; i < 10; i++)
+    {
         testBuffer->pushRecordToBuffer(std::make_tuple(42_u16, true, 42 * 2.0));
     }
 
-    for (auto tuple : *testBuffer) {
+    for (auto tuple : *testBuffer)
+    {
         ASSERT_EQ(tuple[0].read<uint16_t>(), 42);
         ASSERT_EQ(tuple["t2"].read<bool>(), true);
         ASSERT_EQ(tuple["t3"].read<double>(), 42 * 2.0);
     }
 }
 
-TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout) {
-    for (uint32_t i = 0; i < 10; i++) {
+TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout)
+{
+    for (uint32_t i = 0; i < 10; i++)
+    {
         testBuffer->pushRecordToBuffer(std::tuple<uint16_t, bool, double>{i, true, i * 2.0});
     }
 
@@ -103,10 +114,10 @@ TEST_P(DynamicMemoryLayoutTestParameterized, toStringTestRowLayout) {
     EXPECT_EQ(testBuffer->toString(schema), expectedOutput);
 }
 
-INSTANTIATE_TEST_CASE_P(TestInputs,
-                        DynamicMemoryLayoutTestParameterized,
-                        ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
-                        [](const testing::TestParamInfo<DynamicMemoryLayoutTestParameterized::ParamType>& info) {
-                            return std::string(magic_enum::enum_name(info.param));
-                        });
-}// namespace NES::Runtime::MemoryLayouts
+INSTANTIATE_TEST_CASE_P(
+    TestInputs,
+    DynamicMemoryLayoutTestParameterized,
+    ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
+    [](const testing::TestParamInfo<DynamicMemoryLayoutTestParameterized::ParamType>& info)
+    { return std::string(magic_enum::enum_name(info.param)); });
+} // namespace NES::Runtime::MemoryLayouts

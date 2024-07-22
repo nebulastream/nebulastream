@@ -15,21 +15,23 @@
 #ifndef NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_
 #define NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_
 
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/MetricCollectorType.hpp>
-#include <memory>
 
-namespace NES::Monitoring {
+namespace NES::Monitoring
+{
 
 class Metric;
 
 /**
  * The metric collector base class. Metric collectors are required for the integration with data sources.
  */
-class MetricCollector {
-  protected:
+class MetricCollector
+{
+protected:
     //  -- Constructors --
     MetricCollector();
     MetricCollector(WorkerId workerId);
@@ -39,7 +41,7 @@ class MetricCollector {
     MetricCollector& operator=(const MetricCollector&) = default;
     MetricCollector& operator=(MetricCollector&&) = default;
 
-  public:
+public:
     //  -- Destructor --
     virtual ~MetricCollector() = default;
 
@@ -81,12 +83,12 @@ class MetricCollector {
      */
     void setNodeId(const WorkerId nodeId);
 
-  private:
+private:
     WorkerId workerId;
 };
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 
-}// namespace NES::Monitoring
+} // namespace NES::Monitoring
 
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_

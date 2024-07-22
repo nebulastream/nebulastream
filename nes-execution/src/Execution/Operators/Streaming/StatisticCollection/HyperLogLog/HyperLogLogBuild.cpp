@@ -20,13 +20,16 @@
 #include <Statistics/Synopses/HyperLogLogStatistic.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void* getHLLRefProxy(void* ptrOpHandler,
-                     Statistic::StatisticMetricHash metricHash,
-                     StatisticId statisticId,
-                     WorkerThreadId workerThreadId,
-                     uint64_t timestamp) {
+void* getHLLRefProxy(
+    void* ptrOpHandler,
+    Statistic::StatisticMetricHash metricHash,
+    StatisticId statisticId,
+    WorkerThreadId workerThreadId,
+    uint64_t timestamp)
+{
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = static_cast<HyperLogLogOperatorHandler*>(ptrOpHandler);
 
@@ -34,21 +37,24 @@ void* getHLLRefProxy(void* ptrOpHandler,
     return opHandler->getStatistic(workerThreadId, statisticHash, timestamp).get();
 }
 
-void updateHLLProxy(void* ptrHLL, uint64_t hash) {
+void updateHLLProxy(void* ptrHLL, uint64_t hash)
+{
     NES_ASSERT2_FMT(ptrHLL != nullptr, "HyperLogLog should not be null!");
     auto* hll = static_cast<Statistic::HyperLogLogStatistic*>(ptrHLL);
     hll->update(hash);
 }
 
-void checkHLLSketchesSendingProxy(void* ptrOpHandler,
-                                  void* ptrPipelineCtx,
-                                  uint64_t watermarkTs,
-                                  uint64_t sequenceNumber,
-                                  uint64_t chunkNumber,
-                                  bool lastChunk,
-                                  uint64_t originId,
-                                  Statistic::StatisticMetricHash metricHash,
-                                  StatisticId statisticId) {
+void checkHLLSketchesSendingProxy(
+    void* ptrOpHandler,
+    void* ptrPipelineCtx,
+    uint64_t watermarkTs,
+    uint64_t sequenceNumber,
+    uint64_t chunkNumber,
+    bool lastChunk,
+    uint64_t originId,
+    Statistic::StatisticMetricHash metricHash,
+    StatisticId statisticId)
+{
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     auto* opHandler = static_cast<HyperLogLogOperatorHandler*>(ptrOpHandler);
@@ -60,53 +66,65 @@ void checkHLLSketchesSendingProxy(void* ptrOpHandler,
     opHandler->checkStatisticsSending(bufferMetaData, statisticHash, pipelineCtx);
 }
 
-void HyperLogLogBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
+void HyperLogLogBuild::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
+{
     // We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
-    if (hasChild()) {
+    if (hasChild())
+    {
         child->open(executionCtx, recordBuffer);
     }
 }
 
-void HyperLogLogBuild::execute(ExecutionContext& ctx, Record& record) const {
+void HyperLogLogBuild::execute(ExecutionContext& ctx, Record& record) const
+{
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 1. Get the memRef to the CountMin sketch
     auto timestampVal = timeFunction->getTs(ctx, record);
-    auto hllMemRef = Nautilus::FunctionCall("getHLLRefProxy",
-                                            getHLLRefProxy,
-                                            operatorHandlerMemRef,
-                                            Value<UInt64>(metricHash),
-                                            ctx.getCurrentStatisticId(),
-                                            ctx.getWorkerThreadId(),
-                                            timestampVal);
+    auto hllMemRef = Nautilus::FunctionCall(
+        "getHLLRefProxy",
+        getHLLRefProxy,
+        operatorHandlerMemRef,
+        Value<UInt64>(metricHash),
+        ctx.getCurrentStatisticId(),
+        ctx.getWorkerThreadId(),
+        timestampVal);
 
     // 2. Updating the hyperloglog sketch for this record
     Value<UInt64> hash = murmurHash->calculate(record.read(fieldToTrackFieldName));
     Nautilus::FunctionCall("updateHLLProxy", updateHLLProxy, hllMemRef, hash);
 }
 
-void HyperLogLogBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void HyperLogLogBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
     // Update the watermark for the HyperLogLog build operator and send the created statistics upward
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("checkHLLSketchesSendingProxy",
-                           checkHLLSketchesSendingProxy,
-                           operatorHandlerMemRef,
-                           ctx.getPipelineContext(),
-                           ctx.getWatermarkTs(),
-                           ctx.getSequenceNumber(),
-                           ctx.getChunkNumber(),
-                           ctx.getLastChunk(),
-                           ctx.getOriginId(),
-                           Value<UInt64>(metricHash),
-                           ctx.getCurrentStatisticId());
+    Nautilus::FunctionCall(
+        "checkHLLSketchesSendingProxy",
+        checkHLLSketchesSendingProxy,
+        operatorHandlerMemRef,
+        ctx.getPipelineContext(),
+        ctx.getWatermarkTs(),
+        ctx.getSequenceNumber(),
+        ctx.getChunkNumber(),
+        ctx.getLastChunk(),
+        ctx.getOriginId(),
+        Value<UInt64>(metricHash),
+        ctx.getCurrentStatisticId());
     Operator::close(ctx, recordBuffer);
 }
 
-HyperLogLogBuild::HyperLogLogBuild(const uint64_t operatorHandlerIndex,
-                                   const std::string_view fieldToTrackFieldName,
-                                   const Statistic::StatisticMetricHash metricHash,
-                                   TimeFunctionPtr timeFunction)
-    : operatorHandlerIndex(operatorHandlerIndex), fieldToTrackFieldName(fieldToTrackFieldName), metricHash(metricHash),
-      timeFunction(std::move(timeFunction)), murmurHash(std::make_unique<Nautilus::Interface::MurMur3HashFunction>()) {}
+HyperLogLogBuild::HyperLogLogBuild(
+    const uint64_t operatorHandlerIndex,
+    const std::string_view fieldToTrackFieldName,
+    const Statistic::StatisticMetricHash metricHash,
+    TimeFunctionPtr timeFunction)
+    : operatorHandlerIndex(operatorHandlerIndex)
+    , fieldToTrackFieldName(fieldToTrackFieldName)
+    , metricHash(metricHash)
+    , timeFunction(std::move(timeFunction))
+    , murmurHash(std::make_unique<Nautilus::Interface::MurMur3HashFunction>())
+{
+}
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

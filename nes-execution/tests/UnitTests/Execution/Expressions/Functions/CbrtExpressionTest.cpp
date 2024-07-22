@@ -12,19 +12,22 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/Functions/CbrtExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class CbrtExpressionTest : public Testing::BaseUnitTest {
-  public:
+class CbrtExpressionTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("CbrtExpressionTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup CbrtExpressionTest test class.");
     }
@@ -33,53 +36,55 @@ class CbrtExpressionTest : public Testing::BaseUnitTest {
     static void TearDownTestCase() { NES_INFO("Tear down CbrtExpressionTest test class."); }
 };
 
-TEST_F(CbrtExpressionTest, evaluateCbrtExpressionInteger) {
+TEST_F(CbrtExpressionTest, evaluateCbrtExpressionInteger)
+{
     auto expression = UnaryExpressionWrapper<CbrtExpression>();
     // Int8
     {
         auto resultValue = expression.eval(Value<Int8>(8_s8));
-        ASSERT_EQ(resultValue, (float) 2);
+        ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     // Int32
     {
         auto resultValue = expression.eval(Value<Int32>(8_s32));
-        ASSERT_EQ(resultValue, (float) 2);
+        ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Int64
     {
         auto resultValue = expression.eval(Value<Int64>(8_s64));
-        ASSERT_EQ(resultValue, (float) 2);
+        ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
 
-TEST_F(CbrtExpressionTest, evaluateCbrtExpressionFloat) {
+TEST_F(CbrtExpressionTest, evaluateCbrtExpressionFloat)
+{
     auto expression = UnaryExpressionWrapper<CbrtExpression>();
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 8));
-        ASSERT_EQ(resultValue, (float) 2);
+        auto resultValue = expression.eval(Value<Float>((float)8));
+        ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Float
     {
-        auto resultValue = expression.eval(Value<Float>((float) 8));
-        ASSERT_EQ(resultValue, (float) 2);
+        auto resultValue = expression.eval(Value<Float>((float)8));
+        ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 8));
-        ASSERT_EQ(resultValue, (float) 2);
+        auto resultValue = expression.eval(Value<Double>((double)8));
+        ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // Double
     {
-        auto resultValue = expression.eval(Value<Double>((double) 8));
-        ASSERT_EQ(resultValue, (double) 2);
+        auto resultValue = expression.eval(Value<Double>((double)8));
+        ASSERT_EQ(resultValue, (double)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
@@ -87,9 +92,10 @@ TEST_F(CbrtExpressionTest, evaluateCbrtExpressionFloat) {
 /**
  * @brief If we execute the expression on a boolean it should throw an exception.
  */
-TEST_F(CbrtExpressionTest, evaluateCbrtExpressionOnWrongType) {
+TEST_F(CbrtExpressionTest, evaluateCbrtExpressionOnWrongType)
+{
     auto expression = UnaryExpressionWrapper<CbrtExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)));
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

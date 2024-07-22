@@ -11,16 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
-#include <Util/TopologyLinkInformation.hpp>
 #include <sstream>
 #include <utility>
+#include <Catalogs/Topology/Prediction/TopologyDelta.hpp>
+#include <Util/TopologyLinkInformation.hpp>
 
-namespace NES::Experimental::TopologyPrediction {
+namespace NES::Experimental::TopologyPrediction
+{
 TopologyDelta::TopologyDelta(std::vector<TopologyLinkInformation> added, std::vector<TopologyLinkInformation> removed)
-    : added(std::move(added)), removed(std::move(removed)) {}
+    : added(std::move(added)), removed(std::move(removed))
+{
+}
 
-std::string TopologyDelta::toString() const {
+std::string TopologyDelta::toString() const
+{
     std::stringstream deltaString;
 
     deltaString << "added: {";
@@ -34,10 +38,12 @@ std::string TopologyDelta::toString() const {
     return deltaString.str();
 }
 
-std::string TopologyDelta::topologyLinkInformationListToString(const std::vector<TopologyLinkInformation>& topologyLinks) {
+std::string TopologyDelta::topologyLinkInformationListToString(const std::vector<TopologyLinkInformation>& topologyLinks)
+{
     std::stringstream deltaString;
 
-    if (topologyLinks.empty()) {
+    if (topologyLinks.empty())
+    {
         return "";
     }
 
@@ -47,7 +53,8 @@ std::string TopologyDelta::topologyLinkInformationListToString(const std::vector
     ++addedIter;
 
     //add comma separated additional items
-    for (; addedIter != topologyLinks.cend(); ++addedIter) {
+    for (; addedIter != topologyLinks.cend(); ++addedIter)
+    {
         deltaString << ", ";
         deltaString << addedIter->toString();
     }
@@ -55,7 +62,13 @@ std::string TopologyDelta::topologyLinkInformationListToString(const std::vector
     return deltaString.str();
 }
 
-const std::vector<TopologyLinkInformation>& TopologyDelta::getAdded() const { return added; }
+const std::vector<TopologyLinkInformation>& TopologyDelta::getAdded() const
+{
+    return added;
+}
 
-const std::vector<TopologyLinkInformation>& TopologyDelta::getRemoved() const { return removed; }
-}// namespace NES::Experimental::TopologyPrediction
+const std::vector<TopologyLinkInformation>& TopologyDelta::getRemoved() const
+{
+    return removed;
+}
+} // namespace NES::Experimental::TopologyPrediction

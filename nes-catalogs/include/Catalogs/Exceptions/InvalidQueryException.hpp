@@ -15,18 +15,20 @@
 #ifndef NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_
 #define NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_
 
-#include <Exceptions/RequestExecutionException.hpp>
 #include <stdexcept>
 #include <string>
+#include <Exceptions/RequestExecutionException.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief This Exception is thrown if the query is found to have invalid format or has a logical error.
  */
-class InvalidQueryException : public Exceptions::RequestExecutionException {
-  public:
+class InvalidQueryException : public Exceptions::RequestExecutionException
+{
+public:
     explicit InvalidQueryException(const std::string& message);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_EXCEPTIONS_INVALIDQUERYEXCEPTION_HPP_

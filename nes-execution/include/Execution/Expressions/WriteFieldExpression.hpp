@@ -18,13 +18,15 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expression writes a particular Value to a specific field of an record.
  */
-class WriteFieldExpression : public Expression {
-  public:
+class WriteFieldExpression : public Expression
+{
+public:
     /**
      * @brief Creates a new WriteFieldExpression.
      * @param field identifier of a record field.
@@ -33,10 +35,10 @@ class WriteFieldExpression : public Expression {
     WriteFieldExpression(Nautilus::Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression);
     Value<> execute(Record& record) const override;
 
-  private:
+private:
     const Nautilus::Record::RecordFieldIdentifier field;
     const ExpressionPtr subExpression;
 };
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_

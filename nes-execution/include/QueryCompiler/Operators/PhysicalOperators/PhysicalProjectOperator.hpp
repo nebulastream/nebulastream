@@ -16,23 +16,23 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical projection operator.
  */
-class PhysicalProjectOperator : public PhysicalUnaryOperator {
-  public:
-    PhysicalProjectOperator(OperatorId id,
-                            StatisticId statisticId,
-                            SchemaPtr inputSchema,
-                            SchemaPtr outputSchema,
-                            std::vector<ExpressionNodePtr> expressions);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const std::vector<ExpressionNodePtr>& expressions);
+class PhysicalProjectOperator : public PhysicalUnaryOperator
+{
+public:
+    PhysicalProjectOperator(
+        OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
+    static PhysicalOperatorPtr create(
+        OperatorId id,
+        StatisticId statisticId,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        const std::vector<ExpressionNodePtr>& expressions);
     static PhysicalOperatorPtr
     create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions);
     /**
@@ -43,10 +43,10 @@ class PhysicalProjectOperator : public PhysicalUnaryOperator {
     std::string toString() const override;
     OperatorPtr copy() override;
 
-  private:
+private:
     std::vector<ExpressionNodePtr> expressions;
 };
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALPROJECTOPERATOR_HPP_

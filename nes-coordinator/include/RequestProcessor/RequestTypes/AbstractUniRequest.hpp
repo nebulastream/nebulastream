@@ -16,15 +16,17 @@
 
 #include <RequestProcessor/RequestTypes/AbstractRequest.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 /**
  * @brief This class serves as the base class for all coordinator side request logic that is to executed serially
  * inside a single (uni) thread of execution.
  * Requests are queued into the async request processor and then picked up and executed by a thread
  */
-class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker {
-  public:
+class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker
+{
+public:
     /**
      * @brief constructor
      * @param requiredResources: a list of resource types which indicates which resources will be accessed to execute
@@ -41,7 +43,7 @@ class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker 
      */
     std::vector<AbstractRequestPtr> execute(const StorageHandlerPtr& storageHandle) final;
 
-  protected:
+protected:
     /**
      * @brief Executes the request logic.
      * @param storageHandle: a handle to access the coordinators data structures which might be needed for executing the
@@ -56,5 +58,5 @@ class AbstractUniRequest : public AbstractRequest, public StorageResourceLocker 
      */
     RequestId getResourceLockingId() override;
 };
-}// namespace NES::RequestProcessor
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTUNIREQUEST_HPP_
+} // namespace NES::RequestProcessor
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTUNIREQUEST_HPP_

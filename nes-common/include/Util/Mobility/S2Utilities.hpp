@@ -15,22 +15,26 @@
 #define NES_COMMON_INCLUDE_UTIL_MOBILITY_S2UTILITIES_HPP_
 
 #ifdef S2DEF
-#include <s2/s2latlng.h>
-#include <s2/s2point.h>
+#    include <s2/s2latlng.h>
+#    include <s2/s2point.h>
 
-namespace NES::Spatial {
+namespace NES::Spatial
+{
 
-namespace DataTypes::Experimental {
+namespace DataTypes::Experimental
+{
 class GeoLocation;
 }
 
-namespace Util {
+namespace Util
+{
 
 /**
      * @brief utility functions for handling google s2 datatypes
      */
-class S2Utilities {
-  public:
+class S2Utilities
+{
+public:
     /**
      * Converts a Location object to and s2 point
      * @param location the location object
@@ -45,7 +49,7 @@ class S2Utilities {
      */
     static NES::Spatial::DataTypes::Experimental::GeoLocation s2pointToLocation(S2Point point);
 };
-}// namespace Util
-}// namespace NES::Spatial
+} // namespace Util
+} // namespace NES::Spatial
 #endif
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_S2UTILITIES_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_S2UTILITIES_HPP_

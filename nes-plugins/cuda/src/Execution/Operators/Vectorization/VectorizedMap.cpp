@@ -22,15 +22,20 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-VectorizedMap::VectorizedMap(const std::shared_ptr<Map>& mapOperator,
-                             std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
-                             std::vector<Nautilus::Record::RecordFieldIdentifier> projections)
-    : mapOperator(mapOperator), memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
+VectorizedMap::VectorizedMap(
+    const std::shared_ptr<Map>& mapOperator,
+    std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+    std::vector<Nautilus::Record::RecordFieldIdentifier> projections)
+    : mapOperator(mapOperator), memoryProvider(std::move(memoryProvider)), projections(std::move(projections))
+{
+}
 
 // TODO #4829: Move this method out of this source file to a more sensible place.
-static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable) {
+static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>& builtInVariable)
+{
     auto ref = createNextValueReference(builtInVariable->getType());
     Tracing::TraceUtil::traceConstOperation(builtInVariable, ref);
     auto value = builtInVariable->getAsValue();
@@ -38,9 +43,12 @@ static Value<> getCompilerBuiltInVariable(const std::shared_ptr<BuiltInVariable>
     return value;
 }
 
-static void setAsValidInMetadata(uint64_t /*recordIndex*/) {}
+static void setAsValidInMetadata(uint64_t /*recordIndex*/)
+{
+}
 
-void VectorizedMap::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
+void VectorizedMap::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+{
     auto blockDim = std::make_shared<BlockDim>();
     auto blockDim_x = getCompilerBuiltInVariable(blockDim->x());
 
@@ -57,7 +65,8 @@ void VectorizedMap::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
 
     auto numberOfRecords = recordBuffer.getNumRecords();
 
-    if (recordIndex < numberOfRecords) {
+    if (recordIndex < numberOfRecords)
+    {
         auto record = memoryProvider->read(projections, bufferAddress, recordIndex);
         mapOperator->execute(ctx, record);
         // TODO #4831: This is a workaround to support selection but not to lose support for map.
@@ -66,10 +75,11 @@ void VectorizedMap::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
         memoryProvider->write(recordIndex, bufferAddress, record);
     }
 
-    if (hasChild()) {
+    if (hasChild())
+    {
         auto vectorizedChild = std::dynamic_pointer_cast<const VectorizableOperator>(child);
         vectorizedChild->execute(ctx, recordBuffer);
     }
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

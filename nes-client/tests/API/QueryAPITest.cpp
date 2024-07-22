@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -48,24 +48,28 @@
 #include <Util/Logger/Logger.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class QueryAPITest : public Testing::BaseUnitTest {
-  public:
+class QueryAPITest : public Testing::BaseUnitTest
+{
+public:
     PhysicalSourcePtr physicalSource;
     LogicalSourcePtr logicalSource;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("QueryTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup QueryTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         auto defaultSourceType = DefaultSourceType::create("test2", "test_source");
         physicalSource = PhysicalSource::create(defaultSourceType);
@@ -73,8 +77,8 @@ class QueryAPITest : public Testing::BaseUnitTest {
     }
 };
 
-TEST_F(QueryAPITest, testQueryFilter) {
-
+TEST_F(QueryAPITest, testQueryFilter)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -94,8 +98,8 @@ TEST_F(QueryAPITest, testQueryFilter) {
     EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
-TEST_F(QueryAPITest, testQueryProjection) {
-
+TEST_F(QueryAPITest, testQueryProjection)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("id");
@@ -115,8 +119,8 @@ TEST_F(QueryAPITest, testQueryProjection) {
     EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
-TEST_F(QueryAPITest, testQueryTumblingWindow) {
-
+TEST_F(QueryAPITest, testQueryTumblingWindow)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -140,8 +144,8 @@ TEST_F(QueryAPITest, testQueryTumblingWindow) {
     EXPECT_TRUE(sinkOptr->getSinkDescriptor()->instanceOf<PrintSinkDescriptor>());
 }
 
-TEST_F(QueryAPITest, testQuerySlidingWindow) {
-
+TEST_F(QueryAPITest, testQuerySlidingWindow)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -168,8 +172,8 @@ TEST_F(QueryAPITest, testQuerySlidingWindow) {
 /**
  * Merge two input source: one with filter and one without filter.
  */
-TEST_F(QueryAPITest, testQueryMerge) {
-
+TEST_F(QueryAPITest, testQueryMerge)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -190,8 +194,8 @@ TEST_F(QueryAPITest, testQueryMerge) {
 /**
  * Join two input source: one with filter and one without filter.
  */
-TEST_F(QueryAPITest, testQueryJoin) {
-
+TEST_F(QueryAPITest, testQueryJoin)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -214,7 +218,8 @@ TEST_F(QueryAPITest, testQueryJoin) {
     EXPECT_EQ(sinkOperators.size(), 1U);
 }
 
-TEST_F(QueryAPITest, testQueryExpression) {
+TEST_F(QueryAPITest, testQueryExpression)
+{
     auto andExpression = Attribute("f1") && 10;
     EXPECT_TRUE(andExpression->instanceOf<AndExpressionNode>());
 
@@ -249,8 +254,8 @@ TEST_F(QueryAPITest, testQueryExpression) {
 /**
  * @brief Test if the custom field set for aggregation using "as()" is set in the sink output schema
  */
-TEST_F(QueryAPITest, windowAggregationWithAs) {
-
+TEST_F(QueryAPITest, windowAggregationWithAs)
+{
     auto sce = Catalogs::Source::SourceCatalogEntry::create(physicalSource, logicalSource, WorkerId(1));
 
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
@@ -259,13 +264,12 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     // create a query with "as" in the aggregation
-    auto query =
-        Query::from("default_logical")
-            .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
-            .byKey(Attribute("id", BasicType::INT64))
-            .apply(Sum(Attribute("value", BasicType::INT64))->as(FieldAccessExpressionNode::create("MY_OUTPUT_FIELD_NAME")))
-            .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
-            .sink(PrintSinkDescriptor::create());
+    auto query = Query::from("default_logical")
+                     .window(TumblingWindow::of(EventTime(Attribute("value")), Milliseconds(10)))
+                     .byKey(Attribute("id", BasicType::INT64))
+                     .apply(Sum(Attribute("value", BasicType::INT64))->as(FieldAccessExpressionNode::create("MY_OUTPUT_FIELD_NAME")))
+                     .filter(Attribute("MY_OUTPUT_FIELD_NAME") > 1)
+                     .sink(PrintSinkDescriptor::create());
 
     Catalogs::UDF::UDFCatalogPtr udfCatalog = std::make_shared<Catalogs::UDF::UDFCatalog>();
     // only perform type inference phase to check if the modified aggregation field name is set in the output schema of the sink
@@ -282,8 +286,8 @@ TEST_F(QueryAPITest, windowAggregationWithAs) {
 /**
  * @brief Test if the system can create a logical query plan with a Threshold Window Operator
  */
-TEST_F(QueryAPITest, ThresholdWindowQueryTest) {
-
+TEST_F(QueryAPITest, ThresholdWindowQueryTest)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -332,8 +336,8 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTest) {
 /**
  * @brief Test if the system can create a logical query plan with a Threshold Window Operator with minuium count
  */
-TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport) {
-
+TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -382,8 +386,8 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestWithMinSupport) {
 /**
  * @brief Test if the system can create a logical query plan with a Threshold Window Operator and minium count
  */
-TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
-
+TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
 
     auto lessExpression = Attribute("field_1") <= 10;
@@ -434,19 +438,20 @@ TEST_F(QueryAPITest, ThresholdWindowQueryTestwithKeyAndMinCount) {
  * This test compares the structure of the seqWith operator with the structure of the joinWith operator.
  * Query: SEQ(A,B) WITHIN 2 minutes
  */
-TEST_F(QueryAPITest, testQuerySeqWithTwoSources) {
+TEST_F(QueryAPITest, testQuerySeqWithTwoSources)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
-    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+    auto subQueryB = Query::from("default_logical").filter(lessExpression); // B in query
 
     // Query: SEQ(A,B) WITHIN 2 minutes
-    auto querySeq = Query::from("default_logical")// A in query
+    auto querySeq = Query::from("default_logical") // A in query
                         .seqWith(subQueryB)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .sink(PrintSinkDescriptor::create());
     // create query with joinWith-operator instead of seqWith for comparison
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    auto queryJoin = Query::from("default_logical")                   // A in query
+    subQueryB = Query::from("default_logical").filter(lessExpression); // reset B
+    auto queryJoin = Query::from("default_logical") // A in query
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
                          .where(Attribute("cep_leftKey") == Attribute("cep_rightKey"))
@@ -464,24 +469,25 @@ TEST_F(QueryAPITest, testQuerySeqWithTwoSources) {
  * This test compares the structure of the seqWith operator with the structure of the joinWith operator.
  * Query: SEQ(A,B,C) WITHIN 2 minutes
  */
-TEST_F(QueryAPITest, testQuerySeqWithThreeSources) {
+TEST_F(QueryAPITest, testQuerySeqWithThreeSources)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
-    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
-    auto subQueryC = Query::from("default_logical").filter(lessExpression);// C in query
+    auto subQueryB = Query::from("default_logical").filter(lessExpression); // B in query
+    auto subQueryC = Query::from("default_logical").filter(lessExpression); // C in query
 
     // Query: SEQ(A,B,C) WITHIN 2 minutes
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    auto querySeq = Query::from("default_logical")                    // A in query
+    subQueryB = Query::from("default_logical").filter(lessExpression); // reset B
+    auto querySeq = Query::from("default_logical") // A in query
                         .seqWith(subQueryB)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .seqWith(subQueryC)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .sink(PrintSinkDescriptor::create());
     // reset input streams
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    subQueryC = Query::from("default_logical").filter(lessExpression);// reset C
-    auto queryJoin = Query::from("default_logical")                   // A in query
+    subQueryB = Query::from("default_logical").filter(lessExpression); // reset B
+    subQueryC = Query::from("default_logical").filter(lessExpression); // reset C
+    auto queryJoin = Query::from("default_logical") // A in query
                          // create seqWith B
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
@@ -506,19 +512,20 @@ TEST_F(QueryAPITest, testQuerySeqWithThreeSources) {
  * Compares the actual query plan of andWith with the expected query plan.
  * Query: AND(A,B) WITHIN 2 minutes
  */
-TEST_F(QueryAPITest, testQueryAndWithTwoSources) {
+TEST_F(QueryAPITest, testQueryAndWithTwoSources)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
-    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
+    auto subQueryB = Query::from("default_logical").filter(lessExpression); // B in query
 
     // Query: AND(A,B) WITHIN 2 minutes
-    auto queryAnd = Query::from("default_logical")// A in query
+    auto queryAnd = Query::from("default_logical") // A in query
                         .andWith(subQueryB)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .sink(PrintSinkDescriptor::create());
     // reset input streams
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    auto queryJoin = Query::from("default_logical")                   // A in query
+    subQueryB = Query::from("default_logical").filter(lessExpression); // reset B
+    auto queryJoin = Query::from("default_logical") // A in query
                          // create andWith B
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
@@ -536,24 +543,25 @@ TEST_F(QueryAPITest, testQueryAndWithTwoSources) {
  * Compares the actual query plan of andWith with the expected query plan.
  * Query: AND(A,B,C) WITHIN 2 minutes
  */
-TEST_F(QueryAPITest, testQueryAndWithThreeSources) {
+TEST_F(QueryAPITest, testQueryAndWithThreeSources)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
-    auto subQueryB = Query::from("default_logical").filter(lessExpression);// B in query
-    auto subQueryC = Query::from("default_logical").filter(lessExpression);// C in query
+    auto subQueryB = Query::from("default_logical").filter(lessExpression); // B in query
+    auto subQueryC = Query::from("default_logical").filter(lessExpression); // C in query
 
     // Query: AND(A,B,C) WITHIN 2 minutes
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    auto queryAnd = Query::from("default_logical")                    // A in query
+    subQueryB = Query::from("default_logical").filter(lessExpression); // reset B
+    auto queryAnd = Query::from("default_logical") // A in query
                         .andWith(subQueryB)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .andWith(subQueryC)
                         .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                         .sink(PrintSinkDescriptor::create());
     // reset input streams
-    subQueryB = Query::from("default_logical").filter(lessExpression);// reset B
-    subQueryC = Query::from("default_logical").filter(lessExpression);// reset C
-    auto queryJoin = Query::from("default_logical")                   // A in query
+    subQueryB = Query::from("default_logical").filter(lessExpression); // reset B
+    subQueryC = Query::from("default_logical").filter(lessExpression); // reset C
+    auto queryJoin = Query::from("default_logical") // A in query
                          // create andWith B
                          .map(Attribute("cep_leftKey") = 1)
                          .joinWith(subQueryB.map(Attribute("cep_rightKey") = 1))
@@ -576,7 +584,8 @@ TEST_F(QueryAPITest, testQueryAndWithThreeSources) {
  * In this test, there are no occurrences specified (Times() without parameter),
  * leading to a query that expects the default behavior of the Times-operator without filtering for min/max occurrences.
  */
-TEST_F(QueryAPITest, testQueryTimesNoSpecifiedOccurrences) {
+TEST_F(QueryAPITest, testQueryTimesNoSpecifiedOccurrences)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
 
@@ -600,7 +609,8 @@ TEST_F(QueryAPITest, testQueryTimesNoSpecifiedOccurrences) {
  * In this test, there is an exact number (larger than 0) occurrences specified (Times(occurrences)),
  * leading to a query that filters the tuples by the exact number of occurrences.
  */
-TEST_F(QueryAPITest, testQueryTimesExactOccurrences) {
+TEST_F(QueryAPITest, testQueryTimesExactOccurrences)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
 
@@ -628,20 +638,26 @@ TEST_F(QueryAPITest, testQueryTimesExactOccurrences) {
 * If the exact number of occurrences is 0 (Times(0)), this test should fail because
 * min- and max-occurrences are set to 0 which is not allowed.
 */
-TEST_F(QueryAPITest, testQueryTimesZeroOccurrences) {
+TEST_F(QueryAPITest, testQueryTimesZeroOccurrences)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
 
     uint64_t numberOfOccurrences = 0;
-    try {
+    try
+    {
         auto timesQuery = Query::from("default_logical")
                               .times(numberOfOccurrences)
                               .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Minutes(2)))
                               .sink(PrintSinkDescriptor::create());
-    } catch (const NES::Exceptions::RuntimeException& error) {
+    }
+    catch (const NES::Exceptions::RuntimeException& error)
+    {
         // expected to fail with a RuntimeException since numberOfOccurrences == 0 is not allowed.
         EXPECT_THAT(error.what(), ::testing::HasSubstr("Number of occurrences must be at least 1."));
-    } catch (...) {
+    }
+    catch (...)
+    {
         FAIL() << "Expected NES::Exceptions::RuntimeException to be thrown, because occurrences == 0 is not allowed.";
     }
 }
@@ -651,7 +667,8 @@ TEST_F(QueryAPITest, testQueryTimesZeroOccurrences) {
  * If there are two parameters specified (Times(min_occurrences, max_occurrences)), the query-plan
  * is expected to filtered according to the minimum and maximum number of occurrences.
  */
-TEST_F(QueryAPITest, testQueryTimesMinMaxOccurrences) {
+TEST_F(QueryAPITest, testQueryTimesMinMaxOccurrences)
+{
     auto schema = TestSchemas::getSchemaTemplate("id_val_u64");
     auto lessExpression = Attribute("field_1") <= 10;
 
@@ -675,4 +692,4 @@ TEST_F(QueryAPITest, testQueryTimesMinMaxOccurrences) {
     EXPECT_TRUE(timesPlan->compare(expectedPlan));
 }
 
-}// namespace NES
+} // namespace NES

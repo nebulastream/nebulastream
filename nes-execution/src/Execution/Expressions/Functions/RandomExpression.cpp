@@ -12,51 +12,77 @@
     limitations under the License.
 */
 
+#include <cstdlib>
+#include <utility>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/RandomExpression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <cstdlib>
-#include <utility>
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 RandomExpression::RandomExpression(NES::Runtime::Execution::Expressions::ExpressionPtr subExpression)
-    : subExpression(std::move(subExpression)) {}
-
-double random(uint32_t seed) {
-    std::srand(seed);
-    return (double) std::rand() / RAND_MAX;
+    : subExpression(std::move(subExpression))
+{
 }
 
-Value<> RandomExpression::execute(NES::Nautilus::Record& record) const {
+double random(uint32_t seed)
+{
+    std::srand(seed);
+    return (double)std::rand() / RAND_MAX;
+}
+
+Value<> RandomExpression::execute(NES::Nautilus::Record& record) const
+{
     //Evaluate the sub expression and retrieve the value.
     Value subValue = subExpression->execute(record);
     //check the type and then call the function.
-    if (subValue->isType<Int8>()) {
+    if (subValue->isType<Int8>())
+    {
         return FunctionCall<>("random", random, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
+    }
+    else if (subValue->isType<Int16>())
+    {
         return FunctionCall<>("random", random, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
+    }
+    else if (subValue->isType<Int32>())
+    {
         return FunctionCall<>("random", random, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
+    }
+    else if (subValue->isType<Int64>())
+    {
         return FunctionCall<>("random", random, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
+    }
+    else if (subValue->isType<UInt8>())
+    {
         return FunctionCall<>("random", random, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
+    }
+    else if (subValue->isType<UInt16>())
+    {
         return FunctionCall<>("random", random, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
+    }
+    else if (subValue->isType<UInt32>())
+    {
         return FunctionCall<>("random", random, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
+    }
+    else if (subValue->isType<UInt64>())
+    {
         return FunctionCall<>("random", random, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
+    }
+    else if (subValue->isType<Float>())
+    {
         return FunctionCall<>("random", random, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
+    }
+    else if (subValue->isType<Double>())
+    {
         return FunctionCall<>("random", random, subValue.as<Double>());
-    } else {
+    }
+    else
+    {
         // If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<RandomExpression>> randomFunction("random");
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

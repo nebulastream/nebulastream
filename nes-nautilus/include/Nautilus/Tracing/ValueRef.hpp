@@ -13,16 +13,18 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_VALUEREF_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_VALUEREF_HPP_
+#include <memory>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
-#include <memory>
-namespace NES::Nautilus::Tracing {
+namespace NES::Nautilus::Tracing
+{
 
 /**
  * @brief References of a value with a block_id and operation_id tag
  */
-class ValueRef {
-  public:
+class ValueRef
+{
+public:
     ValueRef();
     /**
      * @brief Constructor to create a new value reference
@@ -73,14 +75,16 @@ class ValueRef {
  */
 ValueRef createNextRef(const IR::Types::StampPtr& type);
 
-struct ValueRefHasher {
-    std::size_t operator()(const ValueRef& k) const {
+struct ValueRefHasher
+{
+    std::size_t operator()(const ValueRef& k) const
+    {
         auto hasher = std::hash<uint64_t>();
         std::size_t hashVal = hasher(k.operationId) ^ hasher(k.blockId);
         return hashVal;
     }
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_VALUEREF_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_VALUEREF_HPP_

@@ -14,17 +14,18 @@
 
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
-#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <string>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief Descriptor defining properties used for creating physical kafka sink
  */
-class KafkaSinkDescriptor : public SinkDescriptor {
-
-  public:
+class KafkaSinkDescriptor : public SinkDescriptor
+{
+public:
     /**
      * @brief Factory method to create a new Kafka sink.
      * @param topic kafka topic name
@@ -32,8 +33,7 @@ class KafkaSinkDescriptor : public SinkDescriptor {
      * @param timeout Kafka producer timeout
      * @return descriptor for kafka sink
      */
-    static SinkDescriptorPtr
-    create(const std::string& sinkFormat, const std::string& topic, const std::string& brokers, uint64_t timeout);
+    static SinkDescriptorPtr create(const std::string& sinkFormat, const std::string& topic, const std::string& brokers, uint64_t timeout);
 
     /**
      * @brief Get Kafka topic where data is to be written
@@ -54,11 +54,8 @@ class KafkaSinkDescriptor : public SinkDescriptor {
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;
     std::string getSinkFormatAsString() const;
 
-  private:
-    explicit KafkaSinkDescriptor(const std::string& sinkFormat,
-                                 const std::string& topic,
-                                 const std::string& brokers,
-                                 uint64_t timeout);
+private:
+    explicit KafkaSinkDescriptor(const std::string& sinkFormat, const std::string& topic, const std::string& brokers, uint64_t timeout);
     std::string sinkFormat;
     std::string topic;
     std::string brokers;
@@ -66,5 +63,5 @@ class KafkaSinkDescriptor : public SinkDescriptor {
 };
 
 typedef std::shared_ptr<KafkaSinkDescriptor> KafkaSinkDescriptorPtr;
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_

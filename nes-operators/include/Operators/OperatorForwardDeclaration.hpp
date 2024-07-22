@@ -16,7 +16,8 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
 
 #include <memory>
-namespace NES {
+namespace NES
+{
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -36,10 +37,11 @@ using LogicalFilterOperatorPtr = std::shared_ptr<LogicalFilterOperator>;
 class LogicalJoinOperator;
 using LogicalJoinOperatorPtr = std::shared_ptr<LogicalJoinOperator>;
 
-namespace Experimental {
+namespace Experimental
+{
 class LogicalBatchJoinOperator;
 using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
-}// namespace Experimental
+} // namespace Experimental
 
 class LogicalUnionOperator;
 using LogicalUnionOperatorPtr = std::shared_ptr<LogicalUnionOperator>;
@@ -62,7 +64,8 @@ using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLog
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
-namespace Catalogs::UDF {
+namespace Catalogs::UDF
+{
 class JavaUDFDescriptor;
 using JavaUdfDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 
@@ -71,20 +74,22 @@ using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
-namespace InferModel {
+namespace InferModel
+{
 class LogicalInferModelOperator;
 using LogicalInferModelOperatorPtr = std::shared_ptr<LogicalInferModelOperator>;
 
 class InferModelOperatorHandler;
 using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
-}// namespace InferModel
+} // namespace InferModel
 
-namespace Statistic {
+namespace Statistic
+{
 class LogicalStatisticWindowOperator;
 using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
-}// namespace Statistic
+} // namespace Statistic
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

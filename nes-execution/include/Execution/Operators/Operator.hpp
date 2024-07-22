@@ -14,15 +14,17 @@
 
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <memory>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 class ExecutionContext;
 class RecordBuffer;
-}// namespace NES::Runtime::Execution
-namespace NES::Runtime::Execution::Operators {
+} // namespace NES::Runtime::Execution
+namespace NES::Runtime::Execution::Operators
+{
 using namespace Nautilus;
 class ExecutableOperator;
 using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
@@ -34,8 +36,9 @@ using OperatorPtr = std::shared_ptr<Operators::Operator>;
  * @brief Base operator for all specific operators.
  * Each operator can implement setup, open, close, and terminate.
  */
-class Operator {
-  public:
+class Operator
+{
+public:
     /**
      * @brief Setup initializes this operator for execution.
      * Operators can implement this class to initialize some state that exists over the whole life time of this operator.
@@ -81,11 +84,11 @@ class Operator {
 
     virtual ~Operator();
 
-  protected:
+protected:
     mutable ExecuteOperatorPtr child;
     StatisticId statisticId;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_

@@ -11,35 +11,48 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <utility>
+#include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
-OperatorPtr NautilusPipelineOperator::create(std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-                                             std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
+OperatorPtr NautilusPipelineOperator::create(
+    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
+{
     return std::make_shared<NautilusPipelineOperator>(
         NautilusPipelineOperator(getNextOperatorId(), std::move(nautilusPipeline), std::move(operatorHandlers)));
 }
 
-NautilusPipelineOperator::NautilusPipelineOperator(OperatorId id,
-                                                   std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
-                                                   std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
-    : Operator(id), UnaryOperator(id), nautilusPipeline(std::move(nautilusPipeline)),
-      operatorHandlers(std::move(operatorHandlers)) {}
+NautilusPipelineOperator::NautilusPipelineOperator(
+    OperatorId id,
+    std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> nautilusPipeline,
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
+    : Operator(id), UnaryOperator(id), nautilusPipeline(std::move(nautilusPipeline)), operatorHandlers(std::move(operatorHandlers))
+{
+}
 
-std::string NautilusPipelineOperator::toString() const { return "NautilusPipelineOperator"; }
+std::string NautilusPipelineOperator::toString() const
+{
+    return "NautilusPipelineOperator";
+}
 
-OperatorPtr NautilusPipelineOperator::copy() {
+OperatorPtr NautilusPipelineOperator::copy()
+{
     auto result = create(nautilusPipeline, operatorHandlers);
     result->addAllProperties(properties);
     return result;
 }
 
-std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> NautilusPipelineOperator::getNautilusPipeline() {
+std::shared_ptr<Runtime::Execution::PhysicalOperatorPipeline> NautilusPipelineOperator::getNautilusPipeline()
+{
     return nautilusPipeline;
 }
 
-std::vector<Runtime::Execution::OperatorHandlerPtr> NautilusPipelineOperator::getOperatorHandlers() { return operatorHandlers; }
+std::vector<Runtime::Execution::OperatorHandlerPtr> NautilusPipelineOperator::getOperatorHandlers()
+{
+    return operatorHandlers;
+}
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

@@ -19,7 +19,8 @@
 #include <string>
 #include <vector>
 
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -33,17 +34,19 @@ using DumpContextPtr = std::shared_ptr<DumpContext>;
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
-namespace QueryCompilation {
+namespace QueryCompilation
+{
 class PipelineQueryPlan;
 using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
-}// namespace QueryCompilation
+} // namespace QueryCompilation
 
 /**
  * @brief The dump context is used to dump a node graph to multiple dump handler at the same time.
  * To this end, it manages the local registered dump handlers.
  */
-class DumpContext {
-  public:
+class DumpContext
+{
+public:
     static DumpContextPtr create();
     static DumpContextPtr create(const std::string& contextIdentifier);
     explicit DumpContext(std::string contextIdentifier);
@@ -73,11 +76,11 @@ class DumpContext {
     */
     void dump(const std::string& scope, const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan);
 
-  private:
+private:
     std::string context;
     std::vector<DebugDumpHandlerPtr> dumpHandlers;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_DUMPCONTEXT_HPP_
+#endif // NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_DUMPCONTEXT_HPP_

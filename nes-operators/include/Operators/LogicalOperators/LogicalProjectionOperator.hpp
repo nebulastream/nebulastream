@@ -18,13 +18,15 @@
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief projection operator, which contains an resets the output schema
  */
-class LogicalProjectionOperator : public LogicalUnaryOperator {
-  public:
+class LogicalProjectionOperator : public LogicalUnaryOperator
+{
+public:
     explicit LogicalProjectionOperator(std::vector<ExpressionNodePtr> expressions, OperatorId id);
     ~LogicalProjectionOperator() override = default;
 
@@ -52,9 +54,9 @@ class LogicalProjectionOperator : public LogicalUnaryOperator {
     bool inferSchema() override;
     OperatorPtr copy() override;
 
-  private:
+private:
     std::vector<ExpressionNodePtr> expressions;
 };
 
-}// namespace NES
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALPROJECTIONOPERATOR_HPP_
+} // namespace NES
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALPROJECTIONOPERATOR_HPP_

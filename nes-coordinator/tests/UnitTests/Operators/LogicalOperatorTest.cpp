@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>//
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
@@ -22,14 +21,15 @@
 #include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp> //
 
-#include <Catalogs/Source/LogicalSource.hpp>
-#include <Catalogs/Source/SourceCatalog.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Sources/DefaultSource.hpp>
 #include <iostream>
 #include <memory>
+#include <Catalogs/Source/LogicalSource.hpp>
+#include <Catalogs/Source/SourceCatalog.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Sources/DefaultSource.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
@@ -37,16 +37,20 @@
 #include <Util/Core.hpp>
 
 using namespace std;
-namespace NES {
+namespace NES
+{
 
-class LogicalOperatorTest : public Testing::BaseUnitTest {
-  public:
-    static void SetUpTestCase() {
+class LogicalOperatorTest : public Testing::BaseUnitTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("LogicalOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup LogicalOperatorTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         dumpContext = DumpContext::create();
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
@@ -86,7 +90,7 @@ class LogicalOperatorTest : public Testing::BaseUnitTest {
         parents.clear();
     }
 
-  protected:
+protected:
     bool removed{};
     bool replaced{};
     LogicalSourcePtr logicalSource;
@@ -102,8 +106,8 @@ class LogicalOperatorTest : public Testing::BaseUnitTest {
     std::vector<NodePtr> parents{};
 };
 
-TEST_F(LogicalOperatorTest, getSuccessors) {
-
+TEST_F(LogicalOperatorTest, getSuccessors)
+{
     sourceOp->addChild(filterOp1);
     sourceOp->addChild(filterOp2);
 
@@ -117,7 +121,8 @@ TEST_F(LogicalOperatorTest, getSuccessors) {
     EXPECT_EQ(children.size(), 2U);
 }
 
-TEST_F(LogicalOperatorTest, getPredecessors) {
+TEST_F(LogicalOperatorTest, getPredecessors)
+{
     filterOp3->addParent(filterOp1);
 
     parents = filterOp3->getParents();
@@ -130,7 +135,8 @@ TEST_F(LogicalOperatorTest, getPredecessors) {
     EXPECT_EQ(parents.size(), 1U);
 }
 
-TEST_F(LogicalOperatorTest, addSelfAsSuccessor) {
+TEST_F(LogicalOperatorTest, addSelfAsSuccessor)
+{
     sourceOp->addChild(filterOp1);
     children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 1U);
@@ -140,7 +146,8 @@ TEST_F(LogicalOperatorTest, addSelfAsSuccessor) {
     EXPECT_EQ(children.size(), 1U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveSingleSuccessor) {
+TEST_F(LogicalOperatorTest, addAndRemoveSingleSuccessor)
+{
     sourceOp->addChild(filterOp1);
     children = sourceOp->getChildren();
     EXPECT_EQ(children.size(), 1U);
@@ -151,7 +158,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveSingleSuccessor) {
     EXPECT_EQ(children.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveMultipleSuccessors) {
+TEST_F(LogicalOperatorTest, addAndRemoveMultipleSuccessors)
+{
     sourceOp->addChild(filterOp1);
     sourceOp->addChild(filterOp2);
     sourceOp->addChild(filterOp3);
@@ -168,7 +176,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveMultipleSuccessors) {
     EXPECT_EQ(children.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveDuplicatedSuccessors) {
+TEST_F(LogicalOperatorTest, addAndRemoveDuplicatedSuccessors)
+{
     sourceOp->addChild(filterOp1);
     OperatorPtr duplicateFilterOp1 = filterOp1->duplicate();
     sourceOp->addChild(duplicateFilterOp1);
@@ -186,7 +195,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveDuplicatedSuccessors) {
     EXPECT_EQ(children.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveLogicalDuplicateButDifferentOperatorAsSuccessors) {
+TEST_F(LogicalOperatorTest, addAndRemoveLogicalDuplicateButDifferentOperatorAsSuccessors)
+{
     sourceOp->addChild(filterOp1);
     sourceOp->addChild(filterOp1Copy);
     children = sourceOp->getChildren();
@@ -203,7 +213,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveLogicalDuplicateButDifferentOperatorAsSu
     EXPECT_EQ(children.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveNullSuccessor) {
+TEST_F(LogicalOperatorTest, addAndRemoveNullSuccessor)
+{
     // assertion fail due to nullptr
     sourceOp->addChild(filterOp1);
     children = sourceOp->getChildren();
@@ -213,7 +224,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveNullSuccessor) {
     EXPECT_FALSE(removed);
 }
 
-TEST_F(LogicalOperatorTest, addSelfAsPredecessor) {
+TEST_F(LogicalOperatorTest, addSelfAsPredecessor)
+{
     filterOp3->addParent(filterOp1);
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 1U);
@@ -223,7 +235,8 @@ TEST_F(LogicalOperatorTest, addSelfAsPredecessor) {
     EXPECT_EQ(parents.size(), 1U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveSinglePredecessor) {
+TEST_F(LogicalOperatorTest, addAndRemoveSinglePredecessor)
+{
     filterOp3->addParent(filterOp1);
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 1U);
@@ -234,7 +247,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveSinglePredecessor) {
     EXPECT_EQ(parents.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveMultiplePredecessors) {
+TEST_F(LogicalOperatorTest, addAndRemoveMultiplePredecessors)
+{
     filterOp3->addParent(filterOp1);
     filterOp3->addParent(filterOp2);
     parents = filterOp3->getParents();
@@ -248,7 +262,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveMultiplePredecessors) {
     EXPECT_EQ(parents.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveDuplicatedPredecessors) {
+TEST_F(LogicalOperatorTest, addAndRemoveDuplicatedPredecessors)
+{
     filterOp3->addParent(filterOp1);
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 1U);
@@ -269,7 +284,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveDuplicatedPredecessors) {
     EXPECT_EQ(parents.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveLogicallyDuplicatedButDifferentOperatorAsPredecessors) {
+TEST_F(LogicalOperatorTest, addAndRemoveLogicallyDuplicatedButDifferentOperatorAsPredecessors)
+{
     filterOp3->addParent(filterOp1);
     parents = filterOp3->getParents();
     EXPECT_EQ(parents.size(), 1U);
@@ -289,7 +305,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveLogicallyDuplicatedButDifferentOperatorA
     EXPECT_EQ(parents.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, consistencyBetweenSuccessorPredecesorRelation1) {
+TEST_F(LogicalOperatorTest, consistencyBetweenSuccessorPredecesorRelation1)
+{
     filterOp3->addParent(filterOp1);
     filterOp3->addParent(filterOp2);
     parents = filterOp3->getParents();
@@ -305,7 +322,8 @@ TEST_F(LogicalOperatorTest, consistencyBetweenSuccessorPredecesorRelation1) {
 
     children = filterOp1->getChildren();
     NES_DEBUG("children of filterOp1");
-    for (auto&& op : children) {
+    for (auto&& op : children)
+    {
         NES_DEBUG("{}", op->toString());
     }
     std::cout << "================================================================================\n";
@@ -324,7 +342,8 @@ TEST_F(LogicalOperatorTest, consistencyBetweenSuccessorPredecesorRelation1) {
     EXPECT_EQ(children.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, consistencyBetweenSuccessorPredecesorRelation2) {
+TEST_F(LogicalOperatorTest, consistencyBetweenSuccessorPredecesorRelation2)
+{
     filterOp3->addChild(filterOp1);
     filterOp3->addChild(filterOp2);
     children = filterOp3->getChildren();
@@ -351,7 +370,8 @@ TEST_F(LogicalOperatorTest, consistencyBetweenSuccessorPredecesorRelation2) {
     EXPECT_EQ(parents.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, addAndRemoveNullPredecessor) {
+TEST_F(LogicalOperatorTest, addAndRemoveNullPredecessor)
+{
     // assertion failed due to nullptr
     EXPECT_TRUE(filterOp3->addParent(filterOp1));
     EXPECT_FALSE(filterOp3->addParent(nullptr));
@@ -365,7 +385,8 @@ TEST_F(LogicalOperatorTest, addAndRemoveNullPredecessor) {
  * replaced: sourceOp -> filterOp3 -> filterOp2
  *                                |-> filterOp4
  */
-TEST_F(LogicalOperatorTest, replaceSuccessor) {
+TEST_F(LogicalOperatorTest, replaceSuccessor)
+{
     children = filterOp3->getChildren();
     EXPECT_EQ(children.size(), 0U);
     filterOp3->addChild(filterOp4);
@@ -391,7 +412,8 @@ TEST_F(LogicalOperatorTest, replaceSuccessor) {
  * replaced: sourceOp -> filterOp1Copy -> filterOp2
  */
 
-TEST_F(LogicalOperatorTest, replaceWithEqualSuccessor) {
+TEST_F(LogicalOperatorTest, replaceWithEqualSuccessor)
+{
     children = filterOp1Copy->getChildren();
     EXPECT_EQ(children.size(), 0u);
 
@@ -415,7 +437,8 @@ TEST_F(LogicalOperatorTest, replaceWithEqualSuccessor) {
  *                   |-> filterOp3 -> filterOp4
  */
 
-TEST_F(LogicalOperatorTest, replaceWithExistedSuccessor) {
+TEST_F(LogicalOperatorTest, replaceWithExistedSuccessor)
+{
     children = filterOp3->getChildren();
     EXPECT_EQ(children.size(), 0U);
 
@@ -446,7 +469,8 @@ TEST_F(LogicalOperatorTest, replaceWithExistedSuccessor) {
  * original: sourceOp -> filterOp1 -> filterOp2
  * replaced: sourceOp -> filterOp1 -> filterOp2
  */
-TEST_F(LogicalOperatorTest, replaceWithIdenticalSuccessor) {
+TEST_F(LogicalOperatorTest, replaceWithIdenticalSuccessor)
+{
     children = filterOp1->getChildren();
     EXPECT_EQ(children.size(), 0U);
 
@@ -467,7 +491,8 @@ TEST_F(LogicalOperatorTest, replaceWithIdenticalSuccessor) {
  * original: sourceOp -> filterOp1 -> filterOp2
  * replaced: sourceOp -> filterOp2
  */
-TEST_F(LogicalOperatorTest, replaceWithSubSuccessor) {
+TEST_F(LogicalOperatorTest, replaceWithSubSuccessor)
+{
     children = filterOp2->getChildren();
     EXPECT_EQ(children.size(), 0U);
 
@@ -489,7 +514,8 @@ TEST_F(LogicalOperatorTest, replaceWithSubSuccessor) {
  * original: sourceOp -> filterOp1 -> filterOp2
  * replaced: sourceOp -> filterOp1 -> filterOp2
  */
-TEST_F(LogicalOperatorTest, replaceWithNoneSuccessor) {
+TEST_F(LogicalOperatorTest, replaceWithNoneSuccessor)
+{
     children = filterOp3->getChildren();
     EXPECT_EQ(children.size(), 0U);
 
@@ -506,7 +532,8 @@ TEST_F(LogicalOperatorTest, replaceWithNoneSuccessor) {
     EXPECT_EQ(children.size(), 0U);
 }
 
-TEST_F(LogicalOperatorTest, replaceSuccessorInvalidOldOperator) {
+TEST_F(LogicalOperatorTest, replaceSuccessorInvalidOldOperator)
+{
     children = filterOp3->getChildren();
     EXPECT_EQ(children.size(), 0U);
 
@@ -516,7 +543,8 @@ TEST_F(LogicalOperatorTest, replaceSuccessorInvalidOldOperator) {
     EXPECT_FALSE(sourceOp->replace(filterOp3, nullptr));
 }
 
-TEST_F(LogicalOperatorTest, replaceWithWithInvalidNewOperator) {
+TEST_F(LogicalOperatorTest, replaceWithWithInvalidNewOperator)
+{
     children = filterOp3->getChildren();
     EXPECT_EQ(children.size(), 0U);
 
@@ -531,7 +559,8 @@ TEST_F(LogicalOperatorTest, replaceWithWithInvalidNewOperator) {
  * original: sourceOp <- filterOp1 <- filterOp2
  * replaced: sourceOp <- filterOp3 <- filterOp2
  */
-TEST_F(LogicalOperatorTest, replacePredecessor) {
+TEST_F(LogicalOperatorTest, replacePredecessor)
+{
     parents = filterOp3->getParents();
 
     EXPECT_EQ(parents.size(), 0U);
@@ -554,7 +583,8 @@ TEST_F(LogicalOperatorTest, replacePredecessor) {
  * original: sourceOp -> filterOp1 -> filterOp2
  * replaced: sourceOp -> filterOp1Copy -> filterOp2
  */
-TEST_F(LogicalOperatorTest, replaceWithEqualPredecessor) {
+TEST_F(LogicalOperatorTest, replaceWithEqualPredecessor)
+{
     parents = filterOp1Copy->getParents();
     EXPECT_EQ(parents.size(), 0U);
 
@@ -580,7 +610,8 @@ TEST_F(LogicalOperatorTest, replaceWithEqualPredecessor) {
  * original: sourceOp -> filterOp1 -> filterOp2
  * replaced: sourceOp -> filterOp1 -> filterOp2
  */
-TEST_F(LogicalOperatorTest, replaceWithIdenticalPredecessor) {
+TEST_F(LogicalOperatorTest, replaceWithIdenticalPredecessor)
+{
     parents = filterOp1->getParents();
     EXPECT_EQ(parents.size(), 0U);
 
@@ -608,7 +639,8 @@ TEST_F(LogicalOperatorTest, replaceWithIdenticalPredecessor) {
  * desired: sourceOp -> filterOp2
  *                  |-> filterOp3
  */
-TEST_F(LogicalOperatorTest, removeExistedAndLevelUpSuccessors) {
+TEST_F(LogicalOperatorTest, removeExistedAndLevelUpSuccessors)
+{
     sourceOp->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
     filterOp1->addChild(filterOp3);
@@ -628,7 +660,8 @@ TEST_F(LogicalOperatorTest, removeExistedAndLevelUpSuccessors) {
  * desired: sourceOp -> filterOp1 -> filterOp2
  *                               |-> filterOp3
  */
-TEST_F(LogicalOperatorTest, removeNotExistedAndLevelUpSuccessors) {
+TEST_F(LogicalOperatorTest, removeNotExistedAndLevelUpSuccessors)
+{
     sourceOp->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
     filterOp1->addChild(filterOp3);
@@ -651,7 +684,8 @@ TEST_F(LogicalOperatorTest, removeNotExistedAndLevelUpSuccessors) {
  *
  *
  */
-TEST_F(LogicalOperatorTest, removeExistedSblingAndLevelUpSuccessors) {
+TEST_F(LogicalOperatorTest, removeExistedSblingAndLevelUpSuccessors)
+{
     sourceOp->addChild(filterOp1);
     sourceOp->addChild(filterOp3);
 
@@ -666,7 +700,8 @@ TEST_F(LogicalOperatorTest, removeExistedSblingAndLevelUpSuccessors) {
     EXPECT_TRUE(children[1]->equal(filterOp3));
 }
 
-TEST_F(LogicalOperatorTest, remove) {
+TEST_F(LogicalOperatorTest, remove)
+{
     filterOp2->addParent(filterOp1);
     // filterOp3 neither in filterOp2's children nor parents
     removed = filterOp2->remove(filterOp3);
@@ -680,7 +715,8 @@ TEST_F(LogicalOperatorTest, remove) {
     EXPECT_TRUE(removed);
 }
 
-TEST_F(LogicalOperatorTest, clear) {
+TEST_F(LogicalOperatorTest, clear)
+{
     filterOp2->addParent(filterOp1);
     filterOp2->addChild(filterOp3);
     parents = filterOp2->getParents();
@@ -707,7 +743,8 @@ TEST_F(LogicalOperatorTest, clear) {
  *                      \-> filterOp3'
  *
  */
-TEST_F(LogicalOperatorTest, equalWithAllSuccessors1) {
+TEST_F(LogicalOperatorTest, equalWithAllSuccessors1)
+{
     bool same = false;
 
     EXPECT_TRUE(filterOp1->equal(filterOp1Copy));
@@ -743,7 +780,8 @@ TEST_F(LogicalOperatorTest, equalWithAllSuccessors1) {
  *                     \-> filterOp3'
  *
  */
-TEST_F(LogicalOperatorTest, equalWithAllSuccessors2) {
+TEST_F(LogicalOperatorTest, equalWithAllSuccessors2)
+{
     bool same = true;
     // topology1
     filterOp6->addChild(filterOp1);
@@ -772,7 +810,8 @@ TEST_F(LogicalOperatorTest, equalWithAllSuccessors2) {
  *                      \-> filterOp3'
  *
  */
-TEST_F(LogicalOperatorTest, equalWithAllSuccessors3) {
+TEST_F(LogicalOperatorTest, equalWithAllSuccessors3)
+{
     bool same = true;
     // topology1
     filterOp6->addChild(filterOp3);
@@ -802,7 +841,8 @@ TEST_F(LogicalOperatorTest, equalWithAllSuccessors3) {
  *                      \<- filterOp3'
  *
  */
-TEST_F(LogicalOperatorTest, equalWithAllPredecessors1) {
+TEST_F(LogicalOperatorTest, equalWithAllPredecessors1)
+{
     bool same = false;
 
     // topology1
@@ -836,7 +876,8 @@ TEST_F(LogicalOperatorTest, equalWithAllPredecessors1) {
  *                     \<- filterOp3'
  *
  */
-TEST_F(LogicalOperatorTest, equalWithAllPredecessors2) {
+TEST_F(LogicalOperatorTest, equalWithAllPredecessors2)
+{
     bool same = false;
 
     // topology1
@@ -870,7 +911,8 @@ TEST_F(LogicalOperatorTest, equalWithAllPredecessors2) {
  * topology4: filterOp6' <- filterOp1' <- filterOp2'
  *                      \<- filterOp3'
  */
-TEST_F(LogicalOperatorTest, equalWithAllPredecessors3) {
+TEST_F(LogicalOperatorTest, equalWithAllPredecessors3)
+{
     bool same = false;
     // topology1
     filterOp2->addParent(filterOp1);
@@ -892,17 +934,22 @@ TEST_F(LogicalOperatorTest, equalWithAllPredecessors3) {
 }
 
 // TODO: add more operator casting
-TEST_F(LogicalOperatorTest, as) {
+TEST_F(LogicalOperatorTest, as)
+{
     NodePtr base2 = filterOp1;
     LogicalFilterOperatorPtr _filterOp1 = base2->as<LogicalFilterOperator>();
 }
 
-TEST_F(LogicalOperatorTest, asBadCast) {
+TEST_F(LogicalOperatorTest, asBadCast)
+{
     NodePtr base2 = sourceOp;
-    try {
+    try
+    {
         LogicalFilterOperatorPtr _filterOp1 = base2->as<LogicalFilterOperator>();
         FAIL();
-    } catch (const std::exception& e) {
+    }
+    catch (const std::exception& e)
+    {
         SUCCEED();
     }
 }
@@ -914,8 +961,8 @@ TEST_F(LogicalOperatorTest, asBadCast) {
  *                     \-> filterOp3 -> filterOp5
  *
  */
-TEST_F(LogicalOperatorTest, findRecurisivelyOperatorNotExists) {
-
+TEST_F(LogicalOperatorTest, findRecurisivelyOperatorNotExists)
+{
     // topology1
     filterOp6->addChild(filterOp3);
     filterOp6->addChild(filterOp1);
@@ -939,7 +986,8 @@ TEST_F(LogicalOperatorTest, findRecurisivelyOperatorNotExists) {
  *            ^        \-> filterOp3
  *            |<---------------|
  */
-TEST_F(LogicalOperatorTest, isCyclic) {
+TEST_F(LogicalOperatorTest, isCyclic)
+{
     // topology1
     filterOp6->addChild(filterOp3);
     filterOp6->addChild(filterOp1);
@@ -957,7 +1005,8 @@ TEST_F(LogicalOperatorTest, isCyclic) {
  * topology1: filterOp6 -> filterOp1 -> filterOp2 <-
  *                    \-> filterOp3
  */
-TEST_F(LogicalOperatorTest, isNotCyclic) {
+TEST_F(LogicalOperatorTest, isNotCyclic)
+{
     filterOp6->addChild(filterOp3);
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
@@ -975,7 +1024,8 @@ TEST_F(LogicalOperatorTest, isNotCyclic) {
  *            ^        \-> filterOp3
  *            |<---------------|
  */
-TEST_F(LogicalOperatorTest, getAndFlattenAllSuccessorsNoCycle) {
+TEST_F(LogicalOperatorTest, getAndFlattenAllSuccessorsNoCycle)
+{
     filterOp6->addChild(filterOp3);
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
@@ -990,7 +1040,8 @@ TEST_F(LogicalOperatorTest, getAndFlattenAllSuccessorsNoCycle) {
     children = filterOp6->getAndFlattenAllChildren(true);
     EXPECT_EQ(children.size(), expected.size());
 
-    for (uint64_t i = 0; i < children.size(); i++) {
+    for (uint64_t i = 0; i < children.size(); i++)
+    {
         EXPECT_TRUE(children[i]->equal(expected[i]));
     }
 }
@@ -1001,7 +1052,8 @@ TEST_F(LogicalOperatorTest, getAndFlattenAllSuccessorsNoCycle) {
  *            ^        \-> filterOp3
  *            |<---------------|
  */
-TEST_F(LogicalOperatorTest, getAndFlattenAllSuccessorsForCycle) {
+TEST_F(LogicalOperatorTest, getAndFlattenAllSuccessorsForCycle)
+{
     filterOp6->addChild(filterOp3);
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
@@ -1016,12 +1068,14 @@ TEST_F(LogicalOperatorTest, getAndFlattenAllSuccessorsForCycle) {
 
     children = filterOp6->getAndFlattenAllChildren(false);
     EXPECT_EQ(children.size(), expected.size());
-    for (uint64_t i = 0; i < children.size(); i++) {
+    for (uint64_t i = 0; i < children.size(); i++)
+    {
         EXPECT_TRUE(children[i]->equal(expected[i]));
     }
 }
 
-TEST_F(LogicalOperatorTest, prettyPrint) {
+TEST_F(LogicalOperatorTest, prettyPrint)
+{
     filterOp6->addChild(filterOp3);
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
@@ -1039,7 +1093,8 @@ TEST_F(LogicalOperatorTest, prettyPrint) {
     EXPECT_EQ(ss.str(), ss1.str());
 }
 
-TEST_F(LogicalOperatorTest, instanceOf) {
+TEST_F(LogicalOperatorTest, instanceOf)
+{
     bool inst = false;
     inst = filterOp1->instanceOf<LogicalFilterOperator>();
     EXPECT_TRUE(inst);
@@ -1047,7 +1102,8 @@ TEST_F(LogicalOperatorTest, instanceOf) {
     EXPECT_FALSE(inst);
 }
 
-TEST_F(LogicalOperatorTest, getOperatorByType) {
+TEST_F(LogicalOperatorTest, getOperatorByType)
+{
     filterOp1->addChild(filterOp2);
     filterOp2->addChild(filterOp3);
     filterOp3->addChild(filterOp4);
@@ -1062,7 +1118,8 @@ TEST_F(LogicalOperatorTest, getOperatorByType) {
 
     // EXPECT_EQ(children.size(), expected.size());
 
-    for (uint64_t i = 0; i < children.size(); i++) {
+    for (uint64_t i = 0; i < children.size(); i++)
+    {
         NES_DEBUG("{}", i);
         // both reference to the same pointer
         EXPECT_TRUE(children[i]->isIdentical(expected[i]));
@@ -1080,7 +1137,8 @@ TEST_F(LogicalOperatorTest, getOperatorByType) {
  *             filterOp3 -> filterOp5
  *                     \-> filterOp2
  */
-TEST_F(LogicalOperatorTest, swap1) {
+TEST_F(LogicalOperatorTest, swap1)
+{
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
     filterOp1->addChild(filterOp4);
@@ -1109,7 +1167,8 @@ TEST_F(LogicalOperatorTest, swap1) {
  *             filterOp3 -> filterOp5
  *                     \-> filterOp2
  */
-TEST_F(LogicalOperatorTest, swap2) {
+TEST_F(LogicalOperatorTest, swap2)
+{
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
     filterOp1->addChild(filterOp4);
@@ -1140,7 +1199,8 @@ TEST_F(LogicalOperatorTest, swap2) {
  *             filterOp3 -> filterOp5
  *                     \-> filterOp7
  */
-TEST_F(LogicalOperatorTest, swap3) {
+TEST_F(LogicalOperatorTest, swap3)
+{
     filterOp6->addChild(filterOp1);
     filterOp6->addChild(filterOp4);
     filterOp1->addChild(filterOp2);
@@ -1176,7 +1236,8 @@ TEST_F(LogicalOperatorTest, swap3) {
  *             filterOp3 -> filterOp5
  *                     \-> filterOp7
  */
-TEST_F(LogicalOperatorTest, swap4) {
+TEST_F(LogicalOperatorTest, swap4)
+{
     filterOp6->addChild(filterOp1);
     filterOp6->addChild(filterOp4);
     filterOp1->addChild(filterOp2);
@@ -1212,7 +1273,8 @@ TEST_F(LogicalOperatorTest, swap4) {
  *             filterOp3 -> filterOp5
  *                     \-> filterOp2
  */
-TEST_F(LogicalOperatorTest, swap5) {
+TEST_F(LogicalOperatorTest, swap5)
+{
     filterOp6->addChild(filterOp1);
     filterOp6->addChild(filterOp4);
     filterOp1->addChild(filterOp2);
@@ -1248,7 +1310,8 @@ TEST_F(LogicalOperatorTest, swap5) {
  *             filterOp3 -> filterOp5
  *                     \-> filterOp2
  */
-TEST_F(LogicalOperatorTest, swap6) {
+TEST_F(LogicalOperatorTest, swap6)
+{
     filterOp6->addChild(filterOp3);
     filterOp6->addChild(filterOp4);
     filterOp1->addChild(filterOp2);
@@ -1265,7 +1328,8 @@ TEST_F(LogicalOperatorTest, swap6) {
  * split at filterOp2
  * topology1: filterOp6 -> filterOp1 -> filterOp2 -> filterOp3
  */
-TEST_F(LogicalOperatorTest, splitWithSinglePredecessor) {
+TEST_F(LogicalOperatorTest, splitWithSinglePredecessor)
+{
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
     filterOp2->addChild(filterOp3);
@@ -1275,7 +1339,8 @@ TEST_F(LogicalOperatorTest, splitWithSinglePredecessor) {
 
     auto vec = filterOp6->split(filterOp2);
     EXPECT_EQ(vec.size(), expected.size());
-    for (uint64_t i = 0; i < vec.size(); i++) {
+    for (uint64_t i = 0; i < vec.size(); i++)
+    {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }
@@ -1284,7 +1349,8 @@ TEST_F(LogicalOperatorTest, splitWithSinglePredecessor) {
  * split at filterOp3
  * topology1: filterOp6 -> filterOp1 -> filterOp2 -> filterOp3
  */
-TEST_F(LogicalOperatorTest, splitWithAtLastSuccessor) {
+TEST_F(LogicalOperatorTest, splitWithAtLastSuccessor)
+{
     filterOp7->addChild(filterOp1);
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
@@ -1295,7 +1361,8 @@ TEST_F(LogicalOperatorTest, splitWithAtLastSuccessor) {
 
     auto vec = filterOp6->split(filterOp3);
     EXPECT_EQ(vec.size(), expected.size());
-    for (uint64_t i = 0; i < vec.size(); i++) {
+    for (uint64_t i = 0; i < vec.size(); i++)
+    {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }
@@ -1303,7 +1370,8 @@ TEST_F(LogicalOperatorTest, splitWithAtLastSuccessor) {
  * split at filterOp6
  * topology1: filterOp6 -> filterOp1 -> filterOp2 -> filterOp3
  */
-TEST_F(LogicalOperatorTest, splitWithAtRoot) {
+TEST_F(LogicalOperatorTest, splitWithAtRoot)
+{
     filterOp7->addChild(filterOp1);
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
@@ -1313,7 +1381,8 @@ TEST_F(LogicalOperatorTest, splitWithAtRoot) {
 
     auto vec = filterOp6->split(filterOp6);
     EXPECT_EQ(vec.size(), expected.size());
-    for (uint64_t i = 0; i < vec.size(); i++) {
+    for (uint64_t i = 0; i < vec.size(); i++)
+    {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }
@@ -1322,7 +1391,8 @@ TEST_F(LogicalOperatorTest, splitWithAtRoot) {
  *             filterOp7->\
  * topology1: filterOp6 -> filterOp1 -> filterOp2 -> filterOp3
  */
-TEST_F(LogicalOperatorTest, splitWithMultiplePredecessors) {
+TEST_F(LogicalOperatorTest, splitWithMultiplePredecessors)
+{
     filterOp7->addChild(filterOp1);
     filterOp6->addChild(filterOp1);
     filterOp1->addChild(filterOp2);
@@ -1334,12 +1404,14 @@ TEST_F(LogicalOperatorTest, splitWithMultiplePredecessors) {
 
     auto vec = filterOp6->split(filterOp1);
     EXPECT_EQ(vec.size(), expected.size());
-    for (uint64_t i = 0; i < vec.size(); i++) {
+    for (uint64_t i = 0; i < vec.size(); i++)
+    {
         EXPECT_TRUE(vec[i]->equal(expected[i]));
     }
 }
 
-TEST_F(LogicalOperatorTest, bfIterator) {
+TEST_F(LogicalOperatorTest, bfIterator)
+{
     /**
      * 1 -> 2 -> 5
      * 1 -> 2 -> 6
@@ -1374,7 +1446,8 @@ TEST_F(LogicalOperatorTest, bfIterator) {
     ASSERT_EQ(*iterator, filterOp7);
 }
 
-TEST_F(LogicalOperatorTest, dfIterator) {
+TEST_F(LogicalOperatorTest, dfIterator)
+{
     /**
      * 1 -> 2 -> 5
      * 1 -> 2 -> 6
@@ -1409,4 +1482,4 @@ TEST_F(LogicalOperatorTest, dfIterator) {
     ASSERT_EQ(*iterator, filterOp5);
 }
 
-}// namespace NES
+} // namespace NES

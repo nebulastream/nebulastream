@@ -15,14 +15,15 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
 
-#include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/Yaml.hpp>
 #include <map>
 #include <memory>
 #include <string>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/yaml/Yaml.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class DefaultSourceType;
 using DefaultSourceTypePtr = std::shared_ptr<DefaultSourceType>;
@@ -31,25 +32,23 @@ using DefaultSourceTypePtr = std::shared_ptr<DefaultSourceType>;
  * @brief Configuration object for default source config
  * A simple source with default data created inside NES, useful for testing
  */
-class DefaultSourceType : public PhysicalSourceType {
-
-  public:
-    /**
-     * @brief create a DefaultSourceConfigPtr object
-     * @param sourceConfigMap inputted config options
-     * @return DefaultSourceConfigPtr
-     */
-    static DefaultSourceTypePtr create(const std::string& logicalSourceName,
-                                       const std::string& physicalSourceName,
-                                       std::map<std::string, std::string> sourceConfigMap);
-
+class DefaultSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief create a DefaultSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return DefaultSourceConfigPtr
      */
     static DefaultSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a DefaultSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return DefaultSourceConfigPtr
+     */
+    static DefaultSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create defaultSourceConfig with default values
@@ -87,22 +86,19 @@ class DefaultSourceType : public PhysicalSourceType {
 
     void reset() override;
 
-  private:
+private:
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      * @param sourceConfigMap: the source configuration map
      */
-    explicit DefaultSourceType(const std::string& logicalSourceName,
-                               const std::string& physicalSourceName,
-                               std::map<std::string, std::string> sourceConfigMap);
+    explicit DefaultSourceType(
+        const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Default source config object using the sourceConfigMap for physicalSources
      * @param sourceTypeConfig: the configuration for yaml
      */
-    explicit DefaultSourceType(const std::string& logicalSourceName,
-                               const std::string& physicalSourceName,
-                               Yaml::Node sourceTypeConfig);
+    explicit DefaultSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node sourceTypeConfig);
 
     /**
      * @brief constructor to create a new Default source config object initialized with default values
@@ -117,5 +113,5 @@ class DefaultSourceType : public PhysicalSourceType {
      */
     Configurations::GatheringModeConfigOption gatheringMode;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_DEFAULTSOURCETYPE_HPP_

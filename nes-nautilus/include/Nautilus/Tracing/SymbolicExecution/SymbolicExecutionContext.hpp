@@ -13,11 +13,12 @@
 */
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
-#include <Nautilus/Tracing/Tag/Tag.hpp>
 #include <list>
 #include <unordered_map>
-namespace NES::Nautilus::Tracing {
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
+#include <Nautilus/Tracing/Tag/Tag.hpp>
+namespace NES::Nautilus::Tracing
+{
 class TagRecorder;
 class TraceContext;
 
@@ -25,8 +26,9 @@ class TraceContext;
  * @brief The symbolic execution context supports the symbolic execution of functions.
  * In general it executes a function with dummy parameters and explores all possible execution paths.
  */
-class SymbolicExecutionContext {
-  public:
+class SymbolicExecutionContext
+{
+public:
     // The number of iterations we want to spend maximally to explore executions.
     static const uint64_t MAX_ITERATIONS = 100000;
     /**
@@ -50,7 +52,7 @@ class SymbolicExecutionContext {
      */
     uint64_t getIterations() const;
 
-  private:
+private:
     /**
      * @brief Records a new cmp operation
      * @param tr TagRecorder
@@ -58,19 +60,27 @@ class SymbolicExecutionContext {
      */
     bool record(TagRecorder& tr);
 
-  private:
+private:
     friend TraceContext;
     /**
      * @brief Symbolic execution mode.
      * That identifies if, we follow a previously recorded execution or if we record a new one.
      */
-    enum class MODE : const uint8_t { FOLLOW, RECORD };
+    enum class MODE : const uint8_t
+    {
+        FOLLOW,
+        RECORD
+    };
     /**
      * @brief Tag state
      * This indicates if we visited a specific tag one or two times.
      * If we already visited it two times, we can skip any further executions at this point.
      */
-    enum class TagState : const int8_t { FirstVisit, SecondVisit };
+    enum class TagState : const int8_t
+    {
+        FirstVisit,
+        SecondVisit
+    };
     std::unordered_map<const Tag*, TagState> tagMap;
     std::list<SymbolicExecutionPath> inflightExecutionPaths;
     MODE currentMode = MODE::RECORD;
@@ -79,6 +89,6 @@ class SymbolicExecutionContext {
     uint64_t iterations = 0;
 };
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_

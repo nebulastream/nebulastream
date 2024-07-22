@@ -15,22 +15,24 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_MAPJAVAUDF_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_MAPJAVAUDF_HPP_
 
+#include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Relational/JavaUDF/AbstractJavaUDFOperator.hpp>
-#include <utility>
+#include <Common/DataTypes/DataType.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This operator evaluates a map expression defined as java function on input records.
  * Its state is managed inside a JavaUDFOperatorHandler.
  */
-class MapJavaUDF : public AbstractJavaUDFOperator {
-  public:
+class MapJavaUDF : public AbstractJavaUDFOperator
+{
+public:
     /**
      * @brief Creates a MapJavaUDF operator
      * @param operatorHandlerIndex The index to a valid JavaUDFOperatorHandler
@@ -41,6 +43,6 @@ class MapJavaUDF : public AbstractJavaUDFOperator {
     void execute(ExecutionContext& ctx, Record& record) const override;
 };
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_MAPJAVAUDF_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_MAPJAVAUDF_HPP_

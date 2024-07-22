@@ -15,13 +15,15 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
 #include <cstdint>
 #include <string>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Defines a set of compilation options for nautilus compilation backends.
  */
-class CompilationOptions {
-  public:
+class CompilationOptions
+{
+public:
     CompilationOptions() = default;
     /**
      * @brief Retrieves the identifier for this compilation options instance.
@@ -143,7 +145,7 @@ class CompilationOptions {
      */
     const std::string getCUDASdkPath() const;
 
-  private:
+private:
     std::string identifier;
     std::string dumpOutputPath;
     std::string proxyInliningInputPath;
@@ -157,6 +159,6 @@ class CompilationOptions {
     std::string cudaSdkPath;
     uint8_t optimizationLevel = 1;
 };
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_

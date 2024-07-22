@@ -14,28 +14,32 @@
 
 #include <iostream>
 
-#include <BaseIntegrationTest.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 using std::cout;
 using std::endl;
 #define DEBUG_OUTPUT
-namespace NES {
+namespace NES
+{
 
-class WorkerCoordinatorStarterTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class WorkerCoordinatorStarterTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("WorkerCoordinatorStarterTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup WorkerCoordinatorStarterTest test class.");
     }
 };
 
-TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
+TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
@@ -67,9 +71,11 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator) {
     ASSERT_TRUE(retStopCord);
 }
 
-TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
+TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times)
+{
     cout << "start coordinator" << endl;
-    for (uint64_t i = 0; i < 10; i++) {
+    for (uint64_t i = 0; i < 10; i++)
+    {
         CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
         WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
@@ -106,7 +112,8 @@ TEST_F(WorkerCoordinatorStarterTest, startStopWorkerCoordinator10times) {
         ASSERT_TRUE(retStopCord);
     }
 }
-TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
+TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
@@ -138,7 +145,8 @@ TEST_F(WorkerCoordinatorStarterTest, startStopCoordinatorWorker) {
     ASSERT_TRUE(retStopWrk);
 }
 
-TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
+TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
@@ -170,7 +178,8 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWorkerCoordinator) {
     ASSERT_TRUE(retStopCord);
 }
 
-TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoordinator) {
+TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoordinator)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
@@ -202,7 +211,8 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectStopWithoutDisconnectWorkerCoor
     ASSERT_TRUE(retStopWrk);
 }
 
-TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator) {
+TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
@@ -240,7 +250,8 @@ TEST_F(WorkerCoordinatorStarterTest, startConnectDisconnectStopWorkerCoordinator
     ASSERT_TRUE(retStopCord);
 }
 
-TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
+TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr workerConfig = WorkerConfiguration::create();
 
@@ -284,4 +295,4 @@ TEST_F(WorkerCoordinatorStarterTest, startReconnectStopWorkerCoordinator) {
     bool retStopCord = crd->stopCoordinator(false);
     ASSERT_TRUE(retStopCord);
 }
-}// namespace NES
+} // namespace NES

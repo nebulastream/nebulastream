@@ -18,13 +18,15 @@
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 /**
  * @brief Physical external operator. It receives a executable pipeline stage, which captures specific user defined logic.
  */
-class PhysicalExternalOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator {
-  public:
+class PhysicalExternalOperator : public PhysicalUnaryOperator, public AbstractEmitOperator, public AbstractScanOperator
+{
+public:
     /**
      * @brief Creates a new physical external operator, which contains an executable pipeline stage
      * @param id operator id
@@ -33,20 +35,23 @@ class PhysicalExternalOperator : public PhysicalUnaryOperator, public AbstractEm
      * @param outputSchema output schema
      * @param executablePipelineStage executable pipeline stage
      */
-    PhysicalExternalOperator(OperatorId id,
-                             StatisticId statisticId,
-                             SchemaPtr inputSchema,
-                             SchemaPtr outputSchema,
-                             Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage);
-    static PhysicalOperatorPtr create(OperatorId id,
-                                      StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
-    static PhysicalOperatorPtr create(StatisticId statisticId,
-                                      const SchemaPtr& inputSchema,
-                                      const SchemaPtr& outputSchema,
-                                      const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
+    PhysicalExternalOperator(
+        OperatorId id,
+        StatisticId statisticId,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage);
+    static PhysicalOperatorPtr create(
+        OperatorId id,
+        StatisticId statisticId,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
+    static PhysicalOperatorPtr create(
+        StatisticId statisticId,
+        const SchemaPtr& inputSchema,
+        const SchemaPtr& outputSchema,
+        const Runtime::Execution::ExecutablePipelineStagePtr& executablePipelineStage);
     std::string toString() const override;
     OperatorPtr copy() override;
 
@@ -56,9 +61,9 @@ class PhysicalExternalOperator : public PhysicalUnaryOperator, public AbstractEm
     */
     Runtime::Execution::ExecutablePipelineStagePtr getExecutablePipelineStage();
 
-  private:
+private:
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
 };
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators
 
-#endif// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEXTERNALOPERATOR_HPP_
+#endif // NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEXTERNALOPERATOR_HPP_

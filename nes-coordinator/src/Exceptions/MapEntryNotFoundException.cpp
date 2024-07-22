@@ -14,6 +14,9 @@
 
 #include <Exceptions/MapEntryNotFoundException.hpp>
 
-namespace NES {
-MapEntryNotFoundException::MapEntryNotFoundException(const std::string& message) : std::runtime_error(message) {}
-}// namespace NES
+namespace NES
+{
+MapEntryNotFoundException::MapEntryNotFoundException(const std::string& message) : std::runtime_error(message)
+{
+}
+} // namespace NES

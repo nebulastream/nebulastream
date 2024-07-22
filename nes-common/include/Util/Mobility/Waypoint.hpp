@@ -14,19 +14,21 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_MOBILITY_WAYPOINT_HPP_
 #define NES_COMMON_INCLUDE_UTIL_MOBILITY_WAYPOINT_HPP_
 
-#include <Util/Mobility/GeoLocation.hpp>
-#include <Util/TimeMeasurement.hpp>
 #include <memory>
 #include <optional>
+#include <Util/Mobility/GeoLocation.hpp>
+#include <Util/TimeMeasurement.hpp>
 
-namespace NES::Spatial::DataTypes::Experimental {
+namespace NES::Spatial::DataTypes::Experimental
+{
 
 /**
 * @brief This class contains a location combined with an optional timestamp to represent where a device has been at a certain time or
 * where it is expected to be at that time. For fixed location nodes the timestamp will be set to nullopt_t
 */
-class Waypoint {
-  public:
+class Waypoint
+{
+public:
     /**
      * @brief Constructor for fixed locations, will create a waypoint where the timestamp is nullopt_t
      * @param location The location of the device
@@ -59,10 +61,10 @@ class Waypoint {
      */
     std::optional<Timestamp> getTimestamp() const;
 
-  private:
+private:
     GeoLocation location;
     std::optional<Timestamp> timestamp;
 };
-}// namespace NES::Spatial::DataTypes::Experimental
+} // namespace NES::Spatial::DataTypes::Experimental
 
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_WAYPOINT_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_WAYPOINT_HPP_

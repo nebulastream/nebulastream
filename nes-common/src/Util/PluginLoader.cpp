@@ -11,55 +11,74 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <filesystem>
 #include <PathConfig.h>
+#include <dlfcn.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/PluginLoader.hpp>
-#include <dlfcn.h>
-#include <filesystem>
 
-namespace NES::Util {
+namespace NES::Util
+{
 
-void PluginLoader::loadDefaultPlugins() {
-    if (std::filesystem::exists(NES_PLUGINS_BUILD_PATH)) {
+void PluginLoader::loadDefaultPlugins()
+{
+    if (std::filesystem::exists(NES_PLUGINS_BUILD_PATH))
+    {
         NES_INFO("Found nes-plugins in local dir");
         loadPlugins(NES_PLUGINS_BUILD_PATH);
-    } else if (std::filesystem::exists(NES_PLUGINS_INSTALL_PATH)) {
+    }
+    else if (std::filesystem::exists(NES_PLUGINS_INSTALL_PATH))
+    {
         NES_INFO("Found nes-plugins in parent dir");
         loadPlugins(NES_PLUGINS_INSTALL_PATH);
-    } else {
+    }
+    else
+    {
         NES_THROW_RUNTIME_ERROR("Plugin path could not be found");
     }
 }
 
-void PluginLoader::loadPlugins(const std::filesystem::path& dirPath) {
-    try {
-        for (const auto& entry : std::filesystem::directory_iterator(dirPath)) {
+void PluginLoader::loadPlugins(const std::filesystem::path& dirPath)
+{
+    try
+    {
+        for (const auto& entry : std::filesystem::directory_iterator(dirPath))
+        {
             if (entry.is_regular_file() && entry.path().filename().string().starts_with("libnes-")
-                && (entry.path().extension() == ".so" || entry.path().extension() == ".dylib")) {
+                && (entry.path().extension() == ".so" || entry.path().extension() == ".dylib"))
+            {
                 loadPlugin(entry.path().string());
             }
         }
-    } catch (std::filesystem::filesystem_error& e) {
+    }
+    catch (std::filesystem::filesystem_error& e)
+    {
         std::cerr << "Error: " << e.what() << '\n';
     }
 }
 
-void PluginLoader::loadPlugin(const std::string_view& path) {
+void PluginLoader::loadPlugin(const std::string_view& path)
+{
     NES_INFO("Load Plugin {}", path);
     void* plugin = dlopen(path.data(), RTLD_NOW | RTLD_GLOBAL);
-    if (!plugin) {
+    if (!plugin)
+    {
         NES_FATAL_ERROR("Error when loading plugin: {}", dlerror());
     }
     loadedPlugins.emplace_back(plugin);
 }
 
-LoadedPlugin::LoadedPlugin(void* handle) : handle(handle) {}
+LoadedPlugin::LoadedPlugin(void* handle) : handle(handle)
+{
+}
 
-LoadedPlugin::~LoadedPlugin() {
+LoadedPlugin::~LoadedPlugin()
+{
     NES_DEBUG("~LoadedPlugin()");
-    if (dlclose(handle) == 0) {
+    if (dlclose(handle) == 0)
+    {
         NES_FATAL_ERROR("Error when unloading plugin: {}", dlerror());
     }
 }
 
-}// namespace NES::Util
+} // namespace NES::Util

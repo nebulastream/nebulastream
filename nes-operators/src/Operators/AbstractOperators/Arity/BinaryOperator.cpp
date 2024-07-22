@@ -18,66 +18,100 @@
 #include <Util/OperatorsUtil.hpp>
 #include <fmt/format.h>
 
-namespace NES {
+namespace NES
+{
 
-BinaryOperator::BinaryOperator(OperatorId id) : Operator(id) {}
+BinaryOperator::BinaryOperator(OperatorId id) : Operator(id)
+{
+}
 
-void BinaryOperator::setLeftInputSchema(SchemaPtr inputSchema) {
-    if (inputSchema) {
+void BinaryOperator::setLeftInputSchema(SchemaPtr inputSchema)
+{
+    if (inputSchema)
+    {
         this->leftInputSchema = std::move(inputSchema);
     }
 }
 
-void BinaryOperator::setRightInputSchema(SchemaPtr inputSchema) {
-    if (inputSchema) {
+void BinaryOperator::setRightInputSchema(SchemaPtr inputSchema)
+{
+    if (inputSchema)
+    {
         this->rightInputSchema = std::move(inputSchema);
     }
 }
-void BinaryOperator::setOutputSchema(SchemaPtr outputSchema) {
-    if (outputSchema) {
+void BinaryOperator::setOutputSchema(SchemaPtr outputSchema)
+{
+    if (outputSchema)
+    {
         this->outputSchema = std::move(outputSchema);
     }
 }
-SchemaPtr BinaryOperator::getLeftInputSchema() const { return leftInputSchema; }
+SchemaPtr BinaryOperator::getLeftInputSchema() const
+{
+    return leftInputSchema;
+}
 
-SchemaPtr BinaryOperator::getRightInputSchema() const { return rightInputSchema; }
+SchemaPtr BinaryOperator::getRightInputSchema() const
+{
+    return rightInputSchema;
+}
 
-SchemaPtr BinaryOperator::getOutputSchema() const { return outputSchema; }
+SchemaPtr BinaryOperator::getOutputSchema() const
+{
+    return outputSchema;
+}
 
-std::vector<OriginId> BinaryOperator::getLeftInputOriginIds() { return leftInputOriginIds; }
+std::vector<OriginId> BinaryOperator::getLeftInputOriginIds()
+{
+    return leftInputOriginIds;
+}
 
-std::vector<OriginId> BinaryOperator::getAllInputOriginIds() {
+std::vector<OriginId> BinaryOperator::getAllInputOriginIds()
+{
     std::vector<OriginId> vec;
     vec.insert(vec.end(), leftInputOriginIds.begin(), leftInputOriginIds.end());
     vec.insert(vec.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
     return vec;
 }
 
-void BinaryOperator::setLeftInputOriginIds(const std::vector<OriginId>& originIds) { this->leftInputOriginIds = originIds; }
+void BinaryOperator::setLeftInputOriginIds(const std::vector<OriginId>& originIds)
+{
+    this->leftInputOriginIds = originIds;
+}
 
-std::vector<OriginId> BinaryOperator::getRightInputOriginIds() { return rightInputOriginIds; }
+std::vector<OriginId> BinaryOperator::getRightInputOriginIds()
+{
+    return rightInputOriginIds;
+}
 
-void BinaryOperator::setRightInputOriginIds(const std::vector<OriginId>& originIds) { this->rightInputOriginIds = originIds; }
+void BinaryOperator::setRightInputOriginIds(const std::vector<OriginId>& originIds)
+{
+    this->rightInputOriginIds = originIds;
+}
 
-std::vector<OriginId> BinaryOperator::getOutputOriginIds() const {
+std::vector<OriginId> BinaryOperator::getOutputOriginIds() const
+{
     std::vector<OriginId> outputOriginIds = leftInputOriginIds;
     outputOriginIds.insert(outputOriginIds.end(), rightInputOriginIds.begin(), rightInputOriginIds.end());
     return outputOriginIds;
 }
 
-std::string BinaryOperator::toString() const {
-    return fmt::format("leftInputSchema: {}\n"
-                       "rightInputSchema: {}\n"
-                       "outputSchema: {}\n"
-                       "distinctSchemas: {}\n"
-                       "leftInputOriginIds: {}\n"
-                       "rightInputOriginIds: {}",
-                       leftInputSchema->toString(),
-                       rightInputSchema->toString(),
-                       outputSchema->toString(),
-                       Util::concatenateVectorAsString(distinctSchemas),
-                       fmt::join(leftInputOriginIds.begin(), leftInputOriginIds.end(), ", "),
-                       fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));
+std::string BinaryOperator::toString() const
+{
+    return fmt::format(
+        "leftInputSchema: {}\n"
+        "rightInputSchema: {}\n"
+        "outputSchema: {}\n"
+        "distinctSchemas: {}\n"
+        "leftInputOriginIds: {}\n"
+        "rightInputOriginIds: {}",
+        leftInputSchema->toString(),
+        rightInputSchema->toString(),
+        outputSchema->toString(),
+        Util::concatenateVectorAsString(distinctSchemas),
+        fmt::join(leftInputOriginIds.begin(), leftInputOriginIds.end(), ", "),
+        fmt::join(rightInputOriginIds.begin(), rightInputOriginIds.end(), ", "));
 }
 
-}// namespace NES
+} // namespace NES

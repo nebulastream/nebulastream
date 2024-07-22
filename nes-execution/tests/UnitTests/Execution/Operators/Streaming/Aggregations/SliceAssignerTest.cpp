@@ -12,18 +12,21 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <iostream>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-class SliceAssignerTest : public Testing::BaseUnitTest {
-  public:
+class SliceAssignerTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SliceAssignerTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup SliceAssignerTest test class.");
     }
@@ -40,7 +43,8 @@ class SliceAssignerTest : public Testing::BaseUnitTest {
  * Slices:
  * 0-100, 100-200, 200-300
  */
-TEST_F(SliceAssignerTest, assignTumblingWindow) {
+TEST_F(SliceAssignerTest, assignTumblingWindow)
+{
     // note we model tumbling windows as sliding windows with same size and slide.
     auto windowAssigner = SliceAssigner(100, 100);
 
@@ -73,7 +77,8 @@ TEST_F(SliceAssignerTest, assignTumblingWindow) {
  * Slices:
  * 0-50, 50-100, 100-150, 150-200, 200-250, 250-300, 300-350
  */
-TEST_F(SliceAssignerTest, assignRegularSlidingWindow) {
+TEST_F(SliceAssignerTest, assignRegularSlidingWindow)
+{
     // note we model tumbling windows as sliding windows with same size and slide.
     auto windowAssigner = SliceAssigner(100, 50);
 
@@ -111,7 +116,8 @@ TEST_F(SliceAssignerTest, assignRegularSlidingWindow) {
  * Slices:
  * 0-30, 30-60, 60-90, 90-100, 100-120, 120-130, 130-150, 150-160, 160-180, 180-190
  */
-TEST_F(SliceAssignerTest, assignIrRegularSlidingWindow) {
+TEST_F(SliceAssignerTest, assignIrRegularSlidingWindow)
+{
     // note we model tumbling windows as sliding windows with same size and slide.
     auto windowAssigner = SliceAssigner(100, 30);
 
@@ -151,4 +157,4 @@ TEST_F(SliceAssignerTest, assignIrRegularSlidingWindow) {
     ASSERT_EQ(windowAssigner.getSliceEndTs(180), 190);
 }
 
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

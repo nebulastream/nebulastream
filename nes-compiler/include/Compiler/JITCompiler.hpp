@@ -13,20 +13,22 @@
 */
 #ifndef NES_COMPILER_INCLUDE_COMPILER_JITCOMPILER_HPP_
 #define NES_COMPILER_INCLUDE_COMPILER_JITCOMPILER_HPP_
-#include <Compiler/CompilerForwardDeclarations.hpp>
 #include <future>
 #include <map>
 #include <vector>
+#include <Compiler/CompilerForwardDeclarations.hpp>
 
-namespace NES::Compiler {
+namespace NES::Compiler
+{
 
 class CompilationCache;
 using CompilationCachePtr = std::shared_ptr<CompilationCache>;
 /**
  * @brief The JIT compiler handles compilation requests and dispatches them to the right language compiler implementation.
  */
-class JITCompiler {
-  public:
+class JITCompiler
+{
+public:
     /**
      * @brief Constructor to create a new jit compiler with a fixed set of language compilers.
      * @param languageCompilers set of language compilers.
@@ -42,7 +44,7 @@ class JITCompiler {
 
     ~JITCompiler();
 
-  private:
+private:
     /**
      * @brief Processes a compilation request and dispatches it to the correct compiler implementation.
      * @param request Compilation request
@@ -54,6 +56,6 @@ class JITCompiler {
     CompilationCachePtr compilationCache;
 };
 
-}// namespace NES::Compiler
+} // namespace NES::Compiler
 
-#endif// NES_COMPILER_INCLUDE_COMPILER_JITCOMPILER_HPP_
+#endif // NES_COMPILER_INCLUDE_COMPILER_JITCOMPILER_HPP_

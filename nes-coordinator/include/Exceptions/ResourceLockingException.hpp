@@ -18,14 +18,18 @@
 /**
  * @brief This exception is raised, when a request was not able to lock a resource
  */
-namespace NES {
-namespace RequestProcessor::Experimental {
+namespace NES
+{
+namespace RequestProcessor::Experimental
+{
 enum class ResourceType : uint8_t;
 }
-namespace Exceptions {
+namespace Exceptions
+{
 
-class ResourceLockingException : public RequestExecutionException {
-  public:
+class ResourceLockingException : public RequestExecutionException
+{
+public:
     ResourceLockingException(const std::string& message, RequestProcessor::Experimental::ResourceType resourceType);
 
     /**
@@ -34,9 +38,9 @@ class ResourceLockingException : public RequestExecutionException {
      */
     [[nodiscard]] RequestProcessor::Experimental::ResourceType getResourceType() const;
 
-  private:
+private:
     RequestProcessor::Experimental::ResourceType resourceType;
 };
-}// namespace Exceptions
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_
+} // namespace Exceptions
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_EXCEPTIONS_RESOURCELOCKINGEXCEPTION_HPP_

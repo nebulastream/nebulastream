@@ -15,26 +15,29 @@
 #ifndef NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_
 #define NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_
 
+#include <utility>
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/Operator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/SchemaSourceDescriptor.hpp>
-#include <utility>
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief TestQuery api for testing.
  */
-class TestQuery : public Query {
-  public:
+class TestQuery : public Query
+{
+public:
     /**
      * @brief Creates a query from a SourceDescriptor
      * @param descriptor
      * @return Query
      */
-    static Query from(const SourceDescriptorPtr& descriptor) {
+    static Query from(const SourceDescriptorPtr& descriptor)
+    {
         auto sourceOperator = LogicalOperatorFactory::createSourceOperator(descriptor);
         auto queryPlan = QueryPlan::create(sourceOperator);
         return {queryPlan};
@@ -45,14 +48,14 @@ class TestQuery : public Query {
      * @param inputSchema
      * @return Query
      */
-    static Query from(const SchemaPtr& inputSchema) {
-        auto sourceOperator =
-            LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(inputSchema)));
+    static Query from(const SchemaPtr& inputSchema)
+    {
+        auto sourceOperator = LogicalOperatorFactory::createSourceOperator(SchemaSourceDescriptor::create(std::move(inputSchema)));
         auto queryPlan = QueryPlan::create(sourceOperator);
         return {queryPlan};
     }
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_
+#endif // NES_COORDINATOR_TESTS_INCLUDE_UTIL_TESTQUERY_HPP_

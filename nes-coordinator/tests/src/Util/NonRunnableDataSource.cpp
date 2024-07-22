@@ -14,40 +14,47 @@
 
 #include <Util/NonRunnableDataSource.hpp>
 
-namespace NES::Testing {
+namespace NES::Testing
+{
 
-NonRunnableDataSource::NonRunnableDataSource(const SchemaPtr& schema,
-                                             const Runtime::BufferManagerPtr& bufferManager,
-                                             const Runtime::QueryManagerPtr& queryManager,
-                                             uint64_t numbersOfBufferToProduce,
-                                             uint64_t gatheringInterval,
-                                             OperatorId operatorId,
-                                             OriginId originId,
-                                             StatisticId statisticId,
-                                             size_t numSourceLocalBuffers,
-                                             const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                                             NES::Runtime::QueryTerminationType type)
-    : DefaultSource(schema,
-                    bufferManager,
-                    queryManager,
-                    numbersOfBufferToProduce,
-                    gatheringInterval,
-                    operatorId,
-                    originId,
-                    statisticId,
-                    numSourceLocalBuffers,
-                    successors) {
+NonRunnableDataSource::NonRunnableDataSource(
+    const SchemaPtr& schema,
+    const Runtime::BufferManagerPtr& bufferManager,
+    const Runtime::QueryManagerPtr& queryManager,
+    uint64_t numbersOfBufferToProduce,
+    uint64_t gatheringInterval,
+    OperatorId operatorId,
+    OriginId originId,
+    StatisticId statisticId,
+    size_t numSourceLocalBuffers,
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+    NES::Runtime::QueryTerminationType type)
+    : DefaultSource(
+        schema,
+        bufferManager,
+        queryManager,
+        numbersOfBufferToProduce,
+        gatheringInterval,
+        operatorId,
+        originId,
+        statisticId,
+        numSourceLocalBuffers,
+        successors)
+{
     wasGracefullyStopped = type;
 }
 
-void NonRunnableDataSource::runningRoutine() {
+void NonRunnableDataSource::runningRoutine()
+{
     open();
     completedPromise.set_value(canTerminate.get_future().get());
     close();
 }
 
-bool NonRunnableDataSource::stop(Runtime::QueryTerminationType termination) {
-    if (!isRunning()) {
+bool NonRunnableDataSource::stop(Runtime::QueryTerminationType termination)
+{
+    if (!isRunning())
+    {
         // the source is already stopped, we don't have to do anything
         return true;
     }
@@ -55,37 +62,45 @@ bool NonRunnableDataSource::stop(Runtime::QueryTerminationType termination) {
     return NES::DefaultSource::stop(termination);
 }
 
-Runtime::MemoryLayouts::TestTupleBuffer NonRunnableDataSource::getBuffer() { return allocateBuffer(); }
+Runtime::MemoryLayouts::TestTupleBuffer NonRunnableDataSource::getBuffer()
+{
+    return allocateBuffer();
+}
 
-void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer, bool addBufferMetaData) {
+void NonRunnableDataSource::emitBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer, bool addBufferMetaData)
+{
     auto buf = buffer.getBuffer();
     emitBuffer(buf, addBufferMetaData);
 }
 
-void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer, bool addBufferMetaData) {
+void NonRunnableDataSource::emitBuffer(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
+{
     DataSource::emitWork(buffer, addBufferMetaData);
 }
 
-DataSourcePtr createNonRunnableSource(const SchemaPtr& schema,
-                                      const Runtime::BufferManagerPtr& bufferManager,
-                                      const Runtime::QueryManagerPtr& queryManager,
-                                      OperatorId operatorId,
-                                      OriginId originId,
-                                      StatisticId statisticId,
-                                      size_t numSourceLocalBuffers,
-                                      const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-                                      NES::Runtime::QueryTerminationType terminationType) {
-    return std::make_shared<NonRunnableDataSource>(schema,
-                                                   bufferManager,
-                                                   queryManager,
-                                                   /*bufferCnt*/ 1,
-                                                   /*frequency*/ 1000,
-                                                   operatorId,
-                                                   originId,
-                                                   statisticId,
-                                                   numSourceLocalBuffers,
-                                                   successors,
-                                                   terminationType);
+DataSourcePtr createNonRunnableSource(
+    const SchemaPtr& schema,
+    const Runtime::BufferManagerPtr& bufferManager,
+    const Runtime::QueryManagerPtr& queryManager,
+    OperatorId operatorId,
+    OriginId originId,
+    StatisticId statisticId,
+    size_t numSourceLocalBuffers,
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
+    NES::Runtime::QueryTerminationType terminationType)
+{
+    return std::make_shared<NonRunnableDataSource>(
+        schema,
+        bufferManager,
+        queryManager,
+        /*bufferCnt*/ 1,
+        /*frequency*/ 1000,
+        operatorId,
+        originId,
+        statisticId,
+        numSourceLocalBuffers,
+        successors,
+        terminationType);
 }
 
-}// namespace NES::Testing
+} // namespace NES::Testing

@@ -14,6 +14,16 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 
+#include <chrono>
+#include <condition_variable>
+#include <deque>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <shared_mutex>
+#include <thread>
+#include <unordered_map>
+#include <unordered_set>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -30,41 +40,40 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
-#include <chrono>
-#include <condition_variable>
-#include <deque>
-#include <map>
-#include <memory>
-#include <mutex>
-#include <shared_mutex>
-#include <thread>
-#include <unordered_map>
-#include <unordered_set>
 
 #ifdef ENABLE_PAPI_PROFILER
-#include <Runtime/Profiler/PAPIProfiler.hpp>
+#    include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
 
 #include <folly/MPMCQueue.h>
 #include <folly/concurrency/UnboundedQueue.h>
 
-namespace NES {
+namespace NES
+{
 class NesWorker;
-namespace Runtime {
+namespace Runtime
+{
 
 class ThreadPool;
-using ThreadPoolPtr = std::shared_ptr<ThreadPool>;// TODO consider moving this atomic in c++20
+using ThreadPoolPtr = std::shared_ptr<ThreadPool>; // TODO consider moving this atomic in c++20
 
 class AsyncTaskExecutor;
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
-class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>,
-                             public Reconfigurable {
-  public:
+class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>, public Reconfigurable
+{
+public:
     using inherited0 = NES::detail::virtual_enable_shared_from_this<AbstractQueryManager, false>;
 
     using inherited1 = Reconfigurable;
-    enum class QueryManagerStatus : uint8_t { Created, Running, Stopped, Destroyed, Failed };
+    enum class QueryManagerStatus : uint8_t
+    {
+        Created,
+        Running,
+        Stopped,
+        Destroyed,
+        Failed
+    };
 
     AbstractQueryManager() = delete;
     AbstractQueryManager(const AbstractQueryManager&) = delete;
@@ -74,13 +83,14 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     * @brief
     * @param bufferManager
     */
-    explicit AbstractQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
-                                  std::vector<BufferManagerPtr> bufferManagers,
-                                  WorkerId nodeEngineId,
-                                  uint16_t numThreads,
-                                  HardwareManagerPtr hardwareManager,
-                                  uint64_t numberOfBuffersPerEpoch,
-                                  std::vector<uint64_t> workerToCoreMapping = {});
+    explicit AbstractQueryManager(
+        std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+        std::vector<BufferManagerPtr> bufferManagers,
+        WorkerId nodeEngineId,
+        uint16_t numThreads,
+        HardwareManagerPtr hardwareManager,
+        uint64_t numberOfBuffersPerEpoch,
+        std::vector<uint64_t> workerToCoreMapping = {});
 
     virtual ~AbstractQueryManager() NES_NOEXCEPT(false) override;
 
@@ -114,8 +124,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param Pointer to the pipeline stage that will be executed next
      * @param id of the queue where to put the task (only necessary if multiple queues are used)
      */
-    virtual void
-    addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) = 0;
+    virtual void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) = 0;
 
     /**
      * This method posts a reconfig callback task
@@ -158,8 +167,9 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param graceful stop the query gracefully or not
      * @return bool indicating success
      */
-    [[nodiscard]] bool stopQuery(const Execution::ExecutableQueryPlanPtr& qep,
-                                 Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
+    [[nodiscard]] bool stopQuery(
+        const Execution::ExecutableQueryPlanPtr& qep,
+        Runtime::QueryTerminationType terminationType = Runtime::QueryTerminationType::HardStop);
 
     /**
     * @brief method to fail a query
@@ -201,10 +211,12 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    virtual bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                           DecomposedQueryPlanId queryExecutionPlanId,
-                                           const ReconfigurationMessage& reconfigurationMessage,
-                                           bool blocking = false) = 0;
+    virtual bool addReconfigurationMessage(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId queryExecutionPlanId,
+        const ReconfigurationMessage& reconfigurationMessage,
+        bool blocking = false)
+        = 0;
 
     /**
      * method to get the first buffer manger
@@ -212,7 +224,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
 
-  private:
+private:
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
      * @return true if the reconfiguration task was added correctly on the worker queue
@@ -223,12 +235,11 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    virtual bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                           DecomposedQueryPlanId queryExecutionPlanId,
-                                           TupleBuffer&& buffer,
-                                           bool blocking = false) = 0;
+    virtual bool addReconfigurationMessage(
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false)
+        = 0;
 
-  public:
+public:
     /**
      * @brief This method informs the QueryManager that a task has failed
      * @param pipeline the enclosed pipeline or sink
@@ -307,9 +318,8 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param pipeline the terminated pipeline
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifyPipelineCompletion(DecomposedQueryPlanId decomposedQueryPlanId,
-                                  Execution::ExecutablePipelinePtr pipeline,
-                                  QueryTerminationType terminationType);
+    void notifyPipelineCompletion(
+        DecomposedQueryPlanId decomposedQueryPlanId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
 
     /**
      * @brief Notifies that a sink operator is done with its execution
@@ -317,10 +327,9 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param sink the terminated sink
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void
-    notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
+    void notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
 
-  private:
+private:
     friend class ThreadPool;
     friend class NodeEngine;
     /**
@@ -331,7 +340,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
     */
     virtual bool startThreadPool(uint64_t numberOfBuffersPerWorker) = 0;
 
-  protected:
+protected:
     /**
      * @brief finalize task execution by:
      * 1.) update statistics (number of processed tuples and tasks)
@@ -341,7 +350,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     void completedWork(Task& task, WorkerContext& workerContext);
 
-  protected:
+protected:
     /**
      * @brief Method to update the statistics
      * @param task
@@ -350,11 +359,12 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      * @param pipelineId
      * @param workerContext
      */
-    virtual void updateStatistics(const Task& task,
-                                  SharedQueryId sharedQueryId,
-                                  DecomposedQueryPlanId decomposedQueryPlanId,
-                                  PipelineId pipelineId,
-                                  WorkerContext& workerContext);
+    virtual void updateStatistics(
+        const Task& task,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        PipelineId pipelineId,
+        WorkerContext& workerContext);
 
     /**
      * @brief Executes cleaning up logic on the task queue
@@ -389,7 +399,7 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
      */
     uint64_t getNextTaskId();
 
-  protected:
+protected:
     WorkerId nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
     std::vector<BufferManagerPtr> bufferManagers;
@@ -429,15 +439,17 @@ class AbstractQueryManager : public NES::detail::virtual_enable_shared_from_this
 #endif
 };
 
-class DynamicQueryManager : public AbstractQueryManager {
-  public:
-    explicit DynamicQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
-                                 std::vector<BufferManagerPtr> bufferManager,
-                                 WorkerId nodeEngineId,
-                                 uint16_t numThreads,
-                                 HardwareManagerPtr hardwareManager,
-                                 uint64_t numberOfBuffersPerEpoch,
-                                 std::vector<uint64_t> workerToCoreMapping = {});
+class DynamicQueryManager : public AbstractQueryManager
+{
+public:
+    explicit DynamicQueryManager(
+        std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+        std::vector<BufferManagerPtr> bufferManager,
+        WorkerId nodeEngineId,
+        uint16_t numThreads,
+        HardwareManagerPtr hardwareManager,
+        uint64_t numberOfBuffersPerEpoch,
+        std::vector<uint64_t> workerToCoreMapping = {});
 
     void destroy() override;
 
@@ -456,10 +468,9 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param Pointer to the pipeline stage that will be executed next
      * @param id of the queue where to put the task (only necessary if multiple queues are used)
      */
-    void
-    addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) override;
+    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) override;
 
-  protected:
+protected:
     /**
      * @brief
      * @return
@@ -474,11 +485,12 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param pipeId
      * @param workerContext
      */
-    void updateStatistics(const Task& task,
-                          SharedQueryId sharedQueryId,
-                          DecomposedQueryPlanId decomposedQueryPlanId,
-                          PipelineId pipeId,
-                          WorkerContext& workerContext) override;
+    void updateStatistics(
+        const Task& task,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        PipelineId pipeId,
+        WorkerContext& workerContext) override;
 
     uint64_t getNumberOfTasksInWorkerQueues() const override;
 
@@ -488,7 +500,7 @@ class DynamicQueryManager : public AbstractQueryManager {
       */
     uint64_t getNumberOfBuffersPerEpoch() const;
 
-  private:
+private:
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
      * @return true if the reconfiguration task was added correctly on the worker queue
@@ -499,10 +511,8 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId decomposedQueryPlanId,
-                                   TupleBuffer&& buffer,
-                                   bool blocking = false) override;
+    bool addReconfigurationMessage(
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, TupleBuffer&& buffer, bool blocking = false) override;
 
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
@@ -514,10 +524,11 @@ class DynamicQueryManager : public AbstractQueryManager {
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId queryExecutionPlanId,
-                                   const ReconfigurationMessage& reconfigurationMessage,
-                                   bool blocking = false) override;
+    bool addReconfigurationMessage(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId queryExecutionPlanId,
+        const ReconfigurationMessage& reconfigurationMessage,
+        bool blocking = false) override;
 
     /**
     * @brief method to start the thread pool
@@ -532,21 +543,23 @@ class DynamicQueryManager : public AbstractQueryManager {
      */
     void poisonWorkers() override;
 
-  private:
+private:
     folly::MPMCQueue<Task> taskQueue;
 };
 
-class MultiQueueQueryManager : public AbstractQueryManager {
-  public:
-    explicit MultiQueueQueryManager(std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
-                                    std::vector<BufferManagerPtr> bufferManager,
-                                    WorkerId nodeEngineId,
-                                    uint16_t numThreads,
-                                    HardwareManagerPtr hardwareManager,
-                                    uint64_t numberOfBuffersPerEpoch,
-                                    std::vector<uint64_t> workerToCoreMapping = {},
-                                    uint64_t numberOfQueues = 1,
-                                    uint64_t numberOfThreadsPerQueue = 1);
+class MultiQueueQueryManager : public AbstractQueryManager
+{
+public:
+    explicit MultiQueueQueryManager(
+        std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
+        std::vector<BufferManagerPtr> bufferManager,
+        WorkerId nodeEngineId,
+        uint16_t numThreads,
+        HardwareManagerPtr hardwareManager,
+        uint64_t numberOfBuffersPerEpoch,
+        std::vector<uint64_t> workerToCoreMapping = {},
+        uint64_t numberOfQueues = 1,
+        uint64_t numberOfThreadsPerQueue = 1);
 
     void destroy() override;
 
@@ -567,8 +580,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @param Pointer to the pipeline stage that will be executed next
      * @param id of the queue where to put the task (only necessary if multiple queues are used)
      */
-    void
-    addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) override;
+    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0) override;
 
     uint64_t getNumberOfTasksInWorkerQueues() const override;
 
@@ -578,7 +590,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
       */
     uint64_t getNumberOfBuffersPerEpoch() const;
 
-  protected:
+protected:
     /**
      * @brief
      * @return
@@ -592,13 +604,14 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @param pipeId
      * @param workerContext
      */
-    void updateStatistics(const Task& task,
-                          SharedQueryId sharedQueryId,
-                          DecomposedQueryPlanId decomposedQueryPlanId,
-                          PipelineId pipeId,
-                          WorkerContext& workerContext) override;
+    void updateStatistics(
+        const Task& task,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        PipelineId pipeId,
+        WorkerContext& workerContext) override;
 
-  private:
+private:
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
      * @return true if the reconfiguration task was added correctly on the worker queue
@@ -609,10 +622,8 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId queryExecutionPlanId,
-                                   TupleBuffer&& buffer,
-                                   bool blocking = false) override;
+    bool addReconfigurationMessage(
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false) override;
 
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
@@ -624,10 +635,11 @@ class MultiQueueQueryManager : public AbstractQueryManager {
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(SharedQueryId sharedQueryId,
-                                   DecomposedQueryPlanId queryExecutionPlanId,
-                                   const ReconfigurationMessage& reconfigurationMessage,
-                                   bool blocking = false) override;
+    bool addReconfigurationMessage(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId queryExecutionPlanId,
+        const ReconfigurationMessage& reconfigurationMessage,
+        bool blocking = false) override;
 
     void poisonWorkers() override;
 
@@ -639,7 +651,7 @@ class MultiQueueQueryManager : public AbstractQueryManager {
     */
     bool startThreadPool(uint64_t numberOfBuffersPerWorker) override;
 
-  private:
+private:
     std::vector<folly::MPMCQueue<Task>> taskQueues;
     uint16_t numberOfQueues = 1;
     uint16_t numberOfThreadsPerQueue;
@@ -651,6 +663,6 @@ using QueryManagerPtr = std::shared_ptr<AbstractQueryManager>;
 using DynamicQueryManagerPtr = std::shared_ptr<DynamicQueryManager>;
 using MultiQueueQueryManagerPtr = std::shared_ptr<MultiQueueQueryManager>;
 
-}// namespace Runtime
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+} // namespace Runtime
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_

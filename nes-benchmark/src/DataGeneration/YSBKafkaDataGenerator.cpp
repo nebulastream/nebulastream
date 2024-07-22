@@ -12,24 +12,26 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
-#include <DataGeneration/DataGenerator.hpp>
-#include <DataProvider/DataProvider.hpp>
-#include <cppkafka/cppkafka.h>
-#include <cstring>
-#include <filesystem>
-#include <fstream>
-#include <future>
-#include <iostream>
-#include <unordered_map>
+#    include <cstring>
+#    include <filesystem>
+#    include <fstream>
+#    include <future>
+#    include <iostream>
+#    include <unordered_map>
+#    include <DataGeneration/DataGenerator.hpp>
+#    include <DataProvider/DataProvider.hpp>
+#    include <cppkafka/cppkafka.h>
 
 const uint64_t bufferSizeInBytes = 131072;
 const uint64_t flushDelay = 131072;
 
-int main(int argc, const char* argv[]) {
+int main(int argc, const char* argv[])
+{
     // Activating and installing error listener
     std::cout << "hello" << std::endl;
     //usage --broker --topic --partition
-    if (argc != 5) {
+    if (argc != 5)
+    {
         std::cout << "Usage: --broker= --topic= --numberOfPartitions --numberOfBuffersToProduce= required as a command line "
                      "argument!\nExiting now..."
                   << std::endl;
@@ -38,17 +40,27 @@ int main(int argc, const char* argv[]) {
 
     // Iterating through the arguments
     std::unordered_map<std::string, std::string> argMap;
-    for (int i = 0; i < argc; ++i) {
+    for (int i = 0; i < argc; ++i)
+    {
         auto pathArg = std::string(argv[i]);
-        if (pathArg.find("--broker") != std::string::npos) {
+        if (pathArg.find("--broker") != std::string::npos)
+        {
             argMap["broker"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
-        } else if (pathArg.find("--topic") != std::string::npos) {
+        }
+        else if (pathArg.find("--topic") != std::string::npos)
+        {
             argMap["topic"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
-        } else if (pathArg.find("--numberOfPartitions") != std::string::npos) {
+        }
+        else if (pathArg.find("--numberOfPartitions") != std::string::npos)
+        {
             argMap["numberOfPartitions"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
-        } else if (pathArg.find("--numberOfBuffersToProduce") != std::string::npos) {
+        }
+        else if (pathArg.find("--numberOfBuffersToProduce") != std::string::npos)
+        {
             argMap["numberOfBuffersToProduce"] = pathArg.substr(pathArg.find("=") + 1, pathArg.length() - 1);
-        } else {
+        }
+        else
+        {
             std::cout << "parameter " << pathArg << " not supported" << std::endl;
         }
     }
@@ -70,30 +82,44 @@ int main(int argc, const char* argv[]) {
     auto createdBuffers = dataGenerator->createData(numberOfBuffersToProduce, bufferSizeInBytes);
 
     std::vector<std::future<void>> futures;
-    for (uint64_t partition = 0; partition < numberOfPartitions; partition++) {
-        futures.push_back(std::async(std::launch::async, [&, partition]() {
-            std::cout << "start producer thread for partition=" << partition << std::endl;
-            for (uint64_t prodBuffer = 0; prodBuffer < numberOfBuffersToProduce; prodBuffer++) {
-                char* buffer = createdBuffers[prodBuffer].getBuffer<char>();
-                size_t len = createdBuffers[prodBuffer].getBufferSize();
-                std::vector<uint8_t> bytes(buffer, buffer + len);
-                try {
-                    producer.produce(cppkafka::MessageBuilder(argMap["topic"]).partition(partition).payload(bytes));
-                    producer.flush(std::chrono::seconds(flushDelay));
-                } catch (const std::exception& ex) {
-                    std::cout << ex.what() << std::endl;
-                } catch (const std::string& ex) {
-                    std::cout << ex << std::endl;
-                } catch (...) {
+    for (uint64_t partition = 0; partition < numberOfPartitions; partition++)
+    {
+        futures.push_back(std::async(
+            std::launch::async,
+            [&, partition]()
+            {
+                std::cout << "start producer thread for partition=" << partition << std::endl;
+                for (uint64_t prodBuffer = 0; prodBuffer < numberOfBuffersToProduce; prodBuffer++)
+                {
+                    char* buffer = createdBuffers[prodBuffer].getBuffer<char>();
+                    size_t len = createdBuffers[prodBuffer].getBufferSize();
+                    std::vector<uint8_t> bytes(buffer, buffer + len);
+                    try
+                    {
+                        producer.produce(cppkafka::MessageBuilder(argMap["topic"]).partition(partition).payload(bytes));
+                        producer.flush(std::chrono::seconds(flushDelay));
+                    }
+                    catch (const std::exception& ex)
+                    {
+                        std::cout << ex.what() << std::endl;
+                    }
+                    catch (const std::string& ex)
+                    {
+                        std::cout << ex << std::endl;
+                    }
+                    catch (...)
+                    {
+                    }
+                    if (prodBuffer % 1000 == 0)
+                    {
+                        std::cout << "number of buffers prod =" << prodBuffer << " for partition=" << partition << std::endl;
+                    }
                 }
-                if (prodBuffer % 1000 == 0) {
-                    std::cout << "number of buffers prod =" << prodBuffer << " for partition=" << partition << std::endl;
-                }
-            }
-        }));
+            }));
     }
 
-    for (auto& e : futures) {
+    for (auto& e : futures)
+    {
         e.get();
     }
     producer.flush(std::chrono::seconds(flushDelay));

@@ -17,12 +17,14 @@
 
 #include <Nautilus/Interface/DataTypes/BuiltIns/BuiltInVariable.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 class FieldAccess;
 
-class BlockDim : public BuiltInVariable {
-  public:
+class BlockDim : public BuiltInVariable
+{
+public:
     static const inline auto type = TypeIdentifier::create<BlockDim>();
 
     BlockDim();
@@ -41,6 +43,6 @@ class BlockDim : public BuiltInVariable {
     std::shared_ptr<FieldAccess> x();
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_BLOCKDIM_HPP_
+#endif // NES_PLUGINS_CUDA_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BUILTINS_CUDA_BLOCKDIM_HPP_

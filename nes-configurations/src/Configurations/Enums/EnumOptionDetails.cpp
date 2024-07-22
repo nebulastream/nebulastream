@@ -28,7 +28,8 @@
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 template class EnumOption<NES::Spatial::Experimental::SpatialType>;
 template class EnumOption<NES::QueryCompilation::QueryCompilerType>;
@@ -46,4 +47,4 @@ template class EnumOption<NES::Optimizer::MemoryLayoutPolicy>;
 template class EnumOption<NES::Optimizer::PlacementAmendmentMode>;
 template class EnumOption<NES::Optimizer::DistributedJoinOptimizationMode>;
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations

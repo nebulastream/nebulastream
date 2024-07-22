@@ -19,17 +19,20 @@
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
 #include <Util/Placement/PlacementStrategy.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 
 /**
  * @brief the response indicating the id if the query after successful registration of the add query event
  */
-struct ISQPAddQueryResponse : public ISQPResponse {
+struct ISQPAddQueryResponse : public ISQPResponse
+{
     explicit ISQPAddQueryResponse(QueryId queryId) : queryId(queryId){};
     QueryId queryId;
 };
@@ -41,9 +44,9 @@ using ISQPAddQueryEventPtr = std::shared_ptr<ISQPAddQueryEvent>;
 /**
  * @brief Representing the ISQP Add query event
  */
-class ISQPAddQueryEvent : public ISQPEvent {
-
-  public:
+class ISQPAddQueryEvent : public ISQPEvent
+{
+public:
     static ISQPEventPtr create(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy);
 
     ISQPAddQueryEvent(const QueryPlanPtr& queryPlan, Optimizer::PlacementStrategy placementStrategy);
@@ -52,10 +55,10 @@ class ISQPAddQueryEvent : public ISQPEvent {
 
     Optimizer::PlacementStrategy getPlacementStrategy() const;
 
-  private:
+private:
     QueryPlanPtr queryPlan;
     Optimizer::PlacementStrategy placementStrategy;
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDQUERYEVENT_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDQUERYEVENT_HPP_

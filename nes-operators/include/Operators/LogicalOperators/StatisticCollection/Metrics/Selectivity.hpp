@@ -16,15 +16,17 @@
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_SELECTIVITY_HPP_
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
 /**
  * @brief Collects statistics to estimate the selectivity. We define the selectivity as a ratio of how many tuples
  * an operator filters out. For example, a selectivity of 75% would mean that 75% of all tuples are not passed on by the
  * operator.
  */
-class Selectivity : public StatisticMetric {
-  public:
+class Selectivity : public StatisticMetric
+{
+public:
     /**
      * @brief Creates a Selectivity wrapped in a MetricPtr
      * @param expressionNode
@@ -45,7 +47,7 @@ class Selectivity : public StatisticMetric {
      */
     std::string toString() const override;
 
-  private:
+private:
     /**
      * @brief Private constructor for a Selectivity
      * @param expressionNode
@@ -53,6 +55,6 @@ class Selectivity : public StatisticMetric {
     explicit Selectivity(const FieldAccessExpressionNodePtr& field);
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_SELECTIVITY_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_SELECTIVITY_HPP_

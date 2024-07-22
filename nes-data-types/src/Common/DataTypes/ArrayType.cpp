@@ -15,18 +15,27 @@
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
-bool ArrayType::equals(DataTypePtr otherDataType) {
-    if (otherDataType->isArray()) {
+bool ArrayType::equals(DataTypePtr otherDataType)
+{
+    if (otherDataType->isArray())
+    {
         auto const otherArray = as<ArrayType>(otherDataType);
         return length == otherArray->length && component->equals(otherArray->component);
     }
     return false;
 }
 
-DataTypePtr ArrayType::join(DataTypePtr) { return DataTypeFactory::createUndefined(); }
+DataTypePtr ArrayType::join(DataTypePtr)
+{
+    return DataTypeFactory::createUndefined();
+}
 
-std::string ArrayType::toString() { return "ArrayType"; }
+std::string ArrayType::toString()
+{
+    return "ArrayType";
+}
 
-}// namespace NES
+} // namespace NES

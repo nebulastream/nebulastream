@@ -14,19 +14,21 @@
 
 #ifndef NES_COORDINATOR_INCLUDE_UTIL_INCREMENTALPLACEMENTUTILS_HPP_
 #define NES_COORDINATOR_INCLUDE_UTIL_INCREMENTALPLACEMENTUTILS_HPP_
-#include <Identifiers/Identifiers.hpp>
 #include <memory>
 #include <set>
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Optimizer {
+namespace Optimizer
+{
 class ExecutionNode;
 using ExecutionNodePtr = std::shared_ptr<ExecutionNode>;
 
 using ExecutionNodeWLock = std::shared_ptr<folly::Synchronized<ExecutionNodePtr>::WLockedPtr>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class SharedQueryPlan;
 using SharedQueryPlanPtr = std::shared_ptr<SharedQueryPlan>;
@@ -37,7 +39,8 @@ using TopologyPtr = std::shared_ptr<Topology>;
 class LogicalOperator;
 using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 
-namespace Experimental {
+namespace Experimental
+{
 
 /**
  * @brief identifies the upstream and downstream operators that can remain deployed on the same nodes as they were
@@ -50,11 +53,11 @@ namespace Experimental {
  * @param topology a pointer to the topology
  * @return a pair constaining two sets of operator id in the order {UPSTREAM, DOWNSTREAM}
  */
-std::pair<std::set<OperatorId>, std::set<OperatorId>>
-findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPlan,
-                                         Optimizer::ExecutionNodeWLock lockedUpstreamNode,
-                                         Optimizer::ExecutionNodeWLock lockedDownstreamNode,
-                                         const TopologyPtr& topology);
+std::pair<std::set<OperatorId>, std::set<OperatorId>> findUpstreamAndDownstreamPinnedOperators(
+    const SharedQueryPlanPtr& sharedQueryPlan,
+    Optimizer::ExecutionNodeWLock lockedUpstreamNode,
+    Optimizer::ExecutionNodeWLock lockedDownstreamNode,
+    const TopologyPtr& topology);
 
 /**
  * @brief find all pairs of network sinks and sources that connect the specified up- and downstream node and belong
@@ -64,11 +67,11 @@ findUpstreamAndDownstreamPinnedOperators(const SharedQueryPlanPtr& sharedQueryPl
  * @param lockedDownstreamNode the node hosting the network sources
  * @return a vector source-sink-pairs in the format {SinkOperator, SourceOperator}
  */
-std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>>
-findNetworkOperatorsForLink(const SharedQueryId& sharedQueryPlanId,
-                            Optimizer::ExecutionNodeWLock lockedUpstreamNode,
-                            Optimizer::ExecutionNodeWLock lockedDownstreamNode);
+std::vector<std::pair<LogicalOperatorPtr, LogicalOperatorPtr>> findNetworkOperatorsForLink(
+    const SharedQueryId& sharedQueryPlanId,
+    Optimizer::ExecutionNodeWLock lockedUpstreamNode,
+    Optimizer::ExecutionNodeWLock lockedDownstreamNode);
 
-}// namespace Experimental
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_UTIL_INCREMENTALPLACEMENTUTILS_HPP_
+} // namespace Experimental
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_UTIL_INCREMENTALPLACEMENTUTILS_HPP_

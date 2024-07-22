@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
@@ -28,28 +28,33 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class ScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+class ScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ScanEmitPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ScanEmitPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup ScanEmitPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         options.setDumpToConsole(true);
@@ -66,7 +71,8 @@ class ScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
 /**
  * @brief Emit operator that emits a row oriented tuple buffer.
  */
-TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
+TEST_P(ScanEmitPipelineTest, scanEmitPipeline)
+{
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT8);
     schema->addField("f2", BasicType::INT16);
@@ -92,18 +98,19 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
 
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-    for (uint64_t i = 0; i < testBuffer.getCapacity(); i++) {
-        testBuffer[i]["f1"].write((int8_t) i);
-        testBuffer[i]["f2"].write((int16_t) i);
-        testBuffer[i]["f3"].write((int32_t) i);
-        testBuffer[i]["f4"].write((int64_t) i);
-        testBuffer[i]["f5"].write((uint8_t) i);
-        testBuffer[i]["f6"].write((uint16_t) i);
-        testBuffer[i]["f7"].write((uint32_t) i);
-        testBuffer[i]["f8"].write((uint64_t) i);
-        testBuffer[i]["f9"].write((float) 1.1f);
-        testBuffer[i]["f10"].write((double) 1.1);
-        auto value = (bool) (i % 2);
+    for (uint64_t i = 0; i < testBuffer.getCapacity(); i++)
+    {
+        testBuffer[i]["f1"].write((int8_t)i);
+        testBuffer[i]["f2"].write((int16_t)i);
+        testBuffer[i]["f3"].write((int32_t)i);
+        testBuffer[i]["f4"].write((int64_t)i);
+        testBuffer[i]["f5"].write((uint8_t)i);
+        testBuffer[i]["f6"].write((uint16_t)i);
+        testBuffer[i]["f7"].write((uint32_t)i);
+        testBuffer[i]["f8"].write((uint64_t)i);
+        testBuffer[i]["f9"].write((float)1.1f);
+        testBuffer[i]["f10"].write((double)1.1);
+        auto value = (bool)(i % 2);
         testBuffer[i]["f11"].write<bool>(value);
         testBuffer.setNumberOfTuples(i + 1);
         testBuffer.getBuffer().setSequenceNumber(1);
@@ -121,27 +128,27 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), memoryLayout->getCapacity());
 
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
-    for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++) {
-        ASSERT_EQ(resulttestBuffer[i]["f1"].read<int8_t>(), (int8_t) i);
-        ASSERT_EQ(resulttestBuffer[i]["f2"].read<int16_t>(), (int16_t) i);
-        ASSERT_EQ(resulttestBuffer[i]["f3"].read<int32_t>(), (int32_t) i);
-        ASSERT_EQ(resulttestBuffer[i]["f4"].read<int64_t>(), (int64_t) i);
-        ASSERT_EQ(resulttestBuffer[i]["f5"].read<uint8_t>(), (uint8_t) i);
-        ASSERT_EQ(resulttestBuffer[i]["f6"].read<uint16_t>(), (uint16_t) i);
-        ASSERT_EQ(resulttestBuffer[i]["f7"].read<uint32_t>(), (uint32_t) i);
-        ASSERT_EQ(resulttestBuffer[i]["f8"].read<uint64_t>(), (uint64_t) i);
+    for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++)
+    {
+        ASSERT_EQ(resulttestBuffer[i]["f1"].read<int8_t>(), (int8_t)i);
+        ASSERT_EQ(resulttestBuffer[i]["f2"].read<int16_t>(), (int16_t)i);
+        ASSERT_EQ(resulttestBuffer[i]["f3"].read<int32_t>(), (int32_t)i);
+        ASSERT_EQ(resulttestBuffer[i]["f4"].read<int64_t>(), (int64_t)i);
+        ASSERT_EQ(resulttestBuffer[i]["f5"].read<uint8_t>(), (uint8_t)i);
+        ASSERT_EQ(resulttestBuffer[i]["f6"].read<uint16_t>(), (uint16_t)i);
+        ASSERT_EQ(resulttestBuffer[i]["f7"].read<uint32_t>(), (uint32_t)i);
+        ASSERT_EQ(resulttestBuffer[i]["f8"].read<uint64_t>(), (uint64_t)i);
         ASSERT_EQ(resulttestBuffer[i]["f9"].read<float>(), 1.1f);
         ASSERT_EQ(resulttestBuffer[i]["f10"].read<double>(), 1.1);
-        auto value = (bool) (i % 2);
+        auto value = (bool)(i % 2);
         ASSERT_EQ(resulttestBuffer[i]["f11"].read<bool>(), value);
     }
 }
 
-INSTANTIATE_TEST_CASE_P(testIfCompilation,
-                        ScanEmitPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<ScanEmitPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
+INSTANTIATE_TEST_CASE_P(
+    testIfCompilation,
+    ScanEmitPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<ScanEmitPipelineTest::ParamType>& info) { return info.param; });
 
-}// namespace NES::Runtime::Execution
+} // namespace NES::Runtime::Execution

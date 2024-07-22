@@ -12,13 +12,13 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
 #include <API/QueryAPI.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Services/RequestHandlerService.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 #include <Monitoring/ResourcesReader/SystemResourcesReaderFactory.hpp>
 #include <Util/MetricValidator.hpp>
@@ -27,51 +27,59 @@
 #include <Runtime/BufferManager.hpp>
 #include <Util/MetricCollectorType.hpp>
 
-#include <Util/Logger/Logger.hpp>
 #include <memory>
+#include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
 
 using std::cout;
 using std::endl;
-namespace NES {
+namespace NES
+{
 
-class E2EMonitoringTest : public Testing::BaseIntegrationTest {
-  public:
+class E2EMonitoringTest : public Testing::BaseIntegrationTest
+{
+public:
     Runtime::BufferManagerPtr bufferManager;
     uint16_t timeout = 15;
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("E2EMonitoringTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup E2EMonitoringTest test class.");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         bufferManager = std::make_shared<Runtime::BufferManager>(4096, 10);
     }
 };
 
-TEST_F(E2EMonitoringTest, requestStoredRegistrationMetrics) {
+TEST_F(E2EMonitoringTest, requestStoredRegistrationMetrics)
+{
     uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
-                                                    TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableMonitoring()});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::enableNautilusCoordinator(),
+         TestUtils::rpcPort(*rpcCoordinatorPort),
+         TestUtils::restPort(*restPort),
+         TestUtils::enableMonitoring()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::enableNautilusWorker(),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker1 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::enableMonitoring(),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::enableNautilusWorker(),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker2 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::enableMonitoring(),
+         TestUtils::workerHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
@@ -79,68 +87,76 @@ TEST_F(E2EMonitoringTest, requestStoredRegistrationMetrics) {
     ASSERT_EQ(jsons.size(), noWorkers + 1);
 }
 
-TEST_F(E2EMonitoringTest, requestAllMetricsViaRest) {
+TEST_F(E2EMonitoringTest, requestAllMetricsViaRest)
+{
     uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
-                                                    TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableMonitoring()});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::enableNautilusCoordinator(),
+         TestUtils::rpcPort(*rpcCoordinatorPort),
+         TestUtils::restPort(*restPort),
+         TestUtils::enableMonitoring()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::enableNautilusWorker(),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker1 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::enableMonitoring(),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::enableNautilusWorker(),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker2 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::enableMonitoring(),
+         TestUtils::workerHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("metrics", std::to_string(*restPort));
     NES_INFO("ResourcesReaderTest: Jsons received: \n{}", jsons.dump());
 
     ASSERT_EQ(jsons.size(), noWorkers + 1);
-    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+    for (uint64_t i = 1; i <= noWorkers + 1; i++)
+    {
         NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID {}", i);
         auto json = jsons[std::to_string(i)];
         NES_DEBUG("E2EMonitoringTest: JSON for node {}:\n{}", i, json.dump());
         auto jsonString = json.dump();
         nlohmann::json jsonLohmann = nlohmann::json::parse(jsonString);
-        ASSERT_TRUE(
-            MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), jsonLohmann));
+        ASSERT_TRUE(MetricValidator::isValidAll(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), jsonLohmann));
         ASSERT_TRUE(MetricValidator::checkNodeIds(jsonLohmann, WorkerId(i)));
     }
 }
 
-TEST_F(E2EMonitoringTest, requestStoredMetricsViaRest) {
+TEST_F(E2EMonitoringTest, requestStoredMetricsViaRest)
+{
     uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
-                                                    TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableMonitoring()});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::enableNautilusCoordinator(),
+         TestUtils::rpcPort(*rpcCoordinatorPort),
+         TestUtils::restPort(*restPort),
+         TestUtils::enableMonitoring()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::enableNautilusWorker(),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker1 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::enableMonitoring(),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::enableNautilusWorker(),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker2 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::enableMonitoring(),
+         TestUtils::workerHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsons = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
@@ -148,43 +164,47 @@ TEST_F(E2EMonitoringTest, requestStoredMetricsViaRest) {
 
     ASSERT_EQ(jsons.size(), noWorkers + 1);
 
-    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+    for (uint64_t i = 1; i <= noWorkers + 1; i++)
+    {
         NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID {}", i);
         auto json = jsons[std::to_string(i)];
         NES_DEBUG("E2EMonitoringTest: JSON for node {}:\n{}", i, json.dump());
         auto jsonRegistration = json["RegistrationMetric"][0]["value"];
         auto jsonString = jsonRegistration.dump();
         nlohmann::json jsonRegistrationLohmann = nlohmann::json::parse(jsonString);
-        ASSERT_TRUE(
-            MetricValidator::isValidRegistrationMetrics(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
-                                                        jsonRegistrationLohmann));
+        ASSERT_TRUE(MetricValidator::isValidRegistrationMetrics(
+            Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), jsonRegistrationLohmann));
         ASSERT_EQ(jsonRegistrationLohmann["NODE_ID"], i);
     }
 }
 
-TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
+TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams)
+{
     auto expectedMonitoringStreams = Monitoring::MonitoringPlan::defaultPlan()->getMetricTypes();
     uint64_t noWorkers = 2;
-    auto coordinator = TestUtils::startCoordinator({TestUtils::enableNautilusCoordinator(),
-                                                    TestUtils::rpcPort(*rpcCoordinatorPort),
-                                                    TestUtils::restPort(*restPort),
-                                                    TestUtils::enableMonitoring()});
+    auto coordinator = TestUtils::startCoordinator(
+        {TestUtils::enableNautilusCoordinator(),
+         TestUtils::rpcPort(*rpcCoordinatorPort),
+         TestUtils::restPort(*restPort),
+         TestUtils::enableMonitoring()});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 0));
 
-    auto worker1 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::enableNautilusWorker(),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker1 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::enableMonitoring(),
+         TestUtils::workerHealthCheckWaitTime(1)});
     ASSERT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 1));
 
-    auto worker2 = TestUtils::startWorker({TestUtils::rpcPort(0),
-                                           TestUtils::enableNautilusWorker(),
-                                           TestUtils::dataPort(0),
-                                           TestUtils::coordinatorPort(*rpcCoordinatorPort),
-                                           TestUtils::enableMonitoring(),
-                                           TestUtils::workerHealthCheckWaitTime(1)});
+    auto worker2 = TestUtils::startWorker(
+        {TestUtils::rpcPort(0),
+         TestUtils::enableNautilusWorker(),
+         TestUtils::dataPort(0),
+         TestUtils::coordinatorPort(*rpcCoordinatorPort),
+         TestUtils::enableMonitoring(),
+         TestUtils::workerHealthCheckWaitTime(1)});
     EXPECT_TRUE(TestUtils::waitForWorkers(*restPort, timeout, 2));
 
     auto jsonStart = TestUtils::makeMonitoringRestCall("start", std::to_string(*restPort));
@@ -195,19 +215,20 @@ TEST_F(E2EMonitoringTest, requestAllMetricsFromMonitoringStreams) {
     auto jsonMetrics = TestUtils::makeMonitoringRestCall("storage", std::to_string(*restPort));
 
     // test network metrics
-    for (uint64_t i = 1; i <= noWorkers + 1; i++) {
+    for (uint64_t i = 1; i <= noWorkers + 1; i++)
+    {
         NES_INFO("ResourcesReaderTest: Requesting monitoring data from node with ID {}", i);
         auto json = jsonMetrics[std::to_string(i)];
         NES_DEBUG("E2EMonitoringTest: JSON for node {}:\n{}", i, json.dump());
         auto jsonString = json.dump();
         nlohmann::json jsonLohmann = nlohmann::json::parse(jsonString);
-        ASSERT_TRUE(MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(),
-                                                       jsonLohmann));
+        ASSERT_TRUE(MetricValidator::isValidAllStorage(Monitoring::SystemResourcesReaderFactory::getSystemResourcesReader(), jsonLohmann));
         ASSERT_TRUE(MetricValidator::checkNodeIdsStorage(jsonLohmann, WorkerId(i)));
     }
 }
 
-TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
+TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
@@ -217,7 +238,7 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
 
     NES_INFO("ContinuousSourceTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("ContinuousSourceTest: Coordinator started successfully");
 
@@ -244,8 +265,7 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
                      .apply(Sum(Attribute("tBytes")))
                      .sink(FileSinkDescriptor::create(outputFilePath, true));
 
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_NE(queryId, INVALID_QUERY_ID);
     auto globalQueryPlan = crd->getGlobalQueryPlan();
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -279,4 +299,4 @@ TEST_F(E2EMonitoringTest, testNemoPlacementWithMonitoringSource) {
     NES_INFO("UpstreamBackupTest: Test finished");
 }
 
-}// namespace NES
+} // namespace NES

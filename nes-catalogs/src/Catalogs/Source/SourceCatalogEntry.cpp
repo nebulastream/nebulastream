@@ -12,29 +12,42 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
 #include <Catalogs/Topology/TopologyNode.hpp>
-#include <utility>
 
-namespace NES::Catalogs::Source {
+namespace NES::Catalogs::Source
+{
 
 SourceCatalogEntry::SourceCatalogEntry(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId)
-    : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId) {}
+    : physicalSource(std::move(physicalSource)), logicalSource(std::move(logicalSource)), topologyNodeId(topologyNodeId)
+{
+}
 
-SourceCatalogEntryPtr
-SourceCatalogEntry::create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId) {
+SourceCatalogEntryPtr SourceCatalogEntry::create(PhysicalSourcePtr physicalSource, LogicalSourcePtr logicalSource, WorkerId topologyNodeId)
+{
     return std::make_shared<SourceCatalogEntry>(SourceCatalogEntry(physicalSource, logicalSource, topologyNodeId));
 }
 
-const PhysicalSourcePtr& SourceCatalogEntry::getPhysicalSource() const { return physicalSource; }
+const PhysicalSourcePtr& SourceCatalogEntry::getPhysicalSource() const
+{
+    return physicalSource;
+}
 
-const LogicalSourcePtr& SourceCatalogEntry::getLogicalSource() const { return logicalSource; }
+const LogicalSourcePtr& SourceCatalogEntry::getLogicalSource() const
+{
+    return logicalSource;
+}
 
-WorkerId SourceCatalogEntry::getTopologyNodeId() const { return topologyNodeId; }
+WorkerId SourceCatalogEntry::getTopologyNodeId() const
+{
+    return topologyNodeId;
+}
 
-std::string SourceCatalogEntry::toString() {
+std::string SourceCatalogEntry::toString()
+{
     std::stringstream ss;
     ss << "physicalSource=" << physicalSource << " logicalSource=" << logicalSource << " on node=" << topologyNodeId;
     return ss.str();
 }
-}// namespace NES::Catalogs::Source
+} // namespace NES::Catalogs::Source

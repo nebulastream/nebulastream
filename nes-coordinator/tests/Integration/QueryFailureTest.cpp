@@ -12,12 +12,11 @@
     limitations under the License.
 */
 
+#include <iostream>
 #include <API/QueryAPI.hpp>
 #include <API/TestSchemas.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Exceptions/InvalidQueryException.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -28,26 +27,30 @@
 #include <Services/RequestHandlerService.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class QueryFailureTest : public Testing::BaseIntegrationTest {
-  public:
+class QueryFailureTest : public Testing::BaseIntegrationTest
+{
+public:
     static void SetUpTestCase() { NES::Logger::setupLogging("QueryFailureTest.log", NES::LogLevel::LOG_DEBUG); }
 };
 
-TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
+TEST_F(QueryFailureTest, testQueryFailureForFaultySource)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryFailureTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
@@ -87,13 +90,14 @@ TEST_F(QueryFailureTest, testQueryFailureForFaultySource) {
 /**
  * This test checks if we can run a valid query after a query failed
  */
-TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
+TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("QueryFailureTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
@@ -124,8 +128,7 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     std::string outputFilePath1 = getTestResourceFolder() / "testDeployTwoWorkerMergeUsingBottomUp.out";
 
     NES_INFO("QueryFailureTest: Submit query");
-    string query1 =
-        R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query1 = R"(Query::from("test").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
     NES_DEBUG("query={}", query1);
     QueryId queryId1 = requestHandlerService->validateAndQueueAddQueryRequest(query1, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId1, queryCatalog));
@@ -133,8 +136,8 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
     std::string outputFilePath2 = getTestResourceFolder() / "test2.out";
 
     NES_INFO("QueryFailureTest: Submit query");
-    string query2 = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2
-        + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query2
+        = R"(Query::from("default_logical").sink(FileSinkDescriptor::create(")" + outputFilePath2 + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId2 = requestHandlerService->validateAndQueueAddQueryRequest(query2, Optimizer::PlacementStrategy::BottomUp);
 
     ASSERT_TRUE(TestUtils::waitForQueryToStart(queryId2, queryCatalog));
@@ -174,14 +177,15 @@ TEST_F(QueryFailureTest, testExecutingOneFaultAndOneCorrectQuery) {
 }
 
 // This test will be enabled when fixing #2857
-TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
+TEST_F(QueryFailureTest, DISABLED_failRunningQuery)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     coordinatorConfig->worker.bufferSizeInBytes = 2;
     NES_INFO("QueryFailureTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("QueryFailureTest: Coordinator started successfully");
     //register logical source
@@ -207,9 +211,8 @@ TEST_F(QueryFailureTest, DISABLED_failRunningQuery) {
 
     auto query = Query::from("default_logical").filter(Attribute("value") < 42).sink(FileSinkDescriptor::create(outputFilePath));
 
-    QueryId queryId =
-        requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
+    QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query.getQueryPlan(), Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::checkFailedOrTimeout(queryId, queryCatalog));
 }
 
-}// namespace NES
+} // namespace NES

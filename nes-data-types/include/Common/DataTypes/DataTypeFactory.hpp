@@ -14,10 +14,11 @@
 
 #ifndef NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_
 #define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_
-#include <Common/DataTypes/BasicTypes.hpp>
 #include <memory>
 #include <vector>
-namespace NES {
+#include <Common/DataTypes/BasicTypes.hpp>
+namespace NES
+{
 
 class DataType;
 using DataTypePtr = std::shared_ptr<DataType>;
@@ -34,9 +35,9 @@ using ValueTypePtr = std::shared_ptr<ValueType>;
 /**
  * @brief The data type factory offers multiple methods to construct data types
  */
-class DataTypeFactory {
-
-  public:
+class DataTypeFactory
+{
+public:
     /**
      * @brief Create a new Undefined type
      * @return DataTypePtr
@@ -223,8 +224,8 @@ class DataTypeFactory {
      *
      * @param values the value as a vector of strings, which represent the individual values.
      */
-    static ValueTypePtr createArrayValueFromContainerType(const std::shared_ptr<ArrayType>& type,
-                                                          std::vector<std::string>&& values) noexcept;
+    static ValueTypePtr
+    createArrayValueFromContainerType(const std::shared_ptr<ArrayType>& type, std::vector<std::string>&& values) noexcept;
 
     /**
      * @brief Create a fixed char typed value. For instance ['a', 'b'].
@@ -304,6 +305,6 @@ class DataTypeFactory {
     static DataTypePtr createFloatFromInteger(DataTypePtr stamp);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_
+#endif // NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_

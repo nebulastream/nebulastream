@@ -15,60 +15,70 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_
 
-#include <folly/concurrency/UnboundedQueue.h>
 #include <memory>
+#include <folly/concurrency/UnboundedQueue.h>
 
-namespace NES {
+namespace NES
+{
 
 class Topology;
 using TopologyPtr = std::shared_ptr<Topology>;
 
-namespace Catalogs::Query {
+namespace Catalogs::Query
+{
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-}// namespace Catalogs::Query
+} // namespace Catalogs::Query
 
-namespace Catalogs::Source {
+namespace Catalogs::Source
+{
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-}// namespace Catalogs::Source
+} // namespace Catalogs::Source
 
-namespace Optimizer {
+namespace Optimizer
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 class GlobalQueryPlan;
 using GlobalQueryPlanPtr = std::shared_ptr<GlobalQueryPlan>;
 
-namespace Catalogs::UDF {
+namespace Catalogs::UDF
+{
 class UDFCatalog;
 using UDFCatalogPtr = std::shared_ptr<UDFCatalog>;
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
-namespace Configurations {
+namespace Configurations
+{
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Statistic {
+namespace Statistic
+{
 class StatisticProbeHandler;
 using StatisticProbeHandlerPtr = std::shared_ptr<StatisticProbeHandler>;
-}// namespace Statistic
+} // namespace Statistic
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 /**
  * @brief This struct contains smart pointers to the data structures which coordinator requests operate on.
  */
-struct StorageDataStructures {
-    StorageDataStructures(Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
-                          TopologyPtr topology,
-                          Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
-                          GlobalQueryPlanPtr globalQueryPlan,
-                          Catalogs::Query::QueryCatalogPtr queryCatalog,
-                          Catalogs::Source::SourceCatalogPtr sourceCatalog,
-                          Catalogs::UDF::UDFCatalogPtr udfCatalog,
-                          Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
+struct StorageDataStructures
+{
+    StorageDataStructures(
+        Configurations::CoordinatorConfigurationPtr coordinatorConfiguration,
+        TopologyPtr topology,
+        Optimizer::GlobalExecutionPlanPtr globalExecutionPlan,
+        GlobalQueryPlanPtr globalQueryPlan,
+        Catalogs::Query::QueryCatalogPtr queryCatalog,
+        Catalogs::Source::SourceCatalogPtr sourceCatalog,
+        Catalogs::UDF::UDFCatalogPtr udfCatalog,
+        Statistic::StatisticProbeHandlerPtr statisticProbeHandler);
 
     Configurations::CoordinatorConfigurationPtr coordinatorConfiguration;
     TopologyPtr topology;
@@ -79,6 +89,6 @@ struct StorageDataStructures {
     Catalogs::UDF::UDFCatalogPtr udfCatalog;
     Statistic::StatisticProbeHandlerPtr statisticProbeHandler;
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_STORAGEHANDLES_STORAGEDATASTRUCTURES_HPP_

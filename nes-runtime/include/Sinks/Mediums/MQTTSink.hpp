@@ -16,19 +16,21 @@
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MQTTSINK_HPP_
 
 #ifdef ENABLE_MQTT_BUILD
-#include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/MQTTClientWrapper.hpp>
-#include <cstdint>
-#include <memory>
-#include <string>
+#    include <cstdint>
+#    include <memory>
+#    include <string>
+#    include <Operators/LogicalOperators/Sinks/MQTTSinkDescriptor.hpp>
+#    include <Sinks/Mediums/SinkMedium.hpp>
+#    include <Util/MQTTClientWrapper.hpp>
 
-namespace NES {
+namespace NES
+{
 /**
  * @brief Defining properties used for creating physical MQTT sink
  */
-class MQTTSink : public SinkMedium {
-  public:
+class MQTTSink : public SinkMedium
+{
+public:
     /**
      * @brief Creates the MQTT sink
      * @param address: address name of MQTT broker
@@ -43,21 +45,22 @@ class MQTTSink : public SinkMedium {
      * @param numberOfOrigins: number of origins of a given query
      * @return MQTT sink
      */
-    explicit MQTTSink(SinkFormatPtr sinkFormat,
-                      Runtime::NodeEnginePtr nodeEngine,
-                      uint32_t numOfProducers,
-                      SharedQueryId sharedQueryId,
-                      DecomposedQueryPlanId decomposedQueryPlanId,
-                      std::string const& address,
-                      std::string const& clientId,
-                      std::string const& topic,
-                      std::string const& user,
-                      uint64_t maxBufferedMessages,
-                      MQTTSinkDescriptor::TimeUnits timeUnit,
-                      uint64_t messageDelay,
-                      MQTTSinkDescriptor::ServiceQualities qualityOfService,
-                      bool asynchronousClient,
-                      uint64_t numberOfOrigins = 1);
+    explicit MQTTSink(
+        SinkFormatPtr sinkFormat,
+        Runtime::NodeEnginePtr nodeEngine,
+        uint32_t numOfProducers,
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        std::string const& address,
+        std::string const& clientId,
+        std::string const& topic,
+        std::string const& user,
+        uint64_t maxBufferedMessages,
+        MQTTSinkDescriptor::TimeUnits timeUnit,
+        uint64_t messageDelay,
+        MQTTSinkDescriptor::ServiceQualities qualityOfService,
+        bool asynchronousClient,
+        uint64_t numberOfOrigins = 1);
     ~MQTTSink() NES_NOEXCEPT(false) override;
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
@@ -141,7 +144,7 @@ class MQTTSink : public SinkMedium {
     */
     SinkMediumTypes getSinkMediumType() override;
 
-  private:
+private:
     [[maybe_unused]] DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     std::string address;
     std::string clientId;
@@ -158,6 +161,6 @@ class MQTTSink : public SinkMedium {
 };
 using MQTTSinkPtr = std::shared_ptr<MQTTSink>;
 
-}// namespace NES
+} // namespace NES
 #endif
-#endif// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MQTTSINK_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MQTTSINK_HPP_

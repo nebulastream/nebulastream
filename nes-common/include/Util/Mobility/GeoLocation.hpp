@@ -16,21 +16,24 @@
 
 #include <string>
 
-namespace NES::Spatial {
+namespace NES::Spatial
+{
 
-namespace Protobuf {
+namespace Protobuf
+{
 class GeoLocation;
 }
 
-namespace DataTypes::Experimental {
+namespace DataTypes::Experimental
+{
 
 /**
 * @brief a representation of geographical location used to specify the fixed location of field nodes
 * and the changing location of mobile devices
 */
-class GeoLocation {
-
-  public:
+class GeoLocation
+{
+public:
     /**
      * @brief the default constructor which constructs an object with lat=200 and lng=200 which represents an invalid location
      */
@@ -99,11 +102,11 @@ class GeoLocation {
      */
     static bool checkValidityOfCoordinates(double latitude, double longitude);
 
-  private:
+private:
     double latitude;
     double longitude;
 };
-}// namespace DataTypes::Experimental
-}// namespace NES::Spatial
+} // namespace DataTypes::Experimental
+} // namespace NES::Spatial
 
-#endif// NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_
+#endif // NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_

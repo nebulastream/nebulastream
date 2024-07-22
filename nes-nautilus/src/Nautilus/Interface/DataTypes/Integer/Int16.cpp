@@ -15,66 +15,95 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 Int16::Int16(int16_t value) : Int(&type), value(value){};
-Nautilus::IR::Types::StampPtr Int16::getType() const { return Nautilus::IR::Types::StampFactory::createInt16Stamp(); }
-std::shared_ptr<Any> Int16::copy() { return create<Int16>(value); }
-const std::shared_ptr<Int> Int16::add(const Int& other) const {
+Nautilus::IR::Types::StampPtr Int16::getType() const
+{
+    return Nautilus::IR::Types::StampFactory::createInt16Stamp();
+}
+std::shared_ptr<Any> Int16::copy()
+{
+    return create<Int16>(value);
+}
+const std::shared_ptr<Int> Int16::add(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value + otherValue.value);
 }
 
-const std::shared_ptr<Int> Int16::sub(const Int& other) const {
+const std::shared_ptr<Int> Int16::sub(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value - otherValue.value);
 }
-const std::shared_ptr<Int> Int16::div(const Int& other) const {
+const std::shared_ptr<Int> Int16::div(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value / otherValue.value);
 }
-const std::shared_ptr<Int> Int16::mod(const Int& other) const {
+const std::shared_ptr<Int> Int16::mod(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value % otherValue.value);
 }
-const std::shared_ptr<Int> Int16::mul(const Int& other) const {
+const std::shared_ptr<Int> Int16::mul(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value * otherValue.value);
 }
-const std::shared_ptr<Boolean> Int16::equals(const Int& other) const {
+const std::shared_ptr<Boolean> Int16::equals(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Boolean>(value == otherValue.value);
 }
-const std::shared_ptr<Boolean> Int16::lessThan(const Int& other) const {
+const std::shared_ptr<Boolean> Int16::lessThan(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Boolean>(value < otherValue.value);
 }
-const std::shared_ptr<Boolean> Int16::greaterThan(const Int& other) const {
+const std::shared_ptr<Boolean> Int16::greaterThan(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Boolean>(value > otherValue.value);
 }
-const std::shared_ptr<Int> Int16::bitWiseAnd(const Int& other) const {
+const std::shared_ptr<Int> Int16::bitWiseAnd(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value & otherValue.value);
 }
-const std::shared_ptr<Int> Int16::bitWiseOr(const Int& other) const {
+const std::shared_ptr<Int> Int16::bitWiseOr(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value | otherValue.value);
 }
-const std::shared_ptr<Int> Int16::bitWiseXor(const Int& other) const {
+const std::shared_ptr<Int> Int16::bitWiseXor(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value ^ otherValue.value);
 }
-const std::shared_ptr<Int> Int16::bitWiseLeftShift(const Int& other) const {
+const std::shared_ptr<Int> Int16::bitWiseLeftShift(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value << otherValue.value);
 }
-const std::shared_ptr<Int> Int16::bitWiseRightShift(const Int& other) const {
+const std::shared_ptr<Int> Int16::bitWiseRightShift(const Int& other) const
+{
     auto& otherValue = other.staticCast<Int16>();
     return create<Int16>(value >> otherValue.value);
 }
 
-int16_t Int16::getValue() const { return value; }
-int64_t Int16::getRawInt() const { return value; }
-std::string Int16::toString() { return std::to_string(value); }
-}// namespace NES::Nautilus
+int16_t Int16::getValue() const
+{
+    return value;
+}
+int64_t Int16::getRawInt() const
+{
+    return value;
+}
+std::string Int16::toString()
+{
+    return std::to_string(value);
+}
+} // namespace NES::Nautilus

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
@@ -20,23 +20,27 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
-#include <utility>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
-void* getKeyedStateProxy(void* op, WorkerThreadId workerThreadId) {
+void* getKeyedStateProxy(void* op, WorkerThreadId workerThreadId)
+{
     auto handler = static_cast<BatchKeyedAggregationHandler*>(op);
     return handler->getThreadLocalStore(workerThreadId);
 }
 
-void setupHandler(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize) {
+void setupHandler(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize)
+{
     auto handler = static_cast<BatchKeyedAggregationHandler*>(ss);
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, keySize, valueSize);
 }
 
-class LocalKeyedStoreState : public Operators::OperatorState {
-  public:
+class LocalKeyedStoreState : public Operators::OperatorState
+{
+public:
     explicit LocalKeyedStoreState(Interface::ChainedHashMapRef hm) : hm(std::move(hm)){};
 
     const Interface::ChainedHashMapRef hm;
@@ -48,35 +52,45 @@ BatchKeyedAggregation::BatchKeyedAggregation(
     const std::vector<PhysicalTypePtr>& keyDataTypes,
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>>& aggregationFunctions,
     std::unique_ptr<Nautilus::Interface::HashFunction> hashFunction)
-    : operatorHandlerIndex(operatorHandlerIndex), keyExpressions(keyExpressions), keyDataTypes(keyDataTypes),
-      aggregationFunctions(aggregationFunctions), hashFunction(std::move(hashFunction)), keySize(0), valueSize(0) {
-    for (auto& keyType : keyDataTypes) {
+    : operatorHandlerIndex(operatorHandlerIndex)
+    , keyExpressions(keyExpressions)
+    , keyDataTypes(keyDataTypes)
+    , aggregationFunctions(aggregationFunctions)
+    , hashFunction(std::move(hashFunction))
+    , keySize(0)
+    , valueSize(0)
+{
+    for (auto& keyType : keyDataTypes)
+    {
         keySize = keySize + keyType->size();
     }
-    for (auto& function : aggregationFunctions) {
+    for (auto& function : aggregationFunctions)
+    {
         valueSize = valueSize + function->getSize();
     }
 }
 
-void BatchKeyedAggregation::setup(ExecutionContext& executionCtx) const {
+void BatchKeyedAggregation::setup(ExecutionContext& executionCtx) const
+{
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("setupHandler",
-                           setupHandler,
-                           globalOperatorHandler,
-                           executionCtx.getPipelineContext(),
-                           Value<UInt64>(keySize),
-                           Value<UInt64>(valueSize));
+    Nautilus::FunctionCall(
+        "setupHandler",
+        setupHandler,
+        globalOperatorHandler,
+        executionCtx.getPipelineContext(),
+        Value<UInt64>(keySize),
+        Value<UInt64>(valueSize));
 }
 
-void BatchKeyedAggregation::open(ExecutionContext& ctx, RecordBuffer&) const {
+void BatchKeyedAggregation::open(ExecutionContext& ctx, RecordBuffer&) const
+{
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context.
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
     // 2. load the thread local hash map according to the worker id.
-    auto hashMap =
-        Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerThreadId());
+    auto hashMap = Nautilus::FunctionCall("getKeyedStateProxy", getKeyedStateProxy, globalOperatorHandler, ctx.getWorkerThreadId());
     auto hashMapRef = Interface::ChainedHashMapRef(hashMap, keyDataTypes, keySize, valueSize);
 
     // 3. store the reference to the hash map in the local operator state.
@@ -84,11 +98,12 @@ void BatchKeyedAggregation::open(ExecutionContext& ctx, RecordBuffer&) const {
     ctx.setLocalOperatorState(this, std::move(state));
 }
 
-void BatchKeyedAggregation::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const {
-
+void BatchKeyedAggregation::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const
+{
     // 1. derive key values
     std::vector<Value<>> keyValues;
-    for (const auto& exp : keyExpressions) {
+    for (const auto& exp : keyExpressions)
+    {
         keyValues.emplace_back(exp->execute(record));
     }
 
@@ -100,20 +115,26 @@ void BatchKeyedAggregation::execute(NES::Runtime::Execution::ExecutionContext& c
     auto hash = hashFunction->calculate(keyValues);
 
     // 5. create entry in the hash map. If the entry is new set default values for aggregations.
-    auto entry = hashMap.findOrCreate(hash, keyValues, [this](auto& entry) {
-        // set aggregation values if a new entry was created
-        auto valuePtr = entry.getValuePtr();
-        for (const auto& aggFunction : aggregationFunctions) {
-            aggFunction->reset(valuePtr);
-            valuePtr = valuePtr + aggFunction->getSize();
-        }
-    });
+    auto entry = hashMap.findOrCreate(
+        hash,
+        keyValues,
+        [this](auto& entry)
+        {
+            // set aggregation values if a new entry was created
+            auto valuePtr = entry.getValuePtr();
+            for (const auto& aggFunction : aggregationFunctions)
+            {
+                aggFunction->reset(valuePtr);
+                valuePtr = valuePtr + aggFunction->getSize();
+            }
+        });
 
     // 6. manipulate the current aggregate values
     auto valuePtr = entry.getValuePtr();
-    for (size_t i = 0; i < aggregationFunctions.size(); ++i) {
+    for (size_t i = 0; i < aggregationFunctions.size(); ++i)
+    {
         aggregationFunctions[i]->lift(valuePtr, record);
         valuePtr = valuePtr + aggregationFunctions[i]->getSize();
     }
 }
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators

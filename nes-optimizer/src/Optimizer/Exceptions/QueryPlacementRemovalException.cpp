@@ -14,10 +14,16 @@
 
 #include <Optimizer/Exceptions/QueryPlacementRemovalException.hpp>
 
-namespace NES::Exceptions {
+namespace NES::Exceptions
+{
 QueryPlacementRemovalException::QueryPlacementRemovalException(SharedQueryId sharedQueryId, const std::string& message)
-    : RequestExecutionException(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), message) {}
+    : RequestExecutionException(UNSURE_CONVERSION_TODO_4761(sharedQueryId, QueryId), message)
+{
+}
 
-const char* QueryPlacementRemovalException::what() const noexcept { return RequestExecutionException::what(); }
+const char* QueryPlacementRemovalException::what() const noexcept
+{
+    return RequestExecutionException::what();
+}
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions

@@ -15,32 +15,36 @@
 #ifndef NES_WORKER_INCLUDE_COMPONENTS_NESWORKER_HPP_
 #define NES_WORKER_INCLUDE_COMPONENTS_NESWORKER_HPP_
 
+#include <future>
+#include <memory>
+#include <optional>
+#include <vector>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/ErrorListener.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/PluginLoader.hpp>
-#include <future>
-#include <memory>
-#include <optional>
-#include <vector>
 
-namespace grpc {
+namespace grpc
+{
 class Server;
 class ServerCompletionQueue;
-}// namespace grpc
+} // namespace grpc
 
-namespace NES {
+namespace NES
+{
 
 class WorkerHealthCheckService;
 
-namespace Spatial::Index::Experimental {
+namespace Spatial::Index::Experimental
+{
 class Location;
 using LocationPtr = std::shared_ptr<Location>;
-}// namespace Spatial::Index::Experimental
+} // namespace Spatial::Index::Experimental
 
-namespace Spatial::Mobility::Experimental {
+namespace Spatial::Mobility::Experimental
+{
 class LocationProvider;
 using LocationProviderPtr = std::shared_ptr<LocationProvider>;
 
@@ -50,34 +54,37 @@ using ReconnectSchedulePredictorPtr = std::shared_ptr<ReconnectSchedulePredictor
 class WorkerMobilityHandler;
 using WorkerMobilityHandlerPtr = std::shared_ptr<WorkerMobilityHandler>;
 
-}// namespace Spatial::Mobility::Experimental
+} // namespace Spatial::Mobility::Experimental
 
-namespace Configurations::Spatial::Mobility::Experimental {
+namespace Configurations::Spatial::Mobility::Experimental
+{
 class WorkerMobilityConfiguration;
 using WorkerMobilityConfigurationPtr = std::shared_ptr<WorkerMobilityConfiguration>;
-}// namespace Configurations::Spatial::Mobility::Experimental
+} // namespace Configurations::Spatial::Mobility::Experimental
 
 class WorkerRPCServer;
 class CoordinatorRPCClient;
 using CoordinatorRPCClientPtr = std::shared_ptr<CoordinatorRPCClient>;
 
-namespace Monitoring {
+namespace Monitoring
+{
 class MonitoringAgent;
 using MonitoringAgentPtr = std::shared_ptr<MonitoringAgent>;
 
 class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
-}// namespace Monitoring
+} // namespace Monitoring
 
 static constexpr auto HEALTH_SERVICE_NAME = "NES_DEFAULT_HEALTH_CHECK_SERVICE";
 
 class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
                   public Exceptions::ErrorListener,
-                  public AbstractQueryStatusListener {
+                  public AbstractQueryStatusListener
+{
     using inherited0 = detail::virtual_enable_shared_from_this<NesWorker>;
     using inherited1 = ErrorListener;
 
-  public:
+public:
     /**
      * @brief default constructor which creates a sensor node with a metric store
      * @note this will create the worker actor using the default worker config
@@ -174,19 +181,22 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
      */
     bool notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) override;
 
-    bool notifySourceTermination(SharedQueryId sharedQueryId,
-                                 DecomposedQueryPlanId decomposedQueryPlanId,
-                                 OperatorId sourceId,
-                                 Runtime::QueryTerminationType) override;
+    bool notifySourceTermination(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        OperatorId sourceId,
+        Runtime::QueryTerminationType) override;
 
-    bool canTriggerEndOfStream(SharedQueryId sharedQueryId,
-                               DecomposedQueryPlanId decomposedQueryPlanId,
-                               OperatorId sourceId,
-                               Runtime::QueryTerminationType) override;
+    bool canTriggerEndOfStream(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        OperatorId sourceId,
+        Runtime::QueryTerminationType) override;
 
-    bool notifyQueryStatusChange(SharedQueryId sharedQueryId,
-                                 DecomposedQueryPlanId decomposedQueryPlanId,
-                                 Runtime::Execution::ExecutableQueryPlanStatus newStatus) override;
+    bool notifyQueryStatusChange(
+        SharedQueryId sharedQueryId,
+        DecomposedQueryPlanId decomposedQueryPlanId,
+        Runtime::Execution::ExecutableQueryPlanStatus newStatus) override;
 
     /**
      * @brief Method to let the Coordinator know of errors and exceptions
@@ -243,7 +253,7 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 
     NES::Spatial::Mobility::Experimental::WorkerMobilityHandlerPtr getMobilityHandler();
 
-  private:
+private:
     /**
      * @brief method to register physical source with the coordinator
      * @param physicalSourceTypes: physical sources containing relevant information
@@ -289,5 +299,5 @@ class NesWorker : public detail::virtual_enable_shared_from_this<NesWorker>,
 };
 using NesWorkerPtr = std::shared_ptr<NesWorker>;
 
-}// namespace NES
-#endif// NES_WORKER_INCLUDE_COMPONENTS_NESWORKER_HPP_
+} // namespace NES
+#endif // NES_WORKER_INCLUDE_COMPONENTS_NESWORKER_HPP_

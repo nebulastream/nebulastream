@@ -14,11 +14,12 @@
 #ifndef NES_RUNTIME_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
 #include <memory>
-namespace NES {
+namespace NES
+{
 
 class SinkMedium;
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_
+#endif // NES_RUNTIME_INCLUDE_SINKS_SINKSFORWAREDREFS_HPP_

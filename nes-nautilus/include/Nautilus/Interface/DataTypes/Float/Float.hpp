@@ -16,13 +16,15 @@
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
-namespace NES::Nautilus {
+namespace NES::Nautilus
+{
 
 /**
  * @brief Float data type.
  */
-class Float : public TraceableType {
-  public:
+class Float : public TraceableType
+{
+public:
     using RawType = float;
     static const inline auto type = TypeIdentifier::create<Float>();
     Float(float value);
@@ -38,10 +40,10 @@ class Float : public TraceableType {
     float getValue() const;
     std::string toString() override;
 
-  private:
+private:
     const float value;
 };
 
-}// namespace NES::Nautilus
+} // namespace NES::Nautilus
 
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_FLOAT_FLOAT_HPP_
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_FLOAT_FLOAT_HPP_

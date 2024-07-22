@@ -15,16 +15,18 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_
 
-#include <Sources/DataSource.hpp>
 #include <fstream>
+#include <Sources/DataSource.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /**
  * @brief this class provides a binary file as source
  */
-class BinarySource : public DataSource {
-  public:
+class BinarySource : public DataSource
+{
+public:
     /**
      * @brief the constructor for a binary source
      * @param schema of the data source
@@ -40,17 +42,18 @@ class BinarySource : public DataSource {
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      * @return a DataSourcePtr pointing to the data source
      */
-    explicit BinarySource(const SchemaPtr& schema,
-                          Runtime::BufferManagerPtr bufferManager,
-                          Runtime::QueryManagerPtr queryManager,
-                          const std::string& pathToFile,
-                          OperatorId operatorId,
-                          OriginId originId,
-                          StatisticId statisticId,
-                          size_t numSourceLocalBuffers,
-                          GatheringMode gatheringMode,
-                          const std::string& physicalSourceName,
-                          std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+    explicit BinarySource(
+        const SchemaPtr& schema,
+        Runtime::BufferManagerPtr bufferManager,
+        Runtime::QueryManagerPtr queryManager,
+        const std::string& pathToFile,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        GatheringMode gatheringMode,
+        const std::string& physicalSourceName,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief override the receiveData method for the binary source
@@ -74,10 +77,10 @@ class BinarySource : public DataSource {
 
     const std::string& getFilePath() const;
 
-  protected:
+protected:
     std::ifstream input;
 
-  private:
+private:
     std::string filePath;
 
     size_t fileSize;
@@ -86,5 +89,5 @@ class BinarySource : public DataSource {
 
 using BinarySourcePtr = std::shared_ptr<BinarySource>;
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_

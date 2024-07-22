@@ -14,20 +14,30 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
 
-namespace NES::QueryCompilation::PhysicalOperators {
+namespace NES::QueryCompilation::PhysicalOperators
+{
 
 PhysicalStreamJoinOperator::PhysicalStreamJoinOperator(
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& joinOperatorHandler,
     QueryCompilation::StreamJoinStrategy joinStrategy,
     QueryCompilation::WindowingStrategy windowingStrategy)
-    : streamJoinOperator(joinStrategy, windowingStrategy), joinOperatorHandler(joinOperatorHandler) {}
+    : streamJoinOperator(joinStrategy, windowingStrategy), joinOperatorHandler(joinOperatorHandler)
+{
+}
 
-StreamJoinStrategy PhysicalStreamJoinOperator::getJoinStrategy() const { return streamJoinOperator.joinStrategy; }
+StreamJoinStrategy PhysicalStreamJoinOperator::getJoinStrategy() const
+{
+    return streamJoinOperator.joinStrategy;
+}
 
-WindowingStrategy PhysicalStreamJoinOperator::getWindowingStrategy() const { return streamJoinOperator.windowingStrategy; }
+WindowingStrategy PhysicalStreamJoinOperator::getWindowingStrategy() const
+{
+    return streamJoinOperator.windowingStrategy;
+}
 
-const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& PhysicalStreamJoinOperator::getJoinOperatorHandler() const {
+const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& PhysicalStreamJoinOperator::getJoinOperatorHandler() const
+{
     return joinOperatorHandler;
 }
 
-}// namespace NES::QueryCompilation::PhysicalOperators
+} // namespace NES::QueryCompilation::PhysicalOperators

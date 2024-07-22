@@ -16,7 +16,8 @@
 #define NES_COMMON_INCLUDE_NODES_ITERATORS_BREADTHFIRSTNODEITERATOR_HPP_
 #include <memory>
 #include <queue>
-namespace NES {
+namespace NES
+{
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -25,14 +26,16 @@ using NodePtr = std::shared_ptr<Node>;
  * @brief Breadth-First iterator for node trees.
  * We first iterate over all records at the same level and then go to the next level.
  */
-class BreadthFirstNodeIterator {
-  public:
+class BreadthFirstNodeIterator
+{
+public:
     explicit BreadthFirstNodeIterator(NodePtr start);
 
-    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&> {
+    class iterator : public std::iterator<std::forward_iterator_tag, NodePtr, NodePtr, NodePtr*, NodePtr&>
+    {
         friend class BreadthFirstNodeIterator;
 
-      public:
+    public:
         /**
          * @brief Moves the iterator to the next node.
          * If we reach the end of the iterator we will ignore this operation.
@@ -51,7 +54,7 @@ class BreadthFirstNodeIterator {
          */
         NodePtr operator*();
 
-      private:
+    private:
         explicit iterator(const NodePtr& current);
         explicit iterator();
         std::queue<NodePtr> workQueue;
@@ -69,9 +72,9 @@ class BreadthFirstNodeIterator {
     */
     static iterator end();
 
-  private:
+private:
     NodePtr start;
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_COMMON_INCLUDE_NODES_ITERATORS_BREADTHFIRSTNODEITERATOR_HPP_
+#endif // NES_COMMON_INCLUDE_NODES_ITERATORS_BREADTHFIRSTNODEITERATOR_HPP_

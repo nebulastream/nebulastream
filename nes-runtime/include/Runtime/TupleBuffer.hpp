@@ -15,8 +15,6 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
 
-#include <Runtime/detail/TupleBufferImpl.hpp>
-#include <Sequencing/SequenceData.hpp>
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
@@ -25,21 +23,25 @@
 #include <ostream>
 #include <sstream>
 #include <utility>
+#include <Runtime/detail/TupleBufferImpl.hpp>
+#include <Sequencing/SequenceData.hpp>
 
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
 /// Making use of short-circuit evaluation here because otherwise v-1 might be an underflow.
 /// TODO: switch to std::ispow2 when we use C++2a.
-template<std::size_t v>
+template <std::size_t v>
 static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
-namespace NES::Network::detail {
-template<typename>
+namespace NES::Network::detail
+{
+template <typename>
 class NetworkDataSender;
-template<typename>
+template <typename>
 class NetworkEventSender;
-}// namespace NES::Network::detail
+} // namespace NES::Network::detail
 
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 
 /**
  * @brief The TupleBuffer allows Runtime components to access memory to store records in a reference-counted and
@@ -63,7 +65,8 @@ namespace NES::Runtime {
  * Reminder: this class should be header-only to help inlining
  */
 
-class TupleBuffer {
+class TupleBuffer
+{
     /// Utilize the wrapped-memory constructor
     friend class BufferManager;
     friend class FixedSizeBufferPool;
@@ -71,17 +74,18 @@ class TupleBuffer {
     friend class detail::MemorySegment;
 
     /// Utilize the wrapped-memory constructor and requires direct access to the control block for the ZMQ sink.
-    template<typename T>
+    template <typename T>
     friend class NES::Network::detail::NetworkDataSender;
-    template<typename T>
+    template <typename T>
     friend class NES::Network::detail::NetworkEventSender;
 
     [[nodiscard]] constexpr explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
-        : controlBlock(controlBlock), ptr(ptr), size(size) {
+        : controlBlock(controlBlock), ptr(ptr), size(size)
+    {
         // nop
     }
 
-  public:
+public:
     ///@brief This is the logical identifier of a child tuple buffer
     using NestedTupleBufferKey = uint32_t;
 
@@ -113,9 +117,7 @@ class TupleBuffer {
      */
     [[nodiscard]] static TupleBuffer wrapMemory(uint8_t* ptr, size_t length, BufferRecycler* parent);
     [[nodiscard]] static TupleBuffer
-    wrapMemory(uint8_t* ptr,
-               size_t length,
-               std::function<void(detail::MemorySegment* segment, BufferRecycler* recycler)>&& recycler);
+    wrapMemory(uint8_t* ptr, size_t length, std::function<void(detail::MemorySegment* segment, BufferRecycler* recycler)>&& recycler);
 
     /**
      * Wrap an object in a tuple buffer.
@@ -123,35 +125,39 @@ class TupleBuffer {
      * @param ownership to object
      * @return TupleBuffer
      */
-    template<class T>
-    [[nodiscard]] static TupleBuffer wrapPtr(std::unique_ptr<T> object) {
-        return wrapMemory((uint8_t*) object.release(),
-                          sizeof(typename std::unique_ptr<T>::pointer),
-                          [](detail::MemorySegment* segment, BufferRecycler*) {
-                              delete (typename std::unique_ptr<T>::pointer)(segment->getPointer());
-                          });
+    template <class T>
+    [[nodiscard]] static TupleBuffer wrapPtr(std::unique_ptr<T> object)
+    {
+        return wrapMemory(
+            (uint8_t*)object.release(),
+            sizeof(typename std::unique_ptr<T>::pointer),
+            [](detail::MemorySegment* segment, BufferRecycler*) { delete (typename std::unique_ptr<T>::pointer)(segment->getPointer()); });
     }
 
     /// @brief Copy constructor: Increase the reference count associated to the control buffer.
     [[nodiscard]] constexpr TupleBuffer(TupleBuffer const& other) noexcept
-        : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
-        if (controlBlock) {
+        : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+    {
+        if (controlBlock)
+        {
             controlBlock->retain();
         }
     }
 
     /// @brief Move constructor: Steal the resources from `other`. This does not affect the reference count.
     /// @dev In this constructor, `other` is cleared, because otherwise its destructor would release its old memory.
-    [[nodiscard]] constexpr TupleBuffer(TupleBuffer&& other) noexcept
-        : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size) {
+    [[nodiscard]] constexpr TupleBuffer(TupleBuffer&& other) noexcept : controlBlock(other.controlBlock), ptr(other.ptr), size(other.size)
+    {
         other.controlBlock = nullptr;
         other.ptr = nullptr;
         other.size = 0;
     }
 
     /// @brief Assign the `other` resource to this TupleBuffer; increase and decrease reference count if necessary.
-    TupleBuffer& operator=(TupleBuffer const& other) noexcept {
-        if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
+    TupleBuffer& operator=(TupleBuffer const& other) noexcept
+    {
+        if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
+        {
             return *this;
         }
 
@@ -161,9 +167,11 @@ class TupleBuffer {
         size = other.size;
 
         // Update reference counts: If the new and old controlBlocks differ, retain the new one and release the old one.
-        if (oldControlBlock != controlBlock) {
+        if (oldControlBlock != controlBlock)
+        {
             retain();
-            if (oldControlBlock) {
+            if (oldControlBlock)
+            {
                 oldControlBlock->release();
             }
         }
@@ -171,10 +179,12 @@ class TupleBuffer {
     }
 
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
-    inline TupleBuffer& operator=(TupleBuffer&& other) noexcept {
+    inline TupleBuffer& operator=(TupleBuffer&& other) noexcept
+    {
         // Especially for rvalues, the following branch should most likely never be taken if the caller writes
         // reasonable code. Therefore, this branch is considered unlikely.
-        if PLACEHOLDER_UNLIKELY (this == std::addressof(other)) {
+        if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
+        {
             return *this;
         }
 
@@ -197,7 +207,8 @@ class TupleBuffer {
 
     /// @brief Swap `lhs` and `rhs`.
     /// @dev Accessible via ADL in an unqualified call.
-    inline friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept {
+    inline friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
+    {
         // Enable ADL to spell out to onlookers how swap should be used.
         using std::swap;
 
@@ -207,16 +218,20 @@ class TupleBuffer {
     }
 
     /// @brief Increases the internal reference counter by one and return this.
-    inline TupleBuffer& retain() noexcept {
-        if (controlBlock) {
+    inline TupleBuffer& retain() noexcept
+    {
+        if (controlBlock)
+        {
             controlBlock->retain();
         }
         return *this;
     }
 
     /// @brief Decrease internal reference counter by one and release the resource when the reference count reaches 0.
-    inline void release() noexcept {
-        if (controlBlock) {
+    inline void release() noexcept
+    {
+        if (controlBlock)
+        {
             controlBlock->release();
         }
         controlBlock = nullptr;
@@ -227,28 +242,29 @@ class TupleBuffer {
     inline uint8_t* getBuffer() noexcept { return getBuffer<uint8_t>(); }
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
-    template<typename T = uint8_t>
-    inline T* getBuffer() noexcept {
+    template <typename T = uint8_t>
+    inline T* getBuffer() noexcept
+    {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<T*>(ptr);
     }
 
     /// @brief return the TupleBuffer's content as pointer to `T`.
-    template<typename T = uint8_t>
-    inline const T* getBuffer() const noexcept {
+    template <typename T = uint8_t>
+    inline const T* getBuffer() const noexcept
+    {
         static_assert(alignof(T) <= alignof(std::max_align_t), "Alignment of type T is stricter than allowed.");
         static_assert(ispow2<alignof(T)>);
         return reinterpret_cast<const T*>(ptr);
     }
 
-    [[nodiscard]] inline uint32_t getReferenceCounter() const noexcept {
-        return controlBlock ? controlBlock->getReferenceCount() : 0;
-    }
+    [[nodiscard]] inline uint32_t getReferenceCounter() const noexcept { return controlBlock ? controlBlock->getReferenceCount() : 0; }
 
     /// @brief Print the buffer's address.
     /// @dev TODO: consider changing the reinterpret_cast to  std::bit_cast in C++2a if possible.
-    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept {
+    friend std::ostream& operator<<(std::ostream& os, const TupleBuffer& buff) noexcept
+    {
         return os << reinterpret_cast<std::uintptr_t>(buff.ptr);
     }
 
@@ -274,7 +290,8 @@ class TupleBuffer {
     inline void setSequenceNumber(uint64_t sequenceNumber) noexcept { controlBlock->setSequenceNumber(sequenceNumber); }
 
     /// @brief set the sequence data, i.e., sequenceNumber, chunkNumber, and lastChunk
-    inline void setSequenceData(SequenceData sequenceData) noexcept {
+    inline void setSequenceData(SequenceData sequenceData) noexcept
+    {
         setSequenceNumber(sequenceData.sequenceNumber);
         setChunkNumber(sequenceData.chunkNumber);
         setLastChunk(sequenceData.lastChunk);
@@ -314,7 +331,8 @@ class TupleBuffer {
     inline void setStatisticId(StatisticId statisticId) noexcept { controlBlock->setStatisticId(statisticId); }
 
     ///@brief set the buffer's recycle callback.
-    inline void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept {
+    inline void addRecycleCallback(std::function<void(detail::MemorySegment*, BufferRecycler*)> newCallback) noexcept
+    {
         controlBlock->addRecycleCallback(std::move(newCallback));
     }
 
@@ -324,9 +342,7 @@ class TupleBuffer {
     ///@brief retrieve a child tuple buffer via its NestedTupleBufferKey
     [[nodiscard]] TupleBuffer loadChildBuffer(NestedTupleBufferKey bufferIndex) const noexcept;
 
-    [[nodiscard]] constexpr uint32_t getNumberOfChildrenBuffer() const noexcept {
-        return controlBlock->getNumberOfChildrenBuffer();
-    }
+    [[nodiscard]] constexpr uint32_t getNumberOfChildrenBuffer() const noexcept { return controlBlock->getNumberOfChildrenBuffer(); }
 
     /**
      * @brief returns true if there is enought space to write
@@ -336,7 +352,7 @@ class TupleBuffer {
      */
     bool hasSpaceLeft(uint64_t used, uint64_t needed) const;
 
-  private:
+private:
     /**
      * @brief returns the control block of the buffer USE THIS WITH CAUTION!
      */
@@ -360,12 +376,13 @@ class TupleBuffer {
  * @param buffer
  * @return T+
  */
-template<typename T>
-T* allocateWithin(TupleBuffer& buffer) {
+template <typename T>
+T* allocateWithin(TupleBuffer& buffer)
+{
     auto ptr = new (buffer.getBuffer()) T();
     buffer.setNumberOfTuples(1);
     return ptr;
 };
 
-}// namespace NES::Runtime
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
+} // namespace NES::Runtime
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_

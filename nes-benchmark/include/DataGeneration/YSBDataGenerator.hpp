@@ -16,10 +16,12 @@
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_YSBDATAGENERATOR_HPP_
 #include <DataGeneration/DataGenerator.hpp>
 
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-class YSBDataGenerator : public DataGenerator {
-  public:
+class YSBDataGenerator : public DataGenerator
+{
+public:
     std::string getName() override;
 
     std::vector<Runtime::TupleBuffer> createData(size_t numberOfBuffers, size_t bufferSize) override;
@@ -31,6 +33,6 @@ class YSBDataGenerator : public DataGenerator {
     std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_YSBDATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_YSBDATAGENERATOR_HPP_

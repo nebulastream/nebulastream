@@ -12,9 +12,8 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <iostream>
 #include <Catalogs/Source/PhysicalSource.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
@@ -30,17 +29,21 @@
 #include <Util/TestUtils.hpp>
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class GrpcTests : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class GrpcTests : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("GrpcTests.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup grpc test class.");
     }
@@ -49,7 +52,8 @@ class GrpcTests : public Testing::BaseIntegrationTest {
 /**
 * Test of Notification from Worker to Coordinator of a failed Query.
 */
-TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
+TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure)
+{
     // Setup Coordinator
     auto window = Schema::create()
                       ->addField(createField("win", BasicType::UINT64))
@@ -83,16 +87,15 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
 
     std::string outputFilePath1 = getTestResourceFolder() / "test1.out";
     NES_INFO("GrpcNotifyQueryFailureTest: Submit query");
-    string query =
-        R"(Query::from("Win1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query = R"(Query::from("Win1").sink(FileSinkDescriptor::create(")" + outputFilePath1 + R"(", "CSV_FORMAT", "APPEND"));)";
 
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
 
     auto subQueryId = DecomposedQueryPlanId(1);
     std::string errormsg = "Query failed.";
-    bool successOfNotifyingQueryFailure =
-        wrk->notifyQueryFailure(UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId), subQueryId, errormsg);
+    bool successOfNotifyingQueryFailure
+        = wrk->notifyQueryFailure(UNSURE_CONVERSION_TODO_4761(queryId, SharedQueryId), subQueryId, errormsg);
 
     EXPECT_TRUE(successOfNotifyingQueryFailure);
 
@@ -115,8 +118,8 @@ TEST_F(GrpcTests, DISABLED_testGrpcNotifyQueryFailure) {
 /**
 * Test if errors are transferred from Worker to Coordinator.
 */
-TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
-
+TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification)
+{
     // Setup Coordinator
     auto window = Schema::create()
                       ->addField(createField("win", BasicType::UINT64))
@@ -163,4 +166,4 @@ TEST_F(GrpcTests, DISABLED_testGrpcSendErrorNotification) {
     NES_INFO("GrpcNotifyErrorTest: Test finished");
 }
 
-}// namespace NES
+} // namespace NES

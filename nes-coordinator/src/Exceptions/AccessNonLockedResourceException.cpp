@@ -12,11 +12,16 @@
     limitations under the License.
 */
 #include <Exceptions/AccessNonLockedResourceException.hpp>
-namespace NES::Exceptions {
-AccessNonLockedResourceException::AccessNonLockedResourceException(const std::string& message,
-                                                                   RequestProcessor::ResourceType resourceType)
-    : RequestExecutionException(message), resourceType(resourceType) {}
+namespace NES::Exceptions
+{
+AccessNonLockedResourceException::AccessNonLockedResourceException(const std::string& message, RequestProcessor::ResourceType resourceType)
+    : RequestExecutionException(message), resourceType(resourceType)
+{
+}
 
-RequestProcessor::ResourceType AccessNonLockedResourceException::getResourceType() { return resourceType; }
+RequestProcessor::ResourceType AccessNonLockedResourceException::getResourceType()
+{
+    return resourceType;
+}
 
-}// namespace NES::Exceptions
+} // namespace NES::Exceptions

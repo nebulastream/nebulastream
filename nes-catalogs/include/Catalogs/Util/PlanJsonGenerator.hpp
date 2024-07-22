@@ -18,7 +18,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <nlohmann/json.hpp>
 
-namespace NES {
+namespace NES
+{
 
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
@@ -26,20 +27,21 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
 
-namespace Optimizer {
+namespace Optimizer
+{
 class GlobalExecutionPlan;
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
-}// namespace Optimizer
+} // namespace Optimizer
 
 /**
  * @brief This is a utility class to convert different plans into JSON
  */
-class PlanJsonGenerator {
-
-  public:
+class PlanJsonGenerator
+{
+public:
     static nlohmann::json getQueryPlanAsJson(const QueryPlanPtr& queryPlan);
 
-  private:
+private:
     /**
      * @brief function to traverse to queryPlanChildren
      * @param root root operator of the queryPlan
@@ -54,5 +56,5 @@ class PlanJsonGenerator {
      */
     static std::string getOperatorType(const OperatorPtr& operatorNode);
 };
-}// namespace NES
-#endif// NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_
+} // namespace NES
+#endif // NES_CATALOGS_INCLUDE_CATALOGS_UTIL_PLANJSONGENERATOR_HPP_

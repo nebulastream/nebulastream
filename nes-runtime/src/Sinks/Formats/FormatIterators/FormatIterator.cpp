@@ -12,13 +12,14 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
-#include <utility>
 
-namespace NES {
+namespace NES
+{
 
 FormatIterator::FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer, FormatTypes formatType)
     : schema(std::move(schema)), buffer(std::move(buffer)), sinkFormatType(formatType){};
-}// namespace NES
+} // namespace NES

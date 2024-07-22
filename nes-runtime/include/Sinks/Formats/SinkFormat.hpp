@@ -14,18 +14,20 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SINKS_FORMATS_SINKFORMAT_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_FORMATS_SINKFORMAT_HPP_
+#include <fstream>
+#include <optional>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
-#include <fstream>
-#include <optional>
 /**
  * @brief this class covers the different output formats that we offer in NES
  */
-namespace NES {
+namespace NES
+{
 
-class SinkFormat {
-  public:
+class SinkFormat
+{
+public:
     /**
      * @brief constructor for a sink format
      * @param schema
@@ -80,7 +82,7 @@ class SinkFormat {
     bool getAddTimestamp();
     void setAddTimestamp(bool addTimestamp);
 
-  protected:
+protected:
     SchemaPtr schema;
     Runtime::BufferManagerPtr bufferManager;
     bool addTimestamp;
@@ -88,5 +90,5 @@ class SinkFormat {
 
 using SinkFormatPtr = std::shared_ptr<SinkFormat>;
 
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_SINKS_FORMATS_SINKFORMAT_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_SINKFORMAT_HPP_

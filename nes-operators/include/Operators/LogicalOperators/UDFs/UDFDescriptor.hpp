@@ -15,19 +15,21 @@
 #ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
 #define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
 
-#include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <memory>
 #include <string>
 #include <utility>
+#include <API/Schema.hpp>
+#include <Common/DataTypes/DataType.hpp>
 
-namespace NES::Catalogs::UDF {
+namespace NES::Catalogs::UDF
+{
 
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 
-class UDFDescriptor {
-  public:
+class UDFDescriptor
+{
+public:
     explicit UDFDescriptor(const std::string& methodName, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema);
 
     virtual ~UDFDescriptor() = default;
@@ -73,8 +75,9 @@ class UDFDescriptor {
 
     virtual std::stringstream generateInferStringSignature() = 0;
 
-    template<class UDFDescriptor>
-    static std::shared_ptr<UDFDescriptor> as(UDFDescriptorPtr ptr) {
+    template <class UDFDescriptor>
+    static std::shared_ptr<UDFDescriptor> as(UDFDescriptorPtr ptr)
+    {
         return std::dynamic_pointer_cast<UDFDescriptor>(ptr);
     }
 
@@ -83,9 +86,11 @@ class UDFDescriptor {
      * @tparam NodeType
      * @return bool true if node is of NodeType
      */
-    template<class UDFDescriptor>
-    bool instanceOf() {
-        if (dynamic_cast<UDFDescriptor*>(this)) {
+    template <class UDFDescriptor>
+    bool instanceOf()
+    {
+        if (dynamic_cast<UDFDescriptor*>(this))
+        {
             return true;
         }
         return false;
@@ -100,11 +105,11 @@ class UDFDescriptor {
      */
     bool operator==(const UDFDescriptor& other) const;
 
-  private:
+private:
     const std::string methodName;
     const DataTypePtr returnType;
     SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
 };
-}// namespace NES::Catalogs::UDF
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
+} // namespace NES::Catalogs::UDF
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_

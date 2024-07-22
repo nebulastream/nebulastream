@@ -15,13 +15,14 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
 
+#include <map>
+#include <string>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <map>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 class KafkaSourceType;
 using KafkaSourceTypePtr = std::shared_ptr<KafkaSourceType>;
@@ -30,25 +31,23 @@ using KafkaSourceTypePtr = std::shared_ptr<KafkaSourceType>;
  * @brief Configuration object for Kafka source config
  * Connect to a kafka broker and read data form there
  */
-class KafkaSourceType : public PhysicalSourceType {
-
-  public:
-    /**
-     * @brief create a KafkaSourceConfigPtr object
-     * @param sourceConfigMap inputted config options
-     * @return KafkaSourceConfigPtr
-     */
-    static KafkaSourceTypePtr create(const std::string& logicalSourceName,
-                                     const std::string& physicalSourceName,
-                                     std::map<std::string, std::string> sourceConfigMap);
-
+class KafkaSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief create a KafkaSourceConfigPtr object
      * @param sourceConfigMap inputted config options
      * @return KafkaSourceConfigPtr
      */
     static KafkaSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+
+    /**
+     * @brief create a KafkaSourceConfigPtr object
+     * @param sourceConfigMap inputted config options
+     * @return KafkaSourceConfigPtr
+     */
+    static KafkaSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
 
     /**
      * @brief create a KafkaSourceConfigPtr object
@@ -158,13 +157,12 @@ class KafkaSourceType : public PhysicalSourceType {
      */
     void setInputFormat(Configurations::InputFormat inputFormatValue);
 
-  private:
+private:
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
      */
-    explicit KafkaSourceType(const std::string& logicalSourceName,
-                             const std::string& physicalSourceName,
-                             std::map<std::string, std::string> sourceConfigMap);
+    explicit KafkaSourceType(
+        const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Kafka source config object initialized with values from sourceConfigMap
@@ -186,5 +184,5 @@ class KafkaSourceType : public PhysicalSourceType {
     Configurations::IntConfigOption batchSize;
     Configurations::InputFormatConfigOption inputFormat;
 };
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

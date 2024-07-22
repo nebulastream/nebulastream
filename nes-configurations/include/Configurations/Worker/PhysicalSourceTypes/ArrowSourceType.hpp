@@ -15,13 +15,14 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_ARROWSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_ARROWSOURCETYPE_HPP_
 
+#include <map>
+#include <string>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
-#include <map>
-#include <string>
 
-namespace NES {
+namespace NES
+{
 
 class ArrowSourceType;
 using ArrowSourceTypePtr = std::shared_ptr<ArrowSourceType>;
@@ -30,8 +31,9 @@ using ArrowSourceTypePtr = std::shared_ptr<ArrowSourceType>;
  * @brief Configuration object for Arrow source config
  * define configurations for a Arrow IPC file source, i.e. this source reads from data from an Arrow IPC file
  */
-class ArrowSourceType : public PhysicalSourceType {
-  public:
+class ArrowSourceType : public PhysicalSourceType
+{
+public:
     ~ArrowSourceType() noexcept override = default;
 
     /**
@@ -39,9 +41,8 @@ class ArrowSourceType : public PhysicalSourceType {
      * @param sourceConfigMap inputted config options
      * @return ArrowSourceTypePtr
      */
-    static ArrowSourceTypePtr create(const std::string& logicalSourceName,
-                                     const std::string& physicalSourceName,
-                                     std::map<std::string, std::string> sourceConfigMap);
+    static ArrowSourceTypePtr
+    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a ArrowSourceTypePtr object
@@ -138,13 +139,12 @@ class ArrowSourceType : public PhysicalSourceType {
      */
     void setNumberOfTuplesToProducePerBuffer(const uint32_t numberOfTuplesToProducePerBuffer);
 
-  private:
+private:
     /**
      * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
      */
-    explicit ArrowSourceType(const std::string& logicalSourceName,
-                             const std::string& physicalSourceName,
-                             std::map<std::string, std::string> sourceConfigMap);
+    explicit ArrowSourceType(
+        const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new Arrow source config object initialized with values from sourceConfigMap
@@ -165,5 +165,5 @@ class ArrowSourceType : public PhysicalSourceType {
     Configurations::GatheringModeConfigOption gatheringMode;
 };
 
-}// namespace NES
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_ARROWSOURCETYPE_HPP_
+} // namespace NES
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_ARROWSOURCETYPE_HPP_

@@ -18,20 +18,22 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
 /**
  * @brief This expression calculates the Gammafunction value of the subExpression.
  */
-class GammaExpression : public Expression {
-  public:
+class GammaExpression : public Expression
+{
+public:
     GammaExpression(const ExpressionPtr& SubExpression);
     Value<> execute(Record& record) const override;
 
-  private:
+private:
     const ExpressionPtr SubExpression;
 };
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_GAMMAEXPRESSION_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_GAMMAEXPRESSION_HPP_

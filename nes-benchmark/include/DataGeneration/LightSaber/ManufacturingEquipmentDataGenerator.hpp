@@ -14,10 +14,12 @@
 #ifndef NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_MANUFACTURINGEQUIPMENTDATAGENERATOR_HPP_
 #define NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_MANUFACTURINGEQUIPMENTDATAGENERATOR_HPP_
 #include <DataGeneration/DataGenerator.hpp>
-namespace NES::Benchmark::DataGeneration {
+namespace NES::Benchmark::DataGeneration
+{
 
-class ManufacturingEquipmentDataGenerator : public DataGenerator {
-  public:
+class ManufacturingEquipmentDataGenerator : public DataGenerator
+{
+public:
     explicit ManufacturingEquipmentDataGenerator();
 
     std::string getName() override;
@@ -27,6 +29,6 @@ class ManufacturingEquipmentDataGenerator : public DataGenerator {
     std::string toString() override;
 };
 
-}// namespace NES::Benchmark::DataGeneration
+} // namespace NES::Benchmark::DataGeneration
 
-#endif// NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_MANUFACTURINGEQUIPMENTDATAGENERATOR_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAGENERATION_LIGHTSABER_MANUFACTURINGEQUIPMENTDATAGENERATOR_HPP_

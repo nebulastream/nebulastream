@@ -13,14 +13,18 @@
 */
 #include <Execution/Expressions/ArithmeticalExpressions/SubExpression.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-Value<> SubExpression::execute(Record& record) const {
+Value<> SubExpression::execute(Record& record) const
+{
     Value leftValue = leftSubExpression->execute(record);
     Value rightValue = rightSubExpression->execute(record);
     return leftValue - rightValue;
 }
 SubExpression::SubExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
-    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
+    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression)
+{
+}
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

@@ -12,9 +12,10 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
+#include <BaseIntegrationTest.hpp>
 
+#include <string>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogService.hpp>
@@ -24,30 +25,31 @@
 #include <Compiler/JITCompilerBuilder.hpp>
 #include <Configurations/WorkerConfigurationKeys.hpp>
 #include <Configurations/WorkerPropertyKeys.hpp>
-#include <CoordinatorRPCService.pb.h>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-#include <string>
+#include <CoordinatorRPCService.pb.h>
 
 using namespace std;
 using namespace NES;
 
-class TopologyManagerServiceTest : public Testing::BaseIntegrationTest {
-  public:
-    std::string queryString =
-        R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
+class TopologyManagerServiceTest : public Testing::BaseIntegrationTest
+{
+public:
+    std::string queryString = R"(Query::from("default_logical").filter(Attribute("value") < 42).sink(PrintSinkDescriptor::create()); )";
 
     std::shared_ptr<QueryParsingService> queryParsingService;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("TopologyManager.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("Setup NES TopologyManagerService test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("Setup NES TopologyManagerService test case.");
         NES_DEBUG("FINISHED ADDING 5 Serialization to topology");
@@ -65,7 +67,8 @@ class TopologyManagerServiceTest : public Testing::BaseIntegrationTest {
     int publish_port;
 };
 
-TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
+TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode)
+{
     Catalogs::Source::SourceCatalogPtr sourceCatalog = std::make_shared<Catalogs::Source::SourceCatalog>();
     TopologyPtr topology = Topology::create();
     std::map<std::string, std::any> properties;
@@ -73,12 +76,11 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     properties[NES::Worker::Configuration::SPATIAL_SUPPORT] = NES::Spatial::Experimental::SpatialType::NO_LOCATION;
     auto bandwidthInMbps = 50;
     auto latencyInMs = 1;
-    auto nodeId =
-        topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port, 5000, 6, properties, bandwidthInMbps, latencyInMs);
+    auto nodeId = topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_NE(nodeId, INVALID_WORKER_NODE_ID);
 
-    auto nodeId1 =
-        topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 2, 5000, 6, properties, bandwidthInMbps, latencyInMs);
+    auto nodeId1
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 2, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_EQ(nodeId1, WorkerId(2));
 
     //test register existing node
@@ -96,8 +98,8 @@ TEST_F(TopologyManagerServiceTest, testRegisterUnregisterNode) {
     EXPECT_TRUE(successUnregisterExistingNode);
 
     //test register new node
-    auto nodeId3 =
-        topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 6, 5000, 6, properties, bandwidthInMbps, latencyInMs);
+    auto nodeId3
+        = topology->registerWorker(INVALID_WORKER_NODE_ID, ip, publish_port + 6, 5000, 6, properties, bandwidthInMbps, latencyInMs);
     EXPECT_EQ(nodeId3, WorkerId(4));
 
     //test register new node with misconfigured worker id

@@ -21,7 +21,8 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::MemoryLayouts {
+namespace NES::Runtime::MemoryLayouts
+{
 
 /**
  * @brief The ColumnLayoutField enables assesses to a specific field in a columnar layout.
@@ -31,10 +32,10 @@ namespace NES::Runtime::MemoryLayouts {
  * @tparam boundaryChecks flag to identify if buffer bounds should be checked at runtime.
  * @caution This class is non-thread safe
  */
-template<class T, bool boundaryChecks = true>
-class ColumnLayoutField {
-
-  public:
+template <class T, bool boundaryChecks = true>
+class ColumnLayoutField
+{
+public:
     /**
      * Factory to create a ColumnLayoutField for a specific memory layout and a specific tuple buffer.
      * @param fieldIndex the field which is accessed.
@@ -64,23 +65,24 @@ class ColumnLayoutField {
      */
     inline T& operator[](size_t recordIndex);
 
-  private:
+private:
     /**
      * @brief Constructor for ColumnLayoutField
      * @param basePointer
      * @param layout
      */
-    ColumnLayoutField(T* basePointer, std::shared_ptr<ColumnLayout> layout)
-        : basePointer(basePointer), layout(std::move(layout)){};
+    ColumnLayoutField(T* basePointer, std::shared_ptr<ColumnLayout> layout) : basePointer(basePointer), layout(std::move(layout)){};
 
     T* basePointer;
     std::shared_ptr<ColumnLayout> layout;
 };
 
-template<class T, bool boundaryChecks>
+template <class T, bool boundaryChecks>
 inline ColumnLayoutField<T, boundaryChecks>
-ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer) {
-    if (boundaryChecks && fieldIndex >= layout->getFieldSizes().size()) {
+ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer)
+{
+    if (boundaryChecks && fieldIndex >= layout->getFieldSizes().size())
+    {
         NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layout->getFieldSizes().size() << " >= " << fieldIndex);
     }
 
@@ -91,25 +93,28 @@ ColumnLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_pt
     return ColumnLayoutField<T, boundaryChecks>(basePointer, layout);
 }
 
-template<class T, bool boundaryChecks>
-ColumnLayoutField<T, boundaryChecks> ColumnLayoutField<T, boundaryChecks>::create(const std::string& fieldName,
-                                                                                  std::shared_ptr<ColumnLayout> layout,
-                                                                                  TupleBuffer& buffer) {
+template <class T, bool boundaryChecks>
+ColumnLayoutField<T, boundaryChecks>
+ColumnLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<ColumnLayout> layout, TupleBuffer& buffer)
+{
     auto fieldIndex = layout->getFieldIndexFromName(fieldName);
-    if (fieldIndex.has_value()) {
+    if (fieldIndex.has_value())
+    {
         return ColumnLayoutField<T, boundaryChecks>::create(fieldIndex.value(), layout, buffer);
     }
     NES_THROW_RUNTIME_ERROR("DynamicColumnLayoutField: Could not find fieldIndex for " << fieldName);
 }
 
-template<class T, bool boundaryChecks>
-inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex) {
-    if (boundaryChecks && recordIndex >= layout->getCapacity()) {
+template <class T, bool boundaryChecks>
+inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
+{
+    if (boundaryChecks && recordIndex >= layout->getCapacity())
+    {
         NES_THROW_RUNTIME_ERROR("recordIndex out of bounds!" << layout->getCapacity() << " >= " << recordIndex);
     }
     return *(basePointer + recordIndex);
 }
 
-}// namespace NES::Runtime::MemoryLayouts
+} // namespace NES::Runtime::MemoryLayouts
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_

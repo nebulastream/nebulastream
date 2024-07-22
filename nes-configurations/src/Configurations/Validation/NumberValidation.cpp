@@ -12,16 +12,19 @@
     limitations under the License.
 */
 
-#include <Configurations/Validation/NumberValidation.hpp>
 #include <regex>
+#include <Configurations/Validation/NumberValidation.hpp>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
-bool NumberValidation::isValid(const std::string& parameter) const {
+bool NumberValidation::isValid(const std::string& parameter) const
+{
     std::regex numberRegex("^\\d+$");
-    if (!std::regex_match(parameter, numberRegex)) {
+    if (!std::regex_match(parameter, numberRegex))
+    {
         return false;
     }
     return true;
 }
-}// namespace NES::Configurations
+} // namespace NES::Configurations

@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
-#include <Common/ValueTypes/ValueType.hpp>
+#include <cstring>
+#include <numeric>
+#include <string>
+#include <vector>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
@@ -21,21 +24,21 @@
 #include <Statistics/Synopses/CountMinStatistic.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <cstring>
 #include <fmt/format.h>
-#include <numeric>
-#include <string>
-#include <vector>
+#include <Common/ValueTypes/ValueType.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-StatisticPtr CountMinStatistic::create(const Windowing::TimeMeasure& startTs,
-                                       const Windowing::TimeMeasure& endTs,
-                                       uint64_t observedTuples,
-                                       uint64_t width,
-                                       uint64_t depth,
-                                       uint64_t numberOfBitsInKey,
-                                       const std::string_view countMinDataString) {
+StatisticPtr CountMinStatistic::create(
+    const Windowing::TimeMeasure& startTs,
+    const Windowing::TimeMeasure& endTs,
+    uint64_t observedTuples,
+    uint64_t width,
+    uint64_t depth,
+    uint64_t numberOfBitsInKey,
+    const std::string_view countMinDataString)
+{
     // We just store the CountMin data as a string. So we have to copy the bytes from the string to a vector
     // We do this by first creating a large enough vector and then copy the bytes
     std::vector<uint64_t> countMinData(width * depth, 0);
@@ -45,11 +48,9 @@ StatisticPtr CountMinStatistic::create(const Windowing::TimeMeasure& startTs,
         CountMinStatistic(startTs, endTs, observedTuples, width, depth, numberOfBitsInKey, countMinData));
 }
 
-StatisticPtr CountMinStatistic::createInit(const Windowing::TimeMeasure& startTs,
-                                           const Windowing::TimeMeasure& endTs,
-                                           uint64_t width,
-                                           uint64_t depth,
-                                           uint64_t numberOfBitsInKey) {
+StatisticPtr CountMinStatistic::createInit(
+    const Windowing::TimeMeasure& startTs, const Windowing::TimeMeasure& endTs, uint64_t width, uint64_t depth, uint64_t numberOfBitsInKey)
+{
     // Initializing the underlying count min data to all 0 and setting the observed tuples to 0
     std::vector<uint64_t> countMinData(width * depth, 0);
     constexpr auto observedTuples = 0;
@@ -57,7 +58,8 @@ StatisticPtr CountMinStatistic::createInit(const Windowing::TimeMeasure& startTs
         CountMinStatistic(startTs, endTs, observedTuples, width, depth, numberOfBitsInKey, countMinData));
 }
 
-void CountMinStatistic::update(uint64_t row, uint64_t col) {
+void CountMinStatistic::update(uint64_t row, uint64_t col)
+{
     // 1. Incrementing the observed tuples as we have seen one more
     observedTuples += 1;
 
@@ -68,19 +70,27 @@ void CountMinStatistic::update(uint64_t row, uint64_t col) {
     countMinData[pos] += 1;
 }
 
-CountMinStatistic::CountMinStatistic(const Windowing::TimeMeasure& startTs,
-                                     const Windowing::TimeMeasure& endTs,
-                                     uint64_t observedTuples,
-                                     uint64_t width,
-                                     uint64_t depth,
-                                     uint64_t numberOfBitsInKey,
-                                     const std::vector<uint64_t>& countMinData)
-    : SynopsesStatistic(startTs, endTs, observedTuples), width(width), depth(depth), numberOfBitsInKey(numberOfBitsInKey),
-      countMinData(countMinData) {}
+CountMinStatistic::CountMinStatistic(
+    const Windowing::TimeMeasure& startTs,
+    const Windowing::TimeMeasure& endTs,
+    uint64_t observedTuples,
+    uint64_t width,
+    uint64_t depth,
+    uint64_t numberOfBitsInKey,
+    const std::vector<uint64_t>& countMinData)
+    : SynopsesStatistic(startTs, endTs, observedTuples)
+    , width(width)
+    , depth(depth)
+    , numberOfBitsInKey(numberOfBitsInKey)
+    , countMinData(countMinData)
+{
+}
 
-StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& probeExpression) const {
+StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& probeExpression) const
+{
     const auto expression = probeExpression.getProbeExpression();
-    if (!expression->instanceOf<EqualsExpressionNode>()) {
+    if (!expression->instanceOf<EqualsExpressionNode>())
+    {
         NES_THROW_RUNTIME_ERROR("For now, we can only get the statistic for a FieldAssignmentExpressionNode!");
     }
     const auto equalExpression = expression->as<EqualsExpressionNode>();
@@ -88,9 +98,9 @@ StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& pro
     const auto rightExpr = equalExpression->getRight();
     // We expect that one expression is a constant value and the other a field access expression
     if (!((leftExpr->instanceOf<ConstantValueExpressionNode>() && rightExpr->instanceOf<FieldAccessExpressionNode>())
-          || (leftExpr->instanceOf<FieldAccessExpressionNode>() && rightExpr->instanceOf<ConstantValueExpressionNode>()))) {
-        NES_THROW_RUNTIME_ERROR(
-            "For now, we expect that one expression is a constant value and the other a field access expression!");
+          || (leftExpr->instanceOf<FieldAccessExpressionNode>() && rightExpr->instanceOf<ConstantValueExpressionNode>())))
+    {
+        NES_THROW_RUNTIME_ERROR("For now, we expect that one expression is a constant value and the other a field access expression!");
     }
 
     // Getting the constant value and the field access
@@ -100,7 +110,8 @@ StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& pro
 
     // Iterating over each row. Calculating the column and then taking the minimum over all rows
     uint64_t minCount = UINT64_MAX;
-    for (auto row = 0_u64; row < depth; ++row) {
+    for (auto row = 0_u64; row < depth; ++row)
+    {
         const auto hashValue = StatisticUtil::getH3HashValue(*basicValue, row, depth, numberOfBitsInKey);
         const auto column = hashValue % width;
         minCount = std::min(minCount, countMinData[row * width + column]);
@@ -109,8 +120,10 @@ StatisticValue<> CountMinStatistic::getStatisticValue(const ProbeExpression& pro
     return StatisticValue<>(minCount, startTs, endTs);
 }
 
-bool CountMinStatistic::equal(const Statistic& other) const {
-    if (other.instanceOf<CountMinStatistic>()) {
+bool CountMinStatistic::equal(const Statistic& other) const
+{
+    if (other.instanceOf<CountMinStatistic>())
+    {
         auto otherCountMinStatistic = other.as<const CountMinStatistic>();
         return startTs.equals(otherCountMinStatistic->startTs) && endTs.equals(otherCountMinStatistic->endTs)
             && observedTuples == otherCountMinStatistic->observedTuples && width == otherCountMinStatistic->width
@@ -120,7 +133,8 @@ bool CountMinStatistic::equal(const Statistic& other) const {
     return false;
 }
 
-std::string CountMinStatistic::toString() const {
+std::string CountMinStatistic::toString() const
+{
     std::ostringstream oss;
     oss << "CountMin(";
     oss << "startTs: " << startTs.toString() << " ";
@@ -133,13 +147,23 @@ std::string CountMinStatistic::toString() const {
     return oss.str();
 }
 
-uint64_t CountMinStatistic::getWidth() const { return width; }
+uint64_t CountMinStatistic::getWidth() const
+{
+    return width;
+}
 
-uint64_t CountMinStatistic::getDepth() const { return depth; }
+uint64_t CountMinStatistic::getDepth() const
+{
+    return depth;
+}
 
-uint64_t CountMinStatistic::getNumberOfBitsInKeyOffset() const { return numberOfBitsInKey; }
+uint64_t CountMinStatistic::getNumberOfBitsInKeyOffset() const
+{
+    return numberOfBitsInKey;
+}
 
-std::string CountMinStatistic::getCountMinDataAsString() const {
+std::string CountMinStatistic::getCountMinDataAsString() const
+{
     const auto dataSizeBytes = countMinData.size() * sizeof(uint64_t);
     std::string countMinStr;
     countMinStr.resize(dataSizeBytes);
@@ -147,26 +171,31 @@ std::string CountMinStatistic::getCountMinDataAsString() const {
     return countMinStr;
 }
 
-void CountMinStatistic::merge(const SynopsesStatistic& other) {
+void CountMinStatistic::merge(const SynopsesStatistic& other)
+{
     // 1. We can only merge the same synopsis type
-    if (!other.instanceOf<CountMinStatistic>()) {
+    if (!other.instanceOf<CountMinStatistic>())
+    {
         NES_ERROR("Other is not of type CountMinStatistic. Therefore, we skipped merging them together");
         return;
     }
 
     // 2. We can only merge a count min sketch with the same dimensions
     auto otherCountMinStatistic = other.as<const CountMinStatistic>();
-    if (depth != otherCountMinStatistic->depth || width != otherCountMinStatistic->width) {
-        NES_ERROR("Can not combine sketches <{},{}> and <{},{}>, as they do not share the same dimensions",
-                  width,
-                  depth,
-                  otherCountMinStatistic->width,
-                  otherCountMinStatistic->depth);
+    if (depth != otherCountMinStatistic->depth || width != otherCountMinStatistic->width)
+    {
+        NES_ERROR(
+            "Can not combine sketches <{},{}> and <{},{}>, as they do not share the same dimensions",
+            width,
+            depth,
+            otherCountMinStatistic->width,
+            otherCountMinStatistic->depth);
         return;
     }
 
     // 3. We merge the count min counters by simply adding them up
-    for (auto i = 0_u64; i < countMinData.size(); ++i) {
+    for (auto i = 0_u64; i < countMinData.size(); ++i)
+    {
         countMinData[i] += otherCountMinStatistic->countMinData[i];
     }
 
@@ -174,4 +203,4 @@ void CountMinStatistic::merge(const SynopsesStatistic& other) {
     observedTuples += otherCountMinStatistic->observedTuples;
 }
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic

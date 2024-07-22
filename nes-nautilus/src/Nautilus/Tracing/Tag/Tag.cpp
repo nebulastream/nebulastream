@@ -12,20 +12,28 @@
     limitations under the License.
 */
 
-#include <Nautilus/Tracing/Tag/Tag.hpp>
 #include <iostream>
-namespace NES::Nautilus::Tracing {
-TagVector::TagVector(const std::vector<TagAddress>& addresses) : addresses(addresses) {}
+#include <Nautilus/Tracing/Tag/Tag.hpp>
+namespace NES::Nautilus::Tracing
+{
+TagVector::TagVector(const std::vector<TagAddress>& addresses) : addresses(addresses)
+{
+}
 
-std::ostream& operator<<(std::ostream& os, const TagVector& tag) {
+std::ostream& operator<<(std::ostream& os, const TagVector& tag)
+{
     os << "addresses: [";
-    for (auto address : tag.addresses) {
+    for (auto address : tag.addresses)
+    {
         os << address << ";";
     }
     os << "]";
     return os;
 }
 
-const std::vector<TagAddress>& TagVector::getAddresses() { return addresses; }
+const std::vector<TagAddress>& TagVector::getAddresses()
+{
+    return addresses;
+}
 
-}// namespace NES::Nautilus::Tracing
+} // namespace NES::Nautilus::Tracing

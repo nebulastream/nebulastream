@@ -16,7 +16,6 @@
 #include <gtest/gtest.h>
 // clang-format on
 #include <API/QueryAPI.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Catalogs/Source/LogicalSource.hpp>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
@@ -45,24 +44,27 @@
 #include <StatisticCollection/StatisticProbeHandling/StatisticProbeHandler.hpp>
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <BaseIntegrationTest.hpp>
 
 using namespace NES;
 using namespace Configurations;
 
-class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
-
-  public:
+class OriginIdInferencePhaseTest : public Testing::BaseUnitTest
+{
+public:
     Optimizer::OriginIdInferencePhasePtr originIdInferenceRule;
     Optimizer::TypeInferencePhasePtr typeInferencePhase;
     Optimizer::TopologySpecificQueryRewritePhasePtr topologySpecificQueryRewritePhase;
 
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("OriginIdInferencePhaseTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup OriginIdInferencePhaseTest test case.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup OriginIdInferencePhaseTest test case.");
         originIdInferenceRule = Optimizer::OriginIdInferencePhase::create();
@@ -71,17 +73,17 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, Catalogs::UDF::UDFCatalog::create());
         auto optimizerConfiguration = OptimizerConfiguration();
         auto statisticRegistry = Statistic::StatisticRegistry::create();
-        auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(statisticRegistry,
-                                                                              Statistic::DefaultStatisticProbeGenerator::create(),
-                                                                              Statistic::DefaultStatisticCache::create(),
-                                                                              Topology::create());
-        topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(Topology::create(),
-                                                                                                 sourceCatalog,
-                                                                                                 optimizerConfiguration,
-                                                                                                 statisticProbeHandler);
+        auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(
+            statisticRegistry,
+            Statistic::DefaultStatisticProbeGenerator::create(),
+            Statistic::DefaultStatisticCache::create(),
+            Topology::create());
+        topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(
+            Topology::create(), sourceCatalog, optimizerConfiguration, statisticProbeHandler);
     }
 
-    void setupTopologyNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog) {
+    void setupTopologyNodeAndSourceCatalog(const Catalogs::Source::SourceCatalogPtr& sourceCatalog)
+    {
         NES_INFO("Setup FilterPushDownTest test case.");
         std::map<std::string, std::any> properties;
         properties[NES::Worker::Properties::MAINTENANCE] = false;
@@ -113,7 +115,8 @@ class OriginIdInferencePhaseTest : public Testing::BaseUnitTest {
 /**
  * @brief Tests inference on a query plan with a single source.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource)
+{
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("B"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source);
@@ -143,7 +146,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSinglePhysicalSource) {
 /**
  * @brief Tests inference on a query plan with a single source.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources)
+{
     const QueryPlanPtr queryPlan = QueryPlan::create();
     auto source = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source);
@@ -175,16 +179,14 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultiplePhysicalSources) {
  * @brief Tests inference on a query plan with multiple sources.
  * Thus the root operator should contain the origin ids from all sources.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSources) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSources)
+{
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
+    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source1);
-    auto source2 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
+    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source2);
-    auto source3 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
+    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source3);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -213,23 +215,21 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSources) {
  * @brief Tests inference on a query plan with multiple sources and intermediate unary operators.
  * Thus the all intermediate operators should contain the origin ids from all sources.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndIntermediateUnaryOperators) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndIntermediateUnaryOperators)
+{
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source1 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
+    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source1);
-    auto source2 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
+    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source2);
-    auto source3 =
-        LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
+    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("A"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source3);
     auto filter = LogicalOperatorFactory::createFilterOperator(Attribute("id") == Attribute("id"));
     queryPlan->appendOperatorAsNewRoot(filter);
     auto map = LogicalOperatorFactory::createMapOperator(Attribute("x") = Attribute("id"));
     queryPlan->appendOperatorAsNewRoot(map);
-    auto project = LogicalOperatorFactory::createProjectionOperator(
-        {Attribute("x").getExpressionNode(), Attribute("id").getExpressionNode()});
+    auto project
+        = LogicalOperatorFactory::createProjectionOperator({Attribute("x").getExpressionNode(), Attribute("id").getExpressionNode()});
     queryPlan->appendOperatorAsNewRoot(project);
     auto sink = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(sink);
@@ -258,16 +258,17 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndIntermediateUnar
  * @brief Tests inference on a query plan with multiple sources and a central window operator.
  * Thus the root operator should contain the origin id from the window operator and the window operator from all sources.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
+TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow)
+{
     const QueryPlanPtr queryPlan = QueryPlan::create();
-    auto source1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
-                       ->as<SourceLogicalOperator>();
+    auto source1
+        = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source1);
-    auto source2 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
-                       ->as<SourceLogicalOperator>();
+    auto source2
+        = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source2);
-    auto source3 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))
-                       ->as<SourceLogicalOperator>();
+    auto source3
+        = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("default_logical"))->as<SourceLogicalOperator>();
     queryPlan->addRootOperator(source3);
     auto dummyWindowDefinition = LogicalWindowDescriptor::create({}, WindowTypePtr(), 0);
     auto window = LogicalOperatorFactory::createWindowOperator(dummyWindowDefinition)->as<LogicalWindowOperator>();
@@ -302,8 +303,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForMultipleSourcesAndWindow) {
  * @brief: This test infer origin id for a union operator fetching data from two distinct sources.
  * Therefore, the output origin ids for union operator should return 3 distinct ids. 2 for each physical source of A and 1 for physical source B.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForUnionOperators) {
-
+TEST_F(OriginIdInferencePhaseTest, testRuleForUnionOperators)
+{
     auto query = Query::from("A").unionWith(Query::from("B")).sink(NullOutputSinkDescriptor::create());
 
     const QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -329,8 +330,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForUnionOperators) {
  * Therefore, the output origin ids for union operator should return 4 distinct ids. 2 for each physical source of A on the right
  * side and 2 for physical source A on the left side.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators) {
-
+TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators)
+{
     auto query = Query::from("A").unionWith(Query::from("A")).sink(NullOutputSinkDescriptor::create());
 
     const QueryPlanPtr queryPlan = query.getQueryPlan();
@@ -363,8 +364,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfUnionOperators) {
  * Therefore, the output origin ids for join operator should return 4 distinct ids. 2 for each physical source of A on the left side
  * and 2 for each physical source of A with alias C on the right side.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator) {
-
+TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator)
+{
     auto query = Query::from("A")
                      .joinWith(Query::from("A").as("C"))
                      .where(Attribute("id") == Attribute("id"))
@@ -407,8 +408,8 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForSelfJoinOperator) {
  * Therefore, the output origin ids for union operator should return 3 distinct ids. 2 for each physical source of A on the left side
  * and 2 for each physical source of A with alias C on the right side.
  */
-TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) {
-
+TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators)
+{
     auto query = Query::from("B")
                      .unionWith(Query::from("A"))
                      .map(Attribute("x") = Attribute("id"))
@@ -442,11 +443,16 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
     // Window aggregations
     auto aggregations = windowOps[0]->getWindowDefinition()->getWindowAggregation();
     ASSERT_EQ(aggregations.size(), 1);
-    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Sum) {
+    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Sum)
+    {
         ASSERT_EQ(windowOps[0]->getInputOriginIds().size(), 3);
-    } else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Avg) {
+    }
+    else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Avg)
+    {
         ASSERT_EQ(windowOps[0]->getInputOriginIds().size(), 2);
-    } else {
+    }
+    else
+    {
         FAIL();
     }
     ASSERT_EQ(windowOps[0]->getOutputOriginIds().size(), 1);
@@ -454,11 +460,16 @@ TEST_F(OriginIdInferencePhaseTest, testRuleForJoinAggregationAndUnionOperators) 
     // Window aggregations
     aggregations = windowOps[1]->getWindowDefinition()->getWindowAggregation();
     ASSERT_EQ(aggregations.size(), 1);
-    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Sum) {
+    if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Sum)
+    {
         ASSERT_EQ(windowOps[1]->getInputOriginIds().size(), 3);
-    } else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Avg) {
+    }
+    else if (aggregations[0]->getType() == NES::Windowing::WindowAggregationDescriptor::Type::Avg)
+    {
         ASSERT_EQ(windowOps[1]->getInputOriginIds().size(), 2);
-    } else {
+    }
+    else
+    {
         FAIL();
     }
     ASSERT_EQ(windowOps[1]->getOutputOriginIds().size(), 1);

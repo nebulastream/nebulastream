@@ -11,32 +11,50 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
-#include <utility>
 
-namespace NES::QueryCompilation {
+namespace NES::QueryCompilation
+{
 
-ExecutableOperator::ExecutableOperator(OperatorId id,
-                                       Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                                       std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
-    : Operator(id), UnaryOperator(id), executablePipelineStage(std::move(executablePipelineStage)),
-      operatorHandlers(std::move(operatorHandlers)) {}
+ExecutableOperator::ExecutableOperator(
+    OperatorId id,
+    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
+    : Operator(id)
+    , UnaryOperator(id)
+    , executablePipelineStage(std::move(executablePipelineStage))
+    , operatorHandlers(std::move(operatorHandlers))
+{
+}
 
-OperatorPtr ExecutableOperator::create(Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
-                                       std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers) {
+OperatorPtr ExecutableOperator::create(
+    Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage,
+    std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers)
+{
     return std::make_shared<ExecutableOperator>(
         ExecutableOperator(getNextOperatorId(), std::move(executablePipelineStage), std::move(operatorHandlers)));
 }
 
-Runtime::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage() {
+Runtime::Execution::ExecutablePipelineStagePtr ExecutableOperator::getExecutablePipelineStage()
+{
     return executablePipelineStage;
 }
 
-std::vector<Runtime::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers() { return operatorHandlers; }
+std::vector<Runtime::Execution::OperatorHandlerPtr> ExecutableOperator::getOperatorHandlers()
+{
+    return operatorHandlers;
+}
 
-std::string ExecutableOperator::toString() const { return "ExecutableOperator"; }
+std::string ExecutableOperator::toString() const
+{
+    return "ExecutableOperator";
+}
 
-OperatorPtr ExecutableOperator::copy() { return create(executablePipelineStage, operatorHandlers); }
+OperatorPtr ExecutableOperator::copy()
+{
+    return create(executablePipelineStage, operatorHandlers);
+}
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation

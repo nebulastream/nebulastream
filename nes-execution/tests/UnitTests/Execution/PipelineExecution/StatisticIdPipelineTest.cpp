@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <random>
+#include <utility>
 #include <API/Schema.hpp>
-#include <BaseIntegrationTest.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
 #include <Execution/Expressions/ConstantValueExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
@@ -35,14 +37,14 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <memory>
-#include <random>
-#include <utility>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution {
+namespace NES::Runtime::Execution
+{
 
-class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
-  public:
+class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
+{
+public:
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -54,25 +56,26 @@ class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPip
     StatisticId statisticIdScan = 1, statisticIdFilter = 2, statisticIdMap = 3;
 
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("StatisticIdPipelineTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup StatisticIdPipelineTest test class.");
     }
 
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup StatisticIdPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
+        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
+        {
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
-        schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
-                     ->addField("f1", BasicType::INT64)
-                     ->addField("f2", BasicType::INT64);
+        schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::INT64)->addField("f2", BasicType::INT64);
 
         // Creating a scan and an emit operator, as we need this for all tests
         auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
@@ -91,12 +94,15 @@ class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPip
     /**
  * @brief This method creates numBuffers buffers (default = 100) with some arbitrary data
  */
-    std::vector<TupleBuffer> createData(uint64_t numberOfBuffers = 20) {
+    std::vector<TupleBuffer> createData(uint64_t numberOfBuffers = 20)
+    {
         std::vector<TupleBuffer> retBuffers;
-        for (uint64_t bufCnt = 0; bufCnt < numberOfBuffers; ++bufCnt) {
+        for (uint64_t bufCnt = 0; bufCnt < numberOfBuffers; ++bufCnt)
+        {
             auto buffer = bm->getBufferBlocking();
             auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-            for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i) {
+            for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
+            {
                 testBuffer[i]["f1"].write<int64_t>(i);
                 testBuffer[i]["f2"].write(+1_s64);
                 testBuffer.setNumberOfTuples(i + 1);
@@ -118,7 +124,8 @@ class StatisticIdPipelineTest : public Testing::BaseUnitTest, public AbstractPip
  * @brief Tests if the statistic id is set correctly for the emitted tuple buffer of a pipeline consisting of a
  * scan --> filter --> emit. The statistic id of the filter operator should be set
  */
-TEST_P(StatisticIdPipelineTest, testScanFilterEmitPipeline) {
+TEST_P(StatisticIdPipelineTest, testScanFilterEmitPipeline)
+{
     // Creating a filter operator that checks for f1 == 5
     auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -136,18 +143,18 @@ TEST_P(StatisticIdPipelineTest, testScanFilterEmitPipeline) {
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createData()) {
+    for (auto& buf : createData())
+    {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
     executablePipeline->stop(pipelineContext);
 
     // Checking if all buffers have the statisticId of the filterOperator
-    bool statisticIdCheck = std::accumulate(pipelineContext.buffers.begin(),
-                                            pipelineContext.buffers.end(),
-                                            true,
-                                            [this](const bool cur, const TupleBuffer& buf) {
-                                                return cur && (buf.getStatisticId() == statisticIdFilter);
-                                            });
+    bool statisticIdCheck = std::accumulate(
+        pipelineContext.buffers.begin(),
+        pipelineContext.buffers.end(),
+        true,
+        [this](const bool cur, const TupleBuffer& buf) { return cur && (buf.getStatisticId() == statisticIdFilter); });
     EXPECT_TRUE(statisticIdCheck);
 }
 
@@ -155,7 +162,8 @@ TEST_P(StatisticIdPipelineTest, testScanFilterEmitPipeline) {
  * @brief Tests if the statistic id is set correctly for the emitted tuple buffer of a pipeline consisting of a
  * scan --> filter --> map --> emit. The statistic id of the filter operator should be set
  */
-TEST_P(StatisticIdPipelineTest, testScanFilterMapEmitPipeline) {
+TEST_P(StatisticIdPipelineTest, testScanFilterMapEmitPipeline)
+{
     // Creating a filter operator that checks for f1 == 5
     auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -182,25 +190,24 @@ TEST_P(StatisticIdPipelineTest, testScanFilterMapEmitPipeline) {
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createData()) {
+    for (auto& buf : createData())
+    {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
     executablePipeline->stop(pipelineContext);
 
     // Checking if all buffers have the statisticId of the filterOperator
-    bool statisticIdCheck = std::accumulate(pipelineContext.buffers.begin(),
-                                            pipelineContext.buffers.end(),
-                                            true,
-                                            [this](const bool cur, const TupleBuffer& buf) {
-                                                return cur && (buf.getStatisticId() == statisticIdMap);
-                                            });
+    bool statisticIdCheck = std::accumulate(
+        pipelineContext.buffers.begin(),
+        pipelineContext.buffers.end(),
+        true,
+        [this](const bool cur, const TupleBuffer& buf) { return cur && (buf.getStatisticId() == statisticIdMap); });
     EXPECT_TRUE(statisticIdCheck);
 }
 
-INSTANTIATE_TEST_CASE_P(testStatisticIdCompilation,
-                        StatisticIdPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
-                        [](const testing::TestParamInfo<StatisticIdPipelineTest::ParamType>& info) {
-                            return info.param;
-                        });
-}// namespace NES::Runtime::Execution
+INSTANTIATE_TEST_CASE_P(
+    testStatisticIdCompilation,
+    StatisticIdPipelineTest,
+    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    [](const testing::TestParamInfo<StatisticIdPipelineTest::ParamType>& info) { return info.param; });
+} // namespace NES::Runtime::Execution

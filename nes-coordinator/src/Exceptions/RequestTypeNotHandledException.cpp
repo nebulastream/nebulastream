@@ -14,7 +14,10 @@
 
 #include <Exceptions/RequestTypeNotHandledException.hpp>
 
-namespace NES {
+namespace NES
+{
 
-RequestTypeNotHandledException::RequestTypeNotHandledException(const std::string& message) : std::runtime_error(message) {}
-}// namespace NES
+RequestTypeNotHandledException::RequestTypeNotHandledException(const std::string& message) : std::runtime_error(message)
+{
+}
+} // namespace NES

@@ -17,7 +17,8 @@
 
 #include <Execution/Operators/ExecutableOperator.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief this is the nautilus implementation of infer model operator. This operator allows for inferring  machine learning model
@@ -25,18 +26,19 @@ namespace NES::Runtime::Execution::Operators {
  * @details Creation of the Operator is handled by the ONNXOperatorLoweringPlugin, which when given a PhysicalModelInferenceOperator
  * with a ONNX model (determined by the .onnx suffix) will create a Nautilus ONNXInferenceOperator
  */
-class ONNXInferenceOperator : public ExecutableOperator {
-
-  public:
+class ONNXInferenceOperator : public ExecutableOperator
+{
+public:
     /**
      * Nautilus Operator for Model Inference using the ONNX Runtime.
      * @param inferModelHandlerIndex Index of the ONNXInferenceOperatorHandler
      * @param inputFieldNames vector of strings for the input field names
      * @param outputFieldNames  vector of string for the output field names
      */
-    ONNXInferenceOperator(const uint32_t inferModelHandlerIndex,
-                          const std::vector<std::string>& inputFieldNames,
-                          const std::vector<std::string>& outputFieldNames)
+    ONNXInferenceOperator(
+        const uint32_t inferModelHandlerIndex,
+        const std::vector<std::string>& inputFieldNames,
+        const std::vector<std::string>& outputFieldNames)
         : inferModelHandlerIndex(inferModelHandlerIndex), inputFieldNames(inputFieldNames), outputFieldNames(outputFieldNames){};
 
     /**
@@ -51,11 +53,11 @@ class ONNXInferenceOperator : public ExecutableOperator {
      */
     void execute(ExecutionContext& ctx, Record& record) const override;
 
-  private:
+private:
     const uint32_t inferModelHandlerIndex;
     const std::vector<std::string> inputFieldNames;
     const std::vector<std::string> outputFieldNames;
 };
 
-}// namespace NES::Runtime::Execution::Operators
-#endif// NES_PLUGINS_ONNX_INCLUDE_EXECUTION_OPERATORS_ONNX_ONNXINFERENCEOPERATOR_HPP_
+} // namespace NES::Runtime::Execution::Operators
+#endif // NES_PLUGINS_ONNX_INCLUDE_EXECUTION_OPERATORS_ONNX_ONNXINFERENCEOPERATOR_HPP_

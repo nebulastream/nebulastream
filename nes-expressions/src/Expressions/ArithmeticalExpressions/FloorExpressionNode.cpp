@@ -12,25 +12,30 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <cmath>
 #include <Expressions/ArithmeticalExpressions/FloorExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <cmath>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES {
+namespace NES
+{
 
 FloorExpressionNode::FloorExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
 
-FloorExpressionNode::FloorExpressionNode(FloorExpressionNode* other) : ArithmeticalUnaryExpressionNode(other) {}
+FloorExpressionNode::FloorExpressionNode(FloorExpressionNode* other) : ArithmeticalUnaryExpressionNode(other)
+{
+}
 
-ExpressionNodePtr FloorExpressionNode::create(ExpressionNodePtr const& child) {
+ExpressionNodePtr FloorExpressionNode::create(ExpressionNodePtr const& child)
+{
     auto floorNode = std::make_shared<FloorExpressionNode>(child->getStamp());
     floorNode->setChild(child);
     return floorNode;
 }
 
-void FloorExpressionNode::inferStamp(SchemaPtr schema) {
+void FloorExpressionNode::inferStamp(SchemaPtr schema)
+{
     // infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
@@ -39,20 +44,26 @@ void FloorExpressionNode::inferStamp(SchemaPtr schema) {
     NES_TRACE("FloorExpressionNode: converted stamp to float: {}", toString());
 }
 
-bool FloorExpressionNode::equal(NodePtr const& rhs) const {
-    if (rhs->instanceOf<FloorExpressionNode>()) {
+bool FloorExpressionNode::equal(NodePtr const& rhs) const
+{
+    if (rhs->instanceOf<FloorExpressionNode>())
+    {
         auto otherFloorNode = rhs->as<FloorExpressionNode>();
         return child()->equal(otherFloorNode->child());
     }
     return false;
 }
 
-std::string FloorExpressionNode::toString() const {
+std::string FloorExpressionNode::toString() const
+{
     std::stringstream ss;
     ss << "FLOOR(" << children[0]->toString() << ")";
     return ss.str();
 }
 
-ExpressionNodePtr FloorExpressionNode::copy() { return FloorExpressionNode::create(children[0]->as<ExpressionNode>()->copy()); }
+ExpressionNodePtr FloorExpressionNode::copy()
+{
+    return FloorExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
+}
 
-}// namespace NES
+} // namespace NES

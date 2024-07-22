@@ -15,13 +15,15 @@
 #ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
 #include <Expressions/BinaryExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents an When expression.
  * It is used as part of a case expression, if it evaluates the left child to true, the right child will be returned.
  */
-class WhenExpressionNode final : public BinaryExpressionNode {
-  public:
+class WhenExpressionNode final : public BinaryExpressionNode
+{
+public:
     explicit WhenExpressionNode(DataTypePtr stamp);
     ~WhenExpressionNode() noexcept override = default;
 
@@ -46,10 +48,10 @@ class WhenExpressionNode final : public BinaryExpressionNode {
      */
     ExpressionNodePtr copy() override;
 
-  private:
+private:
     explicit WhenExpressionNode(WhenExpressionNode* other);
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_WHENEXPRESSIONNODE_HPP_

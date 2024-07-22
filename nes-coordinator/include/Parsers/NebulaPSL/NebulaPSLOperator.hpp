@@ -15,12 +15,13 @@
 #ifndef NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLOPERATOR_HPP_
 #define NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLOPERATOR_HPP_
 
-#include <API/Query.hpp>
 #include <list>
 #include <queue>
 #include <string>
+#include <API/Query.hpp>
 
-namespace NES::Parsers {
+namespace NES::Parsers
+{
 
 /**
  * @brief This class defines the attributes and methods used by the PatternParsingService.
@@ -29,8 +30,9 @@ namespace NES::Parsers {
  * and specific attributes of the specific operator in order to create the query (tree).
  */
 
-class NebulaPSLOperator {
-  public:
+class NebulaPSLOperator
+{
+public:
     //Constructors
     explicit NebulaPSLOperator(int32_t id);
     // Getter and Setter
@@ -47,7 +49,7 @@ class NebulaPSLOperator {
     int32_t getParentNodeId() const;
     void setParentNodeId(int32_t parentNodeId);
 
-  private:
+private:
     int32_t id;
     std::string operatorName;
     int32_t rightChildId = -1;
@@ -56,6 +58,6 @@ class NebulaPSLOperator {
     int32_t parentNodeId = -1;
 };
 
-}// namespace NES::Parsers
+} // namespace NES::Parsers
 
-#endif// NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLOPERATOR_HPP_
+#endif // NES_COORDINATOR_INCLUDE_PARSERS_NEBULAPSL_NEBULAPSLOPERATOR_HPP_

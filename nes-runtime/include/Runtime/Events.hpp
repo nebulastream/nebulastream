@@ -16,14 +16,21 @@
 
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-namespace NES::Network {
+namespace NES::Network
+{
 class ExchangeProtocol;
 }
-namespace NES::Runtime {
+namespace NES::Runtime
+{
 /// this enum defines the event that can occur in the system runtime
-enum class EventType : uint8_t { kInvalidEvent, kCustomEvent, kStartSourceEvent };
+enum class EventType : uint8_t
+{
+    kInvalidEvent,
+    kCustomEvent,
+    kStartSourceEvent
+};
 
-template<typename T>
+template <typename T>
 concept IsNesEvent = requires(T t) { t.getEventType(); };
 
 /// Design rationale: create an own event that inherits from BaseEvent for internal system events (e.g., the checkpoint barrier, the upstream ACK).
@@ -32,13 +39,14 @@ concept IsNesEvent = requires(T t) { t.getEventType(); };
 /**
  * @brief This is the base event type. All events supported in NES shall inherit from this class
  */
-class BaseEvent {
-  public:
+class BaseEvent
+{
+public:
     /**
      * @brief Creates an event of a given type
      * @param eventType
      */
-    explicit BaseEvent(EventType eventType = EventType::kInvalidEvent) : eventType(eventType) {}
+    explicit BaseEvent(EventType eventType = EventType::kInvalidEvent) : eventType(eventType) { }
 
     /**
      * @brief Gets the payload of the event
@@ -52,46 +60,49 @@ class BaseEvent {
      */
     EventType getEventType() const { return eventType; }
 
-  private:
+private:
     EventType eventType;
 };
 
 /**
  * @brief This class shall be used to define custom events with user-supplied data
  */
-class CustomEventWrapper : public BaseEvent {
-  public:
+class CustomEventWrapper : public BaseEvent
+{
+public:
     /**
      * @brief creates a custom events that stores a buffer as a payload
      * @param buffer
      */
-    explicit CustomEventWrapper(Runtime::TupleBuffer&& buffer) : BaseEvent(EventType::kCustomEvent), buffer(buffer) {}
+    explicit CustomEventWrapper(Runtime::TupleBuffer&& buffer) : BaseEvent(EventType::kCustomEvent), buffer(buffer) { }
 
     uint8_t* data() override { return buffer.getBuffer(); }
 
-    template<typename T>
-    T* data() {
+    template <typename T>
+    T* data()
+    {
         return buffer.getBuffer<T>();
     }
 
-  private:
+private:
     Runtime::TupleBuffer buffer;
 };
 
 /**
  * @brief This class represents a start method for static data sources
  */
-class StartSourceEvent : public BaseEvent {
-  public:
+class StartSourceEvent : public BaseEvent
+{
+public:
     /**
      * @brief creates a custom events that lets static data sources start sending data.
      */
-    explicit StartSourceEvent() : BaseEvent(EventType::kStartSourceEvent) {}
+    explicit StartSourceEvent() : BaseEvent(EventType::kStartSourceEvent) { }
 
     // todo only for compliance, don't call!
     uint8_t* data() override { return nullptr; }
 };
 
-}// namespace NES::Runtime
+} // namespace NES::Runtime
 
-#endif// NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_
+#endif // NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_

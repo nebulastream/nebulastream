@@ -15,27 +15,31 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
 
+#include <fstream>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sources/GeneratorSource.hpp>
-#include <fstream>
 
-namespace NES {
+namespace NES
+{
 
 class CSVParser;
 using CSVParserPtr = std::shared_ptr<CSVParser>;
 
-namespace Runtime::detail {
+namespace Runtime::detail
+{
 class MemorySegment;
-}// namespace Runtime::detail
+} // namespace Runtime::detail
 
-namespace Experimental {
+namespace Experimental
+{
 /**
  * @brief Table Source
  * todo Still under development
  */
-class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRecycler {
-  public:
+class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRecycler
+{
+public:
     /**
      * @brief The constructor of a StaticDataSource
      * @param schema the schema of the data
@@ -50,17 +54,18 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      */
-    explicit StaticDataSource(SchemaPtr schema,
-                              std::string pathTableFile,
-                              const bool lateStart,
-                              ::NES::Runtime::BufferManagerPtr bufferManager,
-                              ::NES::Runtime::QueryManagerPtr queryManager,
-                              OperatorId operatorId,
-                              OriginId originId,
-                              StatisticId statisticId,
-                              size_t numSourceLocalBuffers,
-                              const std::string& physicalSourceName,
-                              std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
+    explicit StaticDataSource(
+        SchemaPtr schema,
+        std::string pathTableFile,
+        const bool lateStart,
+        ::NES::Runtime::BufferManagerPtr bufferManager,
+        ::NES::Runtime::QueryManagerPtr queryManager,
+        OperatorId operatorId,
+        OriginId originId,
+        StatisticId statisticId,
+        size_t numSourceLocalBuffers,
+        const std::string& physicalSourceName,
+        std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);
 
     /**
      * @brief overwrite DataSource::start(). Only start runningRoutine, if lateStart==false.
@@ -110,7 +115,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
      */
     virtual void recycleUnpooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
 
-  private:
+private:
     /* message & late start system */
     bool lateStart;
     bool startCalled = false;
@@ -132,7 +137,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
     uint64_t tupleSizeInBytes;
     uint64_t bufferSize;
 
-    size_t numTuples;// in table
+    size_t numTuples; // in table
     size_t numTuplesEmitted = 0;
     size_t numBuffersEmitted = 0;
 
@@ -141,7 +146,7 @@ class StaticDataSource : public GeneratorSource, public ::NES::Runtime::BufferRe
 
 using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;
 
-}// namespace Experimental
-}// namespace NES
+} // namespace Experimental
+} // namespace NES
 
-#endif// NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_
+#endif // NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_

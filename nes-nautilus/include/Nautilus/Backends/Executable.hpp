@@ -19,18 +19,21 @@
 #include <string>
 #include <variant>
 #include <vector>
-namespace NES::Nautilus::Backends {
+namespace NES::Nautilus::Backends
+{
 
 /**
  * @brief Represents an executable object, which enables the invocation of dynamically defined methods.
  */
-class Executable {
-  public:
+class Executable
+{
+public:
     /**
      * @brief A general wrapper for the invocation of an executable function.
      */
-    class GenericInvocable {
-      public:
+    class GenericInvocable
+    {
+    public:
         /**
          * @brief Invoke executable function with a set of arguments.
          * @param args set of arguments
@@ -45,9 +48,10 @@ class Executable {
      * @tparam R return type
      * @tparam Args agument types
      */
-    template<typename R, typename... Args>
-    class Invocable {
-      public:
+    template <typename R, typename... Args>
+    class Invocable
+    {
+    public:
         using FunctionType = R(Args...);
         explicit Invocable(void* fptr) : function(reinterpret_cast<FunctionType*>(fptr)){};
         explicit Invocable(std::unique_ptr<GenericInvocable> generic) : function(std::move(generic)){};
@@ -57,28 +61,38 @@ class Executable {
          * @param arguments
          * @return returns the result of the function if any
          */
-        R operator()(Args... arguments) {
-            if (std::holds_alternative<FunctionType*>(function)) {
+        R operator()(Args... arguments)
+        {
+            if (std::holds_alternative<FunctionType*>(function))
+            {
                 auto fptr = std::get<FunctionType*>(function);
-                if constexpr (!std::is_void_v<R>) {
+                if constexpr (!std::is_void_v<R>)
+                {
                     return fptr(std::forward<Args>(arguments)...);
-                } else {
+                }
+                else
+                {
                     fptr(std::forward<Args>(arguments)...);
                 }
-            } else {
+            }
+            else
+            {
                 auto& genericFunction = std::get<std::unique_ptr<GenericInvocable>>(function);
-                if constexpr (!std::is_void_v<R>) {
+                if constexpr (!std::is_void_v<R>)
+                {
                     std::vector<std::any> inputs_ = {arguments...};
                     auto res = genericFunction->invokeGeneric(inputs_);
                     return std::any_cast<R>(res);
-                } else {
+                }
+                else
+                {
                     std::vector<std::any> inputs_ = {arguments...};
                     genericFunction->invokeGeneric(inputs_);
                 }
             }
         }
 
-      private:
+    private:
         std::variant<FunctionType*, std::unique_ptr<GenericInvocable>> function;
     };
 
@@ -89,18 +103,22 @@ class Executable {
      * @param member function name
      * @return Invocable
      */
-    template<typename R, typename... Args>
-    auto getInvocableMember(const std::string& member) {
-        if (hasInvocableFunctionPtr()) {
+    template <typename R, typename... Args>
+    auto getInvocableMember(const std::string& member)
+    {
+        if (hasInvocableFunctionPtr())
+        {
             return Invocable<R, Args...>(getInvocableFunctionPtr(member));
-        } else {
+        }
+        else
+        {
             return Invocable<R, Args...>(std::move(getGenericInvocable(member)));
         }
     }
 
     virtual ~Executable() = default;
 
-  protected:
+protected:
     /**
      * @brief Returns a untyped function pointer to a specific symbol.
      * @param member on the dynamic object, currently provided as a MangledName.
@@ -120,5 +138,5 @@ class Executable {
     virtual std::unique_ptr<GenericInvocable> getGenericInvocable(const std::string&) { return nullptr; };
 };
 
-}// namespace NES::Nautilus::Backends
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
+} // namespace NES::Nautilus::Backends
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_

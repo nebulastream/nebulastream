@@ -12,56 +12,60 @@
     limitations under the License.
 */
 #ifdef ENABLE_KAFKA_BUILD
-#include <BaseIntegrationTest.hpp>
-#include <Catalogs/Source/PhysicalSource.hpp>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
-#include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Services/RequestHandlerService.hpp>
-#include <Sinks/Mediums//KafkaSink.hpp>
-#include <Sources/KafkaSource.hpp>
-#include <Sources/SourceCreator.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestUtils.hpp>
-#include <Util/TimeMeasurement.hpp>
-#include <cppkafka/cppkafka.h>
-#include <cstring>
-#include <gtest/gtest.h>
-#include <string>
-#include <thread>
+#    include <cstring>
+#    include <string>
+#    include <thread>
+#    include <Catalogs/Source/PhysicalSource.hpp>
+#    include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
+#    include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
+#    include <Configurations/Worker/WorkerConfiguration.hpp>
+#    include <Runtime/BufferManager.hpp>
+#    include <Runtime/NodeEngine.hpp>
+#    include <Runtime/NodeEngineBuilder.hpp>
+#    include <Runtime/QueryManager.hpp>
+#    include <Services/RequestHandlerService.hpp>
+#    include <Sinks/Mediums/KafkaSink.hpp>
+#    include <Sources/KafkaSource.hpp>
+#    include <Sources/SourceCreator.hpp>
+#    include <Util/Logger/Logger.hpp>
+#    include <Util/TestUtils.hpp>
+#    include <Util/TimeMeasurement.hpp>
+#    include <cppkafka/cppkafka.h>
+#    include <gtest/gtest.h>
+#    include <BaseIntegrationTest.hpp>
 
-#ifndef OPERATORID
-#define OPERATORID OperatorId(1)
-#endif
+#    ifndef OPERATORID
+#        define OPERATORID OperatorId(1)
+#    endif
 
-#ifndef ORIGINID
-#define ORIGINID OriginId(1)
-#endif
+#    ifndef ORIGINID
+#        define ORIGINID OriginId(1)
+#    endif
 
-#ifndef NUMSOURCELOCALBUFFERS
-#define NUMSOURCELOCALBUFFERS 12
-#endif
+#    ifndef NUMSOURCELOCALBUFFERS
+#        define NUMSOURCELOCALBUFFERS 12
+#    endif
 
 const std::string KAFKA_BROKER = "localhost:9092";
 
-namespace NES {
+namespace NES
+{
 
 /**
  * NOTE: this test requires a running kafka instance
  */
-class KafkaSourceTest : public Testing::BaseIntegrationTest {
-  public:
+class KafkaSourceTest : public Testing::BaseIntegrationTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("KAFKASourceTest.log", NES::LogLevel::LOG_DEBUG);
         NES_DEBUG("KAFKASOURCETEST::SetUpTestCase()");
     }
 
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseIntegrationTest::SetUp();
         NES_DEBUG("KAFKASOURCETEST::SetUp() KAFKASourceTest cases set up.");
         test_schema = Schema::create()->addField("var", BasicType::UINT32);
@@ -73,7 +77,8 @@ class KafkaSourceTest : public Testing::BaseIntegrationTest {
     }
 
     /* Will be called after a test is executed. */
-    void TearDown() override {
+    void TearDown() override
+    {
         ASSERT_TRUE(nodeEngine->stop());
         Testing::BaseIntegrationTest::TearDown();
         NES_DEBUG("KAFKASOURCETEST::TearDown() Tear down MQTTSourceTest");
@@ -96,51 +101,54 @@ class KafkaSourceTest : public Testing::BaseIntegrationTest {
 /**
  * Tests basic set up of Kafka source
  */
-TEST_F(KafkaSourceTest, KafkaSourceInit) {
-    auto kafkaSource = createKafkaSource(test_schema,
-                                         nodeEngine->getBufferManager(),
-                                         nodeEngine->getQueryManager(),
-                                         2,
-                                         brokers,
-                                         topic,
-                                         groupId,
-                                         true,
-                                         100,
-                                         "earliest",
-                                         kafkaSourceType,
-                                         OPERATORID,
-                                         ORIGINID,
-                                         INVALID_STATISTIC_ID,
-                                         NUMSOURCELOCALBUFFERS,
-                                         1,
-                                         "defaultPhysicalStreamName",
-                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+TEST_F(KafkaSourceTest, KafkaSourceInit)
+{
+    auto kafkaSource = createKafkaSource(
+        test_schema,
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(),
+        2,
+        brokers,
+        topic,
+        groupId,
+        true,
+        100,
+        "earliest",
+        kafkaSourceType,
+        OPERATORID,
+        ORIGINID,
+        INVALID_STATISTIC_ID,
+        NUMSOURCELOCALBUFFERS,
+        1,
+        "defaultPhysicalStreamName",
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     SUCCEED();
 }
 /**
  * Test if schema, Kafka server address, clientId, user, and topic are the same
  */
-TEST_F(KafkaSourceTest, KafkaSourcePrint) {
-
-    auto kafkaSource = createKafkaSource(test_schema,
-                                         nodeEngine->getBufferManager(),
-                                         nodeEngine->getQueryManager(),
-                                         2,
-                                         brokers,
-                                         topic,
-                                         groupId,
-                                         true,
-                                         100,
-                                         "earliest",
-                                         kafkaSourceType,
-                                         OPERATORID,
-                                         ORIGINID,
-                                         INVALID_STATISTIC_ID,
-                                         NUMSOURCELOCALBUFFERS,
-                                         1,
-                                         "defaultPhysicalStreamName",
-                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+TEST_F(KafkaSourceTest, KafkaSourcePrint)
+{
+    auto kafkaSource = createKafkaSource(
+        test_schema,
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(),
+        2,
+        brokers,
+        topic,
+        groupId,
+        true,
+        100,
+        "earliest",
+        kafkaSourceType,
+        OPERATORID,
+        ORIGINID,
+        INVALID_STATISTIC_ID,
+        NUMSOURCELOCALBUFFERS,
+        1,
+        "defaultPhysicalStreamName",
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
 
     std::string expected = "KAFKA_SOURCE(SCHEMA(var:INTEGER(32 bits)), BROKER(localhost:9092), TOPIC(sourceTest). "
                            "OFFSETMODE(earliest). BATCHSIZE(1). ";
@@ -152,33 +160,31 @@ TEST_F(KafkaSourceTest, KafkaSourcePrint) {
     SUCCEED();
 }
 
-#ifdef RUNNING_KAFKA_INSTANCE
+#    ifdef RUNNING_KAFKA_INSTANCE
 /**
  * Tests if obtained value is valid.
  */
-TEST_F(KafkaSourceTest, KafkaTestNative) {
+TEST_F(KafkaSourceTest, KafkaTestNative)
+{
     int partition_value = -1;
 
     //    #####################
     // Construct the configuration
-    cppkafka::Configuration config = {{"metadata.broker.list", brokers},
-                                      {"group.id", "123"},
-                                      {"auto.offset.reset", "earliest"},
-                                      // Disable auto commit
-                                      {"enable.auto.commit", false}};
+    cppkafka::Configuration config
+        = {{"metadata.broker.list", brokers},
+           {"group.id", "123"},
+           {"auto.offset.reset", "earliest"},
+           // Disable auto commit
+           {"enable.auto.commit", false}};
 
     // Create the consumer
     cppkafka::Consumer consumer(config);
 
     // Print the assigned partitions on assignment
-    consumer.set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) {
-        NES_DEBUG("Got assigned: {}", partitions);
-    });
+    consumer.set_assignment_callback([](const cppkafka::TopicPartitionList& partitions) { NES_DEBUG("Got assigned: {}", partitions); });
 
     // Print the revoked partitions on revocation
-    consumer.set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) {
-        NES_DEBUG("Got revoked: {}", partitions);
-    });
+    consumer.set_revocation_callback([](const cppkafka::TopicPartitionList& partitions) { NES_DEBUG("Got revoked: {}", partitions); });
 
     // Subscribe to the topic
     consumer.subscribe({topic});
@@ -191,7 +197,8 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
 
     // Get the partition we want to write to. If no partition is provided, this will be
     // an unassigned one
-    if (partition_value != -1) {
+    if (partition_value != -1)
+    {
         builder.partition(partition_value);
     }
 
@@ -212,22 +219,30 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
     //################################
     bool pollSuccessFull = false;
     size_t cnt = 0;
-    while (!pollSuccessFull) {
+    while (!pollSuccessFull)
+    {
         NES_DEBUG("run ={}", cnt++);
-        if (cnt > 10) {
+        if (cnt > 10)
+        {
             break;
         }
         cppkafka::Message msg = consumer.poll();
-        if (msg) {
+        if (msg)
+        {
             // If we managed to get a message
-            if (msg.get_error()) {
+            if (msg.get_error())
+            {
                 // Ignore EOF notifications from rdkafka
-                if (!msg.is_eof()) {
+                if (!msg.is_eof())
+                {
                     NES_DEBUG("[+] Received error notification: {}", msg.get_error());
                 }
-            } else {
+            }
+            else
+            {
                 // Print the key (if any)
-                if (msg.get_key()) {
+                if (msg.get_key())
+                {
                     NES_DEBUG(" {} -> ", msg.get_key());
                 }
                 // Print the payload
@@ -248,31 +263,31 @@ TEST_F(KafkaSourceTest, KafkaTestNative) {
 /**
  * Tests if obtained value is valid.
  */
-TEST_F(KafkaSourceTest, KafkaSourceValue) {
-    auto kafkaSource = createKafkaSource(test_schema,
-                                         nodeEngine->getBufferManager(),
-                                         nodeEngine->getQueryManager(),
-                                         2,
-                                         brokers,
-                                         topic,
-                                         groupId,
-                                         true,
-                                         100,
-                                         "earliest",
-                                         OPERATORID,
-                                         OPERATORID,
-                                         INVALID_STATISTIC_ID,
-                                         NUMSOURCELOCALBUFFERS,
-                                         1,
-                                         std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
+TEST_F(KafkaSourceTest, KafkaSourceValue)
+{
+    auto kafkaSource = createKafkaSource(
+        test_schema,
+        nodeEngine->getBufferManager(),
+        nodeEngine->getQueryManager(),
+        2,
+        brokers,
+        topic,
+        groupId,
+        true,
+        100,
+        "earliest",
+        OPERATORID,
+        OPERATORID,
+        INVALID_STATISTIC_ID,
+        NUMSOURCELOCALBUFFERS,
+        1,
+        std::vector<Runtime::Execution::SuccessorExecutablePipeline>());
     auto test_schema = Schema::create()->addField("var", BasicType::UINT32);
 
     //first call to connect
     auto tuple_bufferJ = kafkaSource->receiveData();
 
-    cppkafka::Configuration config = {{"metadata.broker.list", brokers.c_str()},
-                                      {"group.id", groupId},
-                                      {"enable.auto.commit", true}};
+    cppkafka::Configuration config = {{"metadata.broker.list", brokers.c_str()}, {"group.id", groupId}, {"enable.auto.commit", true}};
     cppkafka::Producer producer(config);
 
     // Produce a message!
@@ -282,17 +297,16 @@ TEST_F(KafkaSourceTest, KafkaSourceValue) {
 
     auto tuple_buffer = kafkaSource->receiveData();
     EXPECT_TRUE(tuple_buffer.has_value());
-    auto* tuple = (char*) tuple_buffer->getBuffer();
+    auto* tuple = (char*)tuple_buffer->getBuffer();
     std::string str(tuple);
     std::string expected = "32";
-    NES_DEBUG("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: {}. Received value is: {}",
-              expected,
-              str);
+    NES_DEBUG("KAFKASOURCETEST::TEST_F(KAFKASourceTest, KAFKASourceValue) expected value is: {}. Received value is: {}", expected, str);
     EXPECT_EQ(str, expected);
 }
 
 // Disabled, because it requires a manually set up Kafka broker
-TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
+TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson)
+{
     // submit message to kafka
     cppkafka::Configuration config = {{"metadata.broker.list", "127.0.0.1:9092"}};
     cppkafka::Producer producer(config);
@@ -336,8 +350,7 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("KAFKASOURCETEST: Submit query");
-    string query =
-        R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" + outputFilePath + R"("));)";
+    string query = R"(Query::from("stream").filter(Attribute("var") < 7).sink(FileSinkDescriptor::create(")" + outputFilePath + R"("));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -371,7 +384,8 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfigJson) {
 }
 
 // Disabled, because it requires a manually set up Kafka broker
-TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
+TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -417,8 +431,8 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
 
     std::string outputFilePath = getTestResourceFolder() / "test.out";
     NES_INFO("QueryDeploymentTest: Submit query");
-    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")"
-        + outputFilePath + R"(", "CSV_FORMAT", "APPEND"));)";
+    string query = R"(Query::from("stream").filter(Attribute("hospitalId") < 5).sink(FileSinkDescriptor::create(")" + outputFilePath
+        + R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
     GlobalQueryPlanPtr globalQueryPlan = crd->getGlobalQueryPlan();
     EXPECT_TRUE(TestUtils::waitForQueryToStart(queryId, queryCatalog));
@@ -436,6 +450,6 @@ TEST_F(KafkaSourceTest, DISABLED_testDeployOneWorkerWithKafkaSourceConfig) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("QueryDeploymentTest: Test finished");
 }
-#endif
-}// namespace NES
+#    endif
+} // namespace NES
 #endif

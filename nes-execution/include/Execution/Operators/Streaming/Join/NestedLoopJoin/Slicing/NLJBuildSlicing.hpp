@@ -17,25 +17,32 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 
-namespace NES::Runtime::Execution::Operators {
+namespace NES::Runtime::Execution::Operators
+{
 
 /**
  * @brief This class is the first phase of the join. For both streams (left and right), the tuples are stored in the
  * corresponding slice one after the other. Afterwards, the second phase (NLJProbe) will start joining the tuples
  * via two nested loops.
  */
-class NLJBuildSlicing : public StreamJoinBuild {
-  public:
+class NLJBuildSlicing : public StreamJoinBuild
+{
+public:
     /**
      * @brief Local state, which stores the slice start, slice end, joinOpHandlerReference, sliceReference, and pagedVectorRef
      */
-    class LocalNestedLoopJoinState : public Operators::OperatorState {
-      public:
-        LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
-                                 const Value<MemRef>& sliceReference,
-                                 Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef)
-            : joinOperatorHandler(operatorHandler), sliceReference(sliceReference),
-              pagedVectorVarSizedRef(std::move(pagedVectorVarSizedRef)), sliceStart(0_u64), sliceEnd(0_u64){};
+    class LocalNestedLoopJoinState : public Operators::OperatorState
+    {
+    public:
+        LocalNestedLoopJoinState(
+            const Value<MemRef>& operatorHandler,
+            const Value<MemRef>& sliceReference,
+            Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef)
+            : joinOperatorHandler(operatorHandler)
+            , sliceReference(sliceReference)
+            , pagedVectorVarSizedRef(std::move(pagedVectorVarSizedRef))
+            , sliceStart(0_u64)
+            , sliceEnd(0_u64){};
         Value<MemRef> joinOperatorHandler;
         Value<MemRef> sliceReference;
         Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef;
@@ -53,13 +60,14 @@ class NLJBuildSlicing : public StreamJoinBuild {
      * @param timeFunction
      * @param joinStrategy
      */
-    NLJBuildSlicing(const uint64_t operatorHandlerIndex,
-                    const SchemaPtr& schema,
-                    const std::string& joinFieldName,
-                    const QueryCompilation::JoinBuildSideType joinBuildSide,
-                    const uint64_t entrySize,
-                    TimeFunctionPtr timeFunction,
-                    QueryCompilation::StreamJoinStrategy joinStrategy);
+    NLJBuildSlicing(
+        const uint64_t operatorHandlerIndex,
+        const SchemaPtr& schema,
+        const std::string& joinFieldName,
+        const QueryCompilation::JoinBuildSideType joinBuildSide,
+        const uint64_t entrySize,
+        TimeFunctionPtr timeFunction,
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
@@ -70,10 +78,11 @@ class NLJBuildSlicing : public StreamJoinBuild {
      * @param operatorHandlerMemRef: MemRef to the operator handler
      * @param timestamp: Timestamp, for which to get the sliceRef, sliceStart, and sliceEnd
      */
-    void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
-                              Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
-                              Nautilus::Value<Nautilus::UInt64>& timestamp) const;
+    void updateLocalJoinState(
+        LocalNestedLoopJoinState* localJoinState,
+        Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
+        Nautilus::Value<Nautilus::UInt64>& timestamp) const;
 };
-}// namespace NES::Runtime::Execution::Operators
+} // namespace NES::Runtime::Execution::Operators
 
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJBUILDSLICING_HPP_
+#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJBUILDSLICING_HPP_

@@ -19,14 +19,17 @@
 #include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
-namespace NES {
+namespace NES
+{
 
-namespace Configurations {
+namespace Configurations
+{
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-}// namespace Configurations
+} // namespace Configurations
 
-namespace Monitoring {
+namespace Monitoring
+{
 
 /**
  * @brief This class represents the metric values read from /proc/net/dev:
@@ -40,8 +43,9 @@ namespace Monitoring {
  * carrier The number of carrier losses detected by the device driver.
  * multicast The number of multicast frames transmitted or received by the device driver.
  */
-class NetworkMetrics {
-  public:
+class NetworkMetrics
+{
+public:
     NetworkMetrics();
 
     /**
@@ -127,6 +131,6 @@ void readFromBuffer(NetworkMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
  */
 nlohmann::json asJson(const NetworkMetrics& metrics);
 
-}// namespace Monitoring
-}// namespace NES
-#endif// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_
+} // namespace Monitoring
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_NETWORKMETRICS_HPP_

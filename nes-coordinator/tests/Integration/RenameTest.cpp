@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <iostream>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Components/NesCoordinator.hpp>
 #include <Components/NesWorker.hpp>
@@ -24,23 +24,27 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <iostream>
+#include <BaseIntegrationTest.hpp>
 
 using namespace std;
 
-namespace NES {
+namespace NES
+{
 
 using namespace Configurations;
 
-class RenameTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class RenameTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("RenameTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup RenameTest test class.");
     }
 };
 
-TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
+TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -110,7 +114,8 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjection) {
     NES_INFO("RenameTest: Test finished");
 }
 
-TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjectionMapTestProjection) {
+TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjectionMapTestProjection)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -185,7 +190,8 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndProjectionMapTestProjection) {
     NES_INFO("RenameTest: Test finished");
 }
 
-TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
+TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     WorkerConfigurationPtr wrkConf = WorkerConfiguration::create();
 
@@ -214,8 +220,8 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
     auto outputFile = getTestResourceFolder() / "test.out";
 
     NES_INFO("RenameTest: Submit query");
-    std::string query =
-        R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create(")";
+    std::string query
+        = R"(Query::from("default_logical").filter(Attribute("id") < 2).project(Attribute("id").as("NewName"), Attribute("value")).sink(FileSinkDescriptor::create(")";
     query += outputFile;
     query += R"(", "CSV_FORMAT", "APPEND"));)";
     QueryId queryId = requestHandlerService->validateAndQueueAddQueryRequest(query, Optimizer::PlacementStrategy::BottomUp);
@@ -251,13 +257,14 @@ TEST_F(RenameTest, DISABLED_testAttributeRenameAndFilter) {
     NES_INFO("RenameTest: Test finished");
 }
 
-TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
+TEST_F(RenameTest, DISABLED_testCentralWindowEventTime)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -329,13 +336,14 @@ TEST_F(RenameTest, DISABLED_testCentralWindowEventTime) {
 /**
  * Test deploying join with different sources
  */
-TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
+TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow)
+{
     CoordinatorConfigurationPtr coordinatorConfig = CoordinatorConfiguration::createDefault();
     coordinatorConfig->rpcPort = *rpcCoordinatorPort;
     coordinatorConfig->restPort = *restPort;
     NES_INFO("WindowDeploymentTest: Start coordinator");
     NesCoordinatorPtr crd = std::make_shared<NesCoordinator>(coordinatorConfig);
-    uint64_t port = crd->startCoordinator(/**blocking**/ false);//id=1
+    uint64_t port = crd->startCoordinator(/**blocking**/ false); //id=1
     EXPECT_NE(port, 0UL);
     NES_DEBUG("WindowDeploymentTest: Coordinator started successfully");
     //register logical source
@@ -426,4 +434,4 @@ TEST_F(RenameTest, DISABLED_testJoinWithDifferentSourceTumblingWindow) {
     EXPECT_TRUE(retStopCord);
     NES_INFO("RenameTest: Test finished");
 }
-}// namespace NES
+} // namespace NES

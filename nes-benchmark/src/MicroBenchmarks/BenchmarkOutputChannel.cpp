@@ -12,7 +12,11 @@
     limitations under the License.
 */
 
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <filesystem>
+#include <fstream>
+#include <future>
+#include <netdb.h>
+#include <stdint.h>
 #include <Exceptions/RuntimeException.hpp>
 #include <Network/ExchangeProtocol.hpp>
 #include <Network/ExchangeProtocolListener.hpp>
@@ -25,27 +29,26 @@
 #include <Util/BenchmarkUtils.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/ThreadBarrier.hpp>
-#include <filesystem>
-#include <fstream>
-#include <future>
-#include <netdb.h>
 #include <netinet/in.h>
-#include <stdint.h>
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
-namespace NES::Benchmark {
+namespace NES::Benchmark
+{
 
 /**
  * This benchmark measures the performance of the output channel. This is done by spawning a zmq server. 
  */
-static double BM_TestMassiveSending(uint64_t bufferSize,
-                                    uint64_t buffersManaged,
-                                    uint64_t numSenderThreads,
-                                    uint64_t numServerThreads,
-                                    uint64_t dataSize,
-                                    uint32_t port,
-                                    uint32_t rep) {
+static double BM_TestMassiveSending(
+    uint64_t bufferSize,
+    uint64_t buffersManaged,
+    uint64_t numSenderThreads,
+    uint64_t numServerThreads,
+    uint64_t dataSize,
+    uint32_t port,
+    uint32_t rep)
+{
     std::promise<bool> completedProm;
     std::promise<uint64_t> bytesSent;
     std::promise<double> elapsedSeconds;
@@ -53,33 +56,38 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
 
     uint64_t totalNumBuffer = dataSize / bufferSize;
     std::atomic<std::uint64_t> bufferReceived = 0;
-    auto nesPartition =
-        Network::NesPartition(SharedQueryId(1 + rep), OperatorId(22 + rep), PartitionId(333 + rep), SubpartitionId(444 + rep));
-    try {
-        class ExchangeListener : public Network::ExchangeProtocolListener {
-
-          public:
+    auto nesPartition
+        = Network::NesPartition(SharedQueryId(1 + rep), OperatorId(22 + rep), PartitionId(333 + rep), SubpartitionId(444 + rep));
+    try
+    {
+        class ExchangeListener : public Network::ExchangeProtocolListener
+        {
+        public:
             std::atomic<std::uint64_t>& bufferReceived;
             std::promise<bool>& completedProm;
 
             ExchangeListener(std::atomic<std::uint64_t>& bufferReceived, std::promise<bool>& completedProm)
-                : bufferReceived(bufferReceived), completedProm(completedProm) {}
+                : bufferReceived(bufferReceived), completedProm(completedProm)
+            {
+            }
 
-            void onDataBuffer(Network::NesPartition id, Runtime::TupleBuffer& buffer) override {
-                ((void) id);
-                ((void) buffer);
+            void onDataBuffer(Network::NesPartition id, Runtime::TupleBuffer& buffer) override
+            {
+                ((void)id);
+                ((void)buffer);
                 bufferReceived++;
             }
             void onEndOfStream(Network::Messages::EndOfStreamMessage) override { completedProm.set_value(true); }
-            void onServerError(Network::Messages::ErrorMessage) override {}
+            void onServerError(Network::Messages::ErrorMessage) override { }
 
-            void onChannelError(Network::Messages::ErrorMessage) override {}
-            void onEvent(Network::NesPartition, Runtime::BaseEvent&) override {}
+            void onChannelError(Network::Messages::ErrorMessage) override { }
+            void onEvent(Network::NesPartition, Runtime::BaseEvent&) override { }
         };
 
-        class DummyDataEmitter : public DataEmitter {
-          public:
-            void emitWork(Runtime::TupleBuffer&, bool) override {}
+        class DummyDataEmitter : public DataEmitter
+        {
+        public:
+            void emitWork(Runtime::TupleBuffer&, bool) override { }
         };
 
         auto partMgr = std::make_shared<Network::PartitionManager>();
@@ -96,49 +104,57 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
 
         auto firstBarrier = std::make_shared<NES::ThreadBarrier>(2);
         std::vector<std::thread> allThreads;
-        allThreads.emplace_back([&netManager,
-                                 &nesPartition,
-                                 totalNumBuffer,
-                                 bufferSize,
-                                 &bytesSent,
-                                 &elapsedSeconds,
-                                 &completedProm,
-                                 firstBarrier,
-                                 numSenderThreads] {
-            // register the incoming channel
-            netManager->registerSubpartitionConsumer(nesPartition,
-                                                     netManager->getServerLocation(),
-                                                     std::make_shared<DummyDataEmitter>());
-            firstBarrier->wait();
-            auto startTime = std::chrono::steady_clock::now().time_since_epoch();
-            completedProm.get_future().get();
-            auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
-            auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
-            double bytes = numSenderThreads * totalNumBuffer * bufferSize;
-            double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
-            NES_INFO("Sent {}bytes / {}seconds = throughput {}MiB/s", bytes, (elapsed.count() / 1e9), throughput);
-            bytesSent.set_value(bytes);
-            elapsedSeconds.set_value(elapsed.count() / 1e9);
-            netManager->unregisterSubpartitionConsumer(nesPartition);
-        });
+        allThreads.emplace_back(
+            [&netManager,
+             &nesPartition,
+             totalNumBuffer,
+             bufferSize,
+             &bytesSent,
+             &elapsedSeconds,
+             &completedProm,
+             firstBarrier,
+             numSenderThreads]
+            {
+                // register the incoming channel
+                netManager->registerSubpartitionConsumer(
+                    nesPartition, netManager->getServerLocation(), std::make_shared<DummyDataEmitter>());
+                firstBarrier->wait();
+                auto startTime = std::chrono::steady_clock::now().time_since_epoch();
+                completedProm.get_future().get();
+                auto stopTime = std::chrono::steady_clock::now().time_since_epoch();
+                auto elapsed = std::chrono::duration_cast<std::chrono::nanoseconds>(stopTime - startTime);
+                double bytes = numSenderThreads * totalNumBuffer * bufferSize;
+                double throughput = (bytes * 1'000'000'000) / (elapsed.count() * 1024.0 * 1024.0);
+                NES_INFO("Sent {}bytes / {}seconds = throughput {}MiB/s", bytes, (elapsed.count() / 1e9), throughput);
+                bytesSent.set_value(bytes);
+                elapsedSeconds.set_value(elapsed.count() / 1e9);
+                netManager->unregisterSubpartitionConsumer(nesPartition);
+            });
 
         firstBarrier->wait();
 
         auto secondBarrier = std::make_shared<NES::ThreadBarrier>(numSenderThreads);
-        for (uint64_t thread = 0; thread < numSenderThreads; ++thread) {
+        for (uint64_t thread = 0; thread < numSenderThreads; ++thread)
+        {
             allThreads.emplace_back(
-                [totalNumBuffer, &completedProm, nesPartition, bufferSize, &buffMgr, &netManager, port, secondBarrier] {
+                [totalNumBuffer, &completedProm, nesPartition, bufferSize, &buffMgr, &netManager, port, secondBarrier]
+                {
                     Network::NodeLocation nodeLocation(WorkerId(0), "127.0.0.1", port);
-                    auto senderChannel =
-                        netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
+                    auto senderChannel
+                        = netManager->registerSubpartitionProducer(nodeLocation, nesPartition, buffMgr, std::chrono::seconds(1), 5);
                     secondBarrier->wait();
-                    if (senderChannel == nullptr) {
+                    if (senderChannel == nullptr)
+                    {
                         NES_DEBUG("NetworkStackTest: Error in registering DataChannel!");
                         completedProm.set_value(false);
-                    } else {
-                        for (uint64_t sentBuffer = 0; sentBuffer < totalNumBuffer; ++sentBuffer) {
+                    }
+                    else
+                    {
+                        for (uint64_t sentBuffer = 0; sentBuffer < totalNumBuffer; ++sentBuffer)
+                        {
                             auto buffer = buffMgr->getBufferBlocking();
-                            for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j) {
+                            for (uint64_t j = 0; j < bufferSize / sizeof(uint64_t); ++j)
+                            {
                                 buffer.getBuffer<uint64_t>()[j] = j;
                             }
                             buffer.setNumberOfTuples(bufferSize / sizeof(uint64_t));
@@ -151,21 +167,25 @@ static double BM_TestMassiveSending(uint64_t bufferSize,
                 });
         }
 
-        for (auto& thread : allThreads) {
+        for (auto& thread : allThreads)
+        {
             thread.join();
         }
         throughputRet = bytesSent.get_future().get() / elapsedSeconds.get_future().get();
-    } catch (...) {
+    }
+    catch (...)
+    {
         NES_THROW_RUNTIME_ERROR("BenchmarkDataChannel: Error occured!");
     }
     return throughputRet;
 }
 
-}// namespace NES::Benchmark
+} // namespace NES::Benchmark
 
-int main(int argc, char** argv) {
-    ((void) argc);
-    ((void) argv);
+int main(int argc, char** argv)
+{
+    ((void)argc);
+    ((void)argv);
     NES::Logger::setupLogging("NetworkChannelBenchmark.log", NES::LogLevel::LOG_INFO);
 
     const uint64_t buffersManaged = 32 * 1024;
@@ -180,10 +200,8 @@ int main(int argc, char** argv) {
     NES::Benchmark::Util::createRangeVectorPowerOfTwo<uint64_t>(allBufferSizes, 32 * 1024, 128 * 1024);
     NES::Benchmark::Util::createRangeVector<uint64_t>(allSenderThreads, 4, 8, 2);
     NES::Benchmark::Util::createRangeVector<uint64_t>(allServerThreads, 4, 8, 2);
-    NES::Benchmark::Util::createRangeVector<uint64_t>(allDataSizesToBeSent,
-                                                      1_u64 * 1024 * 1024 * 1024,
-                                                      4_u64 * 1024 * 1024 * 1024,
-                                                      1_u64 * 1024 * 1024 * 1024);
+    NES::Benchmark::Util::createRangeVector<uint64_t>(
+        allDataSizesToBeSent, 1_u64 * 1024 * 1024 * 1024, 4_u64 * 1024 * 1024 * 1024, 1_u64 * 1024 * 1024 * 1024);
 
     std::string benchmarkName = "DataChannel";
     std::string benchmarkFolderName = "DataChannel";
@@ -196,8 +214,8 @@ int main(int argc, char** argv) {
     benchmarkFile << "DATASIZE,NUM_SERVER_THREADS,NUM_SENDER_THREADS,BUFFERSIZE,BUFFERSMANAGED,NUM_REPS,THROUGHPUT\n";
     benchmarkFile.close();
 
-    uint64_t totalParamCombinations =
-        allDataSizesToBeSent.size() * allServerThreads.size() * allSenderThreads.size() * allBufferSizes.size();
+    uint64_t totalParamCombinations
+        = allDataSizesToBeSent.size() * allServerThreads.size() * allSenderThreads.size() * allBufferSizes.size();
     uint64_t curComb = 0;
 
     srand(time(NULL));
@@ -205,24 +223,25 @@ int main(int argc, char** argv) {
     int32_t startPort = rand() % (max - min) + min;
     std::vector<double> throughputVec;
 
-    for (auto dataSize : allDataSizesToBeSent) {
-        for (auto numServerThreads : allServerThreads) {
-            for (auto numSenderThreads : allSenderThreads) {
-                for (auto bufferSize : allBufferSizes) {
+    for (auto dataSize : allDataSizesToBeSent)
+    {
+        for (auto numServerThreads : allServerThreads)
+        {
+            for (auto numSenderThreads : allSenderThreads)
+            {
+                for (auto bufferSize : allBufferSizes)
+                {
                     throughputVec.clear();
-                    int32_t port = startPort;// + curComb;
-                    for (uint64_t i = 0; i < NUM_REPS; ++i) {
-                        double throughput = NES::Benchmark::BM_TestMassiveSending(bufferSize,
-                                                                                  buffersManaged,
-                                                                                  numSenderThreads,
-                                                                                  numServerThreads,
-                                                                                  dataSize,
-                                                                                  port,
-                                                                                  curComb);
+                    int32_t port = startPort; // + curComb;
+                    for (uint64_t i = 0; i < NUM_REPS; ++i)
+                    {
+                        double throughput = NES::Benchmark::BM_TestMassiveSending(
+                            bufferSize, buffersManaged, numSenderThreads, numServerThreads, dataSize, port, curComb);
                         throughputVec.emplace_back(throughput);
                     }
                     // Writing whole throughput vector to csv to csv file
-                    for (auto throughput : throughputVec) {
+                    for (auto throughput : throughputVec)
+                    {
                         benchmarkFile.open(benchmarkFolderName + "/" + (benchmarkName) + "_results.csv", std::ios_base::app);
                         benchmarkFile << std::to_string(dataSize) << "," << std::to_string(numServerThreads) << ","
                                       << std::to_string(numSenderThreads) << "," << std::to_string(bufferSize) << ","
@@ -235,22 +254,24 @@ int main(int argc, char** argv) {
                     double sum = 0.0;
                     double mean, stddev;
 
-                    for (auto throughput : throughputVec) {
+                    for (auto throughput : throughputVec)
+                    {
                         sum += throughput;
                     }
                     mean = sum / throughputVec.size();
 
                     sum = 0.0;
-                    for (auto throughput : throughputVec) {
+                    for (auto throughput : throughputVec)
+                    {
                         sum += pow(throughput - mean, 2);
                     }
                     stddev = sqrt(sum / throughputVec.size());
 
                     // Outputting current combination count and incrementing
                     std::cout << "Performed experiment [" << (++curComb) << "/" << totalParamCombinations
-                              << "] with [size,serverThreads,senderThreads,buffSize,port] [" << dataSize << ","
-                              << numServerThreads << "," << numSenderThreads << "," << bufferSize << "," << port
-                              << "] and got [mean,stddev] of [" << mean << "," << stddev << "]\n";
+                              << "] with [size,serverThreads,senderThreads,buffSize,port] [" << dataSize << "," << numServerThreads << ","
+                              << numSenderThreads << "," << bufferSize << "," << port << "] and got [mean,stddev] of [" << mean << ","
+                              << stddev << "]\n";
                 }
             }
         }

@@ -11,34 +11,38 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <BaseIntegrationTest.hpp>
+#include <thread>
 #include <Mobility/LocationProviders/LocationProviderCSV.hpp>
 #include <Mobility/ReconnectSchedulePredictors/ReconnectSchedulePredictor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/Waypoint.hpp>
 #include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
-#include <thread>
+#include <BaseIntegrationTest.hpp>
 
 #ifdef S2DEF
-#include <s2/s2earth.h>
-#include <s2/s2latlng.h>
-#include <s2/s2point.h>
-#include <s2/s2polyline.h>
+#    include <s2/s2earth.h>
+#    include <s2/s2latlng.h>
+#    include <s2/s2point.h>
+#    include <s2/s2polyline.h>
 #endif
 
-namespace NES {
+namespace NES
+{
 
-class ReconnectSchedulePredictorTest : public Testing::BaseIntegrationTest {
-  public:
-    static void SetUpTestCase() {
+class ReconnectSchedulePredictorTest : public Testing::BaseIntegrationTest
+{
+public:
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("ReconnectSchedulePredictor.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ReconnectSchedulePredictor test class.");
     }
 };
 
 #ifdef S2DEF
-TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
+TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage)
+{
     S2Point coveringPointOnLine;
     S1Angle coverage = S2Earth::MetersToAngle(1000);
 
@@ -57,11 +61,10 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
     std::stringstream ss;
     ss << S2LatLng(coveringPointOnLine);
     NES_DEBUG("coordinates of covering point on line: {}", ss.str());
-    std::pair<S2Point, S1Angle> resultOnLinePoint =
-        NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path, coveringPointOnLine, coverage);
+    std::pair<S2Point, S1Angle> resultOnLinePoint
+        = NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path, coveringPointOnLine, coverage);
     NES_DEBUG("point on line coverage in meters: {}", S2Earth::ToMeters(resultOnLinePoint.second));
-    EXPECT_TRUE(
-        S2::ApproxEquals(resultOnLinePoint.first, S2::GetPointOnLine(coveringPointOnLine, lineEnd, coverage), allowedError));
+    EXPECT_TRUE(S2::ApproxEquals(resultOnLinePoint.first, S2::GetPointOnLine(coveringPointOnLine, lineEnd, coverage), allowedError));
     ASSERT_TRUE(abs(resultOnLinePoint.second - coverage) < allowedError);
     std::stringstream resultOnLinePointString;
     resultOnLinePointString << S2LatLng(resultOnLinePoint.first);
@@ -77,24 +80,21 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
     //we can use the orthogonal vector as a target to move away from the line in an angle of 90 degrees
     //we create a point which is exactly at the boundary of the coverage area and should therefore not cover anything of the line
     auto coveringPointCovAwayFromLine = S2::GetPointOnLine(coveringPointOnLine, ortoVec, coverage);
-    auto resultCovaway =
-        NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path,
-                                                                                           coveringPointCovAwayFromLine,
-                                                                                           coverage);
+    auto resultCovaway
+        = NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path, coveringPointCovAwayFromLine, coverage);
     ASSERT_TRUE(resultCovaway.second.degrees() == 0);
 
     //test different distances from the line which are greater than zero but smaller than coverage
-    for (int i = 1; i < 100; ++i) {
+    for (int i = 1; i < 100; ++i)
+    {
         double coverageFactor = 0.01 * i;
         NES_DEBUG("testing coverage of point which is coverage * {} away from path", coverageFactor);
         auto coveringPointAwayFromPath = S2::GetPointOnLine(coveringPointOnLine, ortoVec, coverage * coverageFactor);
         std::stringstream coveringPointAsString;
         coveringPointAsString << S2LatLng(coveringPointAwayFromPath);
         NES_DEBUG("covering point coordinates are: {}", coveringPointAsString.str());
-        auto result =
-            NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path,
-                                                                                               coveringPointAwayFromPath,
-                                                                                               coverage);
+        auto result
+            = NES::Spatial::Mobility::Experimental::ReconnectSchedulePredictor::findPathCoverage(path, coveringPointAwayFromPath, coverage);
         NES_DEBUG("coverage on line in meters is: {}", S2Earth::ToMeters(result.second));
         std::stringstream s2LatLngAsString;
         s2LatLngAsString << S2LatLng(result.first);
@@ -107,4 +107,4 @@ TEST_F(ReconnectSchedulePredictorTest, testFindPathCoverage) {
     }
 }
 #endif
-}// namespace NES
+} // namespace NES

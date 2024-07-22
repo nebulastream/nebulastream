@@ -18,7 +18,8 @@
 #include <DataProvider/DataProvider.hpp>
 #include <IngestionRateGeneration/IngestionRateGenerator.hpp>
 
-namespace NES::Benchmark::DataProvision {
+namespace NES::Benchmark::DataProvision
+{
 /**
  * @brief sets the time period in milliseconds in which the predefined amount of buffers is ingested
  */
@@ -30,8 +31,9 @@ using ExternalProviderPtr = std::shared_ptr<ExternalProvider>;
 /**
  * @brief This class inherits from DataProvider. It enables the use of dynamic ingestion rates.
  */
-class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
-  public:
+class ExternalProvider : public DataProvider, public Runtime::BufferRecycler
+{
+public:
     /**
       * @brief creates an ExternalProvider
       * @param id
@@ -41,11 +43,12 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
       * @param throwException: If this is set to true, then exceptions are thrown instead of warnings. There is one exception thrown
       * if the buffer can not be written to the queue. Another one is thrown, if the data could not been generated fast enough
       */
-    ExternalProvider(uint64_t id,
-                     const DataProviderMode providerMode,
-                     const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
-                     IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
-                     bool throwException = true);
+    ExternalProvider(
+        uint64_t id,
+        const DataProviderMode providerMode,
+        const std::vector<Runtime::TupleBuffer> preAllocatedBuffers,
+        IngestionRateGeneration::IngestionRateGeneratorPtr ingestionRateGenerator,
+        bool throwException = true);
 
     /**
      * @brief destructor
@@ -116,7 +119,7 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
      */
     void setThrowException(bool throwException);
 
-  private:
+private:
     /**
      * @brief generates data based on predefinedIngestionRates
      */
@@ -132,6 +135,6 @@ class ExternalProvider : public DataProvider, public Runtime::BufferRecycler {
     std::vector<uint64_t> predefinedIngestionRates;
     bool throwException;
 };
-}// namespace NES::Benchmark::DataProvision
+} // namespace NES::Benchmark::DataProvision
 
-#endif// NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_
+#endif // NES_BENCHMARK_INCLUDE_DATAPROVIDER_EXTERNALPROVIDER_HPP_

@@ -15,6 +15,7 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 
+#include <string>
 #include "Configurations/BaseConfiguration.hpp"
 #include "Configurations/Coordinator/ElegantConfigurations.hpp"
 #include "Configurations/Coordinator/LogicalSourceTypeFactory.hpp"
@@ -22,9 +23,9 @@
 #include "Configurations/Enums/StorageHandlerType.hpp"
 #include "Configurations/Validation/IpValidation.hpp"
 #include "Configurations/Worker/WorkerConfiguration.hpp"
-#include <string>
 
-namespace NES::Configurations {
+namespace NES::Configurations
+{
 
 class CoordinatorConfiguration;
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
@@ -32,8 +33,9 @@ using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 /**
  * @brief Configuration options for the Coordinator.
  */
-class CoordinatorConfiguration : public BaseConfiguration {
-  public:
+class CoordinatorConfiguration : public BaseConfiguration
+{
+public:
     /**
      * @brief IP of the REST server.
      */
@@ -58,33 +60,27 @@ class CoordinatorConfiguration : public BaseConfiguration {
     /**
      * @brief The current log level. Controls the detail of log messages.
      */
-    EnumOption<LogLevel> logLevel = {LOG_LEVEL_CONFIG,
-                                     LogLevel::LOG_INFO,
-                                     "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
+    EnumOption<LogLevel> logLevel
+        = {LOG_LEVEL_CONFIG, LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
     /**
      * @brief Indicates if the monitoring stack is enables.
      */
-    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG,
-                                   "false",
-                                   "Enable monitoring",
-                                   {std::make_shared<BooleanValidation>()}};
+    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, "false", "Enable monitoring", {std::make_shared<BooleanValidation>()}};
 
     /**
      * @brief Indicates the number of request executor threads
      */
-    UIntOption requestExecutorThreads = {REQUEST_EXECUTOR_THREAD_CONFIG,
-                                         "1",
-                                         "Number of request executor thread",
-                                         {std::make_shared<NumberValidation>()}};
+    UIntOption requestExecutorThreads
+        = {REQUEST_EXECUTOR_THREAD_CONFIG, "1", "Number of request executor thread", {std::make_shared<NumberValidation>()}};
 
     /**
      * @brief Storage handler for request executor
      */
-    EnumOption<RequestProcessor::StorageHandlerType> storageHandlerType = {
-        STORAGE_HANDLER_TYPE_CONFIG,
-        RequestProcessor::StorageHandlerType::TwoPhaseLocking,
-        "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
+    EnumOption<RequestProcessor::StorageHandlerType> storageHandlerType
+        = {STORAGE_HANDLER_TYPE_CONFIG,
+           RequestProcessor::StorageHandlerType::TwoPhaseLocking,
+           "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
 
     /**
      * @brief Configures different properties for the query optimizer.
@@ -95,8 +91,7 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Allows the configuration of logical sources at the coordinator.
      * @deprecated This is currently only used for testing and will be removed.
      */
-    SequenceOption<WrapOption<LogicalSourceTypePtr, LogicalSourceTypeFactory>> logicalSourceTypes = {LOGICAL_SOURCES,
-                                                                                                     "Logical Sources"};
+    SequenceOption<WrapOption<LogicalSourceTypePtr, LogicalSourceTypeFactory>> logicalSourceTypes = {LOGICAL_SOURCES, "Logical Sources"};
 
     /**
      * @brief Configuration yaml path.
@@ -118,18 +113,15 @@ class CoordinatorConfiguration : public BaseConfiguration {
      * @brief Configuration of waiting time of the coordinator health check.
      * Set the number of seconds waiting to perform health checks
      */
-    UIntOption coordinatorHealthCheckWaitTime = {HEALTH_CHECK_WAIT_TIME,
-                                                 "1",
-                                                 "Number of seconds to wait between health checks",
-                                                 {std::make_shared<NumberValidation>()}};
+    UIntOption coordinatorHealthCheckWaitTime
+        = {HEALTH_CHECK_WAIT_TIME, "1", "Number of seconds to wait between health checks", {std::make_shared<NumberValidation>()}};
 
     /**
      * @brief The allowed origin for CORS requests which will be sent as part of the header of the http responses of the rest server.
      *        The default value '*' allows all CORS requests per default. Setting the value to 'false' disables CORS requests.
      */
-    StringOption restServerCorsAllowedOrigin = {REST_SERVER_CORS_ORIGIN,
-                                                "*",
-                                                "The allowed origins to be set in the header of the responses to rest requests"};
+    StringOption restServerCorsAllowedOrigin
+        = {REST_SERVER_CORS_ORIGIN, "*", "The allowed origins to be set in the header of the responses to rest requests"};
 
     /**
      * @brief ELEGANT related configuration parameters
@@ -150,25 +142,27 @@ class CoordinatorConfiguration : public BaseConfiguration {
      */
     static CoordinatorConfigurationPtr create(const int argc, const char** argv);
 
-  private:
-    std::vector<Configurations::BaseOption*> getOptions() override {
-        return {&restIp,
-                &coordinatorHost,
-                &rpcPort,
-                &restPort,
-                &logLevel,
-                &enableMonitoring,
-                &configPath,
-                &worker,
-                &workerConfigPath,
-                &optimizer,
-                &logicalSourceTypes,
-                &coordinatorHealthCheckWaitTime,
-                &restServerCorsAllowedOrigin,
-                &elegant};
+private:
+    std::vector<Configurations::BaseOption*> getOptions() override
+    {
+        return {
+            &restIp,
+            &coordinatorHost,
+            &rpcPort,
+            &restPort,
+            &logLevel,
+            &enableMonitoring,
+            &configPath,
+            &worker,
+            &workerConfigPath,
+            &optimizer,
+            &logicalSourceTypes,
+            &coordinatorHealthCheckWaitTime,
+            &restServerCorsAllowedOrigin,
+            &elegant};
     }
 };
 
-}// namespace NES::Configurations
+} // namespace NES::Configurations
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_

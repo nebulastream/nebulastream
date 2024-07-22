@@ -16,12 +16,14 @@
 #define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
-namespace NES {
+namespace NES
+{
 /**
  * @brief This node represents a logical binary expression.
  */
-class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalExpressionNode {
-  public:
+class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalExpressionNode
+{
+public:
     /**
     * @brief Create a deep copy of this expression node.
     * @return ExpressionNodePtr
@@ -30,11 +32,11 @@ class LogicalBinaryExpressionNode : public BinaryExpressionNode, public LogicalE
 
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
 
-  protected:
+protected:
     LogicalBinaryExpressionNode();
     ~LogicalBinaryExpressionNode() override = default;
     explicit LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other);
 };
-}// namespace NES
+} // namespace NES
 
-#endif// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_
+#endif // NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_

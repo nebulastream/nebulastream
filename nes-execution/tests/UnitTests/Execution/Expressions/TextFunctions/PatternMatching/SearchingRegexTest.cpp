@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <BaseIntegrationTest.hpp>
+#include <memory>
 #include <Execution/Expressions/TextFunctions/PatternMatching/SearchingRegex.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -20,19 +20,23 @@
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <memory>
+#include <BaseIntegrationTest.hpp>
 
-namespace NES::Runtime::Execution::Expressions {
+namespace NES::Runtime::Execution::Expressions
+{
 
-class SearchingRegexTest : public Testing::BaseUnitTest {
-  public:
+class SearchingRegexTest : public Testing::BaseUnitTest
+{
+public:
     /* Will be called before any test in this class are executed. */
-    static void SetUpTestCase() {
+    static void SetUpTestCase()
+    {
         NES::Logger::setupLogging("SearchingRegexTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup SearchingRegexTest test class.");
     }
     /* Will be called before a test is executed. */
-    void SetUp() override {
+    void SetUp() override
+    {
         Testing::BaseUnitTest::SetUp();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
@@ -48,45 +52,49 @@ class SearchingRegexTest : public Testing::BaseUnitTest {
  * sequence (the subject) matches the regular expression rgx (the pattern).
  */
 
-TEST_F(SearchingRegexTest, evaluateSearchingRegex1) {
+TEST_F(SearchingRegexTest, evaluateSearchingRegex1)
+{
     auto expression = BinaryExpressionWrapper<SearchingRegex>();
     // Positive Test full match
     {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("This is a Test");
         auto resultValue = expression.eval(l, r);
-        EXPECT_TRUE((Boolean) resultValue);
+        EXPECT_TRUE((Boolean)resultValue);
     }
 }
-TEST_F(SearchingRegexTest, evaluateSearchingRegex2) {
+TEST_F(SearchingRegexTest, evaluateSearchingRegex2)
+{
     auto expression = BinaryExpressionWrapper<SearchingRegex>();
     // Negative Test regex overflow
     {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("This is a Test!");
         auto resultValue = expression.eval(l, r);
-        EXPECT_FALSE((Boolean) resultValue);
+        EXPECT_FALSE((Boolean)resultValue);
     }
 }
-TEST_F(SearchingRegexTest, evaluateSearchingRegex3) {
+TEST_F(SearchingRegexTest, evaluateSearchingRegex3)
+{
     auto expression = BinaryExpressionWrapper<SearchingRegex>();
     // Positive Test Subsequence
     {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("Test");
         auto resultValue = expression.eval(l, r);
-        EXPECT_TRUE((Boolean) resultValue);
+        EXPECT_TRUE((Boolean)resultValue);
     }
 }
-TEST_F(SearchingRegexTest, evaluateSearchingRegex4) {
+TEST_F(SearchingRegexTest, evaluateSearchingRegex4)
+{
     auto expression = BinaryExpressionWrapper<SearchingRegex>();
     //Negative Test Subsequence
     {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("bbbb");
         auto resultValue = expression.eval(l, r);
-        EXPECT_FALSE((Boolean) resultValue);
+        EXPECT_FALSE((Boolean)resultValue);
     }
 }
 
-}// namespace NES::Runtime::Execution::Expressions
+} // namespace NES::Runtime::Execution::Expressions

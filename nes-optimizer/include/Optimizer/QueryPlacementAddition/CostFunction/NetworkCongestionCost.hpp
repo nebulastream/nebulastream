@@ -18,17 +18,19 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Optimizer/QueryPlacementAddition/CostFunction/AbstractQueryPlacementCost.hpp>
 
-namespace NES::Optimizer {
+namespace NES::Optimizer
+{
 /**
  * Represent a network congestion (i.e., bandwidth over-utilization) as a result of a placement.
  */
-class NetworkCongestionCost : public AbstractQueryPlacementCost {
-  public:
+class NetworkCongestionCost : public AbstractQueryPlacementCost
+{
+public:
     NetworkCongestionCost(uint32_t samplingInterval);
 
     float getCost(PlacementMatrix candidate) override;
 
-  private:
+private:
     /**
      * @brief calculate the total output rate of event streams produced by all running pipelines on a single node.
      * @param candidate the placement matrix of the candidate
@@ -77,5 +79,5 @@ class NetworkCongestionCost : public AbstractQueryPlacementCost {
 
     uint32_t samplingInterval;
 };
-}// namespace NES::Optimizer
-#endif// NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTFUNCTION_NETWORKCONGESTIONCOST_HPP_
+} // namespace NES::Optimizer
+#endif // NES_OPTIMIZER_INCLUDE_OPTIMIZER_QUERYPLACEMENTADDITION_COSTFUNCTION_NETWORKCONGESTIONCOST_HPP_

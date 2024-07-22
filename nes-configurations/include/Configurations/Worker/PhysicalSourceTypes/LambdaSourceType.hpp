@@ -14,13 +14,15 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_LAMBDASOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_LAMBDASOURCETYPE_HPP_
 
+#include <functional>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/GatheringMode.hpp>
-#include <functional>
 
-namespace NES {
+namespace NES
+{
 
-namespace Runtime {
+namespace Runtime
+{
 class TupleBuffer;
 }
 
@@ -30,8 +32,9 @@ using LambdaSourceTypePtr = std::shared_ptr<LambdaSourceType>;
 /**
  * @brief A source config for a lambda source
  */
-class LambdaSourceType : public PhysicalSourceType {
-  public:
+class LambdaSourceType : public PhysicalSourceType
+{
+public:
     /**
      * @brief Factory method of LambdaSourceType
      * @param lambda function that produces the buffer
@@ -41,15 +44,15 @@ class LambdaSourceType : public PhysicalSourceType {
      * @param taskQueueId: taskQueueId
      * @return a constructed LambdaSourceType
      */
-    static LambdaSourceTypePtr
-    create(const std::string& logicalSourceName,
-           const std::string& physicalSourceName,
-           std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
-           uint64_t numBuffersToProduce,
-           uint64_t gatheringValue,
-           GatheringMode gatheringMode,
-           uint64_t sourceAffinity = 0,
-           uint64_t taskQueueId = 0);
+    static LambdaSourceTypePtr create(
+        const std::string& logicalSourceName,
+        const std::string& physicalSourceName,
+        std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
+        uint64_t numBuffersToProduce,
+        uint64_t gatheringValue,
+        GatheringMode gatheringMode,
+        uint64_t sourceAffinity = 0,
+        uint64_t taskQueueId = 0);
 
     std::function<void(NES::Runtime::TupleBuffer&, uint64_t)> getGenerationFunction() const;
 
@@ -73,7 +76,7 @@ class LambdaSourceType : public PhysicalSourceType {
 
     void reset() override;
 
-  private:
+private:
     explicit LambdaSourceType(
         const std::string& logicalSourceName,
         const std::string& physicalSourceName,
@@ -92,6 +95,6 @@ class LambdaSourceType : public PhysicalSourceType {
     uint64_t taskQueueId;
 };
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_LAMBDASOURCETYPE_HPP_
+#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_LAMBDASOURCETYPE_HPP_

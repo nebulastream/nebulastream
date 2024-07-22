@@ -15,24 +15,27 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
 
-#include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
-#include <Nautilus/IR/Operations/Operation.hpp>
 #include <memory>
 #include <vector>
+#include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 
-namespace NES::Nautilus::IR {
+namespace NES::Nautilus::IR
+{
 
-class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
-  public:
+class BasicBlock : public std::enable_shared_from_this<BasicBlock>
+{
+public:
     /**
      * @brief BasicBlock used for control flow in NES IR
      * @param Operations: A list of Operations that are executed in the BasicBlock.
      * @param nextBlocks : The BasicBlock that is next in the control flow of the execution.
      */
-    explicit BasicBlock(std::string identifier,
-                        int32_t scopeLevel,
-                        std::vector<Operations::OperationPtr> operations,
-                        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments);
+    explicit BasicBlock(
+        std::string identifier,
+        int32_t scopeLevel,
+        std::vector<Operations::OperationPtr> operations,
+        std::vector<std::shared_ptr<Operations::BasicBlockArgument>> arguments);
     virtual ~BasicBlock() = default;
     [[nodiscard]] std::string getIdentifier();
     void setIdentifier(const std::string& identifier);
@@ -74,7 +77,7 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
     void replaceTerminatorOperation(Operations::OperationPtr newTerminatorOperation);
     [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> getNextBlocks();
 
-  private:
+private:
     std::string identifier;
     uint32_t scopeLevel;
     uint32_t numLoopBackEdges;
@@ -84,5 +87,5 @@ class BasicBlock : public std::enable_shared_from_this<BasicBlock> {
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 
-}// namespace NES::Nautilus::IR
-#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
+} // namespace NES::Nautilus::IR
+#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_

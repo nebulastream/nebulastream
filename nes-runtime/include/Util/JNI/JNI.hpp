@@ -36,15 +36,15 @@ Copyright (c) 2016 Mitchell Dowd
 #ifndef NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_
 #define NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_
 
-#include <Exceptions/RuntimeException.hpp>
 #include <algorithm>
 #include <cstdint>
 #include <cstring>
 #include <memory>
 #include <stdexcept>
 #include <string>
-#include <sys/types.h>
 #include <vector>
+#include <Exceptions/RuntimeException.hpp>
+#include <sys/types.h>
 
 /* The following code contains portions of jnipp, provided by @mitchdowd (https://github.com/mitchdowd/jnipp)
 */
@@ -60,7 +60,8 @@ class _jarray;
 class _jstring;
 struct _jmethodID;
 
-namespace NES::jni {
+namespace NES::jni
+{
 
 typedef JNIEnv_ JNIEnv;
 typedef JavaVM_ JavaVM;
@@ -93,9 +94,10 @@ void detachEnv();
  * As only ever one JVM instance can be created, it is shared by different users. For instance, for the execution
  * of UDFs or as a compilation backend.
  */
-class JVM final {
-  public:
-    JVM() : options() {}
+class JVM final
+{
+public:
+    JVM() : options() { }
 
     /**
      * @brief Returns an instance to a JVM, which may or may not be initialized yet.
@@ -126,7 +128,7 @@ class JVM final {
      */
     bool isInitialized();
 
-  private:
+private:
     std::vector<std::string> options;
     std::string classPath;
 };
@@ -134,27 +136,29 @@ class JVM final {
 /**
  * A supplied name or type signature could not be resolved.
  */
-class NameResolutionException : public NES::Exceptions::RuntimeException {
-  public:
+class NameResolutionException : public NES::Exceptions::RuntimeException
+{
+public:
     /**
      * Constructor with an error message.
      * @param name The name of the unresolved symbol.
      */
-    explicit NameResolutionException(const char* name) : RuntimeException(name) {}
+    explicit NameResolutionException(const char* name) : RuntimeException(name) { }
 };
 
 /**
 * The Java Native Interface was not properly initialized.
 */
-class InitializationException : public NES::Exceptions::RuntimeException {
-  public:
+class InitializationException : public NES::Exceptions::RuntimeException
+{
+public:
     /**
      * Constructor with an error message.
      * @param msg Message to pass to the Exception.
      */
-    explicit InitializationException(const char* msg) : RuntimeException(msg) {}
+    explicit InitializationException(const char* msg) : RuntimeException(msg) { }
 };
 
-}// namespace NES::jni
+} // namespace NES::jni
 
-#endif// NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_
+#endif // NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_

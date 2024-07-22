@@ -14,38 +14,58 @@
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 
-namespace NES::Nautilus::IR::Operations {
+namespace NES::Nautilus::IR::Operations
+{
 
-BasicBlockInvocation::BasicBlockInvocation()
-    : Operation(OperationType::BlockInvocation, Types::StampFactory::createVoidStamp()) {}
+BasicBlockInvocation::BasicBlockInvocation() : Operation(OperationType::BlockInvocation, Types::StampFactory::createVoidStamp())
+{
+}
 
-void BasicBlockInvocation::setBlock(BasicBlockPtr block) { this->basicBlock = block; }
+void BasicBlockInvocation::setBlock(BasicBlockPtr block)
+{
+    this->basicBlock = block;
+}
 
-BasicBlockPtr BasicBlockInvocation::getBlock() const { return basicBlock; }
+BasicBlockPtr BasicBlockInvocation::getBlock() const
+{
+    return basicBlock;
+}
 
-void BasicBlockInvocation::addArgument(OperationPtr argument) {
+void BasicBlockInvocation::addArgument(OperationPtr argument)
+{
     this->operations.emplace_back(argument);
     argument->addUsage(this);
 }
 
-void BasicBlockInvocation::removeArgument(uint64_t argumentIndex) { operations.erase(operations.begin() + argumentIndex); }
+void BasicBlockInvocation::removeArgument(uint64_t argumentIndex)
+{
+    operations.erase(operations.begin() + argumentIndex);
+}
 
-int BasicBlockInvocation::getOperationArgIndex(Operations::OperationPtr arg) {
-    for (uint64_t i = 0; i < operations.size(); i++) {
-        if (operations[i].lock() == arg) {
+int BasicBlockInvocation::getOperationArgIndex(Operations::OperationPtr arg)
+{
+    for (uint64_t i = 0; i < operations.size(); i++)
+    {
+        if (operations[i].lock() == arg)
+        {
             return i;
         }
     }
     return -1;
 }
 
-std::vector<OperationPtr> BasicBlockInvocation::getArguments() const {
+std::vector<OperationPtr> BasicBlockInvocation::getArguments() const
+{
     std::vector<OperationPtr> arguments;
-    for (auto& arg : this->operations) {
+    for (auto& arg : this->operations)
+    {
         arguments.emplace_back(arg.lock());
     }
     return arguments;
 }
-std::string BasicBlockInvocation::toString() { return "BasicBlockInvocation"; }
+std::string BasicBlockInvocation::toString()
+{
+    return "BasicBlockInvocation";
+}
 
-}// namespace NES::Nautilus::IR::Operations
+} // namespace NES::Nautilus::IR::Operations

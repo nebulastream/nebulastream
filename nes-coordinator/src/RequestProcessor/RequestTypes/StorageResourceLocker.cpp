@@ -11,19 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 #include <RequestProcessor/StorageHandles/StorageHandler.hpp>
-#include <utility>
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
-StorageResourceLocker::StorageResourceLocker(std::vector<ResourceType> requiredResources)
-    : requiredResources(std::move(requiredResources)) {}
+StorageResourceLocker::StorageResourceLocker(std::vector<ResourceType> requiredResources) : requiredResources(std::move(requiredResources))
+{
+}
 
-void StorageResourceLocker::preExecution(const StorageHandlerPtr& storageHandle) {
+void StorageResourceLocker::preExecution(const StorageHandlerPtr& storageHandle)
+{
     storageHandle->acquireResources(getResourceLockingId(), requiredResources);
 }
 
-void StorageResourceLocker::postExecution(const StorageHandlerPtr& storageHandler) {
+void StorageResourceLocker::postExecution(const StorageHandlerPtr& storageHandler)
+{
     storageHandler->releaseResources(getResourceLockingId());
 }
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor

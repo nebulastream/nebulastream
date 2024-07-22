@@ -31,61 +31,90 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES {
+namespace NES
+{
 
-std::string PlanJsonGenerator::getOperatorType(const OperatorPtr& operatorNode) {
+std::string PlanJsonGenerator::getOperatorType(const OperatorPtr& operatorNode)
+{
     NES_TRACE("Util: getting the type of the operator");
 
     std::string operatorType;
-    if (operatorNode->instanceOf<SourceLogicalOperator>()) {
-        if (operatorNode->as<SourceLogicalOperator>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>()) {
+    if (operatorNode->instanceOf<SourceLogicalOperator>())
+    {
+        if (operatorNode->as<SourceLogicalOperator>()->getSourceDescriptor()->instanceOf<Network::NetworkSourceDescriptor>())
+        {
             operatorType = "SOURCE_SYS";
-        } else {
+        }
+        else
+        {
             operatorType = "SOURCE";
         }
-    } else if (operatorNode->instanceOf<LogicalFilterOperator>()) {
+    }
+    else if (operatorNode->instanceOf<LogicalFilterOperator>())
+    {
         operatorType = "FILTER";
-    } else if (operatorNode->instanceOf<LogicalMapOperator>()) {
+    }
+    else if (operatorNode->instanceOf<LogicalMapOperator>())
+    {
         operatorType = "MAP";
-    } else if (operatorNode->instanceOf<LogicalWindowOperator>()) {
+    }
+    else if (operatorNode->instanceOf<LogicalWindowOperator>())
+    {
         operatorType = "WINDOW AGGREGATION";
-    } else if (operatorNode->instanceOf<LogicalJoinOperator>()) {
+    }
+    else if (operatorNode->instanceOf<LogicalJoinOperator>())
+    {
         operatorType = "JOIN";
-    } else if (operatorNode->instanceOf<LogicalProjectionOperator>()) {
+    }
+    else if (operatorNode->instanceOf<LogicalProjectionOperator>())
+    {
         operatorType = "PROJECTION";
-    } else if (operatorNode->instanceOf<LogicalUnionOperator>()) {
+    }
+    else if (operatorNode->instanceOf<LogicalUnionOperator>())
+    {
         operatorType = "UNION";
-    } else if (operatorNode->instanceOf<RenameSourceOperator>()) {
+    }
+    else if (operatorNode->instanceOf<RenameSourceOperator>())
+    {
         operatorType = "RENAME";
-    } else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperator>()) {
+    }
+    else if (operatorNode->instanceOf<WatermarkAssignerLogicalOperator>())
+    {
         operatorType = "WATERMARK";
-    } else if (operatorNode->instanceOf<SinkLogicalOperator>()) {
-        if (operatorNode->as<SinkLogicalOperator>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>()) {
+    }
+    else if (operatorNode->instanceOf<SinkLogicalOperator>())
+    {
+        if (operatorNode->as<SinkLogicalOperator>()->getSinkDescriptor()->instanceOf<Network::NetworkSinkDescriptor>())
+        {
             operatorType = "SINK_SYS";
-        } else {
+        }
+        else
+        {
             operatorType = "SINK";
         }
-    } else {
+    }
+    else
+    {
         operatorType = "UNDEFINED";
     }
     NES_DEBUG("UtilityFunctions: operatorType =  {}", operatorType);
     return operatorType;
 }
 
-void PlanJsonGenerator::getChildren(OperatorPtr const& root,
-                                    std::vector<nlohmann::json>& nodes,
-                                    std::vector<nlohmann::json>& edges) {
-
+void PlanJsonGenerator::getChildren(OperatorPtr const& root, std::vector<nlohmann::json>& nodes, std::vector<nlohmann::json>& edges)
+{
     std::vector<nlohmann::json> childrenNode;
 
     std::vector<NodePtr> children = root->getChildren();
-    if (children.empty()) {
+    if (children.empty())
+    {
         NES_DEBUG("UtilityFunctions::getChildren : children is empty()");
         return;
     }
 
     NES_DEBUG("UtilityFunctions::getChildren : children size =  {}", children.size());
-    for (const NodePtr& child : children) {
+    for (const NodePtr& child : children)
+    {
         // Create a node JSON object for the current operator
         nlohmann::json node;
         auto childLogicalOperator = child->as<LogicalOperator>();
@@ -94,11 +123,14 @@ void PlanJsonGenerator::getChildren(OperatorPtr const& root,
         // use the id of the current operator to fill the id field
         node["id"] = childLogicalOperator->getId();
 
-        if (childOperatorType == "WINDOW AGGREGATION") {
+        if (childOperatorType == "WINDOW AGGREGATION")
+        {
             // window operator node needs more information, therefore we added information about window type and aggregation
             node["name"] = childLogicalOperator->as<LogicalWindowOperator>()->toString();
             NES_DEBUG("{}", childLogicalOperator->as<LogicalWindowOperator>()->toString());
-        } else {
+        }
+        else
+        {
             // use concatenation of <operator type>(OP-<operator id>) to fill name field
             // e.g. FILTER(OP-1)
             node["name"] = fmt::format("{} (OP-{})", childOperatorType, childLogicalOperator->getId());
@@ -111,16 +143,22 @@ void PlanJsonGenerator::getChildren(OperatorPtr const& root,
         // Create an edge JSON object for current operator
         nlohmann::json edge;
 
-        if (childOperatorType == "WINDOW AGGREGATION") {
+        if (childOperatorType == "WINDOW AGGREGATION")
+        {
             // window operator node needs more information, therefore we added information about window type and aggregation
             edge["source"] = childLogicalOperator->as<LogicalWindowOperator>()->toString();
-        } else {
+        }
+        else
+        {
             edge["source"] = fmt::format("{} (OP-{})", childOperatorType, childLogicalOperator->getId());
         }
 
-        if (getOperatorType(root) == "WINDOW AGGREGATION") {
+        if (getOperatorType(root) == "WINDOW AGGREGATION")
+        {
             edge["target"] = root->as<LogicalWindowOperator>()->toString();
-        } else {
+        }
+        else
+        {
             edge["target"] = fmt::format("{} (OP-{})", getOperatorType(root), root->getId());
         }
         // store current edge JSON object to `edges` JSON array
@@ -131,8 +169,8 @@ void PlanJsonGenerator::getChildren(OperatorPtr const& root,
     }
 }
 
-nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPlan) {
-
+nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPlan)
+{
     NES_DEBUG("UtilityFunctions: Getting the json representation of the query plan");
 
     nlohmann::json result{};
@@ -141,13 +179,16 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPl
 
     OperatorPtr root = queryPlan->getRootOperators()[0];
 
-    if (!root) {
+    if (!root)
+    {
         NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is empty");
         nlohmann::json node;
         node["id"] = "NONE";
         node["name"] = "NONE";
         nodes.push_back(node);
-    } else {
+    }
+    else
+    {
         NES_DEBUG("UtilityFunctions::getQueryPlanAsJson : root operator is not empty");
         std::string rootOperatorType = getOperatorType(root);
 
@@ -174,4 +215,4 @@ nlohmann::json PlanJsonGenerator::getQueryPlanAsJson(const QueryPlanPtr& queryPl
     return result;
 }
 
-}// namespace NES
+} // namespace NES

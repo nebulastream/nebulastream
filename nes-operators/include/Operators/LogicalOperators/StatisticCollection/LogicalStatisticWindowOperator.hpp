@@ -20,16 +20,19 @@
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
-namespace NES::Statistic {
+namespace NES::Statistic
+{
 
-class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
-  public:
-    LogicalStatisticWindowOperator(OperatorId id,
-                                   Windowing::WindowTypePtr windowType,
-                                   WindowStatisticDescriptorPtr windowStatisticDescriptor,
-                                   StatisticMetricHash metricHash,
-                                   SendingPolicyPtr sendingPolicy,
-                                   TriggerConditionPtr triggerCondition);
+class LogicalStatisticWindowOperator : public LogicalUnaryOperator
+{
+public:
+    LogicalStatisticWindowOperator(
+        OperatorId id,
+        Windowing::WindowTypePtr windowType,
+        WindowStatisticDescriptorPtr windowStatisticDescriptor,
+        StatisticMetricHash metricHash,
+        SendingPolicyPtr sendingPolicy,
+        TriggerConditionPtr triggerCondition);
 
     /**
      * @brief Infers the schema for this StatisticWindowOperatorNode
@@ -98,7 +101,7 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
      */
     StatisticMetricHash getMetricHash() const;
 
-  private:
+private:
     Windowing::WindowTypePtr windowType;
     WindowStatisticDescriptorPtr windowStatisticDescriptor;
     StatisticMetricHash metricHash;
@@ -106,6 +109,6 @@ class LogicalStatisticWindowOperator : public LogicalUnaryOperator {
     TriggerConditionPtr triggerCondition;
 };
 
-}// namespace NES::Statistic
+} // namespace NES::Statistic
 
-#endif// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_
+#endif // NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_LOGICALSTATISTICWINDOWOPERATOR_HPP_

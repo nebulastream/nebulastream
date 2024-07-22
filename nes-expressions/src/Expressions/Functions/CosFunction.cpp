@@ -11,19 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 
-namespace NES {
+namespace NES
+{
 
 /*
 * Defines the cos function and registers it to the FunctionRegistry.
 */
-class CosFunction : public UnaryLogicalFunction {
-  public:
-    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override {
-        if (!input->isNumeric()) {
+class CosFunction : public UnaryLogicalFunction
+{
+public:
+    [[nodiscard]] DataTypePtr inferUnary(const DataTypePtr& input) const override
+    {
+        if (!input->isNumeric())
+        {
             NES_THROW_RUNTIME_ERROR("CosExpressions can only be evaluated on numeric values.");
         }
         return DataTypeFactory::createDouble();
@@ -32,4 +36,4 @@ class CosFunction : public UnaryLogicalFunction {
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<CosFunction> cosFunction("cos");
 
-}// namespace NES
+} // namespace NES

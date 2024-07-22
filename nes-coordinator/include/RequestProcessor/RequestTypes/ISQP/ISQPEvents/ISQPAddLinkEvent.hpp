@@ -18,12 +18,14 @@
 #include <Identifiers/Identifiers.hpp>
 #include <RequestProcessor/RequestTypes/ISQP/ISQPEvents/ISQPEvent.hpp>
 
-namespace NES::RequestProcessor {
+namespace NES::RequestProcessor
+{
 
 /**
  * @brief the response indicating if the add link event was successfully applied
  */
-struct ISQPAddLinkResponse : public ISQPResponse {
+struct ISQPAddLinkResponse : public ISQPResponse
+{
     explicit ISQPAddLinkResponse(bool success) : success(success){};
     bool success;
 };
@@ -35,9 +37,9 @@ using ISQPAddLinkEventPtr = std::shared_ptr<ISQPAddLinkEvent>;
 /**
  * @brief Representing the ISQP add link event indicating a new link is established between two worker node ids
  */
-class ISQPAddLinkEvent : public ISQPEvent {
-
-  public:
+class ISQPAddLinkEvent : public ISQPEvent
+{
+public:
     static ISQPEventPtr create(const WorkerId& parentNodeId, const WorkerId& childWorkerId);
 
     ISQPAddLinkEvent(const WorkerId& parentNodeId, const WorkerId& childWorkerId);
@@ -46,10 +48,10 @@ class ISQPAddLinkEvent : public ISQPEvent {
 
     WorkerId getChildNodeId() const;
 
-  private:
+private:
     WorkerId parentNodeId;
     WorkerId childNodeId;
 };
-}// namespace NES::RequestProcessor
+} // namespace NES::RequestProcessor
 
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDLINKEVENT_HPP_
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ISQP_ISQPEVENTS_ISQPADDLINKEVENT_HPP_

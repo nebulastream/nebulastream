@@ -14,28 +14,34 @@
 #ifndef NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 #define NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTREQUEST_HPP_
 
-#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 #include <future>
 #include <memory>
 #include <vector>
+#include <RequestProcessor/RequestTypes/StorageResourceLocker.hpp>
 
-namespace NES {
-namespace Exceptions {
+namespace NES
+{
+namespace Exceptions
+{
 class RequestExecutionException;
 }
 using Exceptions::RequestExecutionException;
 
-namespace Configurations {
+namespace Configurations
+{
 class OptimizerConfiguration;
 }
 
 class WorkerRPCClient;
 using WorkerRPCClientPtr = std::shared_ptr<WorkerRPCClient>;
 
-namespace RequestProcessor {
+namespace RequestProcessor
+{
 
 //the base class for the responses to be given to the creator of the request
-struct AbstractRequestResponse {};
+struct AbstractRequestResponse
+{
+};
 using AbstractRequestResponsePtr = std::shared_ptr<AbstractRequestResponse>;
 
 /**
@@ -47,8 +53,9 @@ using AbstractRequestPtr = std::shared_ptr<AbstractRequest>;
 
 const uint8_t DEFAULT_RETRIES = 1;
 
-class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
-  public:
+class AbstractRequest : public std::enable_shared_from_this<AbstractRequest>
+{
+public:
     /**
      * @brief constructor
      * @param maxRetries: amount of retries to execute the request after execution failed due to errors
@@ -112,9 +119,11 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
      * @tparam RequestType: a subclass ob AbstractRequest
      * @return bool true if object is of type AbstractRequest
      */
-    template<class RequestType>
-    bool instanceOf() {
-        if (dynamic_cast<RequestType*>(this)) {
+    template <class RequestType>
+    bool instanceOf()
+    {
+        if (dynamic_cast<RequestType*>(this))
+        {
             return true;
         }
         return false;
@@ -126,15 +135,17 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
     * @return returns a shared pointer of the given type
     */
     //todo #4457: write unit test for this
-    template<class RequestType>
-    std::shared_ptr<RequestType> as() {
-        if (instanceOf<RequestType>()) {
+    template <class RequestType>
+    std::shared_ptr<RequestType> as()
+    {
+        if (instanceOf<RequestType>())
+        {
             return std::dynamic_pointer_cast<RequestType>(this->shared_from_this());
         }
         throw std::logic_error("Exception:: we performed an invalid cast of exception");
     }
 
-  protected:
+protected:
     /**
      * @brief Performs request specific error handling to be done before changes to the storage are rolled back
      * @param ex: The exception thrown during request execution. std::exception_ptr is used to be able to allow setting an
@@ -170,10 +181,10 @@ class AbstractRequest : public std::enable_shared_from_this<AbstractRequest> {
     RequestId requestId{INVALID_REQUEST_ID};
     std::promise<AbstractRequestResponsePtr> responsePromise;
 
-  private:
+private:
     uint8_t maxRetries;
     uint8_t actualRetries{0};
 };
-}// namespace RequestProcessor
-}// namespace NES
-#endif// NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTREQUEST_HPP_
+} // namespace RequestProcessor
+} // namespace NES
+#endif // NES_COORDINATOR_INCLUDE_REQUESTPROCESSOR_REQUESTTYPES_ABSTRACTREQUEST_HPP_

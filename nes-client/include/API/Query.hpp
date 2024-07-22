@@ -15,16 +15,17 @@
 #ifndef NES_CLIENT_INCLUDE_API_QUERY_HPP_
 #define NES_CLIENT_INCLUDE_API_QUERY_HPP_
 
+#include <memory>
+#include <string>
+#include <vector>
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
 #include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
-#include <memory>
-#include <string>
-#include <vector>
 
-namespace NES {
+namespace NES
+{
 
 class Query;
 class Operator;
@@ -48,23 +49,27 @@ using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 class QueryPlan;
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
-namespace API {
+namespace API
+{
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-}// namespace API
+} // namespace API
 
-namespace Catalogs::UDF {
+namespace Catalogs::UDF
+{
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-}// namespace Catalogs::UDF
+} // namespace Catalogs::UDF
 
-namespace WindowOperatorBuilder {
+namespace WindowOperatorBuilder
+{
 
 class WindowedQuery;
 class KeyedWindowedQuery;
 
-}// namespace WindowOperatorBuilder
-namespace Windowing {
+} // namespace WindowOperatorBuilder
+namespace Windowing
+{
 class WindowType;
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
@@ -73,16 +78,18 @@ using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescript
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-}// namespace Windowing
+} // namespace Windowing
 
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
-namespace JoinOperatorBuilder {
+namespace JoinOperatorBuilder
+{
 
 class JoinWhere;
 
-class Join {
-  public:
+class Join
+{
+public:
     /**
      * @brief Constructor. Initialises always subQueryRhs and original Query
      * @param subQueryRhs
@@ -98,13 +105,14 @@ class Join {
      */
     [[nodiscard]] JoinWhere where(ExpressionNodePtr joinExpression) const;
 
-  private:
+private:
     const Query& subQueryRhs;
     Query& originalQuery;
 };
 
-class JoinWhere {
-  public:
+class JoinWhere
+{
+public:
     /**
      * @brief Constructor. Initialises always subQueryRhs, original Query and the joinExpression
      * @param subQueryRhs
@@ -120,13 +128,13 @@ class JoinWhere {
      */
     [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
-  private:
+private:
     const Query& subQueryRhs;
     Query& originalQuery;
     ExpressionNodePtr joinExpressions;
 };
 
-}//namespace JoinOperatorBuilder
+} //namespace JoinOperatorBuilder
 
 /**
 * @brief BatchJoinOperatorBuilder.
@@ -134,12 +142,14 @@ class JoinWhere {
 * @note In contrast to the JoinOperatorBuilder only .where() and .key() need to be applied to join the query.
 * @note No windowing is required.
 */
-namespace Experimental::BatchJoinOperatorBuilder {
+namespace Experimental::BatchJoinOperatorBuilder
+{
 
 class JoinWhere;
 
-class Join {
-  public:
+class Join
+{
+public:
     /**
      * @brief Constructor. Initialises always subQueryRhs and original Query
      * @param subQueryRhs
@@ -154,17 +164,19 @@ class Join {
      */
     [[nodiscard]] Query& where(const ExpressionNodePtr joinExpression) const;
 
-  private:
+private:
     const Query& subQueryRhs;
     Query& originalQuery;
 };
 
-}//namespace Experimental::BatchJoinOperatorBuilder
+} //namespace Experimental::BatchJoinOperatorBuilder
 
-namespace CEPOperatorBuilder {
+namespace CEPOperatorBuilder
+{
 
-class And {
-  public:
+class And
+{
+public:
     /**
      * @brief Constructor. Initialises always subQueryRhs and original Query
      * @param subQueryRhs
@@ -179,14 +191,15 @@ class And {
      */
     [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
-  private:
+private:
     Query& subQueryRhs;
     Query& originalQuery;
     ExpressionNodePtr joinExpression;
 };
 
-class Seq {
-  public:
+class Seq
+{
+public:
     /**
      * @brief Constructor. Initialises always subQueryRhs and original Query
      * @param subQueryRhs
@@ -201,7 +214,7 @@ class Seq {
      */
     [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
-  private:
+private:
     Query& subQueryRhs;
     Query& originalQuery;
     ExpressionNodePtr joinExpression;
@@ -216,8 +229,9 @@ class Seq {
      * @return cepBuilder
      */
 
-class Times {
-  public:
+class Times
+{
+public:
     /**
      * @brief Constructor (bounded variant to a number of minOccurrences to maxOccurrences of event occurrence)
      * @param minOccurrences: minimal number of occurrences of a specified event, i.e., tuples
@@ -249,7 +263,7 @@ class Times {
      */
     [[nodiscard]] Query& window(Windowing::WindowTypePtr const& windowType) const;
 
-  private:
+private:
     Query& originalQuery;
     uint64_t minOccurrences;
     uint64_t maxOccurrences;
@@ -263,14 +277,15 @@ class Times {
      */
 std::string keyAssignment(std::string keyName);
 
-}//namespace CEPOperatorBuilder
+} //namespace CEPOperatorBuilder
 
 /**
  * User interface to create stream processing queryIdAndCatalogEntryMapping.
  * The current api exposes method to create queryIdAndCatalogEntryMapping using all currently supported operators.
  */
-class Query {
-  public:
+class Query
+{
+public:
     Query(const Query&);
 
     virtual ~Query() = default;
@@ -359,11 +374,12 @@ class Query {
      * @param triggerCondition: Policy when and how to call the callback method
      * @return The query
      */
-    Query& buildStatistic(Windowing::WindowTypePtr window,
-                          Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-                          Statistic::StatisticMetricHash metricHash,
-                          Statistic::SendingPolicyPtr sendingPolicy,
-                          Statistic::TriggerConditionPtr triggerCondition);
+    Query& buildStatistic(
+        Windowing::WindowTypePtr window,
+        Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
+        Statistic::StatisticMetricHash metricHash,
+        Statistic::SendingPolicyPtr sendingPolicy,
+        Statistic::TriggerConditionPtr triggerCondition);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.
@@ -377,8 +393,9 @@ class Query {
      * @param attribute list
      * @return the query
      */
-    template<typename... Args>
-    auto project(Args&&... args) -> std::enable_if_t<std::conjunction_v<std::is_constructible<ExpressionItem, Args>...>, Query&> {
+    template <typename... Args>
+    auto project(Args&&... args) -> std::enable_if_t<std::conjunction_v<std::is_constructible<ExpressionItem, Args>...>, Query&>
+    {
         return project({std::forward<Args>(args).getExpressionNode()...});
     }
 
@@ -446,9 +463,8 @@ class Query {
      * @param param
      * @return query
      */
-    Query& inferModel(std::string model,
-                      std::initializer_list<ExpressionItem> inputFields,
-                      std::initializer_list<ExpressionItem> outputFields);
+    Query&
+    inferModel(std::string model, std::initializer_list<ExpressionItem> inputFields, std::initializer_list<ExpressionItem> outputFields);
 
     /**
      * @brief Add sink operator for the query.
@@ -467,11 +483,11 @@ class Query {
     // creates a new query object
     Query(QueryPlanPtr queryPlan);
 
-  protected:
+protected:
     // query plan containing the operators.
     QueryPlanPtr queryPlan;
 
-  private:
+private:
     /**
      * @new change: Now it's private, because we don't want the user to have access to it.
      * We call it only internal as a last step during the Join operation
@@ -535,9 +551,10 @@ class Query {
       * @param aggregations Window aggregation functions.
       * @return query.
       */
-    Query& windowByKey(std::vector<ExpressionNodePtr> joinExpressions,
-                       Windowing::WindowTypePtr const& windowType,
-                       std::vector<API::WindowAggregationPtr> aggregations);
+    Query& windowByKey(
+        std::vector<ExpressionNodePtr> joinExpressions,
+        Windowing::WindowTypePtr const& windowType,
+        std::vector<API::WindowAggregationPtr> aggregations);
 
     /**
       * @brief: Given a Expression is identifies which JoinType has to be used for processing, i.e., Equi-Join enables
@@ -550,6 +567,6 @@ class Query {
 
 using QueryPtr = std::shared_ptr<Query>;
 
-}// namespace NES
+} // namespace NES
 
-#endif// NES_CLIENT_INCLUDE_API_QUERY_HPP_
+#endif // NES_CLIENT_INCLUDE_API_QUERY_HPP_
