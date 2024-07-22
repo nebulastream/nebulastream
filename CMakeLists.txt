@@ -649,6 +649,8 @@ add_subdirectory(nes-window-types)
 add_subdirectory(nes-plugins)
 
 add_subdirectory(nes-memory)
+add_subdirectory(nes-executable)
+
 
 # Add targets for benchmarks
 if (NES_BUILD_BENCHMARKS)
