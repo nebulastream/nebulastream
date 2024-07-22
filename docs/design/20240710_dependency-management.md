@@ -1,4 +1,4 @@
-# Problems
+# The Problem
 
 The NES Build System has grown over the years. The refactor allows us to revisit how we handle the modularization of modules, dependencies, and different build configurations.
 
@@ -40,7 +40,7 @@ Currently, we build LLVM and clang in an external repository. The CMake configur
 
 # Goals and Non-Goals
 
-(**G1**) Easy onboarding for new developers:  After cloning the repository, the developer should be able to build the system without further complications. 
+(**G1**) Easy onboarding for new developers:  After cloning the repository, the developer should be able to build the system following the build guide, without running into issues with missing locally installed libraries, or missing toolchains. We achieve this by offering docker based Development Environment. The build guide explains how to configure the Development Image in CLion, the CMake build system will build without further configuration.
 
 (**G2**) Runtime Analyzer, like sanitizer, requires changes to our dependencies: It should be possible to add additional build configurations for our dependencies. Currently, we use different vcpkg toolchains for x64, arm, Linux, and macOS for all of these configurations, we require the dependencies to build and link with different sanitizer flags: `-fsanitize=thread`, etc...
 
