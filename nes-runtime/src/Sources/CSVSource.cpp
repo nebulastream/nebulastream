@@ -11,95 +11,83 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <chrono>
-#include <cstring>
-#include <sstream>
-#include <string>
-#include <utility>
-#include <vector>
 #include <API/AttributeField.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <chrono>
+#include <cstring>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
 
-namespace NES
-{
+namespace NES {
 
-CSVSource::CSVSource(
-    SchemaPtr schema,
-    Runtime::BufferManagerPtr bufferManager,
-    Runtime::QueryManagerPtr queryManager,
-    CSVSourceTypePtr csvSourceType,
-    OperatorId operatorId,
-    OriginId originId,
-    size_t numSourceLocalBuffers,
-    GatheringMode gatheringMode,
-    const std::string& physicalSourceName,
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(
-        schema,
-        std::move(bufferManager),
-        std::move(queryManager),
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        gatheringMode,
-        physicalSourceName,
-        std::move(successors))
-    , fileEnded(false)
-    , csvSourceType(csvSourceType)
-    , filePath(csvSourceType->getFilePath()->getValue())
-    , numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue())
-    , delimiter(csvSourceType->getDelimiter()->getValue())
-    , skipHeader(csvSourceType->getSkipHeader()->getValue())
-{
+CSVSource::CSVSource(SchemaPtr schema,
+                     Runtime::BufferManagerPtr bufferManager,
+                     Runtime::QueryManagerPtr queryManager,
+                     CSVSourceTypePtr csvSourceType,
+                     OperatorId operatorId,
+                     OriginId originId,
+                     StatisticId statisticId,
+                     size_t numSourceLocalBuffers,
+                     GatheringMode gatheringMode,
+                     const std::string& physicalSourceName,
+                     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+    : DataSource(schema,
+                 std::move(bufferManager),
+                 std::move(queryManager),
+                 operatorId,
+                 originId,
+                 statisticId,
+                 numSourceLocalBuffers,
+                 gatheringMode,
+                 physicalSourceName,
+                 std::move(successors)),
+      fileEnded(false), csvSourceType(csvSourceType), filePath(csvSourceType->getFilePath()->getValue()),
+      numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue()),
+      delimiter(csvSourceType->getDelimiter()->getValue()), skipHeader(csvSourceType->getSkipHeader()->getValue()) {
+
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
     this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
-    struct Deleter
-    {
+    struct Deleter {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
-    auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realpath(filePath.c_str(), nullptr)));
-    if (path == nullptr)
-    {
+    const auto realCSVPath = realpath(filePath.c_str(), nullptr);
+    auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realCSVPath));
+    if (path == nullptr) {
         NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
     }
 
     input.open(path.get());
-    if (!(input.is_open() && input.good()))
-    {
+    if (!(input.is_open() && input.good())) {
         throw Exceptions::RuntimeException("Cannot open file: " + std::string(path.get()));
     }
 
     NES_DEBUG("CSVSource: Opening path {}", path.get());
     input.seekg(0, std::ifstream::end);
-    if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1)
-    {
+    if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1) {
         throw Exceptions::RuntimeException("CSVSource::CSVSource File " + filePath + " is corrupted");
-    }
-    else
-    {
+    } else {
         this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }
 
-    NES_DEBUG(
-        "CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
-        this->tupleSize,
-        this->gatheringInterval.count(),
-        this->numberOfBuffersToProduce,
-        this->numberOfTuplesToProducePerBuffer);
+    NES_DEBUG("CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
+              this->tupleSize,
+              this->gatheringInterval.count(),
+              this->numberOfBuffersToProduce,
+              this->numberOfTuplesToProducePerBuffer);
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
-    for (const AttributeFieldPtr& field : schema->fields)
-    {
+    for (const AttributeFieldPtr& field : schema->fields) {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
     }
@@ -107,33 +95,29 @@ CSVSource::CSVSource(
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
 }
 
-std::optional<Runtime::TupleBuffer> CSVSource::receiveData()
-{
+std::optional<Runtime::TupleBuffer> CSVSource::receiveData() {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();
     fillBuffer(buffer);
     NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
 
-    if (buffer.getNumberOfTuples() == 0)
-    {
+    if (buffer.getNumberOfTuples() == 0) {
         return std::nullopt;
     }
     return buffer.getBuffer();
 }
 
-std::string CSVSource::toString() const
-{
+std::string CSVSource::toString() const {
     std::stringstream ss;
-    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count() << "ms"
+    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count()
+       << "ms"
        << " numBuff=" << this->numberOfBuffersToProduce << ")";
     return ss.str();
 }
 
-void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
-{
+void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer) {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
-    if (this->fileEnded)
-    {
+    if (this->fileEnded) {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");
         return;
     }
@@ -141,13 +125,10 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
     input.seekg(currentPositionInFile, std::ifstream::beg);
 
     uint64_t generatedTuplesThisPass = 0;
-    ///fill buffer maximally
-    if (numberOfTuplesToProducePerBuffer == 0)
-    {
+    //fill buffer maximally
+    if (numberOfTuplesToProducePerBuffer == 0) {
         generatedTuplesThisPass = buffer.getCapacity();
-    }
-    else
-    {
+    } else {
         generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
         NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
     }
@@ -156,18 +137,16 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
     std::string line;
     uint64_t tupleCount = 0;
 
-    if (skipHeader && currentPositionInFile == 0)
-    {
+    if (skipHeader && currentPositionInFile == 0) {
         NES_TRACE("CSVSource: Skipping header");
         std::getline(input, line);
         currentPositionInFile = input.tellg();
     }
 
-    while (tupleCount < generatedTuplesThisPass)
-    {
-        ///Check if EOF has reached
-        if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1)
-        {
+    while (tupleCount < generatedTuplesThisPass) {
+
+        //Check if EOF has reached
+        if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1) {
             NES_TRACE("CSVSource::fillBuffer: reset tellg()={} fileSize={}", input.tellg(), fileSize);
             input.clear();
             NES_TRACE("CSVSource::fillBuffer: break because file ended");
@@ -177,11 +156,11 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
 
         std::getline(input, line);
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
-        /// TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
+        // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
         inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
         tupleCount++;
-    } ///end of while
+    }//end of while
 
     currentPositionInFile = input.tellg();
     buffer.setNumberOfTuples(tupleCount);
@@ -191,18 +170,9 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
     NES_TRACE("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
-SourceType CSVSource::getType() const
-{
-    return SourceType::CSV_SOURCE;
-}
+SourceType CSVSource::getType() const { return SourceType::CSV_SOURCE; }
 
-std::string CSVSource::getFilePath() const
-{
-    return filePath;
-}
+std::string CSVSource::getFilePath() const { return filePath; }
 
-const CSVSourceTypePtr& CSVSource::getSourceConfig() const
-{
-    return csvSourceType;
-}
-} /// namespace NES
+const CSVSourceTypePtr& CSVSource::getSourceConfig() const { return csvSourceType; }
+}// namespace NES

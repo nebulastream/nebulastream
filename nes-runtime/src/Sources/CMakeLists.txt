@@ -12,29 +12,8 @@
 
 add_source_files(nes-runtime
         DataSource.cpp
-        GeneratorSource.cpp
-        BinarySource.cpp
-        ZmqSource.cpp
         CSVSource.cpp
         SourceCreator.cpp
-        DefaultSource.cpp
-        SenseSource.cpp
-        MemorySource.cpp
-        StaticDataSource.cpp
-        LambdaSource.cpp
-        BenchmarkSource.cpp
         TCPSource.cpp
-        KafkaSource.cpp
 )
 add_subdirectory(Parsers)
-
-if(NES_USE_OPC)
-    add_source_files(nes-runtime
-            OPCSource.cpp
-    )
-endif()
-if(NES_USE_MQTT)
-    add_source_files(nes-runtime
-            MQTTSource.cpp
-    )
-endif()

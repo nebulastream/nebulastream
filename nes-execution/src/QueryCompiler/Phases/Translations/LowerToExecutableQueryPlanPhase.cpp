@@ -12,9 +12,6 @@
     limitations under the License.
 */
 
-#include <string>
-#include <utility>
-#include <variant>
 #include <Configurations/Worker/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
@@ -22,6 +19,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
@@ -34,6 +32,7 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
@@ -73,7 +72,7 @@ LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQuery
     std::vector<DataSinkPtr> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
-    ///Process all pipelines recursively.
+    //Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (const auto& pipeline : sourcePipelines)
     {
@@ -98,7 +97,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
-    /// check if the particular pipeline already exist in the pipeline map.
+    // check if the particular pipeline already exist in the pipeline map.
     if (pipelineToExecutableMap.find(pipeline->getPipelineId()) != pipelineToExecutableMap.end())
     {
         return pipelineToExecutableMap.at(pipeline->getPipelineId());
@@ -136,7 +135,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
         throw QueryCompilationException("This is not a source pipeline.");
     }
 
-    ///Convert logical source descriptor to actual source descriptor
+    //Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
@@ -156,8 +155,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto source = sourceProvider->lower(
         sourceOperator->getId(), sourceOperator->getOriginId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
 
-    /// Add this source as a predecessor to the pipeline execution context's of all its children.
-    /// This way you can navigate upstream.
+    // Add this source as a predecessor to the pipeline execution context's of all its children.
+    // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines)
     {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
@@ -168,7 +167,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
                 (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(source);
         }
-        /// note: we do not register predecessors for DataSinks.
+        // note: we do not register predecessors for DataSinks.
     }
     sources.emplace_back(source);
 }
@@ -263,8 +262,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         pipeline->getPredecessors().size(),
         executableSuccessorPipelines);
 
-    /// Add this pipeline as a predecessor to the pipeline execution context's of all its children.
-    /// This way you can navigate upstream.
+    // Add this pipeline as a predecessor to the pipeline execution context's of all its children.
+    // This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines)
     {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
@@ -275,127 +274,36 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                 (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
         }
-        /// note: we do not register predecessors for DataSinks.
+        // note: we do not register predecessors for DataSinks.
     }
 
     executablePipelines.emplace_back(executablePipeline);
     return executablePipeline;
 }
 
-SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
-{
+SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema,
+                                                                            PhysicalSourceTypePtr physicalSourceType) {
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
     auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
     auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG(
-        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-        physicalSourceType->toString(),
-        magic_enum::enum_name(sourceType));
+    NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
+              physicalSourceType->toString(),
+              magic_enum::enum_name(sourceType));
 
-    switch (sourceType)
-    {
-        case SourceType::DEFAULT_SOURCE: {
-            auto defaultSourceType = physicalSourceType->as<DefaultSourceType>();
-            return DefaultSourceDescriptor::create(
-                schema,
-                logicalSourceName,
-                defaultSourceType->getNumberOfBuffersToProduce()->getValue(),
-                std::chrono::milliseconds(defaultSourceType->getSourceGatheringInterval()->getValue()).count());
-        }
-#ifdef ENABLE_MQTT_BUILD
-        case SourceType::MQTT_SOURCE: {
-            auto mqttSourceType = physicalSourceType->as<MQTTSourceType>();
-            return MQTTSourceDescriptor::create(schema, mqttSourceType);
-        }
-#endif
+    switch (sourceType) {
         case SourceType::CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
             return CsvSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
-        }
-        case SourceType::SENSE_SOURCE: {
-            auto senseSourceType = physicalSourceType->as<SenseSourceType>();
-            return SenseSourceDescriptor::create(schema, logicalSourceName, senseSourceType->getUdfs()->getValue());
-        }
-        case SourceType::MEMORY_SOURCE: {
-            auto memorySourceType = physicalSourceType->as<MemorySourceType>();
-            return MemorySourceDescriptor::create(
-                schema,
-                memorySourceType->getMemoryArea(),
-                memorySourceType->getMemoryAreaSize(),
-                memorySourceType->getNumberOfBufferToProduce(),
-                memorySourceType->getGatheringValue(),
-                memorySourceType->getGatheringMode(),
-                memorySourceType->getSourceAffinity(),
-                memorySourceType->getTaskQueueId(),
-                logicalSourceName,
-                physicalSourceName);
-        }
-        case SourceType::BENCHMARK_SOURCE: {
-            auto benchmarkSourceType = physicalSourceType->as<BenchmarkSourceType>();
-            return BenchmarkSourceDescriptor::create(
-                schema,
-                benchmarkSourceType->getMemoryArea(),
-                benchmarkSourceType->getMemoryAreaSize(),
-                benchmarkSourceType->getNumberOfBuffersToProduce(),
-                benchmarkSourceType->getGatheringValue(),
-                benchmarkSourceType->getGatheringMode(),
-                benchmarkSourceType->getSourceMode(),
-                benchmarkSourceType->getSourceAffinity(),
-                benchmarkSourceType->getTaskQueueId(),
-                logicalSourceName,
-                physicalSourceName);
-        }
-        case SourceType::STATIC_DATA_SOURCE: {
-            auto staticDataSourceType = physicalSourceType->as<NES::Experimental::StaticDataSourceType>();
-            return NES::Experimental::StaticDataSourceDescriptor::create(
-                schema, staticDataSourceType->getPathTableFile(), staticDataSourceType->getLateStart());
-        }
-        case SourceType::LAMBDA_SOURCE: {
-            auto lambdaSourceType = physicalSourceType->as<LambdaSourceType>();
-            return LambdaSourceDescriptor::create(
-                schema,
-                lambdaSourceType->getGenerationFunction(),
-                lambdaSourceType->getNumBuffersToProduce(),
-                lambdaSourceType->getGatheringValue(),
-                lambdaSourceType->getGatheringMode(),
-                lambdaSourceType->getSourceAffinity(),
-                lambdaSourceType->getTaskQueueId(),
-                logicalSourceName,
-                physicalSourceName);
         }
         case SourceType::TCP_SOURCE: {
             auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
             return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
         }
-        case SourceType::KAFKA_SOURCE: {
-            auto kafkaSourceType = physicalSourceType->as<KafkaSourceType>();
-            return KafkaSourceDescriptor::create(
-                schema,
-                kafkaSourceType->getBrokers()->getValue(),
-                logicalSourceName,
-                kafkaSourceType->getTopic()->getValue(),
-                kafkaSourceType->getGroupId()->getValue(),
-                kafkaSourceType->getAutoCommit()->getValue(),
-                kafkaSourceType->getConnectionTimeout()->getValue(),
-                kafkaSourceType->getOffsetMode()->getValue(),
-                kafkaSourceType,
-                kafkaSourceType->getNumberOfBuffersToProduce()->getValue(),
-                kafkaSourceType->getBatchSize()->getValue());
-        }
         default: {
-            /// check if a plugin can create the correct source descriptor
-            for (const auto& plugin : SourceDescriptorPluginRegistry::getPlugins())
-            {
-                auto descriptor = plugin->create(schema, physicalSourceType);
-                if (descriptor != nullptr)
-                {
-                    return descriptor;
-                }
-            }
-            throw QueryCompilationException(
-                "PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
+            throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()
+                                            + " not supported");
         }
     }
 }
 
-} /// namespace NES::QueryCompilation
+}// namespace NES::QueryCompilation
