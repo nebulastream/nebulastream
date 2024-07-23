@@ -54,7 +54,7 @@ jobs:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: preamble-check
         run: |
-          docker/buildImage/entrypoint-nes-build-preamble-check.sh
+          python3 /scripts/build/check_license.py . .no-license-check
       - name: format-check
         run: |
           docker/buildImage/entrypoint-nes-build-format-check.sh
