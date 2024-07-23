@@ -20,11 +20,11 @@ DOCKER_FILE_NAME_DEFAULT="Dockerfile-NES-Executable-Multi-Arch"
 NUM_THREADS_DEFAULT=$(nproc)
 
 # Assign arguments with default fallbacks
-BUILD_DIR="${1:-$BUILD_DIR_DEFAULT}"
-CCACHE_DIR="${2:-$CCACHE_DIR_DEFAULT}"
-NEBULA_STREAM_PATH="${3:-$NEBULA_STREAM_PATH}"
-IMAGE_NAME="${4:-$IMAGE_NAME_DEFAULT}"
-TAG="${5:-$TAG_DEFAULT}"
+TAG="${1:-$TAG_DEFAULT}"
+BUILD_DIR="${2:-$BUILD_DIR_DEFAULT}"
+CCACHE_DIR="${3:-$CCACHE_DIR_DEFAULT}"
+NEBULA_STREAM_PATH="${4:-$NEBULA_STREAM_PATH}"
+IMAGE_NAME="${5:-$IMAGE_NAME_DEFAULT}"
 ARCH="${6:-$ARCH_DEFAULT}"
 PACKAGE_NAME="${7:-$PACKAGE_NAME_DEFAULT}"
 PLATFORM_NAME="${8:-$PLATFORM_NAME_DEFAULT}"
@@ -69,7 +69,6 @@ if [[ $user_confirmation == "y" || $user_confirmation == "Y" ]]; then
     cd $cur_dir
 
     # Run the Docker image to create the package
-    echo "docker run --name $docker_runner_creating_package -v $BUILD_DIR:/build_dir -v $CCACHE_DIR:/cache_dir -v $NEBULA_STREAM_PATH:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-prepare-nes-package.sh "$docker_image_name_creating_package""
     docker run --name $docker_runner_creating_package -v $BUILD_DIR:/build_dir -v $CCACHE_DIR:/cache_dir -v $NEBULA_STREAM_PATH:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-prepare-nes-package.sh "$docker_image_name_creating_package" $NUM_THREADS
     docker rm $docker_runner_creating_package
 

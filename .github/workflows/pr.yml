@@ -20,8 +20,15 @@ on:
       - CODE_OF_CONDUCT.md
       - CHANGELOG.md
       - 'docs/**'
+
   # We are using this yaml in the nightly workflow, so we need to allow this workflow to be triggered by a workflow call.
   workflow_call:
+
+  # We only use this trigger for testing the workflow. We SHOULD and will remove this before we merge and let the PR be reviewed.
+  # Dear reviewer: If you can read this, then I forgot to remove this trigger. Please remind me to remove it.
+  push:
+    branches:
+      - 91-clean-up-docker-images
 
 jobs:
   validateTrigger:
@@ -55,8 +62,8 @@ jobs:
           access_token: ${{ secrets.NES_CI_SECRET }}
       - name: Build Docker for CleanUp
         id: builddocker_prebuild
-        working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_build_ubuntu -f Dockerfile-NES-Build .
+        working-directory: ${{ github.workspace }}/docker
+        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
       - name: preamble-check
         run: |
           docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu
@@ -122,8 +129,8 @@ jobs:
       - name: Build Docker for CleanUp
         id: builddocker_cleanup
         continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build .
+        working-directory: ${{ github.workspace }}/docker
+        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
       - name: "Perform cleanup, if necessary"
         run: |
           os_version_arch="${{ matrix.osversion }}_${{ matrix.arch }}"
@@ -149,8 +156,8 @@ jobs:
       - name: Build Docker
         id: builddocker
         continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build .
+        working-directory: ${{ github.workspace }}/docker
+        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
       - name: Build Nebulastream
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
