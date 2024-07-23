@@ -33,7 +33,7 @@ jobs:
 
   # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
   long_running_test:
-    needs: [ github_pr ]
+    needs: [ pr ]
     runs-on: [ self-hosted, linux, X64, Build ]
     steps:
       - name: Print Placeholder Message
