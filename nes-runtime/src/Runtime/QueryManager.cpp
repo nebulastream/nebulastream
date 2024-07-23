@@ -82,44 +82,6 @@ DynamicQueryManager::DynamicQueryManager(
     NES_DEBUG("QueryManger: use dynamic mode with numThreads= {}", numThreads);
 }
 
-MultiQueueQueryManager::MultiQueueQueryManager(
-    std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
-    std::vector<BufferManagerPtr> bufferManagers,
-    WorkerId nodeEngineId,
-    uint16_t numThreads,
-    HardwareManagerPtr hardwareManager,
-    uint64_t numberOfBuffersPerEpoch,
-    std::vector<uint64_t> workerToCoreMapping,
-    uint64_t numberOfQueues,
-    uint64_t numberOfThreadsPerQueue)
-    : AbstractQueryManager(
-        std::move(queryStatusListener),
-        std::move(bufferManagers),
-        nodeEngineId,
-        numThreads,
-        std::move(hardwareManager),
-        numberOfBuffersPerEpoch,
-        std::move(workerToCoreMapping))
-    , numberOfQueues(numberOfQueues)
-    , numberOfThreadsPerQueue(numberOfThreadsPerQueue)
-{
-    NES_DEBUG(
-        "QueryManger: use static mode for numberOfQueues={} numThreads={} numberOfThreadsPerQueue=",
-        numberOfQueues,
-        numThreads,
-        numberOfThreadsPerQueue);
-    if (numberOfQueues * numberOfThreadsPerQueue != numThreads)
-    {
-        NES_THROW_RUNTIME_ERROR("number of queues and threads have to match");
-    }
-
-    ///create the actual task queues
-    for (uint64_t i = 0; i < numberOfQueues; i++)
-    {
-        taskQueues.emplace_back(DEFAULT_QUEUE_INITIAL_CAPACITY);
-    }
-}
-
 uint64_t DynamicQueryManager::getNumberOfBuffersPerEpoch() const
 {
     return numberOfBuffersPerEpoch;
@@ -128,16 +90,6 @@ uint64_t DynamicQueryManager::getNumberOfBuffersPerEpoch() const
 uint64_t DynamicQueryManager::getNumberOfTasksInWorkerQueues() const
 {
     return taskQueue.size();
-}
-
-uint64_t MultiQueueQueryManager::getNumberOfTasksInWorkerQueues() const
-{
-    uint64_t sum = 0;
-    for (uint64_t i = 0; i < numberOfQueues; i++)
-    {
-        sum += taskQueues[i].size();
-    }
-    return sum;
 }
 
 uint64_t AbstractQueryManager::getCurrentTaskSum()
@@ -186,62 +138,12 @@ bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker)
     return false;
 }
 
-uint64_t MultiQueueQueryManager::getNumberOfBuffersPerEpoch() const
-{
-    return numberOfBuffersPerEpoch;
-}
-
-bool MultiQueueQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker)
-{
-    NES_DEBUG("startThreadPool: setup thread pool for nodeId= {}  with numThreads= {}", nodeEngineId, numThreads);
-    ///Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
-    auto expected = QueryManagerStatus::Created;
-    if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Running))
-    {
-#ifdef ENABLE_PAPI_PROFILER
-        cpuProfilers.resize(numThreads);
-#endif
-
-        std::vector<uint64_t> threadToQueueMapping;
-
-        for (uint64_t queueId = 0; queueId < taskQueues.size(); queueId++)
-        {
-            for (uint64_t threadId = 0; threadId < numberOfThreadsPerQueue; threadId++)
-            {
-                threadToQueueMapping.push_back(queueId);
-            }
-        }
-
-        threadPool = std::make_shared<ThreadPool>(
-            nodeEngineId,
-            inherited0::shared_from_this(),
-            numThreads,
-            bufferManagers,
-            numberOfBuffersPerWorker,
-            hardwareManager,
-            workerToCoreMapping);
-        return threadPool->start(threadToQueueMapping);
-    }
-
-    NES_ASSERT2_FMT(false, "Cannot start query manager workers");
-    return false;
-}
-
 void DynamicQueryManager::destroy()
 {
     AbstractQueryManager::destroy();
     if (queryManagerStatus.load() == QueryManagerStatus::Destroyed)
     {
         taskQueue = decltype(taskQueue)();
-    }
-}
-
-void MultiQueueQueryManager::destroy()
-{
-    AbstractQueryManager::destroy();
-    if (queryManagerStatus.load() == QueryManagerStatus::Destroyed)
-    {
-        taskQueues.clear();
     }
 }
 
