@@ -26,6 +26,11 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: [ arc-runner-set ]
     steps:
+      - uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
       - name: Contextual QA Checklists
         if: github.event_name == 'pull_request'
         uses: wyozi/contextual-qa-checklist-action@1.3.2
