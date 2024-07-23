@@ -267,7 +267,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     const SchemaPtr& schema,
     Runtime::BufferManagerPtr bufferManager,
     uint64_t originId,
-    const std::string& timestampFieldname,
+    const std::string& timestampFieldName,
     bool skipFirstLine)
 {
     std::vector<Runtime::TupleBuffer> recordBuffers;
@@ -300,9 +300,9 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
         {
             writeFieldValueToTupleBuffer(values[j], j, testBuffer, schema, tupleCount, bufferManager);
         }
-        if (schema->contains(timestampFieldname))
+        if (schema->contains(timestampFieldName))
         {
-            watermarkTS = std::max(watermarkTS, testBuffer[tupleCount][timestampFieldname].read<uint64_t>());
+            watermarkTS = std::max(watermarkTS, testBuffer[tupleCount][timestampFieldName].read<uint64_t>());
         }
         ++tupleCount;
 
