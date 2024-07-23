@@ -28,18 +28,28 @@ jobs:
 #      - name: Print Placeholder Message
 #        run: echo "Long running tests will be added in the future."
 
-  package-debian-package:
-    #    needs: [ long-running-tests ]
+  create-nightly-image:
+    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+#    needs: [ long-running-tests ]
+    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/hotfix-nightly-wrong-name-pr-workflow'
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
-    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+      EVENT: ${{ github.event_name }}
+      NEXT_VERSION: ${{ github.event.inputs.version }}
     timeout-minutes: 60
     strategy:
       fail-fast: false
       matrix:
-        arch: [ X64, arm64 ]
-        osversion: [ ubuntu-22_04 ]
+        include:
+          - osversion: ubuntu-22_04
+            arch: X64
+            platform: linux/amd64
+            package_name: nes-amd64
+          - osversion: ubuntu-22_04
+            arch: arm64
+            platform: linux/arm64
+            package_name: nes-arm64
     steps:
       - uses: AutoModality/action-clean@v1
       - name: "Checkout NebulaStream Repository"
@@ -66,21 +76,6 @@ jobs:
           DEB_NAME=${{ matrix.arch }}
           mv ${{ env.build_dir }}/*deb ${{ github.workspace }}/$DEB_NAME.deb
           echo "DEB_FILE=${{ github.workspace }}/$DEB_NAME.deb" >> $GITHUB_ENV
-      - name: "Perform Docker Cleanup"
-        if: ${{ always() }}
-        run: |
-          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_package
-
-  create-nightly-image:
-    runs-on: [ self-hosted, linux, X64, Build ]
-    needs: [ package-debian-package ]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/hotfix-nightly-wrong-name-pr-workflow'
-    env:
-      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
-      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
-      EVENT: ${{ github.event_name }}
-      NEXT_VERSION: ${{ github.event.inputs.version }}
-    steps:
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -91,11 +86,10 @@ jobs:
           echo "Preparing and Releasing new executable image version nightly"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
           
-          # We have to rename the debian packages to nes-amd64.deb and nes-arm64.deb
-          cp ${{ github.workspace }}/X64.deb nes-amd64.deb
-          cp ${{ github.workspace }}/arm64.deb nes-arm64.deb
-          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-public-executable-image:nightly --push
-          rm -rf nes-amd64.deb nes-arm64.deb
-          rm -rf ${{ github.workspace }}/X64.deb ${{ github.workspace }}/arm64.deb
+          # We have to rename the debian packages to nes-amd64.deb and nes-arm64.deb, before we can build the docker image, as the dockerfile expects the names amd64 or arm64
+          cp ${{ github.workspace }}/${{ matrix.arch }}.deb ${{ matrix.package_name }}.deb
+          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=${{ matrix.platform }} --tag nebulastream/nes-public-executable-image:nightly-${{ matrix.arch }} --push
+          rm -rf ${{ matrix.package_name }}.deb
+          rm -rf ${{ github.workspace }}/${{ matrix.arch }}.deb
           echo "Pushed the execution image"
           docker logout
