@@ -64,8 +64,8 @@ jobs:
         run: |
           nes_version=${GITHUB_REF_NAME:1}
           DEB_NAME=${{ matrix.arch }}
-          mv ${{ env.build_dir }}/*deb ${{ env.build_dir }}/$DEB_NAME.deb
-          echo "DEB_FILE=${{ env.build_dir }}/$DEB_NAME.deb" >> $GITHUB_ENV
+          mv ${{ env.build_dir }}/*deb ${{ github.workspace }}/$DEB_NAME.deb
+          echo "DEB_FILE=${{ github.workspace }}/$DEB_NAME.deb" >> $GITHUB_ENV
       - name: "Perform Docker Cleanup"
         if: ${{ always() }}
         run: |
@@ -92,9 +92,10 @@ jobs:
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
           
           # We have to rename the debian packages to nes-amd64.deb and nes-arm64.deb
-          cp ${{ env.build_dir }}/X64.deb nes-amd64.deb
-          cp ${{ env.build_dir }}/arm64.deb nes-arm64.deb
+          cp ${{ github.workspace }}/X64.deb nes-amd64.deb
+          cp ${{ github.workspace }}/arm64.deb nes-arm64.deb
           docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-public-executable-image:nightly --push
           rm -rf nes-amd64.deb nes-arm64.deb
+          rm -rf ${{ github.workspace }}/X64.deb ${{ github.workspace }}/arm64.deb
           echo "Pushed the execution image"
           docker logout
