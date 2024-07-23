@@ -26,7 +26,6 @@ jobs:
     if: ${{ !github.event.pull_request.draft }}
     runs-on: [ arc-runner-set ]
     steps:
-      - uses: AutoModality/action-clean@v1
       - name: Checkout
         uses: actions/checkout@v4
       - name: Contextual QA Checklists
