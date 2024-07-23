@@ -9,31 +9,19 @@ on:
   schedule:
     - cron: '30 2 * * *' # gets executed every night at 2:30 AM UTC
   # We only leave this in to test the workflow via a PR. This should be removed before merging.
-  pull_request:
-    types:
-      - ready_for_review
-      - synchronize
-      - opened
-      - reopened
+  push:
     branches:
-      - master
-      - 'feature/**'
-    paths-ignore:
-      - nes-common/include/Version/version.hpp
-      - README.md
-      - CODE_OF_CONDUCT.md
-      - CHANGELOG.md
-      - 'docs/**'
+      - hotfix-nightly-wrong-name-pr-workflow
 
 jobs:
   # We call the pr.yml workflow to run the same tests as for a PR.
-  pr:
-    name: "Run PR Tests"
+  pr-tests:
     uses: ./.github/workflows/pr.yml
+    secrets: inherit
 
   # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
   long_running_test:
-    needs: [ pr ]
+    needs: [ pr-tests ]
     runs-on: [ self-hosted, linux, X64, Build ]
     steps:
       - name: Print Placeholder Message

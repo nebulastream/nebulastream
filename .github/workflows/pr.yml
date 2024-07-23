@@ -20,16 +20,8 @@ on:
       - CODE_OF_CONDUCT.md
       - CHANGELOG.md
       - 'docs/**'
- # We are using this yaml in the nightly workflow, so we need to allow this workflow to be triggered by a workflow call.
+  # We are using this yaml in the nightly workflow, so we need to allow this workflow to be triggered by a workflow call.
   workflow_call:
-    inputs:
-      config-path:
-        required: true
-        type: string
-      secrets:
-        envPAT:
-          required: true
-
 
 jobs:
   validateTrigger:
