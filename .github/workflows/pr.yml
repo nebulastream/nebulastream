@@ -21,14 +21,10 @@ on:
       - CHANGELOG.md
       - 'docs/**'
 
-  # We are using this yaml in the nightly workflow, so we need to allow this workflow to be triggered by a workflow call.
-  workflow_call:
-
-
 jobs:
   validateTrigger:
     if: ${{ !github.event.pull_request.draft }}
-    runs-on: [ self-hosted, linux, X64, Build ]
+    runs-on: [ arc-runner-set ]
     steps:
       - uses: AutoModality/action-clean@v1
       - name: Checkout
@@ -42,7 +38,7 @@ jobs:
 
   pre-build-checks:
     name: "Pre-Build-Checks"
-    runs-on: [ self-hosted, linux, X64, Build ]
+    runs-on: [ arc-runner-set ]
     needs: [ validateTrigger ]
     steps:
       - uses: AutoModality/action-clean@v1
@@ -55,25 +51,15 @@ jobs:
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
-      - name: Build Docker for CleanUp
-        id: builddocker_prebuild
-        working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
       - name: preamble-check
         run: |
-          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu
+          docker/buildImage/entrypoint-nes-build-preamble-check.sh
       - name: format-check
         run: |
-          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nes_build_ubuntu
+          docker/buildImage/entrypoint-nes-build-format-check.sh
       - name: guard-check
         run: |
-          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
-      - name: docker cleanup
-        if: ${{ always() }}
-        run: |
-          docker rm -f ${{ github.run_id }}_preamble-check
-          docker rm -f ${{ github.run_id }}_format-check
-          docker rm -f ${{ github.run_id }}_guard-check
+          docker/buildImage/entrypoint-nes-build-guard-check.sh 
 
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
@@ -86,8 +72,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # Currently, we only test and support with ubuntu-22_04. If we add more OS versions, we need to add the corresponding docker files.
-        # Additionally, we would have to change all docker build commands to build from the correct Dockerfile.
         include:
           - osversion: ubuntu-22_04
             arch: "X64"
@@ -124,8 +108,8 @@ jobs:
       - name: Build Docker for CleanUp
         id: builddocker_cleanup
         continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: "Perform cleanup, if necessary"
         run: |
           os_version_arch="${{ matrix.osversion }}_${{ matrix.arch }}"
@@ -141,8 +125,8 @@ jobs:
           if [ $perform_cleanup -eq 1 ]; then
             echo "Performing cleanup!"
             # Running the script in the docker container, as otherwise, we will have permission issues
-            docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
-            docker rm ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build
+            docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
+            docker rm ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
             echo "Cleanup done!"
           else
             echo "We will not perform any cleanup!"
@@ -151,8 +135,8 @@ jobs:
       - name: Build Docker
         id: builddocker
         continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
       - name: Build Nebulastream
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
@@ -167,7 +151,7 @@ jobs:
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "build_dir=$build_dir"
           mkdir -p $build_dir
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
       - name: Run tests
         run: |
           GPU_RUNNER_PARAMS=""
@@ -176,7 +160,7 @@ jobs:
           fi
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
         shell: bash
       - name: docker cleanup
         if: ${{ always() }}
