@@ -9,29 +9,25 @@ name: NES Nightly
 on:
   schedule:
     - cron: '30 2 * * *' # gets executed every night at 2:30 AM UTC
-  # We only leave this in to test the workflow via a PR. This should be removed before merging.
-  push:
-    branches:
-      - hotfix-nightly-wrong-name-pr-workflow
 
 jobs:
   # We call the pr.yml workflow to run the same tests as for a PR.
-#  pr-tests:
-#    uses: ./.github/workflows/pr.yml
-#    secrets: inherit
-#
-#  # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
-#  long-running-tests:
-#    needs: [ pr-tests ]
-#    runs-on: [ self-hosted, linux, X64, Build ]
-#    steps:
-#      - name: Print Placeholder Message
-#        run: echo "Long running tests will be added in the future."
+  pr-tests:
+    uses: ./.github/workflows/pr.yml
+    secrets: inherit
+
+  # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
+  long-running-tests:
+    needs: [ pr-tests ]
+    runs-on: [ self-hosted, linux, X64, Build ]
+    steps:
+      - name: Print Placeholder Message
+        run: echo "Long running tests will be added in the future."
 
   create-nightly-image:
     runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
-#    needs: [ long-running-tests ]
-    if: github.ref == 'refs/heads/master' || github.ref == 'refs/heads/hotfix-nightly-wrong-name-pr-workflow'
+    needs: [ long-running-tests ]
+    if: github.ref == 'refs/heads/master'
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
