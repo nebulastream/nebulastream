@@ -101,8 +101,9 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 
         if (bufferManagers.empty())
         {
-            NES_ERROR("Runtime: error while building NodeEngine: no NesWorker provided");
-            throw Exceptions::RuntimeException("Error while building NodeEngine : no NesWorker provided", NES::collectAndPrintStacktrace());
+            NES_ERROR("Runtime: error while building NodeEngine: no BufferManager provided");
+            throw Exceptions::RuntimeException(
+                "Error while building NodeEngine : no BufferManager provided", NES::collectAndPrintStacktrace());
         }
 
         QueryManagerPtr queryManager{this->queryManager};
