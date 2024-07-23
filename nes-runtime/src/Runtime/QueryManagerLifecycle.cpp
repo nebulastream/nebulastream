@@ -192,20 +192,6 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     return true;
 }
 
-bool MultiQueueQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
-{
-    auto ret = AbstractQueryManager::registerQuery(qep);
-    std::scoped_lock lock(queryMutex);
-    NES_ASSERT2_FMT(
-        queryToStatisticsMap.size() <= numberOfQueues,
-        "AbstractQueryManager::registerQuery: not enough queues are free for numberOfQueues=" << numberOfQueues << " query cnt="
-                                                                                              << queryToStatisticsMap.size());
-    ///currently we assume all queues have same number of threads, so we can do this.
-    queryToTaskQueueIdMap[qep->getDecomposedQueryPlanId()] = currentTaskQueueId++;
-    NES_DEBUG("queryToTaskQueueIdMap add for= {}  queue= {}", qep->getSharedQueryId(), currentTaskQueueId - 1);
-    return ret;
-}
-
 bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep)
 {
     NES_DEBUG("AbstractQueryManager::startQuery: query id  {}   {}", qep->getDecomposedQueryPlanId(), qep->getSharedQueryId());

@@ -126,19 +126,6 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
                         workerToCoreMappingVec);
                     break;
                 }
-                case QueryExecutionMode::Static: {
-                    queryManager = std::make_shared<MultiQueueQueryManager>(
-                        nullptr,
-                        bufferManagers,
-                        WorkerId(0),
-                        numOfThreads,
-                        nullptr,
-                        numberOfBuffersPerEpoch,
-                        workerToCoreMappingVec,
-                        workerConfiguration.numberOfQueues.getValue(),
-                        workerConfiguration.numberOfThreadsPerQueue.getValue());
-                    break;
-                }
                 default: {
                     NES_ASSERT(false, "Cannot build Query Manager");
                 }
