@@ -84,6 +84,8 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Currently, we only test and support with ubuntu-22_04. If we add more OS versions, we need to add the corresponding docker files.
+        # Additionally, we would have to change all docker build commands to build from the correct Dockerfile.
         include:
           - osversion: ubuntu-22_04
             arch: "X64"
@@ -121,7 +123,7 @@ jobs:
         id: builddocker_cleanup
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build .
       - name: "Perform cleanup, if necessary"
         run: |
           os_version_arch="${{ matrix.osversion }}_${{ matrix.arch }}"
@@ -148,7 +150,7 @@ jobs:
         id: builddocker
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+        run: docker build  -t nes_build_${{ matrix.osversion }} -f Dockerfile-NES-Build .
       - name: Build Nebulastream
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
