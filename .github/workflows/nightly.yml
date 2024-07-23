@@ -2,7 +2,8 @@ name: NES Nightly
 
 # This workflow is triggered every night at 2:30 AM UTC.
 # This is a good way to ensure that the master branch is always in a good state.
-# For now, this workflow file runs the same tests as `github_pr.yml` and then creates a docker image nes-executable-image:nightly, if the test pass
+# For now, this workflow file runs the same tests as `pr.yml` and then creates a docker image nes-executable-image:nightly, if the test pass.
+# For pushing an image to the docker hub, we build debian packages (nes-amd64.deb and nes-arm64.deb) and then use them to build the docker image.
 # We will add long-running test for stability and performance checks in the future.
 
 on:
@@ -10,28 +11,67 @@ on:
     - cron: '30 2 * * *' # gets executed every night at 2:30 AM UTC
 
 jobs:
-  # We call the github_pr.yml workflow to run the same tests as for a PR.
-  github_pr:
-    uses: ./.github/workflows/github_pr.yml
+  # We call the pr.yml workflow to run the same tests as for a PR.
+  pr-tests:
+    uses: ./.github/workflows/pr.yml
+    secrets: inherit
 
   # This is a placeholder for adding long-running tests in the future. Currently, it simply prints a message.
-  long_running_test:
-    needs: [ github_pr ]
+  long-running-tests:
+    needs: [ pr-tests ]
     runs-on: [ self-hosted, linux, X64, Build ]
     steps:
       - name: Print Placeholder Message
         run: echo "Long running tests will be added in the future."
 
   create-nightly-image:
-    runs-on: [ self-hosted, linux, X64, Build ]
-    needs: [ long_running_test ]
+    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+    needs: [ long-running-tests ]
     if: github.ref == 'refs/heads/master'
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
       EVENT: ${{ github.event_name }}
       NEXT_VERSION: ${{ github.event.inputs.version }}
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - osversion: ubuntu-22_04
+            arch: X64
+            platform: linux/amd64
+            package_name: nes-amd64
+          - osversion: ubuntu-22_04
+            arch: arm64
+            platform: linux/arm64
+            package_name: nes-arm64
     steps:
+      - uses: AutoModality/action-clean@v1
+      - name: "Checkout NebulaStream Repository"
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
+      - name: Build Docker
+        working-directory: ${{ github.workspace }}/docker/buildImage
+        run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+      - name: "Build Debian Packages"
+        run: |
+          cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
+          mkdir -p $cache_dir
+          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
+          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
+          echo "build_dir=$build_dir" >> $GITHUB_ENV     
+          mkdir -p $build_dir
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_package -v $cache_dir:/cache_dir -v $build_dir:/build_dir -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-prepare-nes-package.sh nes_package_${{ matrix.osversion }}
+      - name: "Fetch Debian Files"
+        run: |
+          nes_version=${GITHUB_REF_NAME:1}
+          DEB_NAME=${{ matrix.arch }}
+          mv ${{ env.build_dir }}/*deb ${{ github.workspace }}/$DEB_NAME.deb
+          echo "DEB_FILE=${{ github.workspace }}/$DEB_NAME.deb" >> $GITHUB_ENV
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v3
       - name: Set up Docker Buildx
@@ -39,11 +79,13 @@ jobs:
       - name: "Build and Release NES Executable Image"
         run: |
           nes_version=${GITHUB_REF_NAME:1}
-          echo "Preparing and Releasing new executable image with version $nes_version and latest"
+          echo "Preparing and Releasing new executable image version nightly"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          wget --no-check-certificate -O nes-amd64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-$UBUNTU_VERSION-Linux.X64.deb
-          wget --no-check-certificate -O nes-arm64.deb https://github.com/nebulastream/nebulastream-dev-builds/releases/download/$GITHUB_REF_NAME/NebulaStream-$nes_version-ubuntu-$UBUNTU_VERSION-Linux.arm64.deb
-          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=linux/amd64,linux/arm64 --tag nebulastream/nes-public-executable-image:$nes_version --tag nebulastream/nes-public-executable-image:nightly --push
-          rm -rf nes-amd64.deb nes-arm64.deb
+          
+          # We have to rename the debian packages to nes-amd64.deb and nes-arm64.deb, before we can build the docker image, as the dockerfile expects the names amd64 or arm64
+          cp ${{ github.workspace }}/${{ matrix.arch }}.deb ${{ matrix.package_name }}.deb
+          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=${{ matrix.platform }} --tag nebulastream/nes-public-executable-image:nightly-${{ matrix.arch }} --push
+          rm -rf ${{ matrix.package_name }}.deb
+          rm -rf ${{ github.workspace }}/${{ matrix.arch }}.deb
           echo "Pushed the execution image"
           docker logout
