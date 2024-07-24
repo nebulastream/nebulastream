@@ -14,21 +14,13 @@ cmake_minimum_required(VERSION 3.21.0)
 include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
-set(VCPKG_BINARY_VERSION v31)
-set(LLVM_BINARY_VERSION v16_9)
 set(LLVM_VERSION 16)
 # Set the not allowed comment style as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex must match all comments that are not allowed in the codebase per line.
 set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
 
-# Activate self hosting, such that the compiler from the dependencies is taken
-option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
 option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
-# Enable local dependency building (this may take a long time)
-option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
-# Enable prebuild dependencies only if NES_BUILD_DEPENDENCIES_LOCAL is OFF and CMAKE_TOOLCHAIN_FILE is not set.
-cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies" ON "NOT NES_BUILD_NATIVE; NOT CMAKE_TOOLCHAIN_FILE" OFF)
 
 #toggle import and usage of s2 library
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
@@ -74,8 +66,8 @@ if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
 endif ()
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
-set(CMAKE_DEPS_CACHE_DIR "${CMAKE_SOURCE_DIR}/.cache/cmake-deps")
 include(cmake/ImportDependencies.cmake)
+include(cmake/Sanitizers.cmake)
 project(NES LANGUAGES C CXX)
 set(VCPKG_POLICY_ALLOW_RESTRICTED_HEADERS enabled)
 message(STATUS "Going to use ${CMAKE_CXX_COMPILER}")
