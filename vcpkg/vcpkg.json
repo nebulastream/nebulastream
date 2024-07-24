@@ -1,0 +1,30 @@
+{
+  "name": "nebulastream-dependencies",
+  "version-string": "v28",
+  "homepage": "https://nebula.stream",
+  "description": "Data Management for the Internet of Things.",
+  "builtin-baseline": "adb391bd2cb05fdaef1ccef375dd50d998f01cc0",
+  "dependencies": [
+    "grpc",
+    "fmt",
+    "gtest",
+    "benchmark",
+    "spdlog",
+    "nlohmann-json",
+    "magic-enum",
+    "cpptrace",
+    "folly",
+    "boost-asio",
+    "yaml-cpp",
+    "argparse",
+    {
+      "name": "llvm",
+      "default-features": false,
+      "features": [
+        "mlir",
+        "target-x86",
+        "target-aarch64"
+      ]
+    }
+  ]
+}
