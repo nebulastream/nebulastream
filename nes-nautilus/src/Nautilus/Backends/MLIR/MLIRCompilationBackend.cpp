@@ -21,7 +21,11 @@
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
+#include <mlir/Dialect/Func/Extensions/AllExtensions.h>
+#include <mlir/Dialect/Func/IR/FuncOps.h>
 #include <mlir/IR/MLIRContext.h>
+#include <mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h>
+#include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 
 namespace NES::Nautilus::Backends::MLIR
 {
@@ -34,10 +38,15 @@ MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilati
 {
     auto timer = Timer<>("CompilationBasedPipelineExecutionEngine");
     timer.start();
+    ::mlir::DialectRegistry registry;
+    ::mlir::func::registerAllExtensions(registry);
+    registerBuiltinDialectTranslation(registry);
+    registerLLVMDialectTranslation(registry);
 
-    /// 1. Create the MLIRLoweringProvider and lower the given NESIR. Return an MLIR module.
-    mlir::MLIRContext context;
-    auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
+    ::mlir::MLIRContext context(registry);
+    context.allowsUnregisteredDialects();
+
+    auto loweringProvider = std::make_unique<MLIRLoweringProvider>(context);
     auto mlirModule = loweringProvider->generateModuleFromIR(ir);
 
     /// 2.a dump MLIR to console or a file
@@ -68,7 +77,6 @@ MLIRCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilati
         options,
         dumpHelper);
 
-    /// 5. Get execution function from engine. Create and return execution context.
     timer.snapshot("MLIRGeneration");
     return std::make_unique<MLIRExecutable>(std::move(engine));
 }

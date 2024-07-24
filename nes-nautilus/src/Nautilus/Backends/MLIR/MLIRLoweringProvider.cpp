@@ -74,7 +74,7 @@ mlir::Type MLIRLoweringProvider::getMLIRType(IR::Types::StampPtr type)
     }
     else if (type->isAddress())
     {
-        return mlir::LLVM::LLVMPointerType::get(builder->getI8Type());
+        return mlir::LLVM::LLVMPointerType::get(context);
     }
     NES_THROW_RUNTIME_ERROR("No matching type for stamp " << type);
 }
@@ -193,7 +193,7 @@ mlir::FlatSymbolRefAttr MLIRLoweringProvider::insertExternalFunction(
     {
         functionPtr = ProxyFunctions.getProxyFunctionAddress(name);
     }
-    jitProxyFunctionTargetAddresses.push_back(llvm::pointerToJITTargetAddress(functionPtr));
+    jitProxyFunctionTargetAddresses.push_back(functionPtr);
     return mlir::SymbolRefAttr::get(context, name);
 }
 
@@ -273,9 +273,6 @@ void MLIRLoweringProvider::generateMLIR(const IR::Operations::OperationPtr& oper
             break;
         case IR::Operations::Operation::OperationType::LoadOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::LoadOperation>(operation), frame);
-            break;
-        case IR::Operations::Operation::OperationType::AddressOp:
-            generateMLIR(std::static_pointer_cast<IR::Operations::AddressOperation>(operation), frame);
             break;
         case IR::Operations::Operation::OperationType::StoreOp:
             generateMLIR(std::static_pointer_cast<IR::Operations::StoreOperation>(operation), frame);
@@ -442,42 +439,11 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoopOper
 ///==--------------------------==///
 ///==-- MEMORY (LOAD, STORE) --==///
 ///==--------------------------==///
-void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, ValueFrame& frame)
-{
-    mlir::Value recordOffset;
-    if (addressOp->getRecordIdxName() != "")
-    {
-        recordOffset = builder->create<mlir::LLVM::MulOp>(
-            getNameLoc("recordOffset"),
-            frame.getValue(addressOp->getRecordIdxName()),
-            getConstInt("1", IR::Types::StampFactory::createInt64Stamp(), addressOp->getRecordWidthInBytes()));
-    }
-    else
-    {
-        recordOffset = getConstInt("0", IR::Types::StampFactory::createInt64Stamp(), 0);
-    }
-    mlir::Value fieldOffset = builder->create<mlir::LLVM::AddOp>(
-        getNameLoc("fieldOffset"),
-        recordOffset,
-        getConstInt("1", IR::Types::StampFactory::createInt64Stamp(), addressOp->getFieldOffsetInBytes()));
-    /// Return I8* to first byte of field data
-    mlir::Value elementAddress = builder->create<mlir::LLVM::GEPOp>(
-        getNameLoc("fieldAccess"),
-        mlir::LLVM::LLVMPointerType::get(builder->getI8Type()),
-        frame.getValue(addressOp->getAddressSourceName()),
-        mlir::ArrayRef<mlir::Value>({fieldOffset}));
-    auto mlirBitcast = builder->create<mlir::LLVM::BitcastOp>(
-        getNameLoc("Address Bitcasted"), mlir::LLVM::LLVMPointerType::get(getMLIRType(addressOp->getStamp())), elementAddress);
-    frame.setValue(addressOp->getIdentifier(), mlirBitcast);
-}
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame& frame)
 {
     auto address = frame.getValue(loadOp->getAddress()->getIdentifier());
-
-    auto bitcast = builder->create<mlir::LLVM::BitcastOp>(
-        getNameLoc("Bitcasted address"), mlir::LLVM::LLVMPointerType::get(getMLIRType(loadOp->getStamp())), address);
-    auto mlirLoadOp = builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), bitcast);
+    auto mlirLoadOp = builder->create<mlir::LLVM::LoadOp>(getNameLoc("loadedValue"), getMLIRType(loadOp->getStamp()), address);
     frame.setValue(loadOp->getIdentifier(), mlirLoadOp);
 }
 
@@ -518,7 +484,8 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddOpera
         /// if we add something to a ptr we have to use a llvm getelementptr
         mlir::Value elementAddress = builder->create<mlir::LLVM::GEPOp>(
             getNameLoc("fieldAccess"),
-            mlir::LLVM::LLVMPointerType::get(builder->getI8Type()),
+            mlir::LLVM::LLVMPointerType::get(context),
+            builder->getI8Type(),
             leftInput,
             mlir::ArrayRef<mlir::Value>({rightInput}));
         frame.setValue(addOp->getIdentifier(), elementAddress);
@@ -636,9 +603,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::StoreOpe
 {
     auto value = frame.getValue(storeOp->getValue()->getIdentifier());
     auto address = frame.getValue(storeOp->getAddress()->getIdentifier());
-    auto bitcast = builder->create<mlir::LLVM::BitcastOp>(
-        getNameLoc("Address Bitcasted"), mlir::LLVM::LLVMPointerType::get(value.getType()), address);
-    builder->create<mlir::LLVM::StoreOp>(getNameLoc("outputStore"), value, bitcast);
+    builder->create<mlir::LLVM::StoreOp>(getNameLoc("outputStore"), value, address);
 }
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, ValueFrame& frame)
@@ -702,7 +667,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
         && compareOp->getRightInput()->getStamp()->isInteger())
     {
         /// add null check
-        auto null = builder->create<mlir::LLVM::NullOp>(getNameLoc("null"), mlir::LLVM::LLVMPointerType::get(builder->getI8Type()));
+        auto null = builder->create<mlir::LLVM::ZeroOp>(getNameLoc("null"), mlir::LLVM::LLVMPointerType::get(context));
         auto cmpOp = builder->create<mlir::LLVM::ICmpOp>(
             getNameLoc("comparison"), mlir::LLVM::ICmpPredicate::eq, frame.getValue(compareOp->getLeftInput()->getIdentifier()), null);
         frame.setValue(compareOp->getIdentifier(), cmpOp);
@@ -913,7 +878,7 @@ std::vector<std::string> MLIRLoweringProvider::getJitProxyFunctionSymbols()
 {
     return std::move(jitProxyFunctionSymbols);
 }
-std::vector<llvm::JITTargetAddress> MLIRLoweringProvider::getJitProxyTargetAddresses()
+std::vector<void*> MLIRLoweringProvider::getJitProxyTargetAddresses()
 {
     return std::move(jitProxyFunctionTargetAddresses);
 }
