@@ -28,7 +28,7 @@ num_threads=$1
 python3 /nebulastream/scripts/build/check_license.py /nebulastream /nebulastream/.no-license-check || exit 1
 
 # Depending if the ccache_dir exists, we will instruct NebulaStream to compile with a ccache in mind or not
-USE_CCACHE = 0
+USE_CCACHE=0
 if [ -d /ccache_dir ]
 then
   # Compiling NebulaStream with ccache

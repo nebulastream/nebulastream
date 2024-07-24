@@ -53,19 +53,15 @@ jobs:
         with:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
-          fetch-depth: '0'
       - name: Build Executable Docker Image
         working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_executable_image.sh nebulastream/nes-public-executable-image:nightly-${{ matrix.arch }}
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        # Example docker image name: nebulastream/nes-public-executable-image:nightly-X64 or nebulastream/nes-public-executable-image:nightly-arm64
+        run: bash scripts/build_docker_image_executable_image.sh nebulastream/nes-public-executable-image:nightly-${{ matrix.arch }} ${{ matrix.arch }} ${{ matrix.package_name }}
       - name: "Release and Push NES Executable Image"
         run: |
           nes_version=${GITHUB_REF_NAME:1}
           echo "Preparing and Releasing new executable image version nightly"
           echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker buildx build . -f docker/executableImage/Dockerfile-NES-Executable-Multi-Arch --platform=${{ matrix.platform }} --tag nebulastream/nes-public-executable-image:nightly-${{ matrix.arch }} --push
+          docker image push nebulastream/nes-public-executable-image-${{ github.event.inputs.branch }}:nightly-${{ matrix.arch }}
           echo "Pushed the execution image"
           docker logout
