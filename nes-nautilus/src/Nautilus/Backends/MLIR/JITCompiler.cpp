@@ -14,6 +14,7 @@
 
 #include <Nautilus/Backends/MLIR/JITCompiler.hpp>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <mlir/ExecutionEngine/OptUtils.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
@@ -31,7 +32,10 @@ void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOpt
         return;
     }
 
-    mlir::ExecutionEngine::setupTargetTriple(llvmModule.get());
+    auto tmBuilderOrError = llvm::orc::JITTargetMachineBuilder::detectHost();
+    NES_ASSERT2_FMT(tmBuilderOrError, "Failed to create a JITTargetMachineBuilder for the host");
+    auto targetMachine = tmBuilderOrError->createTargetMachine();
+    mlir::ExecutionEngine::setupTargetTripleAndDataLayout(llvmModule.get(), targetMachine.get().get());
 
     /// Optionally run an optimization pipeline over the llvm module.
     auto optPipeline = mlir::makeOptimizingTransformer(
@@ -53,7 +57,7 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
     const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
     const std::vector<std::string>& jitProxyFunctionSymbols,
-    const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses,
+    const std::vector<void*>& jitProxyFunctionTargetAddresses,
     const CompilationOptions& compilerOptions,
     const DumpHelper& dumpHelper)
 {
@@ -70,7 +74,7 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
 
     /// Create MLIR execution engine (wrapper around LLVM ExecutionEngine).
     mlir::ExecutionEngineOptions options;
-    options.jitCodeGenOptLevel = llvm::CodeGenOpt::Level::Aggressive;
+    options.jitCodeGenOptLevel = llvm::CodeGenOptLevel::Aggressive;
     options.transformer = optPipeline;
     auto maybeEngine = mlir::ExecutionEngine::create(*mlirModule, options);
     assert(maybeEngine && "failed to construct an execution engine");
@@ -88,20 +92,19 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
         "NES__Runtime__TupleBuffer__setSequenceNumber",
         "NES__Runtime__TupleBuffer__getSequenceNumber",
         "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
-    /// We register all external functions (symbols) that we do not inline.
     const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner)
     {
         auto symbolMap = llvm::orc::SymbolMap();
+
         for (int i = 0; i < (int)jitProxyFunctionSymbols.size(); ++i)
         {
-            if (!(compilerOptions.isProxyInlining() && ProxyInliningFunctions.contains(jitProxyFunctionSymbols.at(i))))
-            {
-                symbolMap[interner(jitProxyFunctionSymbols.at(i))]
-                    = llvm::JITEvaluatedSymbol(jitProxyFunctionTargetAddresses.at(i), llvm::JITSymbolFlags::Callable);
-            }
+            auto address = jitProxyFunctionTargetAddresses.at(i);
+            symbolMap[interner(jitProxyFunctionSymbols.at(i))]
+                = {llvm::orc::ExecutorAddr::fromPtr(address), llvm::JITSymbolFlags::Exported};
         }
         return symbolMap;
     };
+
     auto& engine = maybeEngine.get();
     engine->registerSymbols(runtimeSymbolMap);
     return std::move(engine);

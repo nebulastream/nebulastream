@@ -42,7 +42,6 @@ public:
     enum class OperationType : uint8_t
     {
         AddOp,
-        AddressOp,
         AndOp,
         BitWiseAnd,
         BitWiseOr,

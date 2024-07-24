@@ -16,11 +16,10 @@ include(CMakeDependentOption)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v31)
 set(LLVM_BINARY_VERSION v16_9)
-set(LLVM_VERSION 16)
+set(LLVM_VERSION 18.1.6)
 # Set the not allowed comment style as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex must match all comments that are not allowed in the codebase per line.
 set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
-
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -203,7 +202,7 @@ get_nes_log_level_value(NES_LOGGING_VALUE)
 
 # Set Optimization Flags
 set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wextra -pedantic -Wno-null-character -Wno-dollar-in-identifier-extension -Werror=extra -Werror=exceptions -Werror=all -Werror=integer-overflow -Werror=return-type -Werror=return-stack-address -Werror=delete-non-virtual-dtor -Werror=deprecated -Werror=writable-strings -Werror=array-bounds -Werror=ignored-qualifiers -Werror=sign-compare -Wno-deprecated-copy-with-dtor -Wno-unused-variable -Wno-unused-but-set-variable -Wno-deprecated-declarations -Wno-invalid-offsetof ")
-set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
+set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -stdlib=libc++ -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
 
@@ -483,21 +482,6 @@ else ()
     message(FATAL_ERROR "Cannot find llvm. LLVM ${LLVM_VERSION} is required. Use self-hosted=1 or install it manually.")
 endif ()
 
-find_package(Clang)
-if (Clang_FOUND)
-    get_property(CLANG_FORMAT_EXECUTABLE TARGET clang-format PROPERTY LOCATION)
-    get_property(CLANG_TIDY_EXECUTABLE TARGET clang-tidy PROPERTY LOCATION)
-    get_property(CLANG_APPLY_REPLACEMENTS_EXECUTABLE TARGET clang-apply-replacements PROPERTY LOCATION)
-    get_property(CLANG_EXECUTABLE TARGET clang PROPERTY LOCATION)
-    set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/lib/clang/${LLVM_VERSION_MAJOR}/include/)
-    message(STATUS "CLANG_FORMAT_EXECUTABLE ${CLANG_FORMAT_EXECUTABLE}")
-    message(STATUS "CLANG_TIDY_EXECUTABLE ${CLANG_TIDY_EXECUTABLE}")
-    message(STATUS "CLANG_APPLY_REPLACEMENTS_EXECUTABLE ${CLANG_APPLY_REPLACEMENTS_EXECUTABLE}")
-    message(STATUS "CLANG_EXECUTABLE ${CLANG_EXECUTABLE}")
-else ()
-    message(FATAL_ERROR "Cannot find clang.")
-endif ()
-
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     find_package(JNI)
     if (JNI_FOUND)
@@ -577,7 +561,7 @@ endif ()
 # Add tests with command
 include(cmake/NebulaStreamTest.cmake)
 if (NES_ENABLES_TESTS)
-    set(GTEST_LIBRARIES ${GTEST_LIBRARIES})
+    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES})
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")

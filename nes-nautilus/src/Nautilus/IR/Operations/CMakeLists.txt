@@ -20,7 +20,6 @@ add_source_files(nes-nautilus
         StoreOperation.cpp
         ConstIntOperation.cpp
         ConstFloatOperation.cpp
-        AddressOperation.cpp
         FunctionOperation.cpp
         IfOperation.cpp
         ProxyCallOperation.cpp
