@@ -175,7 +175,7 @@ jobs:
           path: CHANGELOG.md
       - name: Build Docker
         working-directory: ${{ github.workspace }}/docker/buildImage
-        run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build-${{ matrix.osversion }} .
+        run: docker build  -t nes_package_${{ matrix.osversion }} -f Dockerfile-NES-Build .
       - name: "Build Debian Packages"
         run: |
           cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
