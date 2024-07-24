@@ -1,0 +1,32 @@
+name: NES Docker Image On Demand
+
+on:
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: 'Branch to build docker executable images for'
+        required: true
+        default: 'master'
+
+jobs:
+    build-docker:
+      runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
+      env:
+        DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
+        DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
+        EVENT: ${{ github.event_name }}
+        NEXT_VERSION: ${{ github.event.inputs.version }}
+      strategy:
+        fail-fast: false
+        matrix:
+          include:
+            - osversion: ubuntu-22_04
+              arch: X64
+              platform: linux/amd64
+              package_name: nes-amd64
+            - osversion: ubuntu-22_04
+              arch: arm64
+              platform: linux/arm64
+              package_name: nes-arm64
+      steps:
+        - run: echo "Hello, World!"
