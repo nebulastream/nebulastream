@@ -16,9 +16,6 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_
 
 #include <chrono>
-#include <Monitoring/MetricCollectors/MetricCollector.hpp>
-#include <Operators/LogicalOperators/Network/NesPartition.hpp>
-#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
