@@ -117,21 +117,6 @@ QueryPlanPtr QueryPlanBuilder::addUnion(QueryPlanPtr leftQueryPlan, QueryPlanPtr
     return leftQueryPlan;
 }
 
-QueryPlanPtr QueryPlanBuilder::addStatisticBuildOperator(
-    Windowing::WindowTypePtr window,
-    Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-    Statistic::StatisticMetricHash metricHash,
-    Statistic::SendingPolicyPtr sendingPolicy,
-    Statistic::TriggerConditionPtr triggerCondition,
-    QueryPlanPtr queryPlan)
-{
-    queryPlan = checkAndAddWatermarkAssignment(queryPlan, window);
-    auto op = LogicalOperatorFactory::createStatisticBuildOperator(
-        window, std::move(statisticDescriptor), metricHash, sendingPolicy, triggerCondition);
-    queryPlan->appendOperatorAsNewRoot(op);
-    return queryPlan;
-}
-
 QueryPlanPtr QueryPlanBuilder::addJoin(
     QueryPlanPtr leftQueryPlan,
     QueryPlanPtr rightQueryPlan,

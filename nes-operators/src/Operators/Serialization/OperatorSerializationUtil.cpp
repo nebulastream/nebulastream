@@ -57,7 +57,6 @@
 #include <Operators/Operator.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <Operators/Serialization/StatisticSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Types/SlidingWindow.hpp>
@@ -171,11 +170,6 @@ SerializableOperator OperatorSerializationUtil::serializeOperator(const Operator
     {
         // Serialize map udf operator
         serializeOpenCLOperator(*operatorNode->as<LogicalOpenCLOperator>(), serializedOperator);
-    }
-    else if (operatorNode->instanceOf<Statistic::LogicalStatisticWindowOperator>())
-    {
-        // Serialize map udf operator
-        serializeStatisticWindowOperator(*operatorNode->as<Statistic::LogicalStatisticWindowOperator>(), serializedOperator);
     }
     else
     {
@@ -356,13 +350,6 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
         auto openCLDetails = SerializableOperator_OpenCLOperatorDetails();
         details.UnpackTo(&openCLDetails);
         operatorNode = deserializeOpenCLOperator(openCLDetails);
-    }
-    else if (details.Is<SerializableOperator_StatisticWindowDetails>())
-    {
-        NES_TRACE("Deserialize Statistic Window Operator.");
-        SerializableOperator_StatisticWindowDetails statisticWindowDetails;
-        details.UnpackTo(&statisticWindowDetails);
-        operatorNode = deserializeStatisticWindowOperator(statisticWindowDetails);
     }
     else
     {
@@ -1435,17 +1422,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     }
-    else if (sinkDescriptor.instanceOf<Statistic::StatisticSinkDescriptor>())
-    {
-        auto statisticSinkDescriptor = sinkDescriptor.as<const Statistic::StatisticSinkDescriptor>();
-        SerializableOperator_SinkDetails_StatisticSinkDescriptor sinkDescriptorMessage;
-        sinkDescriptorMessage.set_sinkformattype(
-            (SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticSinkFormatType)statisticSinkDescriptor->getSinkFormatType());
-        sinkDescriptorMessage.set_sinkdatacodec(
-            (SerializableOperator_SinkDetails_StatisticSinkDescriptor_StatisticDataCodec)statisticSinkDescriptor->getSinkDataCodec());
-        sinkDetails.mutable_sinkdescriptor()->PackFrom(sinkDescriptorMessage);
-        sinkDetails.set_numberoforiginids(numberOfOrigins);
-    }
     else
     {
         NES_ERROR("OperatorSerializationUtil: Unknown Sink Descriptor Type - {}", sinkDescriptor.toString());
@@ -1530,17 +1506,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
             serializedSinkDescriptor.sinkformat(),
             serializedSinkDescriptor.append() ? "APPEND" : "OVERWRITE",
             serializedSinkDescriptor.addtimestamp(),
-            deserializedNumberOfOrigins);
-    }
-    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_StatisticSinkDescriptor>())
-    {
-        SerializableOperator_SinkDetails_StatisticSinkDescriptor serializedSinkDescriptor;
-        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        return Statistic::StatisticSinkDescriptor::create(
-            // Be careful changing the order of the enum values, as this works as long as the order is the same in the
-            // cpp and the proto file
-            (Statistic::StatisticSynopsisType)serializedSinkDescriptor.sinkformattype(),
-            (Statistic::StatisticDataCodec)serializedSinkDescriptor.sinkdatacodec(),
             deserializedNumberOfOrigins);
     }
     else
@@ -1775,145 +1740,6 @@ OperatorSerializationUtil::deserializeOpenCLOperator(const SerializableOperator_
     openCLOperator->setDeviceId(openCLDetails.deviceid());
     openCLOperator->setOpenClCode(openCLDetails.openclcode());
     return openCLOperator;
-}
-
-void OperatorSerializationUtil::serializeStatisticWindowOperator(
-    const Statistic::LogicalStatisticWindowOperator& statisticWindowOperator, SerializableOperator& serializedOperator)
-{
-    SerializableOperator_StatisticWindowDetails statisticWindowDetails;
-
-    // 1. Serializing the windowType
-    auto windowType = statisticWindowOperator.getWindowType();
-    auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
-    auto timeCharacteristic = timeBasedWindowType->getTimeCharacteristic();
-    auto timeCharacteristicDetails = SerializableOperator_TimeCharacteristic();
-    if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::EventTime)
-    {
-        timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_EventTime);
-        timeCharacteristicDetails.set_field(timeCharacteristic->getField()->getName());
-    }
-    else if (timeCharacteristic->getType() == Windowing::TimeCharacteristic::Type::IngestionTime)
-    {
-        timeCharacteristicDetails.set_type(SerializableOperator_TimeCharacteristic_Type_IngestionTime);
-    }
-    else
-    {
-        NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Characteristic");
-    }
-    if (windowType->instanceOf<Windowing::TumblingWindow>())
-    {
-        auto tumblingWindow = windowType->as<Windowing::TumblingWindow>();
-        auto tumblingWindowDetails = SerializableOperator_TumblingWindow();
-        tumblingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
-        tumblingWindowDetails.set_size(tumblingWindow->getSize().getTime());
-        statisticWindowDetails.mutable_windowtype()->PackFrom(tumblingWindowDetails);
-    }
-    else if (windowType->instanceOf<Windowing::SlidingWindow>())
-    {
-        auto slidingWindow = windowType->as<Windowing::SlidingWindow>();
-        auto slidingWindowDetails = SerializableOperator_SlidingWindow();
-        slidingWindowDetails.mutable_timecharacteristic()->CopyFrom(timeCharacteristicDetails);
-        slidingWindowDetails.set_size(slidingWindow->getSize().getTime());
-        slidingWindowDetails.set_slide(slidingWindow->getSlide().getTime());
-        statisticWindowDetails.mutable_windowtype()->PackFrom(slidingWindowDetails);
-    }
-    else
-    {
-        NES_ERROR("OperatorSerializationUtil: Cant serialize window Time Type");
-    }
-
-    // 2. Serializing the statistic window descriptor
-    StatisticWindowDescriptorMessage statisticWindowDescriptorMessage;
-    auto statisticWindowDescriptor = statisticWindowOperator.getWindowStatisticDescriptor();
-    ExpressionSerializationUtil::serializeExpression(
-        statisticWindowDescriptor->getField(), statisticWindowDescriptorMessage.mutable_field());
-    StatisticSerializationUtil::serializeDescriptorDetails(*statisticWindowDescriptor, statisticWindowDescriptorMessage);
-    statisticWindowDescriptorMessage.set_width(statisticWindowDescriptor->getWidth());
-    statisticWindowDetails.mutable_statisticwindowdescriptor()->CopyFrom(statisticWindowDescriptorMessage);
-
-    // 3. Serializing sending policy and trigger condition
-    StatisticSerializationUtil::serializeSendingPolicy(
-        *statisticWindowOperator.getSendingPolicy(), *statisticWindowDetails.mutable_sendingpolicy());
-    StatisticSerializationUtil::serializeTriggerCondition(
-        *statisticWindowOperator.getTriggerCondition(), *statisticWindowDetails.mutable_triggercondition());
-
-    // 4. Serializing the metric hash and then packing everything into serializedOperator
-    statisticWindowDetails.set_metrichash(statisticWindowOperator.getMetricHash());
-    serializedOperator.mutable_details()->PackFrom(statisticWindowDetails);
-}
-
-LogicalUnaryOperatorPtr
-OperatorSerializationUtil::deserializeStatisticWindowOperator(const SerializableOperator_StatisticWindowDetails& statisticWindowDetails)
-{
-    // 1. Deserializing the window type
-    const auto serializedWindowType = statisticWindowDetails.windowtype();
-    Windowing::WindowTypePtr window;
-    if (serializedWindowType.Is<SerializableOperator_TumblingWindow>())
-    {
-        auto serializedTumblingWindow = SerializableOperator_TumblingWindow();
-        serializedWindowType.UnpackTo(&serializedTumblingWindow);
-        const auto serializedTimeCharacteristic = serializedTumblingWindow.timecharacteristic();
-        if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
-        {
-            auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
-            window = Windowing::TumblingWindow::of(
-                Windowing::TimeCharacteristic::createEventTime(field), Windowing::TimeMeasure(serializedTumblingWindow.size()));
-        }
-        else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime)
-        {
-            window = Windowing::TumblingWindow::of(
-                Windowing::TimeCharacteristic::createIngestionTime(), Windowing::TimeMeasure(serializedTumblingWindow.size()));
-        }
-        else
-        {
-            NES_FATAL_ERROR(
-                "OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
-                serializedTimeCharacteristic.DebugString());
-        }
-    }
-    else if (serializedWindowType.Is<SerializableOperator_SlidingWindow>())
-    {
-        auto serializedSlidingWindow = SerializableOperator_SlidingWindow();
-        serializedWindowType.UnpackTo(&serializedSlidingWindow);
-        const auto serializedTimeCharacteristic = serializedSlidingWindow.timecharacteristic();
-        if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_EventTime)
-        {
-            auto field = FieldAccessExpressionNode::create(serializedTimeCharacteristic.field());
-            window = Windowing::SlidingWindow::of(
-                Windowing::TimeCharacteristic::createEventTime(field),
-                Windowing::TimeMeasure(serializedSlidingWindow.size()),
-                Windowing::TimeMeasure(serializedSlidingWindow.slide()));
-        }
-        else if (serializedTimeCharacteristic.type() == SerializableOperator_TimeCharacteristic_Type_IngestionTime)
-        {
-            window = Windowing::SlidingWindow::of(
-                Windowing::TimeCharacteristic::createIngestionTime(),
-                Windowing::TimeMeasure(serializedSlidingWindow.size()),
-                Windowing::TimeMeasure(serializedSlidingWindow.slide()));
-        }
-        else
-        {
-            NES_FATAL_ERROR(
-                "OperatorSerializationUtil: could not de-serialize window time characteristic: {}",
-                serializedTimeCharacteristic.DebugString());
-        }
-    }
-    else
-    {
-        NES_FATAL_ERROR("OperatorSerializationUtil: could not de-serialize window type: {}", serializedWindowType.DebugString());
-    }
-
-    // 2. Deserializing sending policy and trigger condition
-    auto sendingPolicy = StatisticSerializationUtil::deserializeSendingPolicy(statisticWindowDetails.sendingpolicy());
-    auto triggerCondition = StatisticSerializationUtil::deserializeTriggerCondition(statisticWindowDetails.triggercondition());
-
-    // 3. Deserializing the statistic descriptor, the metric hash, and then creating the operator
-    auto statisticDescriptor = StatisticSerializationUtil::deserializeDescriptor(statisticWindowDetails.statisticwindowdescriptor());
-    auto metricHash = statisticWindowDetails.metrichash();
-    auto statisticWindowOperator
-        = LogicalOperatorFactory::createStatisticBuildOperator(window, statisticDescriptor, metricHash, sendingPolicy, triggerCondition);
-
-    return statisticWindowOperator;
 }
 
 } // namespace NES

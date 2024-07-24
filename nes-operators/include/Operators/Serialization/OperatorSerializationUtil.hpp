@@ -340,22 +340,6 @@ public:
      * @return LogicalOpenCLOperatorPtr
      */
     static LogicalUnaryOperatorPtr deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails);
-
-    /**
-     * @brief Serializes a LogicalStatisticWindowOperator
-     * @param statisticWindowOperator
-     * @param serializedOperator
-     */
-    static void serializeStatisticWindowOperator(
-        const Statistic::LogicalStatisticWindowOperator& statisticWindowOperator, SerializableOperator& serializedOperator);
-
-    /**
-     * @brief Deserializes a LogicalStatisticWindowOperator
-     * @param statisticWindowDetails
-     * @param StatisticWindowOperator as LogicalUnaryOperator
-     */
-    static LogicalUnaryOperatorPtr
-    deserializeStatisticWindowOperator(const SerializableOperator_StatisticWindowDetails& statisticWindowDetails);
 };
 } // namespace NES
 

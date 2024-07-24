@@ -260,18 +260,6 @@ Query Query::from(const std::string& sourceName)
     return Query(queryPlan);
 }
 
-Query& Query::buildStatistic(
-    Windowing::WindowTypePtr window,
-    Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-    Statistic::StatisticMetricHash metricHash,
-    Statistic::SendingPolicyPtr sendingPolicy,
-    Statistic::TriggerConditionPtr triggerCondition)
-{
-    this->queryPlan = QueryPlanBuilder::addStatisticBuildOperator(
-        std::move(window), std::move(statisticDescriptor), metricHash, sendingPolicy, triggerCondition, this->queryPlan);
-    return *this;
-}
-
 Query& Query::project(std::vector<ExpressionNodePtr> expressions)
 {
     NES_DEBUG("Query: add projection to query");
