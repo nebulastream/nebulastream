@@ -12,20 +12,10 @@
     limitations under the License.
 */
 
+#include <source_location>
 #include <Exceptions/RuntimeException.hpp>
 #include <Util/Logger/Logger.hpp>
-
-namespace fmt
-{
-template <>
-struct formatter<std::source_location> : formatter<std::string>
-{
-    auto format(const std::source_location& loc, format_context& ctx) -> decltype(ctx.out())
-    {
-        return fmt::format_to(ctx.out(), "{}:{} {}", loc.file_name(), loc.line(), loc.function_name());
-    }
-};
-} // namespace fmt
+#include <fmt/std.h>
 
 namespace NES::Exceptions
 {
