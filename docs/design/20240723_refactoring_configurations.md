@@ -3,23 +3,31 @@
 The current implementation of configuration in NES is very ambiguous. In general, we define the following problems:
 
 P1: Existing configurations include partially implemented/non-implemented features. For instance, enableMonitoring, nodeSpatialType, numberOfBuffersPerEpoch, etc.
+
 P2: Different methods to create different configurations. For instance, to create a physicalSource configuration (a WrapOption type), we use PhysicalSourceFactoryPlugin and PhysicalSourceTypeFactory. To create locationCoordinates (also a WrapOption), we only use GeoLocationFactory.
+
 P3: Different places to define new configuration names. Specifically, most config names are defined in ConfigurationNames.hpp. However, some names are defined in WorkerConfigurationKeys.hpp and WorkerPropertyKeys.hpp.
+
 P4: Most of the configurations are not tested.
+
 P5: Unstructured module. The module's structure includes subdirectories: worker, coordinator, enums and validation on the same level. Logically, these subdirectories should not be on the same granularity as they are semantically different. What is worse is that enums are not the only complex type of configuration. We have WrapOption configurations, where each type requires a factory, but they are split between worker and coordinator subdirectories.
 
 # Goals
 
 G1: Remove irrelevant configurations.
-G2: Create documentation on a common way of how to create complex configurations.
+
+G2: Create documentation on a common way to create a configuration option of a non-primitive type.
+
 G3: Move all configuration names to ConfigurationNames.hpp.
-G4: Make sure all the configuration options that are left, are tested.
+
+G4: Make sure all the configuration options that are left are tested.
+
 G5: Create a new module structure. 
 
 # Non-Goals
 
 NG1: Runtime configurations.
-NG2: Configurations for the distributed setup or query optimization.
+NG2: Configurations for the distributed setup or related to the coordinator.
 
 # Our Proposed Solution
 
@@ -29,10 +37,10 @@ As part of the first Milestone targeting a stable worker, I propose removing eve
 WorkerConfiguration.hpp
 - workerId (+)
 - localWorkerHost (+)
-- coordinatorHost (+)          
+- coordinatorHost (-) // No coordinator        
 - rpcPort (+)
-- dataPort (+)
-- coordinatorPort (+)
+- dataPort (-) // No ZMQ Server
+- coordinatorPort (-) // No coordinator
 - numberOfSlots (-) // Related to the heuristics-based placement strategy in the query optimizer
 - bandwidth (-) // Related to the distributed setup
 - latency (-) // Related to the distributed setup
@@ -55,7 +63,7 @@ WorkerConfiguration.hpp
 - mobilityConfiguration (-) // Partially supported
 - numberOfQueues (-) // Part of the optimization
 - queuePinList (-) // Related to the numberOfQueues
-- numberOfThreadsPerQueue (+)
+- numberOfThreadsPerQueue (-) // Related to the numberOfQueues
 - numberOfBuffersPerEpoch (-) // Not supported feature
 - queryManagerMode (-) // Does not make sense if we do not support numberOfQueues
 - enableSourceSharing (+)
@@ -82,14 +90,14 @@ Enum:
 - EnumOptionDetails (-) // Can be just added to EnumOption.hpp
 - MemoryLayoutPolicy (-) // Part of the query optimizer
 - NautilusBackend (+)
-- OutputBufferOptimizationLevel (+) // Part of the query compiler config
-- PipeliningStrategy (+)
+- OutputBufferOptimizationLevel (-) // Part of a partially implemented feature
+- PipeliningStrategy (-) // Part of a partially implemented feature
 - PlacementAmendmentMode (-) // Part of the query optimizer
-- QueryCompilerType (+)
+- QueryCompilerType (-) // Only Nautilus for now
 - QueryExecutionMode (-) // Part of the optimization
 - QueryMergerRule (-) // Part of the optimization
 - StorageHandlerType (-) // Coordinator config
-- WindowingStrategy (+)
+- WindowingStrategy (-) // Only slicing for now
 
 Validation: All (+)
 
@@ -154,14 +162,14 @@ We remove WorkerConfigurationKeys.hpp because it includes TENSOR_FLOW, JAVA_UDF,
 
 ## Make sure all the configuration options that are left are tested.
 
-- We update the current test suit for configurations, removing all configurations that are not relevant to the milestone.
-- The configurations that are left should be included in all four types of the current test suit:
+- We update the current test suite to include all system configurations.
+- The configurations should be included in all four types of the current test suite:
 	- Valid configuration option from the YAML file
 	- Valid configuration option from the command line
 	- Invalid configuration option from the YAML file
 	- Invalid configuration option from the command line 
 - Valid configuration tests check for every option a valid value and an empty value (a default value should be assigned).
-- Invalid configuration tests check for every option a value of a wrong type, a semantically incorrect value (out of range), incorrect value that is specific for the type (in case applicable) (e.g. impossible number of buffers per global buffer pool).
+- Invalid configuration tests check for every option a value of a wrong type, a semantically incorrect value (out of range), or an incorrect value that is specific for the type (in case applicable) (e.g., impossible number of buffers per global buffer pool).
 
 ## Create a new module structure. 
 
