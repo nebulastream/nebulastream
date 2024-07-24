@@ -64,6 +64,16 @@ option(NES_USE_OPENCL "Build with OpenCL support" OFF)
 #toggle GPU runtime and test
 option(NES_USE_GPU "Build with GPU acceleration" OFF)
 
+# Sanitizers
+option(NES_ENABLE_THREAD_SANITIZER "Enables Thread Sanitizer" OFF)
+option(NES_ENABLE_UB_SANITIZER "Enables Undefined Behavior Sanitizer" OFF)
+option(NES_ENABLE_ADDRESS_SANITIZER "Enables Address Sanitizer" OFF)
+
+# Plugins
+option(NES_BUILD_PLUGIN_ARROW "Build Apache Arrow Plugin" OFF)
+option(NES_BUILD_PLUGIN_TENSORFLOW "Build Tensorflow Plugin support" OFF)
+option(NES_BUILD_PLUGIN_ONNX "Build ONNX Plugin support" OFF)
+option(NES_BUILD_PLUGIN_CUDA "Build CUDA Plugin" OFF)
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
@@ -355,23 +365,6 @@ else ()
 endif ()
 set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
-
-# LibZMQ
-message(STATUS "Libzmq")
-find_package(ZeroMQ CONFIG REQUIRED)
-if (NOT ${ZeroMQ_FOUND})
-    message(FATAL_ERROR "Unable to find libzmq")
-endif ()
-set(LIBRARIES_ZMQ ${LIBRARIES_ZMQ} libzmq libzmq-static)
-
-# CppZMQ
-message(STATUS "cppzmq")
-find_package(cppzmq CONFIG REQUIRED)
-if (NOT ${CPPZMQ_FOUND})
-    message(FATAL_ERROR "Unable to find cppzmq")
-endif ()
-set(LIBRARIES ${LIBRARIES} cppzmq cppzmq-static)
-
 if (NES_USE_MQTT)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
@@ -385,14 +378,6 @@ set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
-
-# CPR
-find_package(cpr REQUIRED)
-if (cpr_FOUND)
-    find_package(CURL REQUIRED)
-    message(STATUS "Found CURL : ${CURL_LIBRARIES}")
-    message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
-endif ()
 
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
