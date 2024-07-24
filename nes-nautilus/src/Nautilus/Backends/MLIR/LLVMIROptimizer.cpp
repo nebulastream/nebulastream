@@ -40,7 +40,7 @@ LLVMIROptimizer::getLLVMOptimizerPipeline(const CompilationOptions& options, con
         NES_ASSERT2_FMT(tmBuilderOrError, "Failed to create a JITTargetMachineBuilder for the host");
         auto targetMachine = tmBuilderOrError->createTargetMachine();
         llvm::TargetMachine* targetMachinePtr = targetMachine->get();
-        targetMachinePtr->setOptLevel(llvm::CodeGenOpt::Level::Aggressive);
+        targetMachinePtr->setOptLevel(llvm::CodeGenOptLevel::Aggressive);
 
         // Add target-specific attributes to the 'execute' function.
         llvmIRModule->getFunction("execute")->addAttributeAtIndex(
