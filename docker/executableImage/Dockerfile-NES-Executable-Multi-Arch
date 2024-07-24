@@ -21,7 +21,7 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  
     openjdk-17-jre \
     net-tools --no-install-recommends -y -qq && DEBIAN_FRONTEND="noninteractive" apt install -y -qq  ./nes.deb &&  rm nes.deb
 
-COPY ./docker/executableImage/entrypoint-nes-executable.sh /entrypoint.sh
+COPY ./entrypoint-nes-executable.sh /entrypoint.sh
 
 ENV coordinatorCLIConf="--coordinatorHost=127.0.0.1 --rpcPort=12346 --restIp=0.0.0.0 --restPort=8081 --logLevel=LOG_INFO"
 ENV workerCLIConf="--coordinatorPort=12346 --logLevel=LOG_INFO"

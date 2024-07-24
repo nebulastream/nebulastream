@@ -4,9 +4,8 @@ This readme file explains about how you can build and publish the artifacts on o
 (Note: Please make sure you have rights to publish images on [nebulastream](https://hub.docker.com/u/nebulastream) organization. Please ask one of the core developers to grant you access if you do not have one.)
 
 ## Images and Dockerfiles
-We have three docker files, one for each docker image, describing how 
-to build the docker images. In case you want to add or modify any dependencies in the docker image please 
-edit the corresponding docker file.
+We have three docker files, one for each docker image, describing how to build the docker images. I
+n case you want to add or modify any dependencies in the docker image please edit the corresponding docker file.
 
 #### Dockerfile-NES-Build
 This is the docker image for our CI builds. There is no way to connect to a running container of this image, 
@@ -18,20 +17,22 @@ container and starts a `make_debug` test build.
 
 #### Dockerfile-NES-Dev
 This image is based on NES-Build-image. Additionally, we add connectivity and any interactivity tools to this image.
-It has everything installed that we need for development, including `ssh` connectivity. Its purpose is to start
-in the background while our IDEs connect to it for remote debugging purposes. It can be found in [Dev](devImage/Dockerfile-NES-Dev).
+It has everything installed that we need for development, including `ssh` connectivity. 
+Its purpose is to start in the background while our IDEs connect to it for remote debugging purposes. 
+It can be found in [Dev](devImage/Dockerfile-NES-Dev).
 
 Currently, there is no need for an `ENTRYPOINT` for this image. 
-It stars `sshd` and can be kept in the background. For more info, check
-Docker's official docs [here](https://docs.docker.com/engine/examples/running_ssh_service/).
+It starts `sshd` and can be kept in the background. For more info, check Docker's official docs [here](https://docs.docker.com/engine/examples/running_ssh_service/).
 
 #### Dockerfile-NES-Executable
-This is our executable image. It extends the Build image. There is no way to connect to a running container of this 
-image, aside from `docker attach`. Its purpose is to offer a host operating system for an executable of NES.
+This is our executable image that extends the Build image.
+There is no way to connect to a running container of this image, aside from `docker attach`. 
+Its purpose is to offer a host operating system for an executable of NES.
 
 For this image, we install NebulaStream using a `deb` package inside the [resources](executableImage\resources) folder.
 If you want to update the NebulaStream binary, please create a new `deb` package by compiling the code inside the docker image and running `cpack` command.
-Afterwards, replace the `deb` package inside the resources folder. The image can be found in [Executable](executableImage\Dockerfile-NES-Executable).
+Afterward, replace the `deb` package inside the resources' folder. 
+The image can be found in [Executable](executableImage\Dockerfile-NES-Executable).
 
 Currently, the image is tasked with only running a `.deb` version of NebulaStream. This may change
 in the future. Its `ENTRYPOINT` is located in [entrypoint-nes-executable.sh](executableImage\entrypoint-nes-executable.sh).
@@ -41,23 +42,11 @@ If you want to change the startup behavior of the docker images, please change t
 
 ## Build images
 
-Please execute following command for building the build image locally:
-
-`docker build . -f Dockerfile-NES-XXX -t nebulastream/nes-XXX-image:YYY`
-
-Where `XXX` represents one image type out of:
-- `devel`
-- `build`
-- `executable`
-
-and `YYY` as one `tag` out of:
-- `latest`
-- `testing`
-
-The image types have been explained.
-For `tag`, we use `latest` for latest stable and `testing` for 
-development purposes. If no `tag` is specified at build time,
-then `latest` is the default.
+We provide scripts for building the images that are located under the [`scripts`](./docker/scripts) folder.
+Currently, there exists the following scripts:
+- `build_docker_image_non_executable_image`: Builds a non-executable image, e.g., `dev` or `build`.
+- `build_docker_image_executable_image`: Builds an executable image.
+Each script has a small documentation on how to use it.
 
 
 ## Publish images
@@ -70,10 +59,10 @@ This section describes, how to publish the image to docker repository. Fist, ple
 
 Afterwards, one can execute
 
-`docker push nebulastream/nes-XXX-image:YYY`
+`docker push nebulastream/nes-public-XXX-image:YYY`
 
 Where `XXX` represents one image type out of:
-- `devel`
+- `dev`
 - `build`
 - `executable`
 
@@ -82,6 +71,4 @@ and `YYY` as one `tag` out of:
 - `testing`
 
 The image types have been explained.
-For `tag`, we use `latest` for latest stable and `testing` for 
-development purposes. If no `tag` is specified at build time,
-then `latest` is the default.
+For `tag`, we use `latest` for latest stable and `nightly` for our current master purposes.

@@ -632,11 +632,6 @@ add_subdirectory(nes-single-node-worker)
 # Documentation
 add_subdirectory(cmake/docs)
 
-# if the include what you use path is set configure it for the nes target.
-if (iwyu_path)
-    set_property(TARGET nes-worker PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
-    set_property(TARGET nes-coordinator PROPERTY CXX_INCLUDE_WHAT_YOU_USE ${iwyu_path})
-endif ()
 
 
 # Custom test commands --------------------------------------------------------
