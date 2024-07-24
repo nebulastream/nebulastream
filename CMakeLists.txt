@@ -16,7 +16,7 @@ include(CMakeDependentOption)
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v31)
 set(LLVM_BINARY_VERSION v16_9)
-set(LLVM_VERSION 16)
+set(LLVM_VERSION 18.1.6)
 # Set the not allowed comment style as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex must match all comments that are not allowed in the codebase per line.
 set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
