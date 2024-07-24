@@ -19,7 +19,6 @@
 #include <Nautilus/Backends/MLIR/ProxyFunctions.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
-#include <Nautilus/IR/Operations/AddressOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
@@ -86,7 +85,7 @@ public:
     /**
      * @return std::vector<llvm::JITTargetAddress>: All proxy function addresses used in the module.
      */
-    std::vector<llvm::JITTargetAddress> getJitProxyTargetAddresses();
+    std::vector<void*> getJitProxyTargetAddresses();
 
 private:
     /// MLIR variables
@@ -95,7 +94,7 @@ private:
     std::unique_ptr<mlir::OpBuilder> builder;
     NES::ProxyFunctions ProxyFunctions;
     std::vector<std::string> jitProxyFunctionSymbols;
-    std::vector<llvm::JITTargetAddress> jitProxyFunctionTargetAddresses;
+    std::vector<void*> jitProxyFunctionTargetAddresses;
     std::unordered_set<std::string> inductionVars;
     /// Utility
     mlir::RewriterBase::InsertPoint* globalInsertPoint;
@@ -129,7 +128,6 @@ private:
     void generateMLIR(std::shared_ptr<IR::Operations::ModOperation> modIntOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::StoreOperation> storeOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::LoadOperation> loadOp, ValueFrame& frame);
-    void generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::IfOperation> ifOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::CompareOperation> compareOp, ValueFrame& frame);
     void generateMLIR(std::shared_ptr<IR::Operations::BranchOperation> branchOp, ValueFrame& frame);
