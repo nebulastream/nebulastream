@@ -41,7 +41,7 @@ public:
         mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
         const llvm::function_ref<llvm::Error(llvm::Module*)> optPipeline,
         const std::vector<std::string>& jitProxyFunctionSymbols,
-        const std::vector<llvm::JITTargetAddress>& jitProxyFunctionTargetAddresses,
+        const std::vector<void*>& jitProxyFunctionTargetAddresses,
         const CompilationOptions& options,
         const DumpHelper& dumpHelper);
 };
