@@ -15,8 +15,6 @@
 #include <iostream>
 #include <memory>
 #include <variant>
-#include <Network/NetworkSink.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -40,12 +38,9 @@ void AbstractQueryManager::notifyQueryStatusChange(
     {
         for (const auto& source : qep->getSources())
         {
-            if (!std::dynamic_pointer_cast<Network::NetworkSource>(source))
-            {
-                NES_ASSERT2_FMT(
-                    source->stop(Runtime::QueryTerminationType::Graceful),
-                    "Cannot cleanup source " << source->getOperatorId()); // just a clean-up op
-            }
+            NES_ASSERT2_FMT(
+                source->stop(Runtime::QueryTerminationType::Graceful),
+                "Cannot cleanup source " << source->getOperatorId()); // just a clean-up op
         }
         addReconfigurationMessage(
             qep->getSharedQueryId(),

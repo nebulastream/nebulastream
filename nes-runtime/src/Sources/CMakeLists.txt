@@ -14,7 +14,6 @@ add_source_files(nes-runtime
         DataSource.cpp
         GeneratorSource.cpp
         BinarySource.cpp
-        ZmqSource.cpp
         CSVSource.cpp
         SourceCreator.cpp
         DefaultSource.cpp

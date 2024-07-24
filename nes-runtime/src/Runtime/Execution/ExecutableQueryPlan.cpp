@@ -15,7 +15,6 @@
 #include <chrono>
 #include <iomanip>
 #include <sstream>
-#include <Network/NetworkSink.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/NodeEngine.hpp>

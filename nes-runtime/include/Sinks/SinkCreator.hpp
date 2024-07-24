@@ -102,25 +102,6 @@ DataSinkPtr createJSONFileSink(
     bool append,
     uint64_t numberOfOrigins = 1);
 
-/**
- * @brief create a ZMQ test sink with a schema and Csv format output
- * @param schema of sink
- * @param bufferManager
- * @param hostname as sting
- * @param port at uint16
- * @param internal refers to the usage of this zmq sink as a fwd operator such that we dont have to send the schema, only the data
- * @param numberOfOrigins: number of origins of a given query
- * @return a data sink pointer
- */
-DataSinkPtr createCsvZmqSink(
-    const SchemaPtr& schema,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    uint32_t numOfProducers,
-    const std::string& host,
-    uint16_t port,
-    uint64_t numberOfOrigins = 1);
 #ifdef ENABLE_OPC_BUILD
 /**
  * @brief create a OPC test sink with a schema
@@ -143,44 +124,6 @@ DataSinkPtr createOPCSink(
     std::string user,
     std::string password);
 #endif
-/**
- * @brief create a ZMQ test sink with a schema and CSV format output
- * @param schema of sink
- * @param bufferManager
- * @param hostname as sting
- * @param port at uint16
- * @param numberOfOrigins: number of origins of a given query
- * @return a data sink pointer
- */
-DataSinkPtr createCSVZmqSink(
-    const SchemaPtr& schema,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    uint32_t numOfProducers,
-    const std::string& host,
-    uint16_t port,
-    uint64_t numberOfOrigins = 1);
-
-/**
- * @brief create a ZMQ test sink with a schema and NES_FORMAT format output
- * @param schema of sink
- * @param bufferManager
- * @param hostname as sting
- * @param port at uint16
- * @param numberOfOrigins: number of origins of a given query
- * @return a data sink pointer
- */
-DataSinkPtr createBinaryZmqSink(
-    const SchemaPtr& schema,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    uint32_t activeProducers,
-    const std::string& host,
-    uint16_t port,
-    bool internal,
-    uint64_t numberOfOrigins = 1);
 
 /**
  * @brief create a print test sink with a schema
@@ -227,31 +170,6 @@ DataSinkPtr createCSVPrintSink(
     uint32_t activeProducers,
     std::ostream& out,
     uint64_t numberOfOrigins = 1);
-
-/**
- * @brief create a network data sink
- * @param schema
- * @param networkManager
- * @param nodeLocation
- * @param nesPartition
- * @param waitTime
- * @param retryTimes
- * @param version the initial version number of the network sink
- * @return a data sink pointer
- */
-DataSinkPtr createNetworkSink(
-    const SchemaPtr& schema,
-    OperatorId uniqueNetworkSinkDescriptorId,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    const Network::NodeLocation& nodeLocation,
-    Network::NesPartition nesPartition,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    size_t numOfProducers,
-    std::chrono::milliseconds waitTime,
-    DecomposedQueryPlanVersion version,
-    uint64_t numberOfOrigins = 1,
-    uint8_t retryTimes = 5);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

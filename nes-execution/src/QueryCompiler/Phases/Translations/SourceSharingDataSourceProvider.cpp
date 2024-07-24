@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <utility>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
@@ -38,17 +37,6 @@ DataSourcePtr SourceSharingDataSourceProvider::lower(
     Runtime::NodeEnginePtr nodeEngine,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
 {
-    if (sourceDescriptor->instanceOf<Network::NetworkSourceDescriptor>())
-    {
-        return ConvertLogicalToPhysicalSource::createDataSource(
-            operatorId,
-            originId,
-            statisticId,
-            std::move(sourceDescriptor),
-            std::move(nodeEngine),
-            compilerOptions->getNumSourceLocalBuffers(),
-            std::move(successors));
-    }
     NES_ASSERT(sourceDescriptor->getLogicalSourceName() != "", "The source name is not allowed to be null");
 
     auto searchEntry = std::make_pair(sourceDescriptor->getLogicalSourceName(), sourceDescriptor->getPhysicalSourceName());

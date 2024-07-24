@@ -12,8 +12,6 @@
 
 add_subdirectory(Exceptions)
 add_subdirectory(Runtime)
-add_subdirectory(Network)
-add_subdirectory(Monitoring)
 add_subdirectory(Sinks)
 add_subdirectory(Sources)
 add_subdirectory(Util)

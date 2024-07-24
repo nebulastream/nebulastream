@@ -18,7 +18,6 @@
 #include <thread>
 #include <utility>
 #include <Exceptions/TaskExecutionException.hpp>
-#include <Network/NetworkChannel.hpp>
 #include <Runtime/NesThread.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>

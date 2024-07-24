@@ -21,7 +21,6 @@
 #include <memory>
 #include <stack>
 #include <utility>
-#include <Network/NetworkSink.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>

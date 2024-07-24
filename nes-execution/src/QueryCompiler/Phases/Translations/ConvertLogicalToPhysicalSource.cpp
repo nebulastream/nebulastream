@@ -12,9 +12,6 @@
     limitations under the License.
 */
 
-#include <Monitoring/Util/MetricUtils.hpp>
-#include <Network/NetworkManager.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/BinarySourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -25,7 +22,6 @@
 #include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/ZmqSourceDescriptor.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -70,23 +66,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
     auto bufferManager = nodeEngine->getBufferManager();
     auto queryManager = nodeEngine->getQueryManager();
 
-    if (sourceDescriptor->instanceOf<ZmqSourceDescriptor>())
-    {
-        NES_INFO("ConvertLogicalToPhysicalSource: Creating ZMQ source");
-        const ZmqSourceDescriptorPtr zmqSourceDescriptor = sourceDescriptor->as<ZmqSourceDescriptor>();
-        return createZmqSource(
-            zmqSourceDescriptor->getSchema(),
-            bufferManager,
-            queryManager,
-            zmqSourceDescriptor->getHost(),
-            zmqSourceDescriptor->getPort(),
-            operatorId,
-            originId,
-            statisticId,
-            numSourceLocalBuffers,
-            sourceDescriptor->getPhysicalSourceName(),
-            successors);
-    }
     if (sourceDescriptor->instanceOf<DefaultSourceDescriptor>())
     {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating Default source");

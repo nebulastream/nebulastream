@@ -12,7 +12,6 @@
 
 add_source_files(nes-runtime
         FileSink.cpp
-        ZmqSink.cpp
         SinkMedium.cpp
         PrintSink.cpp
         NullOutputSink.cpp
