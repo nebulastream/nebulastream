@@ -19,6 +19,15 @@ TAG="${2:-$TAG_DEFAULT}"
 DOCKERFILE_PATH="${3:-$DOCKERFILE_PATH_DEFAULT}"
 DOCKER_FILE_NAME="${4:-$DOCKER_FILE_NAME_DEFAULT}"
 
+# Getting for all paths the absolute path
+DOCKERFILE_PATH=$(realpath $DOCKERFILE_PATH)
+
+# Printing out all the arguments
+echo "IMAGE_NAME: $IMAGE_NAME"
+echo "TAG: $TAG"
+echo "DOCKERFILE_PATH: $DOCKERFILE_PATH"
+echo "DOCKER_FILE_NAME: $DOCKER_FILE_NAME"
+
 # Check if Dockerfile exists
 if [ ! -f "$DOCKERFILE_PATH/$DOCKER_FILE_NAME" ]; then
     echo "Dockerfile not found at $DOCKERFILE_PATH"
@@ -30,22 +39,14 @@ if [ "$DOCKERFILE_PATH" == *"docker/executableImage"* ]; then
     exit 1
 fi
 
-# Ask the user if they want to proceed with building the Docker image
-echo "Do you want to build the Docker image with the name $IMAGE_NAME and tag $TAG from the file $DOCKERFILE_PATH/$DOCKER_FILE_NAME? (y/n)"
-read -r user_confirmation
 
-if [[ $user_confirmation == "y" || $user_confirmation == "Y" ]]; then
-    # Build the Docker image, but first cd to the directory where the Dockerfile is located and store the current directory
-    cur_dir=$(pwd)
-    cd $DOCKERFILE_PATH
+# Build the Docker image, but first cd to the directory where the Dockerfile is located and store the current directory
+echo "Building the Docker image with the name $IMAGE_NAME and tag $TAG from the file $DOCKERFILE_PATH/$DOCKER_FILE_NAME..."
+pushd $DOCKERFILE_PATH
 
-    # Build the Docker image
-    docker build -t $IMAGE_NAME:$TAG -f $DOCKER_FILE_NAME .
-    echo "Docker image $IMAGE_NAME:$TAG built successfully."
+# Build the Docker image
+docker build -t $IMAGE_NAME:$TAG -f $DOCKER_FILE_NAME .
+echo "Docker image $IMAGE_NAME:$TAG built successfully."
 
-    # Return to the original directory
-    cd $cur_dir
-else
-    echo "Docker image build cancelled."
-    exit 0
-fi
+# Go back to the original directory
+popd
