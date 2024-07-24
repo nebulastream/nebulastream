@@ -23,11 +23,6 @@ fi
 # We expect the number of threads to be passed as an argument
 num_threads=$1
 
-# Printing the build_dir, ccache_dir, nebulastream and the number of threads
-echo "Build Directory: $(cd /build_dir && pwd)"
-echo "CCache Directory: $(cd /ccache_dir && pwd)"
-echo "NebulaStream Path: $(cd /nebulastream && pwd)"
-echo "Number of Threads: $num_threads"
 
 # Build NES
 python3 /nebulastream/scripts/build/check_license.py /nebulastream /nebulastream/.no-license-check || exit 1

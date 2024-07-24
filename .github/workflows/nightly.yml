@@ -10,12 +10,6 @@ on:
   schedule:
     - cron: '30 2 * * *' # gets executed every night at 2:30 AM UTC
 
-  # We only use this trigger for testing the workflow. We SHOULD and will remove this before we merge and let the PR be reviewed.
-  # Dear reviewer: If you can read this, then I forgot to remove this trigger. Please remind me to remove it.
-  push:
-    branches:
-      - 91-clean-up-docker-images
-
 jobs:
   # We call the pr.yml workflow to run the same tests as for a PR.
   pr-tests:

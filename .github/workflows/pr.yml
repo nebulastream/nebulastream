@@ -24,11 +24,6 @@ on:
   # We are using this yaml in the nightly workflow, so we need to allow this workflow to be triggered by a workflow call.
   workflow_call:
 
-  # We only use this trigger for testing the workflow. We SHOULD and will remove this before we merge and let the PR be reviewed.
-  # Dear reviewer: If you can read this, then I forgot to remove this trigger. Please remind me to remove it.
-  push:
-    branches:
-      - 91-clean-up-docker-images
 
 jobs:
   validateTrigger:
