@@ -34,7 +34,7 @@ std::unique_ptr<mlir::Pass> getMLIRLoweringPass(MLIRPassManager::LoweringPass lo
     switch (loweringPass)
     {
         case MLIRPassManager::LoweringPass::LLVM:
-            return mlir::cf::createConvertControlFlowToLLVMPass();
+            return mlir::createConvertControlFlowToLLVMPass();
         case MLIRPassManager::LoweringPass::SCF:
             return mlir::createConvertSCFToCFPass();
     }
@@ -59,7 +59,6 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(
     mlir::OwningOpRef<mlir::ModuleOp>& module, std::vector<LoweringPass> loweringPasses, std::vector<OptimizationPass> optimizationPasses)
 {
     mlir::PassManager passManager(module->getContext());
-    applyPassManagerCLOptions(passManager);
 
     /// Apply optimization passes.
     if (!optimizationPasses.empty())
@@ -85,7 +84,7 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(
     {
         passManager.addPass(mlir::createConvertSCFToCFPass());
         passManager.addPass(mlir::createConvertFuncToLLVMPass());
-        passManager.addPass(mlir::cf::createConvertControlFlowToLLVMPass());
+        passManager.addPass(mlir::createConvertControlFlowToLLVMPass());
     }
 
     /// Run passes.
