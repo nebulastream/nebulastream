@@ -577,7 +577,7 @@ endif ()
 # Add tests with command
 include(cmake/NebulaStreamTest.cmake)
 if (NES_ENABLES_TESTS)
-    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+    set(GTEST_LIBRARIES ${GTEST_LIBRARIES})
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
