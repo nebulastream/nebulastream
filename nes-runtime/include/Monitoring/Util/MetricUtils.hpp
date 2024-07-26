@@ -98,4 +98,4 @@ public:
 } // namespace Monitoring
 } // namespace NES
 
-#endif // NES_RUNTIME_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_
+#endif /// NES_RUNTIME_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_

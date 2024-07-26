@@ -65,4 +65,4 @@ public:
     FormatTypes getSinkFormat() override;
 };
 } // namespace NES
-#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_
+#endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_

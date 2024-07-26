@@ -100,4 +100,4 @@ public:
     QueryCompilation::WindowingStrategy windowingStrategy;
 };
 } // namespace NES::Runtime::Execution::Operators
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_
+#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_

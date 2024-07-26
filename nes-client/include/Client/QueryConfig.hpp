@@ -46,4 +46,4 @@ private:
 };
 } // namespace NES::Client
 
-#endif // NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
+#endif /// NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_

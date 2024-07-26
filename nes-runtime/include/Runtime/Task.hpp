@@ -99,4 +99,4 @@ private:
 static_assert(sizeof(Task) == 64);
 } // namespace NES::Runtime
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_
+#endif /// NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_

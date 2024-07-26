@@ -59,4 +59,4 @@ private:
     const Configurations::WorkerConfiguration& workerConfiguration;
 };
 } // namespace NES::Runtime
-#endif // NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+#endif /// NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

@@ -46,4 +46,4 @@ public:
     getLLVMOptimizerPipeline(const CompilationOptions& options, const DumpHelper& dumpHelper);
 };
 } // namespace NES::Nautilus::Backends::MLIR
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_
+#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_

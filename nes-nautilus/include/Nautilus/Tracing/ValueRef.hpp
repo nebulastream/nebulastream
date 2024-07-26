@@ -87,4 +87,4 @@ struct ValueRefHasher
 
 } // namespace NES::Nautilus::Tracing
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_VALUEREF_HPP_
+#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_VALUEREF_HPP_

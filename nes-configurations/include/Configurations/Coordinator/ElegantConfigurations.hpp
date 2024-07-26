@@ -63,4 +63,4 @@ private:
     std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs, &plannerServiceURL, &transferRate}; }
 };
 } // namespace NES::Configurations
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_
+#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_ELEGANTCONFIGURATIONS_HPP_

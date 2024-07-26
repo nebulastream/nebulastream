@@ -148,4 +148,4 @@ using OPCSinkPtr = std::shared_ptr<OPCSink>;
 } // namespace NES
 
 #endif
-#endif // NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_OPCSINK_HPP_
+#endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_OPCSINK_HPP_

@@ -95,4 +95,4 @@ public:
 
 } // namespace NES::Windowing
 
-#endif // NES_WINDOW_TYPES_INCLUDE_TYPES_WINDOWTYPE_HPP_
+#endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_WINDOWTYPE_HPP_

@@ -262,4 +262,4 @@ using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
 } // namespace NES::Runtime
 
-#endif // NES_RUNTIME_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
+#endif /// NES_RUNTIME_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_
