@@ -103,6 +103,18 @@ macro(project_enable_clang_tidy)
     endif ()
 endmacro(project_enable_clang_tidy)
 
+macro(project_enable_check_comment_format)
+    get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
+    if (NOT NES_SELF_HOSTING)
+        message(WARNING "Not using self-hosting compiler, thus 'check-comment-format' is disabled")
+    elseif (NOT_ALLOWED_COMMENT_STYLE_REGEX)
+        message(STATUS "comment formatting check enabled through 'check-comment-format' target.")
+        add_custom_target(check-comment-format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_check_correct_comment_style.py --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} --not_allowed_comment_style \"${NOT_ALLOWED_COMMENT_STYLE_REGEX}\" USES_TERMINAL)
+    else ()
+        message(FATAL_ERROR "check-comment-format is not enabled as ${NOT_ALLOWED_COMMENT_STYLE_REGEX} is not set.")
+    endif ()
+endmacro(project_enable_check_comment_format)
+
 macro(project_enable_emulated_tests)
     find_program(QEMU_EMULATOR qemu-aarch64)
     string(CONCAT SYSROOT_DIR
