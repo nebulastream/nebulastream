@@ -20,6 +20,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Undefined.hpp>
 
 namespace NES
 {
@@ -94,7 +95,7 @@ void NodeFunctionFieldAssignment::inferStamp(SchemaPtr schema)
         }
     }
 
-    if (field->getStamp()->isUndefined())
+    if (NES::Util::instanceOf<Undefined>(field->getStamp()))
     {
         /// if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());

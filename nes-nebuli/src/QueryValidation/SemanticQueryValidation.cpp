@@ -22,10 +22,15 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <SourceCatalogs/SourceCatalog.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Numeric.hpp>
+#include <Common/DataTypes/TextType.hpp>
+#include <Common/DataTypes/Undefined.hpp>
 
 using namespace std::string_literals;
 
@@ -174,7 +179,8 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
             for (const auto& inputField : inferModelOperator->getInputFields())
             {
                 auto field = NES::Util::as<NodeFunctionFieldAccess>(inputField);
-                if (!field->getStamp()->isNumeric() && !field->getStamp()->isBoolean() && !field->getStamp()->isText())
+                if (!NES::Util::instanceOf<Numeric>(field->getStamp()) && !NES::Util::instanceOf<Boolean>(field->getStamp())
+                    && !NES::Util::instanceOf<TextType>(field->getStamp()))
                 {
                     throw QueryInvalid(
                         "SemanticQueryValidation::advanceSemanticQueryValidation: Inputted data type for infer model not supported: "
@@ -191,7 +197,7 @@ void SemanticQueryValidation::inferModelValidityCheck(const QueryPlanPtr& queryP
             }
         }
         NES_DEBUG("SemanticQueryValidation::advanceSemanticQueryValidation: Common stamp is: {}", commonStamp->toString());
-        if (commonStamp->isUndefined())
+        if (NES::Util::instanceOf<Undefined>(commonStamp))
         {
             throw QueryInvalid("SemanticQueryValidation::advanceSemanticQueryValidation: Boolean and Numeric data types cannot be mixed as "
                                "input to infer model.");

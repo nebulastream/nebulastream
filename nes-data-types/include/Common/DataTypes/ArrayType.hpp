@@ -37,16 +37,6 @@ public:
     ~ArrayType() override = default;
 
     /**
-     * @brief Checks if this data type is an ArrayType.
-     */
-    [[nodiscard]] bool isArray() const final { return true; }
-
-    /**
-     * @brief Checks if this data type is an ArrayType.
-     */
-    [[nodiscard]] bool isCharArray() const final { return component->isChar(); }
-
-    /**
      * @brief Checks if two data types are equal.
      * @param otherDataType
      * @return

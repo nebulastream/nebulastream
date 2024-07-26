@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
 #include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -20,12 +21,12 @@ namespace NES
 
 bool Boolean::equals(DataTypePtr otherDataType)
 {
-    return otherDataType->isBoolean();
+    return NES::Util::instanceOf<Boolean>(otherDataType);
 }
 
 DataTypePtr Boolean::join(DataTypePtr otherDataType)
 {
-    if (otherDataType->isBoolean())
+    if (NES::Util::instanceOf<Boolean>(otherDataType))
     {
         return DataTypeFactory::createBoolean();
     }

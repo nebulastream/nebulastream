@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -31,27 +33,27 @@ DefaultPhysicalTypeFactory::DefaultPhysicalTypeFactory() = default;
 
 PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(DataTypePtr dataType) const
 {
-    if (dataType->isBoolean())
+    if (NES::Util::instanceOf<Boolean>(dataType))
     {
         return BasicPhysicalType::create(dataType, BasicPhysicalType::NativeType::BOOLEAN);
     }
-    else if (dataType->isInteger())
+    else if (NES::Util::instanceOf<Integer>(dataType))
     {
         return getPhysicalType(DataType::as<Integer>(dataType));
     }
-    else if (dataType->isFloat())
+    else if (NES::Util::instanceOf<Float>(dataType))
     {
         return getPhysicalType(DataType::as<Float>(dataType));
     }
-    else if (dataType->isArray())
+    else if (NES::Util::instanceOf<ArrayType>(dataType))
     {
         return getPhysicalType(DataType::as<ArrayType>(dataType));
     }
-    else if (dataType->isChar())
+    else if (NES::Util::instanceOf<Char>(dataType))
     {
         return BasicPhysicalType::create(DataType::as<Char>(dataType), BasicPhysicalType::NativeType::CHAR);
     }
-    else if (dataType->isText())
+    else if (NES::Util::instanceOf<TextType>(dataType))
     {
         return TextPhysicalType::create(DataType::as<TextType>(dataType));
     }

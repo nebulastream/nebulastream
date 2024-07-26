@@ -17,6 +17,7 @@
 #include <utility>
 #include <Functions/NodeFunction.hpp>
 #include <Util/Common.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES
@@ -27,7 +28,7 @@ NodeFunction::NodeFunction(DataTypePtr stamp, std::string type) : stamp(std::mov
 
 bool NodeFunction::isPredicate() const
 {
-    return stamp->isBoolean();
+    return NES::Util::instanceOf<Boolean>(stamp);
 }
 
 DataTypePtr NodeFunction::getStamp() const

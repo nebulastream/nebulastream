@@ -57,9 +57,6 @@ public:
     */
     [[nodiscard]] bool isArrayType() const noexcept override { return true; }
 
-    /// @brief Return if this array directly contains chars.
-    [[nodiscard]] bool isCharArrayType() const noexcept override;
-
     /**
      * @brief Returns the number of bytes occupied by this data type.
      * @return uint64_t

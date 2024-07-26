@@ -18,6 +18,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES::Windowing
@@ -52,7 +53,7 @@ void MedianAggregationDescriptor::inferStamp(SchemaPtr schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!onField->getStamp()->isNumeric())
+    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
     {
         NES_FATAL_ERROR("MedianAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }
