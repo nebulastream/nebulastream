@@ -44,10 +44,10 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
                             WorkerContext& workerContext) override;
 
   private:
-    nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> compilePipeline();
+    auto compilePipeline();
     std::string compilationBackend;
     const nautilus::engine::Options options;
-    nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> pipelineFunction;
+    nautilus::engine::CallableFunction<nautilus::val<uint32_t>, nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>> pipelineFunction;
     std::shared_ptr<nautilus::engine::NautilusEngine> engine;
 };
 

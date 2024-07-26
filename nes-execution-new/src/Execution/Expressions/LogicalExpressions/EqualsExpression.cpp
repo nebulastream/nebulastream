@@ -23,7 +23,7 @@ EqualsExpression::EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPt
 ExecDataType EqualsExpression::execute(Record& record) const {
     ExecDataType leftValue = leftSubExpression->execute(record);
     ExecDataType rightValue = rightSubExpression->execute(record);
-    return *leftValue == *rightValue;
+    return *leftValue == rightValue;
 }
 
 }// namespace NES::Runtime::Execution::Expressions

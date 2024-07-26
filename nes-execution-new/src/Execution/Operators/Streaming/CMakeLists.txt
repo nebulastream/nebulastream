@@ -10,9 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregations)
+# We disable the below operators, as they are not ported to the new nautilus API yet.
+#add_subdirectory(Aggregations)
 add_subdirectory(Join)
-add_subdirectory(StatisticCollection)
+#add_subdirectory(StatisticCollection)
 
 add_source_files(nes-execution
         MultiOriginWatermarkProcessor.cpp

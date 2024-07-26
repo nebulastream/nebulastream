@@ -28,7 +28,7 @@ class EventTimeWatermarkAssignment : public ExecutableOperator {
      * @brief Creates a EventTimeWatermarkAssignment operator with a watermarkExtractionExpression expression.
      * @param TimeFunctionPtr the time function
      */
-    EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction);
+    explicit EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction);
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;
     void close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

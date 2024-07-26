@@ -42,37 +42,38 @@ class AbstractDataType {
     [[nodiscard]] const nautilus::val<bool>& isNull() const { return null; }
 
     // Defining operations on data types
-    virtual ExecDataType operator&&(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator||(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator==(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator!=(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator<(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator>(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator<=(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator>=(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator+(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator-(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator*(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator/(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator%(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator&(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator|(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator^(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator<<(const AbstractDataType& rightExp) const = 0;
-    virtual ExecDataType operator>>(const AbstractDataType& rightExp) const = 0;
+    virtual ExecDataType operator&&(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator||(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator==(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator!=(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator<(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator>(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator<=(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator>=(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator+(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator-(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator*(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator/(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator%(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator&(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator|(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator^(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator<<(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator>>(const ExecDataType& rightExp) const = 0;
     virtual ExecDataType operator!() const = 0;
 
     template<typename>
     bool isType() { return false; };
 
     template<typename CastedDataType>
-    nautilus::val<CastedDataType> as() { NES_NOT_IMPLEMENTED(); }
+    nautilus::val<CastedDataType> as() const { NES_NOT_IMPLEMENTED(); }
 
   protected:
     [[nodiscard]] virtual std::string toString() const = 0;
 
     nautilus::val<bool> null;
 };
+
 
 } // namespace NES::Nautilus
 

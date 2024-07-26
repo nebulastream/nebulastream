@@ -23,7 +23,7 @@ LessThanExpression::LessThanExpression(ExpressionPtr leftSubExpression, Expressi
 ExecDataType LessThanExpression::execute(Record& record) const {
     ExecDataType leftValue = leftSubExpression->execute(record);
     ExecDataType rightValue = rightSubExpression->execute(record);
-    return *leftValue < *rightValue;
+    return *leftValue < rightValue;
 }
 
 }// namespace NES::Runtime::Execution::Expressions

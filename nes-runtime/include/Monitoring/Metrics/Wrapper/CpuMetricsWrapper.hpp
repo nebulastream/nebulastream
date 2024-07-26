@@ -91,7 +91,7 @@ class CpuMetricsWrapper {
     std::vector<CpuMetrics> cpuMetrics;
     WorkerId nodeId;
     uint64_t timestamp;
-} __attribute__((packed));
+};
 
 /**
  * @brief The serialize method to write metrics into the given Schema and TupleBuffer.

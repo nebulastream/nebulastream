@@ -38,14 +38,14 @@ class MurMur3HashFunction : public HashFunction {
      * @param value
      * @return HashValue
      */
-    HashValue calculate(HashValue& hash, Value<>& value) override;
+    HashValue calculate(HashValue& hash, ExecDataType& value) override;
 
     /**
      * @brief Calculates the hash of value and xor-es it with hash (passes the value over to calculate(hash, value) after hash init())
      * @param value
      * @return HashValue
      */
-    HashValue calculate(Value<>& value);
+    HashValue calculate(ExecDataType& value);
 
     /**
      * @brief Do not use this method for MurMur3Hash, we require this only until issue #3648 has been fixed TODO
@@ -54,7 +54,7 @@ class MurMur3HashFunction : public HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
+    HashValue calculateWithState(HashValue& hash, ExecDataType& value, MemRef& state) override;
 };
 }// namespace NES::Nautilus::Interface
 

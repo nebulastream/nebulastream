@@ -26,7 +26,9 @@ target_link_libraries(nes-nautilus PUBLIC nes-compiler nes-runtime)
 # ${CMAKE_CURRENT_SOURCE_DIR}/.. should be the path to the nautilus source dir
 add_subdirectory(${CMAKE_CURRENT_SOURCE_DIR}/nautilus ${CMAKE_CURRENT_BINARY_DIR}/nautilus)
 # add the nautilus target to your project
-target_link_libraries(nes-nautilus PRIVATE nautilus)
+target_link_libraries(nes-nautilus PUBLIC nautilus)
+target_compile_options(nautilus PUBLIC "-w") # Disable warnings for nautilus, as we get a tone of unused variable/params warnings
+
 target_include_directories(nes-nautilus PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/nautilus/nautilus/include>

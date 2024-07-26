@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Operators {
 class WatermarkState : public OperatorState {
   public:
     explicit WatermarkState() {}
-    Value<> currentWatermark = Value<UInt64>(0_u64);
+    UInt64 currentWatermark = ExecutableDataType<uint64_t>::create(0);
 };
 
 IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction)
@@ -39,9 +39,10 @@ void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, Reco
 
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
-    Value<> tsField = timeFunction->getTs(executionCtx, emptyRecord);
-    if (tsField > executionCtx.getWatermarkTs()) {
-        executionCtx.setWatermarkTs(tsField.as<UInt64>());
+    auto tsField = timeFunction->getTs(executionCtx, emptyRecord);
+    auto currentWatermark = ExecutableDataType<uint64_t>::create(executionCtx.getWatermarkTs());
+    if (*tsField > currentWatermark) {
+        executionCtx.setWatermarkTs(tsField->as<uint64_t>());
     }
 }
 

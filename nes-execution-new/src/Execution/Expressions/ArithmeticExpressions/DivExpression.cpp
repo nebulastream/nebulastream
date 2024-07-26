@@ -19,7 +19,7 @@ namespace NES::Runtime::Execution::Expressions {
 ExecDataType DivExpression::execute(Record& record) const {
     ExecDataType leftValue = leftSubExpression->execute(record);
     ExecDataType rightValue = rightSubExpression->execute(record);
-    return *leftValue / *rightValue;
+    return *leftValue / rightValue;
 }
 DivExpression::DivExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}

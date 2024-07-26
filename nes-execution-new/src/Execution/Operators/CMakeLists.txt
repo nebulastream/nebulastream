@@ -18,5 +18,4 @@ add_source_files(nes-execution
         ExecutionContext.cpp)
 
 add_subdirectory(Relational)
-# for now, we do not want to include the streaming operators, as they are not ported to the new nautilus API yet.
-# add_subdirectory(Streaming)
+add_subdirectory(Streaming)

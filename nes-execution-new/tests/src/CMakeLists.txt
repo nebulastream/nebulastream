@@ -13,4 +13,6 @@
 add_library(nes-execution-test-util SHARED
         "TestUtils/MockedPipelineExecutionContext.cpp"
         "TestUtils/CollectOperator.cpp"
-        "TestUtils/UtilityFunctions.cpp")
+# We disable this for now, as it is not ported to the new nautilus-lib
+        #        "TestUtils/UtilityFunctions.cpp"
+)

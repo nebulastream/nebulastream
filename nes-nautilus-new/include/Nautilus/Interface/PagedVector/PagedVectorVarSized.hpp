@@ -16,7 +16,7 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_HPP_
 
 #include <API/Schema.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <span>
@@ -97,7 +97,7 @@ class PagedVectorVarSized {
      * @param textEntryMapKey
      * @return TextValue*
      */
-    TextValue* loadText(uint64_t textEntryMapKey);
+    ExecutableVariableDataType* loadText(uint64_t textEntryMapKey);
 
     /**
      * @brief Combines the pages of the given PagedVectorVarSized with the pages of this PagedVectorVarSized.

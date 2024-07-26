@@ -15,8 +15,8 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(VCPKG_BINARY_VERSION v31)
-set(LLVM_BINARY_VERSION v2)
-set(LLVM_VERSION 16)
+set(LLVM_BINARY_VERSION v18_11)
+set(LLVM_VERSION 18.1.8)
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)
 # Enable native mtune/march for optimizations
@@ -197,6 +197,7 @@ set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wext
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
+message(STATUS "NES_WARNINGS: ${NES_WARNINGS}")
 
 # setup rpath for linker
 set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")

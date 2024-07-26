@@ -38,25 +38,23 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
     return ExecutionResult::Ok;
 }
 
-nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> CompiledExecutablePipelineStage::compilePipeline() {
+auto CompiledExecutablePipelineStage::compilePipeline() {
     // compiler after setup
     Timer timer("CompilationBasedPipelineExecutionEngine " + options.getOptionOrDefault<std::string>("engine_backend", ""));
     timer.start();
 
 
-    std::function<void(nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>)> compiledFunction = [&](nautilus::val<int8_t*> workerContext, nautilus::val<int8_t*> pipelineExecutionContext, nautilus::val<int8_t*> recordBufferRef) {
+    std::function<nautilus::val<uint32_t>(nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>)> compiledFunction = [&](nautilus::val<int8_t*> workerContext, nautilus::val<int8_t*> pipelineExecutionContext, nautilus::val<int8_t*> recordBufferRef) {
         auto ctx = ExecutionContext(workerContext, pipelineExecutionContext);
         RecordBuffer recordBuffer(recordBufferRef);
         physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
         physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
+        return 0;
     };
 
-    - integrate nautilus into our compilation pipeline
-        - fix the compilation errors
-        - try a filter query
 
     engine = std::make_shared<engine::NautilusEngine>(options);
-    nautilus::engine::CallableFunction<void, int8_t*, int8_t*, int8_t*> executable = engine->registerFunction(compiledFunction);
+    auto executable = engine->registerFunction(compiledFunction);
     timer.snapshot("Compilation");
     std::stringstream timerAsString;
     timerAsString << timer;

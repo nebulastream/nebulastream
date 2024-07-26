@@ -18,6 +18,29 @@
 #include <sstream>
 
 namespace NES::Nautilus {
+
+Record::Record(std::unordered_map<RecordFieldIdentifier, ExecDataType>&& fields) : recordFields(fields) {}
+
+bool Record::operator==(const Record& rhs) const {
+    if (recordFields.size() != rhs.recordFields.size()) {
+        return false;
+    }
+
+    for (const auto& [fieldIdentifier, value] : recordFields) {
+        if (!rhs.recordFields.contains(fieldIdentifier)) {
+            return false;
+        }
+
+        if (*value != rhs.recordFields.at(fieldIdentifier)) {
+            return false;
+        }
+    }
+
+    return true;
+}
+
+bool Record::operator!=(const Record& rhs) const { return !(*this == rhs); }
+
 const ExecDataType& Record::read(const std::string& recordFieldIdentifier) const {
     return recordFields.at(recordFieldIdentifier);
 }

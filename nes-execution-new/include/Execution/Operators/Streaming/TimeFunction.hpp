@@ -45,7 +45,7 @@ using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 class TimeFunction {
   public:
     virtual void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) = 0;
-    virtual ExecutableDataType<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) = 0;
+    virtual UInt64 getTs(Execution::ExecutionContext& ctx, Record& record) = 0;
     virtual ~TimeFunction() = default;
 };
 
@@ -56,7 +56,7 @@ class EventTimeFunction final : public TimeFunction {
   public:
     explicit EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit);
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
-    ExecutableDataType<UInt64> getTs(Execution::ExecutionContext& ctx, Record& record) override;
+    UInt64 getTs(Execution::ExecutionContext& ctx, Record& record) override;
 
   private:
     Windowing::TimeUnit unit;
@@ -69,7 +69,7 @@ class EventTimeFunction final : public TimeFunction {
 class IngestionTimeFunction final : public TimeFunction {
   public:
     void open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) override;
-    ExecutableDataType<UInt64> getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) override;
+    UInt64 getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) override;
 };
 
 }// namespace NES::Runtime::Execution::Operators

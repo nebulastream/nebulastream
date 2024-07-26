@@ -88,7 +88,7 @@ class MemoryMetrics {
     uint64_t LOADS_1MIN;
     uint64_t LOADS_5MIN;
     uint64_t LOADS_15MIN;
-} __attribute__((packed));
+} ;
 using MemoryMetricsPtr = std::shared_ptr<MemoryMetrics>;
 
 /**

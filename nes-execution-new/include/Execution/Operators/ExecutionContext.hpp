@@ -70,7 +70,7 @@ class ExecutionContext final {
      * @brief Get worker thread id of the current execution.
      * @return ValueId<WorkerThreadId>
      */
-    nautilus::val<WorkerThreadId> getWorkerThreadId();
+    nautilus::val<uint32_t> getWorkerThreadId();
 
     /**
      * @brief Allocate a new tuple buffer.

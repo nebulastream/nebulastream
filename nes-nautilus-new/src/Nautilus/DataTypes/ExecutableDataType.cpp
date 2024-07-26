@@ -15,140 +15,228 @@
 #include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 
 namespace NES::Nautilus {
 
 // Define all operations on ExecutableDataType
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator&&(const AbstractDataType& rightExp) const {
+ExecDataType ExecutableDataType<ValueType>::operator&&(const ExecDataType& rightExp) const {
+    const auto resultIsNull = null || rightExp->isNull();
     const auto rawValueBool = static_cast<nautilus::val<bool>>(rawValue);
-    const auto otherRawValueBool = static_cast<nautilus::val<bool>>(static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue);
-    const auto resultIsNull = null || rightExp.isNull();
+    const auto otherRawValueBool = static_cast<nautilus::val<bool>>(std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue);
     return ExecutableDataType<bool>::create(rawValueBool && otherRawValueBool, resultIsNull);
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator||(const AbstractDataType& rightExp) const {
-    const auto rawValueBool = static_cast<nautilus::val<bool>>(rawValue);
-    const auto otherRawValueBool = static_cast<nautilus::val<bool>>(static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue);
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<bool>::create(rawValueBool || otherRawValueBool, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator||(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, int8_t*>) {
+        constexpr int8_t* nullPtr = nullptr;
+        const auto rawValueBool = static_cast<nautilus::val<bool>>(rawValue == nullPtr);
+        const auto otherRawValueBool = static_cast<nautilus::val<bool>>(std::dynamic_pointer_cast<ExecutableDataType<int8_t*>>(rightExp)->getRawValue() == nullPtr);
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<bool>::create(rawValueBool || otherRawValueBool, resultIsNull);
+    } else {
+        const auto rawValueBool = static_cast<nautilus::val<bool>>(rawValue);
+        const auto otherRawValueBool =
+            static_cast<nautilus::val<bool>>(std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue);
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<bool>::create(rawValueBool || otherRawValueBool, resultIsNull);
+    }
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator==(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
+ExecDataType ExecutableDataType<ValueType>::operator==(const ExecDataType& rightExp) const {
+    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue == otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator!=(const AbstractDataType& rightExp) const {
-    return !(this->operator==(rightExp));
+ExecDataType ExecutableDataType<ValueType>::operator!=(const ExecDataType& rightExp) const {
+    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto resultIsNull = null || rightExp->isNull();
+    return ExecutableDataType<bool>::create(rawValue != otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator<(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
+ExecDataType ExecutableDataType<ValueType>::operator<(const ExecDataType& rightExp) const {
+    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue < otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator>(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
+ExecDataType ExecutableDataType<ValueType>::operator>(const ExecDataType& rightExp) const {
+    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue > otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator<=(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
+ExecDataType ExecutableDataType<ValueType>::operator<=(const ExecDataType& rightExp) const {
+    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue <= otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator>=(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
+ExecDataType ExecutableDataType<ValueType>::operator>=(const ExecDataType& rightExp) const {
+    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue >= otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator+(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue + otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator+(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, bool>) {
+        const auto rawValueInt = static_cast<nautilus::val<int64_t>>(rawValue);
+        const auto otherRawValueInt = std::dynamic_pointer_cast<ExecutableDataType<int64_t>>(rightExp)->as<int64_t>();
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<int64_t>::create(rawValueInt + otherRawValueInt, resultIsNull);
+    } else {
+        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<ValueType>::create(rawValue + otherRawValue, resultIsNull);
+    }
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator-(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue - otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator-(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, bool>) {
+        const auto rawValueInt = static_cast<nautilus::val<int64_t>>(rawValue);
+        const auto otherRawValueInt = std::dynamic_pointer_cast<ExecutableDataType<int64_t>>(rightExp)->as<int64_t>();
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<int64_t>::create(rawValueInt - otherRawValueInt, resultIsNull);
+    } else if constexpr (std::is_same_v<ValueType, int8_t*>) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<ValueType>::create(rawValue - otherRawValue, resultIsNull);
+    }}
+
+template<typename ValueType>
+ExecDataType ExecutableDataType<ValueType>::operator*(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*>) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<ValueType>::create(rawValue * otherRawValue, resultIsNull);
+    }
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator*(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue * otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator/(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*>) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<ValueType>::create(rawValue / otherRawValue, resultIsNull);
+    }
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator/(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue / otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator%(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<ValueType>::create(rawValue % otherRawValue, resultIsNull);
+    }
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator%(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue % otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator&(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<ValueType>::create(rawValue & otherRawValue, resultIsNull);
+    }
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator&(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue & otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator|(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<ValueType>::create(rawValue | otherRawValue, resultIsNull);
+    }
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator|(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue | otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator^(const ExecDataType& rightExp) const {
+    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto resultIsNull = null || rightExp->isNull();
+        return ExecutableDataType<ValueType>::create(rawValue ^ otherRawValue, resultIsNull);
+    }
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator^(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue ^ otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator<<(const ExecDataType& rightExp) const {
+//    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
+//        NES_NOT_IMPLEMENTED();
+//    } else {
+//        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+//        const auto resultIsNull = null || rightExp->isNull();
+//        return ExecutableDataType<ValueType>::create(rawValue << otherRawValue, resultIsNull);
+//    }
+    NES_NOT_IMPLEMENTED();
+    ((void) rightExp);
 }
 
 template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator<<(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue << otherRawValue, resultIsNull);
-}
-
-template<typename ValueType>
-ExecDataType ExecutableDataType<ValueType>::operator>>(const AbstractDataType& rightExp) const {
-    const auto otherRawValue = static_cast<ExecutableDataType<ValueType>>(rightExp).rawValue;
-    const auto resultIsNull = null || rightExp.isNull();
-    return ExecutableDataType<ValueType>::create(rawValue >> otherRawValue, resultIsNull);
+ExecDataType ExecutableDataType<ValueType>::operator>>(const ExecDataType& rightExp) const {
+//    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
+//        NES_NOT_IMPLEMENTED();
+//    } else {
+//        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->as<ValueType>;
+//        const auto resultIsNull = null || rightExp->isNull();
+//        auto ret = rawValue >> otherRawValue;
+//        return ExecutableDataType<ValueType>::create(ret, resultIsNull);
+//    }
+    NES_NOT_IMPLEMENTED();
+    ((void) rightExp);
 }
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator!() const {
-    const auto resultIsNull = null;
-    return ExecutableDataType<bool>::create(!rawValue, resultIsNull);
+    if constexpr (std::is_same_v<ValueType, bool>) {
+        const auto resultIsNull = null;
+        return ExecutableDataType<bool>::create(!rawValue, resultIsNull);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
 }
+
+ExecDataType ExecutableVariableDataType::operator&&(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator||(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator==(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator!=(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator<(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator>(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator<=(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator>=(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator+(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator-(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator*(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator/(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator%(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator&(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator|(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator^(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator<<(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator>>(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
+ExecDataType ExecutableVariableDataType::operator!() const { NES_NOT_IMPLEMENTED(); }
 
 }

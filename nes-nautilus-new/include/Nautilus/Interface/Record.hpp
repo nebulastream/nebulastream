@@ -23,7 +23,7 @@ namespace NES::Nautilus {
 class Record {
   public:
     using RecordFieldIdentifier = std::string;
-    explicit Record();
+    explicit Record() = default;
     explicit Record(std::unordered_map<RecordFieldIdentifier, ExecDataType>&& fields);
     ~Record() = default;
 

@@ -14,54 +14,67 @@
 
 #ifndef NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
 #define NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
-#include <nautilus/val.hpp>
-#include <nautilus/val_ptr.hpp>
-#include <nautilus/std/string.hpp>
-#include <nautilus/common/Types.hpp>
 #include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+#include <nautilus/common/Types.hpp>
+#include <nautilus/std/string.hpp>
+#include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <ostream>
 #include <sstream>
-#include <fmt/format.h>
 
 namespace NES::Nautilus {
+
+template<typename ValueType>
+class ExecutableDataType;
+
+template<typename ValueType>
+using ExecutableDataTypePtr = std::shared_ptr<ExecutableDataType<ValueType>>;
+
 
 template<typename ValueType>
 class ExecutableDataType : public AbstractDataType {
   public:
     explicit ExecutableDataType(const nautilus::val<ValueType>& value, const nautilus::val<bool>& null)
         : AbstractDataType(null), rawValue(value) {}
-    static ExecDataType create(nautilus::val<ValueType> value, bool null = false) {
+    static ExecutableDataTypePtr<ValueType> create(nautilus::val<ValueType> value, bool null = false) {
         return std::make_shared<ExecutableDataType<ValueType>>(value, null);
     }
 
     // Implementing operations on data types
-    ExecDataType operator&&(const AbstractDataType& rightExp) const override;
-    ExecDataType operator||(const AbstractDataType& rightExp) const override;
-    ExecDataType operator==(const AbstractDataType& rightExp) const override;
-    ExecDataType operator!=(const AbstractDataType& rightExp) const override;
-    ExecDataType operator<(const AbstractDataType& rightExp) const override;
-    ExecDataType operator>(const AbstractDataType& rightExp) const override;
-    ExecDataType operator<=(const AbstractDataType& rightExp) const override;
-    ExecDataType operator>=(const AbstractDataType& rightExp) const override;
-    ExecDataType operator+(const AbstractDataType& rightExp) const override;
-    ExecDataType operator-(const AbstractDataType& rightExp) const override;
-    ExecDataType operator*(const AbstractDataType& rightExp) const override;
-    ExecDataType operator/(const AbstractDataType& rightExp) const override;
-    ExecDataType operator%(const AbstractDataType& rightExp) const override;
-    ExecDataType operator&(const AbstractDataType& rightExp) const override;
-    ExecDataType operator|(const AbstractDataType& rightExp) const override;
-    ExecDataType operator^(const AbstractDataType& rightExp) const override;
-    ExecDataType operator<<(const AbstractDataType& rightExp) const override;
-    ExecDataType operator>>(const AbstractDataType& rightExp) const override;
+    ExecDataType operator&&(const ExecDataType& rightExp) const override;
+    ExecDataType operator||(const ExecDataType& rightExp) const override;
+    ExecDataType operator==(const ExecDataType& rightExp) const override;
+    ExecDataType operator!=(const ExecDataType& rightExp) const override;
+    ExecDataType operator<(const ExecDataType& rightExp) const override;
+    ExecDataType operator>(const ExecDataType& rightExp) const override;
+    ExecDataType operator<=(const ExecDataType& rightExp) const override;
+    ExecDataType operator>=(const ExecDataType& rightExp) const override;
+    ExecDataType operator+(const ExecDataType& rightExp) const override;
+    ExecDataType operator-(const ExecDataType& rightExp) const override;
+    ExecDataType operator*(const ExecDataType& rightExp) const override;
+    ExecDataType operator/(const ExecDataType& rightExp) const override;
+    ExecDataType operator%(const ExecDataType& rightExp) const override;
+    ExecDataType operator&(const ExecDataType& rightExp) const override;
+    ExecDataType operator|(const ExecDataType& rightExp) const override;
+    ExecDataType operator^(const ExecDataType& rightExp) const override;
+    ExecDataType operator<<(const ExecDataType& rightExp) const override;
+    ExecDataType operator>>(const ExecDataType& rightExp) const override;
     ExecDataType operator!() const override;
 
-    nautilus::val<ValueType> read();
-    template<typename CastedDataType>
-    bool isType() { return std::is_same_v<ValueType, CastedDataType>; }
 
     template<typename CastedDataType>
-    nautilus::val<CastedDataType> as() { return static_cast<nautilus::val<CastedDataType>>(rawValue); }
+    bool isType() {
+        return std::is_same_v<ValueType, CastedDataType>;
+    }
+
+    template<typename CastedDataType>
+    nautilus::val<CastedDataType> as() const {
+        return static_cast<nautilus::val<CastedDataType>>(rawValue);
+    }
+
+    const nautilus::val<ValueType>& getRawValue() const { return rawValue; }
 
     ~ExecutableDataType() override = default;
 
@@ -69,33 +82,91 @@ class ExecutableDataType : public AbstractDataType {
     [[nodiscard]] std::string toString() const override {
         std::ostringstream oss;
         oss << "NOT IMPLEMENTED YET!";
-//        oss << " rawValue: " << rawValue << " null: " << null;
+        //        oss << " rawValue: " << rawValue << " null: " << null;
         return oss.str();
     }
 
-  protected:
     nautilus::val<ValueType> rawValue;
 };
+
 
 // Alias for Identifier Values. Otherwise, user need to type Value<Identifier<WorkerId>>
 //template<NESIdentifier IdentifierType>
 //using ValueId = ExecutableDataType<IdentifierImpl<IdentifierType>>;
 
+// Define common data types and their pointers
+using MemRef = nautilus::val<int8_t*>;
+using Int8 = ExecutableDataTypePtr<int8_t>;
+using Int16 = ExecutableDataTypePtr<int16_t>;
+using Int32 = ExecutableDataTypePtr<int32_t>;
+using Int64 = ExecutableDataTypePtr<int64_t>;
+using UInt8 = ExecutableDataTypePtr<uint8_t>;
+using UInt16 = ExecutableDataTypePtr<uint16_t>;
+using UInt32 = ExecutableDataTypePtr<uint32_t>;
+using UInt64 = ExecutableDataTypePtr<uint64_t>;
+using Float = ExecutableDataTypePtr<float>;
+using Double = ExecutableDataTypePtr<double>;
+using Boolean = ExecutableDataTypePtr<bool>;
 
-// Define common data types
-using MemRef = ExecutableDataType<int8_t*>;
-using Int8 = ExecutableDataType<int8_t>;
-using Int16 = ExecutableDataType<int16_t>;
-using Int32 = ExecutableDataType<int32_t>;
-using Int64 = ExecutableDataType<int64_t>;
-using UInt8 = ExecutableDataType<uint8_t>;
-using UInt16 = ExecutableDataType<uint16_t>;
-using UInt32 = ExecutableDataType<uint32_t>;
-using UInt64 = ExecutableDataType<uint64_t>;
-using Float = ExecutableDataType<float>;
-using Double = ExecutableDataType<double>;
-using Boolean = ExecutableDataType<bool>;
-using Text = ExecutableDataType<std::string>;
+template class ExecutableDataType<int8_t>;
+template class ExecutableDataType<int16_t>;
+template class ExecutableDataType<int32_t>;
+template class ExecutableDataType<int64_t>;
+template class ExecutableDataType<uint8_t>;
+template class ExecutableDataType<uint16_t>;
+template class ExecutableDataType<uint32_t>;
+template class ExecutableDataType<uint64_t>;
+template class ExecutableDataType<float>;
+template class ExecutableDataType<double>;
+template class ExecutableDataType<bool>;
+
+
+class ExecutableVariableDataType : public AbstractDataType {
+  public:
+    ExecutableVariableDataType(const nautilus::val<int8_t*>& content,
+                               const nautilus::val<uint32_t>& size,
+                               const nautilus::val<bool>& null)
+        : AbstractDataType(null), size(size), content(content) {}
+
+    static ExecDataType create(nautilus::val<int8_t*> content, const nautilus::val<uint32_t>& size, bool null = false) {
+        return std::make_shared<ExecutableVariableDataType>(content, size, null);
+    }
+
+    ~ExecutableVariableDataType() override = default;
+    ExecDataType operator&&(const ExecDataType&) const override;
+    ExecDataType operator||(const ExecDataType&) const override;
+    ExecDataType operator==(const ExecDataType&) const override;
+    ExecDataType operator!=(const ExecDataType&) const override;
+    ExecDataType operator<(const ExecDataType&) const override;
+    ExecDataType operator>(const ExecDataType&) const override;
+    ExecDataType operator<=(const ExecDataType&) const override;
+    ExecDataType operator>=(const ExecDataType&) const override;
+    ExecDataType operator+(const ExecDataType&) const override;
+    ExecDataType operator-(const ExecDataType&) const override;
+    ExecDataType operator*(const ExecDataType&) const override;
+    ExecDataType operator/(const ExecDataType&) const override;
+    ExecDataType operator%(const ExecDataType&) const override;
+    ExecDataType operator&(const ExecDataType&) const override;
+    ExecDataType operator|(const ExecDataType&) const override;
+    ExecDataType operator^(const ExecDataType&) const override;
+    ExecDataType operator<<(const ExecDataType&) const override;
+    ExecDataType operator>>(const ExecDataType&) const override;
+    ExecDataType operator!() const override;
+
+    [[nodiscard]] nautilus::val<uint32_t> getSize() const { return size; }
+    [[nodiscard]] nautilus::val<int8_t*> getContent() const { return content; }
+
+  protected:
+    [[nodiscard]] std::string toString() const override {
+        std::ostringstream oss;
+        oss << "NOT IMPLEMENTED YET!";
+        //        oss << " rawValue: " << rawValue << " null: " << null;
+        return oss.str();
+    }
+
+    nautilus::val<uint32_t> size;
+    nautilus::val<int8_t*> content;
+};
 
 }// namespace NES::Nautilus
 

@@ -70,12 +70,12 @@ void ExecutionContext::emitBuffer(const NES::Runtime::Execution::RecordBuffer& b
     invoke(emitBufferProxy, workerContext, pipelineContext, buffer.getReference());
 }
 
-WorkerThreadId getWorkerThreadIdProxy(void* workerContext) {
+uint32_t getWorkerThreadIdProxy(void* workerContext) {
     auto* wc = static_cast<Runtime::WorkerContext*>(workerContext);
-    return wc->getId();
+    return wc->getId().getRawValue();
 }
 
-Nautilus::ValueId<WorkerThreadId> ExecutionContext::getWorkerThreadId() {
+nautilus::val<uint32_t> ExecutionContext::getWorkerThreadId() {
     return invoke(getWorkerThreadIdProxy, workerContext);
 }
 
