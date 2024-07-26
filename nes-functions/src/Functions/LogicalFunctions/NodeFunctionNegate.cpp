@@ -16,6 +16,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/Boolean.hpp>
 #include <Common/DataTypes/DataType.hpp>
 namespace NES
 {
@@ -72,7 +73,7 @@ bool NodeFunctionNegate::validateBeforeLowering() const
     {
         return false;
     }
-    return Util::as<NodeFunction>(children[0])->getStamp()->isBoolean();
+    return NES::Util::instanceOf<Boolean>(Util::as<NodeFunction>(children[0])->getStamp());
 }
 
 }

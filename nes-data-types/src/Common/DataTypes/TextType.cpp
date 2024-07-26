@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/TextType.hpp>
 
@@ -20,7 +21,7 @@ namespace NES
 
 bool TextType::equals(DataTypePtr otherDataType)
 {
-    return otherDataType->isText();
+    return NES::Util::instanceOf<TextType>(otherDataType);
 }
 
 /// A text type cannot be joined with another type.

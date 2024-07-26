@@ -14,8 +14,10 @@
 
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
+#include <Common/DataTypes/TextType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 namespace NES
 {
@@ -33,7 +35,7 @@ std::string Iterator::serializeTupleAsJson()
         auto physicalType = fieldTypes[fieldIndex];
         auto fieldName = fieldNames[fieldIndex];
         auto fieldData = tuplePointer + fieldOffsets[fieldIndex];
-        if (physicalType->type->isText())
+        if (NES::Util::instanceOf<TextType>(physicalType->type))
         {
             auto currentFieldType = fieldTypes[fieldIndex];
             auto dataTypePtr = this->buffer.loadChildBuffer(*reinterpret_cast<uint32_t*>(fieldData)).getBuffer();

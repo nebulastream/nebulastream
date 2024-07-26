@@ -53,9 +53,6 @@ public:
 
     [[nodiscard]] virtual bool isTextType() const noexcept { return false; };
 
-    /// true only for arrays which contain chars as their immediate child type.
-    [[nodiscard]] virtual bool isCharArrayType() const noexcept { return false; };
-
     bool operator==(const PhysicalType& rhs) const { return type->equals(rhs.type); }
 
     /// Type that is contained by this PhysicalType container

@@ -14,14 +14,18 @@
 
 #include <vector>
 #include <Serialization/DataTypeSerializationUtil.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableDataType.pb.h>
 #include <Common/DataTypes/ArrayType.hpp>
+#include <Common/DataTypes/Boolean.hpp>
+#include <Common/DataTypes/Char.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
 #include <Common/DataTypes/TextType.hpp>
+#include <Common/DataTypes/Undefined.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 namespace NES
@@ -29,11 +33,11 @@ namespace NES
 
 SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTypePtr& dataType, SerializableDataType* serializedDataType)
 {
-    if (dataType->isUndefined())
+    if (NES::Util::instanceOf<Undefined>(dataType))
     {
         serializedDataType->set_type(SerializableDataType_Type_UNDEFINED);
     }
-    else if (dataType->isInteger())
+    else if (NES::Util::instanceOf<Integer>(dataType))
     {
         auto intDataType = DataType::as<Integer>(dataType);
         auto serializedInteger = SerializableDataType_IntegerDetails();
@@ -43,7 +47,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         serializedDataType->mutable_details()->PackFrom(serializedInteger);
         serializedDataType->set_type(SerializableDataType_Type_INTEGER);
     }
-    else if (dataType->isFloat())
+    else if (NES::Util::instanceOf<Float>(dataType))
     {
         auto floatDataType = DataType::as<Float>(dataType);
         auto serializableFloat = SerializableDataType_FloatDetails();
@@ -53,15 +57,15 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         serializedDataType->mutable_details()->PackFrom(serializableFloat);
         serializedDataType->set_type(SerializableDataType_Type_FLOAT);
     }
-    else if (dataType->isBoolean())
+    else if (NES::Util::instanceOf<Boolean>(dataType))
     {
         serializedDataType->set_type(SerializableDataType_Type_BOOLEAN);
     }
-    else if (dataType->isChar())
+    else if (NES::Util::instanceOf<Char>(dataType))
     {
         serializedDataType->set_type(SerializableDataType_Type_CHAR);
     }
-    else if (dataType->isArray())
+    else if (NES::Util::instanceOf<ArrayType>(dataType))
     {
         serializedDataType->set_type(SerializableDataType_Type_ARRAY);
         /// store dimension and datatype into ArrayDetails by invoking this function recursively.
@@ -71,7 +75,7 @@ SerializableDataType* DataTypeSerializationUtil::serializeDataType(const DataTyp
         serializeDataType(arrayType->component, serializedArray.mutable_componenttype());
         serializedDataType->mutable_details()->PackFrom(serializedArray);
     }
-    else if (dataType->isText())
+    else if (NES::Util::instanceOf<TextType>(dataType))
     {
         serializedDataType->set_type(SerializableDataType_Type_TEXT);
     }
@@ -160,7 +164,7 @@ SerializableDataValue*
 DataTypeSerializationUtil::serializeDataValue(const ValueTypePtr& valueType, SerializableDataValue* serializedDataValue)
 {
     /// serialize data value
-    if (valueType->dataType->isArray())
+    if (NES::Util::instanceOf<ArrayType>(valueType->dataType))
     {
         /// serialize all information for array value types
         /// 1. cast to ArrayValueType

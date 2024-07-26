@@ -15,7 +15,6 @@ add_source_files(nes-data-types
         ArrayType.cpp
         Boolean.cpp
         Undefined.cpp
-        DataType.cpp
         Numeric.cpp
         Integer.cpp
         Float.cpp

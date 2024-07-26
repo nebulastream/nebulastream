@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Util/Common.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -20,7 +21,7 @@ namespace NES
 
 bool ArrayType::equals(DataTypePtr otherDataType)
 {
-    if (otherDataType->isArray())
+    if (NES::Util::instanceOf<ArrayType>(otherDataType))
     {
         auto const otherArray = as<ArrayType>(otherDataType);
         return length == otherArray->length && component->equals(otherArray->component);

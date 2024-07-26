@@ -17,6 +17,7 @@
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/Integer.hpp>
 
@@ -33,7 +34,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
     {
         auto fieldName = timeCharacteristic->getField()->getName();
         auto existingField = schema->getField(fieldName);
-        if (!existingField->getDataType()->isInteger())
+        if (!NES::Util::instanceOf<Integer>(existingField->getDataType()))
         {
             NES_ERROR("TimeBasedWindow should use a uint for time field {}", fieldName);
             throw InvalidFieldException("TimeBasedWindow should use a uint for time field " + fieldName);

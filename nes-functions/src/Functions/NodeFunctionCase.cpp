@@ -17,7 +17,7 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
-
+#include <Common/DataTypes/Undefined.hpp>
 namespace NES
 {
 NodeFunctionCase::NodeFunctionCase(DataTypePtr stamp) : NodeFunction(std::move(stamp), "Case")
@@ -46,7 +46,7 @@ void NodeFunctionCase::inferStamp(SchemaPtr schema)
     auto whenChildren = getWhenChildren();
     auto defaultExp = getDefaultExp();
     defaultExp->inferStamp(schema);
-    if (defaultExp->getStamp()->isUndefined())
+    if (NES::Util::instanceOf<Undefined>(defaultExp->getStamp()))
     {
         NES_THROW_RUNTIME_ERROR(
             "Error during stamp inference. Right type must be defined, but was: {}", defaultExp->getStamp()->toString());

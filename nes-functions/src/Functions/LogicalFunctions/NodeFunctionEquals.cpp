@@ -17,7 +17,9 @@
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
+#include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/TextType.hpp>
 
 namespace NES
 {
@@ -70,15 +72,14 @@ bool NodeFunctionEquals::validateBeforeLowering() const
     const auto childRight = Util::as<NodeFunction>(children[1]);
 
     /// If one of the children has a stamp of type text, the other child must also have a stamp of type text
-    if (childLeft->getStamp()->isText() != childRight->getStamp()->isText())
+    if (NES::Util::instanceOf<TextType>(childLeft->getStamp()) != NES::Util::instanceOf<TextType>(childRight->getStamp()))
     {
         return false;
     }
 
 
     /// If one of the children has a stamp of type array, the other child must also have a stamp of type array
-    if (childLeft->getStamp()->isArray() || childRight->getStamp()->isArray() || childLeft->getStamp()->isCharArray()
-        || childRight->getStamp()->isCharArray())
+    if (NES::Util::instanceOf<ArrayType>(childLeft->getStamp()) || NES::Util::instanceOf<ArrayType>(childRight->getStamp()))
     {
         NES_ERROR("We do not support array and char arrays as data types for now!");
         return false;
