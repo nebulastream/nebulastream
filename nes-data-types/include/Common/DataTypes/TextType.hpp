@@ -29,8 +29,6 @@ public:
 
     ~TextType() override = default;
 
-    [[nodiscard]] bool isText() const override { return true; }
-
     bool equals(DataTypePtr otherDataType) override;
 
     DataTypePtr join(DataTypePtr otherDataType) override;

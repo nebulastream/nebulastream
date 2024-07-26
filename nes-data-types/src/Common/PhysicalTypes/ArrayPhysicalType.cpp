@@ -14,6 +14,8 @@
 
 #include <iostream>
 #include <sstream>
+#include <Util/Common.hpp>
+#include <Common/DataTypes/Char.hpp>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 
 namespace NES
@@ -22,11 +24,6 @@ namespace NES
 uint64_t ArrayPhysicalType::size() const
 {
     return physicalComponentType->size() * length;
-}
-
-bool ArrayPhysicalType::isCharArrayType() const noexcept
-{
-    return type->isChar();
 }
 
 std::string ArrayPhysicalType::convertRawToString(void const* data) const noexcept
@@ -38,7 +35,7 @@ std::string ArrayPhysicalType::convertRawToString(void const* data) const noexce
         return "";
     }
     /// we print a fixed char directly because the last char terminated the output.
-    if (physicalComponentType->type->isChar())
+    if (NES::Util::instanceOf<Char>(physicalComponentType->type))
     {
         /// This char is fixed size, so we have to convert it to a fixed size string.
         /// Otherwise, we would copy all data till the termination character.
@@ -70,7 +67,7 @@ std::string ArrayPhysicalType::convertRawToStringWithoutFill(void const* data) c
         return "";
     }
     /// we print a fixed char directly because the last char terminated the output.
-    if (physicalComponentType->type->isChar())
+    if (NES::Util::instanceOf<Char>(physicalComponentType->type))
     {
         /// Only copy the actual content of the char. If the size is larger than the schema definition
         /// only copy until the defined size of the schema

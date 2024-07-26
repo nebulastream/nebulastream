@@ -19,6 +19,7 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/MinAggregationDescriptor.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 
 
 namespace NES::Windowing
@@ -66,7 +67,7 @@ void MinAggregationDescriptor::inferStamp(SchemaPtr schema)
 {
     /// We first infer the stamp of the input field and set the output stamp as the same.
     onField->inferStamp(schema);
-    if (!onField->getStamp()->isNumeric())
+    if (!NES::Util::instanceOf<Numeric>(onField->getStamp()))
     {
         NES_FATAL_ERROR("MinAggregationDescriptor: aggregations on non numeric fields is not supported.");
     }

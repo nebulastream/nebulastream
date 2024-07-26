@@ -19,6 +19,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/Numeric.hpp>
 namespace NES
 {
 
@@ -45,7 +46,7 @@ void NodeFunctionArithmeticalUnary::inferStamp(SchemaPtr schema)
 
     /// get stamp from child
     auto child_stamp = child->getStamp();
-    if (!child_stamp->isNumeric())
+    if (!NES::Util::instanceOf<Numeric>(child_stamp))
     {
         throw CannotInferSchema(
             fmt::format("Error during stamp inference. Types need to be Numerical but child was: {}", child->getStamp()->toString()));
@@ -76,7 +77,7 @@ bool NodeFunctionArithmeticalUnary::validateBeforeLowering() const
     {
         return false;
     }
-    return Util::as<NodeFunction>(this->getChildren()[0])->getStamp()->isNumeric();
+    return NES::Util::instanceOf<Numeric>(Util::as<NodeFunction>(this->getChildren()[0])->getStamp());
 }
 
 }

@@ -27,12 +27,6 @@ public:
     ~Numeric() override = default;
 
     /**
-    * @brief Checks if this data type is Numeric.
-    * @return bool
-    */
-    [[nodiscard]] bool isNumeric() const final { return true; }
-
-    /**
      * @brief Gets the bit size of this type.
      * @return int8_t
      */

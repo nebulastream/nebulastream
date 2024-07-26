@@ -18,6 +18,7 @@
 #include <cstring>
 #include <limits>
 #include <utility>
+#include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Boolean.hpp>
@@ -229,14 +230,14 @@ DataTypePtr DataTypeFactory::createType(BasicType type)
 
 DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, double minLowerBound)
 {
-    if (stamp->isFloat())
+    if (NES::Util::instanceOf<Float>(stamp))
     {
         if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound)
         {
             return createFloat(floatStamp->getBits(), minLowerBound, floatStamp->upperBound);
         }
     }
-    else if (stamp->isInteger())
+    else if (NES::Util::instanceOf<Integer>(stamp))
     {
         if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound)
         {
@@ -255,14 +256,14 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, do
 
 DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, int64_t minLowerBound)
 {
-    if (stamp->isInteger())
+    if (NES::Util::instanceOf<Integer>(stamp))
     {
         if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound)
         {
             return createInteger(intStamp->getBits(), minLowerBound, intStamp->upperBound);
         }
     }
-    else if (stamp->isFloat())
+    else if (NES::Util::instanceOf<Float>(stamp))
     {
         if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound)
         {
@@ -282,14 +283,14 @@ DataTypePtr DataTypeFactory::copyTypeAndIncreaseLowerBound(DataTypePtr stamp, in
 
 DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, double maxUpperBound)
 {
-    if (stamp->isFloat())
+    if (NES::Util::instanceOf<Float>(stamp))
     {
         if (auto const floatStamp = DataType::as<Float>(stamp); maxUpperBound < floatStamp->upperBound)
         {
             return createFloat(floatStamp->getBits(), floatStamp->lowerBound, maxUpperBound);
         }
     }
-    else if (stamp->isInteger())
+    else if (NES::Util::instanceOf<Integer>(stamp))
     {
         if (auto const intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound)
         {
@@ -309,14 +310,14 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, do
 
 DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, int64_t maxUpperBound)
 {
-    if (stamp->isInteger())
+    if (NES::Util::instanceOf<Integer>(stamp))
     {
         if (auto const intStamp = DataType::as<Integer>(stamp); maxUpperBound < intStamp->upperBound)
         {
             return createInteger(intStamp->getBits(), intStamp->lowerBound, maxUpperBound);
         }
     }
-    else if (stamp->isFloat())
+    else if (NES::Util::instanceOf<Float>(stamp))
     {
         if (auto const floatStamp = DataType::as<Float>(stamp); maxUpperBound < floatStamp->upperBound)
         {
@@ -336,7 +337,7 @@ DataTypePtr DataTypeFactory::copyTypeAndDecreaseUpperBound(DataTypePtr stamp, in
 
 DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t minLowerBound, int64_t maxUpperBound)
 {
-    if (stamp->isInteger())
+    if (NES::Util::instanceOf<Integer>(stamp))
     {
         if (auto const intStamp = DataType::as<Integer>(stamp); intStamp->lowerBound < minLowerBound)
         {
@@ -350,7 +351,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t
             return createInteger(intStamp->getBits(), intStamp->lowerBound, maxUpperBound);
         }
     }
-    else if (stamp->isFloat())
+    else if (NES::Util::instanceOf<Float>(stamp))
     {
         NES_INFO("DataTypeFactory: Integers are passed as new bounds of an Float data type. Progresses with standard casting to "
                  "Double.");
@@ -367,7 +368,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, int64_t
 
 DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double minLowerBound, double maxUpperBound)
 {
-    if (stamp->isFloat())
+    if (NES::Util::instanceOf<Float>(stamp))
     {
         if (auto const floatStamp = DataType::as<Float>(stamp); floatStamp->lowerBound < minLowerBound)
         {
@@ -381,7 +382,7 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
             return createFloat(floatStamp->getBits(), floatStamp->lowerBound, maxUpperBound);
         }
     }
-    else if (stamp->isInteger())
+    else if (NES::Util::instanceOf<Integer>(stamp))
     {
         NES_INFO("DataTypeFactory: Floats are passed as new bounds of an Integer data type. Progresses with the floor of the "
                  "lower bound and ceiling of the upper bound instead.");
@@ -399,12 +400,12 @@ DataTypePtr DataTypeFactory::copyTypeAndTightenBounds(DataTypePtr stamp, double 
 
 DataTypePtr DataTypeFactory::createFloatFromInteger(DataTypePtr stamp)
 {
-    if (stamp->isInteger())
+    if (NES::Util::instanceOf<Integer>(stamp))
     {
         auto const intStamp = DataType::as<Integer>(stamp);
         return DataTypeFactory::createFloat(intStamp->lowerBound, intStamp->upperBound);
     }
-    else if (stamp->isFloat())
+    else if (NES::Util::instanceOf<Float>(stamp))
     {
         NES_INFO("DataTypeFactory: A Float is passed to be converted to a Float. Return stamp passed as argument.");
     }

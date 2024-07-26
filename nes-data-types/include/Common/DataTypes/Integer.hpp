@@ -42,11 +42,6 @@ public:
     ~Integer() override = default;
 
     /**
-    * @brief Checks if this data type is Integer.
-    */
-    [[nodiscard]] bool isInteger() const override { return true; }
-
-    /**
     * @brief Checks if two data types are equal.
     * @param otherDataType
     * @return

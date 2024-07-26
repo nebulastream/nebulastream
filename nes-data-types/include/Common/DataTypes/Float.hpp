@@ -40,11 +40,6 @@ public:
     ~Float() override = default;
 
     /**
-    * @brief Checks if this data type is Float.
-    */
-    [[nodiscard]] bool isFloat() const override { return true; }
-
-    /**
     * @brief Checks if two data types are equal.
     * @param otherDataType
     * @return

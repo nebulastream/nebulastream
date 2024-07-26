@@ -27,11 +27,6 @@ public:
     ~Undefined() override = default;
 
     /**
-    * @brief Checks if this data type is Undefined.
-    */
-    [[nodiscard]] bool isUndefined() const override { return true; }
-
-    /**
      * @brief Checks if two data types are equal.
      * @param otherDataType
      * @return
