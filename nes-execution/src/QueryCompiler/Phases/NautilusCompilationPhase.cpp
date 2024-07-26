@@ -85,11 +85,11 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
         pipeline->getPipelineId());
     options.setIdentifier(identifier);
 
-    // enable dump to console if the compiler options are set
+    /// enable dump to console if the compiler options are set
     options.setDumpToConsole(
         compilerOptions->getDumpMode() == DumpMode::CONSOLE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
-    // enable dump to file if the compiler options are set
+    /// enable dump to file if the compiler options are set
     options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
 
     options.setProxyInlining(compilerOptions->getCompilationStrategy() == CompilationStrategy::PROXY_INLINING);
@@ -99,11 +99,11 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(providerName);
     auto pipelineStage = provider->create(nautilusPipeline->getNautilusPipeline(), options);
-    // we replace the current pipeline operators with an executable operator.
-    // this allows us to keep the pipeline structure.
+    /// we replace the current pipeline operators with an executable operator.
+    /// this allows us to keep the pipeline structure.
     auto executableOperator = ExecutableOperator::create(std::move(pipelineStage), nautilusPipeline->getOperatorHandlers());
     pipeline->getDecomposedQueryPlan()->replaceRootOperator(rootOperator, executableOperator);
     return pipeline;
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

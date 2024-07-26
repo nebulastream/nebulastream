@@ -55,28 +55,28 @@ public:
             throw WindowProcessingException(
                 "The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs " + std::to_string(lastWatermarkTs));
         }
-        // get a read lock
+        /// get a read lock
         auto readLock = synchronizedSlices.rlock();
         auto& slices = readLock.asNonConstUnsafe();
-        // Find the correct slice.
-        // Reverse iteration over all slices from the end to the start,
-        // as it is expected that ts is in a more recent slice.
-        // At the end of the iteration sliceIter can be in three states:
-        // 1. sliceIter == slices.rend() -> their is no slice with a start <= ts.
-        // In this case we have to pre-pend a new slice.
-        // 2. sliceIter is at a slide which slice.startTs < ts and slice.endTs <= ts.
-        // In this case we have to insert a new slice after the current sliceIter
-        // 3. sliceIter is at a slide which slice.startTs <= ts and slice.endTs > ts.
-        // In this case we found the correct slice.
+        /// Find the correct slice.
+        /// Reverse iteration over all slices from the end to the start,
+        /// as it is expected that ts is in a more recent slice.
+        /// At the end of the iteration sliceIter can be in three states:
+        /// 1. sliceIter == slices.rend() -> their is no slice with a start <= ts.
+        /// In this case we have to pre-pend a new slice.
+        /// 2. sliceIter is at a slide which slice.startTs < ts and slice.endTs <= ts.
+        /// In this case we have to insert a new slice after the current sliceIter
+        /// 3. sliceIter is at a slide which slice.startTs <= ts and slice.endTs > ts.
+        /// In this case we found the correct slice.
         auto sliceIter = slices.rbegin();
         while (sliceIter != slices.rend() && (*sliceIter)->getStart() > ts)
         {
             sliceIter++;
         }
-        // Handle the individual cases and append a slice if required.
+        /// Handle the individual cases and append a slice if required.
         if (sliceIter == slices.rend())
         {
-            // We are in case 1. thus we have to prepend a new slice
+            /// We are in case 1. thus we have to prepend a new slice
             auto newSliceStart = windowAssigner.getSliceStartTs(ts);
             auto newSliceEnd = windowAssigner.getSliceEndTs(ts);
             auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd);
@@ -85,7 +85,7 @@ public:
         }
         else if ((*sliceIter)->getStart() < ts && (*sliceIter)->getEnd() <= ts)
         {
-            // We are in case 2. thus we have to append a new slice after the current iterator
+            /// We are in case 2. thus we have to append a new slice after the current iterator
             auto newSliceStart = windowAssigner.getSliceStartTs(ts);
             auto newSliceEnd = windowAssigner.getSliceEndTs(ts);
             auto newSlice = allocateNewSlice(newSliceStart, newSliceEnd);
@@ -95,8 +95,8 @@ public:
         }
         else if ((*sliceIter)->coversTs(ts))
         {
-            // We are in case 3. and found a slice which covers the current ts.
-            // Thus, we return a reference to the slice.
+            /// We are in case 3. and found a slice which covers the current ts.
+            /// Thus, we return a reference to the slice.
             return *sliceIter;
         }
         else
@@ -129,7 +129,7 @@ public:
 
     std::list<std::shared_ptr<SliceType>> extractSlicesUntilTs(uint64_t ts)
     {
-        // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
+        /// drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
         auto lock = synchronizedSlices.wlock();
         auto& slices = *lock;
         std::list<std::shared_ptr<SliceType>> resultSlices;
@@ -146,7 +146,7 @@ public:
      */
     void removeSlicesUntilTs(uint64_t ts)
     {
-        // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
+        /// drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
         auto lock = synchronizedSlices.wlock();
         while (!lock->empty() && lock->front()->getEnd() <= ts)
         {
@@ -194,6 +194,6 @@ private:
     folly::Synchronized<std::list<SliceTypePtr>> synchronizedSlices;
     std::atomic<uint64_t> lastWatermarkTs = 0;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_THREADLOCALSLICESTORE_HPP_

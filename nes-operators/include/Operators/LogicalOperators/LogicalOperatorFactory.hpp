@@ -159,7 +159,7 @@ public:
     static LogicalBinaryOperatorPtr
     createJoinOperator(const Join::LogicalJoinDescriptorPtr& joinDefinition, OperatorId id = getNextOperatorId());
 
-    // todo put in experimental namespace
+    /// todo put in experimental namespace
     /**
     * @brief Create a specialized batch join operator.
     * @param id: the id of the operator if not defined then next free operator id is used.
@@ -196,6 +196,6 @@ public:
     createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id = getNextOperatorId());
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATORFACTORY_HPP_

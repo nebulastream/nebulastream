@@ -36,6 +36,6 @@ public:
 
     std::unordered_map<uint32_t, KeyedThresholdWindowState> keyedAggregationStates{};
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWOPERATORHANDLER_HPP_

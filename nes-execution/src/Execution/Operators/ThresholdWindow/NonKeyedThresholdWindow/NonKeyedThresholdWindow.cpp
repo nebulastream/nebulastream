@@ -98,14 +98,14 @@ NonKeyedThresholdWindow::NonKeyedThresholdWindow(
 void NonKeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) const
 {
     NES_TRACE("Execute ThresholdWindow for received record {}", record.getAllFields().begin()->c_str())
-    // Evaluate the threshold condition
+    /// Evaluate the threshold condition
     auto val = predicateExpression->execute(record);
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall("lockWindowHandler", lockWindowHandler, handler);
     if (val)
     {
         NES_TRACE("Execute ThresholdWindow for valid predicate {}", val.getValue().toString())
-        // Log the start of a threshold window
+        /// Log the start of a threshold window
         auto allFieldNames = record.getAllFields();
         if (!FunctionCall("getIsWindowOpen", getIsWindowOpen, handler))
         {
@@ -145,8 +145,8 @@ void NonKeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) con
                 FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
                 FunctionCall("resetCount", resetCount, handler);
                 FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
-                // Log the closing of window and along with agg result
-                auto aggregatedValue = Value<Int64>(1_s64); // default value to aggregate (i.e., for countAgg)
+                /// Log the closing of window and along with agg result
+                auto aggregatedValue = Value<Int64>(1_s64); /// default value to aggregate (i.e., for countAgg)
                 auto allFieldNames = record.getAllFields();
                 NES_DEBUG(
                     "Threshold window ends, closing value:{} | aggVal:{}",
@@ -162,24 +162,24 @@ void NonKeyedThresholdWindow::execute(ExecutionContext& ctx, Record& record) con
                         [&resultRecord](std::string acc, std::string s)
                         { return acc + " " + s + "=" + resultRecord.read(s)->toString(); }));
 
-                // crucial to release the handler here before we execute the rest of the pipeline
+                /// crucial to release the handler here before we execute the rest of the pipeline
                 child->execute(ctx, resultRecord);
             }
             else
             {
-                // if the minCount is not reached, we still need to close the window, reset counter and release the lock if the handler
+                /// if the minCount is not reached, we still need to close the window, reset counter and release the lock if the handler
                 FunctionCall("setIsWindowOpen", setIsWindowOpen, handler, Value<Boolean>(false));
                 FunctionCall("resetCount", resetCount, handler);
                 FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
             }
-        } // end if isWindowOpen
+        } /// end if isWindowOpen
         else
         {
-            // if the window is closed, we reset the counter and release the handler
+            /// if the window is closed, we reset the counter and release the handler
             FunctionCall("resetCount", resetCount, handler);
             FunctionCall("unlockWindowHandler", unlockWindowHandler, handler);
         }
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

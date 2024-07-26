@@ -55,15 +55,15 @@ namespace Source
 {
 class SourceCatalog;
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
-} // namespace Source
+} /// namespace Source
 
 namespace Query
 {
 class QueryCatalog;
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
-} // namespace Query
+} /// namespace Query
 
-} // namespace Catalogs
+} /// namespace Catalogs
 
 namespace Util
 {
@@ -128,7 +128,7 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
     Runtime::BufferManagerPtr bufferManager,
     const std::string& timeStampFieldName,
     uint64_t lastTimeStamp);
-} // namespace Util
-} // namespace NES
+} /// namespace Util
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_

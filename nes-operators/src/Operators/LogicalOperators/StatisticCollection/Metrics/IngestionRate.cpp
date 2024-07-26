@@ -32,7 +32,7 @@ bool IngestionRate::operator==(const StatisticMetric& rhs) const
 {
     if (rhs.instanceOf<IngestionRate>())
     {
-        // We assume that if the field has the same name, the metric is equal
+        /// We assume that if the field has the same name, the metric is equal
         auto rhsIngestionRate = dynamic_cast<const IngestionRate&>(rhs);
         return field->getFieldName() == rhsIngestionRate.field->getFieldName();
     }
@@ -43,4 +43,4 @@ std::string IngestionRate::toString() const
 {
     return "IngestionRate";
 }
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

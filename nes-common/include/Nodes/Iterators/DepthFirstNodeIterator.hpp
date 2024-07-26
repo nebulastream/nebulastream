@@ -75,6 +75,6 @@ public:
 private:
     NodePtr start;
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_NODES_ITERATORS_DEPTHFIRSTNODEITERATOR_HPP_

@@ -36,4 +36,4 @@ const std::vector<TagAddress>& TagVector::getAddresses()
     return addresses;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

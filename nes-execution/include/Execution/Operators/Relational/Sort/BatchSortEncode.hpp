@@ -174,7 +174,7 @@ struct EncoderTraits<T, typename std::enable_if<std::is_integral<T>::value && st
 template <typename T>
 struct EncoderTraits<T, typename std::enable_if<std::is_floating_point<T>::value>::type>
 {
-    // float and double are encoded as uint32_t and uint64_t respectively
+    /// float and double are encoded as uint32_t and uint64_t respectively
     using EncodedType = typename std::conditional<std::is_same<T, float>::value, uint32_t, uint64_t>::type;
 
     static EncodedType Encode(T value, bool descending)
@@ -220,5 +220,5 @@ typename EncoderTraits<T>::EncodedType encodeData(T value, bool descending = fal
     return EncoderTraits<T>::Encode(value, descending);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTENCODE_HPP_

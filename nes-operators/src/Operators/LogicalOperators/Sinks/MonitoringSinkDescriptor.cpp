@@ -46,4 +46,4 @@ void MonitoringSinkDescriptor::setCollectorType(Monitoring::MetricCollectorType 
     this->collectorType = collectorType;
 }
 
-} // namespace NES
+} /// namespace NES

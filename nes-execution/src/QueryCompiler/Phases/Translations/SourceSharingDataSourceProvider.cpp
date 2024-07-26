@@ -76,4 +76,4 @@ DataSourcePtr SourceSharingDataSourceProvider::lower(
     }
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

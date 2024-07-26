@@ -68,4 +68,4 @@ uint64_t PhysicalSchema::getRecordSize()
 {
     return this->schema->getSchemaSizeInBytes();
 }
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

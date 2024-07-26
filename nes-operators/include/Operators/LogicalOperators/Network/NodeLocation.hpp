@@ -91,5 +91,5 @@ private:
     std::string hostname;
     uint32_t port;
 };
-} // namespace NES::Network
+} /// namespace NES::Network
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NODELOCATION_HPP_

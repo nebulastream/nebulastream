@@ -41,22 +41,22 @@ void* executeMapUdf(void* state)
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
 
-    // get module and python arguments for the udf
-    // we need the module bc inside this module is the python udf
+    /// get module and python arguments for the udf
+    /// we need the module bc inside this module is the python udf
     auto* pythonArguments = handler->getPythonArguments();
     pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "No arguments for the python udf can be found.");
 
     PyObject* module = handler->getPythonModule();
     pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "Could not get the python module.");
 
-    // we get the python function
+    /// we get the python function
     auto pythonFunction = PyObject_GetAttrString(module, handler->getFunctionName().c_str());
     pythonInterpreterErrorCheck(
         pythonArguments, __func__, __LINE__, "Could not find the python udf " + handler->getFunctionName() + " inside the module");
 
     if (!PyCallable_Check(pythonFunction))
     {
-        //  PyCallable_Check returns 1 if the object is callable (= is a function) and 0 otherwise.
+        ///  PyCallable_Check returns 1 if the object is callable (= is a function) and 0 otherwise.
         if (PyErr_Occurred())
         {
             PyErr_Print();
@@ -65,7 +65,7 @@ void* executeMapUdf(void* state)
         NES_THROW_RUNTIME_ERROR("Function not callable");
     }
 
-    // execute python udf
+    /// execute python udf
     auto result = PyObject_CallObject(pythonFunction, pythonArguments);
     pythonInterpreterErrorCheck(pythonArguments, __func__, __LINE__, "Something went wrong. Result of the Python UDF is NULL");
 
@@ -100,8 +100,8 @@ void createFloatPythonObject(void* state, float value)
 {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
-    // Calling this function returns a PyFloatObject
+    /// The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
+    /// Calling this function returns a PyFloatObject
     handler->setPythonVariable(PyFloat_FromDouble(value));
 }
 
@@ -114,8 +114,8 @@ void createDoublePythonObject(void* state, double value)
 {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
-    // Calling this function returns a PyFloatObject
+    /// The Python C-API only has PyFloat_FromDouble for all Floating Point Objects
+    /// Calling this function returns a PyFloatObject
     handler->setPythonVariable(PyFloat_FromDouble(value));
 }
 
@@ -128,8 +128,8 @@ void createIntegerPythonObject(void* state, int32_t value)
 {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyLong_FromLong for all Integer Objects
-    // Calling this function returns a PyLongObject
+    /// The Python C-API only has PyLong_FromLong for all Integer Objects
+    /// Calling this function returns a PyLongObject
     handler->setPythonVariable(PyLong_FromLong(value));
 }
 
@@ -142,8 +142,8 @@ void createLongPythonObject(void* state, int64_t value)
 {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyLong_FromLong for all Integer Objects
-    // Calling this function returns a PyLongObject
+    /// The Python C-API only has PyLong_FromLong for all Integer Objects
+    /// Calling this function returns a PyLongObject
     handler->setPythonVariable(PyLong_FromLong(value));
 }
 
@@ -156,8 +156,8 @@ void createShortPythonObject(void* state, int16_t value)
 {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyLong_FromLong for all Integer Objects
-    // Calling this function returns a PyLongObject
+    /// The Python C-API only has PyLong_FromLong for all Integer Objects
+    /// Calling this function returns a PyLongObject
     handler->setPythonVariable(PyLong_FromLong(value));
 }
 
@@ -170,8 +170,8 @@ void createBytePythonObject(void* state, int8_t value)
 {
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     auto handler = static_cast<PythonUDFOperatorHandler*>(state);
-    // The Python C-API only has PyLong_FromLong for all Integer Objects
-    // Calling this function returns a PyLongObject
+    /// The Python C-API only has PyLong_FromLong for all Integer Objects
+    /// Calling this function returns a PyLongObject
     handler->setPythonVariable(PyLong_FromLong(value));
 }
 
@@ -233,7 +233,7 @@ T transformOutputType(void* outputPtr, int position, int tupleSize)
         output = PyTuple_GetItem(output, position);
     }
 
-    // value in the specific data type that we want to transform the PyObject into
+    /// value in the specific data type that we want to transform the PyObject into
     T value;
     if constexpr (std::is_same<T, bool>::value)
     {
@@ -248,8 +248,8 @@ T transformOutputType(void* outputPtr, int position, int tupleSize)
     }
     else if constexpr (std::is_same<T, float>::value)
     {
-        // The Python C-API only has PyFloat_AsDouble for all Floating Point Objects
-        // Calling this function returns a double
+        /// The Python C-API only has PyFloat_AsDouble for all Floating Point Objects
+        /// Calling this function returns a double
         value = PyFloat_AsDouble(output);
     }
     else if constexpr (std::is_same<T, double>::value)
@@ -258,8 +258,8 @@ T transformOutputType(void* outputPtr, int position, int tupleSize)
     }
     else if constexpr (std::is_same<T, int64_t>::value)
     {
-        // The Python C-API only has PyLong_AsLong for all Integer Objects
-        // Calling this function returns a long because all integers are implemented as long in Python
+        /// The Python C-API only has PyLong_AsLong for all Integer Objects
+        /// Calling this function returns a long because all integers are implemented as long in Python
         value = PyLong_AsLong(output);
     }
     else if constexpr (std::is_same<T, int32_t>::value)
@@ -396,7 +396,7 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const
 
     FunctionCall("initPythonTupleSize", initPythonTupleSize, handler, Value<Int32>((int)inputSchema->fields.size()));
 
-    // check for data type
+    /// check for data type
     for (int i = 0; i < (int)inputSchema->fields.size(); i++)
     {
         auto field = inputSchema->fields[i];
@@ -417,19 +417,19 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const
         else if (field->getDataType()->isEquals(DataTypeFactory::createInt32()))
         {
             FunctionCall("createIntegerPythonObject", createIntegerPythonObject, handler,
-                         record.read(fieldName).as<Int32>()); // Integer
+                         record.read(fieldName).as<Int32>()); /// Integer
         }
         else if (field->getDataType()->isEquals(DataTypeFactory::createInt64()))
         {
-            FunctionCall("createLongPythonObject", createLongPythonObject, handler, record.read(fieldName).as<Int64>()); // Long
+            FunctionCall("createLongPythonObject", createLongPythonObject, handler, record.read(fieldName).as<Int64>()); /// Long
         }
         else if (field->getDataType()->isEquals(DataTypeFactory::createInt16()))
         {
-            FunctionCall("createShortPythonObject", createShortPythonObject, handler, record.read(fieldName).as<Int16>()); // Short
+            FunctionCall("createShortPythonObject", createShortPythonObject, handler, record.read(fieldName).as<Int16>()); /// Short
         }
         else if (field->getDataType()->isEquals(DataTypeFactory::createInt8()))
         {
-            FunctionCall("createBytePythonObject", createBytePythonObject, handler, record.read(fieldName).as<Int8>()); // Byte
+            FunctionCall("createBytePythonObject", createBytePythonObject, handler, record.read(fieldName).as<Int8>()); /// Byte
         }
         else
         {
@@ -465,29 +465,29 @@ void MapPythonUDF::execute(ExecutionContext& ctx, Record& record) const
         else if (field->getDataType()->isEquals(DataTypeFactory::createInt32()))
         {
             Value<> val = FunctionCall("transformIntegerType", transformIntegerType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val); // Integer
+            record.write(fieldName, val); /// Integer
         }
         else if (field->getDataType()->isEquals(DataTypeFactory::createInt64()))
         {
             Value<> val = FunctionCall("transformLongType", transformLongType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val); // Long
+            record.write(fieldName, val); /// Long
         }
         else if (field->getDataType()->isEquals(DataTypeFactory::createInt16()))
         {
             Value<> val = FunctionCall("transformShortType", transformShortType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val); // Short
+            record.write(fieldName, val); /// Short
         }
         else if (field->getDataType()->isEquals(DataTypeFactory::createInt8()))
         {
             Value<> val = FunctionCall("transformByteType", transformByteType, outputPtr, Value<Int32>(i), Value<Int32>(outputSize));
-            record.write(fieldName, val); // Byte
+            record.write(fieldName, val); /// Byte
         }
         else
         {
             NES_THROW_RUNTIME_ERROR("Unsupported type: " + std::string(field->getDataType()->toString()));
         }
     }
-    // Trigger execution of next operator
+    /// Trigger execution of next operator
     child->execute(ctx, (Record&)record);
 }
 
@@ -500,5 +500,5 @@ void MapPythonUDF::terminate(ExecutionContext& ctx) const
     auto handler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     FunctionCall<>("finalizePython", finalizePython, handler);
 }
-} // namespace NES::Runtime::Execution::Operators
-#endif //NAUTILUS_PYTHON_UDF_ENABLED
+} /// namespace NES::Runtime::Execution::Operators
+#endif ///NAUTILUS_PYTHON_UDF_ENABLED

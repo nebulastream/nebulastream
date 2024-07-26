@@ -94,7 +94,7 @@ bool DefaultPhysicalOperatorProvider::isDemultiplex(const LogicalOperatorPtr& op
 void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const LogicalOperatorPtr& operatorNode)
 {
     auto operatorOutputSchema = operatorNode->getOutputSchema();
-    // A demultiplex operator has the same output schema as its child operator.
+    /// A demultiplex operator has the same output schema as its child operator.
     auto demultiplexOperator = PhysicalOperators::PhysicalDemultiplexOperator::create(operatorNode->getStatisticId(), operatorOutputSchema);
     demultiplexOperator->setOutputSchema(operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndParentNodes(demultiplexOperator);
@@ -102,7 +102,7 @@ void DefaultPhysicalOperatorProvider::insertDemultiplexOperatorsBefore(const Log
 
 void DefaultPhysicalOperatorProvider::insertMultiplexOperatorsAfter(const LogicalOperatorPtr& operatorNode)
 {
-    // the unionOperator operator has the same schema as the output schema of the operator node.
+    /// the unionOperator operator has the same schema as the output schema of the operator node.
     auto unionOperator = PhysicalOperators::PhysicalUnionOperator::create(operatorNode->getStatisticId(), operatorNode->getOutputSchema());
     operatorNode->insertBetweenThisAndChildNodes(unionOperator);
 }
@@ -133,7 +133,7 @@ void DefaultPhysicalOperatorProvider::lower(DecomposedQueryPlanPtr decomposedQue
 void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
     const DecomposedQueryPlanPtr& decomposedQueryPlan, const LogicalOperatorPtr& operatorNode)
 {
-    // If a unary operator has more than one parent, we introduce an implicit multiplex operator before.
+    /// If a unary operator has more than one parent, we introduce an implicit multiplex operator before.
     if (operatorNode->getChildren().size() > 1)
     {
         insertMultiplexOperatorsAfter(operatorNode);
@@ -286,7 +286,7 @@ void DefaultPhysicalOperatorProvider::lowerBinaryOperator(const LogicalOperatorP
 void DefaultPhysicalOperatorProvider::lowerUnionOperator(const LogicalOperatorPtr& operatorNode)
 {
     auto unionOperator = operatorNode->as<LogicalUnionOperator>();
-    // this assumes that we apply the ProjectBeforeUnionRule and the input across all children is the same.
+    /// this assumes that we apply the ProjectBeforeUnionRule and the input across all children is the same.
     if (!unionOperator->getLeftInputSchema()->equals(unionOperator->getRightInputSchema()))
     {
         throw QueryCompilationException(
@@ -393,7 +393,7 @@ void DefaultPhysicalOperatorProvider::lowerNautilusJoin(const LogicalOperatorPtr
     auto joinOperator = operatorNode->as<LogicalJoinOperator>();
     const auto& joinDefinition = joinOperator->getJoinDefinition();
 
-    // returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
+    /// returns the following pair:  std::make_pair(leftJoinKeyNameEqui,rightJoinKeyNameEqui);
     auto equiJoinKeyNames = NES::findEquiJoinKeyNames(joinDefinition->getJoinExpression());
 
     const auto windowType = joinDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
@@ -561,11 +561,11 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
     }
     else
     {
-        // FIXME Once #3407 is done, we can change this to get the left and right fieldname
+        /// FIXME Once #3407 is done, we can change this to get the left and right fieldname
         auto timeStampFieldName = windowType->getTimeCharacteristic()->getField()->getName();
         auto timeStampFieldNameWithoutSourceName = timeStampFieldName.substr(timeStampFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR));
 
-        // Lambda function for extracting the timestamp from a schema
+        /// Lambda function for extracting the timestamp from a schema
         auto findTimeStampFieldName = [&](const SchemaPtr& schema)
         {
             for (const auto& field : schema->fields)
@@ -578,7 +578,7 @@ std::tuple<TimestampField, TimestampField> DefaultPhysicalOperatorProvider::getT
             return std::string();
         };
 
-        // Extracting the left and right timestamp
+        /// Extracting the left and right timestamp
         auto timeStampFieldNameLeft = findTimeStampFieldName(joinOperator->getLeftInputSchema());
         auto timeStampFieldNameRight = findTimeStampFieldName(joinOperator->getRightInputSchema());
 
@@ -621,7 +621,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
         throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
     }
 
-    // TODO this currently just mimics the old usage of the set of input origins.
+    /// TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
     windowDefinition->setInputOriginIds(windowOperator->getInputOriginIds());
 
@@ -629,7 +629,7 @@ void DefaultPhysicalOperatorProvider::lowerTimeBasedWindowOperator(const Logical
         getNextOperatorId(), operatorNode->getStatisticId(), windowInputSchema, windowOutputSchema, windowDefinition);
     operatorNode->insertBetweenThisAndChildNodes(preAggregationOperator);
 
-    // if we have a sliding window and use slicing we have to create another slice merge operator
+    /// if we have a sliding window and use slicing we have to create another slice merge operator
     if (timeBasedWindowType->instanceOf<Windowing::SlidingWindow>() && options->getWindowingStrategy() == WindowingStrategy::SLICING)
     {
         auto mergingOperator = PhysicalOperators::PhysicalSliceMergingOperator::create(
@@ -651,19 +651,19 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
     {
         throw QueryCompilationException("The number of input origin IDs for an window operator should not be zero.");
     }
-    // TODO this currently just mimics the old usage of the set of input origins.
+    /// TODO this currently just mimics the old usage of the set of input origins.
     windowDefinition->setNumberOfInputEdges(windowOperator->getInputOriginIds().size());
 
-    // create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
+    /// create window operator handler, to establish a common Runtime object for aggregation and trigger phase.
     if (operatorNode->instanceOf<LogicalWindowOperator>())
     {
-        // handle if threshold window
-        //TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
+        /// handle if threshold window
+        ///TODO: At this point we are already a central window, we do not want the threshold window to become a Gentral Window in the first place
         auto windowType = operatorNode->as<WindowOperator>()->getWindowDefinition()->getWindowType();
         if (windowType->instanceOf<Windowing::ContentBasedWindowType>())
         {
             auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
-            // check different content-based window types
+            /// check different content-based window types
             if (contentBasedWindowType->getContentBasedSubWindowType()
                 == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
             {
@@ -691,4 +691,4 @@ void DefaultPhysicalOperatorProvider::lowerWindowOperator(const LogicalOperatorP
     }
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

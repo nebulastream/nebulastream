@@ -60,6 +60,6 @@ protected:
     TimeCharacteristicPtr timeCharacteristic;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_

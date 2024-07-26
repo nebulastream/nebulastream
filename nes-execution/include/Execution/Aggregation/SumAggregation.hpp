@@ -34,6 +34,6 @@ public:
     void reset(Nautilus::Value<Nautilus::MemRef> state) override;
     uint64_t getSize() override;
 };
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP_

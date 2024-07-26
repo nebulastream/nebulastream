@@ -30,7 +30,7 @@ namespace detail
 */
 [[maybe_unused]] std::string concatenateFunctionHelper(uint64_t value);
 [[maybe_unused]] std::string concatenateFunctionHelper(const NES::SchemaPtr& schema);
-} // namespace detail
+} /// namespace detail
 
 /**
  * @brief concatenates each element of the vector with a comma as the delimiter
@@ -54,6 +54,6 @@ std::string concatenateVectorAsString(const std::vector<T>& vector)
     return out.str();
 }
 
-}; // namespace Util
+}; /// namespace Util
 
 #endif /// NES_OPERATORS_INCLUDE_UTIL_OPERATORSUTIL_HPP_

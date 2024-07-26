@@ -58,7 +58,7 @@ DefaultSource::DefaultSource(
 
 std::optional<Runtime::TupleBuffer> DefaultSource::receiveData()
 {
-    // 10 tuples of size one
+    /// 10 tuples of size one
     uint64_t tupleCnt = 10;
 
     auto value = 1;
@@ -149,4 +149,4 @@ std::vector<Schema::MemoryLayoutType> DefaultSource::getSupportedLayouts()
     return {Schema::MemoryLayoutType::ROW_LAYOUT, Schema::MemoryLayoutType::COLUMNAR_LAYOUT};
 }
 
-} // namespace NES
+} /// namespace NES

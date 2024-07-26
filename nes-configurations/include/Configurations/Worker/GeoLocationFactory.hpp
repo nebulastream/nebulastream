@@ -21,7 +21,7 @@
 namespace NES::Spatial::DataTypes::Experimental
 {
 class GeoLocation;
-} // namespace NES::Spatial::DataTypes::Experimental
+} /// namespace NES::Spatial::DataTypes::Experimental
 
 namespace NES::Configurations::Spatial::Index::Experimental
 {
@@ -46,5 +46,5 @@ public:
      */
     static NES::Spatial::DataTypes::Experimental::GeoLocation createFromYaml(Yaml::Node& yamlConfig);
 };
-} // namespace NES::Configurations::Spatial::Index::Experimental
+} /// namespace NES::Configurations::Spatial::Index::Experimental
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_

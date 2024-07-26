@@ -32,4 +32,4 @@ std::string CastOperation::toString()
     return identifier + " = " + getInput()->getIdentifier() + " cast_to " + getStamp()->toString();
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

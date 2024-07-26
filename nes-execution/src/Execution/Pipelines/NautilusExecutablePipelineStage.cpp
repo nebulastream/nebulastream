@@ -49,18 +49,18 @@ ExecutionResult NautilusExecutablePipelineStage::execute(
 
 uint32_t NautilusExecutablePipelineStage::start(PipelineExecutionContext&)
 {
-    // nop as we don't need this function in nautilus
+    /// nop as we don't need this function in nautilus
     return 0;
 }
 
 uint32_t NautilusExecutablePipelineStage::open(Execution::PipelineExecutionContext&, WorkerContext&)
 {
-    // nop as we don't need this function in nautilus
+    /// nop as we don't need this function in nautilus
     return 0;
 }
 uint32_t NautilusExecutablePipelineStage::close(PipelineExecutionContext&, WorkerContext&)
 {
-    // nop as we don't need this function in nautilus
+    /// nop as we don't need this function in nautilus
     return 0;
 }
 
@@ -78,4 +78,4 @@ std::string NautilusExecutablePipelineStage::getCodeAsString()
     return "<no_code>";
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

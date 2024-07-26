@@ -26,9 +26,9 @@
 namespace NES
 {
 
-// In the following we define the NES_COMPILE_TIME_LOG_LEVEL macro.
-// This macro indicates the log level, which was chosen at compilation time and enables the complete
-// elimination of log messages.
+/// In the following we define the NES_COMPILE_TIME_LOG_LEVEL macro.
+/// This macro indicates the log level, which was chosen at compilation time and enables the complete
+/// elimination of log messages.
 #if defined(NES_LOGLEVEL_TRACE)
 #    define NES_COMPILE_TIME_LOG_LEVEL 7
 #elif defined(NES_LOGLEVEL_DEBUG)
@@ -55,7 +55,7 @@ struct LogCaller
     template <typename... arguments>
     constexpr static void do_call(spdlog::source_loc&&, fmt::format_string<arguments...>, arguments&&...)
     {
-        // nop
+        /// nop
     }
 };
 
@@ -148,17 +148,17 @@ struct LogCaller<LogLevel::LOG_WARNING>
         } \
     } while (0)
 
-// Creates a log message with log level trace.
+/// Creates a log message with log level trace.
 #define NES_TRACE(...) NES_LOG(NES::LogLevel::LOG_TRACE, __VA_ARGS__);
-// Creates a log message with log level info.
+/// Creates a log message with log level info.
 #define NES_INFO(...) NES_LOG(NES::LogLevel::LOG_INFO, __VA_ARGS__);
-// Creates a log message with log level debug.
+/// Creates a log message with log level debug.
 #define NES_DEBUG(...) NES_LOG(NES::LogLevel::LOG_DEBUG, __VA_ARGS__);
-// Creates a log message with log level warning.
+/// Creates a log message with log level warning.
 #define NES_WARNING(...) NES_LOG(NES::LogLevel::LOG_WARNING, __VA_ARGS__);
-// Creates a log message with log level error.
+/// Creates a log message with log level error.
 #define NES_ERROR(...) NES_LOG(NES::LogLevel::LOG_ERROR, __VA_ARGS__);
-// Creates a log message with log level fatal error.
+/// Creates a log message with log level fatal error.
 #define NES_FATAL_ERROR(...) NES_LOG(NES::LogLevel::LOG_FATAL_ERROR, __VA_ARGS__);
 
 /// I am aware that we do not like __ before variable names but here we need them
@@ -172,7 +172,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
 /// handled appropriately in invokeErrorHandlers/RunTimeException.
 
 #ifdef NES_DEBUG_MODE
-//Note Verify is only evaluated in Debug but not in Release
+///Note Verify is only evaluated in Debug but not in Release
 
 #    define NES_VERIFY(CONDITION, TEXT) \
         do \
@@ -345,6 +345,6 @@ struct LogCaller<LogLevel::LOG_WARNING>
         } \
     } while (0)
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGGER_HPP_

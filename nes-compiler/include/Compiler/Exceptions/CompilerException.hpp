@@ -26,6 +26,6 @@ public:
     explicit CompilerException(const std::string& message, const std::source_location location = std::source_location::current());
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_EXCEPTIONS_COMPILEREXCEPTION_HPP_

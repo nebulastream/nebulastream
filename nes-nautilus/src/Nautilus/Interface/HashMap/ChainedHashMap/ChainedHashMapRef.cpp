@@ -50,15 +50,15 @@ Value<MemRef> ChainedHashMapRef::EntryRef::getValuePtr() const
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryRef::getNext() const
 {
-    // This assumes that the next ptr is stored as the first element in the entry.
-    // perform a load to load the next value
+    /// This assumes that the next ptr is stored as the first element in the entry.
+    /// perform a load to load the next value
     auto next = getMember(ref, ChainedHashMap::Entry, next).load<MemRef>();
     return {next, keyOffset, valueOffset};
 }
 
 Value<UInt64> ChainedHashMapRef::EntryRef::getHash() const
 {
-    // load the has value from the entry
+    /// load the has value from the entry
     return getMember(ref, ChainedHashMap::Entry, hash).load<UInt64>();
 }
 
@@ -91,9 +91,9 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash)
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash, const std::vector<Value<>>& keys)
 {
-    // create new entry
+    /// create new entry
     auto entry = insert(hash);
-    // store keys
+    /// store keys
     auto keyPtr = entry.getKeyPtr();
     for (size_t i = 0; i < keys.size(); i++)
     {
@@ -106,9 +106,9 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash,
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::find(const Value<UInt64>& hash, const std::vector<Value<>>& keys)
 {
-    // find chain
+    /// find chain
     auto entry = findChain(hash);
-    // iterate chain and search for the correct entry
+    /// iterate chain and search for the correct entry
     for (; entry != nullptr; entry = entry.getNext())
     {
         if (compareKeys(entry, keys))
@@ -131,21 +131,21 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
         keys,
         [](const EntryRef&)
         {
-            // nop
+            /// nop
         });
 }
 
 ChainedHashMapRef::EntryRef
 ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys, const std::function<void(EntryRef&)>& onInsert)
 {
-    // find entry
+    /// find entry
     auto entry = find(hash, keys);
-    // if the entry is null, insert a new entry.
+    /// if the entry is null, insert a new entry.
     if (entry == nullptr)
     {
-        // create new entry
+        /// create new entry
         entry = insert(hash, keys);
-        // call on insert lambda function to insert default values
+        /// call on insert lambda function to insert default values
         onInsert(entry);
     }
     return entry;
@@ -296,4 +296,4 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::KeyEntryIterator::operator*() con
 {
     return currentEntry;
 }
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

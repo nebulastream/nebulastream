@@ -39,6 +39,6 @@ struct ReconnectPoint
     WorkerId newParentId;
     Timestamp expectedTime;
 };
-} // namespace Spatial::Mobility::Experimental
-} // namespace NES
+} /// namespace Spatial::Mobility::Experimental
+} /// namespace NES
 #endif /// NES_COMMON_INCLUDE_UTIL_MOBILITY_RECONNECTPOINT_HPP_

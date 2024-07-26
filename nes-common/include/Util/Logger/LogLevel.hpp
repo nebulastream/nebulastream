@@ -26,19 +26,19 @@ namespace NES
  */
 enum class LogLevel : uint8_t
 {
-    // Indicates that no information will be logged.
+    /// Indicates that no information will be logged.
     LOG_NONE = 1,
-    // Indicates that only information about fatal errors will be logged.
+    /// Indicates that only information about fatal errors will be logged.
     LOG_FATAL_ERROR = 2,
-    // Indicates that all kinds of error messages will be logged.
+    /// Indicates that all kinds of error messages will be logged.
     LOG_ERROR = 3,
-    // Indicates that all warnings and error messages will be logged.
+    /// Indicates that all warnings and error messages will be logged.
     LOG_WARNING = 4,
-    // Indicates that additional debug messages will be logged.
+    /// Indicates that additional debug messages will be logged.
     LOG_INFO = 5,
-    // Indicates that additional information will be logged.
+    /// Indicates that additional information will be logged.
     LOG_DEBUG = 6,
-    // Indicates that all available information will be logged (can result in massive output).
+    /// Indicates that all available information will be logged (can result in massive output).
     LOG_TRACE = 7
 };
 
@@ -59,6 +59,6 @@ constexpr uint64_t getLogLevel(const LogLevel value)
     return static_cast<std::underlying_type_t<LogLevel>>(value);
 }
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_

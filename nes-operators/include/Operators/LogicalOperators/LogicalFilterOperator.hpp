@@ -72,5 +72,5 @@ private:
     float selectivity = 1.0f;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALFILTEROPERATOR_HPP_

@@ -180,5 +180,5 @@ private:
     Configurations::GatheringModeConfigOption gatheringMode;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_CSVSOURCETYPE_HPP_

@@ -86,13 +86,13 @@ Value<> evalWithCast(
 {
     if (left.getValue().getTypeIdentifier() != right.value->getTypeIdentifier())
     {
-        // try to cast left to right type
+        /// try to cast left to right type
         auto castLeft = CastToOp(left, right.value->getTypeIdentifier());
         if (castLeft.has_value())
         {
             return evalBinary(castLeft.value(), right, function);
         }
-        // try to cast right to left type
+        /// try to cast right to left type
         auto castRight = CastToOp(right, left.value->getTypeIdentifier());
         if (castRight.has_value())
         {
@@ -413,4 +413,4 @@ Value<>::Value(const char* s)
     this->ref = createNextValueReference(value->getType());
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

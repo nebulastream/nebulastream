@@ -50,10 +50,10 @@ void ExecutionTrace::addArgument(const ValueRef& argument)
 
 uint32_t ExecutionTrace::createBlock()
 {
-    // add first block
+    /// add first block
     if (blocks.empty())
     {
-        // add arguments to first block
+        /// add arguments to first block
         blocks.emplace_back(blocks.size());
         blocks[0].arguments = arguments;
         return blocks.size() - 1;
@@ -64,14 +64,14 @@ uint32_t ExecutionTrace::createBlock()
 
 Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t operationIndex)
 {
-    // perform a control flow merge and merge the current block with operations in some other block.
-    // create new block
+    /// perform a control flow merge and merge the current block with operations in some other block.
+    /// create new block
     auto mergedBlockId = createBlock();
     auto& mergeBlock = getBlock(mergedBlockId);
     mergeBlock.type = Block::Type::ControlFlowMerge;
-    // move operation to new block
+    /// move operation to new block
     auto& oldBlock = getBlock(blockIndex);
-    // copy everything between opId and end;
+    /// copy everything between opId and end;
     for (uint32_t opIndex = operationIndex; opIndex < oldBlock.operations.size(); opIndex++)
     {
         auto sourceOperation = oldBlock.operations[opIndex];
@@ -86,7 +86,7 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
 
     auto oldBlockRef = BlockRef(mergedBlockId);
 
-    // remove content beyond opID
+    /// remove content beyond opID
     oldBlock.operations.erase(oldBlock.operations.begin() + operationIndex, oldBlock.operations.end());
     oldBlock.operations.emplace_back(
         TraceOperation(OpCode::JMP, ValueRef(0, 0, NES::Nautilus::IR::Types::StampFactory::createVoidStamp()), {oldBlockRef}));
@@ -98,7 +98,7 @@ Block& ExecutionTrace::processControlFlowMerge(uint32_t blockIndex, uint32_t ope
     mergeBlock.predecessors.emplace_back(currentBlock);
     setCurrentBlock(mergedBlockId);
 
-    //
+    ///
     auto& lastMergeOperation = mergeBlock.operations[mergeBlock.operations.size() - 1];
     if (lastMergeOperation.op == OpCode::CMP || lastMergeOperation.op == OpCode::JMP)
     {
@@ -142,4 +142,4 @@ std::shared_ptr<OperationRef> ExecutionTrace::getReturn()
     return returnRef;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

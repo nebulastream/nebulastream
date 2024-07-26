@@ -63,4 +63,4 @@ TEST_F(CompilationCacheTest, cacheSource)
     ASSERT_TRUE(compilationCache.contains(sourceCode));
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

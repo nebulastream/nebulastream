@@ -21,7 +21,7 @@
 namespace NES::Statistic
 {
 
-// Necessary for choosing the correct statistic format
+/// Necessary for choosing the correct statistic format
 enum class StatisticSynopsisType : uint8_t
 {
     COUNT_MIN,
@@ -52,6 +52,6 @@ static const std::string WIDTH_FIELD_NAME = "WIDTH_FIELD_NAME";
 static const std::string ESTIMATE_FIELD_NAME = "ESTIMATE_FIELD_NAME";
 static const std::string DEPTH_FIELD_NAME = "DEPTH_FIELD_NAME";
 static const std::string NUMBER_OF_BITS_IN_KEY = "NUMBER_OF_BITS_IN_KEY";
-} // namespace NES::Statistic
+} /// namespace NES::Statistic
 
 #endif /// NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_

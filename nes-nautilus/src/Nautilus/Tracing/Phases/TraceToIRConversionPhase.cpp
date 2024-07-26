@@ -70,7 +70,7 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> TraceToIRConversionPhase::IRConversi
 
 NES::Nautilus::IR::BasicBlockPtr TraceToIRConversionPhase::IRConversionContext::processBlock(int32_t scope, Block& block)
 {
-    // create new frame and block
+    /// create new frame and block
     ValueFrame blockFrame;
     std::vector<std::shared_ptr<NES::Nautilus::IR::Operations::BasicBlockArgument>> blockArguments;
     for (auto& arg : block.arguments)
@@ -208,7 +208,7 @@ void TraceToIRConversionPhase::IRConversionContext::processOperation(
             processCall(scope, frame, currentIrBlock, operation);
             return;
     }
-    //  NES_NOT_IMPLEMENTED();
+    ///  NES_NOT_IMPLEMENTED();
 }
 
 void TraceToIRConversionPhase::IRConversionContext::processJMP(
@@ -227,11 +227,11 @@ void TraceToIRConversionPhase::IRConversionContext::processJMP(
         return;
     }
     auto targetBlock = trace->getBlock(blockRef.block);
-    // Problem:
-    // trueCaseBlock = trace->getBlock(get<BlockRef>(operation.input[0]))
-    // targetBlock   = get<BlockRef>(operation.input[0])
+    /// Problem:
+    /// trueCaseBlock = trace->getBlock(get<BlockRef>(operation.input[0]))
+    /// targetBlock   = get<BlockRef>(operation.input[0])
 
-    // check if we jump to a loop head:
+    /// check if we jump to a loop head:
     if (targetBlock.operations.back().op == OpCode::CMP)
     {
         auto trueCaseBlockRef = get<BlockRef>(operation.input[0]);
@@ -467,11 +467,11 @@ void TraceToIRConversionPhase::IRConversionContext::processBitWiseRightShift(
 void TraceToIRConversionPhase::IRConversionContext::processLoad(
     int32_t, ValueFrame& frame, NES::Nautilus::IR::BasicBlockPtr& currentBlock, TraceOperation& operation)
 {
-    // TODO add load data type
-    //auto constOperation = std::make_shared<NES::Nautilus::IR::Operations::LoadOperation>(createValueIdentifier(operation.result),
-    //                                                                      createValueIdentifier(operation.input[0]),
-    //                                                                      NES::Nautilus::IR::Operations::Operation::BasicType::VOID);
-    //currentBlock->addOperation(constOperation);
+    /// TODO add load data type
+    ///auto constOperation = std::make_shared<NES::Nautilus::IR::Operations::LoadOperation>(createValueIdentifier(operation.result),
+    ///                                                                      createValueIdentifier(operation.input[0]),
+    ///                                                                      NES::Nautilus::IR::Operations::Operation::BasicType::VOID);
+    ///currentBlock->addOperation(constOperation);
     auto address = frame.getValue(createValueIdentifier(operation.input[0]));
     auto resultIdentifier = createValueIdentifier(operation.result);
     auto resultType = std::get<ValueRef>(operation.result).type;
@@ -540,7 +540,7 @@ bool TraceToIRConversionPhase::IRConversionContext::isBlockInLoop(uint32_t paren
         auto trueCaseBlockRef = get<BlockRef>(terminationOp.input[0]);
         auto falseCaseBlockRef = get<BlockRef>(terminationOp.input[1]);
         return currentBlock.type == Block::Type::ControlFlowMerge;
-        //isBlockInLoop(parentBlockId, trueCaseBlockRef.block) || isBlockInLoop(parentBlockId, falseCaseBlockRef.block);
+        ///isBlockInLoop(parentBlockId, trueCaseBlockRef.block) || isBlockInLoop(parentBlockId, falseCaseBlockRef.block);
     }
     else if (terminationOp.op == OpCode::JMP)
     {
@@ -626,4 +626,4 @@ void TraceToIRConversionPhase::IRConversionContext::processCast(
     frame.setValue(resultIdentifier, castOperation);
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

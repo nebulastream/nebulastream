@@ -118,4 +118,4 @@ uint64_t TimeCharacteristic::hash() const
     return hashValue;
 }
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing

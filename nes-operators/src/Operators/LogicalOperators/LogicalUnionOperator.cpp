@@ -82,7 +82,7 @@ bool LogicalUnionOperator::inferSchema()
         throw TypeInferenceException("Left and right should have same memory layout");
     }
 
-    //Copy the schema of left input
+    ///Copy the schema of left input
     outputSchema->clear();
     outputSchema->copyFields(leftInputSchema);
     outputSchema->setLayoutType(leftInputSchema->getLayoutType());
@@ -123,7 +123,7 @@ void LogicalUnionOperator::inferStringSignature()
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("LogicalUnionOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalUnionOperator: Union should have 2 children.");
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         child->as<LogicalOperator>()->inferStringSignature();
@@ -135,14 +135,14 @@ void LogicalUnionOperator::inferStringSignature()
     signatureStream << *rightChildSignature.begin()->second.begin() + ").";
     signatureStream << *leftChildSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
 void LogicalUnionOperator::inferInputOrigins()
 {
-    // in the default case we collect all input origins from the children/upstream operators
+    /// in the default case we collect all input origins from the children/upstream operators
     std::vector<OriginId> combinedInputOriginIds;
     for (auto child : this->children)
     {
@@ -154,4 +154,4 @@ void LogicalUnionOperator::inferInputOrigins()
     this->leftInputOriginIds = combinedInputOriginIds;
 }
 
-} // namespace NES
+} /// namespace NES

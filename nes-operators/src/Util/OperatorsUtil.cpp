@@ -29,4 +29,4 @@ std::string detail::concatenateFunctionHelper(const NES::SchemaPtr& schema)
     return schema->toString();
 }
 
-} // namespace Util
+} /// namespace Util

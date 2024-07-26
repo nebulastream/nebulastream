@@ -34,7 +34,7 @@ LogicalSourceTypePtr LogicalSourceTypeFactory::createFromString(std::string, std
 
         if (parameter.first == LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG && !parameter.second.empty())
         {
-            // TODO: add issue for CLI parsing of array of values, currently we support only yaml
+            /// TODO: add issue for CLI parsing of array of values, currently we support only yaml
         }
     }
 
@@ -100,4 +100,4 @@ LogicalSourceTypePtr LogicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlCo
     return LogicalSourceType::create(logicalSourceName, schemaType);
 }
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations

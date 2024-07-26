@@ -75,10 +75,10 @@ Value<> TanExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<TanExpression>> tanFunction("tan");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

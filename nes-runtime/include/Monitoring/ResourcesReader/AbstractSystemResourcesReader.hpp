@@ -36,14 +36,14 @@ class RuntimeMetrics;
 class AbstractSystemResourcesReader
 {
 public:
-    //  -- Constructors --
+    ///  -- Constructors --
     AbstractSystemResourcesReader();
     AbstractSystemResourcesReader(const AbstractSystemResourcesReader&) = default;
     AbstractSystemResourcesReader(AbstractSystemResourcesReader&&) = default;
-    //  -- Assignment --
+    ///  -- Assignment --
     AbstractSystemResourcesReader& operator=(const AbstractSystemResourcesReader&) = default;
     AbstractSystemResourcesReader& operator=(AbstractSystemResourcesReader&&) = default;
-    //  -- dtor --
+    ///  -- dtor --
     virtual ~AbstractSystemResourcesReader() = default;
 
     /**
@@ -102,6 +102,6 @@ protected:
 };
 using AbstractSystemResourcesReaderPtr = std::shared_ptr<AbstractSystemResourcesReader>;
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_ABSTRACTSYSTEMRESOURCESREADER_HPP_

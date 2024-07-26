@@ -123,5 +123,5 @@ private:
     Configurations::StringConfigOption userName;
     Configurations::StringConfigOption password;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_OPCSOURCETYPE_HPP_

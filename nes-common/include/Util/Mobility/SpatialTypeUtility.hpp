@@ -37,6 +37,6 @@ public:
     static NES::Spatial::Protobuf::SpatialType toProtobufEnum(Experimental::SpatialType spatialType);
 };
 
-} // namespace NES::Spatial::Util
+} /// namespace NES::Spatial::Util
 
 #endif /// NES_COMMON_INCLUDE_UTIL_MOBILITY_SPATIALTYPEUTILITY_HPP_

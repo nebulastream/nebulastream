@@ -56,6 +56,6 @@ private:
     T content;
     std::vector<std::unique_ptr<TrieNode<T>>> children;
 };
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_TRIE_HPP_

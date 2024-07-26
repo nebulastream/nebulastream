@@ -85,4 +85,4 @@ Catalogs::UDF::JavaUDFDescriptorPtr LogicalOpenCLOperator::getJavaUDFDescriptor(
     return Catalogs::UDF::UDFDescriptor::as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
 }
 
-} // namespace NES
+} /// namespace NES

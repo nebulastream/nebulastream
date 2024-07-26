@@ -108,6 +108,6 @@ private:
     bool alreadyMergedLocalToGlobalHashTable;
     std::mutex mutexMergeLocalToGlobalHashTable;
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICEVARSIZED_HPP_

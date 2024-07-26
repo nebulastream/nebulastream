@@ -47,12 +47,12 @@ FixedPagesLinkedList* StreamJoinHashTable::getBucketLinkedList(size_t bucketPos)
 std::string StreamJoinHashTable::getContentAsString(SchemaPtr schema) const
 {
     std::stringstream ss;
-    //for every bucket
+    ///for every bucket
     size_t bucketCnt = 0;
     for (auto& bucket : buckets)
     {
         ss << "bucket no=" << bucketCnt++;
-        //for every page
+        ///for every page
         size_t pageCnt = 0;
         for (auto& page : bucket->getPages())
         {
@@ -122,4 +122,4 @@ size_t StreamJoinHashTable::getNumBuckets() const
     return buckets.size();
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

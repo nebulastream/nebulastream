@@ -20,4 +20,4 @@ TagCreationException::TagCreationException(const std::string& message, const std
 {
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

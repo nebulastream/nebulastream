@@ -60,7 +60,7 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
 {
     if (withDeletion)
     {
-        // Update the watermark for the nlj probe and delete all slices that can be deleted
+        /// Update the watermark for the nlj probe and delete all slices that can be deleted
         const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         Nautilus::FunctionCall(
             "deleteAllSlicesProxy",
@@ -75,14 +75,14 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
             Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     }
 
-    // Now close for all children
+    /// Now close for all children
     Operator::close(ctx, recordBuffer);
 }
 
 void StreamJoinProbe::createJoinedRecord(
     Record& joinedRecord, Record& leftRecord, Record& rightRecord, const Value<UInt64>& windowStart, const Value<UInt64>& windowEnd) const
 {
-    // Writing the window start, end, and key field
+    /// Writing the window start, end, and key field
     joinedRecord.write(windowMetaData.windowStartFieldName, windowStart);
     joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd);
 
@@ -118,7 +118,7 @@ StreamJoinProbe::StreamJoinProbe(
 
 void StreamJoinProbe::terminate(ExecutionContext& ctx) const
 {
-    // Delete all slices, as the query has ended
+    /// Delete all slices, as the query has ended
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall(
         "deleteAllWindowsProxy",
@@ -130,4 +130,4 @@ void StreamJoinProbe::terminate(ExecutionContext& ctx) const
     Operator::terminate(ctx);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

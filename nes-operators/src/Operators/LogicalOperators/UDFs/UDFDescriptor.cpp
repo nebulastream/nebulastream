@@ -30,7 +30,7 @@ UDFDescriptor::UDFDescriptor(const std::string& methodName, const SchemaPtr& inp
         throw UDFException("The output schema of a UDF must not be empty");
     }
 
-    // We allow the input schema to be empty for now so that we don't have to serialize it in the client
+    /// We allow the input schema to be empty for now so that we don't have to serialize it in the client
 }
 
 void UDFDescriptor::setInputSchema(const SchemaPtr& inputSchema)
@@ -43,4 +43,4 @@ bool UDFDescriptor::operator==(const UDFDescriptor& other) const
     return getMethodName() == other.getMethodName() && inputSchema->equals(other.inputSchema, true)
         && outputSchema->equals(other.outputSchema, true);
 }
-} // namespace NES::Catalogs::UDF
+} /// namespace NES::Catalogs::UDF

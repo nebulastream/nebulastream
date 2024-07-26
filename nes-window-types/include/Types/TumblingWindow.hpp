@@ -56,6 +56,6 @@ private:
     const TimeMeasure size;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_TUMBLINGWINDOW_HPP_

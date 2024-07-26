@@ -38,20 +38,20 @@ public:
 TEST_F(CosExpressionTest, evaluateCosExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<CosExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(0_s8));
         ASSERT_EQ(resultValue, (float)1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(0_s32));
         ASSERT_EQ(resultValue, (float)1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(0_s64));
         ASSERT_EQ(resultValue, (float)1);
@@ -62,13 +62,13 @@ TEST_F(CosExpressionTest, evaluateCosExpressionInteger)
 TEST_F(CosExpressionTest, evaluateCosExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<CosExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)90));
         ASSERT_EQ(resultValue, std::cos(90));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)90));
         ASSERT_EQ(resultValue, std::cos(90));
@@ -85,4 +85,4 @@ TEST_F(CosExpressionTest, evaluateCosExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

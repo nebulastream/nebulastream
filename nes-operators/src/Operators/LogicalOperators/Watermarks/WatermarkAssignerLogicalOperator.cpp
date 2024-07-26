@@ -83,7 +83,7 @@ void WatermarkAssignerLogicalOperator::inferStringSignature()
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
@@ -95,9 +95,9 @@ void WatermarkAssignerLogicalOperator::inferStringSignature()
     auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
     signatureStream << *childSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
 
-} // namespace NES
+} /// namespace NES

@@ -55,16 +55,16 @@ inline auto toExpressionNodePtr(T&& t) -> ExpressionNodePtr
     using Arg = std::decay_t<T>;
     if constexpr (std::is_same_v<Arg, ExpressionNodePtr>)
     {
-        // This is actually correct and necessary in C++17 to enable moving in the applicable cases (xval, prval).
-        // In C++2a this shouldn't be necessary anymore due to P1825.
+        /// This is actually correct and necessary in C++17 to enable moving in the applicable cases (xval, prval).
+        /// In C++2a this shouldn't be necessary anymore due to P1825.
         return std::forward<T>(t);
     }
     else if constexpr (std::is_same_v<Arg, ExpressionItem>)
     {
-        // Guaranteed copy elision
+        /// Guaranteed copy elision
         return t.getExpressionNode();
     }
-    // Guaranteed copy elision.
+    /// Guaranteed copy elision.
     return ExpressionItem{std::forward<T>(t)}.getExpressionNode();
 }
 
@@ -148,6 +148,6 @@ inline auto operator>(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr
     return toExpressionNodePtr(std::forward<LHS>(lhs)) > toExpressionNodePtr(std::forward<RHS>(rhs));
 }
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_CLIENT_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_

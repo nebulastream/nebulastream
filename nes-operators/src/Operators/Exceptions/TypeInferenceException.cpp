@@ -23,4 +23,4 @@ TypeInferenceException::TypeInferenceException(QueryId queryId, const std::strin
     : Exceptions::RequestExecutionException(queryId, message)
 {
 }
-} // namespace NES
+} /// namespace NES

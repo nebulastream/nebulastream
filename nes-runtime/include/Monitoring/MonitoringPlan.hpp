@@ -76,10 +76,10 @@ public:
 private:
     explicit MonitoringPlan(const std::set<MetricType>& metrics);
 
-    //enum defined in SerializableDataType.proto
+    ///enum defined in SerializableDataType.proto
     std::set<MetricType> metricTypes;
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGPLAN_HPP_

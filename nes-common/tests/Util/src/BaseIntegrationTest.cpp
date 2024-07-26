@@ -61,7 +61,7 @@ std::string generateUUID()
     }
     return ss.str();
 }
-} // namespace detail::uuid
+} /// namespace detail::uuid
 
 BaseIntegrationTest::BaseIntegrationTest() : testResourcePath(std::filesystem::current_path() / detail::uuid::generateUUID())
 {
@@ -141,4 +141,4 @@ void BaseIntegrationTest::onFatalException(std::shared_ptr<std::exception> excep
     failTest();
 }
 
-} // namespace NES::Testing
+} /// namespace NES::Testing

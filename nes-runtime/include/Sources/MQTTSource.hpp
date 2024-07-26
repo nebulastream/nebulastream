@@ -28,7 +28,7 @@ namespace mqtt
 {
 class async_client;
 using async_clientPtr = std::shared_ptr<async_client>;
-} // namespace mqtt
+} /// namespace mqtt
 
 namespace NES
 {
@@ -188,11 +188,11 @@ private:
     std::vector<PhysicalTypePtr> physicalTypes;
     std::unique_ptr<Parser> inputParser;
     long bufferFlushIntervalMs;
-    //Read timeout in ms for mqtt message consumer
+    ///Read timeout in ms for mqtt message consumer
     long readTimeoutInMs;
 };
 
 using MQTTSourcePtr = std::shared_ptr<MQTTSource>;
-} // namespace NES
-#endif //NES_MQTTSOURCE_HPP
+} /// namespace NES
+#endif ///NES_MQTTSOURCE_HPP
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_MQTTSOURCE_HPP_

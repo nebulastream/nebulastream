@@ -42,6 +42,6 @@ public:
 protected:
     explicit GreaterExpressionNode(GreaterExpressionNode* other);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREXPRESSIONNODE_HPP_

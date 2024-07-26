@@ -55,8 +55,8 @@ class NLJBuildPipelineExecutionContext : public PipelineExecutionContext
 public:
     NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID, // mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
+            INVALID_PIPELINE_ID, /// mock pipeline id
+            INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
             bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {},
@@ -72,17 +72,17 @@ public:
     std::vector<TupleBuffer> emittedBuffers;
     NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID, // mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
+            INVALID_PIPELINE_ID, /// mock pipeline id
+            INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
             bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef)
             {
-                //                emittedBuffers.emplace_back(std::move(buffer));
+                ///                emittedBuffers.emplace_back(std::move(buffer));
             },
             [](TupleBuffer&)
             {
-                //                emittedBuffers.emplace_back(std::move(buffer));
+                ///                emittedBuffers.emplace_back(std::move(buffer));
             },
             {nljOperatorHandler})
     {
@@ -322,7 +322,7 @@ public:
         nljBuildLeft->setup(executionContext);
         nljBuildRight->setup(executionContext);
 
-        // We do not care for the record buffer in the current NLJBuild::open() implementation
+        /// We do not care for the record buffer in the current NLJBuild::open() implementation
         RecordBuffer recordBuffer(Value<MemRef>((int8_t*)nullptr));
         nljBuildLeft->open(executionContext, recordBuffer);
         nljBuildRight->open(executionContext, recordBuffer);
@@ -382,13 +382,13 @@ public:
                     joinedRecord.write(joinSchema->get(0)->getName(), windowStartVal);
                     joinedRecord.write(joinSchema->get(1)->getName(), windowEndVal);
                     joinedRecord.write(joinSchema->get(2)->getName(), leftRecord.read(joinFieldNameLeft));
-                    // Writing the leftSchema fields
+                    /// Writing the leftSchema fields
                     for (auto& field : leftSchema->fields)
                     {
                         joinedRecord.write(field->getName(), leftRecord.read(field->getName()));
                     }
 
-                    // Writing the rightSchema fields
+                    /// Writing the rightSchema fields
                     for (auto& field : rightSchema->fields)
                     {
                         joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
@@ -560,9 +560,9 @@ public:
 
         auto numberOfBuffersInLeft = std::ceil((double)windowSize / (leftPageSize / getSizeOfRecord(leftSchema)));
         auto numberOfBuffersInRight = std::ceil((double)windowSize / (rightPageSize / getSizeOfRecord(rightSchema)));
-        // 1 for number of metadata buffers, 2 for slice start and end, 1 for number of workers + 2 * number of workers (default one) (see documentation of NLJSlice serialize function)
+        /// 1 for number of metadata buffers, 2 for slice start and end, 1 for number of workers + 2 * number of workers (default one) (see documentation of NLJSlice serialize function)
         auto numberOfOSliceMetadataBuffers = std::ceil((double)(4 + 2) * sizeof(uint64_t) / bm->getBufferSize());
-        // 1 for number of metadata buffers, 1 for number of slices + number of slices (see documentation of StreamJoinOperatorHandler getStateToMigrate function)
+        /// 1 for number of metadata buffers, 1 for number of slices + number of slices (see documentation of StreamJoinOperatorHandler getStateToMigrate function)
         auto numberOfOperatorMetadataBuffers = std::ceil((double)(2 + expectedNumberOfSlice) * sizeof(uint64_t) / bm->getBufferSize());
 
         auto expectedNumberOfBuffers = numberOfOperatorMetadataBuffers
@@ -570,20 +570,20 @@ public:
         ASSERT_EQ(buffers.size(), expectedNumberOfBuffers);
 
         auto startMetadataPtr = buffers[numberOfOperatorMetadataBuffers].getBuffer<uint64_t>();
-        // Second uint64_t in metadata is sliceStart
+        /// Second uint64_t in metadata is sliceStart
         uint64_t sliceStart = startMetadataPtr[1];
         ASSERT_EQ(sliceStart, start);
 
         auto sliceEndIdx = 3;
-        // count index of sliceEnd metadata buffer (from of sliceEnd and pageSize)
+        /// count index of sliceEnd metadata buffer (from of sliceEnd and pageSize)
         auto sliceEndMetadataIdx = sliceEndIdx * sizeof(uint64_t) / bm->getBufferSize();
         auto startOfLastSliceBufferIdx = numberOfOperatorMetadataBuffers
             + (expectedNumberOfSlice - 1) * (numberOfOSliceMetadataBuffers + numberOfBuffersInLeft + numberOfBuffersInRight)
             + sliceEndMetadataIdx;
         auto endMetadataPtr = buffers[startOfLastSliceBufferIdx].getBuffer<uint64_t>();
-        // sliceEnd index is real index normed by number of data in slice
+        /// sliceEnd index is real index normed by number of data in slice
         auto sliceEndIdxInBuffer = (sliceEndIdx - 1) % (bm->getBufferSize() / sizeof(uint64_t));
-        // Third uint64_t in metadata is sliceEnd
+        /// Third uint64_t in metadata is sliceEnd
         uint64_t sliceEnd = endMetadataPtr[sliceEndIdxInBuffer];
         ASSERT_EQ(sliceEnd, end);
     }
@@ -629,7 +629,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTest)
     const auto numberOfRecordsRight = 5000;
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
-    // Checking corner case when stopTS is equal to end timestamp of slice.
+    /// Checking corner case when stopTS is equal to end timestamp of slice.
     auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);
     checkNumberOfBuffers(2000, 4000);
 }
@@ -642,10 +642,10 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTestWithSmallBufferSize)
     const auto numberOfRecordsRight = 5000;
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
-    // make buffer size less and check that more metadata buffers are created
+    /// make buffer size less and check that more metadata buffers are created
     bm = std::make_shared<BufferManager>(20, 10000);
     nljOperatorHandler->setBufferManager(bm);
-    // Checking corner case when stopTS is equal to end timestamp of slice.
+    /// Checking corner case when stopTS is equal to end timestamp of slice.
     auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);
     checkNumberOfBuffers(2000, 4000);
 }
@@ -658,7 +658,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesMiddleBordersTest)
     const auto numberOfRecordsRight = 5000;
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
-    // Checking case when startTS and stopTS are in the middle of slices timestamps.
+    /// Checking case when startTS and stopTS are in the middle of slices timestamps.
     auto slices = nljOperatorHandler->getStateToMigrate(1500, 3500);
     checkNumberOfBuffers(1000, 4000);
 }
@@ -686,4 +686,4 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindowMulipleExpression
 
     insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
 }
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

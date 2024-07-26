@@ -384,4 +384,4 @@ uint64_t TestTupleBuffer::countOccurrences(DynamicTuple& tuple) const
     return count;
 }
 
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts

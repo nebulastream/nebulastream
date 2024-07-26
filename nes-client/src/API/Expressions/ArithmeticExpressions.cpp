@@ -32,7 +32,7 @@
 namespace NES
 {
 
-// calls of binary operators with two ExpressionNodes
+/// calls of binary operators with two ExpressionNodes
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
 {
     return AddExpressionNode::create(std::move(leftExp), std::move(rightExp));
@@ -68,7 +68,7 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionNodePtr rightExp)
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "power", {leftExp, rightExp});
 }
 
-// calls of unary operators with ExpressionNode
+/// calls of unary operators with ExpressionNode
 ExpressionNodePtr ABS(const ExpressionNodePtr& exp)
 {
     return FunctionExpression::create(DataTypeFactory::createUndefined(), "abs", {exp});
@@ -153,8 +153,8 @@ ExpressionNodePtr operator--(ExpressionNodePtr leftExp, int)
         - ConstantValueExpressionNode::create(DataTypeFactory::createBasicValue(DataTypeFactory::createUInt16(), /*value*/ "1"));
 }
 
-// calls of Binary operators with one or two ExpressionItems
-// leftExp: item, rightExp: node
+/// calls of Binary operators with one or two ExpressionItems
+/// leftExp: item, rightExp: node
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionNodePtr rightExp)
 {
     return leftExp.getExpressionNode() + std::move(rightExp);
@@ -190,7 +190,7 @@ ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionNodePtr rightExp)
     return POWER(leftExp.getExpressionNode(), std::move(rightExp));
 }
 
-// leftExp: node, rightExp: item
+/// leftExp: node, rightExp: item
 ExpressionNodePtr operator+(ExpressionNodePtr leftExp, ExpressionItem rightExp)
 {
     return std::move(leftExp) + rightExp.getExpressionNode();
@@ -226,7 +226,7 @@ ExpressionNodePtr POWER(ExpressionNodePtr leftExp, ExpressionItem rightExp)
     return POWER(std::move(leftExp), rightExp.getExpressionNode());
 }
 
-// leftExp: item, rightWxp: item
+/// leftExp: item, rightWxp: item
 ExpressionNodePtr operator+(ExpressionItem leftExp, ExpressionItem rightExp)
 {
     return leftExp.getExpressionNode() + rightExp.getExpressionNode();
@@ -262,7 +262,7 @@ ExpressionNodePtr POWER(ExpressionItem leftExp, ExpressionItem rightExp)
     return POWER(leftExp.getExpressionNode(), rightExp.getExpressionNode());
 }
 
-// calls of Unary operators with ExpressionItem
+/// calls of Unary operators with ExpressionItem
 ExpressionNodePtr ABS(ExpressionItem exp)
 {
     return ABS(exp.getExpressionNode());
@@ -343,4 +343,4 @@ ExpressionNodePtr operator--(ExpressionItem exp, int)
     return exp.getExpressionNode()--;
 }
 
-} // namespace NES
+} /// namespace NES

@@ -50,7 +50,7 @@ ValueRef createNextRef(const NES::Nautilus::IR::Types::StampPtr& stamp)
     {
         return ctx->createNextRef(stamp);
     }
-    // create default value.
+    /// create default value.
     return ValueRef(0 /* blockId */, 0 /*operationId */, NES::Nautilus::IR::Types::StampFactory::createVoidStamp());
 }
 
@@ -68,4 +68,4 @@ bool ValueRef::operator!=(const ValueRef& rhs) const
     return !(rhs == *this);
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

@@ -91,12 +91,12 @@ std::string KafkaSink::toString() const
 
 void KafkaSink::setup()
 {
-    // currently not required
+    /// currently not required
 }
 
 void KafkaSink::shutdown()
 {
-    // currently not required
+    /// currently not required
 }
 
 void KafkaSink::connect()
@@ -104,10 +104,10 @@ void KafkaSink::connect()
     NES_DEBUG("KAFKASINK connecting...");
     producer = std::make_unique<cppkafka::Producer>(*config);
     msgBuilder = std::make_unique<cppkafka::MessageBuilder>(topic);
-    // FIXME: should we provide user to access partition ?
-    // if (partition != INVALID_PARTITION_NUMBER) {
-    // msgBuilder->partition(partition);
-    // }
+    /// FIXME: should we provide user to access partition ?
+    /// if (partition != INVALID_PARTITION_NUMBER) {
+    /// msgBuilder->partition(partition);
+    /// }
 }
 
 std::string KafkaSink::getBrokers() const
@@ -127,5 +127,5 @@ SinkMediumTypes KafkaSink::getSinkMediumType()
     return SinkMediumTypes::KAFKA_SINK;
 }
 
-} // namespace NES
+} /// namespace NES
 #endif

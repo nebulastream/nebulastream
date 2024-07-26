@@ -86,5 +86,5 @@ private:
 
 using SenseSourcePtr = std::shared_ptr<SenseSource>;
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_SENSESOURCE_HPP_

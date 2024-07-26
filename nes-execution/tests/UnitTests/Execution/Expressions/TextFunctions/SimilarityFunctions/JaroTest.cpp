@@ -116,4 +116,4 @@ TEST_F(JaroTest, FailJaroWinklerTest)
     EXPECT_ANY_THROW(expression.eval(textValue0, textValue1, flagValue));
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

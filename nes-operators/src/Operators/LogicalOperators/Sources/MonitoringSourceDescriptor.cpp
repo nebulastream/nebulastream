@@ -63,4 +63,4 @@ Monitoring::MetricCollectorType MonitoringSourceDescriptor::getMetricCollectorTy
     return metricCollectorType;
 }
 
-} // namespace NES
+} /// namespace NES

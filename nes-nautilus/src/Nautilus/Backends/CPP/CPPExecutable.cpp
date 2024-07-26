@@ -32,4 +32,4 @@ bool CPPExecutable::hasInvocableFunctionPtr()
     return true;
 }
 
-} // namespace NES::Nautilus::Backends::CPP
+} /// namespace NES::Nautilus::Backends::CPP

@@ -41,7 +41,7 @@ namespace Experimental
 {
 class LogicalBatchJoinOperator;
 using LogicalBatchJoinOperatorPtr = std::shared_ptr<LogicalBatchJoinOperator>;
-} // namespace Experimental
+} /// namespace Experimental
 
 class LogicalUnionOperator;
 using LogicalUnionOperatorPtr = std::shared_ptr<LogicalUnionOperator>;
@@ -74,7 +74,7 @@ using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-} // namespace Catalogs::UDF
+} /// namespace Catalogs::UDF
 
 namespace InferModel
 {
@@ -83,13 +83,13 @@ using LogicalInferModelOperatorPtr = std::shared_ptr<LogicalInferModelOperator>;
 
 class InferModelOperatorHandler;
 using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
-} // namespace InferModel
+} /// namespace InferModel
 
 namespace Statistic
 {
 class LogicalStatisticWindowOperator;
 using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
-} // namespace Statistic
+} /// namespace Statistic
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

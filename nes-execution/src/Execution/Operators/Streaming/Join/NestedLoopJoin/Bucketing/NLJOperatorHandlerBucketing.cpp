@@ -43,4 +43,4 @@ NLJOperatorHandlerPtr NLJOperatorHandlerBucketing::create(
     return std::make_shared<NLJOperatorHandlerBucketing>(
         inputOrigins, outputOriginId, windowSize, windowSlide, leftSchema, rightSchema, pageSizeLeft, pageSizeRight);
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

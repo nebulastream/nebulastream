@@ -58,4 +58,4 @@ const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const
     return columnOffsets;
 }
 
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts

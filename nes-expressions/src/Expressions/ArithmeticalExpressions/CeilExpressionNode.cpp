@@ -34,10 +34,10 @@ ExpressionNodePtr CeilExpressionNode::create(ExpressionNodePtr const& child)
 
 void CeilExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of the child, check if its numerical, assume the same stamp
+    /// infer stamp of the child, check if its numerical, assume the same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // if stamp is integer, convert stamp to float
+    /// if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
     NES_TRACE("CeilExpressionNode: converted stamp to float: {}", toString());
 }
@@ -64,4 +64,4 @@ ExpressionNodePtr CeilExpressionNode::copy()
     return CeilExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

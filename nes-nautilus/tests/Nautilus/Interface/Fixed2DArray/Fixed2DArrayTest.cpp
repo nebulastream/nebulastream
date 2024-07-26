@@ -110,4 +110,4 @@ TEST_F(Fixed2DArrayTest, insertCustomClass)
     }
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

@@ -191,7 +191,7 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
             {
                 if (std::find(indexAlreadyInNewBuffer.begin(), indexAlreadyInNewBuffer.end(), inner) != indexAlreadyInNewBuffer.end())
                 {
-                    // If we have already moved this index into the
+                    /// If we have already moved this index into the
                     continue;
                 }
 
@@ -273,7 +273,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     std::vector<Runtime::TupleBuffer> recordBuffers;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
 
-    // Creating everything for the csv parser
+    /// Creating everything for the csv parser
     std::ifstream file(csvFile);
 
     if (skipFirstLine)
@@ -295,7 +295,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
         auto testBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
         auto values = NES::Util::splitWithStringDelimiter<std::string>(line, ",");
 
-        // iterate over fields of schema and cast string values to correct type
+        /// iterate over fields of schema and cast string values to correct type
         for (uint64_t j = 0; j < numberOfSchemaFields; j++)
         {
             writeFieldValueToTupleBuffer(values[j], j, testBuffer, schema, tupleCount, bufferManager);
@@ -350,7 +350,7 @@ void writeFieldValueToTupleBuffer(
     {
         throw Exceptions::RuntimeException("Input string for parsing is empty");
     }
-    // TODO replace with csv parsing library #3949
+    /// TODO replace with csv parsing library #3949
     try
     {
         if (physicalType->isBasicType())
@@ -411,7 +411,7 @@ void writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::CHAR: {
-                    //verify that only a single char was transmitted
+                    ///verify that only a single char was transmitted
                     if (inputString.size() > 1)
                     {
                         NES_FATAL_ERROR(
@@ -423,7 +423,7 @@ void writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
-                    //verify that a valid bool was transmitted (valid{true,false,0,1})
+                    ///verify that a valid bool was transmitted (valid{true,false,0,1})
                     bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
                     if (!value)
                     {
@@ -451,11 +451,11 @@ void writeFieldValueToTupleBuffer(
             tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
         }
         else
-        { // char array(string) case
-            // obtain pointer from buffer to fill with content via strcpy
+        { /// char array(string) case
+            /// obtain pointer from buffer to fill with content via strcpy
             char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
-            // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
-            // improve behavior with json library
+            /// remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
+            /// improve behavior with json library
             strcpy(value, inputString.c_str());
         }
     }
@@ -467,14 +467,14 @@ void writeFieldValueToTupleBuffer(
 
 void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr)
 {
-    // Get the first occurrence
+    /// Get the first occurrence
     uint64_t pos = data.find(toSearch);
-    // Repeat till end is reached
+    /// Repeat till end is reached
     while (pos != std::string::npos)
     {
-        // Replace this occurrence of Sub String
+        /// Replace this occurrence of Sub String
         data.replace(pos, toSearch.size(), replaceStr);
-        // Get the next occurrence from the current position
+        /// Get the next occurrence from the current position
         pos = data.find(toSearch, pos + replaceStr.size());
     }
 }
@@ -533,4 +533,4 @@ bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer b
 
     return (sameTupleIndices.size() == buffer1.getNumberOfTuples());
 }
-} // namespace NES::Runtime::Execution::Util
+} /// namespace NES::Runtime::Execution::Util

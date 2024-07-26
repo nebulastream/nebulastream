@@ -52,11 +52,11 @@ std::string NullOutputSink::toString() const
 
 void NullOutputSink::setup()
 {
-    // currently not required
+    /// currently not required
 }
 void NullOutputSink::shutdown()
 {
-    // currently not required
+    /// currently not required
 }
 
-} // namespace NES
+} /// namespace NES

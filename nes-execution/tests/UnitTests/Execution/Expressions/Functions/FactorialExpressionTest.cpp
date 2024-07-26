@@ -41,24 +41,24 @@ TEST_F(FactorialExpressionTest, factorialIntegers)
 {
     auto expression = UnaryExpressionWrapper<FactorialExpression>();
 
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, (double)24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(4_s16));
         ASSERT_EQ(resultValue, (double)24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    } // Int32
+    } /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(4_s32));
         ASSERT_EQ(resultValue, (double)24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, (double)24);
@@ -70,23 +70,23 @@ TEST_F(FactorialExpressionTest, factorialUnsignedIntegers)
 {
     auto expression = UnaryExpressionWrapper<FactorialExpression>();
 
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>(4_u8));
         ASSERT_EQ(resultValue, (double)24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>(4_u16));
         ASSERT_EQ(resultValue, (double)24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    } // UInt32
+    } /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(4u));
         ASSERT_EQ(resultValue, (double)24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    } // UInt64
+    } /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(4_u64));
         ASSERT_EQ(resultValue, (double)24);
@@ -103,13 +103,13 @@ TEST_F(FactorialExpressionTest, factorialUnsignedIntegers)
 TEST_F(FactorialExpressionTest, factorialFloat)
 {
     auto expression = UnaryExpressionWrapper<FactorialExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)4));
         ASSERT_EQ(resultValue, (double)24);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)4));
         ASSERT_EQ(resultValue, (double)24);
@@ -117,4 +117,4 @@ TEST_F(FactorialExpressionTest, factorialFloat)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

@@ -32,4 +32,4 @@ public:
 private:
     std::unordered_map<std::string, void*> functionNameToAddressMap;
 };
-} // namespace NES
+} /// namespace NES

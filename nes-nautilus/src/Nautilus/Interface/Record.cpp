@@ -99,4 +99,4 @@ bool Record::operator!=(const Record& rhs) const
 {
     return !(rhs == *this);
 }
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

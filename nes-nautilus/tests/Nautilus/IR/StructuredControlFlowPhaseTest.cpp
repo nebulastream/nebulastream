@@ -62,7 +62,7 @@ public:
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 
-    // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
+    /// Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
     std::vector<IR::BasicBlockPtr> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction)
     {
         auto execution = Nautilus::Tracing::traceFunctionWithReturn([nautilusFunction]() { return nautilusFunction(); });
@@ -183,11 +183,11 @@ public:
         {
             if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::IfOp)
             {
-                // Check that the currentBlock is actually part of the solution set.
+                /// Check that the currentBlock is actually part of the solution set.
                 if (correctBlocks.contains(currentBlock->getIdentifier()))
                 {
                     auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-                    // Check that the merge-block id is set correctly, if the if-operation has a merge-block.
+                    /// Check that the merge-block id is set correctly, if the if-operation has a merge-block.
                     auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
                     if (!correctMergeBlockId.empty())
                     {
@@ -240,7 +240,7 @@ public:
             else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::LoopOp)
             {
                 auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(currentBlock->getTerminatorOp());
-                // Check loop operation for correctness.
+                /// Check loop operation for correctness.
                 if (correctBlocks.contains(currentBlock->getIdentifier()))
                 {
                     if (correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo)
@@ -286,7 +286,7 @@ public:
                             NES_ERROR("\n Loop operation in block: {} should be default loop, but is not.", currentBlock->getIdentifier());
                         }
                     }
-                    // Check that the number of loop back edges is set correctly.
+                    /// Check that the number of loop back edges is set correctly.
                     backLinksAreCorrect &= currentBlock->getNumLoopBackEdges()
                         == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfLoopBackEdges;
                     if (!backLinksAreCorrect)
@@ -331,9 +331,9 @@ public:
     }
 };
 
-//==----------------------------------------------------------==//
-//==------------------ NAUTILUS PHASE TESTS ------------------==//
-//==----------------------------------------------------------==//
+///==----------------------------------------------------------==///
+///==------------------ NAUTILUS PHASE TESTS ------------------==///
+///==----------------------------------------------------------==///
 Value<> threeIfOperationsOneNestedThreeMergeBlocks_1()
 {
     Value agg = Value(0);
@@ -449,7 +449,7 @@ Value<> doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock_3()
     }
     return agg;
 }
-// Breaks in release mode.
+/// Breaks in release mode.
 TEST_P(StructuredControlFlowPhaseTest, 3_doubleHorizontalDiamondWithOneMergeBlockThatAlsoIsIfBlock)
 {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
@@ -808,9 +808,9 @@ Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLo
     for (Value start = 0; start < 10; start = start + 1)
     {
         if (agg < 50)
-        { //3
+        { ///3
             while (agg < limit)
-            { //9
+            { ///9
                 agg = agg + 1;
             }
         }
@@ -822,7 +822,7 @@ Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLo
             }
         }
         if (agg < 150)
-        { //16
+        { ///16
         }
         else
         {
@@ -863,11 +863,11 @@ Value<> IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLo
                 }
             }
         }
-        // 41
+        /// 41
     }
     return agg;
 }
-// Breaks in release mode.
+/// Breaks in release mode.
 TEST_P(StructuredControlFlowPhaseTest, 11_IfOperationFollowedByLoopWithDeeplyNestedIfOperationsWithSeveralNestedLoops)
 {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
@@ -1125,12 +1125,12 @@ Value<> TracingBreaker_19()
         if (agg < 350)
         {
             if (agg < 350)
-            { //the 'false' case of this if this if-operation has no operations -> Block_9
+            { ///the 'false' case of this if this if-operation has no operations -> Block_9
                 agg = agg + 1;
             }
             else
             {
-                agg = agg + 2; // leads to empty block
+                agg = agg + 2; /// leads to empty block
             }
         }
     }
@@ -1173,55 +1173,55 @@ TEST_P(StructuredControlFlowPhaseTest, 20_DebugVsRelease)
 Value<> ExtensiveCountedLoopDetection_21()
 {
     Value agg = Value(2);
-    // 1. Standard for loop.
+    /// 1. Standard for loop.
     for (Value lowerBound = Value(0); lowerBound < 10; lowerBound = lowerBound + 1)
     {
         agg = agg + 1;
     }
-    // 2. for loop, but condition is flipped.
+    /// 2. for loop, but condition is flipped.
     for (Value lowerBound = Value(0); 10 > lowerBound; lowerBound = lowerBound + 2)
     {
         agg = agg + 1;
     }
-    // 3. for loop, but addition order is flipped.
+    /// 3. for loop, but addition order is flipped.
     for (Value lowerBound = Value(0); lowerBound < 10; lowerBound = 3 + lowerBound)
     {
         agg = agg + 1;
     }
-    // 4. for loop, but condition, and addition order are flipped.
+    /// 4. for loop, but condition, and addition order are flipped.
     for (Value lowerBound = Value(0); 10 > lowerBound; lowerBound = 4 + lowerBound)
     {
         agg = agg + 1;
     }
-    // 5. for loop, but the induction variable is defined outside of the loop.
+    /// 5. for loop, but the induction variable is defined outside of the loop.
     Value lowerBound_5 = Value(0);
     for (; lowerBound_5 < 10; lowerBound_5 = lowerBound_5 + 5)
     {
         agg = agg + 1;
     }
-    // 6. for loop, but the induction variable, and the upperBound are defined outside of the loop.
+    /// 6. for loop, but the induction variable, and the upperBound are defined outside of the loop.
     Value lowerBound_6 = Value(0);
     Value upperBound_6 = Value(10);
     for (; lowerBound_6 < upperBound_6; lowerBound_6 = lowerBound_6 + 6)
     {
         agg = agg + 1;
     }
-    // 7. for loop, but the induction variable, and the upperBound are defined outside of the loop,
-    //    and the condition and add operations are flipped.
+    /// 7. for loop, but the induction variable, and the upperBound are defined outside of the loop,
+    ///    and the condition and add operations are flipped.
     Value lowerBound_7 = Value(0);
     Value upperBound_7 = Value(10);
     for (; upperBound_7 > lowerBound_7; lowerBound_7 = 7 + lowerBound_7)
     {
         agg = agg + 1;
     }
-    // 8. while loop counted
+    /// 8. while loop counted
     Value lowerBound_8 = Value(0);
     while (lowerBound_8 < 10)
     {
         agg = agg + 1;
         lowerBound_8 = lowerBound_8 + 8;
     }
-    // 9. while loop counted, but upperBound is defined outside
+    /// 9. while loop counted, but upperBound is defined outside
     Value lowerBound_9 = Value(0);
     Value upperBound_9 = Value(10);
     while (lowerBound_9 < upperBound_9)
@@ -1229,7 +1229,7 @@ Value<> ExtensiveCountedLoopDetection_21()
         agg = agg + 1;
         lowerBound_9 = lowerBound_9 + 9;
     }
-    // 10. while loop counted, but upperBound is defined outside, and condition is flipped
+    /// 10. while loop counted, but upperBound is defined outside, and condition is flipped
     Value lowerBound_10 = Value(0);
     Value upperBound_10 = Value(10);
     while (upperBound_10 > lowerBound_10)
@@ -1253,14 +1253,14 @@ TEST_P(StructuredControlFlowPhaseTest, 21_ExtensiveCountedLoopDetection)
     createCorrectBlock(correctBlocks, "22", 1, "", createCorrectCountedLoopInfo(0, 10, 8, "23"));
     createCorrectBlock(correctBlocks, "25", 1, "", createCorrectCountedLoopInfo(0, 10, 9, "26"));
     createCorrectBlock(correctBlocks, "28", 1, "", createCorrectCountedLoopInfo(0, 10, 10, "29"));
-    // createCorrectBlock(correctBlocks, "31", 1, "");
+    /// createCorrectBlock(correctBlocks, "31", 1, "");
     ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
 Value<> NonCountedLoopCases_22()
 {
     Value agg = Value(2);
-    // 1. while loop counted, but condition for lowerBound vs upperBound is wrong.
+    /// 1. while loop counted, but condition for lowerBound vs upperBound is wrong.
     Value lowerBound_1 = Value(0);
     Value upperBound_1 = Value(10);
     while (upperBound_1 < lowerBound_1)
@@ -1268,15 +1268,15 @@ Value<> NonCountedLoopCases_22()
         agg = agg + 1;
         lowerBound_1 = lowerBound_1 + 1;
     }
-    // 2. while loop counted, but an old value is used in the loop condition.
+    /// 2. while loop counted, but an old value is used in the loop condition.
     Value lowerBound_2 = Value(0);
     Value upperBound_2 = Value(10);
     while (lowerBound_1 < upperBound_2)
-    { //<- using lowerBound_1, which is passed through several blocks before.
+    { ///<- using lowerBound_1, which is passed through several blocks before.
         agg = agg + 1;
         lowerBound_2 = lowerBound_2 + 2;
     }
-    // 3. while loop counted, but the stepSize is not defined in the loopEndBlock.
+    /// 3. while loop counted, but the stepSize is not defined in the loopEndBlock.
     Value lowerBound_3 = Value(0);
     Value upperBound_3 = Value(10);
     Value stepSize_3 = Value(1);
@@ -1285,7 +1285,7 @@ Value<> NonCountedLoopCases_22()
         agg = agg + 1;
         lowerBound_3 = lowerBound_3 + stepSize_3;
     }
-    // 4. for loop, but the inductionVar is decreased.
+    /// 4. for loop, but the inductionVar is decreased.
     Value lowerBound = Value(10);
     for (; lowerBound > 0; lowerBound = lowerBound - 1)
     {
@@ -1411,19 +1411,19 @@ TEST_P(StructuredControlFlowPhaseTest, twoCountedLoopsOneLargeOneSmall)
 Value<> DetectCountedLoopsWithEqualInComparison_23()
 {
     Value agg = Value(2);
-    // 1. Counted for loop with smaller equals in condition.
+    /// 1. Counted for loop with smaller equals in condition.
     for (Value inductionVar_1 = Value(0); inductionVar_1 <= 10; inductionVar_1 = inductionVar_1 + 1)
     {
         agg = agg + 1;
     }
-    // 2. Counted for loop with smaller equals in condition, but condition is flipped.
+    /// 2. Counted for loop with smaller equals in condition, but condition is flipped.
     Value inductionVar_1 = Value(0);
     Value upperBound_2 = Value(10);
     for (; upperBound_2 >= inductionVar_1; inductionVar_1 = inductionVar_1 + 2)
     {
         agg = agg + 1;
     }
-    // 3. Counted while loop with smaller equals in condition.
+    /// 3. Counted while loop with smaller equals in condition.
     Value inductionVar_3 = Value(0);
     Value upperBound_3 = Value(10);
     while (inductionVar_3 <= upperBound_3)
@@ -1431,25 +1431,25 @@ Value<> DetectCountedLoopsWithEqualInComparison_23()
         agg = agg + 4;
         inductionVar_3 = inductionVar_3 + 3;
     }
-    // 4. Counted for loop with smaller equals condition, but condition is complex (not supported).
+    /// 4. Counted for loop with smaller equals condition, but condition is complex (not supported).
     Value inductionVar_4 = Value(0);
     Value otherBound_4 = Value(1);
     for (; (inductionVar_4 + 10) <= (inductionVar_4 - otherBound_4); inductionVar_4 = inductionVar_4 + 1)
     {
         agg = agg + 1;
     }
-    // 5. Smaller equals, but the comparison order of '<=', which is (<,==,or) is faked.
+    /// 5. Smaller equals, but the comparison order of '<=', which is (<,==,or) is faked.
     Value otherBound_5 = Value(1);
     for (Value lowerBound = Value(0); lowerBound < 10 || lowerBound == otherBound_5; lowerBound = lowerBound + 1)
     {
         agg = agg + 1;
     }
-    // 6. Counted for loop not equals(!=) in condition (not supported).
+    /// 6. Counted for loop not equals(!=) in condition (not supported).
     for (Value inductionVar_6 = Value(0); inductionVar_6 != 10; inductionVar_6 = inductionVar_6 + 1)
     {
         agg = agg + 1;
     }
-    // 7. Counted for loop with equals (==) in condition (not supported).
+    /// 7. Counted for loop with equals (==) in condition (not supported).
     for (Value inductionVar_8 = Value(0); inductionVar_8 == 10; inductionVar_8 = inductionVar_8 + 1)
     {
         agg = agg + 1;
@@ -1470,8 +1470,8 @@ TEST_P(StructuredControlFlowPhaseTest, 23_DetectCountedLoopsWithEqualInCompariso
     ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
-// Tests all registered compilation backends.
-// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+/// Tests all registered compilation backends.
+/// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 INSTANTIATE_TEST_CASE_P(
     testLoopCompilation,
     StructuredControlFlowPhaseTest,
@@ -1479,4 +1479,4 @@ INSTANTIATE_TEST_CASE_P(
         Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<StructuredControlFlowPhaseTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

@@ -145,7 +145,7 @@ private:
     UA_Client* client;
 };
 using OPCSinkPtr = std::shared_ptr<OPCSink>;
-} // namespace NES
+} /// namespace NES
 
 #endif
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_OPCSINK_HPP_

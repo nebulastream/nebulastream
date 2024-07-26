@@ -34,7 +34,7 @@ public:
 
     explicit ExecutablePipelineStage(PipelineStageArity arity = PipelineStageArity::Unary) : arity(arity)
     {
-        // nop
+        /// nop
     }
 
     /**
@@ -106,7 +106,7 @@ private:
     PipelineStageArity arity;
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 namespace fmt
 {
@@ -118,6 +118,6 @@ struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<s
         return fmt::format_to(ctx.out(), "{}", std::string(magic_enum::enum_name(ex_pipeline_stage.getArity())));
     }
 };
-} //namespace fmt
+} ///namespace fmt
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_

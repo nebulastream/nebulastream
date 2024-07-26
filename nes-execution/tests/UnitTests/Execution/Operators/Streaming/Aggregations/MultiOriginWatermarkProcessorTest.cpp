@@ -40,7 +40,7 @@ TEST_F(MultiOriginWatermarkProcessorTest, singleThreadWatermarkUpdaterTest)
 {
     auto updates = 10000_u64;
     auto watermarkManager = MultiOriginWatermarkProcessor::create(std::vector{INVALID_ORIGIN_ID});
-    // preallocate watermarks for each transaction
+    /// preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
     for (auto i = 1_u64; i <= updates; i++)
     {
@@ -64,7 +64,7 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterTest)
     const auto threadsCount = 10;
     auto watermarkManager = MultiOriginWatermarkProcessor::create({INVALID_ORIGIN_ID});
 
-    // preallocate watermarks for each transaction
+    /// preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
     for (auto i = 1_u64; i <= updates * threadsCount; i++)
     {
@@ -78,16 +78,16 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterTest)
         threads.emplace_back(thread(
             [&watermarkManager, &watermarkBarriers, &globalUpdateCounter]()
             {
-                // each thread processes a particular update
+                /// each thread processes a particular update
                 for (auto i = 0_u64; i < updates; i++)
                 {
                     auto currentWatermark = watermarkBarriers[globalUpdateCounter++];
                     auto oldWatermark = watermarkManager->getCurrentWatermark();
-                    // check if the watermark manager does not return a watermark higher than the current one
+                    /// check if the watermark manager does not return a watermark higher than the current one
                     ASSERT_LT(oldWatermark, std::get<0>(currentWatermark));
                     watermarkManager->updateWatermark(
                         std::get<0>(currentWatermark), std::get<1>(currentWatermark), std::get<2>(currentWatermark));
-                    // check that the watermark manager returns a watermark that is <= to the max watermark
+                    /// check that the watermark manager returns a watermark that is <= to the max watermark
                     auto globalCurrentWatermark = watermarkManager->getCurrentWatermark();
                     auto maxCurrentWatermark = watermarkBarriers[globalUpdateCounter - 1];
                     ASSERT_LE(globalCurrentWatermark, std::get<0>(maxCurrentWatermark));
@@ -117,7 +117,7 @@ TEST_F(MultiOriginWatermarkProcessorTest, singleThreadWatermarkUpdaterMultipleOr
          OriginId(7),
          OriginId(8),
          OriginId(9)});
-    // preallocate watermarks for each transaction
+    /// preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
     for (auto i = 1_u64; i <= updates; i++)
     {
@@ -155,7 +155,7 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterMultipleOrig
          OriginId(8),
          OriginId(9)});
 
-    // preallocate watermarks for each transaction
+    /// preallocate watermarks for each transaction
     std::vector<std::tuple<WatermarkTs, SequenceData, OriginId>> watermarkBarriers;
     for (auto i = 1_u64; i <= updates; i++)
     {
@@ -172,16 +172,16 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterMultipleOrig
         threads.emplace_back(thread(
             [&watermarkManager, &watermarkBarriers, &globalUpdateCounter]()
             {
-                // each thread processes a particular update
+                /// each thread processes a particular update
                 for (auto i = 0; i < updates; i++)
                 {
                     auto currentWatermark = watermarkBarriers[globalUpdateCounter++];
                     auto oldWatermark = watermarkManager->getCurrentWatermark();
-                    // check if the watermark manager does not return a watermark higher than the current one
+                    /// check if the watermark manager does not return a watermark higher than the current one
                     ASSERT_LT(oldWatermark, std::get<0>(currentWatermark));
                     watermarkManager->updateWatermark(
                         std::get<0>(currentWatermark), std::get<1>(currentWatermark), std::get<2>(currentWatermark));
-                    // check that the watermark manager returns a watermark that is <= to the max watermark
+                    /// check that the watermark manager returns a watermark that is <= to the max watermark
                     auto globalCurrentWatermark = watermarkManager->getCurrentWatermark();
                     auto maxCurrentWatermark = watermarkBarriers[globalUpdateCounter - 1];
                     ASSERT_LE(globalCurrentWatermark, std::get<0>(maxCurrentWatermark));
@@ -195,4 +195,4 @@ TEST_F(MultiOriginWatermarkProcessorTest, concurrentWatermarkUpdaterMultipleOrig
     }
     ASSERT_EQ(watermarkManager->getCurrentWatermark(), std::get<0>(watermarkBarriers.back()));
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

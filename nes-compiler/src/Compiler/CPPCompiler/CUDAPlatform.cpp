@@ -36,7 +36,7 @@ CUDAPlatform::CUDAPlatform(const std::string& cudaSdkPath) : cudaSdkPath(cudaSdk
 
 const CompilerFlags CUDAPlatform::getCompilerFlags() const
 {
-    // See https://www.llvm.org/docs/CompileCudaWithLLVM.html
+    /// See https://www.llvm.org/docs/CompileCudaWithLLVM.html
     auto cudaFlags = {
         "--language=cuda",
         "--cuda-gpu-arch=native",
@@ -56,4 +56,4 @@ const CompilerFlags CUDAPlatform::getCompilerFlags() const
     return flags;
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

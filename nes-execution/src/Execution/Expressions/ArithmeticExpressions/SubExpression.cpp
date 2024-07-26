@@ -27,4 +27,4 @@ SubExpression::SubExpression(const ExpressionPtr& leftSubExpression, const Expre
 {
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

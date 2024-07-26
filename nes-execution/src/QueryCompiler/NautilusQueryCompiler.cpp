@@ -61,7 +61,7 @@ QueryCompilation::QueryCompilationResultPtr NautilusQueryCompiler::compileQuery(
         auto queryId = request->getDecomposedQueryPlan()->getSharedQueryId();
         auto subPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
         auto query = fmt::format("{}-{}", queryId, subPlanId);
-        // create new context for handling debug output
+        /// create new context for handling debug output
         auto dumpContext = DumpContext::create("QueryCompilation-" + query);
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
@@ -100,4 +100,4 @@ QueryCompilation::QueryCompilationResultPtr NautilusQueryCompiler::compileQuery(
     }
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

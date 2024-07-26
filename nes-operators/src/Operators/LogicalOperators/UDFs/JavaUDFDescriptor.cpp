@@ -49,8 +49,8 @@ JavaUDFDescriptor::JavaUDFDescriptor(
     {
         throw UDFException("The class name of the UDF method return type must not be empty.");
     }
-    // This check is implied by the check that the class name of the UDF is contained.
-    // We keep it here for clarity of the error message.
+    /// This check is implied by the check that the class name of the UDF is contained.
+    /// We keep it here for clarity of the error message.
     if (byteCodeList.empty())
     {
         throw UDFException("The bytecode list of classes implementing the UDF must not be empty");
@@ -58,10 +58,10 @@ JavaUDFDescriptor::JavaUDFDescriptor(
     if (!getClassByteCode(getClassName()).has_value())
     {
         throw UDFException("The bytecode list of classes implementing the UDF must contain the fully-qualified name of the UDF");
-        // We could also check whether the input and output types are contained in the bytecode list.
-        // But then we would have to distinguish between custom types (i.e., newly defined POJOs) and existing Java types.
-        // This does not seem to be worth the effort here, because if a custom type is missing, the JVM will through an exception
-        // when deserializing the UDF instance.
+        /// We could also check whether the input and output types are contained in the bytecode list.
+        /// But then we would have to distinguish between custom types (i.e., newly defined POJOs) and existing Java types.
+        /// This does not seem to be worth the effort here, because if a custom type is missing, the JVM will through an exception
+        /// when deserializing the UDF instance.
     }
     for (const auto& [_, value] : byteCodeList)
     {
@@ -81,20 +81,20 @@ const std::optional<jni::JavaByteCode> JavaUDFDescriptor::getClassByteCode(const
 
 std::stringstream JavaUDFDescriptor::generateInferStringSignature()
 {
-    // Infer signature for this operator based on the UDF metadata (class name and UDF method), the serialized instance,
-    // and the byte code list. We can ignore the schema information because it is determined by the UDF method signature.
+    /// Infer signature for this operator based on the UDF metadata (class name and UDF method), the serialized instance,
+    /// and the byte code list. We can ignore the schema information because it is determined by the UDF method signature.
     auto signatureStream = std::stringstream{};
     auto elementHash = std::hash<jni::JavaSerializedInstance::value_type>{};
 
-    // Hash the contents of a byte array (i.e., the serialized instance and the byte code of a class)
-    // based on the hashes of the individual elements.
+    /// Hash the contents of a byte array (i.e., the serialized instance and the byte code of a class)
+    /// based on the hashes of the individual elements.
     auto charArrayHashHelper = [&elementHash](std::size_t h, char v) { return h = h * 31 + elementHash(v); };
 
-    // Compute hashed value of the UDF instance.
+    /// Compute hashed value of the UDF instance.
     auto& instance = getSerializedInstance();
     auto instanceHash = std::accumulate(instance.begin(), instance.end(), instance.size(), charArrayHashHelper);
 
-    // Compute hashed value of the UDF byte code list.
+    /// Compute hashed value of the UDF byte code list.
     auto stringHash = std::hash<std::string>{};
     auto byteCodeListHash = std::accumulate(
         byteCodeList.begin(),
@@ -126,4 +126,4 @@ bool JavaUDFDescriptor::operator==(const JavaUDFDescriptor& other) const
         && serializedInstance == other.serializedInstance && byteCodeList == other.byteCodeList && inputClassName == other.inputClassName
         && outputClassName == other.outputClassName;
 }
-} // namespace NES::Catalogs::UDF
+} /// namespace NES::Catalogs::UDF

@@ -87,4 +87,4 @@ StampPtr StampFactory::createDoubleStamp()
     return std::make_shared<FloatStamp>(FloatStamp::BitWidth::F64);
 }
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types

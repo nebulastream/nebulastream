@@ -180,7 +180,7 @@ public:
 
         auto plan = TPCH_Query3::getPipelinePlan(tables, bm);
 
-        // process query
+        /// process query
         auto pipeline1 = plan.getPipeline(0);
         auto pipeline2 = plan.getPipeline(1);
         auto pipeline3 = plan.getPipeline(2);
@@ -223,7 +223,7 @@ public:
     }
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 int main(int, char**)
 {

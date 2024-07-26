@@ -51,6 +51,6 @@ private:
     explicit ModExpressionNode(ModExpressionNode* other);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MODEXPRESSIONNODE_HPP_

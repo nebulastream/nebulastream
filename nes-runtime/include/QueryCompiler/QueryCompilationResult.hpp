@@ -64,6 +64,6 @@ private:
     std::optional<std::exception_ptr> exception;
     std::optional<Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock>> timer;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_

@@ -288,4 +288,4 @@ DataSinkPtr createMQTTSink(
         numberOfOrigins);
 }
 #endif
-} // namespace NES
+} /// namespace NES

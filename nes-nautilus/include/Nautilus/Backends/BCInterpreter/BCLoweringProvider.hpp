@@ -101,5 +101,5 @@ private:
         short getResultRegister(const std::shared_ptr<IR::Operations::Operation>& opt, RegisterFrame& frame);
     };
 };
-} // namespace NES::Nautilus::Backends::BC
+} /// namespace NES::Nautilus::Backends::BC
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCLOWERINGPROVIDER_HPP_

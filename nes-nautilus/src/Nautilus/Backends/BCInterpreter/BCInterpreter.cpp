@@ -209,29 +209,29 @@ static Operation* OpTable[]
        (Operation*)andOp<bool>,
        (Operation*)orOp<bool>,
        (Operation*)notOp<bool>,
-       // Casts
-       // int to int
+       /// Casts
+       /// int to int
        (Operation*)cast<int8_t, int16_t>,
        (Operation*)cast<int8_t, int32_t>,
        (Operation*)cast<int8_t, int64_t>,
        (Operation*)cast<int16_t, int32_t>,
        (Operation*)cast<int16_t, int64_t>,
        (Operation*)cast<int32_t, int64_t>,
-       // uint to int
+       /// uint to int
        (Operation*)cast<uint8_t, int16_t>,
        (Operation*)cast<uint8_t, int32_t>,
        (Operation*)cast<uint8_t, int64_t>,
        (Operation*)cast<uint16_t, int32_t>,
        (Operation*)cast<uint16_t, int64_t>,
        (Operation*)cast<uint32_t, int64_t>,
-       // uint to uint
+       /// uint to uint
        (Operation*)cast<uint8_t, uint16_t>,
        (Operation*)cast<uint8_t, uint32_t>,
        (Operation*)cast<uint8_t, uint64_t>,
        (Operation*)cast<uint16_t, uint32_t>,
        (Operation*)cast<uint16_t, uint64_t>,
        (Operation*)cast<uint32_t, uint64_t>,
-       // int to uint
+       /// int to uint
        (Operation*)cast<int8_t, uint8_t>,
        (Operation*)cast<int8_t, uint16_t>,
        (Operation*)cast<int8_t, uint32_t>,
@@ -251,8 +251,8 @@ static Operation* OpTable[]
        (Operation*)cast<int32_t, double>,
        (Operation*)cast<int64_t, float>,
        (Operation*)cast<int64_t, double>,
-       // FUNCTION CALLS
-       // return void
+       /// FUNCTION CALLS
+       /// return void
        (Operation*)call<void>,
        (Operation*)call<void, void*>,
        /*CALL_v_ptr_ui64*/
@@ -261,16 +261,16 @@ static Operation* OpTable[]
        (Operation*)call<void, void*, void*, void*>,
        /*CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64*/
        (Operation*)call<void, void*, void*, void*, uint64_t, uint64_t, uint64_t, uint64_t>,
-       // Return uint64_t
+       /// Return uint64_t
        (Operation*)call<uint64_t, void*>,
        (Operation*)call<uint64_t, uint64_t, int8_t>,
        (Operation*)call<uint64_t, uint64_t, int32_t>,
        (Operation*)call<uint64_t, uint64_t, int64_t>,
-       // Return int64_t
+       /// Return int64_t
        (Operation*)call<int64_t>,
        (Operation*)call<int64_t, int64_t>,
        (Operation*)call<int64_t, int64_t, int64_t>,
-       // Return ptr
+       /// Return ptr
        (Operation*)call<void*, void*>,
        (Operation*)call<void*, void*, void*>,
        /*CALL_ptr_ptr_i64*/
@@ -384,7 +384,7 @@ std::any BCInterpreter::invokeGeneric(const std::vector<std::any>& args)
             NES_NOT_IMPLEMENTED();
         }
     }
-    // set arguments
+    /// set arguments
     auto result = execute(registerFile);
     switch (code.returnType)
     {
@@ -426,16 +426,16 @@ std::any BCInterpreter::invokeGeneric(const std::vector<std::any>& args)
 }
 int64_t BCInterpreter::execute(RegisterFile& regs) const
 {
-    // first block is always the entrypoint
+    /// first block is always the entrypoint
     auto* currentBlock = &code.blocks[0];
     while (true)
     {
-        // execute operations in block
+        /// execute operations in block
         for (const auto& c : currentBlock->code)
         {
             OpTable[(int16_t)c.op](c, regs);
         }
-        // handle terminator
+        /// handle terminator
         if (const auto* res = std::get_if<BranchOp>(&currentBlock->terminatorOp))
         {
             currentBlock = &code.blocks[res->nextBlock];
@@ -474,7 +474,7 @@ std::ostream& operator<<(std::ostream& os, const CodeBlock& block)
         os << "\t" << code << "\n";
     }
 
-    // handle terminator
+    /// handle terminator
     if (const auto* res = std::get_if<BranchOp>(&block.terminatorOp))
     {
         os << "\t"
@@ -518,4 +518,4 @@ std::string Code::toString()
     return ss.str();
 }
 
-} // namespace NES::Nautilus::Backends::BC
+} /// namespace NES::Nautilus::Backends::BC

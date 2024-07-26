@@ -40,24 +40,24 @@ TEST_F(BitcounterExpressionTest, divIntegers)
 {
     auto expression = UnaryExpressionWrapper<BitcounterExpression>();
 
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(31_s8));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(31_s16));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    } // Int32
+    } /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(31_s32));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(31_s64));
         ASSERT_EQ(resultValue, 5_u32);
@@ -69,24 +69,24 @@ TEST_F(BitcounterExpressionTest, divUIntegers)
 {
     auto expression = UnaryExpressionWrapper<BitcounterExpression>();
 
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>(31_u8));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>(31_u16));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    } // UInt32
+    } /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(31_u32));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
-    // UInt64
+    /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(31_u64));
         ASSERT_EQ(resultValue, 5_u32);
@@ -103,4 +103,4 @@ TEST_F(BitcounterExpressionTest, evaluateBitCounterExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

@@ -111,6 +111,6 @@ private:
 
 using NetworkSourceDescriptorPtr = std::shared_ptr<NetworkSourceDescriptor>;
 
-} // namespace NES::Network
+} /// namespace NES::Network
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NETWORKSOURCEDESCRIPTOR_HPP_

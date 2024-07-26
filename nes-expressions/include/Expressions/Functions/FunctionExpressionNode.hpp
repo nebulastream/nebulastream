@@ -82,5 +82,5 @@ private:
     const std::unique_ptr<LogicalFunction> function;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_FUNCTIONEXPRESSIONNODE_HPP_

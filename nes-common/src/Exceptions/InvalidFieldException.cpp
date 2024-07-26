@@ -19,4 +19,4 @@ namespace NES
 InvalidFieldException::InvalidFieldException(const std::string& msg) : std::runtime_error(msg)
 {
 }
-} // namespace NES
+} /// namespace NES

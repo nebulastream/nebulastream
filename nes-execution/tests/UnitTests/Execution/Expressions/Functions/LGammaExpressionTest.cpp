@@ -41,24 +41,24 @@ TEST_F(LGammaExpressionTest, lGammaIntegers)
 {
     auto expression = UnaryExpressionWrapper<LGammaExpression>();
 
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(2_s8));
         ASSERT_EQ(resultValue, (double)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(2_s16));
         ASSERT_EQ(resultValue, (double)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    } // Int32
+    } /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(2));
         ASSERT_EQ(resultValue, (double)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(2_s64));
         ASSERT_EQ(resultValue, (double)0);
@@ -70,23 +70,23 @@ TEST_F(LGammaExpressionTest, lGammaUnsignedIntegers)
 {
     auto expression = UnaryExpressionWrapper<LGammaExpression>();
 
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>(2_u8));
         ASSERT_EQ(resultValue, (double)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>(2_u16));
         ASSERT_EQ(resultValue, (double)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    } // UInt32
+    } /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(2u));
         ASSERT_EQ(resultValue, (double)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
-    } // UInt64
+    } /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(2_u64));
         ASSERT_EQ(resultValue, (double)0);
@@ -103,13 +103,13 @@ TEST_F(LGammaExpressionTest, lGammaUnsignedIntegers)
 TEST_F(LGammaExpressionTest, lGammaFloat)
 {
     auto expression = UnaryExpressionWrapper<LGammaExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)2));
         ASSERT_EQ(resultValue, (double)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)2));
         ASSERT_EQ(resultValue, (double)0);
@@ -117,4 +117,4 @@ TEST_F(LGammaExpressionTest, lGammaFloat)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

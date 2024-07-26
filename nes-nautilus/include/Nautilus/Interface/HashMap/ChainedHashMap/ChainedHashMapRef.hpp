@@ -19,7 +19,7 @@ namespace NES
 {
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Nautilus::Interface
 {
@@ -233,6 +233,6 @@ private:
     uint64_t valueSize;
 };
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_

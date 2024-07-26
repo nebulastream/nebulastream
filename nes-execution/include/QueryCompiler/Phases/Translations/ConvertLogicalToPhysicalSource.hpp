@@ -48,6 +48,6 @@ private:
     ConvertLogicalToPhysicalSource() = default;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_CONVERTLOGICALTOPHYSICALSOURCE_HPP_

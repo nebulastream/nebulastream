@@ -183,4 +183,4 @@ std::string BasicPhysicalType::toString() const noexcept
     return "";
 }
 
-} // namespace NES
+} /// namespace NES

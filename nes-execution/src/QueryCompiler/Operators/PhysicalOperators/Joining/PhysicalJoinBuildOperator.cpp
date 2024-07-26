@@ -75,4 +75,4 @@ JoinBuildSideType PhysicalJoinBuildOperator::getBuildSide()
     return joinBuildSide;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

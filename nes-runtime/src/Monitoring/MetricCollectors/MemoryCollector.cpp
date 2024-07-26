@@ -63,4 +63,4 @@ const MetricPtr MemoryCollector::readMetric() const
     return std::make_shared<Metric>(std::move(metrics), MetricType::MemoryMetric);
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

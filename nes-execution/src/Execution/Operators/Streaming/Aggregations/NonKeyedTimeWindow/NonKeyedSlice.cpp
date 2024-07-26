@@ -21,7 +21,7 @@ uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
 {
     if (bufferSize % withAlignment)
     {
-        // make sure that each buffer is a multiple of the alignment
+        /// make sure that each buffer is a multiple of the alignment
         return bufferSize + (withAlignment - bufferSize % withAlignment);
     }
     return bufferSize;
@@ -45,4 +45,4 @@ NonKeyedSlice::~NonKeyedSlice()
     NES_DEBUG("~NonKeyedSlice {}-{}", start, end);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

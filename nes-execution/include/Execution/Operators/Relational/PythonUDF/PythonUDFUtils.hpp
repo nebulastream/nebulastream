@@ -40,7 +40,7 @@ inline void pythonInterpreterErrorCheck(PyObject* pyObject, const char* func_nam
         NES_THROW_RUNTIME_ERROR("[" << func_name << ": line " << line_number << "] " << errorMessage);
     }
 }
-}; // namespace NES::Runtime::Execution::Operators
+}; /// namespace NES::Runtime::Execution::Operators
 
-#endif // NAUTILUS_PYTHON_UDF_ENABLED
+#endif /// NAUTILUS_PYTHON_UDF_ENABLED
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_

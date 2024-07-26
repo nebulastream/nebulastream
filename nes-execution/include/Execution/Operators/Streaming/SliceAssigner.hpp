@@ -71,6 +71,6 @@ private:
     const uint64_t windowSlide;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_SLICEASSIGNER_HPP_

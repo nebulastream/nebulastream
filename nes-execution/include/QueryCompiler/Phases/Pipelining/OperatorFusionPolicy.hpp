@@ -33,6 +33,6 @@ public:
      */
     virtual bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) = 0;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORFUSIONPOLICY_HPP_

@@ -38,10 +38,10 @@ ExpressionNodePtr RoundExpressionNode::create(ExpressionNodePtr const& child)
 
 void RoundExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of child, check if its numerical, assume same stamp
+    /// infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // if stamp is integer, convert stamp to float
+    /// if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
     NES_TRACE("RoundExpressionNode: converted stamp to float: {}", toString());
 }
@@ -68,4 +68,4 @@ ExpressionNodePtr RoundExpressionNode::copy()
     return RoundExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

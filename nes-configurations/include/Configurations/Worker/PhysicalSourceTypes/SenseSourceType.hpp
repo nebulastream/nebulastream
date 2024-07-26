@@ -91,5 +91,5 @@ private:
 
     Configurations::StringConfigOption udfs;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_SENSESOURCETYPE_HPP_

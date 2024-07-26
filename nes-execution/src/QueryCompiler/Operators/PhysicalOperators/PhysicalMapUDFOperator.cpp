@@ -74,4 +74,4 @@ Catalogs::UDF::UDFDescriptorPtr PhysicalMapUDFOperator::getUDFDescriptor()
 {
     return udfDescriptor;
 }
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

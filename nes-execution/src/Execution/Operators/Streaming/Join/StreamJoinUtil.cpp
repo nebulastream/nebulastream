@@ -51,7 +51,7 @@ SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSc
 
     return retSchema;
 }
-} // namespace Util
+} /// namespace Util
 
 WindowInfo::WindowInfo(uint64_t windowStart, uint64_t windowEnd) : windowStart(windowStart), windowEnd(windowEnd), windowId(windowEnd)
 {
@@ -76,4 +76,4 @@ std::string WindowInfo::toString() const
     return oss.str();
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

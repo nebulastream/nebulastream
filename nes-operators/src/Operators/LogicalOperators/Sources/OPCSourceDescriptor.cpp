@@ -105,6 +105,6 @@ SourceDescriptorPtr OPCSourceDescriptor::copy()
     return copy;
 }
 
-} // namespace NES
+} /// namespace NES
 
 #endif

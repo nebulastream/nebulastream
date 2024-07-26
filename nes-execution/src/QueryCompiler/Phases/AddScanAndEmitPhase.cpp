@@ -52,7 +52,7 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
         throw QueryCompilationException("A pipeline should only have one root operator");
     }
     auto rootOperator = pipelineRootOperators[0];
-    // insert buffer scan operator to the pipeline root if necessary
+    /// insert buffer scan operator to the pipeline root if necessary
     if (!rootOperator->instanceOf<PhysicalOperators::AbstractScanOperator>())
     {
         if (rootOperator->instanceOf<PhysicalOperators::PhysicalUnaryOperator>())
@@ -67,7 +67,7 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
         }
     }
 
-    // insert emit buffer operator if necessary
+    /// insert emit buffer operator if necessary
     auto pipelineLeafOperators = rootOperator->getAllLeafNodes();
     for (const auto& leaf : pipelineLeafOperators)
     {
@@ -82,4 +82,4 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
     return pipeline;
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

@@ -22,7 +22,7 @@ namespace NES::Nautilus::Backends::MLIR
 
 void dumpLLVMIR(mlir::ModuleOp mlirModule, const CompilationOptions& compilerOptions, const DumpHelper& dumpHelper)
 {
-    // Convert the module to LLVM IR in a new LLVM IR context.
+    /// Convert the module to LLVM IR in a new LLVM IR context.
     llvm::LLVMContext llvmContext;
     auto llvmModule = mlir::translateModuleToLLVMIR(mlirModule, llvmContext);
     if (!llvmModule)
@@ -57,10 +57,10 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     const CompilationOptions& compilerOptions,
     const DumpHelper& dumpHelper)
 {
-    // Initialize information about the local machine in LLVM.
+    /// Initialize information about the local machine in LLVM.
     LLVMInitializeNativeTarget();
     LLVMInitializeNativeAsmPrinter();
-    // Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
+    /// Register the translation from MLIR to LLVM IR, which must happen before we can JIT-compile.
     mlir::registerLLVMDialectTranslation(*mlirModule->getContext());
 
     if (compilerOptions.isDumpToConsole() || compilerOptions.isDumpToFile())
@@ -68,15 +68,15 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
         dumpLLVMIR(mlirModule.get(), compilerOptions, dumpHelper);
     }
 
-    // Create MLIR execution engine (wrapper around LLVM ExecutionEngine).
+    /// Create MLIR execution engine (wrapper around LLVM ExecutionEngine).
     mlir::ExecutionEngineOptions options;
     options.jitCodeGenOptLevel = llvm::CodeGenOpt::Level::Aggressive;
     options.transformer = optPipeline;
     auto maybeEngine = mlir::ExecutionEngine::create(*mlirModule, options);
     assert(maybeEngine && "failed to construct an execution engine");
 
-    // TODO in issue #3710 we aim to add a proxy function catalog that contains the information on all proxy functions.
-    // right now, we have to statically list all proxy functions here, and in 'ExtractFunctionsFromLLVMIR.cpp'.
+    /// TODO in issue #3710 we aim to add a proxy function catalog that contains the information on all proxy functions.
+    /// right now, we have to statically list all proxy functions here, and in 'ExtractFunctionsFromLLVMIR.cpp'.
     const std::unordered_set<std::string> ProxyInliningFunctions{
         "NES__Runtime__TupleBuffer__getNumberOfTuples",
         "NES__Runtime__TupleBuffer__setNumberOfTuples",
@@ -88,7 +88,7 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
         "NES__Runtime__TupleBuffer__setSequenceNumber",
         "NES__Runtime__TupleBuffer__getSequenceNumber",
         "NES__Runtime__TupleBuffer__setCreationTimestampInMS"};
-    // We register all external functions (symbols) that we do not inline.
+    /// We register all external functions (symbols) that we do not inline.
     const auto runtimeSymbolMap = [&](llvm::orc::MangleAndInterner interner)
     {
         auto symbolMap = llvm::orc::SymbolMap();
@@ -106,4 +106,4 @@ std::unique_ptr<mlir::ExecutionEngine> JITCompiler::jitCompileModule(
     engine->registerSymbols(runtimeSymbolMap);
     return std::move(engine);
 }
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR

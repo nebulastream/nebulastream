@@ -53,18 +53,18 @@ bool LogicalBatchJoinOperator::inferSchema()
         return false;
     }
 
-    //validate that only two different type of schema were present
+    ///validate that only two different type of schema were present
     if (distinctSchemas.size() != 2)
     {
         throw TypeInferenceException(
             fmt::format("BinaryOperator: Found {} distinct schemas but expected 2 distinct schemas.", distinctSchemas.size()));
     }
 
-    //reset left and right schema
+    ///reset left and right schema
     leftInputSchema->clear();
     rightInputSchema->clear();
 
-    //Find the schema for left join key
+    ///Find the schema for left join key
     FieldAccessExpressionNodePtr buildJoinKey = batchJoinDefinition->getBuildJoinKey();
     auto buildJoinKeyName = buildJoinKey->getFieldName();
     for (auto itr = distinctSchemas.begin(); itr != distinctSchemas.end();)
@@ -73,14 +73,14 @@ bool LogicalBatchJoinOperator::inferSchema()
         {
             leftInputSchema->copyFields(*itr);
             buildJoinKey->inferStamp(leftInputSchema);
-            //remove the schema from distinct schema list
+            ///remove the schema from distinct schema list
             distinctSchemas.erase(itr);
             break;
         }
         itr++;
     }
 
-    //Find the schema for right join key
+    ///Find the schema for right join key
     FieldAccessExpressionNodePtr probeJoinKey = batchJoinDefinition->getProbeJoinKey();
     auto probeJoinKeyName = probeJoinKey->getFieldName();
     for (const auto& schema : distinctSchemas)
@@ -92,7 +92,7 @@ bool LogicalBatchJoinOperator::inferSchema()
         }
     }
 
-    //Check if left input schema was identified
+    ///Check if left input schema was identified
     if (!leftInputSchema)
     {
         NES_ERROR(
@@ -101,7 +101,7 @@ bool LogicalBatchJoinOperator::inferSchema()
         throw TypeInferenceException("LogicalBatchJoinOperator: Left input schema is not initialized.");
     }
 
-    //Check if right input schema was identified
+    ///Check if right input schema was identified
     if (!rightInputSchema)
     {
         NES_ERROR(
@@ -110,7 +110,7 @@ bool LogicalBatchJoinOperator::inferSchema()
         throw TypeInferenceException("LogicalBatchJoinOperator: Right input schema is not initialized.");
     }
 
-    //Check that both left and right schema should be different
+    ///Check that both left and right schema should be different
     if (rightInputSchema->equals(leftInputSchema, false))
     {
         NES_ERROR("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
@@ -121,10 +121,10 @@ bool LogicalBatchJoinOperator::inferSchema()
     NES_ASSERT(leftInputSchema->getSchemaSizeInBytes() != 0, "left schema is emtpy");
     NES_ASSERT(rightInputSchema->getSchemaSizeInBytes() != 0, "right schema is emtpy");
 
-    //Reset output schema and add fields from left and right input schema
+    ///Reset output schema and add fields from left and right input schema
     outputSchema->clear();
 
-    // create dynamic fields to store all fields from left and right streams
+    /// create dynamic fields to store all fields from left and right streams
     for (const auto& field : leftInputSchema->fields)
     {
         outputSchema->addField(field->getName(), field->getDataType());
@@ -160,14 +160,14 @@ OperatorPtr LogicalBatchJoinOperator::copy()
 bool LogicalBatchJoinOperator::equal(NodePtr const& rhs) const
 {
     return rhs->instanceOf<LogicalBatchJoinOperator>();
-} // todo
+} /// todo
 
 void LogicalBatchJoinOperator::inferStringSignature()
 {
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("LogicalBatchJoinOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty() && children.size() == 2, "LogicalBatchJoinOperator: Join should have 2 children.");
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
@@ -182,8 +182,8 @@ void LogicalBatchJoinOperator::inferStringSignature()
     signatureStream << *rightChildSignature.begin()->second.begin() + ").";
     signatureStream << *leftChildSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-} // namespace NES::Experimental
+} /// namespace NES::Experimental

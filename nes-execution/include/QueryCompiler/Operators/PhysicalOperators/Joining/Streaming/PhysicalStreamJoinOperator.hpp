@@ -56,5 +56,5 @@ protected:
     Runtime::Execution::Operators::StreamJoinOperator streamJoinOperator;
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr joinOperatorHandler;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_

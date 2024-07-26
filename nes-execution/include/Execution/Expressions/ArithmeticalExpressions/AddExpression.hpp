@@ -34,6 +34,6 @@ private:
     const ExpressionPtr rightSubExpression;
 };
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ADDEXPRESSION_HPP_

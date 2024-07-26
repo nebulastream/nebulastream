@@ -36,5 +36,5 @@ public:
         std::source_location location = std::source_location::current());
 };
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_

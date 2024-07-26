@@ -31,14 +31,14 @@ void SlidingWindowSliceStore<SliceType>::insertSlice(SlidingWindowSliceStore::Sl
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     auto sliceStart = slice->getStart();
     auto sliceIter = slices.rbegin();
-    // reverse iterate from the end of the slice store to the front as long as the slice.start > currentSlice.start
+    /// reverse iterate from the end of the slice store to the front as long as the slice.start > currentSlice.start
     while (sliceIter != slices.rend() && (*sliceIter)->getStart() > sliceStart)
     {
         sliceIter++;
     }
     if (sliceIter == slices.rend())
     {
-        // we reached the front of all slices -> so insert in the front of the slice store
+        /// we reached the front of all slices -> so insert in the front of the slice store
         slices.emplace_front(std::move(slice));
     }
     else if ((*sliceIter)->getStart() < sliceStart)
@@ -68,8 +68,8 @@ std::set<std::tuple<uint64_t, uint64_t>> SlidingWindowSliceStore<SliceType>::col
 {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     std::set<std::tuple<uint64_t, uint64_t>> windows;
-    // collect all windows, for which the list of slices contains the slice end.
-    // iterate over all slices that would open a window that ends before endTs.
+    /// collect all windows, for which the list of slices contains the slice end.
+    /// iterate over all slices that would open a window that ends before endTs.
     for (auto& slice : slices)
     {
         if (slice->getEnd() > currentTs)
@@ -98,8 +98,8 @@ std::set<std::tuple<uint64_t, uint64_t>> SlidingWindowSliceStore<SliceType>::col
 {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     std::set<std::tuple<uint64_t, uint64_t>> windows;
-    // collect all windows, for which the list of slices contains the slice end.
-    // iterate over all slices that would open a window that ends before endTs.
+    /// collect all windows, for which the list of slices contains the slice end.
+    /// iterate over all slices that would open a window that ends before endTs.
     for (auto& slice : slices)
     {
         auto windowStart = slice->getStart();
@@ -123,7 +123,7 @@ std::vector<std::shared_ptr<SliceType>> SlidingWindowSliceStore<SliceType>::coll
 {
     const std::lock_guard<std::mutex> lock(sliceStagingMutex);
     std::vector<SliceTypePtr> windowSlices;
-    // iterate over all slices that are contained in the window that ends before endTs.
+    /// iterate over all slices that are contained in the window that ends before endTs.
     for (auto& slice : slices)
     {
         if (slice->getStart() > windowEnd)
@@ -160,8 +160,8 @@ uint64_t SlidingWindowSliceStore<SliceType>::getNumberOfSlices()
     return slices.size();
 }
 
-// Instantiate types
+/// Instantiate types
 template class SlidingWindowSliceStore<NonKeyedSlice>;
 template class SlidingWindowSliceStore<KeyedSlice>;
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

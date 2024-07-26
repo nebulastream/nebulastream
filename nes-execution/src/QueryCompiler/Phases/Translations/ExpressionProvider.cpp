@@ -213,4 +213,4 @@ std::shared_ptr<Expression> ExpressionProvider::lowerFunctionExpression(const st
     auto functionProvider = ExecutableFunctionRegistry::createPlugin(expressionNode->getFunctionName());
     return functionProvider->create(arguments);
 }
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

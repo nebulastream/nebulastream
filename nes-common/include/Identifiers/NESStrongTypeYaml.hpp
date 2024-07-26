@@ -51,7 +51,7 @@ struct StringConverter<T>
         return T(type);
     }
 };
-} // namespace impl
-} // namespace Yaml
+} /// namespace impl
+} /// namespace Yaml
 
 #endif /// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEYAML_HPP_

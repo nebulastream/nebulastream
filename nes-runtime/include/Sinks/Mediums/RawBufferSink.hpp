@@ -98,6 +98,6 @@ protected:
     /// Indicate if the file could be opened during setup.
     bool isOpen{false};
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_RAWBUFFERSINK_HPP_

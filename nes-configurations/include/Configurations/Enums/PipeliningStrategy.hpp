@@ -21,9 +21,9 @@ namespace NES::QueryCompilation
 {
 enum class PipeliningStrategy : uint8_t
 {
-    // Applies operator fusion.
+    /// Applies operator fusion.
     OPERATOR_FUSION,
-    // Places each operator in an individual pipeline.
+    /// Places each operator in an individual pipeline.
     OPERATOR_AT_A_TIME
 };
 }

@@ -141,6 +141,6 @@ protected:
     std::vector<PhysicalTypePtr> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_

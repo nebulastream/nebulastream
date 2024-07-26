@@ -25,4 +25,4 @@ std::ostream& operator<<(std::ostream& os, const ConstantValue& valueRef)
     return os;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

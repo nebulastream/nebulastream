@@ -88,4 +88,4 @@ public:
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<IdentifierInvocationPlugin> intPlugin;
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

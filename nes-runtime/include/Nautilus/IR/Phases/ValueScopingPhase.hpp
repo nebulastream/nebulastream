@@ -77,5 +77,5 @@ private:
     };
 };
 
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR
 #endif /// NES_RUNTIME_INCLUDE_NAUTILUS_IR_PHASES_VALUESCOPINGPHASE_HPP_

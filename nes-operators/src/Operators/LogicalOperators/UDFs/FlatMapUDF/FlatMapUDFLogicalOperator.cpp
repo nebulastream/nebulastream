@@ -60,4 +60,4 @@ bool FlatMapUDFLogicalOperator::isIdentical(const NodePtr& other) const
     return equal(other) && id == other->as<FlatMapUDFLogicalOperator>()->id;
 }
 
-} // namespace NES
+} /// namespace NES

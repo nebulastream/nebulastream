@@ -73,6 +73,6 @@ protected:
     const uint64_t entrySize;
     const TimeFunctionPtr timeFunction;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILD_HPP_

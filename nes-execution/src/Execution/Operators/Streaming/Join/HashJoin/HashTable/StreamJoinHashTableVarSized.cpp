@@ -75,4 +75,4 @@ size_t StreamJoinHashTableVarSized::getNumBuckets() const
     return buckets.size();
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

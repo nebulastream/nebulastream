@@ -105,6 +105,6 @@ private:
     std::vector<ExpressionNodePtr> outputFields;
 };
 
-} // namespace NES::InferModel
+} /// namespace NES::InferModel
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALINFERMODELOPERATOR_HPP_

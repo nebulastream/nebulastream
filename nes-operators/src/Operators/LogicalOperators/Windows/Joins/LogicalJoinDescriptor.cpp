@@ -147,4 +147,4 @@ bool LogicalJoinDescriptor::equals(const LogicalJoinDescriptor& other) const
         && joinType == other.joinType && originId == other.originId;
 }
 
-}; // namespace NES::Join
+}; /// namespace NES::Join

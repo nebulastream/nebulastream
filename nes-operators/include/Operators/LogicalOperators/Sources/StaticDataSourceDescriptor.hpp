@@ -71,5 +71,5 @@ private:
     std::string pathTableFile;
     bool lateStart;
 };
-} // namespace NES::Experimental
+} /// namespace NES::Experimental
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_STATICDATASOURCEDESCRIPTOR_HPP_

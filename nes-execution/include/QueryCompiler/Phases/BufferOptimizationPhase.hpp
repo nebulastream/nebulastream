@@ -58,6 +58,6 @@ public:
 private:
     [[maybe_unused]] OutputBufferOptimizationLevel level;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_BUFFEROPTIMIZATIONPHASE_HPP_

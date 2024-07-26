@@ -1,5 +1,5 @@
 package stream.nebula;
-// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
+/// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
 
 /**
@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 public class ShortMapFunction implements MapFunction<Short, Short>, Serializable {
 
-    // This field is used to verify that we store the actual instance in the UDF descriptor.
+    /// This field is used to verify that we store the actual instance in the UDF descriptor.
     public short instanceVariable = 10;
 
     /**

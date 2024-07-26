@@ -56,12 +56,12 @@ StaticDataSource::StaticDataSource(
         std::move(schema),
         std::move(bufferManager),
         std::move(queryManager),
-        0, // todo  <-- dumb
+        0, /// todo  <-- dumb
         operatorId,
         originId,
         statisticId,
         numSourceLocalBuffers,
-        GatheringMode::INTERVAL_MODE, // todo: this is a placeholder. gathering mode is unnecessary for static data.
+        GatheringMode::INTERVAL_MODE, /// todo: this is a placeholder. gathering mode is unnecessary for static data.
         std::move(successors),
         physicalSourceName)
     , lateStart(lateStart)
@@ -85,16 +85,16 @@ StaticDataSource::StaticDataSource(
         "The following path is not a valid table file: "
             + pathTableFile);
 
-    // check how many rows are in file/ table
+    /// check how many rows are in file/ table
     numTuples = std::count(std::istreambuf_iterator<char>(input), std::istreambuf_iterator<char>(), '\n');
 
-    // reset ifstream to beginning of file
+    /// reset ifstream to beginning of file
     input.seekg(0, input.beg);
 
     numTuplesPerBuffer = bufferSize / tupleSizeInBytes;
     numberOfBuffersToProduce = numTuples / numTuplesPerBuffer + (numTuples % numTuplesPerBuffer != 0);
 
-    // setup file parser
+    /// setup file parser
     std::vector<PhysicalTypePtr> physicalTypes;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : this->schema->fields)
@@ -131,7 +131,7 @@ bool StaticDataSource::start()
     if (lateStart)
     {
         NES_DEBUG("StaticDataSource::start called while lateStart==true. Will start at StartSourceEvent. operatorId: {}", this->operatorId);
-        return true; // we didn't start but still signal a success
+        return true; /// we didn't start but still signal a success
     }
 
     lock.unlock();
@@ -172,19 +172,19 @@ void StaticDataSource::onEvent(Runtime::BaseEvent& event)
 
 void StaticDataSource::open()
 {
-    // in the case of eager loading the static data source has already been opened
+    /// in the case of eager loading the static data source has already been opened
     if (!eagerLoading)
     {
         DataSource::open();
     }
 
-    // but we might want to wait for the preloading to finish, for benchmarking reasons:
-    if (eagerLoading && this->bufferManager != nullptr // <- has previously been opened
+    /// but we might want to wait for the preloading to finish, for benchmarking reasons:
+    if (eagerLoading && this->bufferManager != nullptr /// <- has previously been opened
         && onlySendDataWhenLoadingIsFinished)
     {
         while (filledBuffers.size() < numberOfBuffersToProduce)
         {
-            // this will stall the start of runningRouting()
+            /// this will stall the start of runningRouting()
             std::this_thread::sleep_for(std::chrono::milliseconds(100));
         }
     }
@@ -192,10 +192,10 @@ void StaticDataSource::open()
 
 void StaticDataSource::preloadBuffers()
 {
-    // open source, register bufferManager:
+    /// open source, register bufferManager:
     DataSource::open();
 
-    // preload buffers:
+    /// preload buffers:
     for (size_t i = 0; i < numberOfBuffersToProduce; ++i)
     {
         auto testBuffer = DataSource::allocateBuffer();
@@ -215,7 +215,7 @@ std::optional<::NES::Runtime::TupleBuffer> StaticDataSource::receiveData()
 
     if (eagerLoading)
     {
-        // todo alternatively we could keep buffers and not recycle them
+        /// todo alternatively we could keep buffers and not recycle them
         NES_DEBUG("StaticDataSource::receiveData: Emit preloaded buffer.");
         NES_ASSERT2_FMT(!filledBuffers.empty(), "StaticDataSource buffers should be preloaded.");
         auto buffer = filledBuffers.front();
@@ -241,7 +241,7 @@ void StaticDataSource::fillBuffer(::NES::Runtime::MemoryLayouts::TestTupleBuffer
     input.seekg(currentPositionInFile, std::ifstream::beg);
 
     uint64_t generatedTuplesThisPass = 0;
-    //fill buffer maximally
+    ///fill buffer maximally
     NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSizeInBytes < buffer.getBuffer().getBufferSize(), "Wrong parameters");
     NES_DEBUG("StaticDataSource::fillBuffer: fill buffer with #tuples= {}  of size= {}", numTuplesPerBuffer, tupleSizeInBytes);
 
@@ -281,4 +281,4 @@ NES::SourceType StaticDataSource::getType() const
 {
     return SourceType::STATIC_DATA_SOURCE;
 }
-} // namespace NES::Experimental
+} /// namespace NES::Experimental

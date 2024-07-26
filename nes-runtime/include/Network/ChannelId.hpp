@@ -27,7 +27,7 @@ public:
     explicit ChannelId(NesPartition nesPartition, WorkerThreadId workerThreadId)
         : nesPartition(nesPartition), workerThreadId(workerThreadId)
     {
-        // nop
+        /// nop
     }
 
     [[nodiscard]] NesPartition getNesPartition() const { return nesPartition; }
@@ -42,7 +42,7 @@ private:
     const NesPartition nesPartition;
     const WorkerThreadId workerThreadId;
 };
-} // namespace NES::Network
+} /// namespace NES::Network
 
 namespace fmt
 {
@@ -54,6 +54,6 @@ struct formatter<NES::Network::ChannelId> : formatter<std::string>
         return fmt::format_to(ctx.out(), "{}:{}", channel_id.getThreadId(), channel_id.getNesPartition());
     }
 };
-} // namespace fmt
+} /// namespace fmt
 
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_CHANNELID_HPP_

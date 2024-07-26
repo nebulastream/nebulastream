@@ -123,7 +123,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
+    /// Fill buffer
     testBuffer[0]["k"].write(+1_s64);
     testBuffer[0]["v"].write(+10_s64);
     testBuffer[0]["ts"].write(+1_s64);
@@ -169,7 +169,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
 {
@@ -224,7 +224,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
+    /// Fill buffer
     testBuffer[0]["k1"].write(+1_s64);
     testBuffer[0]["k2"].write(+1_s64);
     testBuffer[0]["v"].write(+10_s64);
@@ -280,11 +280,11 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     preAggExecutablePipeline->stop(pipeline1Context);
     sliceMergingExecutablePipeline->stop(pipeline2Context);
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     KeyedTimeWindowPipelineTest,
     ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<KeyedTimeWindowPipelineTest::ParamType>& info) { return info.param; });
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

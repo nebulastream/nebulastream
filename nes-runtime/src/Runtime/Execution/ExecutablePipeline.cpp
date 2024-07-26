@@ -49,7 +49,7 @@ ExecutablePipeline::ExecutablePipeline(
     , activeProducers(numOfProducingPipelines)
     , successorPipelines(std::move(successorPipelines))
 {
-    // nop
+    /// nop
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext && numOfProducingPipelines > 0, "Wrong pipeline stage argument");
 }
 
@@ -280,14 +280,14 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
         case ReconfigurationType::FailEndOfStream: {
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1)
-            { //all producers sent EOS
+            { ///all producers sent EOS
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers())
                 {
                     operatorHandler->postReconfigurationCallback(task);
                 }
-                // mark the pipeline as failed
+                /// mark the pipeline as failed
                 fail();
-                // tell the query manager about it
+                /// tell the query manager about it
                 queryManager->notifyPipelineCompletion(
                     decomposedQueryPlanId, inherited0::shared_from_this<ExecutablePipeline>(), Runtime::QueryTerminationType::Failure);
                 for (const auto& successorPipeline : successorPipelines)
@@ -317,19 +317,19 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
         }
         case ReconfigurationType::HardEndOfStream:
         case ReconfigurationType::SoftEndOfStream: {
-            //we mantain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
+            ///we mantain a set of producers, and we will only trigger the end of stream once all producers have sent the EOS, for this we decrement the counter
             auto prevProducerCounter = activeProducers.fetch_sub(1);
             if (prevProducerCounter == 1)
-            { //all producers sent EOS
+            { ///all producers sent EOS
                 NES_DEBUG(
                     "Reconfiguration of pipeline belonging to subplanId:{} stage id:{} reached prev=1", decomposedQueryPlanId, pipelineId);
                 auto terminationType = task.getType() == Runtime::ReconfigurationType::SoftEndOfStream
                     ? Runtime::QueryTerminationType::Graceful
                     : Runtime::QueryTerminationType::HardStop;
 
-                // do not change the order here
-                // first, stop and drain handlers, if necessary
-                //todo #4282: drain without stopping for VersionDrainEvent
+                /// do not change the order here
+                /// first, stop and drain handlers, if necessary
+                ///todo #4282: drain without stopping for VersionDrainEvent
                 for (const auto& operatorHandler : pipelineContext->getOperatorHandlers())
                 {
                     operatorHandler->stop(terminationType, pipelineContext);
@@ -338,9 +338,9 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 {
                     operatorHandler->postReconfigurationCallback(task);
                 }
-                // second, stop pipeline, if not stopped yet
+                /// second, stop pipeline, if not stopped yet
                 stop(terminationType);
-                // finally, notify query manager
+                /// finally, notify query manager
                 queryManager->notifyPipelineCompletion(
                     decomposedQueryPlanId, inherited0::shared_from_this<ExecutablePipeline>(), terminationType);
 
@@ -386,4 +386,4 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
     }
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

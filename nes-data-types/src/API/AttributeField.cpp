@@ -76,4 +76,4 @@ AttributeFieldPtr AttributeField::copy() const
     return create(name, dataType);
 }
 
-} // namespace NES
+} /// namespace NES

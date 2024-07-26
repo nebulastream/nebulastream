@@ -24,7 +24,7 @@ namespace NES
 using WatermarkTs = uint64_t;
 using OriginId = uint64_t;
 using SequenceNumber = uint64_t;
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Windowing
 {
@@ -65,14 +65,14 @@ private:
     {
         bool operator()(std::tuple<WatermarkTs, SequenceNumber> const& wb1, std::tuple<WatermarkTs, SequenceNumber> const& wb2)
         {
-            // return "true" if "wb1" is ordered before "wb2", for example:
+            /// return "true" if "wb1" is ordered before "wb2", for example:
             return std::get<1>(wb1) > std::get<1>(wb2);
         }
     };
     mutable std::mutex watermarkLatch;
     std::atomic<WatermarkTs> currentWatermark{0};
     SequenceNumber currentSequenceNumber{0};
-    // Use a priority queue to keep track of all in flight transactions.
+    /// Use a priority queue to keep track of all in flight transactions.
     std::priority_queue<
         std::tuple<WatermarkTs, SequenceNumber>,
         std::vector<std::tuple<WatermarkTs, SequenceNumber>>,
@@ -80,6 +80,6 @@ private:
         transactionLog;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_WATERMARKPROCESSOR_HPP_

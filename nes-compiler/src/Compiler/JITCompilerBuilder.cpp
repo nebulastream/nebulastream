@@ -40,4 +40,4 @@ std::shared_ptr<JITCompiler> JITCompilerBuilder::build()
     return std::make_shared<JITCompiler>(languageCompilers, useCompilationCache);
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

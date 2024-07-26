@@ -64,14 +64,14 @@ std::ostream& operator<<(std::ostream& os, const NesPartition& partition)
     os << partition.toString();
     return os;
 }
-} // namespace NES::Network
+} /// namespace NES::Network
 
 std::uint64_t std::hash<NES::Network::NesPartition>::operator()(const NES::Network::NesPartition& k) const
 {
     using std::hash;
 
-    // Hash function for the NesPartition
-    // Compute individual hash values of the Ints and combine them using XOR and bit shifting:
+    /// Hash function for the NesPartition
+    /// Compute individual hash values of the Ints and combine them using XOR and bit shifting:
     return ((hash<NES::SharedQueryId>()(k.getQueryId()) ^ (hash<NES::OperatorId>()(k.getOperatorId()) << 1)) >> 1)
         ^ ((hash<NES::PartitionId>()(k.getPartitionId()) ^ (hash<NES::SubpartitionId>()(k.getSubpartitionId()) << 1)) >> 1);
 }

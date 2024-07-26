@@ -139,5 +139,5 @@ private:
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BENCHMARKSOURCEDESCRIPTOR_HPP_

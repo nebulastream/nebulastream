@@ -62,16 +62,16 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(
     Runtime::WorkerContext& wctx, Runtime::Execution::PipelineExecutionContext& ctx, SequenceData sequenceNumber, uint64_t slideEnd)
 {
     NES_ASSERT(sliceStore != 0, "slice store is not initialized");
-    // the watermark update is an atomic process and returns the last and the current watermark.
+    /// the watermark update is an atomic process and returns the last and the current watermark.
     auto currentWatermark = watermarkProcessor->updateWatermark(slideEnd, sequenceNumber, INVALID_ORIGIN_ID);
 
-    // the watermark has changed get the lock to trigger
+    /// the watermark has changed get the lock to trigger
     std::lock_guard<std::mutex> lock(triggerMutex);
-    // update currentWatermark, such that other threads to have to acquire the lock
+    /// update currentWatermark, such that other threads to have to acquire the lock
     NES_TRACE("Trigger sliding windows between {}-{}", lastTriggerWatermark, currentWatermark);
 
     auto windows = sliceStore->collectWindows(lastTriggerWatermark, currentWatermark);
-    // collect all slices that end <= watermark from all thread local slice stores.
+    /// collect all slices that end <= watermark from all thread local slice stores.
     auto bufferProvider = wctx.getBufferProvider();
     for (const auto& [windowStart, windowEnd] : windows)
     {
@@ -84,7 +84,7 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(
         auto buffer = bufferProvider->getBufferBlocking();
         buffer.setSequenceNumber(resultSequenceNumber);
         buffer.setChunkNumber(TupleBuffer::INITIAL_CHUNK_NUMBER);
-        // Tasks always fit into a single chunk, thus this is the last chunk
+        /// Tasks always fit into a single chunk, thus this is the last chunk
         buffer.setLastChunk(true);
 
         auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
@@ -96,7 +96,7 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(
         task->lastChunk = true;
         ctx.dispatchBuffer(buffer);
     }
-    // remove all slices from the slice store that are not necessary anymore.
+    /// remove all slices from the slice store that are not necessary anymore.
     sliceStore->removeSlices(currentWatermark);
     lastTriggerWatermark = currentWatermark;
 };
@@ -108,10 +108,10 @@ void AppendToSliceStoreHandler<Slice>::stop(
     NES_DEBUG("stop AppendToSliceStoreHandler: {}", queryTerminationType);
     if (queryTerminationType == QueryTerminationType::Graceful)
     {
-        // the watermark has changed get the lock to trigger
+        /// the watermark has changed get the lock to trigger
         std::lock_guard<std::mutex> lock(triggerMutex);
         auto windows = sliceStore->collectAllWindows(lastTriggerWatermark);
-        // collect all slices that end <= watermark from all thread local slice stores.
+        /// collect all slices that end <= watermark from all thread local slice stores.
         auto bufferProvider = ctx->getBufferManager();
         for (const auto& [windowStart, windowEnd] : windows)
         {
@@ -162,9 +162,9 @@ void AppendToSliceStoreAction<Slice>::emitSlice(
         sliceEnd);
 }
 
-// Instantiate types
+/// Instantiate types
 template class AppendToSliceStoreHandler<NonKeyedSlice>;
 template class AppendToSliceStoreHandler<KeyedSlice>;
 template class AppendToSliceStoreAction<NonKeyedSlice>;
 template class AppendToSliceStoreAction<KeyedSlice>;
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

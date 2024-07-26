@@ -21,4 +21,4 @@ OperationRef::OperationRef(uint32_t blockId, uint32_t operationId) : blockId(blo
 {
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

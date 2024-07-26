@@ -138,6 +138,6 @@ private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftPagedVectors;
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> rightPagedVectors;
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJSLICE_HPP_

@@ -49,6 +49,6 @@ public:
 
 using InvocationPluginRegistry = Util::PluginRegistry<InvocationPlugin>;
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_

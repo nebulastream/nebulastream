@@ -44,4 +44,4 @@ DataSinkPtr DataSinkProvider::lower(
         sinkId, std::move(sinkDescriptor), std::move(schema), std::move(nodeEngine), querySubPlan, numOfProducers);
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

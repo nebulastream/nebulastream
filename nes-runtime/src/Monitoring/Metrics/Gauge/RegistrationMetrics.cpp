@@ -179,4 +179,4 @@ nlohmann::json asJson(const RegistrationMetrics& metrics)
     return metrics.toJson();
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

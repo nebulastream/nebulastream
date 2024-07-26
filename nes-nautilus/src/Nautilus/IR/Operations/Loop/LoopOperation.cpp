@@ -26,7 +26,7 @@ LoopOperation::LoopType LoopOperation::getLoopType()
 {
     return loopType;
 }
-// Todo leads to segfault
+/// Todo leads to segfault
 void LoopOperation::setLoopType(LoopOperation::LoopType loopType)
 {
     this->loopType = loopType;
@@ -40,8 +40,8 @@ BasicBlockInvocation& LoopOperation::getLoopFalseBlock()
 {
     return loopFalseBlock;
 }
-// void LoopOperation::setLoopBodyBlock(BasicBlockInvocation loopBodyBlock) { this->loopBodyBlock = loopBodyBlock.getBlock(); }
-// void LoopOperation::setLoopFalseBlock(BasicBlockInvocation loopFalseBlock) { this->loopFalseBlock = loopFalseBlock.getBlock(); }
+/// void LoopOperation::setLoopBodyBlock(BasicBlockInvocation loopBodyBlock) { this->loopBodyBlock = loopBodyBlock.getBlock(); }
+/// void LoopOperation::setLoopFalseBlock(BasicBlockInvocation loopFalseBlock) { this->loopFalseBlock = loopFalseBlock.getBlock(); }
 BasicBlockInvocation& LoopOperation::getLoopHeadBlock()
 {
     return loopHeadBlock;
@@ -76,4 +76,4 @@ std::string LoopOperation::toString()
     return baseString + ")";
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

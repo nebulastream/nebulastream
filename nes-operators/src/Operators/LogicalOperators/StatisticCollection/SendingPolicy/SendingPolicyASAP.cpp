@@ -36,4 +36,4 @@ SendingPolicyASAP::SendingPolicyASAP(StatisticDataCodec sinkDataCodec) : Sending
 {
 }
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

@@ -30,4 +30,4 @@ public:
 };
 
 [[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<FlounderPipelineProvider> flounderPipelineProvider("FlounderCompiler");
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

@@ -38,20 +38,20 @@ public:
 TEST_F(AcosExpressionTest, evaluateAcosExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<AcosExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(1_s8));
         ASSERT_EQ(resultValue, (float)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(1_s32));
         ASSERT_EQ(resultValue, (float)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(1_s64));
         ASSERT_EQ(resultValue, (float)0);
@@ -62,25 +62,25 @@ TEST_F(AcosExpressionTest, evaluateAcosExpressionInteger)
 TEST_F(AcosExpressionTest, evaluateAcosExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<AcosExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)0.5));
         ASSERT_EQ(resultValue, std::acos(0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)0.5));
         ASSERT_EQ(resultValue, std::acos(0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)0.5));
         ASSERT_EQ(resultValue, std::acos(0.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)0.5));
         ASSERT_EQ(resultValue, std::acos(0.5));
@@ -95,4 +95,4 @@ TEST_F(AcosExpressionTest, evaluateAcosExpressionOnWrongType)
     auto expression = UnaryExpressionWrapper<AcosExpression>();
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
 }
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

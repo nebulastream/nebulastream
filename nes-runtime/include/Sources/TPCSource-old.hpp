@@ -127,5 +127,5 @@ private:
     char* messageBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_TPCSOURCE_OLD_HPP_

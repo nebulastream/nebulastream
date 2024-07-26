@@ -34,6 +34,6 @@ public:
      */
     bool isValid(const std::string& number) const override;
 };
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_NUMBERVALIDATION_HPP_

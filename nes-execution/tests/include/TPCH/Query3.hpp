@@ -79,14 +79,14 @@ public:
         std::vector<Nautilus::Record::RecordFieldIdentifier> customersProjection = {"c_mksegment", "c_custkey"};
         auto customersScan = std::make_shared<Operators::Scan>(std::move(c_scanMemoryProviderPtr), customersProjection);
 
-        // c_mksegment = 'BUILDING' -> currently modeled as 1
+        /// c_mksegment = 'BUILDING' -> currently modeled as 1
         auto BUILDING = std::make_shared<ConstantInt32ValueExpression>(1);
         auto readC_mktsegment = std::make_shared<ReadFieldExpression>("c_mksegment");
         auto equalsExpression = std::make_shared<EqualsExpression>(readC_mktsegment, BUILDING);
         auto selection = std::make_shared<Selection>(equalsExpression);
         customersScan->setChild(selection);
 
-        // build ht for first join
+        /// build ht for first join
         auto readC_key = std::make_shared<ReadFieldExpression>("c_custkey");
         auto joinOp = std::make_shared<Operators::BatchJoinBuild>(
             0 /*handler index*/,
@@ -97,7 +97,7 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         selection->setChild(joinOp);
 
-        // create customerJoinBuildPipeline pipeline
+        /// create customerJoinBuildPipeline pipeline
         auto customerJoinBuildPipeline = std::make_shared<PhysicalOperatorPipeline>();
         customerJoinBuildPipeline->setRootOperator(customersScan);
         std::vector<Runtime::Execution::OperatorHandlerPtr> joinHandler = {std::make_shared<Operators::BatchJoinHandler>()};
@@ -127,13 +127,13 @@ public:
             = {"o_orderdate", "o_shippriority", "o_custkey", "o_orderkey"};
         auto orderScan = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
 
-        //  o_orderdate < date '1995-03-15'
+        ///  o_orderdate < date '1995-03-15'
         auto const_1995_03_15 = std::make_shared<ConstantInt32ValueExpression>(19950315);
         auto readO_orderdate = std::make_shared<ReadFieldExpression>("o_orderdate");
         auto orderDateSelection = std::make_shared<Selection>(std::make_shared<LessThanExpression>(readO_orderdate, const_1995_03_15));
         orderScan->setChild(orderDateSelection);
 
-        // join probe with customers
+        /// join probe with customers
         std::vector<IR::Types::StampPtr> keyStamps = {IR::Types::StampFactory::createInt64Stamp()};
         std::vector<IR::Types::StampPtr> valueStamps = {};
         std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
@@ -148,7 +148,7 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         orderDateSelection->setChild(customersJoinProbe);
 
-        // join build for order_customers
+        /// join build for order_customers
         std::vector<ExpressionPtr> order_customersJoinBuildKeys = {std::make_shared<ReadFieldExpression>("o_orderkey")};
         std::vector<ExpressionPtr> order_customersJoinBuildValues
             = {std::make_shared<ReadFieldExpression>("o_orderdate"), std::make_shared<ReadFieldExpression>("o_shippriority")};
@@ -163,7 +163,7 @@ public:
 
         customersJoinProbe->setChild(order_customersJoinBuild);
 
-        // create order_customersJoinBuild pipeline
+        /// create order_customersJoinBuild pipeline
         auto orderCustomersJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
         orderCustomersJoinBuild->setRootOperator(orderScan);
         auto joinHandler2 = std::make_shared<Operators::BatchJoinHandler>();
@@ -194,15 +194,15 @@ public:
             = {"l_orderkey", "l_extendedprice", "l_discount", "l_shipdate"};
         auto lineitemsScan = std::make_shared<Operators::Scan>(std::move(lineitemsMP), lineItemProjection);
 
-        //   date '1995-03-15' < l_shipdate
+        ///   date '1995-03-15' < l_shipdate
         auto readL_shipdate = std::make_shared<ReadFieldExpression>("l_shipdate");
         auto const_1995_03_15 = std::make_shared<ConstantInt32ValueExpression>(19950315);
         auto shipDateSelection = std::make_shared<Selection>(std::make_shared<LessThanExpression>(const_1995_03_15, readL_shipdate));
         lineitemsScan->setChild(shipDateSelection);
 
-        // join probe with customers
+        /// join probe with customers
 
-        //  l_orderkey,
+        ///  l_orderkey,
         auto l_orderkey = std::make_shared<ReadFieldExpression>("l_orderkey");
         std::vector<ExpressionPtr> lineitemProbeKeys = {l_orderkey};
 
@@ -217,7 +217,7 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         shipDateSelection->setChild(lineitemJoinProbe);
 
-        //  sum(l_extendedprice * (1 - l_discount)) as revenue,
+        ///  sum(l_extendedprice * (1 - l_discount)) as revenue,
         auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
         auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
         auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
@@ -241,7 +241,7 @@ public:
 
         lineitemJoinProbe->setChild(aggregation);
 
-        // create lineitems_ordersJoinBuild pipeline
+        /// create lineitems_ordersJoinBuild pipeline
         auto lineitems_ordersJoinBuild = std::make_shared<PhysicalOperatorPipeline>();
         lineitems_ordersJoinBuild->setRootOperator(lineitemsScan);
         auto aggHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
@@ -251,5 +251,5 @@ public:
     }
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY3_HPP_

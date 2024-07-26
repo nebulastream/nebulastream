@@ -37,4 +37,4 @@ bool SinkDescriptor::getAddTimestamp() const
 {
     return addTimestamp;
 }
-} // namespace NES
+} /// namespace NES

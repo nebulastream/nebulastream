@@ -42,7 +42,7 @@ std::string IRGraph::toString()
     ss << "NESIR {\n";
     auto dumpHandler = Nautilus::IR::NESIRDumpHandler::create(ss);
     dumpHandler->dump(rootOperation);
-    ss << "} //NESIR";
+    ss << "} ///NESIR";
     return ss.str();
 }
 const IRGraph::Flags& IRGraph::getFlags() const
@@ -96,4 +96,4 @@ void IRGraph::Flags::setDebug(bool debug)
 {
     Flags::debug = debug;
 }
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR

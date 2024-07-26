@@ -93,6 +93,6 @@ public:
     virtual uint64_t hash() const = 0;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_WINDOWTYPE_HPP_

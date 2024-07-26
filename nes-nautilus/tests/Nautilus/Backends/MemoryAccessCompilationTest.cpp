@@ -49,7 +49,7 @@ TEST_P(MemoryAccessCompilationTest, loadFunctionTest)
 {
     int64_t valI = 42;
     auto tempPara = Value<MemRef>(std::make_unique<MemRef>((int8_t*)&valI));
-    // create fake ref TODO improve handling of parameters
+    /// create fake ref TODO improve handling of parameters
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&tempPara]() { return loadFunction(tempPara); });
 
@@ -71,7 +71,7 @@ TEST_P(MemoryAccessCompilationTest, storeFunctionTest)
     int64_t valI = 42;
     auto tempPara = Value<MemRef>((int8_t*)&valI);
     tempPara.load<Int64>();
-    // create fake ref TODO improve handling of parameters
+    /// create fake ref TODO improve handling of parameters
     tempPara.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto executionTrace = Nautilus::Tracing::traceFunction([&tempPara]() { storeFunction(tempPara); });
     auto engine = prepare(executionTrace);
@@ -114,7 +114,7 @@ Value<Boolean> checkEqualityMemRefs(Value<MemRef> lhs, Value<MemRef> rhs)
 
 TEST_P(MemoryAccessCompilationTest, memEqualFunctionTest)
 {
-    // Same value but different addresses
+    /// Same value but different addresses
     uint64_t someValLHS = 42;
     uint64_t someValRHS = 42;
     auto memRefLHS = Value<MemRef>((int8_t*)&someValLHS);
@@ -127,7 +127,7 @@ TEST_P(MemoryAccessCompilationTest, memEqualFunctionTest)
     auto engine = prepare(executionTrace);
     auto function = engine->getInvocableMember<bool, void*, void*>("execute");
 
-    // Testing memRef == memRef for different options
+    /// Testing memRef == memRef for different options
     int i, i2, i3;
     ASSERT_EQ(function(&i, &i), true);
     ASSERT_EQ(function(&i2, &i2), true);
@@ -141,8 +141,8 @@ TEST_P(MemoryAccessCompilationTest, memEqualFunctionTest)
     ASSERT_EQ(function(&i2, &i3), false);
 }
 
-// Tests all registered compilation backends.
-// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+/// Tests all registered compilation backends.
+/// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 INSTANTIATE_TEST_CASE_P(
     testLoopCompilation,
     MemoryAccessCompilationTest,
@@ -150,4 +150,4 @@ INSTANTIATE_TEST_CASE_P(
         Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<MemoryAccessCompilationTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

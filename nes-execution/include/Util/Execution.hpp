@@ -33,6 +33,6 @@ namespace NES::QueryCompilation::Util
 std::tuple<uint64_t, uint64_t, Runtime::Execution::Operators::TimeFunctionPtr>
 getWindowingParameters(Windowing::TimeBasedWindowType& windowType);
 
-} // namespace NES::QueryCompilation::Util
+} /// namespace NES::QueryCompilation::Util
 
 #endif /// NES_EXECUTION_INCLUDE_UTIL_EXECUTION_HPP_

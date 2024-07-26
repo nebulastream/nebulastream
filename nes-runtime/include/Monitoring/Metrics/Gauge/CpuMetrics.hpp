@@ -28,7 +28,7 @@ namespace Configurations
 {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-} // namespace Configurations
+} /// namespace Configurations
 
 namespace Monitoring
 {
@@ -134,6 +134,6 @@ void readFromBuffer(CpuMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tup
  */
 nlohmann::json asJson(const CpuMetrics& metrics);
 
-} // namespace Monitoring
-} // namespace NES
+} /// namespace Monitoring
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_CPUMETRICS_HPP_

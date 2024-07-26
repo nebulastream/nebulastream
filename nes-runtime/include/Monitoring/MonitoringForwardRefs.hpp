@@ -54,7 +54,7 @@ using StoredNodeMetricsPtr = std::shared_ptr<std::unordered_map<MetricType, std:
 
 class MetricCollector;
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
-} //namespace Monitoring
-} // namespace NES
+} ///namespace Monitoring
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGFORWARDREFS_HPP_

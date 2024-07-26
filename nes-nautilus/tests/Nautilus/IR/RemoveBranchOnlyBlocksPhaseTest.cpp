@@ -38,7 +38,7 @@ public:
         NES_INFO("Setup TraceTest test class.");
     }
 
-    // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
+    /// Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
     std::shared_ptr<NES::Nautilus::IR::IRGraph> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction)
     {
         auto execution = Nautilus::Tracing::traceFunctionWithReturn([nautilusFunction]() { return nautilusFunction(); });
@@ -95,11 +95,11 @@ public:
         {
             visitedBlocks.emplace(currentBlock->getIdentifier());
             currentBlock = blocksToVisit.top();
-            // The remove branch only phase should have removed all branch only blocks leaving only 'correct' blocks.
+            /// The remove branch only phase should have removed all branch only blocks leaving only 'correct' blocks.
             if (correctBlocks.contains(currentBlock->getIdentifier()))
             {
-                // If the currentBlock has predecessors, check that the number of predecessors matches the correct
-                // number of predecessors and check that all existing predecessors are correct.
+                /// If the currentBlock has predecessors, check that the number of predecessors matches the correct
+                /// number of predecessors and check that all existing predecessors are correct.
                 if (correctBlocks.at(currentBlock->getIdentifier())->correctPredecessors.size() == currentBlock->getPredecessors().size())
                 {
                     for (auto predecessorBlock : currentBlock->getPredecessors())
@@ -116,7 +116,7 @@ public:
                 {
                     predecessorsAreCorrect = false;
                 }
-                // Every Block MUST have a terminator operation. Check whether the terminator operation points to the correct next blocks.
+                /// Every Block MUST have a terminator operation. Check whether the terminator operation points to the correct next blocks.
                 if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::OperationType::BranchOp)
                 {
                     auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(currentBlock->getTerminatorOp());
@@ -171,9 +171,9 @@ public:
     }
 };
 
-//==----------------------------------------------------------==//
-//==------------------ NAUTILUS Phase TESTS -------------------==//
-//==----------------------------------------------------------==//
+///==----------------------------------------------------------==///
+///==------------------ NAUTILUS Phase TESTS -------------------==///
+///==----------------------------------------------------------==///
 Value<> simpleIfOperationWithoutFalseBranch_0()
 {
     Value agg = Value(0);
@@ -189,7 +189,7 @@ Value<> simpleIfOperationWithoutFalseBranch_0()
 TEST_P(RemoveBranchOnlyBlocksPhaseTest, 0_SimpleIfOperationWithoutFalseBranch)
 {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
+    /// createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "3"});
     createCorrectBlock(correctBlocks, "1", {"0"}, {"3"});
     createCorrectBlock(correctBlocks, "3", {"0", "1"}, {});
@@ -229,7 +229,7 @@ Value<> doubleVerticalDiamondInTrueBranch()
 TEST_P(RemoveBranchOnlyBlocksPhaseTest, 2_doubleVerticalDiamondInTrueBranch)
 {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
+    /// createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "2"});
     createCorrectBlock(correctBlocks, "1", {"0"}, {"3", "4"});
     createCorrectBlock(correctBlocks, "2", {"0"}, {"9"});
@@ -263,7 +263,7 @@ Value<> loopMergeBlockBeforeCorrespondingIfOperation_3()
 TEST_P(RemoveBranchOnlyBlocksPhaseTest, 3_loopMergeBlockBeforeCorrespondingIfOperation)
 {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
+    /// createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"6"});
     createCorrectBlock(correctBlocks, "6", {"0", "3", "4"}, {"1", "2"});
     createCorrectBlock(correctBlocks, "1", {"6"}, {"3", "4"});
@@ -306,7 +306,7 @@ Value<> mergeLoopMergeBlockWithLoopFollowUp_4()
 TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp)
 {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    // createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
+    /// createCorrectBlock(correctBlocks, blockId, predecessors, nextBlocks)
     createCorrectBlock(correctBlocks, "0", {}, {"1", "2"});
     createCorrectBlock(correctBlocks, "1", {"0"}, {"12"});
     createCorrectBlock(correctBlocks, "2", {"0"}, {"12"});
@@ -321,8 +321,8 @@ TEST_P(RemoveBranchOnlyBlocksPhaseTest, 4_mergeLoopMergeBlockWithLoopFollowUp)
     EXPECT_EQ(checkIRForCorrectness(ir->getRootOperation()->getFunctionBasicBlock(), correctBlocks), true);
 }
 
-// Tests all registered compilation backends.
-// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+/// Tests all registered compilation backends.
+/// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 INSTANTIATE_TEST_CASE_P(
     testLoopCompilation,
     RemoveBranchOnlyBlocksPhaseTest,
@@ -330,4 +330,4 @@ INSTANTIATE_TEST_CASE_P(
         Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<RemoveBranchOnlyBlocksPhaseTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

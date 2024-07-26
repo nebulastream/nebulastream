@@ -84,4 +84,4 @@ std::ostream& operator<<(std::ostream& os, const TraceOperation& operation)
     return os;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

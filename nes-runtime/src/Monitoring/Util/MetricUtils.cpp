@@ -171,4 +171,4 @@ MetricCollectorType MetricUtils::createCollectorTypeFromMetricType(MetricType ty
     }
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

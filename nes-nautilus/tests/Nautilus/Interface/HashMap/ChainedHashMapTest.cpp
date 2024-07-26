@@ -60,21 +60,21 @@ TEST_F(ChainedHashMapTest, insertEntryTableTest)
     auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*)&hashMap), keyDataTypes, 8, 8);
     auto f1 = Value<Int8>(42_s8);
 
-    // check if entry already exists
+    /// check if entry already exists
     auto res1 = hashMapRef.find(hf->calculate(f1), {f1});
     ASSERT_FALSE(res1 != nullptr);
 
-    // findOrCreate entry
+    /// findOrCreate entry
     auto hash = hf->calculate(f1);
     NES_INFO("Hash: {}", hash.getValue().toString());
     hashMapRef.findOrCreate(hash, {f1});
     ASSERT_EQ(hashMap.getCurrentSize(), 1);
     auto res2 = hashMapRef.find(hash, {f1});
     ASSERT_TRUE(res2 != nullptr);
-    // next should be null
+    /// next should be null
     ASSERT_FALSE(res2.getNext() != nullptr);
 
-    // findOrCreate same key again -> size should keep the same
+    /// findOrCreate same key again -> size should keep the same
     hashMapRef.findOrCreate(hash, {f1});
     ASSERT_EQ(hashMap.getCurrentSize(), 1);
 }
@@ -141,7 +141,7 @@ TEST_F(ChainedHashMapTest, updateValues)
     auto keyDataTypes = {integerType};
     auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*)&hashMap), keyDataTypes, 8, 8);
 
-    // insert
+    /// insert
     for (uint64_t i = 0; i < 100; i++)
     {
         Value<Int64> key = (int64_t)i;
@@ -150,7 +150,7 @@ TEST_F(ChainedHashMapTest, updateValues)
         Value<Int64> value = (int64_t)i;
         entry.getValuePtr().store(value);
     }
-    // update
+    /// update
     for (uint64_t i = 0; i < 100; i++)
     {
         Value<Int64> key = (int64_t)i;
@@ -159,7 +159,7 @@ TEST_F(ChainedHashMapTest, updateValues)
         auto value = entry.getValuePtr().load<Int64>();
         entry.getValuePtr().store(value + 42);
     }
-    // check
+    /// check
     for (uint64_t i = 0; i < 100; i++)
     {
         Value<Int64> key = (int64_t)i;
@@ -178,7 +178,7 @@ TEST_F(ChainedHashMapTest, insertDefaultValueOnCreation)
     auto keyDataTypes = {integerType};
     auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*)&hashMap), keyDataTypes, 8, 8);
 
-    // call findOrCreate multiple times with same key.
+    /// call findOrCreate multiple times with same key.
     for (uint64_t i = 0; i < 10000; i++)
     {
         Value<Int64> key = (int64_t)i % 100;
@@ -193,7 +193,7 @@ TEST_F(ChainedHashMapTest, insertDefaultValueOnCreation)
             });
     }
     ASSERT_EQ(hashMap.getCurrentSize(), 100);
-    // check. Assume that we only inserted the first 100 elements
+    /// check. Assume that we only inserted the first 100 elements
     for (uint64_t i = 0; i < 100; i++)
     {
         Value<Int64> key = (int64_t)i;
@@ -246,7 +246,7 @@ TEST_F(ChainedHashMapTest, insertChain)
     auto keyDataTypes = {integerType};
     auto hashMapRef = ChainedHashMapRef(Value<MemRef>((int8_t*)&hashMap), keyDataTypes, 8, 8);
 
-    // insert 1000 vals with 2 unique keys
+    /// insert 1000 vals with 2 unique keys
     for (uint64_t i = 0; i < 1000; i++)
     {
         Value<Int64> key = (int64_t)(i % 2);
@@ -262,13 +262,13 @@ TEST_F(ChainedHashMapTest, insertChain)
     {
         auto k = entry.getKeyPtr().load<Int64>();
         auto key = k.value.get()->getValue();
-        // Keys should be 0 or 1
+        /// Keys should be 0 or 1
         ASSERT_TRUE(key == 0 || key == 1);
         auto value = entry.getValuePtr().load<Int64>();
         resultVals.emplace_back(value.value.get()->getValue());
     }
 
-    // Values should cover all values from 0 to 999
+    /// Values should cover all values from 0 to 999
     for (int i = 0; i < 1000; i++)
     {
         if (!std::binary_search(resultVals.begin(), resultVals.end(), i))
@@ -290,7 +290,7 @@ TEST_F(ChainedHashMapTest, KeyEntryIterator)
     Value<Int64> key = TEST_KEY;
     auto hash = hf->calculate(key);
 
-    // Insert entries
+    /// Insert entries
     for (int64_t i = 0; i < 1000; i++)
     {
         auto entry = hashMapRef.insert(hash, {key});
@@ -298,26 +298,26 @@ TEST_F(ChainedHashMapTest, KeyEntryIterator)
         entry.getValuePtr().store(value);
     }
 
-    // Use KeyEntryIterator and update values
+    /// Use KeyEntryIterator and update values
     for (auto iter = hashMapRef.findAll(hash, {key}); iter != nullptr; ++iter)
     {
         auto value = (*iter).getValuePtr().load<Int64>();
         (*iter).getValuePtr().store(value + 42_s64);
     }
 
-    // Test result
+    /// Test result
     std::vector<int64_t> resultVals;
     for (const auto& entry : hashMapRef)
     {
         auto k = entry.getKeyPtr().load<Int64>();
         auto key = k.value.get()->getValue();
-        // Keys should be TEST_KEY
+        /// Keys should be TEST_KEY
         ASSERT_TRUE(key == TEST_KEY);
         auto value = entry.getValuePtr().load<Int64>();
         resultVals.emplace_back(value.value.get()->getValue());
     }
 
-    // All values should be updated
+    /// All values should be updated
     for (int i = 0; i < 1000; i++)
     {
         if (!std::binary_search(resultVals.begin(), resultVals.end(), i + 42))
@@ -327,4 +327,4 @@ TEST_F(ChainedHashMapTest, KeyEntryIterator)
     }
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

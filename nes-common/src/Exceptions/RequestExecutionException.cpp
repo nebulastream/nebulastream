@@ -27,4 +27,4 @@ QueryId RequestExecutionException::getQueryId() const
 {
     return queryId;
 }
-} // namespace NES::Exceptions
+} /// namespace NES::Exceptions

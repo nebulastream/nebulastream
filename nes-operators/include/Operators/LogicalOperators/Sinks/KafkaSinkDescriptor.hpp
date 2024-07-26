@@ -63,5 +63,5 @@ private:
 };
 
 typedef std::shared_ptr<KafkaSinkDescriptor> KafkaSinkDescriptorPtr;
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_KAFKASINKDESCRIPTOR_HPP_

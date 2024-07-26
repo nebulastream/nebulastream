@@ -94,6 +94,6 @@ private:
     const DecomposedQueryPlanId decomposedQueryPlanId;
     std::vector<OperatorPipelinePtr> pipelines;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLAN_HPP_

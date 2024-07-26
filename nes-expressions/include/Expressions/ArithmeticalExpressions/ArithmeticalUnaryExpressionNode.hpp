@@ -41,6 +41,6 @@ protected:
     ~ArithmeticalUnaryExpressionNode() noexcept override = default;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_ARITHMETICALUNARYEXPRESSIONNODE_HPP_

@@ -52,4 +52,4 @@ SourceDescriptorPtr LogicalSourceDescriptor::copy()
     return copy;
 }
 
-} // namespace NES
+} /// namespace NES

@@ -45,7 +45,7 @@ short BCLoweringProvider::RegisterProvider::allocRegister()
 
 void BCLoweringProvider::RegisterProvider::freeRegister()
 {
-    // TODO
+    /// TODO
 }
 
 std::tuple<Code, RegisterFile> BCLoweringProvider::LoweringContext::process()
@@ -68,13 +68,13 @@ std::tuple<Code, RegisterFile> BCLoweringProvider::LoweringContext::process()
 
 short BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock>& block, RegisterFrame& frame)
 {
-    // assume that all argument registers are correctly set
+    /// assume that all argument registers are correctly set
     auto entry = activeBlocks.find(block->getIdentifier());
     if (entry == activeBlocks.end())
     {
         short blockIndex = program.blocks.size();
         activeBlocks.emplace(block->getIdentifier(), blockIndex);
-        // create bytecode block;
+        /// create bytecode block;
         program.blocks.emplace_back();
         for (auto& opt : block->getOperations())
         {
@@ -687,15 +687,15 @@ void BCLoweringProvider::LoweringContext::process(IR::Operations::BasicBlockInvo
         auto parentFrameReg = parentFrame.getValue(blockArgument);
         if (!parentFrame.contains(blockTargetArgument))
         {
-            //auto resultReg = registerProvider.allocRegister();
-            // TODO use child frame
+            ///auto resultReg = registerProvider.allocRegister();
+            /// TODO use child frame
             parentFrame.setValue(blockTargetArgument, parentFrameReg);
-            //OpCode oc = {ByteCode::REG_MOV, parentFrameReg, -1, resultReg};
-            //program.blocks[block].code.emplace_back(oc);
+            ///OpCode oc = {ByteCode::REG_MOV, parentFrameReg, -1, resultReg};
+            ///program.blocks[block].code.emplace_back(oc);
         }
         else
         {
-            // TODO use child frame
+            /// TODO use child frame
             auto resultReg = parentFrame.getValue(blockTargetArgument);
             if (resultReg != parentFrameReg)
             {
@@ -868,11 +868,11 @@ void BCLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::Oper
 void BCLoweringProvider::LoweringContext::process(
     const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame)
 {
-    // first try to lower to a native call if the correct stub was registered.
+    /// first try to lower to a native call if the correct stub was registered.
     auto returnValue = processNativeCall(opt, block, frame);
     if (!returnValue)
     {
-        // if it was not possible to lower the call, we try to create a dynamic call using dyncall.h
+        /// if it was not possible to lower the call, we try to create a dynamic call using dyncall.h
         processDynamicCall(opt, block, frame);
     }
 }
@@ -884,10 +884,10 @@ void BCLoweringProvider::LoweringContext::processDynamicCall(
     NES_DEBUG("CREATE {}: {}", opt->toString(), opt->getStamp()->toString())
     auto arguments = opt->getInputArguments();
 
-    // 1. reset dyncall stack
+    /// 1. reset dyncall stack
     code.emplace_back(ByteCode::DYNCALL_reset, -1, -1, -1);
 
-    // 2. set dyncall arguments
+    /// 2. set dyncall arguments
     for (auto& arg : arguments)
     {
         auto argType = getType(arg->getStamp());
@@ -937,7 +937,7 @@ void BCLoweringProvider::LoweringContext::processDynamicCall(
         code.emplace_back(bc, registerSlot, -1, -1);
     }
 
-    // 3. call function
+    /// 3. call function
     auto returnType = getType(opt->getStamp());
     ByteCode bc;
     switch (returnType)
@@ -997,7 +997,7 @@ void BCLoweringProvider::LoweringContext::processDynamicCall(
 bool BCLoweringProvider::LoweringContext::processNativeCall(
     const std::shared_ptr<IR::Operations::ProxyCallOperation>& opt, short block, RegisterFrame& frame)
 {
-    // TODO the following code is very bad and manually checks function signatures. Type to come up with something more generic.
+    /// TODO the following code is very bad and manually checks function signatures. Type to come up with something more generic.
     NES_DEBUG("CREATE {}: {}", opt->toString(), opt->getStamp()->toString())
     auto arguments = opt->getInputArguments();
     ByteCode bc;
@@ -1057,7 +1057,7 @@ bool BCLoweringProvider::LoweringContext::processNativeCall(
         }
         else
         {
-            // TODO support void function
+            /// TODO support void function
             NES_NOT_IMPLEMENTED();
         }
     }
@@ -1416,7 +1416,7 @@ short BCLoweringProvider::LoweringContext::getResultRegister(const std::shared_p
 {
     auto optResultIdentifier = opt->getIdentifier();
 
-    // if the result value of opt is directly passed to a block argument, then we can directly write the value to the correct target register.
+    /// if the result value of opt is directly passed to a block argument, then we can directly write the value to the correct target register.
     if (opt->getUsages().size() == 1)
     {
         auto* usage = opt->getUsages()[0];
@@ -1456,4 +1456,4 @@ short BCLoweringProvider::LoweringContext::getResultRegister(const std::shared_p
     return registerProvider.allocRegister();
 }
 
-} // namespace NES::Nautilus::Backends::BC
+} /// namespace NES::Nautilus::Backends::BC

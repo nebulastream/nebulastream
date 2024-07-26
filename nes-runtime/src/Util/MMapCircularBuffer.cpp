@@ -52,8 +52,8 @@ MMapCircularBuffer::MMapCircularBuffer(size_t capacity) : capacity_(capacity)
      */
 
 #ifdef __APPLE__
-    // MacOS does not have the memfd_create syscall to create an anonymous memory region. Workaround is to create a file and
-    // immediatly unlink (delete) it.
+    /// MacOS does not have the memfd_create syscall to create an anonymous memory region. Workaround is to create a file and
+    /// immediatly unlink (delete) it.
     {
         std::scoped_lock sl(anonymousFileLock);
         fd = open("queue_buffer", O_CREAT | O_RDWR, 0600);
@@ -104,7 +104,7 @@ MMapCircularBuffer::MMapCircularBuffer(size_t capacity) : capacity_(capacity)
 
     return;
 
-// error handling
+/// error handling
 mmap_2:
     munmap(data + capacity_, capacity_);
 mmap_1:

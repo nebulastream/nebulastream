@@ -30,4 +30,4 @@ KeyedThresholdWindowState::KeyedThresholdWindowState(const NES::Runtime::Executi
 
 KeyedThresholdWindowState::KeyedThresholdWindowState() = default;
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

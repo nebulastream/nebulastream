@@ -46,4 +46,4 @@ const std::vector<const Operation*>& Operation::getUsages()
     return usages;
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

@@ -54,4 +54,4 @@ std::vector<bool>& SymbolicExecutionPath::getPath()
     return path;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

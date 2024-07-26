@@ -38,7 +38,7 @@ void* executeMapUdf(void* state, void* instance, void* pojoObjectPtr)
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
-    // Call udf function
+    /// Call udf function
     jobject udfResult = jni::getEnv()->CallObjectMethod((jobject)instance, handler->getUDFMethodId(), pojoObjectPtr);
     jni::jniErrorCheck();
     return udfResult;
@@ -59,18 +59,18 @@ void MapJavaUDF::execute(ExecutionContext& ctx, Record& record) const
     auto state = (LocalUDFState*)ctx.getLocalState(this);
     auto handler = state->handler;
 
-    // Convert the input record to the input field of UDF input object
+    /// Convert the input record to the input field of UDF input object
     auto inputPojoPtr = createInputPojo(record, handler);
 
-    // Get output class and call udf
+    /// Get output class and call udf
     auto outputPojoPtr = FunctionCall<>("executeMapUdf", executeMapUdf, handler, state->instance, inputPojoPtr);
     FunctionCall<>("freeObject", freeObject, inputPojoPtr);
 
     auto resultRecord = extractRecordFromPojo(handler, outputPojoPtr);
     FunctionCall<>("freeObject", freeObject, outputPojoPtr);
 
-    // Trigger execution of next operator
+    /// Trigger execution of next operator
     child->execute(ctx, resultRecord);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

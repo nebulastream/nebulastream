@@ -89,6 +89,6 @@ std::string Configurations::WrapOption<Type, Factory>::toString()
     return "";
 }
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_

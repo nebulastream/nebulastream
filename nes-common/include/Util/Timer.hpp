@@ -293,5 +293,5 @@ private:
      */
     bool running{false};
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_COMMON_INCLUDE_UTIL_TIMER_HPP_

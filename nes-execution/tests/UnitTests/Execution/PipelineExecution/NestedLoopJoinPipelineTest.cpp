@@ -53,8 +53,8 @@ public:
         OperatorHandlerPtr nljOpHandler,
         PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId, // mock pipeline id
-            DecomposedQueryPlanId(1), // mock query id
+            pipelineId, /// mock pipeline id
+            DecomposedQueryPlanId(1), /// mock query id
             bufferManager,
             noWorkerThreads,
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
@@ -113,7 +113,7 @@ public:
     {
         bool nljWorks = true;
 
-        // Creating the input left and right buffers and the expected output buffer
+        /// Creating the input left and right buffers and the expected output buffer
         auto originId = 0UL;
         auto leftBuffers = Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager, originId++, timeStampFieldLeft);
         auto rightBuffers
@@ -124,7 +124,7 @@ public:
         NES_DEBUG("leftBuffer: \n{}", Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
         NES_DEBUG("rightBuffers: \n{}", Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
 
-        // Creating the scan (for build) and emit operator (for sink)
+        /// Creating the scan (for build) and emit operator (for sink)
         auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
         auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
         auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
@@ -137,7 +137,7 @@ public:
         auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));
         auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderSink));
 
-        // Creating the left, right and sink NLJ operator
+        /// Creating the left, right and sink NLJ operator
         const auto handlerIndex = 0;
         const auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldLeft);
         const auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldRight);
@@ -175,13 +175,13 @@ public:
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        // Creating the NLJ operator handler
+        /// Creating the NLJ operator handler
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
         OriginId outputOriginId = OriginId(1);
         auto nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
             originIds, outputOriginId, windowSize, windowSize, leftSchema, rightSchema, leftPageSize, rightPageSize);
 
-        // Building the pipeline
+        /// Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
         auto pipelineBuildRight = std::make_shared<PhysicalOperatorPipeline>();
         auto pipelineSink = std::make_shared<PhysicalOperatorPipeline>();
@@ -213,7 +213,7 @@ public:
         nljWorks = nljWorks && (executablePipelineRight->setup(pipelineExecCtxRight) == 0);
         nljWorks = nljWorks && (executablePipelineSink->setup(pipelineExecCtxSink) == 0);
 
-        // Executing left and right buffers
+        /// Executing left and right buffers
         for (auto buffer : leftBuffers)
         {
             executablePipelineLeft->execute(buffer, pipelineExecCtxLeft, *workerContext);
@@ -227,10 +227,10 @@ public:
         nljOperatorHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft));
         nljOperatorHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
 
-        // Assure that at least one buffer has been emitted
+        /// Assure that at least one buffer has been emitted
         nljWorks = nljWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
-        // Executing sink buffers
+        /// Executing sink buffers
         std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
         buildEmittedBuffers.insert(
             buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(), pipelineExecCtxRight.emittedBuffers.end());
@@ -291,7 +291,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipeline)
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
 
-    // read values from csv file into one buffer for each join side and for one window
+    /// read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
     const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
@@ -341,7 +341,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentInput)
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
 
-    // read values from csv file into one buffer for each join side and for one window
+    /// read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
     const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
@@ -381,7 +381,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
     const auto joinFieldName2Right = rightSchema->get(1)->getName();
     const auto joinFieldName2Left = leftSchema->get(1)->getName();
 
-    //create joinExpression: id == id && value > value
+    ///create joinExpression: id == id && value > value
     auto onLeftKey1 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName1Left);
     auto onRightKey1 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName1Right);
     auto onLeftKey2 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName2Left);
@@ -398,7 +398,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
 
-    // read values from csv file into one buffer for each join side and for one window
+    /// read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
     const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
@@ -438,7 +438,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
     const auto joinFieldName2Right = rightSchema->get(1)->getName();
     const auto joinFieldName2Left = leftSchema->get(1)->getName();
 
-    //create joinExpression: id <= id && value > value
+    ///create joinExpression: id <= id && value > value
     auto onLeftKey1 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName1Left);
     auto onRightKey1 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName1Right);
     auto onLeftKey2 = std::make_shared<Expressions::ReadFieldExpression>(joinFieldName2Left);
@@ -455,7 +455,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineMultipleKeyExpresssionsDiffe
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
 
-    // read values from csv file into one buffer for each join side and for one window
+    /// read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
     const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window2.csv");
@@ -504,7 +504,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
 
-    // read values from csv file into one buffer for each join side and for one window
+    /// read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
     const std::string fileNameBuffersLeft(std::filesystem::path(TEST_DATA_DIRECTORY) / "window.csv");
     const std::string fileNameBuffersRight(std::filesystem::path(TEST_DATA_DIRECTORY) / "window3.csv");
@@ -532,4 +532,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<NestedLoopJoinPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

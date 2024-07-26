@@ -72,6 +72,6 @@ public:
  */
 using ExecutableFunctionRegistry = Util::PluginFactory<FunctionExpressionProvider>;
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXECUTABLEFUNCTIONREGISTRY_HPP_

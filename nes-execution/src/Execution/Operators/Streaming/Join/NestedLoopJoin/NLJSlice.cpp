@@ -93,7 +93,7 @@ void NLJSlice::combinePagedVectors()
 {
     NES_TRACE("Combining pagedVectors for window: {}", this->toString());
 
-    // Appending all PagedVectors for the left join side and removing all items except the first one
+    /// Appending all PagedVectors for the left join side and removing all items except the first one
     if (leftPagedVectors.size() > 1)
     {
         for (uint64_t i = 1; i < leftPagedVectors.size(); ++i)
@@ -103,7 +103,7 @@ void NLJSlice::combinePagedVectors()
         leftPagedVectors.erase(leftPagedVectors.begin() + 1, leftPagedVectors.end());
     }
 
-    // Appending all PagedVectors for the right join side and removing all items except the first one
+    /// Appending all PagedVectors for the right join side and removing all items except the first one
     if (rightPagedVectors.size() > 1)
     {
         for (uint64_t i = 1; i < rightPagedVectors.size(); ++i)
@@ -122,7 +122,7 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
     buffersToTransfer.emplace(buffersToTransfer.begin(), mainMetadata);
     auto metadataBuffersCount = 1;
 
-    // check that tuple buffer size is more than uint64_t to write number of metadata buffers
+    /// check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t)))
     {
         NES_THROW_RUNTIME_ERROR("Buffer size has to be at least greater or equal to uint64_t in size for successful state migration.");
@@ -142,49 +142,49 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
     auto writeToMetadata
         = [&mainMetadata, &metadataPtr, &metadataIdx, &bufferManager, &metadataBuffersCount, &buffersToTransfer](uint64_t dataToWrite)
     {
-        // check that current metadata buffer has enough space, by sending used space and space needed
+        /// check that current metadata buffer has enough space, by sending used space and space needed
         if (!mainMetadata.hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t)))
         {
-            // if current buffer does not contain enough space then
-            // get new buffer and insert to vector of buffers
+            /// if current buffer does not contain enough space then
+            /// get new buffer and insert to vector of buffers
             auto newBuffer = bufferManager->getBufferBlocking();
-            // add this buffer to vector of buffers
+            /// add this buffer to vector of buffers
             buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
-            // reset pointer to point new buffer and reset index to 0
+            /// reset pointer to point new buffer and reset index to 0
             metadataPtr = newBuffer.getBuffer<uint64_t>();
             metadataIdx = 0;
         }
         metadataPtr[metadataIdx++] = dataToWrite;
     };
-    // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
-    // 1. Store slice start
+    /// NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
+    /// 1. Store slice start
     writeToMetadata(sliceStart);
-    // 2. Store slice end
+    /// 2. Store slice end
     writeToMetadata(sliceEnd);
-    // 3. Store number of worker threads
+    /// 3. Store number of worker threads
     writeToMetadata(leftPagedVectors.size());
 
     for (auto& pagedVec : leftPagedVectors)
     {
-        // 4. Store number of pages in i-th left vector
+        /// 4. Store number of pages in i-th left vector
         writeToMetadata(pagedVec->getNumberOfPages());
-        // get all pages from vector
+        /// get all pages from vector
         buffersToTransfer.insert(buffersToTransfer.end(), pagedVec->getPages().begin(), pagedVec->getPages().end());
-        // set number of tuples on page for the last page
+        /// set number of tuples on page for the last page
         buffersToTransfer.back().setNumberOfTuples(pagedVec->getNumberOfEntriesOnCurrentPage());
     }
 
     for (auto& pagedVec : rightPagedVectors)
     {
-        // 5. Store number of pages in i-th right vector
+        /// 5. Store number of pages in i-th right vector
         writeToMetadata(pagedVec->getNumberOfPages());
-        // get all pages from vector
+        /// get all pages from vector
         buffersToTransfer.insert(buffersToTransfer.end(), pagedVec->getPages().begin(), pagedVec->getPages().end());
-        // set number of tuples on page for the last page
+        /// set number of tuples on page for the last page
         buffersToTransfer.back().setNumberOfTuples(pagedVec->getNumberOfEntriesOnCurrentPage());
     }
 
-    // set number of metadata buffers to the first metadata buffer
+    /// set number of metadata buffers to the first metadata buffer
     mainMetadata.getBuffer<uint64_t>()[0] = metadataBuffersCount;
 
     return buffersToTransfer;
@@ -198,15 +198,15 @@ StreamSlicePtr NLJSlice::deserialize(
     uint64_t rightPageSize,
     std::span<const Runtime::TupleBuffer> buffers)
 {
-    // create new slice with 0 number of worker thread (this will create empty vector of var sized pages) and 0 in slice start and end
+    /// create new slice with 0 number of worker thread (this will create empty vector of var sized pages) and 0 in slice start and end
     auto newSlice = std::make_shared<NLJSlice>(0, 0, 0, bufferManager, leftSchema, leftPageSize, rightSchema, rightPageSize);
 
-    // get main metadata buffer
+    /// get main metadata buffer
     auto metadataBuffersIdx = 0;
     auto metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
     auto metadataIdx = 0;
 
-    // read number of metadata buffers
+    /// read number of metadata buffers
     auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];
 
     /** @brief Lambda to read from metadata buffers
@@ -218,29 +218,29 @@ StreamSlicePtr NLJSlice::deserialize(
     */
     auto readFromMetadata = [&metadataPtr, &metadataIdx, &metadataBuffersIdx, &buffers]() -> uint64_t
     {
-        // check left space in metadata buffer
+        /// check left space in metadata buffer
         if (!buffers[metadataBuffersIdx].hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t)))
         {
-            // if no space left inside current buffer
-            // reset metadata pointer and reset index
+            /// if no space left inside current buffer
+            /// reset metadata pointer and reset index
             metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
             metadataIdx = 0;
         }
         return metadataPtr[metadataIdx++];
     };
-    // NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
-    // 1. Retrieve slice start
+    /// NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
+    /// 1. Retrieve slice start
     newSlice->sliceStart = readFromMetadata();
-    // 2. Retrieve slice end
+    /// 2. Retrieve slice end
     newSlice->sliceEnd = readFromMetadata();
-    // 3. Retrieve number of worker threads
+    /// 3. Retrieve number of worker threads
     auto numberOfWorker = readFromMetadata();
 
     auto buffIdx = 0UL;
-    // recreate left paged vectors
+    /// recreate left paged vectors
     for (uint64_t i = 0; i < numberOfWorker; ++i)
     {
-        // 4. Retrieve number of pages in i-th left vector
+        /// 4. Retrieve number of pages in i-th left vector
         auto numberOfPages = readFromMetadata();
 
         newSlice->leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVectorVarSized>(
@@ -251,10 +251,10 @@ StreamSlicePtr NLJSlice::deserialize(
         buffIdx += numberOfPages;
     }
 
-    // recreate right paged vectors
+    /// recreate right paged vectors
     for (uint64_t i = 0; i < numberOfWorker; ++i)
     {
-        // 5. Retrieve number of pages in i-th right vector
+        /// 5. Retrieve number of pages in i-th right vector
         auto numberOfPages = readFromMetadata();
 
         newSlice->rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVectorVarSized>(
@@ -267,4 +267,4 @@ StreamSlicePtr NLJSlice::deserialize(
 
     return newSlice;
 }
-}; // namespace NES::Runtime::Execution
+}; /// namespace NES::Runtime::Execution

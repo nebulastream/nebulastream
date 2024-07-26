@@ -56,6 +56,6 @@ private:
     CompilationCachePtr compilationCache;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_JITCOMPILER_HPP_

@@ -26,7 +26,7 @@ namespace Configurations
 {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-} // namespace Configurations
+} /// namespace Configurations
 
 namespace Monitoring
 {
@@ -110,6 +110,6 @@ void readFromBuffer(DiskMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t tu
  */
 nlohmann::json asJson(const DiskMetrics& metrics);
 
-} // namespace Monitoring
-} // namespace NES
+} /// namespace Monitoring
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_DISKMETRICS_HPP_

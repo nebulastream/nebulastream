@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Operators
 
 void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuffer&)
 {
-    // nop
+    /// nop
 }
 
 EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit)
@@ -52,4 +52,4 @@ Nautilus::Value<UInt64> IngestionTimeFunction::getTs(Execution::ExecutionContext
     return ctx.getCurrentTs();
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -26,7 +26,7 @@ namespace NES
 namespace detail::Runtime
 {
 class MemorySegment;
-} // namespace detail::Runtime
+} /// namespace detail::Runtime
 
 /**
  * @brief Benchmark Source is a special source for benchmarking purposes only and stripes away all overhead
@@ -131,6 +131,6 @@ private:
 
 using BenchmarkSourcePtr = std::shared_ptr<BenchmarkSource>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_BENCHMARKSOURCE_HPP_

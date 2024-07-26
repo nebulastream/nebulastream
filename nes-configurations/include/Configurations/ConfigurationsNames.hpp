@@ -45,9 +45,9 @@ enum class TCPDecideMessageSize : uint8_t
     BUFFER_SIZE_FROM_SOCKET
 };
 
-//Coordinator Configuration Names
+///Coordinator Configuration Names
 const std::string REST_PORT_CONFIG = "restPort";
-const std::string RPC_PORT_CONFIG = "rpcPort"; //used to be coordinator port, renamed to uniform naming
+const std::string RPC_PORT_CONFIG = "rpcPort"; ///used to be coordinator port, renamed to uniform naming
 const std::string DATA_PORT_CONFIG = "dataPort";
 const std::string REST_IP_CONFIG = "restIp";
 const std::string COORDINATOR_HOST_CONFIG = "coordinatorHost";
@@ -77,16 +77,16 @@ const std::string CONFIG_PATH = "configPath";
 const std::string SENDER_HIGH_WATERMARK = "networkSenderHighWatermark";
 const std::string REST_SERVER_CORS_ORIGIN = "restServerCorsAllowedOrigin";
 
-//Configurations for the hash table
+///Configurations for the hash table
 const std::string STREAM_HASH_JOIN_NUMBER_OF_PARTITIONS_CONFIG = "numberOfPartitions";
 const std::string STREAM_HASH_JOIN_PAGE_SIZE_CONFIG = "pageSize";
 const std::string STREAM_HASH_JOIN_PREALLOC_PAGE_COUNT_CONFIG = "preAllocPageCnt";
 const std::string STREAM_HASH_JOIN_MAX_HASH_TABLE_SIZE_CONFIG = "maxHashTableSize";
 
-//Configuration for joins
+///Configuration for joins
 const std::string JOIN_STRATEGY = "joinStrategy";
 
-//Optimizer Configurations
+///Optimizer Configurations
 const std::string PLACEMENT_AMENDMENT_MODE_CONFIG = "placementAmendmentMode";
 const std::string PLACEMENT_AMENDMENT_THREAD_COUNT = "placementAmendmentThreadCount";
 const std::string DISTRIBUTED_JOIN_OPTIMIZATION_MODE_CONFIG = "distributedJoinOptimizationMode";
@@ -99,16 +99,16 @@ const std::string ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK = "allowExhaustiveContainme
 const std::string PERFORM_ADVANCE_SEMANTIC_VALIDATION = "advanceSemanticValidation";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
-//Elegant Configurations
-const auto ELEGANT = "elegant"s; // elegant configurations are initialize with this constant
-const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s; // accelerate java udfs supplied in Map UDF operator
-const auto PLANNER_SERVICE_URL = "plannerServiceURL"s; // URL for ELEGANT planner
-const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; // URL for acceleration service
-const auto TRANSFER_RATE = "transferRate"s; // Fake transfer rate between two workers
+///Elegant Configurations
+const auto ELEGANT = "elegant"s; /// elegant configurations are initialize with this constant
+const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s; /// accelerate java udfs supplied in Map UDF operator
+const auto PLANNER_SERVICE_URL = "plannerServiceURL"s; /// URL for ELEGANT planner
+const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; /// URL for acceleration service
+const auto TRANSFER_RATE = "transferRate"s; /// Fake transfer rate between two workers
 
-//Worker Configuration Names
+///Worker Configuration Names
 const std::string WORKER_ID = "workerId";
-const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; //needs to be same as RPC Port of Coordinator
+const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; ///needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_HOST_CONFIG = "localWorkerHost";
 const std::string PARENT_ID_CONFIG = "parentId";
 const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
@@ -125,7 +125,7 @@ const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
 const std::string CONNECT_SOURCE_ASYNC = "connectSourceEventChannelsAsync";
 
-// CUDA config names
+/// CUDA config names
 const std::string CUDA_SDK_PATH = "cudaSdkPath";
 
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
@@ -134,7 +134,7 @@ const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 
-//worker mobility config names
+///worker mobility config names
 const std::string MOBILITY_CONFIG_CONFIG = "mobility";
 const std::string SPATIAL_TYPE_CONFIG = "nodeSpatialType";
 const std::string PATH_PREDICTION_UPDATE_INTERVAL_CONFIG = "pathPredictionUpdateInterval";
@@ -153,7 +153,7 @@ const std::string LOCATION_PROVIDER_CONFIG = "locationProviderConfig";
 const std::string LOCATION_PROVIDER_TYPE_CONFIG = "locationProviderType";
 const std::string LOCATION_SIMULATED_START_TIME_CONFIG = "locationProviderSimulatedStartTime";
 
-//Different Source Types supported in NES
+///Different Source Types supported in NES
 const std::string SENSE_SOURCE_CONFIG = "SenseSource";
 const std::string CSV_SOURCE_CONFIG = "CSVSource";
 const std::string BINARY_SOURCE_CONFIG = "BinarySource";
@@ -167,7 +167,7 @@ const std::string ARROW_SOURCE_CONFIG = "ArrowSource";
 const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 
-//Configuration names for source types
+///Configuration names for source types
 const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
@@ -204,7 +204,7 @@ const std::string SOURCE_CONFIG_PATH_CONFIG = "sourceConfigPath";
 
 const std::string TENSORFLOW_SUPPORTED_CONFIG = "tensorflowSupported";
 
-//TCPSourceType configs
+///TCPSourceType configs
 const std::string SOCKET_HOST_CONFIG = "socketHost";
 const std::string SOCKET_PORT_CONFIG = "socketPort";
 const std::string SOCKET_DOMAIN_CONFIG = "socketDomain";
@@ -214,23 +214,23 @@ const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
 
-//Runtime configuration
+///Runtime configuration
 const std::string NUMBER_OF_QUEUES = "numberOfQueues";
 const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
 const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
 const std::string QUERY_MANAGER_MODE = "queryManagerMode";
 
-// Logical source configurations
+/// Logical source configurations
 const std::string LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG = "fields";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG = "name";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG = "type";
 const std::string LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH = "length";
 
-// Synopses Configurations
+/// Synopses Configurations
 const std::string SYNOPSIS_CONFIG_TYPE = "synopsisType";
 const std::string SYNOPSIS_CONFIG_WIDTH = "synopsisWidth";
 const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

@@ -50,6 +50,6 @@ public:
 protected:
     std::map<std::pair<std::string, std::string>, DataSourcePtr> sourceDescriptorToDataSourceMap;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_

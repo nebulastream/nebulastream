@@ -36,4 +36,4 @@ HashFunction::HashValue HashFunction::calculateWithState(Value<> value, Value<Me
     auto hash = init();
     return calculateWithState(hash, value, state);
 }
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

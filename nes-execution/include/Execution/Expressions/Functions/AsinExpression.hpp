@@ -36,6 +36,6 @@ private:
     const ExpressionPtr radians;
 };
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ASINEXPRESSION_HPP_

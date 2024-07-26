@@ -32,4 +32,4 @@ std::string Undefined::toString()
     return "Undefined";
 }
 
-} // namespace NES
+} /// namespace NES

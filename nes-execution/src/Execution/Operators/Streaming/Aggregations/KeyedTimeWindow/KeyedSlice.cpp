@@ -27,4 +27,4 @@ KeyedSlice::~KeyedSlice()
     NES_DEBUG("~KeyedSlice {}-{}", start, end);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

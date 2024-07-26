@@ -26,7 +26,7 @@ namespace cppkafka
 {
 class Consumer;
 class Message;
-} // namespace cppkafka
+} /// namespace cppkafka
 
 namespace NES
 {
@@ -172,6 +172,6 @@ private:
 };
 
 typedef std::shared_ptr<KafkaSource> KafkaSourcePtr;
-} // namespace NES
-#endif // ENABLE_KAFKA_BUILD
+} /// namespace NES
+#endif /// ENABLE_KAFKA_BUILD
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_KAFKASOURCE_HPP_

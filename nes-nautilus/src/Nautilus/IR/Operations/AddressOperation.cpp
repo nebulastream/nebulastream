@@ -65,4 +65,4 @@ bool AddressOperation::classof(const Operation* Op)
 {
     return Op->getOperationType() == OperationType::AddressOp;
 }
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

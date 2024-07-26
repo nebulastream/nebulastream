@@ -129,4 +129,4 @@ bool MQTTSinkDescriptor::equal(SinkDescriptorPtr const& other)
         && timeUnit == otherSinkDescriptor->timeUnit && messageDelay == otherSinkDescriptor->messageDelay
         && qualityOfService == otherSinkDescriptor->qualityOfService && asynchronousClient == otherSinkDescriptor->asynchronousClient;
 }
-} // namespace NES
+} /// namespace NES

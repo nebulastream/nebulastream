@@ -94,8 +94,8 @@ void ThreadPool::runningRoutine(WorkerContext&& workerContext)
             queryManager->notifyTaskFailure(taskException.getExecutable(), std::string(taskException.what()));
         }
     }
-    // to drain the queue for pending reconfigurations
-    // after this no need to care for error handling
+    /// to drain the queue for pending reconfigurations
+    /// after this no need to care for error handling
     try
     {
         queryManager->processNextTask(running, workerContext);
@@ -137,7 +137,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping)
                     NES_ASSERT(
                         maxPosition < std::thread::hardware_concurrency(),
                         "pinning position thread is out of cpu range maxPosition=" << maxPosition);
-                    //pin core
+                    ///pin core
                     cpu_set_t cpuset;
                     CPU_ZERO(&cpuset);
                     CPU_SET(workerPinningPositionList[i], &cpuset);
@@ -165,7 +165,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping)
                     NesThread::getId());
                 queryManager->cpuProfilers[NesThread::getId() % queryManager->cpuProfilers.size()] = profiler;
 #endif
-                // TODO (2310) properly initialize the profiler with a file, thread, and core id
+                /// TODO (2310) properly initialize the profiler with a file, thread, and core id
                 auto workerId = NesThread::getId();
                 NES_DEBUG("worker {} with workerId {} pins to queue {}", i, workerId, queueIdx);
                 runningRoutine(WorkerContext(workerId, localBufferManager, numberOfBuffersPerWorker, queueIdx));
@@ -208,4 +208,4 @@ uint32_t ThreadPool::getNumberOfThreads() const
     return numThreads;
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

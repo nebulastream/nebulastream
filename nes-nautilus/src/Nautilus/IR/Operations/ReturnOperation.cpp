@@ -47,4 +47,4 @@ bool ReturnOperation::hasReturnValue()
     return !stamp->isVoid();
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

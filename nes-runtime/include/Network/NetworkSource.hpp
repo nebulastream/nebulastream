@@ -176,7 +176,7 @@ private:
     NetworkManagerPtr networkManager;
     NesPartition nesPartition;
     NodeLocation sinkLocation;
-    // for event channel
+    /// for event channel
     const std::chrono::milliseconds waitTime;
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
@@ -184,6 +184,6 @@ private:
     std::optional<NetworkSourceDescriptor> nextSourceDescriptor;
 };
 
-} // namespace NES::Network
+} /// namespace NES::Network
 
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSOURCE_HPP_

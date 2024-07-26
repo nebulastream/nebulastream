@@ -106,6 +106,6 @@ private:
 
 using PapiCpuProfilerPtr = std::shared_ptr<PapiCpuProfiler>;
 #endif
-} // namespace NES::Runtime::Profiler
+} /// namespace NES::Runtime::Profiler
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_PAPIPROFILER_HPP_

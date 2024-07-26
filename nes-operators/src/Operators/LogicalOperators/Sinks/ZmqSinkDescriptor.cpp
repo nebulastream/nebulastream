@@ -68,4 +68,4 @@ void ZmqSinkDescriptor::setInternal(bool newInternal)
     ZmqSinkDescriptor::internal = newInternal;
 }
 
-} // namespace NES
+} /// namespace NES

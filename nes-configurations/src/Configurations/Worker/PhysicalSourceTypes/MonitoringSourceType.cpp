@@ -92,4 +92,4 @@ void MonitoringSourceType::setMetricCollectorType(Monitoring::MetricCollectorTyp
     this->metricCollectorType = metricCollectorType;
 }
 
-} // namespace NES
+} /// namespace NES

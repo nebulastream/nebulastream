@@ -37,14 +37,14 @@ double calculateCeil(double x)
 
 Value<> CeilExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value leftValue = subExpression->execute(record);
 
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-    // leftValue.as<Float>() makes an explicit cast from Value to Value<Float>.
-    // In all cases we can call the same calculateCeil function as under the hood C++ can do an implicit cast from
-    // primitive integer types to the double argument.
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
+    /// As we don't know the exact type of value here, we have to check the type and then call the function.
+    /// leftValue.as<Float>() makes an explicit cast from Value to Value<Float>.
+    /// In all cases we can call the same calculateCeil function as under the hood C++ can do an implicit cast from
+    /// primitive integer types to the double argument.
+    /// Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (leftValue->isType<Float>())
     {
         return FunctionCall<>("calculateCeil", calculateCeil, leftValue.as<Float>());
@@ -55,9 +55,9 @@ Value<> CeilExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CeilExpression>> ceilFunction("ceil");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

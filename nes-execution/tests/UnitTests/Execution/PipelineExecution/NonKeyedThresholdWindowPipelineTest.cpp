@@ -122,16 +122,16 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write(+1_s64); /// does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f1"].write(+2_s64); /// qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f1"].write(+3_s64); /// qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64); // does not qualify
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write(+1_s64); /// does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -198,16 +198,16 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write(+1_s64); /// does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f1"].write(+2_s64); /// qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f1"].write(+3_s64); /// qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64); // does not qualify
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write(+1_s64); /// does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -273,16 +273,16 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write(+1_s64); /// does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f1"].write(+2_s64); /// qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f1"].write(+3_s64); /// qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64); // does not qualify
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write(+1_s64); /// does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -348,16 +348,16 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write(+1_s64); /// does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f1"].write(+2_s64); /// qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f1"].write(+3_s64); /// qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64); // does not qualify
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write(+1_s64); /// does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -423,16 +423,16 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write(+1_s64); /// does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f1"].write(+2_s64); /// qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f1"].write(+3_s64); /// qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64); // does not qualify
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write(+1_s64); /// does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -455,7 +455,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg)
     EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 25);
 }
 
-// This test ensures that the aggregated field does not have to be an integer, which is the data type of count aggregation.
+/// This test ensures that the aggregated field does not have to be an integer, which is the data type of count aggregation.
 TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat)
 {
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
@@ -496,16 +496,16 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write(+1_s64); /// does not qualify
     testBuffer[0]["f2"].write((float)10.0);
-    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f1"].write(+2_s64); /// qualifies
     testBuffer[1]["f2"].write((float)20.0);
-    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f1"].write(+3_s64); /// qualifies
     testBuffer[2]["f2"].write((float)30.0);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64); // does not qualify
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write(+1_s64); /// does not qualify
     testBuffer[3]["f2"].write((float)40.0);
     testBuffer.setNumberOfTuples(4);
 
@@ -571,16 +571,16 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write((float)0.5); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write((float)0.5); /// does not qualify
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write((float)2.5); // qualifies
+    testBuffer[1]["f1"].write((float)2.5); /// qualifies
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write((float)3.75); // qualifies
+    testBuffer[2]["f1"].write((float)3.75); /// qualifies
     testBuffer[2]["f2"].write(+30_s64);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write((float)0.25); // does not qualify
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write((float)0.25); /// does not qualify
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
 
@@ -603,10 +603,10 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate)
     EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
 }
 
-// TODO #3468: parameterize the aggregation function instead of repeating the similar test
+/// TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     NonKeyedThresholdWindowPipelineTest,
     ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<NonKeyedThresholdWindowPipelineTest::ParamType>& info) { return info.param; });
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

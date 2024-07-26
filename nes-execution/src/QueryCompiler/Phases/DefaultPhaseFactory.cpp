@@ -88,4 +88,4 @@ BufferOptimizationPhasePtr DefaultPhaseFactory::createBufferOptimizationPhase(Qu
     return BufferOptimizationPhase::create(options->getOutputBufferOptimizationLevel());
 }
 
-} // namespace NES::QueryCompilation::Phases
+} /// namespace NES::QueryCompilation::Phases

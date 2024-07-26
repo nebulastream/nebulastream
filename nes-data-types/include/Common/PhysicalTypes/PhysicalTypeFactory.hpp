@@ -44,6 +44,6 @@ public:
     virtual PhysicalTypePtr getPhysicalType(DataTypePtr dataType) const = 0;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEFACTORY_HPP_

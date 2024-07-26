@@ -423,6 +423,6 @@ private:
      */
     std::string stackTrace;
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_NODES_NODE_HPP_

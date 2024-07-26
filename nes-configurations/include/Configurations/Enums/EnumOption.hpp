@@ -52,6 +52,6 @@ protected:
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 };
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_

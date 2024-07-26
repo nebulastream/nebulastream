@@ -27,4 +27,4 @@ InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> ph
 [[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<InterpreterPipelineProvider>
     interpretationPipelineProvider("PipelineInterpreter");
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

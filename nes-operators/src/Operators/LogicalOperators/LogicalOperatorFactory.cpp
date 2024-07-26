@@ -142,4 +142,4 @@ LogicalOperatorFactory::createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdf
     return std::make_shared<LogicalOpenCLOperator>(javaUdfDescriptor, id);
 }
 
-} // namespace NES
+} /// namespace NES

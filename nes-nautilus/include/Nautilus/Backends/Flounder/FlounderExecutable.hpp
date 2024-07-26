@@ -43,5 +43,5 @@ public:
 private:
     std::unique_ptr<flounder::Executable> engine;
 };
-} // namespace NES::Nautilus::Backends::Flounder
+} /// namespace NES::Nautilus::Backends::Flounder
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDEREXECUTABLE_HPP_

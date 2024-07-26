@@ -52,5 +52,5 @@ private:
     explicit SumAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_

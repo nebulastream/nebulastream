@@ -37,7 +37,7 @@ public:
         atMostOnce,
         atLeastOnce,
         exactlyOnce
-    }; //cleanSession requires atLeastOnce or exactlyOnce
+    }; ///cleanSession requires atLeastOnce or exactlyOnce
     /**
      * @brief Creates the MQTT sink description
      * @param address: address name of MQTT broker
@@ -160,6 +160,6 @@ private:
 
 using MQTTSinkDescriptorPtr = std::shared_ptr<MQTTSinkDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MQTTSINKDESCRIPTOR_HPP_

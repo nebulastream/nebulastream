@@ -35,4 +35,4 @@ OperationPtr NegateOperation::getInput()
 {
     return input.lock();
 }
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

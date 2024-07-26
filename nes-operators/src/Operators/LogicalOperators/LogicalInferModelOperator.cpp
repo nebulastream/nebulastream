@@ -83,8 +83,8 @@ void LogicalInferModelOperator::updateToFullyQualifiedFieldName(FieldAccessExpre
     }
     else
     {
-        //Since this is a new field add the stream name from schema
-        //Check if field name is already fully qualified
+        ///Since this is a new field add the stream name from schema
+        ///Check if field name is already fully qualified
         if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
         {
             field->updateFieldName(fieldName);
@@ -121,15 +121,15 @@ bool LogicalInferModelOperator::inferSchema()
         auto fieldName = outputExpression->getFieldName();
         if (outputSchema->getField(fieldName))
         {
-            // The assigned field is part of the current schema.
-            // Thus we check if it has the correct type.
+            /// The assigned field is part of the current schema.
+            /// Thus we check if it has the correct type.
             NES_TRACE("Infer Model Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
             outputSchema->replaceField(fieldName, outputExpression->getStamp());
         }
         else
         {
-            // The assigned field is not part of the current schema.
-            // Thus we extend the schema by the new attribute.
+            /// The assigned field is not part of the current schema.
+            /// Thus we extend the schema by the new attribute.
             NES_TRACE("Infer Model Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
             outputSchema->addField(fieldName, outputExpression->getStamp());
         }
@@ -143,7 +143,7 @@ void LogicalInferModelOperator::inferStringSignature()
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("InferModelOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalInferModelOperator: InferModel should have children (?)");
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
@@ -153,7 +153,7 @@ void LogicalInferModelOperator::inferStringSignature()
     auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
     signatureStream << "INFER_MODEL(" + model + ")." << *childSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
@@ -168,7 +168,7 @@ const std::string LogicalInferModelOperator::getDeployedModelPath() const
     auto idx = model.find_last_of('/');
     auto path = model;
 
-    // If there exist a / in the model path name. If so, then we have to remove the path to only get the file name
+    /// If there exist a / in the model path name. If so, then we have to remove the path to only get the file name
     if (idx != std::string::npos)
     {
         path = model.substr(idx + 1);
@@ -188,4 +188,4 @@ const std::vector<ExpressionNodePtr>& LogicalInferModelOperator::getOutputFields
     return outputFields;
 }
 
-} // namespace NES::InferModel
+} /// namespace NES::InferModel

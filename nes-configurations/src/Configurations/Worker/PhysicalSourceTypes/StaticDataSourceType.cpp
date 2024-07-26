@@ -25,11 +25,11 @@ using namespace Configurations;
 namespace detail
 {
 
-//struct MemoryAreaDeleter {
-//    void operator()(uint8_t* ptr) const { free(ptr); }
-//};
+///struct MemoryAreaDeleter {
+///    void operator()(uint8_t* ptr) const { free(ptr); }
+///};
 
-} // namespace detail
+} /// namespace detail
 
 /*
 static StaticDataSourceTypePtr create(const std::string& sourceType,
@@ -74,7 +74,7 @@ StaticDataSourceTypePtr StaticDataSourceType::create(
     uint64_t taskQueueId,
     bool lateStart)
 {
-    // todo check validity of path
+    /// todo check validity of path
     SourceMode sourceModeEnum = magic_enum::enum_cast<SourceMode>(sourceMode).value();
     return std::make_shared<StaticDataSourceType>(
         logicalSourceName, physicalSourceName, pathTableFile, numBuffersToProcess, sourceModeEnum, taskQueueId, lateStart);
@@ -87,7 +87,7 @@ SourceMode StaticDataSourceType::getSourceMode() const
 
 void StaticDataSourceType::reset()
 {
-    //nothing
+    ///nothing
 }
 
 std::string StaticDataSourceType::getPathTableFile()
@@ -125,4 +125,4 @@ bool StaticDataSourceType::equal(const PhysicalSourceTypePtr& other)
         && lateStart == otherSourceConfig->lateStart;
 }
 
-} // namespace NES::Experimental
+} /// namespace NES::Experimental

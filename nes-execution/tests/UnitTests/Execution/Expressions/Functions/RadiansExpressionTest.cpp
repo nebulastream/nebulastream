@@ -38,25 +38,25 @@ public:
 TEST_F(RadiansExpressionTest, evaluateRadiansExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<RadiansExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(90_s8));
         ASSERT_EQ(resultValue, M_PI_2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(180_s16));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(360_s32));
         ASSERT_EQ(resultValue, 2 * M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(45_s64));
         ASSERT_EQ(resultValue, M_PI_4);
@@ -66,17 +66,17 @@ TEST_F(RadiansExpressionTest, evaluateRadiansExpressionInteger)
 TEST_F(RadiansExpressionTest, evaluateRadiansExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<RadiansExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)90));
         ASSERT_EQ(resultValue, M_PI_2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)180));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

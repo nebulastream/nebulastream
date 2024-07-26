@@ -33,6 +33,6 @@ public:
     const std::string toString() const override;
 };
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_

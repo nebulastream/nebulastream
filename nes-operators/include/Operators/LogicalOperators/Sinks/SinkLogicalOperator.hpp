@@ -43,5 +43,5 @@ public:
 private:
     SinkDescriptorPtr sinkDescriptor;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_SINKLOGICALOPERATOR_HPP_

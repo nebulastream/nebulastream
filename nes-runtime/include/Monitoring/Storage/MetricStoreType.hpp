@@ -29,6 +29,6 @@ enum class MetricStoreType : uint8_t
     NewestEntry
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_METRICSTORETYPE_HPP_

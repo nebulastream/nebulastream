@@ -57,7 +57,7 @@ Language CPPCompiler::getLanguage() const
 
 CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest> request) const
 {
-    // Compile and load shared library.
+    /// Compile and load shared library.
     Timer timer("CPPCompiler");
     timer.start();
 
@@ -96,19 +96,19 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         compilationFlags.enableProfilingFlags();
     }
 
-    // add header
+    /// add header
     for (auto libPaths : runtimePathConfig.libPaths)
     {
         compilationFlags.addFlag(std::string("-L") + libPaths);
     }
 
-    // add libs
+    /// add libs
     for (auto libs : runtimePathConfig.libs)
     {
         compilationFlags.addFlag(libs);
     }
 
-    // add includes
+    /// add includes
     for (auto includePath : runtimePathConfig.includePaths)
     {
         compilationFlags.addFlag("-I" + includePath);
@@ -116,7 +116,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
 
     compilationFlags.addFlag("-o" + libraryFileName);
 
-    // the log level of the compiled code is the same as the currently selected log level of the runtime.
+    /// the log level of the compiled code is the same as the currently selected log level of the runtime.
     auto logLevel = getLogLevel(Logger::getInstance()->getCurrentLogLevel());
     compilationFlags.addFlag("-DFMT_HEADER_ONLY"s);
     compilationFlags.addFlag("-DNES_COMPILE_TIME_LOG_LEVEL=" + std::to_string(logLevel));
@@ -126,7 +126,7 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         compilationFlags.mergeFlags(api->getCompilerFlags());
     }
 
-    // lock file, such that no one can operate on the file at the same time
+    /// lock file, such that no one can operate on the file at the same time
     const std::lock_guard<std::mutex> fileLock(file->getFileMutex());
 
     std::stringstream compilerCall;
@@ -139,14 +139,14 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     compilerCall << file->getPath();
 
     NES_DEBUG("Compiler: compile with: '{}'", compilerCall.str());
-    // Creating a pointer to an open stream and a buffer, to read the output of the compiler
+    /// Creating a pointer to an open stream and a buffer, to read the output of the compiler
     FILE* fp;
     char buffer[8192];
 
-    // Redirecting stderr to stdout, to be able to read error messages
+    /// Redirecting stderr to stdout, to be able to read error messages
     compilerCall << " 2>&1";
 
-    // Calling the compiler in a new process
+    /// Calling the compiler in a new process
     fp = popen(compilerCall.str().c_str(), "r");
 
     if (fp == nullptr)
@@ -155,17 +155,17 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
         throw std::runtime_error("Compiler: failed to run command");
     }
 
-    // Collecting the output of the compiler to a string stream
+    /// Collecting the output of the compiler to a string stream
     std::ostringstream strstream;
     while (fgets(buffer, sizeof(buffer), fp) != nullptr)
     {
         strstream << buffer;
     }
 
-    // Closing the stream, which also gives us the exit status of the compiler call
+    /// Closing the stream, which also gives us the exit status of the compiler call
     auto ret = pclose(fp);
 
-    // If the compilation didn't return with 0, we throw an exception containing the compiler output
+    /// If the compilation didn't return with 0, we throw an exception containing the compiler output
     if (ret != 0)
     {
         NES_ERROR("Compiler: compilation of {} failed.", libraryFileName);
@@ -186,4 +186,4 @@ CompilationResult CPPCompiler::compile(std::shared_ptr<const CompilationRequest>
     return CompilationResult(sharedLibrary, std::move(timer));
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

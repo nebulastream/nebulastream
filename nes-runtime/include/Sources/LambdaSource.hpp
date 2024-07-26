@@ -81,5 +81,5 @@ protected:
 
 using LambdaSourcePtr = std::shared_ptr<LambdaSource>;
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_LAMBDASOURCE_HPP_

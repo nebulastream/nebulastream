@@ -67,6 +67,6 @@ private:
     std::string newFieldName;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_

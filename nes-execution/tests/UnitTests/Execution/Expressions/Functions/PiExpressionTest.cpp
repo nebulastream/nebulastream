@@ -38,25 +38,25 @@ public:
 TEST_F(PiExpressionTest, evaluatePiExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<PiExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(1_s8));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(2_s16));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(3_s32));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, M_PI);
@@ -67,17 +67,17 @@ TEST_F(PiExpressionTest, evaluatePiExpressionInteger)
 TEST_F(PiExpressionTest, evaluatePiExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<PiExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)5));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)6));
         ASSERT_EQ(resultValue, M_PI);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

@@ -47,6 +47,6 @@ private:
     std::map<RecordFieldIdentifier, Value<>> fields;
 };
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_

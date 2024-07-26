@@ -96,4 +96,4 @@ std::optional<Value<>> InvocationPlugin::ReadArrayIndex(const Value<>&, Value<UI
 {
     return std::nullopt;
 }
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

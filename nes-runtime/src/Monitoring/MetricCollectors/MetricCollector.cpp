@@ -32,4 +32,4 @@ MetricCollector::MetricCollector() : workerId(INVALID_WORKER_NODE_ID)
 {
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

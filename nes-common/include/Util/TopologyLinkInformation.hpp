@@ -43,5 +43,5 @@ public:
     WorkerId upstreamTopologyNode;
     WorkerId downstreamTopologyNode;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_

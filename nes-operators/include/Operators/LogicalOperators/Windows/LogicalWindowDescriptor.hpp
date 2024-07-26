@@ -184,6 +184,6 @@ private:
     uint64_t allowedLateness;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWDESCRIPTOR_HPP_

@@ -48,6 +48,6 @@ private:
     std::string recordIdxName;
     std::string addressSourceName;
 };
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_ADDRESSOPERATION_HPP_

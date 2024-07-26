@@ -252,20 +252,20 @@ TEST_F(TextTypeTest, likeTestFalse)
 
 TEST_F(TextTypeTest, extractStringValueFromTupleBuffer)
 {
-    // Create a tupleBuffer with a string that is 10 chars long
+    /// Create a tupleBuffer with a string that is 10 chars long
     const char* buf = "1234567890";
     auto tupleBuffer = bm->getBufferBlocking();
     *tupleBuffer.getBuffer<uint32_t>() = std::strlen(buf) + 1;
     std::strncpy(tupleBuffer.getBuffer<char>() + sizeof(uint32_t), buf, std::strlen(buf) + 1);
-    // Create a text value from this string that's only 5 chars long
+    /// Create a text value from this string that's only 5 chars long
     auto textValue = NES::Nautilus::TextValue::create(tupleBuffer, 5_u32);
-    // Call strn_copy to create a null terminated string of the text value.
+    /// Call strn_copy to create a null terminated string of the text value.
     const char* expected = "12345";
     auto actual = textValue->strn_copy();
     NES_DEBUG("expected = {}, actual = {}", expected, actual);
     EXPECT_EQ(strcmp(expected, actual.data()), 0);
-    // call the destructor on the text value to free the underling tuple buffer.
+    /// call the destructor on the text value to free the underling tuple buffer.
     textValue->~TextValue();
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

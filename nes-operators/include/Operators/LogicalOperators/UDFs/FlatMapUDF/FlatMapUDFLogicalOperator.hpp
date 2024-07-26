@@ -41,5 +41,5 @@ public:
     [[nodiscard]] bool equal(const NodePtr& other) const override;
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_FLATMAPUDF_FLATMAPUDFLOGICALOPERATOR_HPP_

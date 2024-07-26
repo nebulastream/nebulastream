@@ -83,6 +83,6 @@ public:
         Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
         Nautilus::Value<Nautilus::UInt64>& timestamp) const;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJBUILDSLICING_HPP_

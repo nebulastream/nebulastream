@@ -30,9 +30,9 @@ QuantileEstimationAggregation::QuantileEstimationAggregation(
 
 void insert(void* memrefPtr, float inputValue)
 {
-    //get the Tdigest instance
+    ///get the Tdigest instance
     QuantileEstimationValue* obj = static_cast<QuantileEstimationValue*>(memrefPtr);
-    // insert the new input
+    /// insert the new input
     obj->digest.insert(inputValue);
 }
 
@@ -100,9 +100,9 @@ void QuantileEstimationAggregation::combine(Nautilus::Value<Nautilus::MemRef> me
 double estimateTDigest(void* memrefPtr)
 {
     QuantileEstimationValue* obj = static_cast<QuantileEstimationValue*>(memrefPtr);
-    obj->digest.merge(); // before querying the object a merge is required
+    obj->digest.merge(); /// before querying the object a merge is required
     return obj->digest.quantile(50.0);
-    //TODO: here we can add any % once fixed issue #3889, right now we derive the median
+    ///TODO: here we can add any % once fixed issue #3889, right now we derive the median
 }
 
 void QuantileEstimationAggregation::lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& resultRecord)
@@ -127,4 +127,4 @@ void QuantileEstimationAggregation::reset(Nautilus::Value<Nautilus::MemRef> memr
     Nautilus::FunctionCall<>("clearTDigest", clearTDigest, memref);
 }
 
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation

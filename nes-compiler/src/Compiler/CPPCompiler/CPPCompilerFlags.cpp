@@ -50,17 +50,17 @@ void CPPCompilerFlags::enableOptimizationFlags()
     NES_DEBUG("Compile with optimizations.");
     addFlag(ALL_OPTIMIZATIONS);
 #if !defined(__aarch64__)
-    // use -mcpu=native instead of TUNE/ARCH for arm64, below
-    // -march=native is supported on Intel Macs clang but not on M1 Macs clang
+    /// use -mcpu=native instead of TUNE/ARCH for arm64, below
+    /// -march=native is supported on Intel Macs clang but not on M1 Macs clang
     addFlag(TUNE);
     addFlag(ARCH);
 #endif
 #if defined(__aarch64__) && defined(__APPLE__)
-    // M1 specific string
+    /// M1 specific string
     addFlag(M1_CPU);
 #endif
 #if defined(__aarch64__) && !defined(__APPLE__)
-    // generic arm64 cpu
+    /// generic arm64 cpu
     addFlag(CPU);
 #endif
 }
@@ -71,4 +71,4 @@ void CPPCompilerFlags::enableProfilingFlags()
     addFlag(CPPCompilerFlags::TRACE_COMPILATION_TIME);
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

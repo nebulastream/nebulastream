@@ -348,7 +348,7 @@ public:
     mutable Nautilus::Tracing::ValueRef ref;
 };
 
-// Alias for Identifier Values. Otherwise, user need to type Value<Identifier<WorkerId>>
+/// Alias for Identifier Values. Otherwise, user need to type Value<Identifier<WorkerId>>
 template <NESIdentifier IdentifierType>
 using ValueId = Value<IdentifierImpl<IdentifierType>>;
 
@@ -499,7 +499,7 @@ auto inline operator%(const LHS& left, const RHS& right)
     return ModOp(left, right);
 };
 
-// --- logical operations ----
+/// --- logical operations ----
 
 template <IsNotValueType LHS, IsValueType RHS>
 auto inline operator==(const LHS& left, const RHS& right)
@@ -793,6 +793,6 @@ typename Value<ValueType>::ValueIndexReference Value<ValueType>::operator[](uint
     return ValueIndexReference(indexValue, *this);
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_

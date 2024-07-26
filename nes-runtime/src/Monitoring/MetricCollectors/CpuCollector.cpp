@@ -64,4 +64,4 @@ const MetricPtr CpuCollector::readMetric() const
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedCpuMetrics);
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

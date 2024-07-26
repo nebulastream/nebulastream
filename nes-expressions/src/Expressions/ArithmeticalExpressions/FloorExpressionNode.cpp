@@ -36,10 +36,10 @@ ExpressionNodePtr FloorExpressionNode::create(ExpressionNodePtr const& child)
 
 void FloorExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of child, check if its numerical, assume same stamp
+    /// infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // if stamp is integer, convert stamp to float
+    /// if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
     NES_TRACE("FloorExpressionNode: converted stamp to float: {}", toString());
 }
@@ -66,4 +66,4 @@ ExpressionNodePtr FloorExpressionNode::copy()
     return FloorExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

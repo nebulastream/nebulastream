@@ -34,4 +34,4 @@ const std::string ArrayStamp::toString() const
     return componentStamp->toString() + "[" + std::to_string(size) + "]";
 }
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types

@@ -34,7 +34,7 @@ Nautilus::Interface::ChainedHashMap* BatchKeyedAggregationHandler::getThreadLoca
 
 void BatchKeyedAggregationHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, uint64_t keySize, uint64_t valueSize)
 {
-    // TODO: provide a way to indicate the number of keys from the outside.
+    /// TODO: provide a way to indicate the number of keys from the outside.
     auto numberOfKeys = 1000;
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++)
     {
@@ -62,4 +62,4 @@ void BatchKeyedAggregationHandler::postReconfigurationCallback(Runtime::Reconfig
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

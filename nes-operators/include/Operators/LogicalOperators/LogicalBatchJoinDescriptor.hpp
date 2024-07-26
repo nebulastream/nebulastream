@@ -26,7 +26,7 @@ namespace NES::Join::Experimental
  * @experimental
  */
 class LogicalBatchJoinDescriptor
-{ // todo jm its dumb that this is in the windowing dir
+{ /// todo jm its dumb that this is in the windowing dir
 
 public:
     static LogicalBatchJoinDescriptorPtr create(
@@ -107,5 +107,5 @@ private:
 };
 
 using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
-} // namespace NES::Join::Experimental
+} /// namespace NES::Join::Experimental
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_

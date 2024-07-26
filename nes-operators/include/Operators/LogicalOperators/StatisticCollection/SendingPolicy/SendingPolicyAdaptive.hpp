@@ -19,7 +19,7 @@
 namespace NES::Statistic
 {
 
-// defines for the sending policies. This way, we reduce the number of ()
+/// defines for the sending policies. This way, we reduce the number of ()
 #define SENDING_ADAPTIVE(StatisticDataCodec) SendingPolicyAdaptive::create(StatisticDataCodec)
 
 /**
@@ -51,6 +51,6 @@ private:
     explicit SendingPolicyAdaptive(StatisticDataCodec sinkDataCodec);
 };
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_SENDINGPOLICY_SENDINGPOLICYADAPTIVE_HPP_

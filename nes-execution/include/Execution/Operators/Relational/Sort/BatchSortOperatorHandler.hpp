@@ -50,9 +50,9 @@ public:
         const std::vector<Record::RecordFieldIdentifier>& sortFieldIdentifiers)
     {
         NES_ASSERT(dataTypes.size() == fieldIdentifiers.size(), "Data types and field identifiers must have the same size");
-        // Entry size is the sum of the sizes of the fields to sort, with will be stored encoded and the complete record
+        /// Entry size is the sum of the sizes of the fields to sort, with will be stored encoded and the complete record
         entrySize = 0;
-        // 1) calculate entry size of fields that we encode and store for sorting
+        /// 1) calculate entry size of fields that we encode and store for sorting
         for (const auto& sortFieldIdentifier : sortFieldIdentifiers)
         {
             for (uint64_t j = 0; j < fieldIdentifiers.size(); ++j)
@@ -60,7 +60,7 @@ public:
                 entrySize += (sortFieldIdentifier == fieldIdentifiers[j]) * dataTypes[j]->size();
             }
         }
-        // 2) calculate entry size of complete record/payloads to store
+        /// 2) calculate entry size of complete record/payloads to store
         for (const auto& dataType : dataTypes)
         {
             entrySize += dataType->size();
@@ -106,5 +106,5 @@ private:
     std::unique_ptr<Nautilus::Interface::PagedVector> tempStack;
     uint64_t entrySize;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTOPERATORHANDLER_HPP_

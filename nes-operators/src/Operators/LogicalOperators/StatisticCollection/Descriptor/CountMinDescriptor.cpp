@@ -73,4 +73,4 @@ bool CountMinDescriptor::equal(const WindowStatisticDescriptorPtr& rhs) const
     return false;
 }
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

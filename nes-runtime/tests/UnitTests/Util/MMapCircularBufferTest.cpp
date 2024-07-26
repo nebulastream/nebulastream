@@ -96,7 +96,7 @@ TEST_F(MMapCircularBufferTest, TestWrapAround)
 {
     MMapCircularBuffer buffer(pageSize);
     {
-        // write pagesize - 2 bytes
+        /// write pagesize - 2 bytes
         auto writer = buffer.write();
         std::vector<char> data(pageSize - 2);
         std::iota(data.begin(), data.end(), 0);
@@ -105,7 +105,7 @@ TEST_F(MMapCircularBufferTest, TestWrapAround)
     }
 
     {
-        // read and consume 100 bytes
+        /// read and consume 100 bytes
         auto reader = buffer.read();
         auto data = std::string_view(SPAN_TYPE<const char>(reader).data(), SPAN_TYPE<const char>(reader).size());
         EXPECT_EQ(data[0], 0);
@@ -113,7 +113,7 @@ TEST_F(MMapCircularBufferTest, TestWrapAround)
     }
 
     {
-        // write 100 bytes which causes a wrap around
+        /// write 100 bytes which causes a wrap around
         auto writer = buffer.write();
         std::vector<char> data(100);
         std::iota(data.begin(), data.end(), 0);
@@ -136,4 +136,4 @@ TEST_F(MMapCircularBufferTest, TestWrapAround)
     EXPECT_FALSE(buffer.empty());
     EXPECT_FALSE(buffer.full());
 }
-} // namespace NES
+} /// namespace NES

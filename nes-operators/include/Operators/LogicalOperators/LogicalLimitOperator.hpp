@@ -58,5 +58,5 @@ private:
     uint64_t limit;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALLIMITOPERATOR_HPP_

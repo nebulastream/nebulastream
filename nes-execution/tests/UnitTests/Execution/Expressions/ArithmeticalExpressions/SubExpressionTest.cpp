@@ -39,24 +39,24 @@ TEST_F(SubExpressionTest, subIntegers)
 {
     auto expression = BinaryExpressionWrapper<SubExpression>();
 
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(42_s8), Value<Int8>(42_s8));
         ASSERT_EQ(resultValue, 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int8>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(42_s16), Value<Int16>(42_s16));
         ASSERT_EQ(resultValue, 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int16>());
-    } // Int32
+    } /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(42), Value<Int32>(42));
         ASSERT_EQ(resultValue, 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(42_s64), Value<Int64>(42_s64));
         ASSERT_EQ(resultValue, 0);
@@ -68,23 +68,23 @@ TEST_F(SubExpressionTest, subUnsignedIntegers)
 {
     auto expression = BinaryExpressionWrapper<SubExpression>();
 
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>(42_u8), Value<UInt8>(42_u8));
         ASSERT_EQ(resultValue, 0_u8);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt8>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>(42_u16), Value<UInt16>(42_u16));
         ASSERT_EQ(resultValue, 0_u16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>());
-    } // UInt32
+    } /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(42u), Value<UInt32>(42u));
         ASSERT_EQ(resultValue, 0_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    } // UInt64
+    } /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
         ASSERT_EQ(resultValue, 0_u64);
@@ -101,13 +101,13 @@ TEST_F(SubExpressionTest, subUnsignedIntegers)
 TEST_F(SubExpressionTest, subFloat)
 {
     auto expression = BinaryExpressionWrapper<SubExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)42), Value<Float>((float)42));
         ASSERT_EQ(resultValue, (float)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Float>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)42), Value<Double>((double)42));
         ASSERT_EQ(resultValue, (float)0);
@@ -115,4 +115,4 @@ TEST_F(SubExpressionTest, subFloat)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

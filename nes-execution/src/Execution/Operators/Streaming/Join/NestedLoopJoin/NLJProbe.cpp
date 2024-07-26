@@ -40,7 +40,7 @@ void* getNLJSliceRefFromIdProxy(void* ptrOpHandler, uint64_t sliceIdentifier)
     {
         return slice.value().get();
     }
-    // For now this is fine. We should handle this as part of issue #4016
+    /// For now this is fine. We should handle this as part of issue #4016
     NES_ERROR("Could not find a slice with the id: {}", sliceIdentifier);
     return nullptr;
 }
@@ -78,7 +78,7 @@ uint64_t getSliceIdNLJProxy(void* ptrNLJWindowTriggerTask, uint64_t joinBuildSid
 
 void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    // As this operator functions as a scan, we have to set the execution context for this pipeline
+    /// As this operator functions as a scan, we have to set the execution context for this pipeline
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
     ctx.setChunkNumber(recordBuffer.getChunkNr());
@@ -86,7 +86,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     ctx.setOrigin(recordBuffer.getOriginId());
     Operator::open(ctx, recordBuffer);
 
-    // Getting all needed info from the recordBuffer
+    /// Getting all needed info from the recordBuffer
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto nljWindowTriggerTaskRef = recordBuffer.getBuffer();
     const Value<UInt64> sliceIdLeft = Nautilus::FunctionCall(
@@ -102,10 +102,10 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     const auto windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, nljWindowTriggerTaskRef);
     const auto windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, nljWindowTriggerTaskRef);
 
-    // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
+    /// During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
     const ValueId<WorkerThreadId> workerThreadIdForPages = WorkerThreadId(0);
 
-    // Getting the left and right paged vector
+    /// Getting the left and right paged vector
     const auto sliceRefLeft
         = Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdLeft);
     const auto sliceRefRight
@@ -138,7 +138,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
             createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
             if (joinExpression->execute(joinedRecord).as<Boolean>())
             {
-                // Calling the child operator for this joinedRecord
+                /// Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }
         }
@@ -162,4 +162,4 @@ NLJProbe::NLJProbe(
 {
 }
 
-}; // namespace NES::Runtime::Execution::Operators
+}; /// namespace NES::Runtime::Execution::Operators

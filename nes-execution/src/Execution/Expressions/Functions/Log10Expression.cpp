@@ -37,7 +37,7 @@ double calculateLog10(double x)
 
 Value<> Log10Expression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the sub expression and retrieve the value.
+    /// Evaluate the sub expression and retrieve the value.
     Value subValue = subExpression->execute(record);
 
     if (subValue->isType<Int8>())
@@ -82,10 +82,10 @@ Value<> Log10Expression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log10Expression>> log10Expression("log10");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

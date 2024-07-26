@@ -196,4 +196,4 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation)
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

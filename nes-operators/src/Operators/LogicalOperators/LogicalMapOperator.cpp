@@ -47,13 +47,13 @@ bool LogicalMapOperator::equal(NodePtr const& rhs) const
 
 bool LogicalMapOperator::inferSchema()
 {
-    // infer the default input and output schema
+    /// infer the default input and output schema
     if (!LogicalUnaryOperator::inferSchema())
     {
         return false;
     }
 
-    // use the default input schema to calculate the out schema of this operator.
+    /// use the default input schema to calculate the out schema of this operator.
     mapExpression->inferStamp(getInputSchema());
 
     auto assignedField = mapExpression->getField();
@@ -61,15 +61,15 @@ bool LogicalMapOperator::inferSchema()
 
     if (outputSchema->getField(fieldName))
     {
-        // The assigned field is part of the current schema.
-        // Thus we check if it has the correct type.
+        /// The assigned field is part of the current schema.
+        /// Thus we check if it has the correct type.
         NES_TRACE("MAP Logical Operator: the field {} is already in the schema, so we updated its type.", fieldName);
         outputSchema->replaceField(fieldName, assignedField->getStamp());
     }
     else
     {
-        // The assigned field is not part of the current schema.
-        // Thus we extend the schema by the new attribute.
+        /// The assigned field is not part of the current schema.
+        /// Thus we extend the schema by the new attribute.
         NES_TRACE("MAP Logical Operator: the field {} is not part of the schema, so we added it.", fieldName);
         outputSchema->addField(fieldName, assignedField->getStamp());
     }
@@ -104,16 +104,16 @@ void LogicalMapOperator::inferStringSignature()
 {
     NES_TRACE("LogicalMapOperator: Inferring String signature for {}", toString());
     NES_ASSERT(children.size() == 1, "LogicalMapOperator: Map should have 1 child.");
-    //Infer query signatures for child operator
+    ///Infer query signatures for child operator
     auto child = children[0]->as<LogicalOperator>();
     child->inferStringSignature();
-    // Infer signature for this operator.
+    /// Infer signature for this operator.
     std::stringstream signatureStream;
     auto childSignature = child->getHashBasedSignature();
     signatureStream << "MAP(" + mapExpression->toString() + ")." << *childSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-} // namespace NES
+} /// namespace NES

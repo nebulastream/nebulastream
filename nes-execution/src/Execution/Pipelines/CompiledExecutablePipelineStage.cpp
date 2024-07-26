@@ -41,7 +41,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 ExecutionResult CompiledExecutablePipelineStage::execute(
     TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
 {
-    // wait till pipeline is ready
+    /// wait till pipeline is ready
     executablePipeline.wait();
 
     pipelineFunction((void*)&pipelineExecutionContext, &workerContext, std::addressof(inputTupleBuffer));
@@ -60,7 +60,7 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> CompiledExecutablePipelineStage::cre
     auto recordBuffer = RecordBuffer(memRef);
 
     auto rootOperator = physicalOperatorPipeline->getRootOperator();
-    // generate trace
+    /// generate trace
     auto executionTrace = Nautilus::Tracing::traceFunction(
         [&]()
         {
@@ -88,7 +88,7 @@ std::shared_ptr<NES::Nautilus::IR::IRGraph> CompiledExecutablePipelineStage::cre
 
 std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage::compilePipeline()
 {
-    // compile after setup
+    /// compile after setup
     auto dumpHelper
         = DumpHelper::create(options.getIdentifier(), options.isDumpToConsole(), options.isDumpToFile(), options.getDumpOutputPath());
     Timer timer("CompilationBasedPipelineExecutionEngine " + options.getIdentifier());
@@ -106,10 +106,10 @@ std::unique_ptr<Nautilus::Backends::Executable> CompiledExecutablePipelineStage:
 uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext)
 {
     NautilusExecutablePipelineStage::setup(pipelineExecutionContext);
-    // TODO enable async compilation #3357
+    /// TODO enable async compilation #3357
     executablePipeline = std::async(std::launch::deferred, [this] { return this->compilePipeline(); }).share();
     pipelineFunction = executablePipeline.get()->getInvocableMember<void, void*, void*, void*>("execute");
     return 0;
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

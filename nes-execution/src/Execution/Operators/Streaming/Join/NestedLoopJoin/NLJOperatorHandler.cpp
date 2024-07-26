@@ -96,4 +96,4 @@ void* getNLJPagedVectorProxy(void* ptrNljSlice, WorkerThreadId workerThreadId, u
             return nljSlice->getPagedVectorRefRight(workerThreadId);
     }
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

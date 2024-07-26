@@ -22,4 +22,4 @@ QueryCompilationException::QueryCompilationException(const std::string& message,
 {
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

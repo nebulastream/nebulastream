@@ -22,7 +22,7 @@ void traceFunctionCall(Nautilus::Tracing::ValueRef& resultRef, const std::vector
 {
     if (auto ctx = Nautilus::Tracing::TraceContext::getIfActive())
     {
-        //auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultRef, arguments);
+        ///auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, resultRef, arguments);
         ctx->traceFunctionCall(resultRef, arguments);
     }
 }
@@ -31,9 +31,9 @@ void traceVoidFunctionCall(const std::vector<Nautilus::Tracing::InputVariant>& a
 {
     if (auto ctx = Nautilus::Tracing::TraceContext::getIfActive())
     {
-        // auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, arguments);
+        /// auto operation = Nautilus::Tracing::TraceOperation(Nautilus::Tracing::CALL, arguments);
         ctx->traceFunctionCall(arguments);
     }
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

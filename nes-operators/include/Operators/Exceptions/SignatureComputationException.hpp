@@ -27,5 +27,5 @@ class SignatureComputationException : public std::runtime_error
 public:
     explicit SignatureComputationException(const std::string& message);
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_

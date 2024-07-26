@@ -159,6 +159,6 @@ private:
     std::string cudaSdkPath;
     uint8_t optimizationLevel = 1;
 };
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_

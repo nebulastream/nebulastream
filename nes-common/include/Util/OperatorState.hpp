@@ -39,6 +39,6 @@ enum class OperatorState : uint8_t
     REMOVED
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_UTIL_OPERATORSTATE_HPP_

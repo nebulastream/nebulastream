@@ -33,6 +33,6 @@ struct adl_serializer<NES::NESStrongType<T, Tag, invalid, initial>>
     }
     static void to_json(json& j, NES::NESStrongType<T, Tag, invalid, initial> t) { j = t.getRawValue(); }
 };
-} // namespace nlohmann
+} /// namespace nlohmann
 
 #endif /// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEJSON_HPP_

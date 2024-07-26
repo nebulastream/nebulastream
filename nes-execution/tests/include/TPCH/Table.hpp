@@ -137,6 +137,6 @@ private:
     std::unique_ptr<MemoryLayouts::TestTupleBuffer> currentBuffer;
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_

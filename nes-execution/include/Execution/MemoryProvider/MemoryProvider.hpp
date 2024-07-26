@@ -105,5 +105,5 @@ public:
         const Nautilus::Record::RecordFieldIdentifier& fieldIndex) const;
 };
 
-} // namespace NES::Runtime::Execution::MemoryProvider
+} /// namespace NES::Runtime::Execution::MemoryProvider
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_MEMORYPROVIDER_HPP_

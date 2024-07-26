@@ -120,7 +120,7 @@ public:
         ASSERT_EQ(pagedVector.getNumberOfEntries(), expectedNumberOfEntries);
         ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
 
-        // As we do lazy allocation, we do not create a new page if the last tuple fit on the page
+        /// As we do lazy allocation, we do not create a new page if the last tuple fit on the page
         bool lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
         const uint64_t numTuplesLastPage = lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
         ASSERT_EQ(pagedVector.getNumberOfEntriesOnCurrentPage(), numTuplesLastPage);
@@ -148,7 +148,7 @@ public:
         const std::vector<Record>& expectedRecordsAfterAppendAll,
         uint64_t differentPageSizes)
     {
-        // Inserting data into each PagedVector and checking for correct values
+        /// Inserting data into each PagedVector and checking for correct values
         std::vector<std::unique_ptr<PagedVectorVarSized>> allPagedVectors;
         for (auto& allRecords : allRecordsAndVectors)
         {
@@ -162,7 +162,7 @@ public:
             runRetrieveTest(*allPagedVectors.back(), schema, allRecords);
         }
 
-        // Appending and deleting all PagedVectors except for the first one
+        /// Appending and deleting all PagedVectors except for the first one
         auto& firstPagedVec = allPagedVectors[0];
         if (allRecordsAndVectors.size() > 1)
         {
@@ -181,7 +181,7 @@ public:
             allPagedVectors.erase(allPagedVectors.begin() + 1, allPagedVectors.end());
         }
 
-        // Checking for number of pagedVectors and correct values
+        /// Checking for number of pagedVectors and correct values
         EXPECT_EQ(allPagedVectors.size(), 1);
         EXPECT_EQ(firstPagedVec->getVarSizedDataEntryMapCounter(), totalNumTextFields);
         runRetrieveTest(*firstPagedVec, schema, expectedRecordsAfterAppendAll);
@@ -350,4 +350,4 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectorsWithDifferentPageSi
     insertAndAppendAllPagesTest(testSchema, entrySize, pageSize, totalNumTextFields, allRecords, allRecordsAfterAppendAll, 1);
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

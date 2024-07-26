@@ -76,6 +76,6 @@ protected:
     std::string fieldName;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDACCESSEXPRESSIONNODE_HPP_

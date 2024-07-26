@@ -158,8 +158,8 @@ private:
     std::promise<bool> errorPromise;
 };
 
-} // namespace Network
-} // namespace NES
+} /// namespace Network
+} /// namespace NES
 
 namespace fmt
 {
@@ -176,6 +176,6 @@ struct formatter<NES::Network::ZmqServer> : formatter<std::string>
             zmq.getNumOfThreads());
     }
 };
-} // namespace fmt
+} /// namespace fmt
 
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_ZMQSERVER_HPP_

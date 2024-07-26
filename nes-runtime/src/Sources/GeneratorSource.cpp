@@ -31,6 +31,6 @@ std::string GeneratorSource::toString() const
 SourceType GeneratorSource::getType() const
 {
     return SourceType::TEST_SOURCE;
-} // todo add generator source?
+} /// todo add generator source?
 
-} // namespace NES
+} /// namespace NES

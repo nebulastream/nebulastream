@@ -33,7 +33,7 @@ NodeEngine::NodeEngine(std::vector<BufferManagerPtr>&& bufferManagers, QueryMana
 
 QueryId NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan)
 {
-    // TODO(#123): Query Instantiation
+    /// TODO(#123): Query Instantiation
     static std::atomic counter = INITIAL<QueryId>.getRawValue();
     queryManager->registerQuery(queryExecutionPlan);
 
@@ -63,4 +63,4 @@ void NodeEngine::stopQuery(QueryId queryId, QueryTerminationType type)
     }
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

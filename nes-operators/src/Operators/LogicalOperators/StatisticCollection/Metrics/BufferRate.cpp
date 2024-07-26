@@ -27,7 +27,7 @@ bool BufferRate::operator==(const StatisticMetric& rhs) const
 {
     if (rhs.instanceOf<BufferRate>())
     {
-        // We assume that if the field has the same name, the metric is equal
+        /// We assume that if the field has the same name, the metric is equal
         auto rhsBufferRate = dynamic_cast<const BufferRate&>(rhs);
         return field->getFieldName() == rhsBufferRate.field->getFieldName();
     }
@@ -42,4 +42,4 @@ std::string BufferRate::toString() const
 {
     return "BufferRate";
 }
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

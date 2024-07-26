@@ -61,4 +61,4 @@ bool StaticDataSourceDescriptor::getLateStart() const
     return lateStart;
 };
 
-} // namespace NES::Experimental
+} /// namespace NES::Experimental

@@ -123,6 +123,6 @@ private:
     const std::vector<std::shared_ptr<ExternalAPI>> externalApis;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_COMPILATIONREQUEST_HPP_

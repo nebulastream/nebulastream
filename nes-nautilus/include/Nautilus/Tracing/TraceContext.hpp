@@ -27,7 +27,7 @@ namespace NES::Nautilus
 {
 class Any;
 typedef std::shared_ptr<Any> AnyPtr;
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 namespace NES::Nautilus::Tracing
 {
@@ -182,6 +182,6 @@ std::shared_ptr<ExecutionTrace> traceFunctionWithReturn(const Functor&& func)
     return result;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACECONTEXT_HPP_

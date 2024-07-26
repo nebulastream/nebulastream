@@ -96,6 +96,6 @@ public:
     PhysicalTypePtr const physicalComponentType;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_ARRAYPHYSICALTYPE_HPP_

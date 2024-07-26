@@ -601,7 +601,7 @@ TEST_F(SymbolicTracingTest, deepLoopTest)
 
 TEST_F(SymbolicTracingTest, DISABLED_nativeLoopTest)
 {
-    // tracing of native loops fails as nautilus can differentiate nautilus and native loops correctly.
+    /// tracing of native loops fails as nautilus can differentiate nautilus and native loops correctly.
     auto execution = Nautilus::Tracing::traceFunction([]() { nativeLoop(); });
     std::stringstream executionString;
     executionString << execution;
@@ -630,4 +630,4 @@ TEST_F(SymbolicTracingTest, tracingBreakerTest)
     ASSERT_EQ(basicBlocks.size(), 13);
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

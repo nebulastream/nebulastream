@@ -30,7 +30,7 @@ namespace Configurations
 class WorkerConfiguration;
 using WorkerConfigurationPtr = std::shared_ptr<WorkerConfiguration>;
 
-} // namespace Configurations
+} /// namespace Configurations
 
 enum class PipelineStageArity : uint8_t
 {
@@ -139,7 +139,7 @@ using ExecutablePipelineStagePtr = std::shared_ptr<ExecutablePipelineStage>;
 class PipelineExecutionContext;
 using PipelineExecutionContextPtr = std::shared_ptr<PipelineExecutionContext>;
 
-} // namespace Execution
+} /// namespace Execution
 
 namespace MemoryLayouts
 {
@@ -153,9 +153,9 @@ using ColumnLayoutPtr = std::shared_ptr<ColumnLayout>;
 class RowLayout;
 using RowLayoutPtr = std::shared_ptr<RowLayout>;
 
-} // namespace MemoryLayouts
+} /// namespace MemoryLayouts
 
-} // namespace Runtime
+} /// namespace Runtime
 
 namespace Network
 {
@@ -168,8 +168,8 @@ class QueryCompiler;
 using QueryCompilerPtr = std::shared_ptr<QueryCompiler>;
 class QueryCompilerOptions;
 using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
-} // namespace QueryCompilation
+} /// namespace QueryCompilation
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_

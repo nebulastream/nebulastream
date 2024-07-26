@@ -23,7 +23,7 @@ Operators::StreamJoinHashTable* HJSlice::getHashTable(QueryCompilation::JoinBuil
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING
         || joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE)
     {
-        // Both strategies use a single bucket
+        /// Both strategies use a single bucket
         workerThreadId = INITIAL<WorkerThreadId>;
     }
 
@@ -63,7 +63,7 @@ void HJSlice::mergeLocalToGlobalHashTable()
     }
     alreadyMergedLocalToGlobalHashTable = true;
 
-    // Merging all buckets for all local hash tables for the left side
+    /// Merging all buckets for all local hash tables for the left side
     for (const auto& workerHashTableLeft : hashTableLeftSide)
     {
         for (auto bucketPos = 0_u64; bucketPos < workerHashTableLeft->getNumBuckets(); ++bucketPos)
@@ -72,7 +72,7 @@ void HJSlice::mergeLocalToGlobalHashTable()
         }
     }
 
-    // Merging all buckets for all local hash tables for the right side
+    /// Merging all buckets for all local hash tables for the right side
     for (const auto& workerHashTableRight : hashTableRightSide)
     {
         for (auto bucketPos = 0_u64; bucketPos < workerHashTableRight->getNumBuckets(); ++bucketPos)
@@ -103,7 +103,7 @@ HJSlice::HJSlice(
     std::cout << "HJSlice for sliceStart: " << sliceStart << " and sliceEnd: " << sliceEnd << std::endl;
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL)
     {
-        //TODO they all take the same allocator
+        ///TODO they all take the same allocator
         for (auto i = 0UL; i < numberOfWorker; ++i)
         {
             hashTableLeftSide.emplace_back(std::make_unique<Operators::LocalHashTable>(
@@ -174,4 +174,4 @@ uint64_t HJSlice::getNumberOfTuplesRight()
     return sum;
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

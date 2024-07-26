@@ -68,6 +68,6 @@ public:
 
     ~NLJOperatorHandlerSlicing() override = default;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_SLICING_NLJOPERATORHANDLERSLICING_HPP_

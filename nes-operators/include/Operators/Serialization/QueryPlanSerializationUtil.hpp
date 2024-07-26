@@ -47,5 +47,5 @@ public:
      */
     static QueryPlanPtr deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_

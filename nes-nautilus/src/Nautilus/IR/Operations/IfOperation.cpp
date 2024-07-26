@@ -88,4 +88,4 @@ bool IfOperation::hasFalseCase()
 {
     return this->falseBlockInvocation.getBlock() != nullptr;
 }
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

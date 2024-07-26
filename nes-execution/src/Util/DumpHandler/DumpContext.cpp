@@ -35,7 +35,7 @@ DumpContextPtr DumpContext::create()
 
 DumpContextPtr DumpContext::create(const std::string& contextIdentifier)
 {
-    // add time to identifier
+    /// add time to identifier
     auto now = std::chrono::system_clock::now();
     auto in_time_t = std::chrono::system_clock::to_time_t(now);
     std::stringstream ss;
@@ -75,4 +75,4 @@ void DumpContext::dump(const std::string& scope, const QueryCompilation::Pipelin
     }
 }
 
-} // namespace NES
+} /// namespace NES

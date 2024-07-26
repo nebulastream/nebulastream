@@ -52,31 +52,31 @@ SerializableExpression*
 ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expression, SerializableExpression* serializedExpression)
 {
     NES_DEBUG("ExpressionSerializationUtil:: serialize expression {}", expression->toString());
-    // serialize expression node depending on its type.
+    /// serialize expression node depending on its type.
     if (expression->instanceOf<LogicalExpressionNode>())
     {
-        // serialize logical expression
+        /// serialize logical expression
         serializeLogicalExpressions(expression, serializedExpression);
     }
     else if (expression->instanceOf<ArithmeticalExpressionNode>())
     {
-        // serialize arithmetical expressions
+        /// serialize arithmetical expressions
         serializeArithmeticalExpressions(expression, serializedExpression);
     }
     else if (expression->instanceOf<ConstantValueExpressionNode>())
     {
-        // serialize constant value expression node.
+        /// serialize constant value expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize constant value expression node.");
         auto constantValueExpression = expression->as<ConstantValueExpressionNode>();
         auto value = constantValueExpression->getConstantValue();
-        // serialize value
+        /// serialize value
         auto serializedConstantValue = SerializableExpression_ConstantValueExpression();
         DataTypeSerializationUtil::serializeDataValue(value, serializedConstantValue.mutable_value());
         serializedExpression->mutable_details()->PackFrom(serializedConstantValue);
     }
     else if (expression->instanceOf<FieldAccessExpressionNode>())
     {
-        // serialize field access expression node
+        /// serialize field access expression node
         NES_TRACE("ExpressionSerializationUtil:: serialize field access expression node.");
         auto fieldAccessExpression = expression->as<FieldAccessExpressionNode>();
         auto serializedFieldAccessExpression = SerializableExpression_FieldAccessExpression();
@@ -85,7 +85,7 @@ ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expres
     }
     else if (expression->instanceOf<FieldRenameExpressionNode>())
     {
-        // serialize field rename expression node
+        /// serialize field rename expression node
         NES_TRACE("ExpressionSerializationUtil:: serialize field rename expression node.");
         auto fieldRenameExpression = expression->as<FieldRenameExpressionNode>();
         auto serializedFieldRenameExpression = SerializableExpression_FieldRenameExpression();
@@ -96,7 +96,7 @@ ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expres
     }
     else if (expression->instanceOf<FieldAssignmentExpressionNode>())
     {
-        // serialize field assignment expression node.
+        /// serialize field assignment expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize field assignment expression node.");
         auto fieldAssignmentExpressionNode = expression->as<FieldAssignmentExpressionNode>();
         auto serializedFieldAssignmentExpression = SerializableExpression_FieldAssignmentExpression();
@@ -104,13 +104,13 @@ ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expres
         serializedFieldAccessExpression->set_fieldname(fieldAssignmentExpressionNode->getField()->getFieldName());
         DataTypeSerializationUtil::serializeDataType(
             fieldAssignmentExpressionNode->getField()->getStamp(), serializedFieldAccessExpression->mutable_type());
-        // serialize assignment expression
+        /// serialize assignment expression
         serializeExpression(fieldAssignmentExpressionNode->getAssignment(), serializedFieldAssignmentExpression.mutable_assignment());
         serializedExpression->mutable_details()->PackFrom(serializedFieldAssignmentExpression);
     }
     else if (expression->instanceOf<WhenExpressionNode>())
     {
-        // serialize when expression node.
+        /// serialize when expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize when expression {}.", expression->toString());
         auto whenExpressionNode = expression->as<WhenExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_WhenExpression();
@@ -120,7 +120,7 @@ ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expres
     }
     else if (expression->instanceOf<CaseExpressionNode>())
     {
-        // serialize case expression node.
+        /// serialize case expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize case expression {}.", expression->toString());
         auto caseExpressionNode = expression->as<CaseExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_CaseExpression();
@@ -133,7 +133,7 @@ ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expres
     }
     else if (expression->instanceOf<FunctionExpression>())
     {
-        // serialize negate expression node.
+        /// serialize negate expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize function logical expression to SerializableExpression_FunctionExpression");
         auto functionExpressionNode = expression->as<FunctionExpression>();
         auto serializedExpressionNode = SerializableExpression_FunctionExpression();
@@ -158,20 +158,20 @@ ExpressionSerializationUtil::serializeExpression(const ExpressionNodePtr& expres
 ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const SerializableExpression& serializedExpression)
 {
     NES_DEBUG("ExpressionSerializationUtil:: deserialize expression {}", serializedExpression.details().type_url());
-    // de-serialize expression
-    // 1. check if the serialized expression is a logical expression
+    /// de-serialize expression
+    /// 1. check if the serialized expression is a logical expression
     auto expressionNodePtr = deserializeLogicalExpressions(serializedExpression);
-    // 2. if the expression was not de-serialized then try if it's an arithmetical expression
+    /// 2. if the expression was not de-serialized then try if it's an arithmetical expression
     if (!expressionNodePtr)
     {
         expressionNodePtr = deserializeArithmeticalExpressions(serializedExpression);
     }
-    // 3. if the expression was not de-serialized try remaining expression types
+    /// 3. if the expression was not de-serialized try remaining expression types
     if (!expressionNodePtr)
     {
         if (serializedExpression.details().Is<SerializableExpression_ConstantValueExpression>())
         {
-            // de-serialize constant value expression node.
+            /// de-serialize constant value expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as Constant Value expression node.");
             auto serializedConstantValue = SerializableExpression_ConstantValueExpression();
             serializedExpression.details().UnpackTo(&serializedConstantValue);
@@ -180,7 +180,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
         }
         else if (serializedExpression.details().Is<SerializableExpression_FieldAccessExpression>())
         {
-            // de-serialize field access expression node.
+            /// de-serialize field access expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as FieldAccess expression node.");
             SerializableExpression_FieldAccessExpression serializedFieldAccessExpression;
             serializedExpression.details().UnpackTo(&serializedFieldAccessExpression);
@@ -189,7 +189,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
         }
         else if (serializedExpression.details().Is<SerializableExpression_FieldRenameExpression>())
         {
-            // de-serialize field rename expression node.
+            /// de-serialize field rename expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as Field Rename expression node.");
             SerializableExpression_FieldRenameExpression serializedFieldRenameExpression;
             serializedExpression.details().UnpackTo(&serializedFieldRenameExpression);
@@ -207,7 +207,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
         }
         else if (serializedExpression.details().Is<SerializableExpression_FieldAssignmentExpression>())
         {
-            // de-serialize field read expression node.
+            /// de-serialize field read expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as FieldAssignment expression node.");
             SerializableExpression_FieldAssignmentExpression serializedFieldAccessExpression;
             serializedExpression.details().UnpackTo(&serializedFieldAccessExpression);
@@ -220,7 +220,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
         }
         else if (serializedExpression.details().Is<SerializableExpression_FunctionExpression>())
         {
-            // de-serialize field read expression node.
+            /// de-serialize field read expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as function expression node.");
             SerializableExpression_FunctionExpression functionExpression;
             serializedExpression.details().UnpackTo(&functionExpression);
@@ -236,7 +236,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
         }
         else if (serializedExpression.details().Is<SerializableExpression_WhenExpression>())
         {
-            // de-serialize WHEN expression node.
+            /// de-serialize WHEN expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as When expression node.");
             auto serializedExpressionNode = SerializableExpression_WhenExpression();
             serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -246,13 +246,13 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
         }
         else if (serializedExpression.details().Is<SerializableExpression_CaseExpression>())
         {
-            // de-serialize CASE expression node.
+            /// de-serialize CASE expression node.
             NES_TRACE("ExpressionSerializationUtil:: de-serialize expression as Case expression node.");
             auto serializedExpressionNode = SerializableExpression_CaseExpression();
             serializedExpression.details().UnpackTo(&serializedExpressionNode);
             std::vector<ExpressionNodePtr> leftExps;
 
-            //todo: deserialization might be possible more efficiently
+            ///todo: deserialization might be possible more efficiently
             for (int i = 0; i < serializedExpressionNode.left_size(); i++)
             {
                 const auto& leftNode = serializedExpressionNode.left(i);
@@ -272,7 +272,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeExpression(const Seria
         NES_FATAL_ERROR("ExpressionSerializationUtil:: fatal error during de-serialization. The expression node must not be null");
     }
 
-    // deserialize expression stamp
+    /// deserialize expression stamp
     auto stamp = DataTypeSerializationUtil::deserializeDataType(serializedExpression.stamp());
     expressionNodePtr->setStamp(stamp);
     NES_DEBUG("ExpressionSerializationUtil:: deserialized expression node to the following node: {}", expressionNodePtr->toString());
@@ -285,7 +285,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     NES_DEBUG("ExpressionSerializationUtil:: serialize arithmetical expression {}", expression->toString());
     if (expression->instanceOf<AddExpressionNode>())
     {
-        // serialize add expression node.
+        /// serialize add expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize ADD arithmetical expression to SerializableExpression_AddExpression");
         auto addExpressionNode = expression->as<AddExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_AddExpression();
@@ -295,7 +295,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<SubExpressionNode>())
     {
-        // serialize sub expression node.
+        /// serialize sub expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize SUB arithmetical expression to SerializableExpression_SubExpression");
         auto subExpressionNode = expression->as<SubExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_SubExpression();
@@ -305,7 +305,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<MulExpressionNode>())
     {
-        // serialize mul expression node.
+        /// serialize mul expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize MUL arithmetical expression to SerializableExpression_MulExpression");
         auto mulExpressionNode = expression->as<MulExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_MulExpression();
@@ -315,7 +315,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<DivExpressionNode>())
     {
-        // serialize div expression node.
+        /// serialize div expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize DIV arithmetical expression to SerializableExpression_DivExpression");
         auto divExpressionNode = expression->as<DivExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_DivExpression();
@@ -325,7 +325,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<ModExpressionNode>())
     {
-        // serialize mod expression node.
+        /// serialize mod expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize MODULO arithmetical expression to SerializableExpression_PowExpression");
         auto modExpressionNode = expression->as<ModExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_ModExpression();
@@ -335,7 +335,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<PowExpressionNode>())
     {
-        // serialize pow expression node.
+        /// serialize pow expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize POWER arithmetical expression to SerializableExpression_PowExpression");
         auto powExpressionNode = expression->as<PowExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_PowExpression();
@@ -345,7 +345,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<AbsExpressionNode>())
     {
-        // serialize abs expression node.
+        /// serialize abs expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize ABS arithmetical expression to SerializableExpression_AbsExpression");
         auto absExpressionNode = expression->as<AbsExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_AbsExpression();
@@ -354,7 +354,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<CeilExpressionNode>())
     {
-        // serialize ceil expression node.
+        /// serialize ceil expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize CEIL arithmetical expression to SerializableExpression_CeilExpression");
         auto ceilExpressionNode = expression->as<CeilExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_CeilExpression();
@@ -363,7 +363,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<ExpExpressionNode>())
     {
-        // serialize exp expression node.
+        /// serialize exp expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize EXP arithmetical expression to SerializableExpression_ExpExpression");
         auto expExpressionNode = expression->as<ExpExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_ExpExpression();
@@ -372,7 +372,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<FloorExpressionNode>())
     {
-        // serialize floor expression node.
+        /// serialize floor expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize FLOOR arithmetical expression to SerializableExpression_FloorExpression");
         auto floorExpressionNode = expression->as<FloorExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_FloorExpression();
@@ -381,7 +381,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<RoundExpressionNode>())
     {
-        // serialize round expression node.
+        /// serialize round expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize ROUND arithmetical expression to SerializableExpression_RoundExpression");
         auto roundExpressionNode = expression->as<RoundExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_RoundExpression();
@@ -390,7 +390,7 @@ void ExpressionSerializationUtil::serializeArithmeticalExpressions(
     }
     else if (expression->instanceOf<SqrtExpressionNode>())
     {
-        // serialize sqrt expression node.
+        /// serialize sqrt expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize SQRT arithmetical expression to SerializableExpression_SqrtExpression");
         auto sqrtExpressionNode = expression->as<SqrtExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_SqrtExpression();
@@ -411,7 +411,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     NES_DEBUG("ExpressionSerializationUtil:: serialize logical expression {}", expression->toString());
     if (expression->instanceOf<AndExpressionNode>())
     {
-        // serialize and expression node.
+        /// serialize and expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize AND logical expression to SerializableExpression_AndExpression");
         auto andExpressionNode = expression->as<AndExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_AndExpression();
@@ -421,7 +421,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else if (expression->instanceOf<OrExpressionNode>())
     {
-        // serialize or expression node.
+        /// serialize or expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize OR logical expression to SerializableExpression_OrExpression");
         auto orExpressionNode = expression->as<OrExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_OrExpression();
@@ -431,7 +431,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else if (expression->instanceOf<LessExpressionNode>())
     {
-        // serialize less expression node.
+        /// serialize less expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize Less logical expression to SerializableExpression_LessExpression");
         auto lessExpressionNode = expression->as<LessExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_LessExpression();
@@ -441,7 +441,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else if (expression->instanceOf<LessEqualsExpressionNode>())
     {
-        // serialize less equals expression node.
+        /// serialize less equals expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize Less Equals logical expression to "
                   "SerializableExpression_LessEqualsExpression");
         auto lessEqualsExpressionNode = expression->as<LessEqualsExpressionNode>();
@@ -452,7 +452,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else if (expression->instanceOf<GreaterExpressionNode>())
     {
-        // serialize greater expression node.
+        /// serialize greater expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize Greater logical expression to SerializableExpression_GreaterExpression");
         auto greaterExpressionNode = expression->as<GreaterExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_GreaterExpression();
@@ -462,7 +462,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else if (expression->instanceOf<GreaterEqualsExpressionNode>())
     {
-        // serialize greater equals expression node.
+        /// serialize greater equals expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize Greater Equals logical expression to "
                   "SerializableExpression_GreaterEqualsExpression");
         auto greaterEqualsExpressionNode = expression->as<GreaterEqualsExpressionNode>();
@@ -473,7 +473,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else if (expression->instanceOf<EqualsExpressionNode>())
     {
-        // serialize equals expression node.
+        /// serialize equals expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize Equals logical expression to SerializableExpression_EqualsExpression");
         auto equalsExpressionNode = expression->as<EqualsExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_EqualsExpression();
@@ -483,7 +483,7 @@ void ExpressionSerializationUtil::serializeLogicalExpressions(
     }
     else if (expression->instanceOf<NegateExpressionNode>())
     {
-        // serialize negate expression node.
+        /// serialize negate expression node.
         NES_TRACE("ExpressionSerializationUtil:: serialize negate logical expression to SerializableExpression_NegateExpression");
         auto equalsExpressionNode = expression->as<NegateExpressionNode>();
         auto serializedExpressionNode = SerializableExpression_NegateExpression();
@@ -502,7 +502,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
 {
     if (serializedExpression.details().Is<SerializableExpression_AddExpression>())
     {
-        // de-serialize ADD expression node.
+        /// de-serialize ADD expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as Add expression node.");
         auto serializedExpressionNode = SerializableExpression_AddExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -512,7 +512,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     if (serializedExpression.details().Is<SerializableExpression_SubExpression>())
     {
-        // de-serialize SUB expression node.
+        /// de-serialize SUB expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as SUB expression node.");
         auto serializedExpressionNode = SerializableExpression_SubExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -522,7 +522,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_MulExpression>())
     {
-        // de-serialize MUL expression node.
+        /// de-serialize MUL expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as MUL expression node.");
         auto serializedExpressionNode = SerializableExpression_MulExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -532,7 +532,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_DivExpression>())
     {
-        // de-serialize DIV expression node.
+        /// de-serialize DIV expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as DIV expression node.");
         auto serializedExpressionNode = SerializableExpression_DivExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -542,7 +542,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_ModExpression>())
     {
-        // de-serialize MODULO expression node.
+        /// de-serialize MODULO expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as MODULO expression node.");
         auto serializedExpressionNode = SerializableExpression_ModExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -552,7 +552,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_PowExpression>())
     {
-        // de-serialize POWER expression node.
+        /// de-serialize POWER expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as POWER expression node.");
         auto serializedExpressionNode = SerializableExpression_PowExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -562,7 +562,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_AbsExpression>())
     {
-        // de-serialize ABS expression node.
+        /// de-serialize ABS expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as ABS expression node.");
         auto serializedExpressionNode = SerializableExpression_AbsExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -571,7 +571,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_CeilExpression>())
     {
-        // de-serialize CEIL expression node.
+        /// de-serialize CEIL expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as CEIL expression node.");
         auto serializedExpressionNode = SerializableExpression_CeilExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -580,7 +580,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_ExpExpression>())
     {
-        // de-serialize EXP expression node.
+        /// de-serialize EXP expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as EXP expression node.");
         auto serializedExpressionNode = SerializableExpression_ExpExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -589,7 +589,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_FloorExpression>())
     {
-        // de-serialize FLOOR expression node.
+        /// de-serialize FLOOR expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as FLOOR expression node.");
         auto serializedExpressionNode = SerializableExpression_FloorExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -598,7 +598,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_RoundExpression>())
     {
-        // de-serialize ROUND expression node.
+        /// de-serialize ROUND expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as ROUND expression node.");
         auto serializedExpressionNode = SerializableExpression_RoundExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -607,7 +607,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeArithmeticalExpression
     }
     else if (serializedExpression.details().Is<SerializableExpression_SqrtExpression>())
     {
-        // de-serialize SQRT expression node.
+        /// de-serialize SQRT expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize arithmetical expression as SQRT expression node.");
         auto serializedExpressionNode = SerializableExpression_SqrtExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -623,7 +623,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     if (serializedExpression.details().Is<SerializableExpression_AndExpression>())
     {
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as AND expression node.");
-        // de-serialize and expression node.
+        /// de-serialize and expression node.
         auto serializedExpressionNode = SerializableExpression_AndExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
         auto left = deserializeExpression(serializedExpressionNode.left());
@@ -632,7 +632,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     }
     if (serializedExpression.details().Is<SerializableExpression_OrExpression>())
     {
-        // de-serialize or expression node.
+        /// de-serialize or expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as OR expression node.");
         auto serializedExpressionNode = SerializableExpression_OrExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -642,7 +642,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     }
     else if (serializedExpression.details().Is<SerializableExpression_LessExpression>())
     {
-        // de-serialize less expression node.
+        /// de-serialize less expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as LESS expression node.");
         auto serializedExpressionNode = SerializableExpression_LessExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -652,7 +652,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     }
     else if (serializedExpression.details().Is<SerializableExpression_LessEqualsExpression>())
     {
-        // de-serialize less equals expression node.
+        /// de-serialize less equals expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as LESS Equals expression node.");
         auto serializedExpressionNode = SerializableExpression_LessEqualsExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -662,7 +662,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     }
     else if (serializedExpression.details().Is<SerializableExpression_GreaterExpression>())
     {
-        // de-serialize greater expression node.
+        /// de-serialize greater expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as Greater expression node.");
         auto serializedExpressionNode = SerializableExpression_GreaterExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -672,7 +672,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     }
     else if (serializedExpression.details().Is<SerializableExpression_GreaterEqualsExpression>())
     {
-        // de-serialize greater equals expression node.
+        /// de-serialize greater equals expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as GreaterEquals expression node.");
         auto serializedExpressionNode = SerializableExpression_GreaterEqualsExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -682,7 +682,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     }
     else if (serializedExpression.details().Is<SerializableExpression_EqualsExpression>())
     {
-        // de-serialize equals expression node.
+        /// de-serialize equals expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as Equals expression node.");
         auto serializedExpressionNode = SerializableExpression_EqualsExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -692,7 +692,7 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     }
     else if (serializedExpression.details().Is<SerializableExpression_NegateExpression>())
     {
-        // de-serialize negate expression node.
+        /// de-serialize negate expression node.
         NES_TRACE("ExpressionSerializationUtil:: de-serialize logical expression as Negate expression node.");
         auto serializedExpressionNode = SerializableExpression_NegateExpression();
         serializedExpression.details().UnpackTo(&serializedExpressionNode);
@@ -702,4 +702,4 @@ ExpressionNodePtr ExpressionSerializationUtil::deserializeLogicalExpressions(con
     return nullptr;
 }
 
-} // namespace NES
+} /// namespace NES

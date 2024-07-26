@@ -57,6 +57,6 @@ private:
     std::unordered_map<MetricType, MetricCollectorPtr> metricMap;
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGCATALOG_HPP_

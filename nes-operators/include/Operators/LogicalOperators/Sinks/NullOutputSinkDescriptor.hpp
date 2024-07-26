@@ -40,6 +40,6 @@ private:
 
 using NullOutputSinkDescriptorPtr = std::shared_ptr<NullOutputSinkDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_NULLOUTPUTSINKDESCRIPTOR_HPP_

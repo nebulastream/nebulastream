@@ -67,7 +67,7 @@ public:
         ASSERT_EQ(pagedVector.getNumberOfEntries(), expectedNumberOfEntries);
         ASSERT_EQ(pagedVector.getNumberOfPages(), numberOfPages);
 
-        // As we do lazy allocation, we do not create a new page if the last tuple fit on the page
+        /// As we do lazy allocation, we do not create a new page if the last tuple fit on the page
         bool lastTupleFitsOntoLastPage = (expectedNumberOfEntries % capacityPerPage) == 0;
         const uint64_t numTuplesLastPage = lastTupleFitsOntoLastPage ? capacityPerPage : (expectedNumberOfEntries % capacityPerPage);
         ASSERT_EQ(pagedVector.getNumberOfEntriesOnCurrentPage(), numTuplesLastPage);
@@ -96,7 +96,7 @@ public:
         const std::vector<std::vector<Item>>& allItemsAndVectors,
         const std::vector<Item>& expectedItemsAfterAppendAll)
     {
-        // Inserting data into each PagedVector and checking for correctness
+        /// Inserting data into each PagedVector and checking for correctness
         std::vector<std::unique_ptr<PagedVector>> allPagedVectors;
         for (auto& allItems : allItemsAndVectors)
         {
@@ -106,7 +106,7 @@ public:
             runRetrieveTest<Item>(*allPagedVectors.back(), entrySize, allItems);
         }
 
-        // Now appending and deleting all PagedVectors except the first one
+        /// Now appending and deleting all PagedVectors except the first one
         auto& firstPagedVec = allPagedVectors[0];
         if (allItemsAndVectors.size() > 1)
         {
@@ -122,7 +122,7 @@ public:
             allPagedVectors.erase(allPagedVectors.begin() + 1, allPagedVectors.end());
         }
 
-        // After we have appended all paged and everything except the first one, we expect the size to be one
+        /// After we have appended all paged and everything except the first one, we expect the size to be one
         EXPECT_EQ(allPagedVectors.size(), 1);
         runRetrieveTest<Item>(*firstPagedVec, entrySize, expectedItemsAfterAppendAll);
     }
@@ -234,4 +234,4 @@ TEST_F(PagedVectorTest, appendAllPagesMultipleVectors)
 
     insertAndAppendAllPages<uint64_t>(entrySize, pageSize, {allItemsVec1, allItemsVec2, allItemsVec3, allItemsVec4}, allItemsAfterAppend);
 }
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

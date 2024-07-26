@@ -26,7 +26,7 @@
 /// Turn this on to have Thread::current_num_threads_ keep a count of currently-active threads.
 #undef COUNT_ACTIVE_THREADS
 
-// this class was inspired by FASTER (Microsoft (c))
+/// this class was inspired by FASTER (Microsoft (c))
 
 namespace NES::Runtime
 {
@@ -107,5 +107,5 @@ inline NesThread::ThreadId::~ThreadId()
     NesThread::releaseEntry(id);
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_

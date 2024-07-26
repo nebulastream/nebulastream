@@ -73,4 +73,4 @@ const std::vector<std::string>& FunctionOperation::getInputArgNames() const
     return inputArgNames;
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

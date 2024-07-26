@@ -34,6 +34,6 @@ private:
     std::string cudaSdkPath;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CUDAPLATFORM_HPP_

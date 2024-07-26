@@ -35,4 +35,4 @@ bool TopologyLinkInformation::operator==(const TopologyLinkInformation& other) c
 {
     return this->downstreamTopologyNode == other.downstreamTopologyNode && this->upstreamTopologyNode == other.upstreamTopologyNode;
 }
-} // namespace NES
+} /// namespace NES

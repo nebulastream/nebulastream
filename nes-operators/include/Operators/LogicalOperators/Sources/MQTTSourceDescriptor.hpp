@@ -34,7 +34,7 @@ public:
         atMostOnce,
         atLeastOnce,
         exactlyOnce
-    }; //cleanSession requires atLeastOnce or exactlyOnce
+    }; ///cleanSession requires atLeastOnce or exactlyOnce
     /**
    * @brief create a source descriptor pointer for MQTT source
    * @param schema the schema of the data
@@ -74,7 +74,7 @@ private:
 
 using MQTTSourceDescriptorPtr = std::shared_ptr<MQTTSourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MQTTSOURCEDESCRIPTOR_HPP_

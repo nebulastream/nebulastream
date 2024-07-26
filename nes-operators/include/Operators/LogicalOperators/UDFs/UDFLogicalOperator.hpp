@@ -24,7 +24,7 @@ namespace Catalogs::UDF
 {
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-} // namespace Catalogs::UDF
+} /// namespace Catalogs::UDF
 
 /**
  * Logical operator node for a udf. This class acts as a parent class for any udf logical operator node
@@ -91,6 +91,6 @@ protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFLOGICALOPERATOR_HPP_

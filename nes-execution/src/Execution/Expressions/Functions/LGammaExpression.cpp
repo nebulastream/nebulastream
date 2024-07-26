@@ -35,10 +35,10 @@ double calculateLGamma(double x)
 
 Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value leftValue = SubExpression->execute(record);
 
-    // call the calculateLGamma function with the correct type
+    /// call the calculateLGamma function with the correct type
     if (leftValue->isType<Int8>())
     {
         return FunctionCall<>("calculateLGamma", calculateLGamma, leftValue.as<Int8>());
@@ -81,10 +81,10 @@ Value<> LGammaExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LGammaExpression>> lgammaFunction("lgamma");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

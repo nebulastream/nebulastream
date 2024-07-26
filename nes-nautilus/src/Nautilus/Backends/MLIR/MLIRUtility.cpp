@@ -46,16 +46,16 @@ int MLIRUtility::loadAndExecuteModuleFromString(const std::string& mlirString, c
     mlir::ParserConfig config(&context);
     auto mlirModule = mlir::parseSourceString<mlir::ModuleOp>(mlirString, config);
 
-    // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
+    /// Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if (!MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(mlirModule, {}, {}))
     {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
-    // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+    /// Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
 
-    // JIT compile LLVM IR module and return engine that provides access compiled execute function.
+    /// JIT compile LLVM IR module and return engine that provides access compiled execute function.
     auto engine = MLIR::JITCompiler::jitCompileModule(mlirModule, optPipeline, {}, {});
     if (!engine->invoke(moduleString))
     {
@@ -70,17 +70,17 @@ std::unique_ptr<mlir::ExecutionEngine> MLIRUtility::compileNESIRToMachineCode(st
     mlir::MLIRContext context;
     auto loweringProvider = std::make_unique<MLIR::MLIRLoweringProvider>(context);
     auto module = loweringProvider->generateModuleFromIR(ir);
-    // Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
+    /// Take the MLIR module from the MLIRLoweringProvider and apply lowering and optimization passes.
     if (MLIR::MLIRPassManager::lowerAndOptimizeMLIRModule(module, {}, {}))
     {
         NES_FATAL_ERROR("Could not lower and optimize MLIR");
     }
 
-    // Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
+    /// Lower MLIR module to LLVM IR and create LLVM IR optimization pipeline.
     auto optPipeline = MLIR::LLVMIROptimizer::getLLVMOptimizerPipeline(/*inlining*/ false);
 
-    // JIT compile LLVM IR module and return engine that provides access compiled execute function.
+    /// JIT compile LLVM IR module and return engine that provides access compiled execute function.
     return MLIR::JITCompiler::jitCompileModule(
         module, optPipeline, loweringProvider->getJitProxyFunctionSymbols(), loweringProvider->getJitProxyTargetAddresses());
 }
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR

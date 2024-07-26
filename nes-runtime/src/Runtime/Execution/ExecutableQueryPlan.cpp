@@ -44,7 +44,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(
     , qepStatus(Execution::ExecutableQueryPlanStatus::Created)
     , qepTerminationStatusFuture(qepTerminationStatusPromise.get_future())
 {
-    // the +1 is the termination token for the query plan itself
+    /// the +1 is the termination token for the query plan itself
     numOfTerminationTokens.store(1 + this->sources.size() + this->pipelines.size() + this->sinks.size());
 }
 
@@ -223,24 +223,24 @@ bool ExecutableQueryPlan::stop()
         if (allStagesStopped)
         {
             qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
-            return true; // correct stop
+            return true; /// correct stop
         }
 
         qepStatus.store(Execution::ExecutableQueryPlanStatus::ErrorState);
         qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Fail);
 
-        return false; // one stage failed to stop
+        return false; /// one stage failed to stop
     }
 
     if (expected == Execution::ExecutableQueryPlanStatus::Stopped)
     {
-        return true; // we have tried to stop the same QEP twice.
+        return true; /// we have tried to stop the same QEP twice.
     }
     NES_ERROR("Something is wrong with query {} as it was not possible to stop", decomposedQueryPlanId);
-    // if we get there it mean the CAS failed and expected is the current value
+    /// if we get there it mean the CAS failed and expected is the current value
     while (!qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::ErrorState))
     {
-        // try to install ErrorState
+        /// try to install ErrorState
     }
 
     qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Fail);
@@ -286,7 +286,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                 auto expected = Execution::ExecutableQueryPlanStatus::Running;
                 if (qepStatus.compare_exchange_strong(expected, Execution::ExecutableQueryPlanStatus::Finished))
                 {
-                    // if CAS fails - it means the query was already stopped or failed
+                    /// if CAS fails - it means the query was already stopped or failed
                     NES_DEBUG(
                         "QueryExecutionPlan: query plan {} subplan {} is marked as (soft) stopped now",
                         sharedQueryId,
@@ -312,11 +312,11 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
 
 void ExecutableQueryPlan::destroy()
 {
-    // sanity checks: ensure we can destroy stopped instances
+    /// sanity checks: ensure we can destroy stopped instances
     auto expected = 0u;
     if (qepStatus == ExecutableQueryPlanStatus::Created)
     {
-        return; // there is nothing to destroy;
+        return; /// there is nothing to destroy;
     }
     NES_ASSERT2_FMT(
         numOfTerminationTokens.compare_exchange_strong(expected, uint32_t(-1)),
@@ -337,7 +337,7 @@ void ExecutableQueryPlan::destroy()
 
 void ExecutableQueryPlan::onEvent(BaseEvent&)
 {
-    // nop :: left on purpose -> fill this in when you want to support events
+    /// nop :: left on purpose -> fill this in when you want to support events
 }
 void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType)
 {
@@ -351,15 +351,15 @@ void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerm
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << decomposedQueryPlanId << " = " << terminationType);
     NES_DEBUG("QEP {} Source {} is terminated; tokens left = {}", decomposedQueryPlanId, source->getOperatorId(), (tokensLeft - 1));
-    // the following check is necessary because a data sources first emits an EoS marker and then calls this method.
-    // However, it might happen that the marker is so fast that one possible execution is as follows:
-    // 1) Data Source emits EoS marker
-    // 2) Next pipeline/sink picks the marker and finishes by decreasing `numOfTerminationTokens`
-    // 3) DataSource invokes `notifySourceCompletion`
-    // as a result, the data source might be the last one to decrease the `numOfTerminationTokens` thus it has to
-    // trigger the QEP reconfiguration
+    /// the following check is necessary because a data sources first emits an EoS marker and then calls this method.
+    /// However, it might happen that the marker is so fast that one possible execution is as follows:
+    /// 1) Data Source emits EoS marker
+    /// 2) Next pipeline/sink picks the marker and finishes by decreasing `numOfTerminationTokens`
+    /// 3) DataSource invokes `notifySourceCompletion`
+    /// as a result, the data source might be the last one to decrease the `numOfTerminationTokens` thus it has to
+    /// trigger the QEP reconfiguration
     if (tokensLeft == 2)
-    { // this is the second last token to be removed (last one is the qep itself)
+    { /// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(
             getSharedQueryId(),
             getDecomposedQueryPlanId(),
@@ -383,9 +383,9 @@ void ExecutableQueryPlan::notifyPipelineCompletion(ExecutablePipelinePtr pipelin
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Pipeline was last termination token for " << decomposedQueryPlanId);
     NES_DEBUG("QEP {} Pipeline {} is terminated; tokens left = {}", decomposedQueryPlanId, pipeline->getPipelineId(), (tokensLeft - 1));
-    // the same applies here for the pipeline
+    /// the same applies here for the pipeline
     if (tokensLeft == 2)
-    { // this is the second last token to be removed (last one is the qep itself)
+    { /// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(
             getSharedQueryId(),
             getDecomposedQueryPlanId(),
@@ -408,9 +408,9 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Sink was last termination token for " << decomposedQueryPlanId);
     NES_DEBUG("QEP {} Sink {} is terminated; tokens left = {}", decomposedQueryPlanId, sink->toString(), (tokensLeft - 1));
-    // sinks also require to spawn a reconfig task for the qep
+    /// sinks also require to spawn a reconfig task for the qep
     if (tokensLeft == 2)
-    { // this is the second last token to be removed (last one is the qep itself)
+    { /// this is the second last token to be removed (last one is the qep itself)
         auto reconfMessageQEP = ReconfigurationMessage(
             getSharedQueryId(),
             getDecomposedQueryPlanId(),
@@ -423,4 +423,4 @@ void ExecutableQueryPlan::notifySinkCompletion(DataSinkPtr sink, QueryTerminatio
     }
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

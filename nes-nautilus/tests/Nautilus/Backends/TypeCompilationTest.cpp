@@ -86,7 +86,7 @@ Value<> unsignedIntegerTest()
     return minusOne;
 }
 
-// We should be able to create Values with unsigned ints, but currently we cannot.
+/// We should be able to create Values with unsigned ints, but currently we cannot.
 TEST_P(TypeCompilationTest, DISABLED_unsignedIntegerTest)
 {
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return unsignedIntegerTest(); });
@@ -109,7 +109,7 @@ Value<> boolCompareTest()
     }
 }
 
-// Should return 1, but returns 41 (Value(true) in interpreted as 0).
+/// Should return 1, but returns 41 (Value(true) in interpreted as 0).
 TEST_P(TypeCompilationTest, DISABLED_boolCompareTest)
 {
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return boolCompareTest(); });
@@ -120,12 +120,12 @@ TEST_P(TypeCompilationTest, DISABLED_boolCompareTest)
 
 Value<> floatTest()
 {
-    // Value iw  = 1.3;
-    // return iw;
+    /// Value iw  = 1.3;
+    /// return iw;
     return Value(1);
 }
 
-// Above approach, to return a float Value, does not work.
+/// Above approach, to return a float Value, does not work.
 TEST_P(TypeCompilationTest, DISABLED_floatTest)
 {
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return floatTest(); });
@@ -141,7 +141,7 @@ Value<> mixBoolAndIntTest()
     return boolValue + intValue;
 }
 
-// Should return 5, but returns 4. Could extend to check for bool-int edge cases
+/// Should return 5, but returns 4. Could extend to check for bool-int edge cases
 TEST_P(TypeCompilationTest, DISABLED_mixBoolAndIntTest)
 {
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([]() { return mixBoolAndIntTest(); });
@@ -472,8 +472,8 @@ TEST_P(TypeCompilationTest, castFloat)
     }
 }
 
-// Tests all registered compilation backends.
-// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+/// Tests all registered compilation backends.
+/// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 INSTANTIATE_TEST_CASE_P(
     testTypeCompilation,
     TypeCompilationTest,
@@ -481,4 +481,4 @@ INSTANTIATE_TEST_CASE_P(
         Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<TypeCompilationTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

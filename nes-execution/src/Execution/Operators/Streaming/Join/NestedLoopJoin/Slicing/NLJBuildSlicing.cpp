@@ -58,19 +58,19 @@ void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinS
 
 void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const
 {
-    // Get the local state
+    /// Get the local state
     auto localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
     Value<UInt64> timestampVal = timeFunction->getTs(ctx, record);
 
     if (!(localJoinState->sliceStart <= timestampVal && timestampVal < localJoinState->sliceEnd))
     {
-        // We have to get the slice for the current timestamp
+        /// We have to get the slice for the current timestamp
         auto workerThreadId = ctx.getWorkerThreadId();
         updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal);
     }
 
-    // Write record to the pagedVector
+    /// Write record to the pagedVector
     auto nljPagedVectorMemRef = Nautilus::FunctionCall(
         "getNLJPagedVectorProxy",
         getNLJPagedVectorProxy,
@@ -86,7 +86,7 @@ void NLJBuildSlicing::updateLocalJoinState(
 {
     NES_DEBUG("Updating LocalJoinState for timestamp {}!", timestamp->toString());
 
-    // Retrieving the slice of the current watermark, as we expect that more tuples will be inserted into this slice
+    /// Retrieving the slice of the current watermark, as we expect that more tuples will be inserted into this slice
     localJoinState->sliceReference = Nautilus::FunctionCall(
         "getNLJSliceRefProxy",
         getNLJSliceRefProxy,
@@ -114,11 +114,11 @@ void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const
     auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, sliceReference, pagedVectorVarSizedRef);
 
-    // Getting the current slice start and end
+    /// Getting the current slice start and end
     localJoinState->sliceStart = Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, localJoinState->sliceReference);
     localJoinState->sliceEnd = Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
 
-    // Storing the local state
+    /// Storing the local state
     ctx.setLocalOperatorState(this, std::move(localJoinState));
 }
 
@@ -135,4 +135,4 @@ NLJBuildSlicing::NLJBuildSlicing(
           operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy, windowingStrategy)
 {
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

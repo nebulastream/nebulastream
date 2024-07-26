@@ -55,4 +55,4 @@ public:
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<BooleanInvocationPlugin> booleanInvocationPlugin;
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

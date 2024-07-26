@@ -56,5 +56,5 @@ private:
     std::string delimiter;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_

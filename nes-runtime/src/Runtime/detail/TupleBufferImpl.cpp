@@ -31,9 +31,9 @@ namespace NES::Runtime
 namespace detail
 {
 
-// -----------------------------------------------------------------------------
-// ------------------ Core Mechanism for Buffer recycling ----------------------
-// -----------------------------------------------------------------------------
+/// -----------------------------------------------------------------------------
+/// ------------------ Core Mechanism for Buffer recycling ----------------------
+/// -----------------------------------------------------------------------------
 
 MemorySegment::MemorySegment(const MemorySegment& other) = default;
 
@@ -83,8 +83,8 @@ MemorySegment::~MemorySegment()
             NES_ASSERT(refCnt == 0, "[MemorySegment] invalid reference counter" << refCnt << " on mem segment dtor");
         }
 
-        // Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
-        // have to call the destructor, as the memory segment that contains the controlBlock is managed separately.
+        /// Release the controlBlock, which is either allocated via 'new' or placement new. In the latter case, we only
+        /// have to call the destructor, as the memory segment that contains the controlBlock is managed separately.
         if (controlBlock.tag() == magic_enum::enum_integer(MemorySegmentType::Wrapped))
         {
             delete controlBlock.get();
@@ -103,7 +103,7 @@ BufferControlBlock::BufferControlBlock(
     MemorySegment* owner, BufferRecycler* recycler, std::function<void(MemorySegment*, BufferRecycler*)>&& recycleCallback)
     : owner(owner), owningBufferRecycler(recycler), recycleCallback(std::move(recycleCallback))
 {
-    // nop
+    /// nop
 }
 
 BufferControlBlock::BufferControlBlock(const BufferControlBlock& that)
@@ -180,7 +180,7 @@ bool BufferControlBlock::prepare()
 {
     int32_t expected = 0;
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    // store the current thread that owns the buffer and track which function obtained the buffer
+    /// store the current thread that owns the buffer and track which function obtained the buffer
     std::unique_lock lock(owningThreadsMutex);
     ThreadOwnershipInfo info;
     fillThreadOwnershipInfo(info.threadName, info.callstack);
@@ -197,7 +197,7 @@ bool BufferControlBlock::prepare()
 BufferControlBlock* BufferControlBlock::retain()
 {
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-    // store the current thread that owns the buffer (shared) and track which function increased the coutner of the buffer
+    /// store the current thread that owns the buffer (shared) and track which function increased the coutner of the buffer
     std::unique_lock lock(owningThreadsMutex);
     ThreadOwnershipInfo info;
     fillThreadOwnershipInfo(info.threadName, info.callstack);
@@ -267,18 +267,18 @@ bool BufferControlBlock::release()
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack)
     : threadName(threadName), callstack(callstack)
 {
-    // nop
+    /// nop
 }
 
 BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT-SAMPLED"), callstack("NOT-SAMPLED")
 {
-    // nop
+    /// nop
 }
 #endif
 
-// -----------------------------------------------------------------------------
-// ------------------ Utility functions for TupleBuffer ------------------------
-// -----------------------------------------------------------------------------
+/// -----------------------------------------------------------------------------
+/// ------------------ Utility functions for TupleBuffer ------------------------
+/// -----------------------------------------------------------------------------
 
 uint64_t BufferControlBlock::getNumberOfTuples() const noexcept
 {
@@ -367,9 +367,9 @@ void zmqBufferRecyclingCallback(void*, void* hint)
     controlBlock->release();
 }
 
-// -----------------------------------------------------------------------------
-// ------------------ VarLen fields support for TupleBuffer --------------------
-// -----------------------------------------------------------------------------
+/// -----------------------------------------------------------------------------
+/// ------------------ VarLen fields support for TupleBuffer --------------------
+/// -----------------------------------------------------------------------------
 
 uint32_t BufferControlBlock::storeChildBuffer(BufferControlBlock* control)
 {
@@ -389,5 +389,5 @@ bool BufferControlBlock::loadChildBuffer(uint16_t index, BufferControlBlock*& co
 
     return true;
 }
-} // namespace detail
-} // namespace NES::Runtime
+} /// namespace detail
+} /// namespace NES::Runtime

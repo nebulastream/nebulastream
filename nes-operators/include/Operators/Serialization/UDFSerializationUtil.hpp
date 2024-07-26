@@ -44,6 +44,6 @@ public:
     static Catalogs::UDF::JavaUDFDescriptorPtr deserializeJavaUDFDescriptor(const JavaUdfDescriptorMessage& javaUDFDescriptorMessage);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_

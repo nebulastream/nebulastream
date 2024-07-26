@@ -81,15 +81,15 @@ bool ListValue<T>::equals(const ListValue<T>* other) const
     {
         return false;
     }
-    // compare of both underling arrays.
+    /// compare of both underling arrays.
     return std::equal(c_data(), c_data() + length(), other->c_data());
 }
 
 template <typename T>
 ListValue<T>::~ListValue()
 {
-    // A list value always is backed by the data region of a tuple buffer.
-    // In the following, we recycle the tuple buffer and return it to the buffer pool.
+    /// A list value always is backed by the data region of a tuple buffer.
+    /// In the following, we recycle the tuple buffer and return it to the buffer pool.
     Runtime::recycleTupleBuffer(this);
 }
 
@@ -98,14 +98,14 @@ ListValue<T>* ListValue<T>::concat(const ListValue<T>* other) const
 {
     auto leftListSize = length();
     auto rightListSize = other->length();
-    // create the result list, which is the current list length + the other list length
+    /// create the result list, which is the current list length + the other list length
     auto resultList = ListValue<T>::create(leftListSize + rightListSize);
 
-    // copy this list into result
+    /// copy this list into result
     auto resultDataPtr = resultList->data();
-    // copy left list to result
+    /// copy left list to result
     std::copy(c_data(), c_data() + leftListSize, resultList->data());
-    // copy right list to result
+    /// copy right list to result
     std::copy(other->c_data(), other->c_data() + rightListSize, resultList->data() + leftListSize);
     return resultList;
 }
@@ -113,11 +113,11 @@ ListValue<T>* ListValue<T>::concat(const ListValue<T>* other) const
 template <class T>
 ListValue<T>* ListValue<T>::append(T element) const
 {
-    // create result list
+    /// create result list
     auto resultList = ListValue<T>::create(length() + 1);
-    // copy content
+    /// copy content
     std::copy(c_data(), c_data() + length(), resultList->data());
-    // append element
+    /// append element
     resultList->data()[length()] = element;
     return resultList;
 }
@@ -125,12 +125,12 @@ ListValue<T>* ListValue<T>::append(T element) const
 template <class T>
 ListValue<T>* ListValue<T>::prepend(T element) const
 {
-    // create result list
+    /// create result list
     auto resultList = ListValue<T>::create(length() + 1);
     auto resultDataPtr = resultList->data();
-    // copy content
+    /// copy content
     std::copy(c_data(), c_data() + length(), resultDataPtr + 1);
-    // prepend
+    /// prepend
     resultDataPtr[0] = element;
     return resultList;
 }
@@ -165,7 +165,7 @@ int32_t ListValue<T>::listPosition(T element) const
 template <class T>
 ListValue<T>* ListValue<T>::sort() const
 {
-    // create copy of list
+    /// create copy of list
     auto resultList = ListValue<T>::create(length());
     auto resultDataPtr = resultList->data();
     std::copy(c_data(), c_data() + length(), resultDataPtr);
@@ -176,13 +176,13 @@ ListValue<T>* ListValue<T>::sort() const
 template <class T>
 ListValue<T>* ListValue<T>::revers() const
 {
-    // create reverse copy of list
+    /// create reverse copy of list
     auto resultList = ListValue<T>::create(length());
     std::reverse_copy(c_data(), c_data() + length(), resultList->data());
     return resultList;
 }
 
-// Instantiate ListValue types
+/// Instantiate ListValue types
 template class ListValue<int8_t>;
 template class ListValue<int16_t>;
 template class ListValue<int32_t>;
@@ -194,4 +194,4 @@ template class ListValue<uint64_t>;
 template class ListValue<float>;
 template class ListValue<double>;
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

@@ -28,7 +28,7 @@ namespace Monitoring
 {
 class AbstractMetricStore;
 using MetricStorePtr = std::shared_ptr<AbstractMetricStore>;
-} // namespace Monitoring
+} /// namespace Monitoring
 
 class Metric;
 using MetricPtr = std::shared_ptr<Metric>;
@@ -96,6 +96,6 @@ private:
 };
 using MonitoringSinkPtr = std::shared_ptr<MonitoringSink>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MONITORINGSINK_HPP_

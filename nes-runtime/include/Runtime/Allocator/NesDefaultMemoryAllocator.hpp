@@ -35,5 +35,5 @@ private:
     bool do_is_equal(const memory_resource& other) const noexcept override { return this == &other; }
 };
 using NesDefaultMemoryAllocatorPtr = std::shared_ptr<NesDefaultMemoryAllocator>;
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NESDEFAULTMEMORYALLOCATOR_HPP_

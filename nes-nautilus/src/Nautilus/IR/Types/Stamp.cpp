@@ -55,4 +55,4 @@ bool Stamp::isVoid()
     return isa<VoidStamp>(*this);
 }
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types

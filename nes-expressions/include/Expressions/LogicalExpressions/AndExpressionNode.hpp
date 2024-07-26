@@ -49,6 +49,6 @@ public:
 private:
     explicit AndExpressionNode(AndExpressionNode* other);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_ANDEXPRESSIONNODE_HPP_

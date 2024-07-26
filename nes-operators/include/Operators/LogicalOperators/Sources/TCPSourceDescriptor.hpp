@@ -60,5 +60,5 @@ private:
 
 using TCPSourceDescriptorPtr = std::shared_ptr<TCPSourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_

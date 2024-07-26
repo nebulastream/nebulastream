@@ -31,12 +31,12 @@ double calculateRadians(double x)
 }
 Value<> RadiansExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the sub expression and retrieve the value.
+    /// Evaluate the sub expression and retrieve the value.
     Value subValue = SubExpression->execute(record);
-    //check the type and then call the function.
+    ///check the type and then call the function.
     if (subValue->isType<Int8>())
     {
-        // call the calculateMod function with the correct type
+        /// call the calculateMod function with the correct type
         return FunctionCall<>("calculateRadians", calculateRadians, subValue.as<Int8>());
     }
     else if (subValue->isType<Int16>())
@@ -61,10 +61,10 @@ Value<> RadiansExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<RadiansExpression>> radiansFunction("radians");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

@@ -42,6 +42,6 @@ private:
     Code code;
     RegisterFile registerFile;
 };
-} // namespace NES::Nautilus::Backends::BC
+} /// namespace NES::Nautilus::Backends::BC
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCINTERPRETER_HPP_

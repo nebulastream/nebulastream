@@ -105,4 +105,4 @@ OperatorId NetworkSourceDescriptor::getUniqueId() const
 {
     return uniqueNetworkSourceId;
 }
-} // namespace NES::Network
+} /// namespace NES::Network

@@ -33,4 +33,4 @@ uint8_t* LocalHashTable::insert(uint64_t key) const
     return buckets[getBucketPos(hashedKey)]->appendLocal(hashedKey);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -22,8 +22,8 @@ PiExpression::PiExpression(const NES::Runtime::Execution::Expressions::Expressio
 
 Value<> PiExpression::execute(NES::Nautilus::Record& record) const
 {
-    //Evaluate the sub expression and retrieve the value.
+    ///Evaluate the sub expression and retrieve the value.
     Value subValue = SubExpression->execute(record);
     return M_PI;
 }
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

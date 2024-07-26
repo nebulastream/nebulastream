@@ -51,6 +51,6 @@ private:
     uint64_t numCols;
     uint8_t* data;
 };
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_

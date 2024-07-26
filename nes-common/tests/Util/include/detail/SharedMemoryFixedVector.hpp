@@ -117,7 +117,7 @@ public:
         {
             if (0 == shm_unlink(name.c_str()))
             {
-                // no process has the shared memory segment open
+                /// no process has the shared memory segment open
                 std::filesystem::remove_all(std::filesystem::temp_directory_path() / "nes.tests.begin");
             }
         }
@@ -141,5 +141,5 @@ private:
     Metadata* metadata;
     bool created;
 };
-} // namespace NES::Testing::detail
+} /// namespace NES::Testing::detail
 #endif /// NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_SHAREDMEMORYFIXEDVECTOR_HPP_

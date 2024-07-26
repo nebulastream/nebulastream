@@ -55,7 +55,7 @@ public:
 TEST_F(SearchingRegexTest, evaluateSearchingRegex1)
 {
     auto expression = BinaryExpressionWrapper<SearchingRegex>();
-    // Positive Test full match
+    /// Positive Test full match
     {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("This is a Test");
@@ -66,7 +66,7 @@ TEST_F(SearchingRegexTest, evaluateSearchingRegex1)
 TEST_F(SearchingRegexTest, evaluateSearchingRegex2)
 {
     auto expression = BinaryExpressionWrapper<SearchingRegex>();
-    // Negative Test regex overflow
+    /// Negative Test regex overflow
     {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("This is a Test!");
@@ -77,7 +77,7 @@ TEST_F(SearchingRegexTest, evaluateSearchingRegex2)
 TEST_F(SearchingRegexTest, evaluateSearchingRegex3)
 {
     auto expression = BinaryExpressionWrapper<SearchingRegex>();
-    // Positive Test Subsequence
+    /// Positive Test Subsequence
     {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("Test");
@@ -88,7 +88,7 @@ TEST_F(SearchingRegexTest, evaluateSearchingRegex3)
 TEST_F(SearchingRegexTest, evaluateSearchingRegex4)
 {
     auto expression = BinaryExpressionWrapper<SearchingRegex>();
-    //Negative Test Subsequence
+    ///Negative Test Subsequence
     {
         auto l = Value<Text>("This is a Test");
         auto r = Value<Text>("bbbb");
@@ -97,4 +97,4 @@ TEST_F(SearchingRegexTest, evaluateSearchingRegex4)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

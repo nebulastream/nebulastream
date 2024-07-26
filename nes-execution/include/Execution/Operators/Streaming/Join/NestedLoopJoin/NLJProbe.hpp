@@ -51,5 +51,5 @@ protected:
     const SchemaPtr leftSchema;
     const SchemaPtr rightSchema;
 };
-}; // namespace NES::Runtime::Execution::Operators
+}; /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJPROBE_HPP_

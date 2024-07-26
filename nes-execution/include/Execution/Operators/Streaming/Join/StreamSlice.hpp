@@ -112,6 +112,6 @@ protected:
     uint64_t sliceStart;
     uint64_t sliceEnd;
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_

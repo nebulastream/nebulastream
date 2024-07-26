@@ -308,4 +308,4 @@ void MQTTSourceType::reset()
     setInputFormat(inputFormat->getDefaultValue());
 }
 
-} // namespace NES
+} /// namespace NES

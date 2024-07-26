@@ -68,4 +68,4 @@ MergingHashTableVarSized::MergingHashTableVarSized(size_t numBuckets)
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

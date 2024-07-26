@@ -54,6 +54,6 @@ private:
     std::vector<Runtime::Execution::OperatorHandlerPtr> operatorHandlers;
 };
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_NAUTILUSPIPELINEOPERATOR_HPP_

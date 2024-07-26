@@ -115,6 +115,6 @@ private:
     std::atomic<bool> isDestroyed;
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_

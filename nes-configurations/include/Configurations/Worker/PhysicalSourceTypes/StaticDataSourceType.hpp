@@ -83,10 +83,10 @@ public:
         bool lateStart);
 
     std::string pathTableFile;
-    uint64_t numBuffersToProcess; // todo not used right now [#2493]
+    uint64_t numBuffersToProcess; /// todo not used right now [#2493]
     SourceMode sourceMode;
-    uint64_t taskQueueId; // todo not used right now [#2493]
+    uint64_t taskQueueId; /// todo not used right now [#2493]
     const bool lateStart;
 };
-} // namespace NES::Experimental
+} /// namespace NES::Experimental
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_STATICDATASOURCETYPE_HPP_

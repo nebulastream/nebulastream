@@ -68,6 +68,6 @@ public:
 private:
     QueryId queryId;
 };
-} // namespace NES::Exceptions
+} /// namespace NES::Exceptions
 
 #endif /// NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_

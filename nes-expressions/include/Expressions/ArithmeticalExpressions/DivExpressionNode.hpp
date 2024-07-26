@@ -43,6 +43,6 @@ private:
     explicit DivExpressionNode(DivExpressionNode* other);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSIONNODE_HPP_

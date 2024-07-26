@@ -110,16 +110,16 @@ public:
         auto l_returnflagField = std::make_shared<ReadFieldExpression>("l_returnflag");
         auto l_linestatusFiled = std::make_shared<ReadFieldExpression>("l_linestatus");
 
-        //  sum(l_quantity) as sum_qty,
+        ///  sum(l_quantity) as sum_qty,
         auto l_quantityField = std::make_shared<ReadFieldExpression>("l_quantity");
         auto sumAggFunction1 = std::make_shared<Aggregation::SumAggregationFunction>(integerType, integerType, l_quantityField, "sum_qty");
 
-        // sum(l_extendedprice) as sum_base_price,
+        /// sum(l_extendedprice) as sum_base_price,
         auto l_extendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
         auto sumAggFunction2
             = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, l_extendedpriceField, "sum_base_price");
 
-        // disc_price = l_extendedprice * (1 - l_discount)
+        /// disc_price = l_extendedprice * (1 - l_discount)
         auto l_discountField = std::make_shared<ReadFieldExpression>("l_discount");
         auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
         auto subExpression = std::make_shared<SubExpression>(oneConst, l_discountField);
@@ -128,17 +128,17 @@ public:
         auto map = std::make_shared<Map>(disc_priceExpression);
         selection->setChild(map);
 
-        //  sum(disc_price)
+        ///  sum(disc_price)
         auto disc_price = std::make_shared<ReadFieldExpression>("disc_price");
         auto sumAggFunction3 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, disc_price, "sum_disc_price");
 
-        //  sum(disc_price * (one + l_tax[i]))
+        ///  sum(disc_price * (one + l_tax[i]))
         auto l_taxField = std::make_shared<ReadFieldExpression>("l_tax");
         auto addExpression = std::make_shared<AddExpression>(oneConst, l_taxField);
         auto mulExpression2 = std::make_shared<AddExpression>(disc_price, addExpression);
         auto sumAggFunction4 = std::make_shared<Aggregation::SumAggregationFunction>(floatType, floatType, mulExpression2, "sum_charge");
 
-        //   count(*)
+        ///   count(*)
         auto countAggFunction5 = std::make_shared<Aggregation::CountAggregationFunction>(
             uintegerType, uintegerType, Expressions::ExpressionPtr(), "count_order");
 
@@ -153,7 +153,7 @@ public:
 
         map->setChild(aggregation);
 
-        // create aggregation pipeline
+        /// create aggregation pipeline
         auto aggregationPipeline = std::make_shared<PhysicalOperatorPipeline>();
         aggregationPipeline->setRootOperator(scan);
         std::vector<OperatorHandlerPtr> aggregationHandler = {std::make_shared<Operators::BatchKeyedAggregationHandler>()};
@@ -163,5 +163,5 @@ public:
     }
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY1_HPP_

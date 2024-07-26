@@ -41,6 +41,6 @@ private:
     std::mutex clangFormatMutex;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_UTIL_CLANGFORMAT_HPP_

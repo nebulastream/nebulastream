@@ -80,4 +80,4 @@ std::vector<ExpressionNodePtr> FunctionExpression::getArguments() const
     return arguments;
 }
 
-} // namespace NES
+} /// namespace NES

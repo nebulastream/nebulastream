@@ -32,4 +32,4 @@ bool FlounderExecutable::hasInvocableFunctionPtr()
 }
 
 FlounderExecutable::~FlounderExecutable() noexcept = default;
-} // namespace NES::Nautilus::Backends::Flounder
+} /// namespace NES::Nautilus::Backends::Flounder

@@ -36,4 +36,4 @@ public:
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<SinFunction> sinFunction("sin");
 
-} // namespace NES
+} /// namespace NES

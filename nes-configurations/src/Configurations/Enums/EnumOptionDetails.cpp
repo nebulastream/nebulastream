@@ -47,4 +47,4 @@ template class EnumOption<NES::Optimizer::MemoryLayoutPolicy>;
 template class EnumOption<NES::Optimizer::PlacementAmendmentMode>;
 template class EnumOption<NES::Optimizer::DistributedJoinOptimizationMode>;
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations

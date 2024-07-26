@@ -92,4 +92,4 @@ TEST_F(TagCreationTest, tagCreationLoop)
     ASSERT_EQ(tagMap.size(), 1);
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

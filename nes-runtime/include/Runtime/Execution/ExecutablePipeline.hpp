@@ -36,7 +36,7 @@ namespace NES::Runtime::Execution
  */
 class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventListener
 {
-    // virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
+    /// virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
     using inherited0 = Reconfigurable;
     using inherited1 = Runtime::RuntimeEventListener;
 
@@ -205,6 +205,6 @@ private:
     std::vector<SuccessorExecutablePipeline> successorPipelines;
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_

@@ -59,4 +59,4 @@ void SourceDescriptor::setPhysicalSourceName(std::string_view physicalSourceName
     this->physicalSourceName = physicalSourceName;
 }
 
-} // namespace NES
+} /// namespace NES

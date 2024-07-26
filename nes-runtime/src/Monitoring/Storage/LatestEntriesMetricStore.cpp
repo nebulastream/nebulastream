@@ -41,7 +41,7 @@ void LatestEntriesMetricStore::addMetrics(WorkerId nodeId, MetricPtr metric)
     {
         NES_TRACE("LatestEntriesMetricStore: Found stored metrics for node with ID {}", nodeId);
         nodeMetrics = storedMetrics[nodeId];
-        // check if the metric type exists
+        /// check if the metric type exists
         if (nodeMetrics->contains(metricType))
         {
             NES_TRACE("LatestEntriesMetricStore: Removing metrics {} of {}", nodeId, std::string(magic_enum::enum_name(metricType)));
@@ -93,4 +93,4 @@ StoredNodeMetricsPtr LatestEntriesMetricStore::getAllMetrics(WorkerId nodeId)
     return storedMetrics[nodeId];
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

@@ -58,4 +58,4 @@ private:
 
 using MemoryCollectorPtr = std::shared_ptr<MemoryCollector>;
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

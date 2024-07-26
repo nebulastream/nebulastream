@@ -43,8 +43,8 @@ bool regexMatch(TextValue* txt, TextValue* regex, const Boolean& caseSensitive)
     NES_DEBUG("Received the following source string {}", target);
     std::string strPattern = std::string(regex->str(), regex->length());
     NES_DEBUG("Received the following source string {}", strPattern);
-    // LIKE and GLOB adoption requires syntax conversion functions
-    // would make regex case in sensitive for LIKE
+    /// LIKE and GLOB adoption requires syntax conversion functions
+    /// would make regex case in sensitive for LIKE
     if (caseSensitive)
     {
         std::regex regexPattern(strPattern, std::regex::icase);
@@ -82,4 +82,4 @@ Value<> MatchingRegex::execute(NES::Nautilus::Record& record) const
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

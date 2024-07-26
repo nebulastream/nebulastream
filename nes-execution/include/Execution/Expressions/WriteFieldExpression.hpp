@@ -39,6 +39,6 @@ private:
     const Nautilus::Record::RecordFieldIdentifier field;
     const ExpressionPtr subExpression;
 };
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_

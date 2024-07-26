@@ -99,6 +99,6 @@ private:
     static constexpr std::chrono::milliseconds DEFAULT_WAIT_TIME = std::chrono::milliseconds(1000);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MONITORINGSOURCETYPE_HPP_

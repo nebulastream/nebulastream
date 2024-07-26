@@ -55,6 +55,6 @@ private:
 
 using MonitoringSourceDescriptorPtr = std::shared_ptr<MonitoringSourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_MONITORINGSOURCEDESCRIPTOR_HPP_

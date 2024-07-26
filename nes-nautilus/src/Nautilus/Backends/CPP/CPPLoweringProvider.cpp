@@ -133,11 +133,11 @@ std::stringstream CPPLoweringProvider::LoweringContext::process()
         pipelineCode << arguments[i] << " ";
     }
     pipelineCode << "){\n";
-    pipelineCode << "//variable declarations\n";
+    pipelineCode << "///variable declarations\n";
     pipelineCode << blockArguments.str();
-    pipelineCode << "//function definitions\n";
+    pipelineCode << "///function definitions\n";
     pipelineCode << functions.str();
-    pipelineCode << "//basic blocks\n";
+    pipelineCode << "///basic blocks\n";
     for (auto& block : blocks)
     {
         pipelineCode << block.str();
@@ -150,7 +150,7 @@ std::stringstream CPPLoweringProvider::LoweringContext::process()
 
 std::string CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<IR::BasicBlock>& block, RegisterFrame& frame)
 {
-    // assume that all argument registers are correctly set
+    /// assume that all argument registers are correctly set
     auto entry = activeBlocks.find(block->getIdentifier());
     if (entry == activeBlocks.end())
     {
@@ -163,7 +163,7 @@ std::string CPPLoweringProvider::LoweringContext::process(const std::shared_ptr<
                 frame.setValue(arg->getIdentifier(), var);
             }
         }
-        // create bytecode block;
+        /// create bytecode block;
         auto blockName = "Block_" + block->getIdentifier();
         short blockIndex = blocks.size();
         auto& currentBlock = blocks.emplace_back();
@@ -190,7 +190,7 @@ void CPPLoweringProvider::LoweringContext::process(
     blockArguments << getType(cmpOp->getStamp()) << " " << resultVar << ";\n";
     frame.setValue(cmpOp->getIdentifier(), resultVar);
 
-    // we have to handle the special case that we want to do a null check. Currently, Nautilus IR just contains an x == 0, thus we check if x is a ptr type.
+    /// we have to handle the special case that we want to do a null check. Currently, Nautilus IR just contains an x == 0, thus we check if x is a ptr type.
     if (cmpOp->isEquals() && cmpOp->getLeftInput()->getStamp()->isAddress() && cmpOp->getRightInput()->getStamp()->isInteger())
     {
         blocks[blockIndex] << resultVar << " = " << leftInput << " == nullptr;\n";
@@ -250,7 +250,7 @@ void CPPLoweringProvider::LoweringContext::process(IR::Operations::BasicBlockInv
 {
     auto blockInputArguments = bi.getArguments();
     auto blockTargetArguments = bi.getBlock()->getArguments();
-    blocks[blockIndex] << "// prepare block arguments\n";
+    blocks[blockIndex] << "/// prepare block arguments\n";
     for (uint64_t i = 0; i < blockInputArguments.size(); i++)
     {
         auto blockArgument = blockInputArguments[i]->getIdentifier();
@@ -475,4 +475,4 @@ std::string CPPLoweringProvider::LoweringContext::getVariable(const std::string&
     return "var_" + id;
 }
 
-} // namespace NES::Nautilus::Backends::CPP
+} /// namespace NES::Nautilus::Backends::CPP

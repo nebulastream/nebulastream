@@ -64,7 +64,7 @@ T* allocHugePages(size_t size)
     return reinterpret_cast<T*>(tmp);
 }
 
-} // namespace detail
+} /// namespace detail
 
 class FixedPagesAllocator
 {
@@ -99,6 +99,6 @@ private:
     uint64_t allocCnt = 0;
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_FIXEDPAGESALLOCATOR_HPP_

@@ -68,7 +68,7 @@ public:
     unsigned long globalMemory;
 };
 
-// Define helper methods to convert OpenCLDeviceInfo to JSON and back.
+/// Define helper methods to convert OpenCLDeviceInfo to JSON and back.
 NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     OpenCLDeviceInfo,
     platformVendor,
@@ -81,6 +81,6 @@ NLOHMANN_DEFINE_TYPE_NON_INTRUSIVE(
     deviceExtensions,
     availableProcessors);
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_COMMON_INCLUDE_RUNTIME_OPENCLDEVICEINFO_HPP_

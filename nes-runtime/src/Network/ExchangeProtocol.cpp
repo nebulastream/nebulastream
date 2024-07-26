@@ -22,8 +22,8 @@
 namespace NES::Network
 {
 
-// Important invariant: never leak the protocolListener pointer
-// there is a hack that disables the reference counting
+/// Important invariant: never leak the protocolListener pointer
+/// there is a hack that disables the reference counting
 
 ExchangeProtocol::ExchangeProtocol(
     std::shared_ptr<PartitionManager> partitionManager, std::shared_ptr<ExchangeProtocolListener> protocolListener)
@@ -50,8 +50,8 @@ std::variant<Messages::ServerReadyMessage, Messages::ErrorMessage>
 ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg)
 {
     using namespace Messages;
-    // check if the partition is registered via the partition manager or wait until this is not done
-    // if all good, send message back
+    /// check if the partition is registered via the partition manager or wait until this is not done
+    /// if all good, send message back
     bool isDataChannel = msg.getMode() == Messages::ChannelType::DataChannel;
     NES_INFO(
         "ExchangeProtocol: ClientAnnouncement received for {} {}", msg.getChannelId().toString(), (isDataChannel ? "Data" : "EventOnly"));
@@ -65,16 +65,16 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg)
         }
     }
 
-    // check if identity is registered
+    /// check if identity is registered
     if (isDataChannel)
     {
-        // we got a connection from a data channel: it means there is/will be a partition consumer running locally
+        /// we got a connection from a data channel: it means there is/will be a partition consumer running locally
         if (auto status = partitionManager->getConsumerRegistrationStatus(nesPartition); status == PartitionRegistrationStatus::Registered)
         {
-            // increment the counter
+            /// increment the counter
             partitionManager->pinSubpartitionConsumer(nesPartition);
             NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for DataChannel {} REGISTERED", msg.getChannelId().toString());
-            // send response back to the client based on the identity
+            /// send response back to the client based on the identity
             return Messages::ServerReadyMessage(msg.getChannelId());
         }
         else if (status == PartitionRegistrationStatus::Deleted)
@@ -86,12 +86,12 @@ ExchangeProtocol::onClientAnnouncement(Messages::ClientAnnounceMessage msg)
     }
     else
     {
-        // we got a connection from an event-only channel: it means there is/will be an event consumer attached to a partition producer
+        /// we got a connection from an event-only channel: it means there is/will be an event consumer attached to a partition producer
         if (auto status = partitionManager->getProducerRegistrationStatus(nesPartition); status == PartitionRegistrationStatus::Registered)
         {
             NES_DEBUG("ExchangeProtocol: ClientAnnouncement received for EventChannel {} REGISTERED", msg.getChannelId().toString());
             partitionManager->pinSubpartitionProducer(nesPartition);
-            // send response back to the client based on the identity
+            /// send response back to the client based on the identity
             return Messages::ServerReadyMessage(msg.getChannelId());
         }
         else if (status == PartitionRegistrationStatus::Deleted)
@@ -179,11 +179,11 @@ void ExchangeProtocol::onEndOfStream(Messages::EndOfStreamMessage endOfStreamMes
             }
             NES_DEBUG("Waited for all buffers for the last EOS!");
 
-            // Cleaning up and resetting for this partition, so that we can reuse the partition later on
+            /// Cleaning up and resetting for this partition, so that we can reuse the partition later on
             (*maxSeqNumberPerNesPartition.wlock())[eosNesPartition] = Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>();
         }
 
-        //we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
+        ///we expect the total connection count to be the number of threads plus one registration of the source itself (happens in NetworkSource::bind())
         auto expectedTotalConnectionsInPartitionManager = endOfStreamMessage.getNumberOfSendingThreads();
         if (!lastEOS)
         {
@@ -237,4 +237,4 @@ std::shared_ptr<PartitionManager> ExchangeProtocol::getPartitionManager() const
     return partitionManager;
 }
 
-} // namespace NES::Network
+} /// namespace NES::Network

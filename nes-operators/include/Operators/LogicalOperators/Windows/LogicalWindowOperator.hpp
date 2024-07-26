@@ -39,5 +39,5 @@ public:
     std::vector<std::string> getGroupByKeyNames() const;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWOPERATOR_HPP_

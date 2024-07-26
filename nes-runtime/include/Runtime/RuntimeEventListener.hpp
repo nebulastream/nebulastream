@@ -40,6 +40,6 @@ protected:
     virtual void onEvent(Runtime::BaseEvent& event) = 0;
 };
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_

@@ -118,6 +118,6 @@ public:
     int8_t* value;
 };
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREF_HPP_

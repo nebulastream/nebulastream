@@ -39,4 +39,4 @@ std::string PhysicalWindowOperator::toString() const
     return PhysicalUnaryOperator::toString();
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

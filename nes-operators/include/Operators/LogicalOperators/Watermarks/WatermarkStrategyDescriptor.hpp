@@ -22,7 +22,7 @@ namespace NES
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Windowing
 {
@@ -90,6 +90,6 @@ public:
 
     virtual bool inferStamp(SchemaPtr schema) = 0;
 };
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKSTRATEGYDESCRIPTOR_HPP_

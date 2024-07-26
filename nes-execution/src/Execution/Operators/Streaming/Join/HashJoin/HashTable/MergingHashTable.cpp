@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Operators
 {
 void MergingHashTable::insertBucket(size_t bucketPos, const FixedPagesLinkedList* pagesLinkedList)
 {
-    //Note that this function creates a new FixedPage (that only moves ptr) instead of reusing the existing one
+    ///Note that this function creates a new FixedPage (that only moves ptr) instead of reusing the existing one
     auto& numItems = bucketNumItems[bucketPos];
     auto& numPages = bucketNumPages[bucketPos];
     auto lockedBucketHeads = bucketHeads[bucketPos].wlock();
@@ -72,12 +72,12 @@ MergingHashTable::MergingHashTable(size_t numBuckets) : bucketHeads(numBuckets),
 std::string MergingHashTable::getContentAsString(SchemaPtr schema) const
 {
     std::stringstream ss;
-    //for every bucket
+    ///for every bucket
     size_t bucketCnt = 0;
     for (auto& bucket : bucketHeads)
     {
         ss << "bucket no=" << bucketCnt++;
-        //for every page
+        ///for every page
         auto pageCnt = 0_u64;
         auto lockedBucketHeads = bucket.rlock();
         for (auto& page : *lockedBucketHeads)
@@ -88,4 +88,4 @@ std::string MergingHashTable::getContentAsString(SchemaPtr schema) const
     }
     return ss.str();
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -26,4 +26,4 @@ uint64_t BufferSequenceNumber::getOriginId() const
     return originId;
 }
 
-} // namespace NES
+} /// namespace NES

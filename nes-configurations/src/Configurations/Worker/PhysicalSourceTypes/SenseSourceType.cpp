@@ -108,4 +108,4 @@ void SenseSourceType::reset()
     setUdfs(udfs->getDefaultValue());
 }
 
-} // namespace NES
+} /// namespace NES

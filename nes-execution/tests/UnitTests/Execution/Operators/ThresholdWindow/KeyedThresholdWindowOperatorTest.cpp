@@ -35,7 +35,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-// TODO #3468: parameterize the aggregation function instead of repeating the similar test
+/// TODO #3468: parameterize the aggregation function instead of repeating the similar test
 class KeyedThresholdWindowOperatorTest : public Testing::BaseUnitTest
 {
 public:
@@ -63,7 +63,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
 
     auto keyFieldName = "key";
@@ -95,7 +95,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
 
     auto recordFifty = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -116,7 +116,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest)
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
 
     auto keyFieldName = "key";
@@ -148,7 +148,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest)
 
     auto recordFifty = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -169,7 +169,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
 
     auto keyFieldName = "key";
@@ -203,10 +203,10 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
 
     auto recordFiftyKey0 = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinetyKey0 = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); /// closes the window
     auto recordFiftyKey1 = Record({{"f1", +50_s64}, {"k1", +1_s64}, {"f2", +7_s64}});
     auto recordNinetyKey1 = Record({{"f1", +90_s64}, {"k1", +1_s64}, {"f2", +5_s64}});
-    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}}); /// closes the window
 
     thresholdWindowOperator->execute(ctx, recordFiftyKey0);
     thresholdWindowOperator->execute(ctx, recordNinetyKey0);
@@ -235,7 +235,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readKey = std::make_shared<Expressions::ReadFieldExpression>("k1");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
 
     auto keyFieldName = "key";
@@ -255,8 +255,8 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     resultFieldVector.emplace_back(sumAggregationResultFieldName);
     resultFieldVector.emplace_back(maxAggregationResultFieldName);
 
-    aggFieldAccessExpressionsVector.push_back(readF2); // sum on F2
-    aggFieldAccessExpressionsVector.push_back(readF2); // max on F2
+    aggFieldAccessExpressionsVector.push_back(readF2); /// sum on F2
+    aggFieldAccessExpressionsVector.push_back(readF2); /// max on F2
 
     auto thresholdWindowOperator = std::make_shared<KeyedThresholdWindow>(
         greaterThanExpression, 0, aggFieldAccessExpressionsVector, readKey, keyFieldName, resultFieldVector, aggVector, 0);
@@ -279,10 +279,10 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
 
     auto recordFiftyKey0 = Record({{"f1", +50_s64}, {"k1", +0_s64}, {"f2", +2_s64}});
     auto recordNinetyKey0 = Record({{"f1", +90_s64}, {"k1", +0_s64}, {"f2", +3_s64}});
-    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwentyKey0 = Record({{"f1", +20_s64}, {"k1", +0_s64}, {"f2", +4_s64}}); /// closes the window
     auto recordFiftyKey1 = Record({{"f1", +50_s64}, {"k1", +1_s64}, {"f2", +7_s64}});
     auto recordNinetyKey1 = Record({{"f1", +90_s64}, {"k1", +1_s64}, {"f2", +5_s64}});
-    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwentyKey1 = Record({{"f1", +20_s64}, {"k1", +1_s64}, {"f2", +4_s64}}); /// closes the window
 
     thresholdWindowOperator->execute(ctx, recordFiftyKey0);
     thresholdWindowOperator->execute(ctx, recordNinetyKey0);
@@ -304,4 +304,4 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     thresholdWindowOperator->terminate(ctx);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

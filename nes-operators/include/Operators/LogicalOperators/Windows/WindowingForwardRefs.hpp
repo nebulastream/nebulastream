@@ -35,7 +35,7 @@ using FieldAccessExpressionNodePtr = std::shared_ptr<FieldAccessExpressionNode>;
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Windowing
 {
@@ -121,6 +121,6 @@ using EventTimeWatermarkStrategyPtr = std::shared_ptr<EventTimeWatermarkStrategy
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWINGFORWARDREFS_HPP_

@@ -87,6 +87,6 @@ private:
     std::ostream& outputStream;
 };
 using PrintSinkPtr = std::shared_ptr<PrintSink>;
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_

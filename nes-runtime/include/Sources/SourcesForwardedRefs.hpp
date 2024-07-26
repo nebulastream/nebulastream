@@ -38,9 +38,9 @@ class TupleBuffer;
 namespace detail
 {
 class MemorySegment;
-} // namespace detail
-} // namespace Runtime
+} /// namespace detail
+} /// namespace Runtime
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_SOURCESFORWARDEDREFS_HPP_

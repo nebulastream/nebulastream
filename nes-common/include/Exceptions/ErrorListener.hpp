@@ -41,6 +41,6 @@ public:
     virtual void onFatalException(std::shared_ptr<std::exception>, std::string) = 0;
 };
 
-} // namespace NES::Exceptions
+} /// namespace NES::Exceptions
 
 #endif /// NES_COMMON_INCLUDE_EXCEPTIONS_ERRORLISTENER_HPP_

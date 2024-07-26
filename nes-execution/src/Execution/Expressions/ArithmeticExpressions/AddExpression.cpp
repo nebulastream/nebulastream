@@ -28,4 +28,4 @@ AddExpression::AddExpression(ExpressionPtr leftSubExpression, ExpressionPtr righ
 {
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

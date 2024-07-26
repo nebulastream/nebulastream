@@ -86,7 +86,7 @@ private:
     const Language language;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 namespace std
 {
@@ -100,14 +100,14 @@ struct hash<const NES::Compiler::SourceCode>
         using std::size_t;
         using std::string;
 
-        // Compute individual hash values for first,
-        // second and third and combine them using XOR
-        // and bit shifting:
+        /// Compute individual hash values for first,
+        /// second and third and combine them using XOR
+        /// and bit shifting:
 
         return ((hash<string>()(k.getCode()) ^ (hash<string>()(NES::Compiler::getLanguageAsString(k.getLanguage())) << 1)) >> 1);
     }
 };
 
-} // namespace std
+} /// namespace std
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_SOURCECODE_HPP_

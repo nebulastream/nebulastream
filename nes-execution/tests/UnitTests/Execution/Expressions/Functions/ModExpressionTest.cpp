@@ -39,20 +39,20 @@ public:
 TEST_F(ModExpressionTest, evaluateModExpressionInteger)
 {
     auto expression = BinaryExpressionWrapper<ModExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(17_s8), Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, (float)1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(17_s32), Value<Int32>(4_s32));
         ASSERT_EQ(resultValue, (float)1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(17_s64), Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, (float)1);
@@ -63,25 +63,25 @@ TEST_F(ModExpressionTest, evaluateModExpressionInteger)
 TEST_F(ModExpressionTest, evaluateModExpressionFloat)
 {
     auto expression = BinaryExpressionWrapper<ModExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)4), Value<Float>((float)4));
         ASSERT_EQ(resultValue, (float)0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)17), Value<Float>((float)4));
         ASSERT_EQ(resultValue, (float)1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)17), Value<Double>((double)4));
         ASSERT_EQ(resultValue, (float)1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)4), Value<Double>((double)4));
         ASSERT_EQ(resultValue, (double)0);
@@ -98,4 +98,4 @@ TEST_F(ModExpressionTest, evaluateModExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

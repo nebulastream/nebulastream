@@ -30,7 +30,7 @@ ModExpressionNode::ModExpressionNode(ModExpressionNode* other) : ArithmeticalBin
 ExpressionNodePtr ModExpressionNode::create(const ExpressionNodePtr& left, const ExpressionNodePtr& right)
 {
     auto addNode = std::make_shared<ModExpressionNode>(
-        DataTypeFactory::createFloat()); // TODO: stamp should always be float, but is this the right way?
+        DataTypeFactory::createFloat()); /// TODO: stamp should always be float, but is this the right way?
     addNode->setChildren(left, right);
     return addNode;
 }
@@ -41,15 +41,15 @@ void ModExpressionNode::inferStamp(SchemaPtr schema)
 
     if (stamp->isInteger())
     {
-        // we know that both children must have been Integer, too
+        /// we know that both children must have been Integer, too
         auto leftAsInt = DataType::as<Integer>(getLeft()->getStamp());
         auto rightAsInt = DataType::as<Integer>(getRight()->getStamp());
 
-        // determine the range of values that the result must be in:
-        // e.g. when calculating MOD(..., -128) the result will always be in range [-127, 127]. And no other INT8 divisor will yield a wider range than -128 (=INT8_MIN).
+        /// determine the range of values that the result must be in:
+        /// e.g. when calculating MOD(..., -128) the result will always be in range [-127, 127]. And no other INT8 divisor will yield a wider range than -128 (=INT8_MIN).
         int64_t range = std::max(std::abs(rightAsInt->lowerBound), std::abs(rightAsInt->upperBound)) - 1;
 
-        // further, we know that the result of MOD(X, ...) can not be larger/smaller than X:
+        /// further, we know that the result of MOD(X, ...) can not be larger/smaller than X:
         int64_t newLowerBound = std::max(-range, leftAsInt->lowerBound);
         int64_t newUpperBound = std::min(range, leftAsInt->upperBound);
 
@@ -57,11 +57,11 @@ void ModExpressionNode::inferStamp(SchemaPtr schema)
     }
     else if (stamp->isFloat())
     {
-        // children can be integer or float
+        /// children can be integer or float
         auto leftStamp = getLeft()->getStamp();
         auto rightStamp = getRight()->getStamp();
 
-        // target values
+        /// target values
         double leftL, leftU, rightL, rightU;
 
         if (leftStamp->isFloat())
@@ -104,7 +104,7 @@ void ModExpressionNode::inferStamp(SchemaPtr schema)
 
         stamp = DataTypeFactory::copyTypeAndTightenBounds(stamp, newLowerBound, newUpperBound);
     }
-    // do nothing if the stamp is of type undefined (from ArithmeticalBinaryExpressionNode::inferSchema(typeInferencePhaseContext, schema);)
+    /// do nothing if the stamp is of type undefined (from ArithmeticalBinaryExpressionNode::inferSchema(typeInferencePhaseContext, schema);)
 }
 
 bool ModExpressionNode::equal(NodePtr const& rhs) const
@@ -129,4 +129,4 @@ ExpressionNodePtr ModExpressionNode::copy()
     return ModExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

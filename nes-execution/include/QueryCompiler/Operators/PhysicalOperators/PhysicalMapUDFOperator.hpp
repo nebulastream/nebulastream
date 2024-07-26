@@ -24,7 +24,7 @@ namespace Catalogs::UDF
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 
-} // namespace Catalogs::UDF
+} /// namespace Catalogs::UDF
 
 namespace QueryCompilation::PhysicalOperators
 {
@@ -100,7 +100,7 @@ public:
 protected:
     const Catalogs::UDF::UDFDescriptorPtr udfDescriptor;
 };
-} // namespace QueryCompilation::PhysicalOperators
-} // namespace NES
+} /// namespace QueryCompilation::PhysicalOperators
+} /// namespace NES
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALMAPUDFOPERATOR_HPP_

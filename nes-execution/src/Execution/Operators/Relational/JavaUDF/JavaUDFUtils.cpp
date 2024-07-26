@@ -243,9 +243,9 @@ void setField(void* state, void* classPtr, void* objectPtr, int fieldIndex, T va
     jfieldID id = jni::getEnv()->GetFieldID(pojoClass, fieldName.c_str(), signature.c_str());
     jni::jniErrorCheck();
 
-    // TODO derive the signature from the type of value using the if constexpr
-    //  statement below? Then we would not need all the
-    //  specialized methods, e.g., setBooleanField, below.
+    /// TODO derive the signature from the type of value using the if constexpr
+    ///  statement below? Then we would not need all the
+    ///  specialized methods, e.g., setBooleanField, below.
     if constexpr (std::is_same<T, bool>::value)
     {
         jni::getEnv()->SetBooleanField(pojo, id, (jboolean)value);
@@ -326,4 +326,4 @@ void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex
     return setField(state, classPtr, objectPtr, fieldIndex, value, "Ljava/lang/String;");
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

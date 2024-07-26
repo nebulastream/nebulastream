@@ -24,10 +24,10 @@ uint64_t NES__Runtime__TupleBuffer__getBufferSize(void* thisPtr)
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
     return thisPtr_->getBufferSize();
 };
-// extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void *thisPtr) {
-//    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
-//    return tupleBuffer->getNumberOfTuples();
-// }
+/// extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void *thisPtr) {
+///    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
+///    return tupleBuffer->getNumberOfTuples();
+/// }
 extern "C" __attribute__((always_inline)) uint64_t NES__Runtime__TupleBuffer__getNumberOfTuples(void* thisPtr)
 {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
@@ -38,10 +38,10 @@ extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNum
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
     return thisPtr_->setNumberOfTuples(numberOfTuples);
 };
-// extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void *thisPtr, uint64_t numberOfTuples) {
-//    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
-//    tupleBuffer->setNumberOfTuples(numberOfTuples);
-// }
+/// extern "C" __attribute__((always_inline)) void NES__Runtime__TupleBuffer__setNumberOfTuples(void *thisPtr, uint64_t numberOfTuples) {
+///    NES::Runtime::TupleBuffer *tupleBuffer = static_cast<NES::Runtime::TupleBuffer*>(thisPtr);
+///    tupleBuffer->setNumberOfTuples(numberOfTuples);
+/// }
 uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr)
 {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
@@ -73,4 +73,4 @@ void NES__Runtime__TupleBuffer__setCreationTimestampInMS(void* thisPtr, uint64_t
     return thisPtr_->setCreationTimestampInMS(value);
 }
 
-} // namespace NES::Runtime::ProxyFunctions
+} /// namespace NES::Runtime::ProxyFunctions

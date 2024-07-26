@@ -74,14 +74,14 @@ void BatchJoinProbe::setup(ExecutionContext& executionCtx) const
 
 void BatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const
 {
-    // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the global probe hash table.
-    // 1. get the operator handler
+    /// Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
+    /// We use this here, to load the global probe hash table.
+    /// 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the hash map
+    /// 2. load the hash map
     auto state = Nautilus::FunctionCall("getProbeHashMapProxy", getProbeHashMapProxy, globalOperatorHandler);
     auto chainedHM = Interface::ChainedHashMapRef(state, keyDataTypes, keySize, valueSize);
-    // 3. store the reference to the hash map in the local operator state.
+    /// 3. store the reference to the hash map in the local operator state.
     auto globalHashMap = std::make_unique<LocalJoinProbeState>(chainedHM);
     ctx.setLocalOperatorState(this, std::move(globalHashMap));
     ExecutableOperator::open(ctx, rb);
@@ -89,28 +89,28 @@ void BatchJoinProbe::open(ExecutionContext& ctx, RecordBuffer& rb) const
 
 void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const
 {
-    // 1. derive key values
+    /// 1. derive key values
     std::vector<Value<>> keyValues;
     for (const auto& exp : keyExpressions)
     {
         keyValues.emplace_back(exp->execute(record));
     }
 
-    // 3. load the reference to the global hash map.
+    /// 3. load the reference to the global hash map.
     auto state = reinterpret_cast<LocalJoinProbeState*>(ctx.getLocalState(this));
     auto& hashMap = state->hashMap;
 
-    // 4. calculate hash
+    /// 4. calculate hash
     auto hash = hashFunction->calculate(keyValues);
 
-    // 5. lookup the key in the hashmap
+    /// 5. lookup the key in the hashmap
     auto entry = hashMap.find(hash, keyValues);
 
-    // 6. check if join partner was found
+    /// 6. check if join partner was found
     if (entry != nullptr)
     {
-        // 7. Create result record
-        // 7.1 load values from the probe side and store them in the record.
+        /// 7. Create result record
+        /// 7.1 load values from the probe side and store them in the record.
         auto valuePtr = entry.getValuePtr();
         for (size_t i = 0; i < probeFieldIdentifiers.size(); i++)
         {
@@ -122,4 +122,4 @@ void BatchJoinProbe::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

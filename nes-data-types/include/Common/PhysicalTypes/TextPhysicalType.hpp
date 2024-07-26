@@ -44,6 +44,6 @@ public:
     [[nodiscard]] std::string toString() const noexcept override;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_TEXTPHYSICALTYPE_HPP_

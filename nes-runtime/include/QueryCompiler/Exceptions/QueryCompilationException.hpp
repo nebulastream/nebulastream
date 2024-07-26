@@ -28,6 +28,6 @@ public:
     explicit QueryCompilationException(const std::string& message, std::source_location location = std::source_location::current());
 };
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_EXCEPTIONS_QUERYCOMPILATIONEXCEPTION_HPP_

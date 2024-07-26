@@ -322,4 +322,4 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
     }
 }
 
-} // namespace NES
+} /// namespace NES

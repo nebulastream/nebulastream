@@ -40,18 +40,18 @@ double calculateMin(double x, double y)
 
 Value<> MinExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
-    // Evaluate the right sub expression and retrieve the value.
+    /// Evaluate the right sub expression and retrieve the value.
     Value rightValue = rightSubExpression->execute(record);
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-    // leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
-    // In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
-    // primitive integer types to the double argument.
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
+    /// As we don't know the exact type of value here, we have to check the type and then call the function.
+    /// leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
+    /// In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
+    /// primitive integer types to the double argument.
+    /// Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (leftValue->isType<Int8>() && rightValue->isType<Int8>())
     {
-        // call the calculateMin function with the correct type
+        /// call the calculateMin function with the correct type
         return FunctionCall<>("calculateMin", calculateMin, leftValue.as<Int8>(), rightValue.as<Int8>());
     }
     else if (leftValue->isType<Int16>() && rightValue->isType<Int16>())
@@ -92,10 +92,10 @@ Value<> MinExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<MinExpression>> minFunction("min");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

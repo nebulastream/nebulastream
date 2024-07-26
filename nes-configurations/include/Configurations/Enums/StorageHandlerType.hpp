@@ -28,6 +28,6 @@ enum class StorageHandlerType : uint8_t
     TwoPhaseLocking
 };
 
-} // namespace NES::RequestProcessor
+} /// namespace NES::RequestProcessor
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_

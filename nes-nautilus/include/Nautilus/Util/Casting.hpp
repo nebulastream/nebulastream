@@ -18,7 +18,7 @@
 namespace NES
 {
 
-// polyfill because concepts do not exist on all platforms yet.
+/// polyfill because concepts do not exist on all platforms yet.
 template <typename _From, typename _To>
 concept convertible_to = std::is_convertible_v<_From, _To> && requires { static_cast<_To>(std::declval<_From>()); };
 
@@ -68,6 +68,6 @@ inline bool instanceOf(const TypeCastable& y)
     return X::type == y.getKind();
 }
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTING_HPP_

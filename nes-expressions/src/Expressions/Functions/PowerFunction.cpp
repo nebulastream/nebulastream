@@ -36,4 +36,4 @@ public:
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<PowerFunction> powerFunction("power");
 
-} // namespace NES
+} /// namespace NES

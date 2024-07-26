@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution::Operators
 class State
 {
 public:
-    // Align memory chunk to STATE_ALIGNMENT
+    /// Align memory chunk to STATE_ALIGNMENT
     static constexpr uint64_t STATE_ALIGNMENT = 8;
 
     /**
@@ -95,6 +95,6 @@ private:
     std::unique_ptr<State> state;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDSLICE_HPP_

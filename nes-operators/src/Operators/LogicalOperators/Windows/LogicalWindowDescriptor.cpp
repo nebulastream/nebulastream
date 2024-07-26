@@ -102,7 +102,7 @@ std::string LogicalWindowDescriptor::toString() const
     ss << "windowType=" << windowType->toString();
     if (isKeyed())
     {
-        //ss << " onKey=" << onKey << std::endl;
+        ///ss << " onKey=" << onKey << std::endl;
     }
     ss << " numberOfInputEdges=" << numberOfInputEdges;
     ss << std::endl;
@@ -169,4 +169,4 @@ WindowActionDescriptorPtr LogicalWindowDescriptor::getTriggerAction() const
     return NES::Windowing::WindowActionDescriptorPtr();
 }
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing

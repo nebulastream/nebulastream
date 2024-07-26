@@ -54,6 +54,6 @@ private:
     const FieldAssignmentExpressionNodePtr mapExpression;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALMAPOPERATOR_HPP_

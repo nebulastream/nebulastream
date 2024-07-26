@@ -66,14 +66,14 @@ void KeyedWindowEmitAction::emitSlice(
 
     auto globalSliceState = Nautilus::FunctionCall("getKeyedSliceState", getKeyedSliceState, globalSlice);
     auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, keyDataTypes, keySize, valueSize);
-    // create the final window content and emit it to the downstream operator
+    /// create the final window content and emit it to the downstream operator
     for (const auto& globalEntry : globalHashTable)
     {
         Record resultWindow;
-        // write window start and end to result record
+        /// write window start and end to result record
         resultWindow.write(startTsFieldName, windowStart);
         resultWindow.write(endTsFieldName, windowEnd);
-        // load keys and write them to result record
+        /// load keys and write them to result record
         auto sliceKeys = globalEntry.getKeyPtr();
         for (size_t i = 0; i < resultKeyFields.size(); ++i)
         {
@@ -81,7 +81,7 @@ void KeyedWindowEmitAction::emitSlice(
             resultWindow.write(resultKeyFields[i], value);
             sliceKeys = sliceKeys + keyDataTypes[i]->size();
         }
-        // load values and write them to result record
+        /// load values and write them to result record
         auto sliceValue = globalEntry.getValuePtr();
         for (const auto& aggregationFunction : aggregationFunctions)
         {
@@ -92,4 +92,4 @@ void KeyedWindowEmitAction::emitSlice(
     }
     Nautilus::FunctionCall("deleteSlice", deleteSlice, globalSlice);
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

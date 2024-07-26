@@ -24,7 +24,7 @@ LogicalUnaryOperator::LogicalUnaryOperator(OperatorId id) : Operator(id), Logica
 
 bool LogicalUnaryOperator::inferSchema()
 {
-    // We assume that all children operators have the same output schema otherwise this plan is not valid
+    /// We assume that all children operators have the same output schema otherwise this plan is not valid
     for (const auto& child : children)
     {
         if (!child->as<LogicalOperator>()->inferSchema())
@@ -52,7 +52,7 @@ bool LogicalUnaryOperator::inferSchema()
         }
     }
 
-    //Reset and reinitialize the input and output schemas
+    ///Reset and reinitialize the input and output schemas
     inputSchema->clear();
     inputSchema = inputSchema->copyFields(childSchema);
     inputSchema->setLayoutType(childSchema->getLayoutType());
@@ -64,7 +64,7 @@ bool LogicalUnaryOperator::inferSchema()
 
 void LogicalUnaryOperator::inferInputOrigins()
 {
-    // in the default case we collect all input origins from the children/upstream operators
+    /// in the default case we collect all input origins from the children/upstream operators
     std::vector<OriginId> inputOriginIds;
     for (auto child : this->children)
     {
@@ -76,4 +76,4 @@ void LogicalUnaryOperator::inferInputOrigins()
     this->inputOriginIds = inputOriginIds;
 }
 
-} // namespace NES
+} /// namespace NES

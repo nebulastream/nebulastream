@@ -61,6 +61,6 @@ private:
 
 using DiskCollectorPtr = std::shared_ptr<DiskCollector>;
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_DISKCOLLECTOR_HPP_

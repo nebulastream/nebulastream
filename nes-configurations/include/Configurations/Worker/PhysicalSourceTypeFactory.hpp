@@ -72,7 +72,7 @@ private:
     static PhysicalSourceTypePtr
     createPhysicalSourceType(std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, Yaml::Node& yamlConfig);
 };
-} // namespace Configurations
-} // namespace NES
+} /// namespace Configurations
+} /// namespace NES
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPEFACTORY_HPP_

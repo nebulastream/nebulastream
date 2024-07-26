@@ -35,13 +35,13 @@ namespace NES::Runtime
 namespace detail
 {
 
-// TODO REMOVE TRIM FUNCTION HERE AFTER REFACTORING
+/// TODO REMOVE TRIM FUNCTION HERE AFTER REFACTORING
 std::string trim(std::string str)
 {
     auto not_space = [](char c) { return isspace(c) == 0; };
-    // trim left
+    /// trim left
     str.erase(str.begin(), std::find_if(str.begin(), str.end(), not_space));
-    // trim right
+    /// trim right
     str.erase(find_if(str.rbegin(), str.rend(), not_space).base(), str.end());
     return str;
 }
@@ -51,7 +51,7 @@ void readCpuConfig(
 {
 #ifdef __linux__
     std::stringstream buffer;
-    // TODO #2665 Parsing lscpu output is brittle, use more stable interface.
+    /// TODO #2665 Parsing lscpu output is brittle, use more stable interface.
     FILE* fp = popen("lscpu --all --extended", "r");
     NES_ASSERT2_FMT(fp != nullptr, "Cannot execute `lscpu --all --extended`");
     char temp[1024];
@@ -66,7 +66,7 @@ void readCpuConfig(
     {
         if (line.starts_with("CPU"))
         {
-            continue; // skip first line
+            continue; /// skip first line
         }
         std::vector<std::string> splits;
         std::string s;
@@ -80,7 +80,7 @@ void readCpuConfig(
             }
         }
 
-        //First check if the CPU is online
+        ///First check if the CPU is online
 #    if defined(__x86_64__) || defined(_M_X64)
         bool online = splits[5] == "yes";
 #    elif defined(__aarch64__)
@@ -127,7 +127,7 @@ void readCpuConfig(
 #endif
 }
 
-} // namespace detail
+} /// namespace detail
 
 HardwareManager::HardwareManager() : globalAllocator(std::make_shared<NesDefaultMemoryAllocator>())
 {
@@ -172,4 +172,4 @@ bool HardwareManager::bindThreadToCore(pthread_t, uint32_t, uint32_t)
     return false;
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

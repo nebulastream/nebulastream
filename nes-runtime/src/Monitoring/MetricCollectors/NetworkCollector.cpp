@@ -65,4 +65,4 @@ const MetricPtr NetworkCollector::readMetric() const
     return std::make_shared<Metric>(std::move(wrapper), MetricType::WrappedNetworkMetrics);
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

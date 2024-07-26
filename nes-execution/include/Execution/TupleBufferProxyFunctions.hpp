@@ -122,4 +122,4 @@ bool NES__Runtime__TupleBuffer__isLastChunk(void* thisPtr)
     return thisPtr_->isLastChunk();
 };
 
-} // namespace NES::Runtime::ProxyFunctions
+} /// namespace NES::Runtime::ProxyFunctions

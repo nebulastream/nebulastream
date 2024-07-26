@@ -145,6 +145,6 @@ std::string SequenceOption<T>::toString()
     return os.str();
 }
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SEQUENCEOPTION_HPP_

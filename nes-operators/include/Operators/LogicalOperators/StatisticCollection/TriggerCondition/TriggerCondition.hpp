@@ -86,6 +86,6 @@ public:
      */
     virtual ~TriggerCondition() = default;
 };
-} // namespace NES::Statistic
+} /// namespace NES::Statistic
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_TRIGGERCONDITION_TRIGGERCONDITION_HPP_

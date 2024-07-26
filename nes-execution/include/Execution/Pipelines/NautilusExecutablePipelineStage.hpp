@@ -45,6 +45,6 @@ protected:
     std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline;
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_NAUTILUSEXECUTABLEPIPELINESTAGE_HPP_

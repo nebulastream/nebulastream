@@ -24,7 +24,7 @@ namespace NES
 {
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -64,6 +64,6 @@ private:
     uint64_t valueSize;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICEPREAGGREGATION_HPP_

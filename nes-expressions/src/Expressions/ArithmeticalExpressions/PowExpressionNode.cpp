@@ -35,10 +35,10 @@ ExpressionNodePtr PowExpressionNode::create(ExpressionNodePtr const& left, Expre
 
 void PowExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of child, check if its numerical, assume same stamp
+    /// infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalBinaryExpressionNode::inferStamp(schema);
 
-    // Extend range for POW operation:
+    /// Extend range for POW operation:
     if (stamp->isInteger())
     {
         stamp = DataTypeFactory::createInt64();
@@ -73,4 +73,4 @@ ExpressionNodePtr PowExpressionNode::copy()
     return PowExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

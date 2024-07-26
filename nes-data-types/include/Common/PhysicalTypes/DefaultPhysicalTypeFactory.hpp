@@ -74,6 +74,6 @@ private:
     PhysicalTypePtr getPhysicalType(const ArrayPtr& arrayType) const;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_DEFAULTPHYSICALTYPEFACTORY_HPP_

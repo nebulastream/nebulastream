@@ -176,5 +176,5 @@ private:
     jni::jmethodID loadClassMethod;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFOPERATORHANDLER_HPP_

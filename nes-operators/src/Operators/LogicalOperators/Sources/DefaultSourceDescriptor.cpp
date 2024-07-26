@@ -81,4 +81,4 @@ SourceDescriptorPtr DefaultSourceDescriptor::copy()
     copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
-} // namespace NES
+} /// namespace NES
