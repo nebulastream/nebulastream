@@ -148,7 +148,8 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     ScanEmitPipelineTest,
-    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    ::testing::ValuesIn(
+        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<ScanEmitPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution

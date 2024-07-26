@@ -218,7 +218,8 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     SelectionPipelineTest,
-    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    ::testing::ValuesIn(
+        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<SelectionPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution
