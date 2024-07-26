@@ -795,4 +795,4 @@ typename Value<ValueType>::ValueIndexReference Value<ValueType>::operator[](uint
 
 } // namespace NES::Nautilus
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_

@@ -47,4 +47,4 @@ public:
     static NES::Spatial::DataTypes::Experimental::GeoLocation createFromYaml(Yaml::Node& yamlConfig);
 };
 } // namespace NES::Configurations::Spatial::Index::Experimental
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_
+#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_GEOLOCATIONFACTORY_HPP_

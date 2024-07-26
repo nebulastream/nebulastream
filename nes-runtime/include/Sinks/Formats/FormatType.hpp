@@ -29,4 +29,4 @@ enum class FormatTypes : uint8_t
 };
 } // namespace NES
 
-#endif // NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATTYPE_HPP_
+#endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATTYPE_HPP_

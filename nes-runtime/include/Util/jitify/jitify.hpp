@@ -4624,4 +4624,4 @@ inline KernelLauncher KernelInstantiation::configure_1d_max_occupancy(
 #    pragma pop_macro("min")
 #    pragma pop_macro("strtok_r")
 #endif
-#endif // NES_RUNTIME_INCLUDE_UTIL_JITIFY_JITIFY_HPP_
+#endif /// NES_RUNTIME_INCLUDE_UTIL_JITIFY_JITIFY_HPP_

@@ -66,4 +66,4 @@ EXCEPTION(DeprecatedFeatureUsed, 9007, "deprecated feature used")
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")
 
-#endif // NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTIONDEFINITIONS_HPP_
+#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTIONDEFINITIONS_HPP_

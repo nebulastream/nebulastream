@@ -26,4 +26,4 @@ public:
     explicit InterpreterException(const std::string& message, const std::source_location location = std::source_location::current());
 };
 } // namespace NES::Nautilus
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_EXCEPTIONS_INTERPRETEREXCEPTION_HPP_
+#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_EXCEPTIONS_INTERPRETEREXCEPTION_HPP_

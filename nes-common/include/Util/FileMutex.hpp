@@ -71,4 +71,4 @@ private:
 
 } // namespace NES::Util
 
-#endif // NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_
+#endif /// NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_

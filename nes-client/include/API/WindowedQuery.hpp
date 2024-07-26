@@ -123,4 +123,4 @@ private:
 } // namespace WindowOperatorBuilder
 } // namespace NES
 
-#endif // NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_
+#endif /// NES_CLIENT_INCLUDE_API_WINDOWEDQUERY_HPP_

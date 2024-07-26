@@ -54,4 +54,4 @@ static const std::string DEPTH_FIELD_NAME = "DEPTH_FIELD_NAME";
 static const std::string NUMBER_OF_BITS_IN_KEY = "NUMBER_OF_BITS_IN_KEY";
 } // namespace NES::Statistic
 
-#endif // NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_
+#endif /// NES_COMMON_INCLUDE_STATISTICIDENTIFIERS_HPP_

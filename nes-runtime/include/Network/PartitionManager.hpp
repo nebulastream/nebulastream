@@ -259,4 +259,4 @@ private:
 using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
 } // namespace NES::Network
 
-#endif // NES_RUNTIME_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_
+#endif /// NES_RUNTIME_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_

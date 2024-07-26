@@ -38,4 +38,4 @@ private:
     BasicBlockInvocation basicBlock;
 };
 } // namespace NES::Nautilus::IR::Operations
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_
+#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_BRANCHOPERATION_HPP_
