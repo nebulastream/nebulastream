@@ -1,7 +1,7 @@
 # General Coding Style and Clang Format
 We use the [Clickhouse style](https:///clickhouse.com/docs/en/development/style) for the coding style, and we enforce the style by clang-format. 
-Regarding comments, we use `////` for inline comments and `/* */` for multiline comments.
-`///` are there for temporarily commenting out code.
+Regarding comments, we use `///` for inline comments and `/* */` for multiline comments.
+`//` are there for temporarily commenting out code.
 The `.clang-format` file is located in the root directory of the project.
 The style can be imported into Clion by following the steps below:
 1. Go to the settings window: `File --> Settings`
@@ -114,7 +114,7 @@ We use virtual destructors in base classes and the `final` keyword in virtual fu
 
 # Variable Declaration and Return Types
 We use `const` wherever possible and remove it only if necessary (Rust approach).
-We carefully consider return types, e.g., we do not pass [fundamental types](https:///en.cppreference.com/w/cpp/language/types) by const ref.
+We carefully consider return types, e.g., we do not pass [fundamental types](https://en.cppreference.com/w/cpp/language/types) by const ref.
 We return temporaries and local values by value, getters by reference or const reference, or by value for thread safety.
 We declare enums as `enum class` to avoid polluting the namespace and give a type to the enum, e.g., `enum class Color : int8_t { RED, GREEN, BLUE };`.
 ```cpp
