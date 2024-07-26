@@ -31,4 +31,4 @@ private:
 };
 } // namespace NES
 
-#endif // NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
+#endif /// NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_

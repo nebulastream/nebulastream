@@ -58,4 +58,4 @@ private:
 };
 } // namespace NES::Nautilus::Tracing
 
-#endif // NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_TRIE_HPP_
+#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_TRIE_HPP_

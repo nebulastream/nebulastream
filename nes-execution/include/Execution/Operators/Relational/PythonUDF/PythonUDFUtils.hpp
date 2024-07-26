@@ -43,4 +43,4 @@ inline void pythonInterpreterErrorCheck(PyObject* pyObject, const char* func_nam
 }; // namespace NES::Runtime::Execution::Operators
 
 #endif // NAUTILUS_PYTHON_UDF_ENABLED
-#endif // NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_
+#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFUTILS_HPP_

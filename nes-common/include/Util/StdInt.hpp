@@ -74,4 +74,4 @@ consteval HelperStructLiterals<int64_t> operator""_s64(unsigned long long value)
 {
     return HelperStructLiterals<int64_t>(value);
 }
-#endif // NES_COMMON_INCLUDE_UTIL_STDINT_HPP_
+#endif /// NES_COMMON_INCLUDE_UTIL_STDINT_HPP_

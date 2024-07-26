@@ -59,4 +59,4 @@ private:
 };
 } // namespace std
 #endif
-#endif // NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
+#endif /// NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_

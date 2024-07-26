@@ -564,4 +564,4 @@ private:
 
 } // namespace NES::Runtime::MemoryLayouts
 
-#endif // NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_
+#endif /// NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_

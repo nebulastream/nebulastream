@@ -91,4 +91,4 @@ using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 
 } // namespace NES::Monitoring
 
-#endif // NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_
+#endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_

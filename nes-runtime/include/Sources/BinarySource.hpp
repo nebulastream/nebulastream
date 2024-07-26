@@ -90,4 +90,4 @@ private:
 using BinarySourcePtr = std::shared_ptr<BinarySource>;
 
 } // namespace NES
-#endif // NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_
+#endif /// NES_RUNTIME_INCLUDE_SOURCES_BINARYSOURCE_HPP_

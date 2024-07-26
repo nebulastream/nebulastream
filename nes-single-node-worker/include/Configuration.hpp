@@ -74,4 +74,4 @@ auto loadConfiguration(const int argc, const char** argv)
     return config;
 }
 } // namespace NES::Configuration
-#endif // NES_SINGLE_NODE_WORKER_INCLUDE_CONFIGURATION_HPP_
+#endif /// NES_SINGLE_NODE_WORKER_INCLUDE_CONFIGURATION_HPP_

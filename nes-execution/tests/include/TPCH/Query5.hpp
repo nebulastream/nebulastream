@@ -431,4 +431,4 @@ public:
 };
 
 } // namespace NES::Runtime::Execution
-#endif // NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY5_HPP_
+#endif /// NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY5_HPP_

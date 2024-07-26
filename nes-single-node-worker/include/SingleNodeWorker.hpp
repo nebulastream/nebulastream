@@ -95,4 +95,4 @@ public:
     [[nodiscard]] QueryStatus queryStatus(QueryId) const;
 };
 } // namespace NES
-#endif // NES_SINGLE_NODE_WORKER_INCLUDE_SINGLENODEWORKER_HPP_
+#endif /// NES_SINGLE_NODE_WORKER_INCLUDE_SINGLENODEWORKER_HPP_

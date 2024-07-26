@@ -121,4 +121,4 @@ inline uint64_t getCurrentExceptionCode()
 
 } /// Namespace NES
 
-#endif // NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTION_HPP_
+#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTION_HPP_
