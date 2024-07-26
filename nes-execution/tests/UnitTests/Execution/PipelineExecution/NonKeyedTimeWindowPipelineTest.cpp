@@ -31,6 +31,7 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -63,10 +64,6 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
-        {
-            GTEST_SKIP();
-        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
@@ -364,6 +361,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     NonKeyedTimeWindowPipelineTest,
-    ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    ::testing::ValuesIn(
+        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<NonKeyedTimeWindowPipelineTest::ParamType>& info) { return info.param; });
 } /// namespace NES::Runtime::Execution
