@@ -53,7 +53,7 @@ public:
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex1)
 {
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
-    // Simple Replace
+    /// Simple Replace
     {
         auto l = Value<Text>("abc");
         auto m = Value<Text>("(b|c)");
@@ -66,7 +66,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex1)
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex2)
 {
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
-    // Replacement notation for groups
+    /// Replacement notation for groups
     {
         auto l = Value<Text>("abc");
         auto m = Value<Text>("[b]");
@@ -78,7 +78,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex2)
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex3)
 {
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
-    // Regex string correction
+    /// Regex string correction
     {
         auto l = Value<Text>("there is a subsequence in the string");
         auto m = Value<Text>("\\b(sub)([^ ]*)");
@@ -90,7 +90,7 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex3)
 TEST_F(ReplacingRegexTest, evaluateReplacingRegex4)
 {
     auto expression = TernaryExpressionWrapper<ReplacingRegex>();
-    // Regex swap
+    /// Regex swap
     {
         auto l = Value<Text>("abbbc");
         auto m = Value<Text>("b{2,}");
@@ -100,4 +100,4 @@ TEST_F(ReplacingRegexTest, evaluateReplacingRegex4)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

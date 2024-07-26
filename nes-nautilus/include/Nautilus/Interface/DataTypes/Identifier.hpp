@@ -113,9 +113,9 @@ public:
     }
 
 private:
-    // We only store the underlying value to not introduce additional types visible during debugging.
+    /// We only store the underlying value to not introduce additional types visible during debugging.
     typename T::Underlying value;
 };
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_IDENTIFIER_HPP_

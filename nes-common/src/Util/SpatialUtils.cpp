@@ -22,4 +22,4 @@ double SpatialUtils::degreesToRadians(double degrees)
     return (degrees * M_PI / 180.0);
 }
 
-} // namespace NES
+} /// namespace NES

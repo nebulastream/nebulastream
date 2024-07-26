@@ -227,5 +227,5 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction)
     EXPECT_EQ(record.read("booleanVariable"), false);
 }
 
-} // namespace NES::Runtime::Execution::Operators
-#endif //NAUTILUS_PYTHON_UDF_ENABLED
+} /// namespace NES::Runtime::Execution::Operators
+#endif ///NAUTILUS_PYTHON_UDF_ENABLED

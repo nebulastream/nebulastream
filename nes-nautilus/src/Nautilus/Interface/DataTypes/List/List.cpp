@@ -136,7 +136,7 @@ void TypedList<BaseType>::write(Value<UInt32>& index, const Value<>& value)
     FunctionCall("writeListIndex", writeListIndex<ComponentType>, rawReference, index, baseValue);
 }
 
-// Instantiate List types
+/// Instantiate List types
 template class TypedList<Int8>;
 template class TypedList<Int16>;
 template class TypedList<Int32>;
@@ -148,4 +148,4 @@ template class TypedList<UInt64>;
 template class TypedList<Float>;
 template class TypedList<Double>;
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

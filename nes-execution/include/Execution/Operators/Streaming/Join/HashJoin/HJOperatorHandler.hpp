@@ -102,6 +102,6 @@ protected:
  * @return void* / MemRef
  */
 void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key);
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_

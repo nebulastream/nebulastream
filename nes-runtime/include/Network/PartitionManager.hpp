@@ -257,6 +257,6 @@ private:
     mutable std::recursive_mutex consumerPartitionsMutex;
 };
 using PartitionManagerPtr = std::shared_ptr<PartitionManager>;
-} // namespace NES::Network
+} /// namespace NES::Network
 
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_PARTITIONMANAGER_HPP_

@@ -37,4 +37,4 @@ uint64_t WindowStatisticDescriptor::getWidth() const
 {
     return width;
 }
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

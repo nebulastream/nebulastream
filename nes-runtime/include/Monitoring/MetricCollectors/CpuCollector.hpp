@@ -61,6 +61,6 @@ private:
 
 using CpuCollectorPtr = std::shared_ptr<CpuCollector>;
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_CPUCOLLECTOR_HPP_

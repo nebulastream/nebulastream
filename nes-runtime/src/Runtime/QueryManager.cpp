@@ -14,7 +14,7 @@
 
 /* TODO
  * add to Reconfig... constructors:
- -1, // any query ID
+ -1, /// any query ID
  */
 
 #include <iostream>
@@ -113,7 +113,7 @@ MultiQueueQueryManager::MultiQueueQueryManager(
         NES_THROW_RUNTIME_ERROR("number of queues and threads have to match");
     }
 
-    //create the actual task queues
+    ///create the actual task queues
     for (uint64_t i = 0; i < numberOfQueues; i++)
     {
         taskQueues.emplace_back(DEFAULT_QUEUE_INITIAL_CAPACITY);
@@ -163,7 +163,7 @@ AbstractQueryManager::~AbstractQueryManager() NES_NOEXCEPT(false)
 bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker)
 {
     NES_DEBUG("startThreadPool: setup thread pool for nodeEngineId= {}  with numThreads= {}", nodeEngineId, numThreads);
-    //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
+    ///Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = QueryManagerStatus::Created;
     if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Running))
     {
@@ -194,7 +194,7 @@ uint64_t MultiQueueQueryManager::getNumberOfBuffersPerEpoch() const
 bool MultiQueueQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker)
 {
     NES_DEBUG("startThreadPool: setup thread pool for nodeId= {}  with numThreads= {}", nodeEngineId, numThreads);
-    //Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
+    ///Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
     auto expected = QueryManagerStatus::Created;
     if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Running))
     {
@@ -247,12 +247,12 @@ void MultiQueueQueryManager::destroy()
 
 void AbstractQueryManager::destroy()
 {
-    // 0. if already destroyed
+    /// 0. if already destroyed
     if (queryManagerStatus.load() == QueryManagerStatus::Destroyed)
     {
         return;
     }
-    // 1. attempt transition from Running -> Stopped
+    /// 1. attempt transition from Running -> Stopped
     auto expected = QueryManagerStatus::Running;
 
     bool successful = true;
@@ -267,7 +267,7 @@ void AbstractQueryManager::destroy()
         }
     }
     NES_ASSERT2_FMT(successful, "Cannot stop running queryIdAndCatalogEntryMapping upon query manager destruction");
-    // 2. attempt transition from Stopped -> Destroyed
+    /// 2. attempt transition from Stopped -> Destroyed
     expected = QueryManagerStatus::Stopped;
     if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Destroyed))
     {
@@ -361,12 +361,12 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
                 "query plan " << qepId << " is not in valid state " << int(status));
             std::unique_lock lock(queryMutex);
             if (auto it = runningQEPs.find(qepId); it != runningQEPs.end())
-            { // note that this will release all shared pointers stored in a QEP object
+            { /// note that this will release all shared pointers stored in a QEP object
                 it->second->destroy();
                 runningQEPs.erase(it);
             }
-            // we need to think if we want to remove this after a soft stop
-            //            queryToStatisticsMap.erase(qepId);
+            /// we need to think if we want to remove this after a soft stop
+            ///            queryToStatisticsMap.erase(qepId);
             NES_DEBUG("AbstractQueryManager: removed running QEP  {}", qepId);
             break;
         }
@@ -396,4 +396,4 @@ uint64_t AbstractQueryManager::getNumberOfWorkerThreads()
     return numThreads;
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

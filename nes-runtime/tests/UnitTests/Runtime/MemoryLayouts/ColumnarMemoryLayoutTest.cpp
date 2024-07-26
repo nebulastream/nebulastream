@@ -329,4 +329,4 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
     ASSERT_EQ(testBuffer->getNumberOfTuples(), NUM_TUPLES);
 }
 
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts

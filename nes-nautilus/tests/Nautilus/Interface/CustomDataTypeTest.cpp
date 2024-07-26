@@ -103,7 +103,7 @@ TEST_F(CustomDataTypeTest, customCustomDataTypeTest)
 
 TEST_F(CustomDataTypeTest, customTimeStampTypeBaseTest)
 {
-    long ms = 1666798551744; // Wed Oct 26 2022 15:35:51
+    long ms = 1666798551744; /// Wed Oct 26 2022 15:35:51
     std::chrono::hours dur(ms);
     auto c1 = Value<TimeStamp>(TimeStamp((uint64_t)dur.count()));
     EXPECT_EQ(cast<IR::Types::IntegerStamp>(c1.value->getType())->getNumberOfBits(), 64);
@@ -136,12 +136,12 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeBaseTest)
 TEST_F(CustomDataTypeTest, customTimeStampTypeExtendions)
 {
     /** Test für century functions*/
-    long ms = 1666798551744; // Wed Oct 26 2022 15:35:51
+    long ms = 1666798551744; /// Wed Oct 26 2022 15:35:51
     std::chrono::milliseconds dur(ms);
     auto c1 = Value<TimeStamp>(TimeStamp((uint64_t)dur.count()));
     auto centuryc1 = c1->century();
     EXPECT_EQ(centuryc1, 21_u64);
-    long ms2 = 570207551; // Wed Jan 07 1970 14:23:27
+    long ms2 = 570207551; /// Wed Jan 07 1970 14:23:27
     std::chrono::milliseconds dur1(ms2);
     auto c2 = Value<TimeStamp>(TimeStamp((uint64_t)dur1.count()));
     auto centuryc2 = c2->century();
@@ -154,7 +154,7 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeExtendions)
     /** Test für weekdayName */
     auto weekdayName = c1->getWeekdayName();
     EXPECT_EQ(weekdayName, Value<Text>("Wednesday"));
-    long ms3 = 1666000551744; //Mon Oct 17 2022 09:55:51
+    long ms3 = 1666000551744; ///Mon Oct 17 2022 09:55:51
     std::chrono::milliseconds dur2(ms3);
     auto c3 = Value<TimeStamp>(TimeStamp((uint64_t)dur2.count()));
     auto weekdayNameMon = c3->getWeekdayName();
@@ -163,11 +163,11 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeExtendions)
 
 TEST_F(CustomDataTypeTest, customTimeStampTypeConstructurTest)
 {
-    //Test String Constructor
+    ///Test String Constructor
     auto textValue = Value<Text>("1970-01-07T14:23:27");
     auto c3 = Value<TimeStamp>(TimeStamp((Value<Text>)textValue));
     EXPECT_EQ(c3->getMilliSeconds(), 570207000_u64);
-    //
+    ///
     auto textValue1 = Value<Text>("1970-01-07");
     auto c4 = Value<TimeStamp>(TimeStamp((Value<Text>)textValue1));
     EXPECT_EQ(c4->getMilliSeconds(), 518400000_u64);
@@ -199,4 +199,4 @@ TEST_F(CustomDataTypeTest, customTimeStampTypeIntervalTest)
     EXPECT_FALSE((Boolean)intervall1->equals(textzero));
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

@@ -82,8 +82,8 @@ static double measureRdtscFreq()
     clock_gettime(CLOCK_REALTIME, &start);
     uint64_t rdtsc_start = rdtsc();
 
-    // Do not change this loop! The hardcoded value below depends on this loop
-    // and prevents it from being optimized out.
+    /// Do not change this loop! The hardcoded value below depends on this loop
+    /// and prevents it from being optimized out.
     uint64_t sum = 5;
     for (uint64_t i = 0; i < 1000000; i++)
     {
@@ -126,7 +126,7 @@ public:
     ~PapiInitializer() { PAPI_shutdown(); }
 };
 static PapiInitializer papi;
-} // namespace detail
+} /// namespace detail
 
 PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint32_t threadId, uint32_t coreId)
     : csvWriter(std::move(csvWriter))
@@ -166,7 +166,7 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             break;
         }
         case Presets::CachePrefetcherPresets: {
-            //            currEvents = {PAPI_PRF_DM, PAPI_CA_SHR, PAPI_CA_ITV, PAPI_CA_CLN, PAPI_TOT_INS, PAPI_TOT_CYC};
+            ///            currEvents = {PAPI_PRF_DM, PAPI_CA_SHR, PAPI_CA_ITV, PAPI_CA_CLN, PAPI_TOT_INS, PAPI_TOT_CYC};
             currEvents = {PAPI_PRF_DM, PAPI_CA_SHR, PAPI_CA_ITV, PAPI_CA_CLN};
             currSamples.resize(currEvents.size(), 0);
             this->csvWriter << "core_id,numRecords,worker_id,ts,PAPI_PRF_DM,PAPI_CA_SHR,PAPI_CA_ITV,PAPI_CA_CLN\n";
@@ -183,7 +183,7 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot register events on PAPI reason: " << err);
             break;
         }
-        case Presets::ResourceUsage: { // PAPI_RES_STL PAPI_MEM_WCY PAPI_PRF_DM PAPI_STL_CCY PAPI_REF_CYC
+        case Presets::ResourceUsage: { /// PAPI_RES_STL PAPI_MEM_WCY PAPI_PRF_DM PAPI_STL_CCY PAPI_REF_CYC
             currEvents = {PAPI_RES_STL, PAPI_MEM_WCY, PAPI_PRF_DM, PAPI_STL_CCY, PAPI_REF_CYC};
             currSamples.resize(currEvents.size(), 0);
             this->csvWriter << "core_id,numRecords,worker_id,ts,PAPI_RES_STL,PAPI_MEM_WCY,PAPI_PRF_DM,PAPI_STL_CCY,PAPI_REF_CYC\n";
@@ -210,8 +210,8 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             break;
         }
         case Presets::MemoryBound: {
-            // EXE_ACTIVITY:BOUND_ON_STORES L1D_PEND_MISS:FB_FULL:c=1 CPU_CLK_THREAD_UNHALTED  MEM_LOAD_RETIRED.L1_MISS MEM_LOAD_RETIRED.L2_HIT MEM_LOAD_RETIRED.FB_HIT CYCLE_ACTIVITY.STALLS_L1D_MISS CYCLE_ACTIVITY.STALLS_L2_MISS CYCLE_ACTIVITY.STALLS_L3_MISS
-            err = PAPI_assign_eventset_component(eventSet, 0); // 0 is cpu component
+            /// EXE_ACTIVITY:BOUND_ON_STORES L1D_PEND_MISS:FB_FULL:c=1 CPU_CLK_THREAD_UNHALTED  MEM_LOAD_RETIRED.L1_MISS MEM_LOAD_RETIRED.L2_HIT MEM_LOAD_RETIRED.FB_HIT CYCLE_ACTIVITY.STALLS_L1D_MISS CYCLE_ACTIVITY.STALLS_L2_MISS CYCLE_ACTIVITY.STALLS_L3_MISS
+            err = PAPI_assign_eventset_component(eventSet, 0); /// 0 is cpu component
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot assign PAPI event set to component 0 worker={} with err {}" << err);
             err = PAPI_set_multiplex(eventSet);
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot promote PAPI event set to multiplex worker={} with err {}" << err);
@@ -239,22 +239,22 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             break;
         }
         case Presets::L1Detail: {
-            // EXE_ACTIVITY:BOUND_ON_STORES L1D_PEND_MISS:FB_FULL:c=1 CPU_CLK_THREAD_UNHALTED  MEM_LOAD_RETIRED.L1_MISS MEM_LOAD_RETIRED.L2_HIT MEM_LOAD_RETIRED.FB_HIT CYCLE_ACTIVITY.STALLS_L1D_MISS CYCLE_ACTIVITY.STALLS_L2_MISS CYCLE_ACTIVITY.STALLS_L3_MISS
-            err = PAPI_assign_eventset_component(eventSet, 0); // 0 is cpu component
+            /// EXE_ACTIVITY:BOUND_ON_STORES L1D_PEND_MISS:FB_FULL:c=1 CPU_CLK_THREAD_UNHALTED  MEM_LOAD_RETIRED.L1_MISS MEM_LOAD_RETIRED.L2_HIT MEM_LOAD_RETIRED.FB_HIT CYCLE_ACTIVITY.STALLS_L1D_MISS CYCLE_ACTIVITY.STALLS_L2_MISS CYCLE_ACTIVITY.STALLS_L3_MISS
+            err = PAPI_assign_eventset_component(eventSet, 0); /// 0 is cpu component
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot assign PAPI event set to component 0 worker={} with err {}" << err);
             err = PAPI_set_multiplex(eventSet);
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot promote PAPI event set to multiplex worker={} with err {}" << err);
             std::array events = {
-                //
-                //                "perf::PERF_COUNT_HW_CACHE_L1D.READ"
-                //                                                 "perf::PERF_COUNT_HW_CACHE_L1D:WRITE"
-                //                "perf::L1-DCACHE-PREFETCHES"
+                ///
+                ///                "perf::PERF_COUNT_HW_CACHE_L1D.READ"
+                ///                                                 "perf::PERF_COUNT_HW_CACHE_L1D:WRITE"
+                ///                "perf::L1-DCACHE-PREFETCHES"
                 "perf::PERF_COUNT_HW_CACHE_L1D:PREFETCH:MISS"
-                //                "perf::PERF_COUNT_HW_CACHE_L1D:PREFETCH:MISS"
+                ///                "perf::PERF_COUNT_HW_CACHE_L1D:PREFETCH:MISS"
 
-                //                                 "perf::PERF_COUNT_HW_CACHE_L1D.PREFETCH",
-                //                                 "perf::PERF_COUNT_HW_CACHE_L1D.ACCESS"
-                //                                 "perf::PERF_COUNT_HW_CACHE_L1D.MISS"
+                ///                                 "perf::PERF_COUNT_HW_CACHE_L1D.PREFETCH",
+                ///                                 "perf::PERF_COUNT_HW_CACHE_L1D.ACCESS"
+                ///                                 "perf::PERF_COUNT_HW_CACHE_L1D.MISS"
             };
             currSamples.resize(events.size(), 0);
             this->csvWriter << "core_id,numRecords,worker_id,ts";
@@ -271,7 +271,7 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             std::array events = {"L2_RQSTS:PF_MISS", "L2_RQSTS:PF_HIT", "L2_RQSTS:ALL_PF"};
             currSamples.resize(events.size(), 0);
             this->csvWriter << "core_id,numRecords,worker_id,ts";
-            err = PAPI_assign_eventset_component(eventSet, 0); // 0 is cpu component
+            err = PAPI_assign_eventset_component(eventSet, 0); /// 0 is cpu component
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot assign PAPI event set to component 0 worker={} with err {}" << err);
             err = PAPI_set_multiplex(eventSet);
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot promote PAPI event set to multiplex worker={} with err {}" << err);
@@ -301,7 +301,7 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             };
             currSamples.resize(events.size(), 0);
             this->csvWriter << "core_id,numRecords,worker_id,ts";
-            err = PAPI_assign_eventset_component(eventSet, 0); // 0 is cpu component
+            err = PAPI_assign_eventset_component(eventSet, 0); /// 0 is cpu component
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot assign PAPI event set to component 0 worker={} with err {}" << err);
             err = PAPI_set_multiplex(eventSet);
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot promote PAPI event set to multiplex worker={} with err {}" << err);
@@ -315,7 +315,7 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             break;
         }
         case Presets::CacheBandwidth: {
-            // LONGEST_LAT_CACHE:MISS OFFCORE_REQUESTS:ALL_REQUESTS L2_LINES_IN:ALL L1D:REPLACEMENT
+            /// LONGEST_LAT_CACHE:MISS OFFCORE_REQUESTS:ALL_REQUESTS L2_LINES_IN:ALL L1D:REPLACEMENT
             NES_ASSERT2_FMT(
                 PAPI_add_named_event(eventSet, "LONGEST_LAT_CACHE:MISS") == PAPI_OK, "Cannot register events on PAPI worker={}");
             NES_ASSERT2_FMT(
@@ -328,13 +328,13 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             break;
         }
         case Presets::CoreBound: {
-            // EXE_ACTIVITY:EXE_BOUND_0_PORTS EXE_ACTIVITY:1_PORTS_UTIL EXE_ACTIVITY:2_PORTS_UTIL UOPS_RETIRED:RETIRE_SLOTS
+            /// EXE_ACTIVITY:EXE_BOUND_0_PORTS EXE_ACTIVITY:1_PORTS_UTIL EXE_ACTIVITY:2_PORTS_UTIL UOPS_RETIRED:RETIRE_SLOTS
 
             break;
         }
-        case Presets::MultiplexExtended: { // skylake only
-            // L1D_PEND_MISS:FB_FULL:c=1 CPU_CLK_THREAD_UNHALTED  MEM_LOAD_RETIRED.L1_MISS MEM_LOAD_RETIRED.L2_HIT MEM_LOAD_RETIRED.FB_HIT CYCLE_ACTIVITY.STALLS_L1D_MISS CYCLE_ACTIVITY.STALLS_L2_MISS CYCLE_ACTIVITY.STALLS_L3_MISS
-            err = PAPI_assign_eventset_component(eventSet, 0); // 0 is cpu component
+        case Presets::MultiplexExtended: { /// skylake only
+            /// L1D_PEND_MISS:FB_FULL:c=1 CPU_CLK_THREAD_UNHALTED  MEM_LOAD_RETIRED.L1_MISS MEM_LOAD_RETIRED.L2_HIT MEM_LOAD_RETIRED.FB_HIT CYCLE_ACTIVITY.STALLS_L1D_MISS CYCLE_ACTIVITY.STALLS_L2_MISS CYCLE_ACTIVITY.STALLS_L3_MISS
+            err = PAPI_assign_eventset_component(eventSet, 0); /// 0 is cpu component
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot assign PAPI event set to component 0 worker={} with err {}" << err);
             err = PAPI_set_multiplex(eventSet);
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot promote PAPI event set to multiplex worker={} with err {}" << err);
@@ -359,8 +359,8 @@ PapiCpuProfiler::PapiCpuProfiler(Presets preset, std::ofstream&& csvWriter, uint
             this->csvWriter << ",l1_bound,l2_bound,l3_bound\n";
             break;
         }
-        case Presets::Multiplexing: { // skylake only
-            err = PAPI_assign_eventset_component(eventSet, 0); // 0 is cpu component
+        case Presets::Multiplexing: { /// skylake only
+            err = PAPI_assign_eventset_component(eventSet, 0); /// 0 is cpu component
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot assign PAPI event set to component 0 worker={} with err {}" << err);
             err = PAPI_set_multiplex(eventSet);
             NES_ASSERT2_FMT(err == PAPI_OK, "Cannot promote PAPI event set to multiplex worker={} with err {}" << err);
@@ -449,9 +449,9 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords)
             double cpi = cycles / instr;
             double instr_per_record = numRecords == 0 ? 0 : instr / double(numRecords);
             double cycles_per_record = numRecords == 0 ? 0 : cycles / double(numRecords);
-            // double l1_misses_per_record = numRecords == 0 ? 0 : currSamples[0] / double(numRecords);
-            // double l2_misses_per_record = numRecords == 0 ? 0 : currSamples[1] / double(numRecords);
-            // double l3_misses_per_record = numRecords == 0 ? 0 : currSamples[2] / double(numRecords);
+            /// double l1_misses_per_record = numRecords == 0 ? 0 : currSamples[0] / double(numRecords);
+            /// double l2_misses_per_record = numRecords == 0 ? 0 : currSamples[1] / double(numRecords);
+            /// double l3_misses_per_record = numRecords == 0 ? 0 : currSamples[2] / double(numRecords);
             this->csvWriter << "," << ipc << "," << cpi << "," << instr_per_record << "," << cycles_per_record;
             break;
         }
@@ -464,12 +464,12 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords)
             break;
         }
         case Presets::ICacheMisses: {
-            //            double instr = currSamples[3];
-            //            double cycles = currSamples[4];
-            //            double ipc = instr / cycles;
-            //            double cpi = cycles / instr;
-            //            double instr_per_record = numRecords == 0 ? 0 : instr / double(numRecords);
-            //            double cycles_per_record = numRecords == 0 ? 0 : cycles / double(numRecords);
+            ///            double instr = currSamples[3];
+            ///            double cycles = currSamples[4];
+            ///            double ipc = instr / cycles;
+            ///            double cpi = cycles / instr;
+            ///            double instr_per_record = numRecords == 0 ? 0 : instr / double(numRecords);
+            ///            double cycles_per_record = numRecords == 0 ? 0 : cycles / double(numRecords);
             double l1i_misses_per_record = numRecords == 0 ? 0 : currSamples[0] / double(numRecords);
             double l2i_misses_per_record = numRecords == 0 ? 0 : currSamples[1] / double(numRecords);
             double itlb_misses_per_record = numRecords == 0 ? 0 : currSamples[2] / double(numRecords);
@@ -487,7 +487,7 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords)
             break;
         }
         default: {
-            //            NES_ASSERT2_FMT(false, "Not supported");
+            ///            NES_ASSERT2_FMT(false, "Not supported");
             break;
         }
     }
@@ -495,4 +495,4 @@ uint64_t PapiCpuProfiler::stopSampling(std::size_t numRecords)
     return currentTsc;
 }
 #endif
-} // namespace NES::Runtime::Profiler
+} /// namespace NES::Runtime::Profiler

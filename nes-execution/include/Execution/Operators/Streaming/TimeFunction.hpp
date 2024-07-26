@@ -28,13 +28,13 @@ namespace NES::Runtime::Execution
 class RecordBuffer;
 class ExecutionContext;
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 namespace NES::Runtime::Execution::Expressions
 {
 class Expression;
 using ExpressionPtr = std::shared_ptr<Expression>;
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -80,5 +80,5 @@ public:
     Nautilus::Value<UInt64> getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) override;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_

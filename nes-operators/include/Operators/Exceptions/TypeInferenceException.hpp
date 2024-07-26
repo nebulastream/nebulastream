@@ -30,6 +30,6 @@ public:
     explicit TypeInferenceException(const std::string& message);
     TypeInferenceException(QueryId queryId, const std::string& message);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_

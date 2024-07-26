@@ -133,5 +133,5 @@ protected:
     ExpressionNodePtr joinExpression;
     const Runtime::Execution::Operators::WindowMetaData windowMetaData;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINPROBEOPERATOR_HPP_

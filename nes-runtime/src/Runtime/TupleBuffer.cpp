@@ -82,4 +82,4 @@ bool TupleBuffer::hasSpaceLeft(uint64_t used, uint64_t needed) const
     }
     return false;
 }
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

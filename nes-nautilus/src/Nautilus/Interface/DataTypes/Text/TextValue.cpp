@@ -75,8 +75,8 @@ TextValue* TextValue::load(Runtime::TupleBuffer& buffer)
 
 std::string TextValue::strn_copy() const
 {
-    // We have to ensure that the string is null terminated.
-    // To this end, we use the strndup function.
+    /// We have to ensure that the string is null terminated.
+    /// To this end, we use the strndup function.
     char* nullTerminatedString = strndup(c_str(), length());
     auto resultString = std::string(nullTerminatedString);
     free(nullTerminatedString);
@@ -90,8 +90,8 @@ Runtime::TupleBuffer TextValue::getBuffer() const
 
 TextValue::~TextValue()
 {
-    // A text value always is backed by the data region of a tuple buffer.
-    // In the following, we recycle the tuple buffer and return it to the buffer pool.
+    /// A text value always is backed by the data region of a tuple buffer.
+    /// In the following, we recycle the tuple buffer and return it to the buffer pool.
     Runtime::recycleTupleBuffer(this);
 }
 Runtime::TupleBuffer TextValue::allocateBuffer(uint32_t size)
@@ -105,4 +105,4 @@ Runtime::TupleBuffer TextValue::allocateBuffer(uint32_t size)
     return optBuffer.value();
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

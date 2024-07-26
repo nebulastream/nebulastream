@@ -154,7 +154,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
     }
     executablePipeline->stop(pipelineContext);
 
-    // Checking the output
+    /// Checking the output
     ASSERT_EQ(pipelineContext.buffers.size(), 4);
     for (const auto& buf : pipelineContext.buffers)
     {
@@ -166,7 +166,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
         }
     }
 
-    // Checking, if we have seen all sequence numbers
+    /// Checking, if we have seen all sequence numbers
     std::vector<SequenceNumber> seenSeqNumbers;
     std::transform(
         pipelineContext.seenSeqChunkLastChunk.begin(),
@@ -241,7 +241,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     }
     executablePipeline->stop(pipelineContext);
 
-    // Checking the output and the seq number, chunk number and last chunk
+    /// Checking the output and the seq number, chunk number and last chunk
     ASSERT_EQ(pipelineContext.buffers.size(), 8);
     std::vector<SequenceData> expectedSeqChunkLastChunk = {
         {1, 1, false},
@@ -268,7 +268,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
         ++expectedSeqChunkLastChunkIt;
     }
 
-    // Checking, if we have seen all sequence numbers
+    /// Checking, if we have seen all sequence numbers
     ASSERT_THAT(pipelineContext.seenSeqChunkLastChunk, ::testing::UnorderedElementsAreArray(expectedSeqChunkLastChunk));
 }
 
@@ -356,36 +356,36 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
     auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
     auto memoryLayoutOutputWindow = Runtime::MemoryLayouts::RowLayout::create(outputSchemaWindow, bm->getBufferSize());
 
-    // Creating aggregation function
+    /// Creating aggregation function
     const auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     const auto aggregationResultFieldName1 = "test$count";
     PhysicalTypePtr integerType = DefaultPhysicalTypeFactory().getPhysicalType(DataTypeFactory::createInt64());
     Aggregation::AggregationFunctionPtr aggregationFunction
         = std::make_shared<Aggregation::CountAggregationFunction>(integerType, integerType, readF1, aggregationResultFieldName1);
 
-    // Creating executable pipelines
+    /// Creating executable pipelines
     auto pipeline1 = provider->create(createFirstPipeline(memoryLayoutInput, memoryLayoutOutput), options);
     auto pipeline2 = provider->create(createSecondPipeline(memoryLayoutOutput, aggregationFunction), options);
     auto pipeline3 = provider->create(createThirdPipeline(memoryLayoutOutputWindow, aggregationFunction), options);
 
-    // Creating operator handlers
+    /// Creating operator handlers
     constexpr auto windowSize = 10;
     constexpr auto windowSlide = 10;
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(windowSize, windowSlide, origins);
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
-    // Creating pipeline execution contexts
+    /// Creating pipeline execution contexts
     auto pipeline1Context = MockedPipelineExecutionContext();
     auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false);
     auto pipeline3Context = MockedPipelineExecutionContext({sliceMergingHandler});
 
-    // Setting up all pipelines
+    /// Setting up all pipelines
     pipeline1->setup(pipeline1Context);
     pipeline2->setup(pipeline2Context);
     pipeline3->setup(pipeline3Context);
 
-    // Creating input data and executing the first pipeline
+    /// Creating input data and executing the first pipeline
     constexpr auto NUM_BUFFERS = 2;
     auto ts = 0_u64;
     for (auto bufCnt = 0_u64; bufCnt < NUM_BUFFERS; ++bufCnt)
@@ -406,13 +406,13 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
         pipeline1->execute(buffer, pipeline1Context, *wc);
     }
 
-    // Comparing the expected number of output buffers and shuffling the buffers to mix up the chunk numbers and last chunks
+    /// Comparing the expected number of output buffers and shuffling the buffers to mix up the chunk numbers and last chunks
     EXPECT_EQ(pipeline1Context.buffers.size(), NUM_BUFFERS * 2);
     std::random_device rd;
     std::mt19937 gen(rd());
     std::shuffle(pipeline1Context.buffers.begin(), pipeline1Context.buffers.end(), gen);
 
-    // Executing the second and third pipeline
+    /// Executing the second and third pipeline
     for (auto buf : pipeline1Context.buffers)
     {
         pipeline2->execute(buf, pipeline2Context, *wc);
@@ -422,7 +422,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
         pipeline3->execute(buf, pipeline3Context, *wc);
     }
 
-    // We use ts as we increase the timestamp for each tuple.
+    /// We use ts as we increase the timestamp for each tuple.
     auto expectedNumberOfTuples = (ts) / windowSize;
     auto numberOfTuples = std::accumulate(
         pipeline3Context.buffers.begin(),
@@ -431,13 +431,13 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
         [](const auto sum, const TupleBuffer& buf) { return sum + buf.getNumberOfTuples(); });
     EXPECT_EQ(numberOfTuples, expectedNumberOfTuples);
 
-    // Comparing expected output
+    /// Comparing expected output
     for (const auto& buf : pipeline3Context.buffers)
     {
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, outputSchemaWindow);
         for (auto i = 0_u64; i < testBuffer.getNumberOfTuples(); ++i)
         {
-            // As we count the number of tuple per window, the count should be the window size
+            /// As we count the number of tuple per window, the count should be the window size
             EXPECT_EQ(windowSize, testBuffer[i][aggregationResultFieldName1].read<int64_t>());
         }
     }
@@ -449,4 +449,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<SequenceNumberPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

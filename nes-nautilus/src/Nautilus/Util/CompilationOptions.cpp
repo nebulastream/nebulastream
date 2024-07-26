@@ -75,7 +75,7 @@ bool CompilationOptions::isProxyInlining() const
 }
 void CompilationOptions::setProxyInlining(const bool proxyInlining)
 {
-    // For now, we statically write proxy functions to /tmp/proxiesReduced.ll (see ExtractFunctionFromLLVMIR.cpp)
+    /// For now, we statically write proxy functions to /tmp/proxiesReduced.ll (see ExtractFunctionFromLLVMIR.cpp)
     CompilationOptions::proxyInliningInputPath = std::filesystem::temp_directory_path().string() + "/proxiesReduced.ll";
     if (proxyInlining && !std::filesystem::exists(proxyInliningInputPath))
     {
@@ -114,4 +114,4 @@ const std::string CompilationOptions::getCUDASdkPath() const
     return cudaSdkPath;
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

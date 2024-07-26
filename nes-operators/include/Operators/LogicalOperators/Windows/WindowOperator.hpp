@@ -55,6 +55,6 @@ protected:
     const Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWOPERATOR_HPP_

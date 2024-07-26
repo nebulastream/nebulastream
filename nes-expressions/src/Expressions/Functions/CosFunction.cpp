@@ -36,4 +36,4 @@ public:
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<CosFunction> cosFunction("cos");
 
-} // namespace NES
+} /// namespace NES

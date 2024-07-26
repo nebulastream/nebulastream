@@ -97,5 +97,5 @@ private:
 };
 using MQTTClientWrapperPtr = std::shared_ptr<MQTTClientWrapper>;
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_UTIL_MQTTCLIENTWRAPPER_HPP_

@@ -101,7 +101,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
     Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
 
-    //check if we can reuse window
+    ///check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd))
     {
         joinState->sliceReference
@@ -117,7 +117,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
             to_underlying(joinBuildSide));
     }
 
-    // Write record to the pagedVector
+    /// Write record to the pagedVector
     auto hjPagedVectorMemRef = FunctionCall(
         "getHJPagedVectorVarSizedProxy",
         getHJPagedVectorVarSizedProxy,
@@ -137,7 +137,7 @@ void* getDefaultMemRefVarSized()
 
 void HJBuildSlicingVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    // We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
+    /// We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
     Operator::open(ctx, recordBuffer);
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<MemRef> dummyRef1 = FunctionCall("getDefaultMemRef", getDefaultMemRefVarSized);
@@ -145,4 +145,4 @@ void HJBuildSlicingVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuf
     auto joinState = std::make_unique<LocalHashJoinState>(operatorHandlerMemRef, dummyRef1, dummyRef2);
     ctx.setLocalOperatorState(this, std::move(joinState));
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

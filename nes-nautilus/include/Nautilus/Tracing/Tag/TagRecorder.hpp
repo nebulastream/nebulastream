@@ -33,7 +33,7 @@ public:
      */
     static inline __attribute__((always_inline)) TagRecorder createTagRecorder()
     {
-        // First we derive the base address, which is the first common address between two bracktraces.
+        /// First we derive the base address, which is the first common address between two bracktraces.
         auto referenceTag1 = createBaseTag();
         auto referenceTag2 = createBaseTag();
         auto baseAddress = getBaseAddress(referenceTag1, referenceTag2);
@@ -54,11 +54,11 @@ private:
     static TagAddress getBaseAddress(TagVector& tag1, TagVector& tag2);
     static TagVector createBaseTag();
     Tag* createReferenceTag(TagAddress startAddress);
-    // The start address, which is used as the start to calculate tags for sub instructions.
+    /// The start address, which is used as the start to calculate tags for sub instructions.
     const TagAddress startAddress;
-    // The tag recorder stores the individual tags in a trie of addresses, to minimize space consumption.
+    /// The tag recorder stores the individual tags in a trie of addresses, to minimize space consumption.
     Tag rootTagThreeNode = Tag();
 };
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAGRECORDER_HPP_

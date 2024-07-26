@@ -37,4 +37,4 @@ SendingPolicyAdaptive::SendingPolicyAdaptive(StatisticDataCodec sinkDataCodec) :
 {
 }
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

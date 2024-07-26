@@ -52,7 +52,7 @@ public:
 TEST_F(MatchingRegexTest, evaluateRegexMatch1)
 {
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
+    /// TextValue
     {
         auto l = Value<Text>("test");
         auto r = Value<Text>("test");
@@ -64,7 +64,7 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch1)
 TEST_F(MatchingRegexTest, evaluateRegexMatch2)
 {
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
+    /// TextValue
     {
         auto l = Value<Text>("test");
         auto r = Value<Text>("t");
@@ -76,7 +76,7 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch2)
 TEST_F(MatchingRegexTest, evaluateRegexMatch3)
 {
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
+    /// TextValue
     {
         auto l = Value<Text>("test");
         auto r = Value<Text>("^t$");
@@ -88,7 +88,7 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch3)
 TEST_F(MatchingRegexTest, evaluateRegexMatch4)
 {
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
+    /// TextValue
     {
         auto l = Value<Text>("test");
         auto r = Value<Text>(".*(e|s).*");
@@ -100,7 +100,7 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch4)
 TEST_F(MatchingRegexTest, evaluateRegexMatch5)
 {
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
+    /// TextValue
     {
         auto l = Value<Text>("test");
         auto r = Value<Text>("(e|s).*");
@@ -112,7 +112,7 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch5)
 TEST_F(MatchingRegexTest, evaluateRegexMatch6)
 {
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
+    /// TextValue
     {
         auto l = Value<Text>("test");
         auto r = Value<Text>("^(e|s).*");
@@ -124,7 +124,7 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch6)
 TEST_F(MatchingRegexTest, evaluateRegexMatch7)
 {
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
+    /// TextValue
     {
         auto l = Value<Text>("tESt");
         auto r = Value<Text>(".*(e|s).*");
@@ -136,7 +136,7 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch7)
 TEST_F(MatchingRegexTest, evaluateRegexMatch8)
 {
     auto expression = TernaryExpressionWrapper<MatchingRegex>();
-    // TextValue
+    /// TextValue
     {
         auto l = Value<Text>("tESt");
         auto r = Value<Text>(".*(e|s).*");
@@ -146,4 +146,4 @@ TEST_F(MatchingRegexTest, evaluateRegexMatch8)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

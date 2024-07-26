@@ -54,5 +54,5 @@ private:
     const uint64_t valueSize;
     const uint64_t numberOfKeys;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETSTORE_HPP_

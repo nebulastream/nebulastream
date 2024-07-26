@@ -25,7 +25,7 @@ namespace Configurations
 {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-} // namespace Configurations
+} /// namespace Configurations
 
 namespace Monitoring
 {
@@ -95,7 +95,7 @@ public:
     static MetricCollectorType createCollectorTypeFromMetricType(MetricType type);
 };
 
-} // namespace Monitoring
-} // namespace NES
+} /// namespace Monitoring
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_UTIL_METRICUTILS_HPP_

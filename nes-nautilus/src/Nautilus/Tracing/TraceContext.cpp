@@ -115,8 +115,8 @@ void TraceContext::traceStore(const ValueRef& memref, const ValueRef& valueRef)
 
 void TraceContext::traceAssignmentOperation(const ValueRef& targetRef, const ValueRef& sourceRef)
 {
-    // check if we repeat a known trace or if this is a new operation.
-    // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
+    /// check if we repeat a known trace or if this is a new operation.
+    /// we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(OpCode::ASSIGN))
     {
         auto tag = tagRecorder.createTag();
@@ -135,8 +135,8 @@ void TraceContext::addTraceArgument(const ValueRef& value)
 template <typename Functor>
 void TraceContext::trace(const OpCode& opCode, Functor createOperation)
 {
-    // check if we repeat a known trace or if this is a new operation.
-    // we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
+    /// check if we repeat a known trace or if this is a new operation.
+    /// we are in a know operation if the operation at the current block[currentOperationCounter] is equal to the received operation.
     if (!isExpectedOperation(opCode))
     {
         auto tag = tagRecorder.createTag();
@@ -169,7 +169,7 @@ bool TraceContext::traceCMP(const ValueRef& valueRef)
     }
     else
     {
-        // we repeat the operation
+        /// we repeat the operation
         auto operation = executionTrace->getCurrentBlock().operations[currentOperationCounter];
         trueBlock = std::get<BlockRef>(operation.input[0]).block;
         falseBlock = std::get<BlockRef>(operation.input[1]).block;
@@ -177,7 +177,7 @@ bool TraceContext::traceCMP(const ValueRef& valueRef)
 
     auto result = symbolicExecutionContext.executeCMP(this->tagRecorder);
 
-    // set next block
+    /// set next block
     if (result)
     {
         executionTrace->setCurrentBlock(trueBlock);
@@ -192,9 +192,9 @@ bool TraceContext::traceCMP(const ValueRef& valueRef)
 
 ValueRef TraceContext::createNextRef(const NES::Nautilus::IR::Types::StampPtr& type)
 {
-    // If the next operation already exists, we have to create the same value ref.
-    // Currently, we assume that it is correctly set.
-    // TODO this should be handled better at a fundamental level, which ensures that value references are always correct.
+    /// If the next operation already exists, we have to create the same value ref.
+    /// Currently, we assume that it is correctly set.
+    /// TODO this should be handled better at a fundamental level, which ensures that value references are always correct.
     auto& currentBlock = executionTrace->getCurrentBlock();
     if (currentBlock.operations.size() > currentOperationCounter)
     {
@@ -220,7 +220,7 @@ bool TraceContext::isExpectedOperation(const OpCode& opCode)
         return false;
     }
     auto currentOperation = &currentBlock.operations[currentOperationCounter];
-    // the next operation is a jump we transfer to that block.
+    /// the next operation is a jump we transfer to that block.
     while (currentOperation->op == OpCode::JMP)
     {
         executionTrace->setCurrentBlock(std::get<BlockRef>(currentOperation->input[0]).block);
@@ -237,7 +237,7 @@ bool TraceContext::isKnownOperation(const Tag* tag)
         std::stringstream trace;
         trace << *executionTrace;
         NES_TRACE("{}", trace.str());
-        // TODO #3500 Fix handling of repeated operations
+        /// TODO #3500 Fix handling of repeated operations
         if (ref->blockId != this->executionTrace->getCurrentBlockIndex())
         {
             auto& mergeBlock = executionTrace->processControlFlowMerge(ref->blockId, ref->operationId);
@@ -281,4 +281,4 @@ std::shared_ptr<ExecutionTrace> TraceContext::apply(const std::function<NES::Nau
     return executionTrace;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

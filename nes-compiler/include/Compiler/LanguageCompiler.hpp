@@ -45,6 +45,6 @@ public:
     virtual ~LanguageCompiler() = default;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_LANGUAGECOMPILER_HPP_

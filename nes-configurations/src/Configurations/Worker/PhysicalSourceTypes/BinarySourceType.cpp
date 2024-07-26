@@ -114,4 +114,4 @@ void BinarySourceType::reset()
     setFilePath(filePath->getDefaultValue());
 }
 
-} // namespace NES
+} /// namespace NES

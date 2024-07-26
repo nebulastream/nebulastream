@@ -53,13 +53,13 @@ namespace API
 {
 class WindowAggregation;
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
-} // namespace API
+} /// namespace API
 
 namespace Catalogs::UDF
 {
 class UDFDescriptor;
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-} // namespace Catalogs::UDF
+} /// namespace Catalogs::UDF
 
 namespace WindowOperatorBuilder
 {
@@ -67,7 +67,7 @@ namespace WindowOperatorBuilder
 class WindowedQuery;
 class KeyedWindowedQuery;
 
-} // namespace WindowOperatorBuilder
+} /// namespace WindowOperatorBuilder
 namespace Windowing
 {
 class WindowType;
@@ -78,7 +78,7 @@ using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescript
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-} // namespace Windowing
+} /// namespace Windowing
 
 static constexpr uint64_t defaultTriggerTimeInMs = 1000;
 
@@ -134,7 +134,7 @@ private:
     ExpressionNodePtr joinExpressions;
 };
 
-} //namespace JoinOperatorBuilder
+} ///namespace JoinOperatorBuilder
 
 /**
 * @brief BatchJoinOperatorBuilder.
@@ -169,7 +169,7 @@ private:
     Query& originalQuery;
 };
 
-} //namespace Experimental::BatchJoinOperatorBuilder
+} ///namespace Experimental::BatchJoinOperatorBuilder
 
 namespace CEPOperatorBuilder
 {
@@ -269,7 +269,7 @@ private:
     uint64_t maxOccurrences;
     bool bounded;
 };
-//TODO this method is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
+///TODO this method is a quick fix to generate unique keys for andWith chains and should be removed after implementation of Cartesian Product (#2296)
 /**
      * @brief: this function creates a virtual key for the left side of the binary operator
      * @param keyName the attribute name
@@ -277,7 +277,7 @@ private:
      */
 std::string keyAssignment(std::string keyName);
 
-} //namespace CEPOperatorBuilder
+} ///namespace CEPOperatorBuilder
 
 /**
  * User interface to create stream processing queryIdAndCatalogEntryMapping.
@@ -290,7 +290,7 @@ public:
 
     virtual ~Query() = default;
 
-    //both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
+    ///both, Join and CEPOperatorBuilder friend classes, are required as they use the private joinWith method.
     friend class JoinOperatorBuilder::JoinWhere;
     friend class NES::Experimental::BatchJoinOperatorBuilder::Join;
     friend class CEPOperatorBuilder::And;
@@ -480,11 +480,11 @@ public:
      */
     QueryPlanPtr getQueryPlan() const;
 
-    // creates a new query object
+    /// creates a new query object
     Query(QueryPlanPtr queryPlan);
 
 protected:
-    // query plan containing the operators.
+    /// query plan containing the operators.
     QueryPlanPtr queryPlan;
 
 private:
@@ -567,6 +567,6 @@ private:
 
 using QueryPtr = std::shared_ptr<Query>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_CLIENT_INCLUDE_API_QUERY_HPP_

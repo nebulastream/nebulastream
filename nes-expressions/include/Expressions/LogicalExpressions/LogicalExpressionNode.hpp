@@ -25,6 +25,6 @@ class LogicalExpressionNode
 protected:
     LogicalExpressionNode() = default;
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALEXPRESSIONNODE_HPP_

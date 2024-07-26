@@ -28,14 +28,14 @@ LogicalBinaryOperator::LogicalBinaryOperator(OperatorId id) : Operator(id), Logi
 bool LogicalBinaryOperator::inferSchema()
 {
     distinctSchemas.clear();
-    //Check the number of child operators
+    ///Check the number of child operators
     if (children.size() < 2)
     {
         NES_ERROR("BinaryOperator: this operator should have at least two child operators");
         throw TypeInferenceException("BinaryOperator: this node should have at least two child operators");
     }
 
-    // Infer schema of all child operators
+    /// Infer schema of all child operators
     for (const auto& child : children)
     {
         if (!child->as<LogicalOperator>()->inferSchema())
@@ -45,7 +45,7 @@ bool LogicalBinaryOperator::inferSchema()
         }
     }
 
-    //Identify different type of schemas from children operators
+    ///Identify different type of schemas from children operators
     for (const auto& child : children)
     {
         auto childOutputSchema = child->as<Operator>()->getOutputSchema();
@@ -59,7 +59,7 @@ bool LogicalBinaryOperator::inferSchema()
         }
     }
 
-    //validate that only two different type of schema were present
+    ///validate that only two different type of schema were present
     if (distinctSchemas.size() > 2)
     {
         throw TypeInferenceException(
@@ -95,7 +95,7 @@ std::vector<OperatorPtr> LogicalBinaryOperator::getRightOperators() const
 
 void LogicalBinaryOperator::inferInputOrigins()
 {
-    // in the default case we collect all input origins from the children/upstream operators
+    /// in the default case we collect all input origins from the children/upstream operators
     std::vector<OriginId> leftInputOriginIds;
     for (auto child : this->getLeftOperators())
     {
@@ -117,4 +117,4 @@ void LogicalBinaryOperator::inferInputOrigins()
     this->rightInputOriginIds = rightInputOriginIds;
 }
 
-} // namespace NES
+} /// namespace NES

@@ -63,5 +63,5 @@ private:
     void storeKeys(std::vector<Value<>> keys, Value<MemRef> keyPtr) const;
     void storeValues(std::vector<Value<>> keys, Value<MemRef> valuePtr) const;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_

@@ -60,7 +60,7 @@ public class UDFClassLoader extends ClassLoader {
      * @param byteCode The byte code of the class.
      */
     void injectClass(String className, byte[] byteCode) {
-        // Store a copy of the byteCode because the parameter will be released by the calling code.
+        /// Store a copy of the byteCode because the parameter will be released by the calling code.
         byte[] copy = Arrays.copyOf(byteCode, byteCode.length);
         classes.put(className, copy);
     }

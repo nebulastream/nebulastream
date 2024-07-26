@@ -121,5 +121,5 @@ protected:
     size_t mask;
     size_t numPartitions;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_STREAMJOINHASHTABLE_HPP_

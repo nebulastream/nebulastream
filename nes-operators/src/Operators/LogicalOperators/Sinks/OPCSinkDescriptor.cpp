@@ -79,5 +79,5 @@ bool OPCSinkDescriptor::equal(SinkDescriptorPtr const& other)
         && password == otherSinkDescriptor->getPassword();
 }
 
-} // namespace NES
+} /// namespace NES
 #endif

@@ -68,4 +68,4 @@ std::string BasicBlockInvocation::toString()
     return "BasicBlockInvocation";
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

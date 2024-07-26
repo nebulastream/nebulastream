@@ -67,6 +67,6 @@ private:
     mutable std::mutex fileMutex;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_UTIL_FILE_HPP_

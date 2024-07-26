@@ -31,4 +31,4 @@ GlobalSlicePtr NonKeyedBucketStore::allocateNewSlice(uint64_t startTs, uint64_t 
     return std::make_unique<NonKeyedSlice>(entrySize, startTs, endTs, defaultState);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

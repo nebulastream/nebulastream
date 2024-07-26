@@ -59,6 +59,6 @@ private:
 
 using ZmqSourceDescriptorPtr = std::shared_ptr<ZmqSourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_ZMQSOURCEDESCRIPTOR_HPP_

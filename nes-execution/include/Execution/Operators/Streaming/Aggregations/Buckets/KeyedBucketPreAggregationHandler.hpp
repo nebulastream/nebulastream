@@ -55,5 +55,5 @@ public:
 
     ~KeyedBucketPreAggregationHandler() override;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_KEYEDBUCKETPREAGGREGATIONHANDLER_HPP_

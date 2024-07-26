@@ -35,4 +35,4 @@ DecomposedQueryPlanId PlanIdGenerator::getNextDecomposedQueryPlanId()
     return DecomposedQueryPlanId(id++);
 }
 
-} // namespace NES
+} /// namespace NES

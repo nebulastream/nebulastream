@@ -53,4 +53,4 @@ void BufferStorage::removeTopElementFromQueue()
     this->storage.pop();
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

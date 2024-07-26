@@ -46,4 +46,4 @@ OperatorPipelinePtr BufferOptimizationPhase::apply(OperatorPipelinePtr operatorP
     return operatorPipeline;
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

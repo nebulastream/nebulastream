@@ -33,7 +33,7 @@ public:
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
 {
-    // initialize state variable and create new buffer
+    /// initialize state variable and create new buffer
     auto resultBufferRef = ctx.allocateBuffer();
     auto resultBuffer = RecordBuffer(resultBufferRef);
     ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
@@ -42,7 +42,7 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const
 void Emit::execute(ExecutionContext& ctx, Record& record) const
 {
     auto emitState = (EmitState*)ctx.getLocalState(this);
-    // emit buffer if it reached the maximal capacity
+    /// emit buffer if it reached the maximal capacity
     if (emitState->outputIndex >= maxRecordsPerBuffer)
     {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
@@ -62,7 +62,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const
 
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const
 {
-    // emit current buffer and set the metadata
+    /// emit current buffer and set the metadata
     auto emitState = (EmitState*)ctx.getLocalState(this);
     emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, ctx.isLastChunk());
 }
@@ -91,4 +91,4 @@ Emit::Emit(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider)
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

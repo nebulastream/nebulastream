@@ -42,5 +42,5 @@ private:
     const uint64_t entrySize;
     const std::unique_ptr<State>& defaultState;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDTHREADLOCALSLICESTORE_HPP_

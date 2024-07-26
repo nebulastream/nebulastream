@@ -99,6 +99,6 @@ private:
     uint64_t depth;
 };
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_DESCRIPTOR_COUNTMINDESCRIPTOR_HPP_

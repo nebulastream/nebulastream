@@ -31,4 +31,4 @@ bool Int::isInteger(const Any& val)
         || isa<UInt32>(val) || isa<UInt64>(val);
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

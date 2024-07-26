@@ -71,10 +71,10 @@ protected:
 
 private:
     explicit ConstantValueExpressionNode(ValueTypePtr const& constantValue);
-    // Value of this expression
+    /// Value of this expression
     ValueTypePtr constantValue;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CONSTANTVALUEEXPRESSIONNODE_HPP_

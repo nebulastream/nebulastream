@@ -42,4 +42,4 @@ std::string Boolean::toString()
 {
     return std::to_string(value);
 }
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

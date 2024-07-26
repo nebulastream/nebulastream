@@ -33,4 +33,4 @@ std::string PhysicalUnaryOperator::toString() const
     return out.str();
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

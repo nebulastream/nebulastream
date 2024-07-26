@@ -75,7 +75,7 @@ private:
 
 typedef std::shared_ptr<OPCSourceDescriptor> OPCSourceDescriptorPtr;
 
-} // namespace NES
+} /// namespace NES
 
 #endif
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_OPCSOURCEDESCRIPTOR_HPP_

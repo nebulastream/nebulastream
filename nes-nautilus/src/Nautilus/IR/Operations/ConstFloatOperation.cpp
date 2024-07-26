@@ -39,4 +39,4 @@ std::string ConstFloatOperation::toString()
     return identifier + " = " + std::to_string(constantValue);
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

@@ -44,6 +44,6 @@ private:
 
 using LogicalSourceDescriptorPtr = std::shared_ptr<LogicalSourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LOGICALSOURCEDESCRIPTOR_HPP_

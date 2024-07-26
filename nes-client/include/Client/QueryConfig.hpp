@@ -44,6 +44,6 @@ public:
 private:
     Optimizer::PlacementStrategy placementType;
 };
-} // namespace NES::Client
+} /// namespace NES::Client
 
 #endif /// NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_

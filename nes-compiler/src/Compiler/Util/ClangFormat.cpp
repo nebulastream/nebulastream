@@ -23,12 +23,12 @@ ClangFormat::ClangFormat(const std::string language) : language(language)
 
 void ClangFormat::formatFile(std::shared_ptr<File> file)
 {
-    // lock clang format
+    /// lock clang format
     const std::lock_guard<std::mutex> lock(clangFormatMutex);
-    // lock file, such that no one can operate on the file at the same time
+    /// lock file, such that no one can operate on the file at the same time
     const std::lock_guard<std::mutex> fileLock(file->getFileMutex());
-    // check if we can access clang-format
-    // TODO replace with build-in clang-format #2074
+    /// check if we can access clang-format
+    /// TODO replace with build-in clang-format #2074
     int ret = system("which clang-format > /dev/null");
     if (ret != 0)
     {
@@ -37,7 +37,7 @@ void ClangFormat::formatFile(std::shared_ptr<File> file)
                   "If 'clang-format-X' is installed, try to create a symbolic link.");
         return;
     }
-    // construct clang-format command argument
+    /// construct clang-format command argument
     auto formatCommand = "clang-format --assume-filename=" + language + " -i " + file->getPath();
     NES_DEBUG("Format with {}", formatCommand);
     auto* res = popen(formatCommand.c_str(), "r");
@@ -45,8 +45,8 @@ void ClangFormat::formatFile(std::shared_ptr<File> file)
     {
         throw CompilerException("ClangFormat: popen() failed!");
     }
-    // wait till command is complete executed.
+    /// wait till command is complete executed.
     pclose(res);
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

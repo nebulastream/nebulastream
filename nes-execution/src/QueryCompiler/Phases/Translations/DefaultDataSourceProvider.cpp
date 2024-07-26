@@ -58,4 +58,4 @@ DataSourcePtr DefaultDataSourceProvider::lower(
         std::move(successors));
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

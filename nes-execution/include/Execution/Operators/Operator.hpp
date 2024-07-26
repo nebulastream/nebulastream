@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution
 {
 class ExecutionContext;
 class RecordBuffer;
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 namespace NES::Runtime::Execution::Operators
 {
 using namespace Nautilus;
@@ -89,6 +89,6 @@ protected:
     StatisticId statisticId;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_

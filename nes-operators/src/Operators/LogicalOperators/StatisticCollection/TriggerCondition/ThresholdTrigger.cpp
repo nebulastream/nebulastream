@@ -22,4 +22,4 @@ std::string ThresholdTrigger<T>::toString() const
 {
     return "ThresholdTrigger(" << threshold << ")";
 }
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

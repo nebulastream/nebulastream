@@ -59,4 +59,4 @@ void BatchAggregationHandler::postReconfigurationCallback(Runtime::Reconfigurati
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

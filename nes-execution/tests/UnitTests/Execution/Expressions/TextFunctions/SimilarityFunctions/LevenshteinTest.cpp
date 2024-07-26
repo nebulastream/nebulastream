@@ -89,4 +89,4 @@ TEST_F(LevenshteinTest, FailTest)
     EXPECT_ANY_THROW(expression.eval(textValue0, textValue1));
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

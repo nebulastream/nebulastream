@@ -70,5 +70,5 @@ protected:
     explicit CaseExpressionNode(CaseExpressionNode* other);
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_CASEEXPRESSIONNODE_HPP_

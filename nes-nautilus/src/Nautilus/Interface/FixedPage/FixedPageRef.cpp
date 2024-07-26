@@ -36,7 +36,7 @@ Value<MemRef> FixedPageRef::allocateEntry(const Value<UInt64>& hash)
     Value<MemRef> entry(nullptr);
     if (currentPos < getCapacity())
     {
-        //TODO replace FunctionCall with Nautilus alternative, see #4176
+        ///TODO replace FunctionCall with Nautilus alternative, see #4176
         FunctionCall("addHashToBloomFilterProxy", addHashToBloomFilterProxy, fixedPageRef, hash);
 
         auto ptr = getDataPtr() + currentPos * getSizeOfRecord();
@@ -153,4 +153,4 @@ bool FixedPageRefIter::operator!=(const FixedPageRefIter& other) const
 {
     return !(*this == other);
 }
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

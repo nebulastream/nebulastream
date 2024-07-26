@@ -38,6 +38,6 @@ private:
     PhysicalTypePtr countType;
     Nautilus::Value<Nautilus::MemRef> loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref);
 };
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP_

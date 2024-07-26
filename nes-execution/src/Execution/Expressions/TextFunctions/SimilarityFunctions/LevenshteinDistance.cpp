@@ -87,10 +87,10 @@ uint64_t textLevenshtein(const TextValue* leftText, const TextValue* rightText)
 
 Value<> LevenshteinDistance::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value<> leftValue = leftSubExpression->execute(record);
 
-    // Evaluate the right sub expression and retrieve the value.
+    /// Evaluate the right sub expression and retrieve the value.
     Value<> rightValue = rightSubExpression->execute(record);
 
     if (leftValue->isType<Text>() && rightValue->isType<Text>())
@@ -100,9 +100,9 @@ Value<> LevenshteinDistance::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         NES_THROW_RUNTIME_ERROR("This expression is only defined on input arguments that are Text.");
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

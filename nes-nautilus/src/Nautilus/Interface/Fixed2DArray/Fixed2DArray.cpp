@@ -34,4 +34,4 @@ Fixed2DArray::~Fixed2DArray()
     std::free(data);
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

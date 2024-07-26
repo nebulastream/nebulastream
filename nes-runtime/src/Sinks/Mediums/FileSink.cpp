@@ -64,7 +64,7 @@ void FileSink::setup()
         sinkFormat->getSchemaPtr()->toString(),
         sinkFormat->toString(),
         append);
-    // Remove an existing file unless the append mode is APPEND.
+    /// Remove an existing file unless the append mode is APPEND.
     if (!append)
     {
         if (std::filesystem::exists(filePath.c_str()))
@@ -79,7 +79,7 @@ void FileSink::setup()
         }
     }
 
-    // Open the file stream
+    /// Open the file stream
     if (!outputFile.is_open())
     {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::app);
@@ -99,8 +99,8 @@ void FileSink::shutdown()
 
 bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
 {
-    // Stop execution if the file could not be opened during setup.
-    // This results in ExecutionResult::Error for the task.
+    /// Stop execution if the file could not be opened during setup.
+    /// This results in ExecutionResult::Error for the task.
     if (!isOpen)
     {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
@@ -141,4 +141,4 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     return true;
 }
 
-} // namespace NES
+} /// namespace NES

@@ -25,4 +25,4 @@ Value<> NegateExpression::execute(Record& record) const
     return !leftValue;
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

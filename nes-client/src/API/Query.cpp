@@ -93,10 +93,10 @@ JoinWhere::JoinWhere(const Query& subQueryRhs, Query& originalQuery, ExpressionN
 
 Query& JoinWhere::window(const Windowing::WindowTypePtr& windowType) const
 {
-    return originalQuery.joinWith(subQueryRhs, joinExpressions, windowType); //call original joinWith() function
+    return originalQuery.joinWith(subQueryRhs, joinExpressions, windowType); ///call original joinWith() function
 }
 
-} // namespace JoinOperatorBuilder
+} /// namespace JoinOperatorBuilder
 
 namespace Experimental::BatchJoinOperatorBuilder
 {
@@ -110,7 +110,7 @@ Query& Join::where(const ExpressionNodePtr joinExpression) const
     return originalQuery.batchJoinWith(subQueryRhs, joinExpression);
 }
 
-} // namespace Experimental::BatchJoinOperatorBuilder
+} /// namespace Experimental::BatchJoinOperatorBuilder
 
 namespace CEPOperatorBuilder
 {
@@ -118,13 +118,13 @@ namespace CEPOperatorBuilder
 And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery)
 {
     NES_DEBUG("Query: add map operator to andWith to add virtual key to originalQuery");
-    //here, we add artificial key attributes to the sources in order to reuse the join-logic later
+    ///here, we add artificial key attributes to the sources in order to reuse the join-logic later
     auto cepLeftKey = "cep_leftKey";
     auto cepRightKey = "cep_rightKey";
-    //next: map the attributes with value 1 to the left and right source
+    ///next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
-    //last, define the artificial attributes as key attributes
+    ///last, define the artificial attributes as key attributes
     NES_DEBUG("Query: add name cepLeftKey {}", cepLeftKey);
     NES_DEBUG("Query: add name cepRightKey {}", cepRightKey);
     joinExpression
@@ -133,19 +133,19 @@ And::And(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cas
 
 Query& And::window(const Windowing::WindowTypePtr& windowType) const
 {
-    return originalQuery.andWith(subQueryRhs, joinExpression, windowType); //call original andWith() function
+    return originalQuery.andWith(subQueryRhs, joinExpression, windowType); ///call original andWith() function
 }
 
 Seq::Seq(const Query& subQueryRhs, Query& originalQuery) : subQueryRhs(const_cast<Query&>(subQueryRhs)), originalQuery(originalQuery)
 {
     NES_DEBUG("Query: add map operator to seqWith to add virtual key to originalQuery");
-    //here, we add artificial key attributes to the sources in order to reuse the join-logic later
+    ///here, we add artificial key attributes to the sources in order to reuse the join-logic later
     auto cepLeftKey = "cep_leftKey";
     auto cepRightKey = "cep_rightKey";
-    //next: map the attributes with value 1 to the left and right source
+    ///next: map the attributes with value 1 to the left and right source
     originalQuery.map(Attribute(cepLeftKey) = 1);
     this->subQueryRhs.map(Attribute(cepRightKey) = 1);
-    //last, define the artificial attributes as key attributes
+    ///last, define the artificial attributes as key attributes
     joinExpression
         = ExpressionItem(Attribute(cepLeftKey)).getExpressionNode() == ExpressionItem(Attribute(cepRightKey)).getExpressionNode();
 }
@@ -154,29 +154,29 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
 {
     NES_DEBUG("Sequence enters window function");
     auto timestamp
-        = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName(); // assume time-based windows
+        = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName(); /// assume time-based windows
     std::string sourceNameLeft = originalQuery.getQueryPlan()->getSourceConsumed();
     std::string sourceNameRight = subQueryRhs.getQueryPlan()->getSourceConsumed();
-    // to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
-    // in case of composed streams on the right branch
+    /// to guarantee a correct order of events by time (sequence) we need to identify the correct source and its timestamp
+    /// in case of composed streams on the right branch
     if (sourceNameRight.find("_") != std::string::npos)
     {
-        // we find the most left source and use its timestamp for the filter constraint
+        /// we find the most left source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameRight.find("_");
         uint64_t posEnd = sourceNameRight.find("_", posStart + 1);
         sourceNameRight = sourceNameRight.substr(posStart + 1, posEnd - 2) + "$" + timestamp;
-    } // in case the right branch only contains 1 source we can just use it
+    } /// in case the right branch only contains 1 source we can just use it
     else
     {
         sourceNameRight = sourceNameRight + "$" + timestamp;
     }
-    // in case of composed sources on the left branch
+    /// in case of composed sources on the left branch
     if (sourceNameLeft.find("_") != std::string::npos)
     {
-        // we find the most right source and use its timestamp for the filter constraint
+        /// we find the most right source and use its timestamp for the filter constraint
         uint64_t posStart = sourceNameLeft.find_last_of("_");
         sourceNameLeft = sourceNameLeft.substr(posStart + 1) + "$" + timestamp;
-    } // in case the left branch only contains 1 source we can just use it
+    } /// in case the left branch only contains 1 source we can just use it
     else
     {
         sourceNameLeft = sourceNameLeft + "$" + timestamp;
@@ -184,45 +184,45 @@ Query& Seq::window(const Windowing::WindowTypePtr& windowType) const
     NES_DEBUG("ExpressionItem for Left Source {}", sourceNameLeft);
     NES_DEBUG("ExpressionItem for Right Source {}", sourceNameRight);
     return originalQuery.seqWith(subQueryRhs, joinExpression, windowType)
-        .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight)); //call original seqWith() function
+        .filter(Attribute(sourceNameLeft) < Attribute(sourceNameRight)); ///call original seqWith() function
 }
 
 Times::Times(const uint64_t minOccurrences, const uint64_t maxOccurrences, Query& originalQuery)
     : originalQuery(originalQuery), minOccurrences(minOccurrences), maxOccurrences(maxOccurrences), bounded(true)
 {
-    // add a new count attribute to the schema which is later used to derive the number of occurrences
+    /// add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
 Times::Times(const uint64_t occurrences, Query& originalQuery)
     : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(occurrences), bounded(true)
 {
-    // add a new count attribute to the schema which is later used to derive the number of occurrences
+    /// add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
 Times::Times(Query& originalQuery) : originalQuery(originalQuery), minOccurrences(0), maxOccurrences(0), bounded(false)
 {
-    // add a new count attribute to the schema which is later used to derive the number of occurrences
+    /// add a new count attribute to the schema which is later used to derive the number of occurrences
     originalQuery.map(Attribute("Count") = 1);
 }
 
 Query& Times::window(const Windowing::WindowTypePtr& windowType) const
 {
     auto timestamp = windowType->as<Windowing::TimeBasedWindowType>()->getTimeCharacteristic()->getField()->getName();
-    // if no min and max occurrence is defined, apply count without filter
+    /// if no min and max occurrence is defined, apply count without filter
     if (!bounded)
     {
         return originalQuery.window(windowType).apply(API::Sum(Attribute("Count")), API::Max(Attribute(timestamp)));
     }
     else
     {
-        // if user passed 0 occurrences which is not wanted
+        /// if user passed 0 occurrences which is not wanted
         if ((minOccurrences == 0) && (maxOccurrences == 0))
         {
             NES_THROW_RUNTIME_ERROR("Number of occurrences must be at least 1.");
         }
-        // if min and/or max occurrence are defined, apply count without filter
+        /// if min and/or max occurrence are defined, apply count without filter
         if (maxOccurrences == 0)
         {
             return originalQuery.window(windowType)
@@ -245,7 +245,7 @@ Query& Times::window(const Windowing::WindowTypePtr& windowType) const
     return originalQuery;
 }
 
-} // namespace CEPOperatorBuilder
+} /// namespace CEPOperatorBuilder
 
 Query::Query(QueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan))
 {
@@ -417,7 +417,7 @@ QueryPlanPtr Query::getQueryPlan() const
     return queryPlan;
 }
 
-//
+///
 Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr joinExpression)
 {
     NES_DEBUG("Query: identify Join Type; default: CARTESIAN PRODUCT");
@@ -432,7 +432,7 @@ Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr 
             auto visitingOp = (*itr)->as<BinaryExpressionNode>();
             if (visitedExpressions.contains(visitingOp))
             {
-                // skip rest of the steps as the node found in already visited node list
+                /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             else
@@ -450,4 +450,4 @@ Join::LogicalJoinDescriptor::JoinType Query::identifyJoinType(ExpressionNodePtr 
     return joinType;
 }
 
-} // namespace NES
+} /// namespace NES

@@ -94,7 +94,7 @@ TEST_P(FunctionCompilationTest, voidExceptionFunctionTest)
 {
     if (this->GetParam() != "MLIR")
     {
-        // Only MLIR supports exceptions
+        /// Only MLIR supports exceptions
         GTEST_SKIP();
     }
     auto executionTrace = Nautilus::Tracing::traceFunction([]() { voidExceptionFunction(); });
@@ -154,8 +154,8 @@ TEST_P(FunctionCompilationTest, identifierTypesInProxyFunction)
     ASSERT_EQ(function(WorkerId(3)), WorkerId(3));
 }
 
-// Tests all registered compilation backends.
-// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+/// Tests all registered compilation backends.
+/// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 INSTANTIATE_TEST_CASE_P(
     testFunctionCalls,
     FunctionCompilationTest,
@@ -163,4 +163,4 @@ INSTANTIATE_TEST_CASE_P(
         Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<FunctionCompilationTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

@@ -50,4 +50,4 @@ ExpressionNodePtr GreaterEqualsExpressionNode::copy()
     return GreaterEqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

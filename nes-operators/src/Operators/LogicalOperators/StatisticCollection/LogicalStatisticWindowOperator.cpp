@@ -45,11 +45,11 @@ bool LogicalStatisticWindowOperator::inferSchema()
         return false;
     }
 
-    // Inferring the stamp for the windowType and the fieldToTrackStatisticsOver that is part of the descriptor
+    /// Inferring the stamp for the windowType and the fieldToTrackStatisticsOver that is part of the descriptor
     windowType->inferStamp(inputSchema);
     windowStatisticDescriptor->inferStamps(inputSchema);
 
-    // Creating output schema
+    /// Creating output schema
     const auto qualifierNameWithSeparator = inputSchema->getQualifierNameForSystemGeneratedFieldsWithSeparator();
     outputSchema->clear();
     outputSchema->addField(qualifierNameWithSeparator + BASE_FIELD_NAME_START, UINT64);
@@ -144,7 +144,7 @@ void LogicalStatisticWindowOperator::inferStringSignature()
     std::stringstream signatureStream;
     signatureStream << "STATISTIC_BUILD_OPERATOR(" + windowStatisticDescriptor->toString() + ").";
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
@@ -154,4 +154,4 @@ StatisticMetricHash LogicalStatisticWindowOperator::getMetricHash() const
     return metricHash;
 }
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

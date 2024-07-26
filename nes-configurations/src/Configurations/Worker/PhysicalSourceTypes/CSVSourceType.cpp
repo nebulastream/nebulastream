@@ -266,4 +266,4 @@ void CSVSourceType::reset()
     setGatheringMode(gatheringMode->getDefaultValue());
 }
 
-} // namespace NES
+} /// namespace NES

@@ -38,7 +38,7 @@ namespace QueryCompilation
 {
 class PipelineQueryPlan;
 using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
-} // namespace QueryCompilation
+} /// namespace QueryCompilation
 
 /**
  * @brief The dump context is used to dump a node graph to multiple dump handler at the same time.
@@ -81,6 +81,6 @@ private:
     std::vector<DebugDumpHandlerPtr> dumpHandlers;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_DUMPCONTEXT_HPP_

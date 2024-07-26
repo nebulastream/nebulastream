@@ -54,4 +54,4 @@ std::string collectStacktrace()
     return buffer.str();
 }
 
-} // namespace NES
+} /// namespace NES

@@ -44,6 +44,6 @@ public:
 protected:
     explicit LessExpressionNode(LessExpressionNode* other);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEXPRESSIONNODE_HPP_

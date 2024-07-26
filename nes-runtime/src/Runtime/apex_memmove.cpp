@@ -1,30 +1,30 @@
 #include <Runtime/internal/apex_memmove.hpp>
 
-#include <cstring> //	std::memmove, std::memcpy
+#include <cstring> ///	std::memmove, std::memcpy
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86) //	Test for Intel/AMD architecture
-#    include <emmintrin.h> //	Intel/AMD SSE intrinsics
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86) ///	Test for Intel/AMD architecture
+#    include <emmintrin.h> ///	Intel/AMD SSE intrinsics
 #    if defined(_MSC_VER)
-#        include <intrin.h> // __cpuid		Visual Studio
+#        include <intrin.h> /// __cpuid		Visual Studio
 #    elif defined(__GNUC__)
-#        include <cpuid.h> // __get_cpuid	GCC / LLVM (Clang)
+#        include <cpuid.h> /// __get_cpuid	GCC / LLVM (Clang)
 #    endif
 #endif
 
 namespace apex
 {
-//	apex memmove (tiberium, kryptonite and mithril) memcpy/memmove functions written by Trevor Herselman in 2014
+///	apex memmove (tiberium, kryptonite and mithril) memcpy/memmove functions written by Trevor Herselman in 2014
 
 #if defined(_MSC_VER)
 #    pragma warning(push)
-#    pragma warning(disable : 4146) //	warning C4146: unary minus operator applied to unsigned type, result still unsigned
-#    pragma warning(disable : 4244) //	warning C4244: '-=': conversion from '__int64' to 'std::size_t', possible loss of data
+#    pragma warning(disable : 4146) ///	warning C4146: unary minus operator applied to unsigned type, result still unsigned
+#    pragma warning(disable : 4244) ///	warning C4244: '-=': conversion from '__int64' to 'std::size_t', possible loss of data
 #endif
 
-#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86) //	Test for Intel/AMD architecture
+#if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86) ///	Test for Intel/AMD architecture
 
 void* APEXCALL tiberium(void* dst, const void* src, size_t size)
-{ // based on memmove09 for "size <= 112" and memmove40 for "size > 112"
+{ /// based on memmove09 for "size <= 112" and memmove40 for "size > 112"
     if (size <= 112)
     {
         if (size >= 16)
@@ -145,11 +145,11 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
         {
             if (size < (1024 * 256))
             {
-                long long offset = (long long)(size & -0x40); // "Round down to nearest multiple of 64"
-                dst = (char*)dst + offset; // "Point to the end"
-                src = (char*)src + offset; // "Point to the end"
-                size -= offset; // "Remaining data after loop"
-                offset = -offset; // "Negative index from the end"
+                long long offset = (long long)(size & -0x40); /// "Round down to nearest multiple of 64"
+                dst = (char*)dst + offset; /// "Point to the end"
+                src = (char*)src + offset; /// "Point to the end"
+                size -= offset; /// "Remaining data after loop"
+                offset = -offset; /// "Negative index from the end"
 
                 do
                 {
@@ -194,9 +194,9 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                     return ret;
                 }
             }
-            else // do forward streaming copy/move
+            else /// do forward streaming copy/move
             {
-                // We MUST do prealignment on streaming copies!
+                /// We MUST do prealignment on streaming copies!
                 const size_t prealign = -(size_t)dst & 0xf;
                 if (prealign)
                 {
@@ -241,7 +241,7 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                     size -= prealign;
                 }
 
-                // Begin prefetching upto 4KB
+                /// Begin prefetching upto 4KB
                 for (long long offset = 0; offset < 4096; offset += 256)
                 {
                     _mm_prefetch(((char*)src + offset), _MM_HINT_NTA);
@@ -250,14 +250,14 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                     _mm_prefetch(((char*)src + offset + 192), _MM_HINT_NTA);
                 }
 
-                long long offset = (long long)(size & -0x40); // "Round down to nearest multiple of 64"
-                size -= offset; // "Remaining data after loop"
-                offset -= 4096; // stage 1 INCLUDES prefetches
-                dst = (char*)dst + offset; // "Point to the end"
-                src = (char*)src + offset; // "Point to the end"
-                offset = -offset; // "Negative index from the end"
+                long long offset = (long long)(size & -0x40); /// "Round down to nearest multiple of 64"
+                size -= offset; /// "Remaining data after loop"
+                offset -= 4096; /// stage 1 INCLUDES prefetches
+                dst = (char*)dst + offset; /// "Point to the end"
+                src = (char*)src + offset; /// "Point to the end"
+                offset = -offset; /// "Negative index from the end"
 
-                do // stage 1 ~~ WITH prefetching
+                do /// stage 1 ~~ WITH prefetching
                 {
                     _mm_prefetch((char*)src + offset + 4096, _MM_HINT_NTA);
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset));
@@ -274,9 +274,9 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                 dst = (char*)dst + 4096;
                 src = (char*)src + 4096;
 
-                _mm_prefetch(((char*)src + size - 64), _MM_HINT_NTA); // prefetch the final tail section
+                _mm_prefetch(((char*)src + size - 64), _MM_HINT_NTA); /// prefetch the final tail section
 
-                do // stage 2 ~~ WITHOUT further prefetching
+                do /// stage 2 ~~ WITHOUT further prefetching
                 {
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset));
                     const __m128i xmm1 = _mm_loadu_si128((__m128i*)((char*)src + offset + 16));
@@ -352,18 +352,18 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
             }
             return ret;
         }
-        else // src < dst ... do reverse copy
+        else /// src < dst ... do reverse copy
         {
             src = (char*)src + size;
             dst = (char*)dst + size;
 
             if (size < (1024 * 256))
             {
-                long long offset = (long long)(size & -0x40); // "Round down to nearest multiple of 64"
-                dst = (char*)dst - offset; // "Point to the end" ... actually, we point to the start!
-                src = (char*)src - offset; // "Point to the end" ... actually, we point to the start!
-                size -= offset; // "Remaining data after loop"
-                //offset = -offset;									// "Negative index from the end" ... not when doing reverse copy/move!
+                long long offset = (long long)(size & -0x40); /// "Round down to nearest multiple of 64"
+                dst = (char*)dst - offset; /// "Point to the end" ... actually, we point to the start!
+                src = (char*)src - offset; /// "Point to the end" ... actually, we point to the start!
+                size -= offset; /// "Remaining data after loop"
+                ///offset = -offset;									/// "Negative index from the end" ... not when doing reverse copy/move!
 
                 offset -= 64;
                 do
@@ -410,9 +410,9 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                     return ret;
                 }
             }
-            else // do reversed streaming copy/move
+            else /// do reversed streaming copy/move
             {
-                // We MUST do prealignment on streaming copies!
+                /// We MUST do prealignment on streaming copies!
                 const size_t prealign = (size_t)dst & 0xf;
                 if (prealign)
                 {
@@ -430,7 +430,7 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                         }
                         else
                             *(long long*)dst
-                                = rax; // different on purpose, because we know the exact size now, which is 8, and "dst" has already been aligned!
+                                = rax; /// different on purpose, because we know the exact size now, which is 8, and "dst" has already been aligned!
                     }
                     else if (prealign >= 4)
                     {
@@ -442,7 +442,7 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                             *(int*)dst = ecx;
                         }
                         else
-                            *(int*)dst = eax; // different on purpose!
+                            *(int*)dst = eax; /// different on purpose!
                     }
                     else
                     {
@@ -454,11 +454,11 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                             *(short*)dst = cx;
                         }
                         else
-                            *(char*)dst = al; // different on purpose!
+                            *(char*)dst = al; /// different on purpose!
                     }
                 }
 
-                // Begin prefetching upto 4KB
+                /// Begin prefetching upto 4KB
                 for (long long offset = 0; offset > -4096; offset -= 256)
                 {
                     _mm_prefetch(((char*)src + offset - 64), _MM_HINT_NTA);
@@ -467,15 +467,15 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                     _mm_prefetch(((char*)src + offset - 256), _MM_HINT_NTA);
                 }
 
-                long long offset = (long long)(size & -0x40); // "Round down to nearest multiple of 64"
-                size -= offset; // "Remaining data after loop"
-                offset -= 4096; // stage 1 INCLUDES prefetches
-                dst = (char*)dst - offset; // "Point to the end" ... actually, we point to the start!
-                src = (char*)src - offset; // "Point to the end" ... actually, we point to the start!
-                //offset = -offset;									// "Negative index from the end" ... not when doing reverse copy/move!
+                long long offset = (long long)(size & -0x40); /// "Round down to nearest multiple of 64"
+                size -= offset; /// "Remaining data after loop"
+                offset -= 4096; /// stage 1 INCLUDES prefetches
+                dst = (char*)dst - offset; /// "Point to the end" ... actually, we point to the start!
+                src = (char*)src - offset; /// "Point to the end" ... actually, we point to the start!
+                ///offset = -offset;									/// "Negative index from the end" ... not when doing reverse copy/move!
 
                 offset -= 64;
-                do // stage 1 ~~ WITH prefetching
+                do /// stage 1 ~~ WITH prefetching
                 {
                     _mm_prefetch((char*)src + offset - 4096, _MM_HINT_NTA);
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset + 48));
@@ -492,10 +492,10 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                 dst = (char*)dst - 4096;
                 src = (char*)src - 4096;
 
-                _mm_prefetch(((char*)src - 64), _MM_HINT_NTA); // prefetch the final tail section
+                _mm_prefetch(((char*)src - 64), _MM_HINT_NTA); /// prefetch the final tail section
 
                 offset -= 64;
-                do // stage 2 ~~ WITHOUT further prefetching
+                do /// stage 2 ~~ WITHOUT further prefetching
                 {
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset + 48));
                     const __m128i xmm1 = _mm_loadu_si128((__m128i*)((char*)src + offset + 32));
@@ -540,7 +540,7 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
                 long long rax = *(long long*)((char*)src - 8);
                 if (size > 8)
                 {
-                    size = -size; // that's right, we're converting an unsigned value to a negative, saves 2 clock cycles!
+                    size = -size; /// that's right, we're converting an unsigned value to a negative, saves 2 clock cycles!
                     long long rcx = *(long long*)((char*)src + size);
                     *(long long*)((char*)dst - 8) = rax;
                     *(long long*)((char*)dst + size) = rcx;
@@ -579,7 +579,7 @@ void* APEXCALL tiberium(void* dst, const void* src, size_t size)
     }
 }
 void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
-{ // based on memmove09 for "size <= 112" and memmove41 for "size > 112"; memmove09's "size <= 112" proved fastest overall (weighted), even on Core i5!
+{ /// based on memmove09 for "size <= 112" and memmove41 for "size > 112"; memmove09's "size <= 112" proved fastest overall (weighted), even on Core i5!
     if (size <= 112)
     {
         if (size >= 16)
@@ -700,11 +700,11 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
         {
             if (size < (1024 * 256))
             {
-                long long offset = (long long)(size & -0x20); // "Round down to nearest multiple of 64"
-                dst = (char*)dst + offset; // "Point to the end"
-                src = (char*)src + offset; // "Point to the end"
-                size -= offset; // "Remaining data after loop"
-                offset = -offset; // "Negative index from the end"
+                long long offset = (long long)(size & -0x20); /// "Round down to nearest multiple of 64"
+                dst = (char*)dst + offset; /// "Point to the end"
+                src = (char*)src + offset; /// "Point to the end"
+                size -= offset; /// "Remaining data after loop"
+                offset = -offset; /// "Negative index from the end"
 
                 do
                 {
@@ -728,9 +728,9 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                     return ret;
                 }
             }
-            else // do forward streaming copy/move
+            else /// do forward streaming copy/move
             {
-                // We MUST do prealignment on streaming copies!
+                /// We MUST do prealignment on streaming copies!
                 const size_t prealign = -(size_t)dst & 0xf;
                 if (prealign)
                 {
@@ -775,7 +775,7 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                     size -= prealign;
                 }
 
-                // Begin prefetching upto 4KB
+                /// Begin prefetching upto 4KB
                 for (long long offset = 0; offset < 4096; offset += 256)
                 {
                     _mm_prefetch(((char*)src + offset), _MM_HINT_NTA);
@@ -784,14 +784,14 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                     _mm_prefetch(((char*)src + offset + 192), _MM_HINT_NTA);
                 }
 
-                long long offset = (long long)(size & -0x40); // "Round down to nearest multiple of 64"
-                size -= offset; // "Remaining data after loop"
-                offset -= 4096; // stage 1 INCLUDES prefetches
-                dst = (char*)dst + offset; // "Point to the end"
-                src = (char*)src + offset; // "Point to the end"
-                offset = -offset; // "Negative index from the end"
+                long long offset = (long long)(size & -0x40); /// "Round down to nearest multiple of 64"
+                size -= offset; /// "Remaining data after loop"
+                offset -= 4096; /// stage 1 INCLUDES prefetches
+                dst = (char*)dst + offset; /// "Point to the end"
+                src = (char*)src + offset; /// "Point to the end"
+                offset = -offset; /// "Negative index from the end"
 
-                do // stage 1 ~~ WITH prefetching
+                do /// stage 1 ~~ WITH prefetching
                 {
                     _mm_prefetch((char*)src + offset + 4096, _MM_HINT_NTA);
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset));
@@ -808,9 +808,9 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                 dst = (char*)dst + 4096;
                 src = (char*)src + 4096;
 
-                _mm_prefetch(((char*)src + size - 64), _MM_HINT_NTA); // prefetch the final tail section
+                _mm_prefetch(((char*)src + size - 64), _MM_HINT_NTA); /// prefetch the final tail section
 
-                do // stage 2 ~~ WITHOUT further prefetching
+                do /// stage 2 ~~ WITHOUT further prefetching
                 {
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset));
                     const __m128i xmm1 = _mm_loadu_si128((__m128i*)((char*)src + offset + 16));
@@ -886,18 +886,18 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
             }
             return ret;
         }
-        else // src < dst ... do reverse copy
+        else /// src < dst ... do reverse copy
         {
             src = (char*)src + size;
             dst = (char*)dst + size;
 
             if (size < (1024 * 256))
             {
-                long long offset = (long long)(size & -0x20); // "Round down to nearest multiple of 64"
-                dst = (char*)dst - offset; // "Point to the end" ... actually, we point to the start!
-                src = (char*)src - offset; // "Point to the end" ... actually, we point to the start!
-                size -= offset; // "Remaining data after loop"
-                //offset = -offset;									// "Negative index from the end" ... not when doing reverse copy/move!
+                long long offset = (long long)(size & -0x20); /// "Round down to nearest multiple of 64"
+                dst = (char*)dst - offset; /// "Point to the end" ... actually, we point to the start!
+                src = (char*)src - offset; /// "Point to the end" ... actually, we point to the start!
+                size -= offset; /// "Remaining data after loop"
+                ///offset = -offset;									/// "Negative index from the end" ... not when doing reverse copy/move!
 
                 offset -= 32;
                 do
@@ -913,7 +913,7 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                     if (size > 16)
                     {
                         size = -size;
-                        // The order has been mixed so the compiler will not re-order the statements!
+                        /// The order has been mixed so the compiler will not re-order the statements!
                         const __m128i xmm7 = _mm_loadu_si128((__m128i*)((char*)src + size));
                         const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src - 16));
                         _mm_storeu_si128((__m128i*)((char*)dst + size), xmm7);
@@ -924,9 +924,9 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                     return ret;
                 }
             }
-            else // do reversed streaming copy/move
+            else /// do reversed streaming copy/move
             {
-                // We MUST do prealignment on streaming copies!
+                /// We MUST do prealignment on streaming copies!
                 const size_t prealign = (size_t)dst & 0xf;
                 if (prealign)
                 {
@@ -944,7 +944,7 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                         }
                         else
                             *(long long*)dst
-                                = rax; // different on purpose, because we know the exact size now, which is 8, and "dst" has already been aligned!
+                                = rax; /// different on purpose, because we know the exact size now, which is 8, and "dst" has already been aligned!
                     }
                     else if (prealign >= 4)
                     {
@@ -956,7 +956,7 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                             *(int*)dst = ecx;
                         }
                         else
-                            *(int*)dst = eax; // different on purpose!
+                            *(int*)dst = eax; /// different on purpose!
                     }
                     else
                     {
@@ -968,11 +968,11 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                             *(short*)dst = cx;
                         }
                         else
-                            *(char*)dst = al; // different on purpose!
+                            *(char*)dst = al; /// different on purpose!
                     }
                 }
 
-                // Begin prefetching upto 4KB
+                /// Begin prefetching upto 4KB
                 for (long long offset = 0; offset > -4096; offset -= 256)
                 {
                     _mm_prefetch(((char*)src + offset - 64), _MM_HINT_NTA);
@@ -981,15 +981,15 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                     _mm_prefetch(((char*)src + offset - 256), _MM_HINT_NTA);
                 }
 
-                long long offset = (long long)(size & -0x40); // "Round down to nearest multiple of 64"
-                size -= offset; // "Remaining data after loop"
-                offset -= 4096; // stage 1 INCLUDES prefetches
-                dst = (char*)dst - offset; // "Point to the end" ... actually, we point to the start!
-                src = (char*)src - offset; // "Point to the end" ... actually, we point to the start!
-                //offset = -offset;									// "Negative index from the end" ... not when doing reverse copy/move!
+                long long offset = (long long)(size & -0x40); /// "Round down to nearest multiple of 64"
+                size -= offset; /// "Remaining data after loop"
+                offset -= 4096; /// stage 1 INCLUDES prefetches
+                dst = (char*)dst - offset; /// "Point to the end" ... actually, we point to the start!
+                src = (char*)src - offset; /// "Point to the end" ... actually, we point to the start!
+                ///offset = -offset;									/// "Negative index from the end" ... not when doing reverse copy/move!
 
                 offset -= 64;
-                do // stage 1 ~~ WITH prefetching
+                do /// stage 1 ~~ WITH prefetching
                 {
                     _mm_prefetch((char*)src + offset - 4096, _MM_HINT_NTA);
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset + 48));
@@ -1006,10 +1006,10 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                 dst = (char*)dst - 4096;
                 src = (char*)src - 4096;
 
-                _mm_prefetch(((char*)src - 64), _MM_HINT_NTA); // prefetch the final tail section
+                _mm_prefetch(((char*)src - 64), _MM_HINT_NTA); /// prefetch the final tail section
 
                 offset -= 64;
-                do // stage 2 ~~ WITHOUT further prefetching
+                do /// stage 2 ~~ WITHOUT further prefetching
                 {
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset + 48));
                     const __m128i xmm1 = _mm_loadu_si128((__m128i*)((char*)src + offset + 32));
@@ -1054,7 +1054,7 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
                 long long rax = *(long long*)((char*)src - 8);
                 if (size > 8)
                 {
-                    size = -size; // that's right, we're converting an unsigned value to a negative, saves 2 clock cycles!
+                    size = -size; /// that's right, we're converting an unsigned value to a negative, saves 2 clock cycles!
                     long long rcx = *(long long*)((char*)src + size);
                     *(long long*)((char*)dst - 8) = rax;
                     *(long long*)((char*)dst + size) = rcx;
@@ -1093,13 +1093,13 @@ void* APEXCALL kryptonite(void* dst, const void* src, size_t size)
     }
 }
 
-#    if (!defined(_M_X64) && !defined(__x86_64__)) //	`mithril` is only used in 32-bit code (not necessary for 64-bit)
+#    if (!defined(_M_X64) && !defined(__x86_64__)) ///	`mithril` is only used in 32-bit code (not necessary for 64-bit)
 
-// "Mithril" - Written by Trevor Herselman on 4 December 2013 @ 9pm
-// This is my "compact power house"! Decided to make a "mini" powerful version, one that can easily beat Microsoft's memmove, but doesn't contain all the "bells and whistles"!
-// Probably Very similar to mm04 in terms of performance, but this should be faster under all conditions and ranges!
-// Includes a new "prealignment" check that detects if "size <= 48", then uses 3x SSE loads instead of passing through the prealignment code!
-// originally called memmove13() during development (mm13 is based on mm04)
+/// "Mithril" - Written by Trevor Herselman on 4 December 2013 @ 9pm
+/// This is my "compact power house"! Decided to make a "mini" powerful version, one that can easily beat Microsoft's memmove, but doesn't contain all the "bells and whistles"!
+/// Probably Very similar to mm04 in terms of performance, but this should be faster under all conditions and ranges!
+/// Includes a new "prealignment" check that detects if "size <= 48", then uses 3x SSE loads instead of passing through the prealignment code!
+/// originally called memmove13() during development (mm13 is based on mm04)
 void* APEXCALL mithril(void* dst, const void* src, size_t size)
 {
     if (size <= 32)
@@ -1170,10 +1170,10 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                 const size_t prealign = -(size_t)dst & 0xf;
                 if (size <= 48)
                 {
-                    // prealignment might drop the remaining size below 32-bytes,
-                    // we could also check "size - prealign <= 32", but since we're already here,
-                    // and these statements can load upto 48-bytes, we might as well just do it!
-                    // We `could` copy up to 64-bytes without any additional checks by using another SSE "loadu" & "storeu"
+                    /// prealignment might drop the remaining size below 32-bytes,
+                    /// we could also check "size - prealign <= 32", but since we're already here,
+                    /// and these statements can load upto 48-bytes, we might as well just do it!
+                    /// We `could` copy up to 64-bytes without any additional checks by using another SSE "loadu" & "storeu"
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)src);
                     long long r1 = *(long long*)((char*)src + 16);
                     long long r2 = *(long long*)((char*)src + 24);
@@ -1230,11 +1230,11 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
 
             if (size < (1024 * 256))
             {
-                long long offset = (long long)(size & -0x20); // "Round down to nearest multiple of 32"
-                dst = (char*)dst + offset; // "Point to the end"
-                src = (char*)src + offset; // "Point to the end"
-                size -= offset; // "Remaining data after loop"
-                offset = -offset; // "Negative index from the end"
+                long long offset = (long long)(size & -0x20); /// "Round down to nearest multiple of 32"
+                dst = (char*)dst + offset; /// "Point to the end"
+                src = (char*)src + offset; /// "Point to the end"
+                size -= offset; /// "Remaining data after loop"
+                offset = -offset; /// "Negative index from the end"
 
                 if (((size_t)src & 0xf) == 0)
                 {
@@ -1285,9 +1285,9 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                     }
                 }
             }
-            else // do forward streaming copy/move
+            else /// do forward streaming copy/move
             {
-                // Begin prefetching upto 4KB
+                /// Begin prefetching upto 4KB
                 for (long long i = 0; i < 4096; i += 256)
                 {
                     _mm_prefetch(((char*)src + i), _MM_HINT_NTA);
@@ -1296,14 +1296,14 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                     _mm_prefetch(((char*)src + i + 192), _MM_HINT_NTA);
                 }
 
-                long long offset = (long long)(size & -0x40); // "Round down to nearest multiple of 64"
-                size -= offset; // "Remaining data after loop"
-                offset -= 4096; // stage 1 INCLUDES prefetches
-                dst = (char*)dst + offset; // "Point to the end"
-                src = (char*)src + offset; // "Point to the end"
-                offset = -offset; // "Negative index from the end"
+                long long offset = (long long)(size & -0x40); /// "Round down to nearest multiple of 64"
+                size -= offset; /// "Remaining data after loop"
+                offset -= 4096; /// stage 1 INCLUDES prefetches
+                dst = (char*)dst + offset; /// "Point to the end"
+                src = (char*)src + offset; /// "Point to the end"
+                offset = -offset; /// "Negative index from the end"
 
-                do // stage 1 ~~ WITH prefetching
+                do /// stage 1 ~~ WITH prefetching
                 {
                     _mm_prefetch((char*)src + offset + 4096, _MM_HINT_NTA);
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset));
@@ -1320,9 +1320,9 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                 dst = (char*)dst + 4096;
                 src = (char*)src + 4096;
 
-                _mm_prefetch(((char*)src + size - 64), _MM_HINT_NTA); // prefetch the final tail section
+                _mm_prefetch(((char*)src + size - 64), _MM_HINT_NTA); /// prefetch the final tail section
 
-                do // stage 2 ~~ WITHOUT further prefetching
+                do /// stage 2 ~~ WITHOUT further prefetching
                 {
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset));
                     const __m128i xmm1 = _mm_loadu_si128((__m128i*)((char*)src + offset + 16));
@@ -1398,7 +1398,7 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
             }
             return ret;
         }
-        else // src < dst ... do reverse copy
+        else /// src < dst ... do reverse copy
         {
             src = (char*)src + size;
             dst = (char*)dst + size;
@@ -1408,17 +1408,17 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
             {
                 if (size <= 48)
                 {
-                    // prealignment might drop the remaining size below 32-bytes,
-                    // we could also check "size - prealign <= 32", but since we're already here,
-                    // and these statements can load upto 48-bytes, we might as well just do it!
-                    // Actually, we can copy upto 64-bytes without any additional checks!
+                    /// prealignment might drop the remaining size below 32-bytes,
+                    /// we could also check "size - prealign <= 32", but since we're already here,
+                    /// and these statements can load upto 48-bytes, we might as well just do it!
+                    /// Actually, we can copy upto 64-bytes without any additional checks!
                     size = -size;
-                    const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src - 16)); // first 32-bytes in reverse
+                    const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src - 16)); /// first 32-bytes in reverse
                     const __m128i xmm1 = _mm_loadu_si128((__m128i*)((char*)src - 32));
                     const __m128i xmm7 = _mm_loadu_si128((__m128i*)((char*)src + size));
                     _mm_storeu_si128((__m128i*)((char*)dst - 16), xmm0);
                     _mm_storeu_si128((__m128i*)((char*)dst - 32), xmm1);
-                    _mm_storeu_si128((__m128i*)((char*)dst + size), xmm7); // the "back" bytes are actually the base address!
+                    _mm_storeu_si128((__m128i*)((char*)dst + size), xmm7); /// the "back" bytes are actually the base address!
                     return dst;
                 }
 
@@ -1435,7 +1435,7 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                         *(long long*)dst = rcx;
                     }
                     else
-                        *(long long*)dst = rax; // different on purpose, because we know the exact size now!
+                        *(long long*)dst = rax; /// different on purpose, because we know the exact size now!
                 }
                 else if (prealign >= 4)
                 {
@@ -1447,7 +1447,7 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                         *(int*)dst = ecx;
                     }
                     else
-                        *(int*)dst = eax; // different on purpose!
+                        *(int*)dst = eax; /// different on purpose!
                 }
                 else
                 {
@@ -1459,19 +1459,19 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                         *(short*)dst = cx;
                     }
                     else
-                        *(char*)dst = al; // different on purpose!
+                        *(char*)dst = al; /// different on purpose!
                 }
             }
 
             if (size < (1024 * 256))
             {
-                long long offset = (long long)(size & -0x20); // "Round down to nearest multiple of 32"
-                dst = (char*)dst - offset; // "Point to the end" ... actually, we point to the start!
-                src = (char*)src - offset; // "Point to the end" ... actually, we point to the start!
-                size -= offset; // "Remaining data after loop"
-                //offset = -offset;									// "Negative index from the end" ... not when doing reverse copy/move!
+                long long offset = (long long)(size & -0x20); /// "Round down to nearest multiple of 32"
+                dst = (char*)dst - offset; /// "Point to the end" ... actually, we point to the start!
+                src = (char*)src - offset; /// "Point to the end" ... actually, we point to the start!
+                size -= offset; /// "Remaining data after loop"
+                ///offset = -offset;									/// "Negative index from the end" ... not when doing reverse copy/move!
 
-                offset -= 32; // MSVC completely re-engineers this!
+                offset -= 32; /// MSVC completely re-engineers this!
 
                 if (((size_t)src & 0xf) == 0)
                 {
@@ -1489,10 +1489,10 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                         if (size > 16)
                         {
                             size = -size;
-                            //const __m128i xmm7 = _mm_loadu_si128( (__m128i*)((char*)src + size) ); // SSE2 alternative
+                            ///const __m128i xmm7 = _mm_loadu_si128( (__m128i*)((char*)src + size) ); /// SSE2 alternative
                             long long rax = *(long long*)((char*)src + size + 8);
                             long long rcx = *(long long*)((char*)src + size);
-                            //_mm_storeu_si128( (__m128i*)((char*)dst + size), xmm7 );
+                            ///_mm_storeu_si128( (__m128i*)((char*)dst + size), xmm7 );
                             *(long long*)((char*)dst + size + 8) = rax;
                             *(long long*)((char*)dst + size) = rcx;
                         }
@@ -1526,9 +1526,9 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                     }
                 }
             }
-            else // do reversed streaming copy/move
+            else /// do reversed streaming copy/move
             {
-                // Begin prefetching upto 4KB
+                /// Begin prefetching upto 4KB
                 for (long long offset = 0; offset > -4096; offset -= 256)
                 {
                     _mm_prefetch(((char*)src + offset - 64), _MM_HINT_NTA);
@@ -1537,15 +1537,15 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                     _mm_prefetch(((char*)src + offset - 256), _MM_HINT_NTA);
                 }
 
-                long long offset = (long long)(size & -0x40); // "Round down to nearest multiple of 32"
-                size -= offset; // "Remaining data after loop"
-                offset -= 4096; // stage 1 INCLUDES prefetches
-                dst = (char*)dst - offset; // "Point to the end" ... actually, we point to the start!
-                src = (char*)src - offset; // "Point to the end" ... actually, we point to the start!
-                //offset = -offset;									// "Negative index from the end" ... not when doing reverse copy/move!
+                long long offset = (long long)(size & -0x40); /// "Round down to nearest multiple of 32"
+                size -= offset; /// "Remaining data after loop"
+                offset -= 4096; /// stage 1 INCLUDES prefetches
+                dst = (char*)dst - offset; /// "Point to the end" ... actually, we point to the start!
+                src = (char*)src - offset; /// "Point to the end" ... actually, we point to the start!
+                ///offset = -offset;									/// "Negative index from the end" ... not when doing reverse copy/move!
 
                 offset -= 64;
-                do // stage 1 ~~ WITH prefetching
+                do /// stage 1 ~~ WITH prefetching
                 {
                     _mm_prefetch((char*)src + offset - 4096, _MM_HINT_NTA);
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset + 48));
@@ -1562,10 +1562,10 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                 dst = (char*)dst - 4096;
                 src = (char*)src - 4096;
 
-                _mm_prefetch(((char*)src - 64), _MM_HINT_NTA); // prefetch the final tail section
+                _mm_prefetch(((char*)src - 64), _MM_HINT_NTA); /// prefetch the final tail section
 
                 offset -= 64;
-                do // stage 2 ~~ WITHOUT further prefetching
+                do /// stage 2 ~~ WITHOUT further prefetching
                 {
                     const __m128i xmm0 = _mm_loadu_si128((__m128i*)((char*)src + offset + 48));
                     const __m128i xmm1 = _mm_loadu_si128((__m128i*)((char*)src + offset + 32));
@@ -1610,7 +1610,7 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
                 long long rax = *(long long*)((char*)src - 8);
                 if (size > 8)
                 {
-                    size = -size; // that's right, we're converting an unsigned value to a negative, saves 2 clock cycles!
+                    size = -size; /// that's right, we're converting an unsigned value to a negative, saves 2 clock cycles!
                     long long rcx = *(long long*)((char*)src + size);
                     *(long long*)((char*)dst - 8) = rax;
                     *(long long*)((char*)dst + size) = rcx;
@@ -1649,8 +1649,8 @@ void* APEXCALL mithril(void* dst, const void* src, size_t size)
     }
 }
 
-#    endif //	end test for 32-bit
-#endif //	end test for Intel/AMD (32-bit & 64-bit)
+#    endif ///	end test for 32-bit
+#endif ///	end test for Intel/AMD (32-bit & 64-bit)
 
 #if defined(_MSC_VER)
 #    pragma warning(pop)
@@ -1660,52 +1660,52 @@ void* APEXCALL memmove_dispatcher(void* dst, const void* src, size_t size)
 {
 #if (defined(_M_X64) || defined(__x86_64__) || defined(__i386) || defined(_M_IX86)) \
     && (defined(_MSC_VER) \
-        || defined(__GNUC__)) //	Compiler and architecture test (Intel/AMD Architecture)! Visual Studio and GCC / LLVM (Clang)
+        || defined(__GNUC__)) ///	Compiler and architecture test (Intel/AMD Architecture)! Visual Studio and GCC / LLVM (Clang)
 #    if defined(_MSC_VER)
-    int cpuid[4] = {-1}; //	Visual Studio
+    int cpuid[4] = {-1}; ///	Visual Studio
     __cpuid(cpuid, 1);
-#        define bit_SSE2 (1 << 26) //	Taken from GCC <cpuid.h> ... just more visual & descriptive!
+#        define bit_SSE2 (1 << 26) ///	Taken from GCC <cpuid.h> ... just more visual & descriptive!
 #        define bit_SSSE3 (1 << 9)
 #        define bit_SSE4_2 (1 << 20)
 #    else
-    unsigned int cpuid[4]; //	GCC / LLVM (Clang)
+    unsigned int cpuid[4]; ///	GCC / LLVM (Clang)
     __get_cpuid(1, &cpuid[0], &cpuid[1], &cpuid[2], &cpuid[3]);
 #    endif
-#    if defined(_M_X64) || defined(__x86_64__) //	64-bit
-    if (cpuid[2] & bit_SSE4_2) //	detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access
+#    if defined(_M_X64) || defined(__x86_64__) ///	64-bit
+    if (cpuid[2] & bit_SSE4_2) ///	detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access
         apex::memcpy = apex::memmove = &apex::kryptonite;
     else
         apex::memcpy = apex::memmove = &apex::tiberium;
-#    else //	32-bit
-    if (cpuid[2] & bit_SSE4_2) //	detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access
+#    else ///	32-bit
+    if (cpuid[2] & bit_SSE4_2) ///	detect SSE4.2, available on Core i and newer processors, they include "fast unaligned" memory access
         apex::memcpy = apex::memmove = &apex::kryptonite;
-    else if (cpuid[2] & bit_SSSE3) //	detect SSSE3, available on Core/Core 2 and newer
+    else if (cpuid[2] & bit_SSSE3) ///	detect SSSE3, available on Core/Core 2 and newer
         apex::memcpy = apex::memmove
             = &apex::
-                  tiberium; //	`tiberium` CAN run with the SSE2 instructions alone, however there was something about very old SSE2 (only) computers, some penalty when using `tiberiums` algorithm, so I've restricted `tiberium` to Core/Core 2 based machines on 32-bit by doing this!
+                  tiberium; ///	`tiberium` CAN run with the SSE2 instructions alone, however there was something about very old SSE2 (only) computers, some penalty when using `tiberiums` algorithm, so I've restricted `tiberium` to Core/Core 2 based machines on 32-bit by doing this!
     else if (cpuid[3] & bit_SSE2)
         apex::memcpy = apex::memmove
             = &apex::
-                  mithril; //	this is for very, very old computers with SSE2 only! eg. old Pentium 4! There was something about computers WITHOUT SSSE3 (Core microarchitecture) that made `tiberium` a bit slower. So this is for super old (P4) PC's!
+                  mithril; ///	this is for very, very old computers with SSE2 only! eg. old Pentium 4! There was something about computers WITHOUT SSSE3 (Core microarchitecture) that made `tiberium` a bit slower. So this is for super old (P4) PC's!
     else
     {
-        apex::memcpy = &::memcpy; //	No SSE2 no cry!
+        apex::memcpy = &::memcpy; ///	No SSE2 no cry!
         apex::memmove = &::memmove;
     }
 #    endif
-#else //	unknown compiler or architecture! eg. __arm__ / __mips__ / __ppc__ / __sparc / __ia64 (Itanium) etc.
+#else ///	unknown compiler or architecture! eg. __arm__ / __mips__ / __ppc__ / __sparc / __ia64 (Itanium) etc.
 #    if defined(__x86_64__)
     apex::memcpy = apex::memmove
         = &apex::
-              tiberium; //	unknown compiler BUT it declared support for Intel/AMD x64/AMD64 (64-bit), so it should come with the <emmintrin.h> file from Intel! 64-bit x64/AMD64 includes SSE2! This includes `Portland (PGCC/PGCPP)`, `Oracle Solaris Studio` and `Intel compiler (ICC)`! I don't have code for CPUID for these compilers so I don't know how to check for SSE2/SSSE3/SSE4.2 on them!
+              tiberium; ///	unknown compiler BUT it declared support for Intel/AMD x64/AMD64 (64-bit), so it should come with the <emmintrin.h> file from Intel! 64-bit x64/AMD64 includes SSE2! This includes `Portland (PGCC/PGCPP)`, `Oracle Solaris Studio` and `Intel compiler (ICC)`! I don't have code for CPUID for these compilers so I don't know how to check for SSE2/SSSE3/SSE4.2 on them!
 #    else
-    apex::memcpy = &::memcpy; //	unknown compiler or architecture!
+    apex::memcpy = &::memcpy; ///	unknown compiler or architecture!
     apex::memmove = &::memmove;
 #    endif
 #endif
-    return apex::memmove(dst, src, size); //	safe to call memmove even for memcpy!
+    return apex::memmove(dst, src, size); ///	safe to call memmove even for memcpy!
 }
 
 void*(APEXCALL* memcpy)(void* dst, const void* src, size_t size) = apex::memmove_dispatcher;
 void*(APEXCALL* memmove)(void* dst, const void* src, size_t size) = apex::memmove_dispatcher;
-} // namespace apex
+} /// namespace apex

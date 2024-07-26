@@ -201,4 +201,4 @@ TEST_F(AppendToSliceStoreActionTest, KeyedSlice)
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -25,7 +25,7 @@
 #        include <CL/cl.h>
 #    endif
 #else
-// Define some OpenCL types, so that this header file compiles, and we don't need #ifdef's everywhere.
+/// Define some OpenCL types, so that this header file compiles, and we don't need #ifdef's everywhere.
 using cl_platform_id = unsigned;
 using cl_device_id = unsigned;
 #endif
@@ -66,6 +66,6 @@ private:
     std::vector<WorkerOpenCLDeviceInfo> devices;
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_OPENCLMANAGER_HPP_

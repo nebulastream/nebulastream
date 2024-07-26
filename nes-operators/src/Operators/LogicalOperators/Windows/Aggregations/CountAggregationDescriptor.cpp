@@ -48,7 +48,7 @@ void CountAggregationDescriptor::inferStamp(SchemaPtr schema)
     auto attributeNameResolver = schema->getSourceNameQualifier() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     auto asFieldName = asField->as<FieldAccessExpressionNode>()->getFieldName();
 
-    //If on and as field name are different then append the attribute name resolver from on field to the as field
+    ///If on and as field name are different then append the attribute name resolver from on field to the as field
     if (asFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
         asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + asFieldName);
@@ -59,7 +59,7 @@ void CountAggregationDescriptor::inferStamp(SchemaPtr schema)
         asField->as<FieldAccessExpressionNode>()->updateFieldName(attributeNameResolver + fieldName);
     }
 
-    // a count aggregation is always on an uint 64
+    /// a count aggregation is always on an uint 64
     onField->setStamp(DataTypeFactory::createUInt64());
     asField->setStamp(onField->getStamp());
 }
@@ -81,4 +81,4 @@ DataTypePtr CountAggregationDescriptor::getFinalAggregateStamp()
     return DataTypeFactory::createUInt64();
 }
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing

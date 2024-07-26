@@ -119,16 +119,16 @@ TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile)
 
 TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
 {
-    // given
+    /// given
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     auto commandLineParams = makeCommandLineArgs(
         {"--restIp=localhost",
          "--worker.numberOfSlots=10",
          "--worker.numberOfBuffersInSourceLocalBufferPool=128",
          "--worker.bufferSizeInBytes=1024"});
-    // when
+    /// when
     coordinatorConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-    // then
+    /// then
     EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
@@ -220,7 +220,7 @@ TEST_F(ConfigTest, testWorkerYAMLFileFixedLocationNode)
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
 {
-    // given
+    /// given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     auto commandLineParams = makeCommandLineArgs(
         {"--localWorkerHost=localhost",
@@ -237,9 +237,9 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
          "--physicalSources.physicalSourceName=x",
          "--physicalSources.logicalSourceName=default",
          "--fieldNodeLocationCoordinates=23.88,-3.4"});
-    // when
+    /// when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-    // then
+    /// then
     EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
@@ -269,7 +269,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
 
 TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
 {
-    // given
+    /// given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     auto commandLineParams = makeCommandLineArgs(
         {"--localWorkerHost=localhost",
@@ -285,9 +285,9 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
          "--physicalSources.rowLayout=false",
          "--physicalSources.physicalSourceName=x",
          "--physicalSources.logicalSourceName=default"});
-    // when
+    /// when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-    // then
+    /// then
     EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
@@ -363,12 +363,12 @@ TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput)
 
 TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput)
 {
-    // given
+    /// given
     auto commandLineParams = makeCommandLineArgs(
         {"type=DEFAULT_SOURCE", "numberOfBuffersToProduce=5", "rowLayout=false", "physicalSourceName=x", "logicalSourceName=default"});
-    // when
+    /// when
     auto physicalSourceType1 = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
-    // then
+    /// then
     EXPECT_EQ(
         physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getValue(),
         physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getDefaultValue());
@@ -377,7 +377,7 @@ TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput)
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInput)
 {
-    // given
+    /// given
     auto commandLineParams = makeCommandLineArgs(
         {"type=CSV_SOURCE",
          "numberOfBuffersToProduce=5",
@@ -385,9 +385,9 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInpu
          "physicalSourceName=x",
          "logicalSourceName=default",
          "filePath=fileLoc"});
-    // when
+    /// when
     auto physicalSourceType = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
-    // then
+    /// then
     EXPECT_EQ(
         physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(),
         physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
@@ -396,7 +396,7 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInpu
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput)
 {
-    // given
+    /// given
     auto commandLineParams = makeCommandLineArgs(
         {"type=CSV_SOURCE",
          "numberOfBuffersToProduce=5",
@@ -405,9 +405,9 @@ TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInp
          "logicalSourceName=default",
          "filePath=fileLoc",
          "sourceGatheringMode=ADAPTIVE_MODE"});
-    // when
+    /// when
     auto physicalSourceType = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
-    // then
+    /// then
     EXPECT_NE(
         physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(),
         physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
@@ -635,4 +635,4 @@ TEST_F(ConfigTest, invalidIpYamlInputs)
         }
     }
 }
-} // namespace NES
+} /// namespace NES

@@ -33,6 +33,6 @@ public:
     BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
 };
 
-} // namespace NES::QueryCompilation::Phases
+} /// namespace NES::QueryCompilation::Phases
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_DEFAULTPHASEFACTORY_HPP_

@@ -38,9 +38,9 @@ class QueryCompilerOptions
 public:
     enum class FilterProcessingStrategy : uint8_t
     {
-        // Uses a branches to process filter expressions
+        /// Uses a branches to process filter expressions
         BRANCHED,
-        // Uses predication for filter expressions if possible
+        /// Uses predication for filter expressions if possible
         PREDICATION
     };
 
@@ -207,6 +207,6 @@ protected:
     std::string cudaSdkPath;
     StreamJoinStrategy joinStrategy;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_QUERYCOMPILEROPTIONS_HPP_

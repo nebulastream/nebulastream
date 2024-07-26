@@ -40,16 +40,16 @@ public:
     TypedRef() : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>(Value<MemRef>(std::make_unique<MemRef>(nullptr)))){};
     TypedRef(T* t) : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>((int8_t*)t)){};
 
-    // copy constructor
+    /// copy constructor
     TypedRef(const TypedRef<T>& t) : BaseTypedRef(&type), value(t.value){};
 
-    // move constructor
+    /// move constructor
     TypedRef(const TypedRef<T>&& other) : BaseTypedRef(&type), value(std::move(other.value)){};
 
-    // copy assignment
+    /// copy assignment
     TypedRef<T>& operator=(const TypedRef<T>& other) { return *this = TypedRef<T>(other); };
 
-    // move assignment
+    /// move assignment
     TypedRef<T>& operator=(const TypedRef<T>&& other)
     {
         std::swap(value, other.value);
@@ -69,6 +69,6 @@ public:
     }
 };
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TYPEDREF_HPP_

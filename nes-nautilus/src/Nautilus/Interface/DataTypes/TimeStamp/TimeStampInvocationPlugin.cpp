@@ -89,4 +89,4 @@ public:
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<TimeStampInvocationPlugin> cPlugin;
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

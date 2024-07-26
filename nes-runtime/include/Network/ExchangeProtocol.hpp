@@ -100,6 +100,6 @@ private:
     folly::Synchronized<std::unordered_map<NesPartition, Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> maxSeqNumberPerNesPartition;
 };
 
-} // namespace NES::Network
+} /// namespace NES::Network
 
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_EXCHANGEPROTOCOL_HPP_

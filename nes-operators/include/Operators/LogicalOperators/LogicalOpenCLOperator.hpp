@@ -65,5 +65,5 @@ private:
     std::string openCLCode;
     size_t deviceId;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPENCLOPERATOR_HPP_

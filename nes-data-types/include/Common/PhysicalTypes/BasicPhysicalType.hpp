@@ -96,6 +96,6 @@ public:
 
 using BasicPhysicalTypePtr = std::shared_ptr<BasicPhysicalType>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_BASICPHYSICALTYPE_HPP_

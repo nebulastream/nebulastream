@@ -33,4 +33,4 @@ std::string LoadOperation::toString()
     return identifier + " = load(" + getAddress()->getIdentifier() + ")";
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

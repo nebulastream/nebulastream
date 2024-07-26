@@ -152,5 +152,5 @@ private:
     const TypedRef<RawType> rawReference;
 };
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LIST_HPP_

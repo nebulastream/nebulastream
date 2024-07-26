@@ -53,14 +53,14 @@ void CaseExpressionNode::inferStamp(SchemaPtr schema)
     for (auto elem : whenChildren)
     {
         elem->inferStamp(schema);
-        //all elements in whenChildren must be WhenExpressionNodes
+        ///all elements in whenChildren must be WhenExpressionNodes
         if (!elem->instanceOf<WhenExpressionNode>())
         {
             NES_THROW_RUNTIME_ERROR(
                 "Error during stamp inference. All expressions in when expression vector must be when expressions, but " + elem->toString()
                 + " is not a when expression.");
         }
-        //all elements must have same stamp as defaultExp value
+        ///all elements must have same stamp as defaultExp value
         if (!defaultExp->getStamp()->equals(elem->getStamp()))
         {
             NES_THROW_RUNTIME_ERROR(
@@ -150,4 +150,4 @@ ExpressionNodePtr CaseExpressionNode::copy()
     return CaseExpressionNode::create(copyOfWhenExpressions, getDefaultExp()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

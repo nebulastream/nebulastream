@@ -50,9 +50,9 @@ std::string AndExpressionNode::toString() const
 
 void AndExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // delegate stamp inference of children
+    /// delegate stamp inference of children
     ExpressionNode::inferStamp(schema);
-    // check if children stamp is correct
+    /// check if children stamp is correct
     if (!getLeft()->isPredicate())
     {
         NES_THROW_RUNTIME_ERROR(
@@ -70,4 +70,4 @@ ExpressionNodePtr AndExpressionNode::copy()
     return AndExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

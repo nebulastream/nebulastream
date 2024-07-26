@@ -47,6 +47,6 @@ BENCHMARK_TRACE_FUNCTION(f1);
 BENCHMARK_TRACE_FUNCTION(TracingBreaker);
 BENCHMARK_TRACE_FUNCTION(deepLoop);
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 BENCHMARK_MAIN();

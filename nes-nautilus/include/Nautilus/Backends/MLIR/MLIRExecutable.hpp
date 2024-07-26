@@ -35,5 +35,5 @@ protected:
 private:
     std::unique_ptr<mlir::ExecutionEngine> engine;
 };
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIREXECUTABLE_HPP_

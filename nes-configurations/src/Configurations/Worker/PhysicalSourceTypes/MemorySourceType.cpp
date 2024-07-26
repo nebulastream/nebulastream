@@ -29,7 +29,7 @@ struct MemoryAreaDeleter
     void operator()(uint8_t* ptr) const { free(ptr); }
 };
 
-} // namespace detail
+} /// namespace detail
 
 MemorySourceType::MemorySourceType(
     const std::string& logicalSourceName,
@@ -139,7 +139,7 @@ bool MemorySourceType::equal(const PhysicalSourceTypePtr& other)
 
 void MemorySourceType::reset()
 {
-    //Nothing
+    ///Nothing
 }
 
-} // namespace NES
+} /// namespace NES

@@ -75,7 +75,7 @@ LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQuery
     std::vector<DataSinkPtr> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
-    //Process all pipelines recursively.
+    ///Process all pipelines recursively.
     auto sourcePipelines = pipelineQueryPlan->getSourcePipelines();
     for (const auto& pipeline : sourcePipelines)
     {
@@ -100,7 +100,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
-    // check if the particular pipeline already exist in the pipeline map.
+    /// check if the particular pipeline already exist in the pipeline map.
     if (pipelineToExecutableMap.find(pipeline->getPipelineId()) != pipelineToExecutableMap.end())
     {
         return pipelineToExecutableMap.at(pipeline->getPipelineId());
@@ -138,7 +138,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
         throw QueryCompilationException("This is not a source pipeline.");
     }
 
-    //Convert logical source descriptor to actual source descriptor
+    ///Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
@@ -163,8 +163,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
         nodeEngine,
         executableSuccessorPipelines);
 
-    // Add this source as a predecessor to the pipeline execution context's of all its children.
-    // This way you can navigate upstream.
+    /// Add this source as a predecessor to the pipeline execution context's of all its children.
+    /// This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines)
     {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
@@ -175,7 +175,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
                 (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(source);
         }
-        // note: we do not register predecessors for DataSinks.
+        /// note: we do not register predecessors for DataSinks.
     }
     sources.emplace_back(source);
 }
@@ -270,8 +270,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         pipeline->getPredecessors().size(),
         executableSuccessorPipelines);
 
-    // Add this pipeline as a predecessor to the pipeline execution context's of all its children.
-    // This way you can navigate upstream.
+    /// Add this pipeline as a predecessor to the pipeline execution context's of all its children.
+    /// This way you can navigate upstream.
     for (auto executableSuccessor : executableSuccessorPipelines)
     {
         if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
@@ -282,7 +282,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
                 (*nextExecutablePipeline)->getPipelineId());
             (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
         }
-        // note: we do not register predecessors for DataSinks.
+        /// note: we do not register predecessors for DataSinks.
     }
 
     executablePipelines.emplace_back(executablePipeline);
@@ -395,7 +395,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
                 kafkaSourceType->getBatchSize()->getValue());
         }
         default: {
-            // check if a plugin can create the correct source descriptor
+            /// check if a plugin can create the correct source descriptor
             for (const auto& plugin : SourceDescriptorPluginRegistry::getPlugins())
             {
                 auto descriptor = plugin->create(schema, physicalSourceType);
@@ -410,4 +410,4 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     }
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

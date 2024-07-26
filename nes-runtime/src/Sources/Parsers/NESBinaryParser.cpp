@@ -59,4 +59,4 @@ bool NESBinaryParser::writeInputTupleToTupleBuffer(
     dynamicBuffer.getBuffer().setNumberOfTuples(binaryBuffer.size() / schema->getSchemaSizeInBytes());
     return true;
 }
-} // namespace NES
+} /// namespace NES

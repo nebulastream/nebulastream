@@ -108,4 +108,4 @@ std::string Int8::toString()
     return std::to_string(value);
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

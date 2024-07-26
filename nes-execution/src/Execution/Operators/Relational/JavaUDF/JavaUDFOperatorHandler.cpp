@@ -65,20 +65,20 @@ void JavaUDFOperatorHandler::setup()
     setupClassLoader();
     injectClassesIntoClassLoader();
 
-    // Find udf function
+    /// Find udf function
     std::string sig = "(L" + getInputClassJNIName() + ";)L" + getOutputClassJNIName() + ";";
     NES_DEBUG("Java UDF method signature: {}", sig);
     auto clazz = loadClass(getClassName());
     this->udfMethodId = jni::getMethod(clazz, getMethodName().c_str(), sig.c_str());
 
-    // The map udf class will be either loaded from a serialized instance or allocated using class information
+    /// The map udf class will be either loaded from a serialized instance or allocated using class information
     if (!getSerializedInstance().empty())
     {
         deserializeInstance();
     }
     else
     {
-        // Create instance using default constructor
+        /// Create instance using default constructor
         auto constr = jni::getMethod(clazz, "<init>", "()V");
         auto instance = env->NewObject(clazz, constr);
         jni::jniErrorCheck();
@@ -178,7 +178,7 @@ void JavaUDFOperatorHandler::deserializeInstance()
 {
     auto env = jni::getEnv();
 
-    // Load instance into Java array.
+    /// Load instance into Java array.
     const auto length = serializedInstance.size();
     const auto data = reinterpret_cast<const jbyte*>(serializedInstance.data());
     const auto byteArray = env->NewByteArray(length);
@@ -186,14 +186,14 @@ void JavaUDFOperatorHandler::deserializeInstance()
     env->SetByteArrayRegion(byteArray, 0, length, data);
     jni::jniErrorCheck();
 
-    // Deserialize the instance using a Java helper method.
+    /// Deserialize the instance using a Java helper method.
     const auto clazz = loadClass("stream.nebula.UDFClassLoader");
     const auto mid = jni::getMethod(clazz, "deserialize", "([B)Ljava/lang/Object;");
     auto instance = env->CallObjectMethod(classLoader, mid, byteArray);
     jni::jniErrorCheck();
     this->udfInstance = env->NewGlobalRef(instance);
 
-    // Release the array.
+    /// Release the array.
     env->DeleteLocalRef(byteArray);
     jni::jniErrorCheck();
 }
@@ -227,4 +227,4 @@ void JavaUDFOperatorHandler::injectClassesIntoClassLoader() const
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

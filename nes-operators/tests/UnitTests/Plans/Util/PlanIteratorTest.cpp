@@ -255,4 +255,4 @@ TEST_F(PlanIteratorTest, iterateMultiSinkRemergeQueryPlan)
     ASSERT_EQ(sourceOp1, *queryPlanIter);
 }
 
-} // namespace NES
+} /// namespace NES

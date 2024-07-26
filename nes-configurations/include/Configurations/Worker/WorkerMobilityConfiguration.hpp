@@ -187,6 +187,6 @@ private:
             &locationProviderSimulatedStartTime};
     }
 };
-} // namespace NES::Configurations::Spatial::Mobility::Experimental
+} /// namespace NES::Configurations::Spatial::Mobility::Experimental
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_WORKERMOBILITYCONFIGURATION_HPP_

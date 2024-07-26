@@ -300,6 +300,6 @@ private:
     uint64_t value;
 };
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INTEGER_INT_HPP_

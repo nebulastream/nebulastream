@@ -3,15 +3,15 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_UTIL_HH_
 #define NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_UTIL_HH_
 
-#include "cuckoohash_config.hh" // for LIBCUCKOO_DEBUG
+#include "cuckoohash_config.hh" /// for LIBCUCKOO_DEBUG
 #include <exception>
 #include <thread>
 #include <utility>
 #include <vector>
 
 #if LIBCUCKOO_DEBUG
-//! When \ref LIBCUCKOO_DEBUG is 0, LIBCUCKOO_DBG will printing out status
-//! messages in various situations
+///! When \ref LIBCUCKOO_DEBUG is 0, LIBCUCKOO_DBG will printing out status
+///! messages in various situations
 #define LIBCUCKOO_DBG(fmt, ...)                                                \
   fprintf(stderr, "\x1b[32m"                                                   \
                   "[libcuckoo:%s:%d:%lu] " fmt ""                              \
@@ -20,7 +20,7 @@
           std::hash<std::thread::id>()(std::this_thread::get_id()),            \
           __VA_ARGS__)
 #else
-//! When \ref LIBCUCKOO_DEBUG is 0, LIBCUCKOO_DBG does nothing
+///! When \ref LIBCUCKOO_DEBUG is 0, LIBCUCKOO_DBG does nothing
 #define LIBCUCKOO_DBG(fmt, ...)                                                \
   do {                                                                         \
   } while (0)

@@ -57,5 +57,5 @@ public:
     static std::unique_ptr<mlir::ExecutionEngine> compileNESIRToMachineCode(std::shared_ptr<NES::Nautilus::IR::IRGraph> ir);
 };
 
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_

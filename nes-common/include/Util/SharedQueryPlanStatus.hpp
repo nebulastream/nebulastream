@@ -46,6 +46,6 @@ enum class SharedQueryPlanStatus : uint8_t
     MIGRATING
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_UTIL_SHAREDQUERYPLANSTATUS_HPP_

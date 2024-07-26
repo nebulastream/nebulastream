@@ -30,11 +30,11 @@ public:
         {
             NES_THROW_RUNTIME_ERROR("LogExpressions can only be evaluated on numeric values.");
         }
-        // Output values can become highly negative for inputs close to +0. Set Double as output stamp.
+        /// Output values can become highly negative for inputs close to +0. Set Double as output stamp.
         return DataTypeFactory::createDouble();
     }
 };
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<Log10Function> logFunction("log10");
 
-} // namespace NES
+} /// namespace NES

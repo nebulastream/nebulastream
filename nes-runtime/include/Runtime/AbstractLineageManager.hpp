@@ -49,5 +49,5 @@ public:
      */
     virtual size_t getLineageSize() const = 0;
 };
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTLINEAGEMANAGER_HPP_

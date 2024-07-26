@@ -52,7 +52,7 @@ LocalBufferPool::LocalBufferPool(
 
 LocalBufferPool::~LocalBufferPool()
 {
-    // nop
+    /// nop
 }
 
 BufferManagerType LocalBufferPool::getBufferManagerType() const
@@ -66,7 +66,7 @@ void LocalBufferPool::destroy()
     std::unique_lock lock(mutex);
     if (bufferManager == nullptr)
     {
-        return; // already destroyed
+        return; /// already destroyed
     }
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     if (numberOfReservedBuffers != (size_t)exclusiveBuffers.size())
@@ -87,7 +87,7 @@ void LocalBufferPool::destroy()
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     while (!exclusiveBuffers.empty())
     {
-        // return exclusive buffers to the global pool
+        /// return exclusive buffers to the global pool
         detail::MemorySegment* memSegment = exclusiveBuffers.front();
         exclusiveBuffers.pop_front();
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
@@ -98,7 +98,7 @@ void LocalBufferPool::destroy()
     detail::MemorySegment* memSegment = nullptr;
     while (exclusiveBuffers.read(memSegment))
     {
-        // return exclusive buffers to the global pool
+        /// return exclusive buffers to the global pool
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
@@ -121,7 +121,7 @@ TupleBuffer LocalBufferPool::getBufferBlocking()
 {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     {
-        // try to get an exclusive buffer
+        /// try to get an exclusive buffer
         std::unique_lock lock(mutex);
         if (!exclusiveBuffers.empty())
         {
@@ -136,7 +136,7 @@ TupleBuffer LocalBufferPool::getBufferBlocking()
                 "[BufferManager] got buffer with invalid reference counter " << memSegment->controlBlock->getReferenceCount());
         }
     }
-    // TODO potential problem here: what if we are blocked here but one exclusive buffer is returned to the pool?
+    /// TODO potential problem here: what if we are blocked here but one exclusive buffer is returned to the pool?
     return bufferManager->getBufferBlocking();
 #else
     detail::MemorySegment* memSegment;
@@ -167,7 +167,7 @@ void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
         NES_THROW_RUNTIME_ERROR(
             "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
     }
-    // add back an exclusive buffer to the local pool
+    /// add back an exclusive buffer to the local pool
     exclusiveBuffers.emplace_back(memSegment);
 #else
     NES_VERIFY(memSegment, "null memory segment");
@@ -215,4 +215,4 @@ std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t size)
 {
     return bufferManager->getUnpooledBuffer(size);
 }
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

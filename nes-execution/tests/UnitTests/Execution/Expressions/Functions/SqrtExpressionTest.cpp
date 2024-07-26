@@ -39,20 +39,20 @@ public:
 TEST_F(SqrtExpressionTest, evaluateSqrtExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<SqrtExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(9_s8));
         ASSERT_EQ(resultValue, (float)3);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(9_s32));
         ASSERT_EQ(resultValue, (float)3);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(9_s64));
         ASSERT_EQ(resultValue, (float)3);
@@ -63,13 +63,13 @@ TEST_F(SqrtExpressionTest, evaluateSqrtExpressionInteger)
 TEST_F(SqrtExpressionTest, evaluateSqrtExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<SqrtExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)9));
         ASSERT_EQ(resultValue, (float)3);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)9));
         ASSERT_EQ(resultValue, (double)3);
@@ -86,4 +86,4 @@ TEST_F(SqrtExpressionTest, evaluateSqrtExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)));
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

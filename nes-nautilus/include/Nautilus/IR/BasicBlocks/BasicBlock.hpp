@@ -61,7 +61,7 @@ public:
     [[nodiscard]] Operations::OperationPtr getTerminatorOp();
     [[nodiscard]] std::vector<std::shared_ptr<Operations::BasicBlockArgument>> getArguments();
 
-    // NESIR Assembly
+    /// NESIR Assembly
     std::shared_ptr<BasicBlock> addOperation(Operations::OperationPtr operation);
     std::shared_ptr<BasicBlock> addLoopHeadBlock(std::shared_ptr<BasicBlock> loopHeadBlock);
     std::shared_ptr<BasicBlock> addNextBlock(std::shared_ptr<BasicBlock> nextBlock);
@@ -73,7 +73,7 @@ public:
     void addPredecessor(std::shared_ptr<BasicBlock> predecessor);
     std::vector<std::weak_ptr<BasicBlock>>& getPredecessors();
     uint64_t getIndexOfArgument(std::shared_ptr<Operations::Operation> arg);
-    // void popOperation();
+    /// void popOperation();
     void replaceTerminatorOperation(Operations::OperationPtr newTerminatorOperation);
     [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> getNextBlocks();
 
@@ -87,5 +87,5 @@ private:
 };
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_

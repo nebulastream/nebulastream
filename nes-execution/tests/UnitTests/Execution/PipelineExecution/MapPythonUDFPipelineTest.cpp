@@ -364,8 +364,8 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
-    // TODO #3980 enable once string works
-    // schema->addField("stringVariable", DataTypeFactory::createText());
+    /// TODO #3980 enable once string works
+    /// schema->addField("stringVariable", DataTypeFactory::createText());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
@@ -387,12 +387,12 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
         testBuffer[i]["floatVariable"].write((float)i);
         testBuffer[i]["doubleVariable"].write((double)i);
         testBuffer[i]["booleanVariable"].write(true);
-        // testBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
+        /// testBuffer[i]["stringVariable"].write(strIndex); TODO #3980 enable once string works
         testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
-    // TODO #3980 once string works add string here as argument
+    /// TODO #3980 once string works add string here as argument
     std::string function = "def complex_test(byte_var, short_var, int_var, long_var, float_var, double_var, boolean_var):"
                            "\n\tbyte_var = byte_var + 10"
                            "\n\tshort_var = short_var + 10"
@@ -424,12 +424,12 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
         EXPECT_EQ(resulttestBuffer[i]["floatVariable"].read<float>(), i + 10);
         EXPECT_EQ(resulttestBuffer[i]["doubleVariable"].read<double>(), i + 10);
         EXPECT_EQ(resulttestBuffer[i]["booleanVariable"].read<bool>(), false);
-        // TODO #3980 enable this once string works
-        // auto index = resulttestBuffer[i]["stringVariable"].read<uint32_t>();
-        // auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
-        // auto textValue = varLengthBuffer.getBuffer<TextValue>();
-        // auto size = textValue->length();
-        // EXPECT_EQ(std::string(textValue->c_str(), size), "Appended String:X");
+        /// TODO #3980 enable this once string works
+        /// auto index = resulttestBuffer[i]["stringVariable"].read<uint32_t>();
+        /// auto varLengthBuffer = resultBuffer.loadChildBuffer(index);
+        /// auto textValue = varLengthBuffer.getBuffer<TextValue>();
+        /// auto size = textValue->length();
+        /// EXPECT_EQ(std::string(textValue->c_str(), size), "Appended String:X");
     }
 }
 
@@ -439,5 +439,5 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
     [](const testing::TestParamInfo<MapPythonUDFPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
-#endif // NAUTILUS_PYTHON_UDF_ENABLED
+} /// namespace NES::Runtime::Execution
+#endif /// NAUTILUS_PYTHON_UDF_ENABLED

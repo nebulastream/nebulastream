@@ -21,13 +21,13 @@ namespace NES::QueryCompilation
 {
 enum class DumpMode : uint8_t
 {
-    // Disables all dumping
+    /// Disables all dumping
     NONE,
-    // Dumps intermediate representations to console, std:out
+    /// Dumps intermediate representations to console, std:out
     CONSOLE,
-    // Dumps intermediate representations to file
+    /// Dumps intermediate representations to file
     FILE,
-    // Dumps intermediate representations to console and file
+    /// Dumps intermediate representations to console and file
     FILE_AND_CONSOLE
 };
 }

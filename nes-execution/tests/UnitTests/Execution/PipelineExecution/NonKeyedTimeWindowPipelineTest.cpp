@@ -118,7 +118,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
+    /// Fill buffer
     testBuffer[0]["f1"].write(+1_s64);
     testBuffer[0]["f2"].write(+10_s64);
     testBuffer[0]["ts"].write(+1_s64);
@@ -158,7 +158,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum)
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
     EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 100);
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 /**
  * @brief Test running a pipeline containing a threshold window with a sum aggregation
@@ -215,7 +215,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
+    /// Fill buffer
     testBuffer[0]["f1"].write(+1_s64);
     testBuffer[0]["f2"].write(+10_s64);
     testBuffer[0]["ts"].write(+1_s64);
@@ -260,7 +260,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates)
     EXPECT_EQ(resulttestBuffer[0][2].read<int64_t>(), 10);
     EXPECT_EQ(resulttestBuffer[0][3].read<int64_t>(), 40);
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 /**
  * @brief Test running a pipeline containing a threshold window with two min aggregations with different data types
@@ -313,7 +313,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
+    /// Fill buffer
     testBuffer[0]["f1"].write(+1_s64);
     testBuffer[0]["f2"].write(+10_s64);
     testBuffer[0]["f3"].write((float)0.5);
@@ -359,11 +359,11 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
     EXPECT_EQ(resulttestBuffer[0][0].read<int64_t>(), 10);
     EXPECT_EQ(resulttestBuffer[0][1].read<float>(), 0.5);
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     NonKeyedTimeWindowPipelineTest,
     ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<NonKeyedTimeWindowPipelineTest::ParamType>& info) { return info.param; });
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

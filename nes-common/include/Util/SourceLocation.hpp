@@ -14,7 +14,7 @@
 #ifndef NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
 #define NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
 #include <cstring>
-// The following provides a polyfill for the source location standard. On not supported platforms it will return an empty result.
+/// The following provides a polyfill for the source location standard. On not supported platforms it will return an empty result.
 #if __has_include(<source_location>)
 #    include <source_location>
 #elif __has_include(<experimental/source_location>)
@@ -45,7 +45,7 @@ struct source_location
     }
 
     constexpr source_location() noexcept : _M_file("unknown"), _M_func(_M_file), _M_line(0), _M_col(0) { }
-    // 14.1.3, source_location field access
+    /// 14.1.3, source_location field access
     constexpr uint_least32_t line() const noexcept { return _M_line; }
     constexpr uint_least32_t column() const noexcept { return _M_col; }
     constexpr const char* file_name() const noexcept { return _M_file; }
@@ -57,6 +57,6 @@ private:
     uint_least32_t _M_line;
     uint_least32_t _M_col;
 };
-} // namespace std
+} /// namespace std
 #endif
 #endif /// NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_

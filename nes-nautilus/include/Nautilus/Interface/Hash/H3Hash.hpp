@@ -61,6 +61,6 @@ private:
     uint64_t numberOfKeyBits;
 };
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_H3HASH_HPP_

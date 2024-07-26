@@ -46,6 +46,6 @@ private:
     std::unordered_map<K, V> frameMap;
 };
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_

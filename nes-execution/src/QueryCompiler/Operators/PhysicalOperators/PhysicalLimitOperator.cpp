@@ -56,4 +56,4 @@ OperatorPtr PhysicalLimitOperator::copy()
     return create(id, statisticId, inputSchema, outputSchema, limit);
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

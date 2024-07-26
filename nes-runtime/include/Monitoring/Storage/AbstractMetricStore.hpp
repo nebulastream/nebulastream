@@ -30,7 +30,7 @@ namespace NES::Monitoring
 class AbstractMetricStore
 {
 public:
-    //  -- dtor --
+    ///  -- dtor --
     virtual ~AbstractMetricStore() = default;
 
     /**
@@ -66,6 +66,6 @@ public:
     */
     virtual bool hasMetrics(WorkerId nodeId) = 0;
 };
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ABSTRACTMETRICSTORE_HPP_

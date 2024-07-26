@@ -30,6 +30,6 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target);
 };
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_

@@ -33,4 +33,4 @@ ThresholdWindowPtr ContentBasedWindowType::asThresholdWindow(ContentBasedWindowT
         NES_THROW_RUNTIME_ERROR("Can not cast the content based window type to a threshold window");
     }
 }
-} // namespace NES::Windowing
+} /// namespace NES::Windowing

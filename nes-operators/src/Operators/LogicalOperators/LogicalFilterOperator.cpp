@@ -95,7 +95,7 @@ void LogicalFilterOperator::inferStringSignature()
     NES_TRACE("LogicalFilterOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalFilterOperator: Filter should have children");
 
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
@@ -106,7 +106,7 @@ void LogicalFilterOperator::inferStringSignature()
     auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
     signatureStream << "FILTER(" + predicate->toString() + ")." << *childSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
@@ -123,14 +123,14 @@ std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredica
 {
     NES_TRACE("LogicalFilterOperator: Find all field names used in filter operator");
 
-    //vector to save the names of all the fields that are used in this predicate
+    ///vector to save the names of all the fields that are used in this predicate
     std::vector<std::string> fieldsInPredicate;
 
-    //iterator to go over all the fields of the predicate
+    ///iterator to go over all the fields of the predicate
     DepthFirstNodeIterator depthFirstNodeIterator(predicate);
     for (auto itr = depthFirstNodeIterator.begin(); itr != NES::DepthFirstNodeIterator::end(); ++itr)
     {
-        //if it finds a fieldAccessExpressionNode this means that the predicate uses this specific field that comes from any source
+        ///if it finds a fieldAccessExpressionNode this means that the predicate uses this specific field that comes from any source
         if ((*itr)->instanceOf<FieldAccessExpressionNode>())
         {
             const FieldAccessExpressionNodePtr accessExpressionNode = (*itr)->as<FieldAccessExpressionNode>();
@@ -140,4 +140,4 @@ std::vector<std::string> LogicalFilterOperator::getFieldNamesUsedByFilterPredica
 
     return fieldsInPredicate;
 }
-} // namespace NES
+} /// namespace NES

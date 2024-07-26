@@ -41,9 +41,9 @@ double calculateAtan2(double x, double y)
 
 Value<> Atan2Expression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
-    // Evaluate the right sub expression and retrieve the value.
+    /// Evaluate the right sub expression and retrieve the value.
     Value rightValue = rightSubExpression->execute(record);
     if (leftValue->isType<Float>() && rightValue->isType<Float>())
     {
@@ -55,10 +55,10 @@ Value<> Atan2Expression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Double or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<BinaryFunctionProvider<Atan2Expression>> atan2Function("atan");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

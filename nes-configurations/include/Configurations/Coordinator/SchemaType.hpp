@@ -52,6 +52,6 @@ private:
     explicit SchemaType(std::vector<SchemaFieldDetail> schemaFieldDetails);
     std::vector<SchemaFieldDetail> schemaFieldDetails;
 };
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_SCHEMATYPE_HPP_

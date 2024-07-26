@@ -65,7 +65,7 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema)
     originalFieldName->inferStamp(schema);
     auto fieldName = originalFieldName->getFieldName();
     auto fieldAttribute = schema->getField(fieldName);
-    //Detect if user has added attribute name separator
+    ///Detect if user has added attribute name separator
     if (newFieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
         if (!fieldAttribute)
@@ -95,7 +95,7 @@ void FieldRenameExpressionNode::inferStamp(SchemaPtr schema)
             throw InvalidFieldException("New field with name " + newFieldName + " already exists in the schema " + schema->toString());
         }
     }
-    // assign the stamp of this field access with the type of this field.
+    /// assign the stamp of this field access with the type of this field.
     stamp = fieldAttribute->getDataType();
 }
 
@@ -104,4 +104,4 @@ ExpressionNodePtr FieldRenameExpressionNode::copy()
     return FieldRenameExpressionNode::create(originalField->copy()->as<FieldAccessExpressionNode>(), newFieldName);
 }
 
-} // namespace NES
+} /// namespace NES

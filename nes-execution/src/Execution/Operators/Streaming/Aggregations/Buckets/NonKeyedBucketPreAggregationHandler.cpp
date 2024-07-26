@@ -42,4 +42,4 @@ const State* NonKeyedBucketPreAggregationHandler::getDefaultState() const
     return defaultState.get();
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

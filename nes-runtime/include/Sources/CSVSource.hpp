@@ -112,6 +112,6 @@ private:
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_

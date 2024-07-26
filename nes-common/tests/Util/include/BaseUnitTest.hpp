@@ -57,7 +57,7 @@ public:
 private:
     uint64_t srcCnt;
 };
-} // namespace detail
+} /// namespace detail
 
 class BaseUnitTest : public testing::Test, public Exceptions::ErrorListener, public detail::TestWaitingHelper
 {
@@ -78,6 +78,6 @@ private:
     std::shared_ptr<Exceptions::ErrorListener> self{nullptr};
 };
 
-} // namespace NES::Testing
+} /// namespace NES::Testing
 
 #endif /// NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_

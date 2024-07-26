@@ -49,6 +49,6 @@ private:
     const bool dumpToFile;
     const std::string outputPath;
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_

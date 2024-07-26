@@ -201,5 +201,5 @@ private:
     std::vector<PredecessorExecutablePipeline> predecessors;
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_PIPELINEEXECUTIONCONTEXT_HPP_

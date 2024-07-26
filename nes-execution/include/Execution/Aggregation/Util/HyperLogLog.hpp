@@ -114,7 +114,7 @@ public:
         {
             sum += 1.0 / (1 << M_[i]);
         }
-        estimate = alphaMM_ / sum; // E in the original paper
+        estimate = alphaMM_ / sum; /// E in the original paper
         if (estimate <= 2.5 * m_)
         {
             uint32_t zeros = 0;
@@ -189,6 +189,6 @@ protected:
     double alphaMM_; ///< alpha * m^2
     std::vector<uint8_t> M_; ///< registers
 };
-} // namespace hll
+} /// namespace hll
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_UTIL_HYPERLOGLOG_HPP_

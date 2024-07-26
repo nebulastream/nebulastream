@@ -21,15 +21,15 @@ namespace NES::QueryCompilation
 {
 enum class NautilusBackend : uint8_t
 {
-    // Uses the interpretation based nautilus backend.
+    /// Uses the interpretation based nautilus backend.
     INTERPRETER,
-    // Uses the mlir based nautilus backend.
+    /// Uses the mlir based nautilus backend.
     MLIR_COMPILER_BACKEND,
-    // Uses the byte code interpretation based nautilus backend.
+    /// Uses the byte code interpretation based nautilus backend.
     BC_INTERPRETER_BACKEND,
-    // Uses the flounder based nautilus backend.
+    /// Uses the flounder based nautilus backend.
     FLOUNDER_COMPILER_BACKEND,
-    // Uses the cpp based nautilus backend.
+    /// Uses the cpp based nautilus backend.
     CPP_COMPILER_BACKEND
 };
 }

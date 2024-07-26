@@ -48,6 +48,6 @@ private:
 
 using MonitoringSinkDescriptorPtr = std::shared_ptr<MonitoringSinkDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_MONITORINGSINKDESCRIPTOR_HPP_

@@ -26,7 +26,7 @@ namespace Configurations
 {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-} // namespace Configurations
+} /// namespace Configurations
 
 namespace Monitoring
 {
@@ -73,7 +73,7 @@ public:
      */
     [[nodiscard]] nlohmann::json toJson() const;
 
-    //equality operators
+    ///equality operators
     bool operator==(const MemoryMetrics& rhs) const;
     bool operator!=(const MemoryMetrics& rhs) const;
 
@@ -118,6 +118,6 @@ void readFromBuffer(MemoryMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t 
  */
 nlohmann::json asJson(const MemoryMetrics& metrics);
 
-} // namespace Monitoring
-} // namespace NES
+} /// namespace Monitoring
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_MEMORYMETRICS_HPP_

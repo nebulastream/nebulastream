@@ -38,7 +38,7 @@ ExpressionNodePtr SqrtExpressionNode::create(ExpressionNodePtr const& child)
 
 void SqrtExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of child, check if its numerical, assume same stamp
+    /// infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
     if ((stamp->isInteger() && DataType::as<Integer>(stamp)->upperBound <= 0)
@@ -48,10 +48,10 @@ void SqrtExpressionNode::inferStamp(SchemaPtr schema)
                   "run-time.");
     }
 
-    // if stamp is integer, convert stamp to float
+    /// if stamp is integer, convert stamp to float
     stamp = DataTypeFactory::createFloatFromInteger(stamp);
 
-    // increase lower bound to 0
+    /// increase lower bound to 0
     stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0.0);
     NES_TRACE("SqrtExpressionNode: converted stamp to float and increased the lower bound of stamp to 0: {}", toString());
 }
@@ -78,4 +78,4 @@ ExpressionNodePtr SqrtExpressionNode::copy()
     return SqrtExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

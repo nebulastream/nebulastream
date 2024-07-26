@@ -39,8 +39,8 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     auto slicesLocked = slices.rlock();
 
     std::list<StreamSlicePtr> filteredSlices;
-    // filtering slices, which start is in [startTS, stopTS) or end is in (startTS, stopTS]
-    // (records are in range [start, end) in slice)
+    /// filtering slices, which start is in [startTS, stopTS) or end is in (startTS, stopTS]
+    /// (records are in range [start, end) in slice)
     std::copy_if(
         slicesLocked->begin(),
         slicesLocked->end(),
@@ -54,18 +54,18 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
     auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
 
-    // metadata buffer
+    /// metadata buffer
     auto mainMetadata = bufferManager->getBufferBlocking();
     buffersToTransfer.insert(buffersToTransfer.begin(), mainMetadata);
     auto metadataBuffersCount = 1;
 
-    // check that tuple buffer size is more than uint64_t to write number of metadata buffers
+    /// check that tuple buffer size is more than uint64_t to write number of metadata buffers
     if (!mainMetadata.hasSpaceLeft(0, sizeof(uint64_t)))
     {
         NES_THROW_RUNTIME_ERROR("Buffer is too small");
     }
 
-    // metadata pointer
+    /// metadata pointer
     auto metadataPtr = mainMetadata.getBuffer<uint64_t>();
     auto metadataIdx = 1ULL;
 
@@ -81,35 +81,35 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     auto writeToMetadata
         = [&mainMetadata, &metadataPtr, &metadataIdx, this, &metadataBuffersCount, &buffersToTransfer](uint64_t dataToWrite)
     {
-        // check that current metadata buffer has enough space, by sending used space and space needed
+        /// check that current metadata buffer has enough space, by sending used space and space needed
         if (!mainMetadata.hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t)))
         {
-            // if current buffer does not contain enough space then
-            // get new buffer and insert to vector of buffers
+            /// if current buffer does not contain enough space then
+            /// get new buffer and insert to vector of buffers
             auto newBuffer = bufferManager->getBufferBlocking();
             buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
-            // update pointer and index
+            /// update pointer and index
             metadataPtr = newBuffer.getBuffer<uint64_t>();
             metadataIdx = 0;
         }
         metadataPtr[metadataIdx++] = dataToWrite;
     };
 
-    // NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
-    // 1. Insert number of slices to metadata buffer
+    /// NOTE: Do not change the order of writes to metadata (order is documented in function declaration)
+    /// 1. Insert number of slices to metadata buffer
     writeToMetadata(filteredSlices.size());
 
     for (const auto& slice : filteredSlices)
     {
-        // get buffers with records and store
+        /// get buffers with records and store
         auto sliceBuffers = slice->serialize(bufferManager);
         buffersToTransfer.insert(buffersToTransfer.end(), sliceBuffers.begin(), sliceBuffers.end());
 
-        // 2. Insert number of buffers in i-th slice to metadata buffer
+        /// 2. Insert number of buffers in i-th slice to metadata buffer
         writeToMetadata(sliceBuffers.size());
     }
 
-    // set number of metadata buffers to the first metadata buffer
+    /// set number of metadata buffers to the first metadata buffer
     mainMetadata.getBuffer<uint64_t>()[0] = metadataBuffersCount;
 
     return buffersToTransfer;
@@ -117,12 +117,12 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
 
 void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers)
 {
-    // get main metadata buffer
+    /// get main metadata buffer
     auto metadataBuffersIdx = 0;
     auto metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
     auto metadataIdx = 0;
 
-    // read number of metadata buffers
+    /// read number of metadata buffers
     auto numberOfMetadataBuffers = metadataPtr[metadataIdx++];
 
     /** @brief Lambda to read from metadata buffers
@@ -134,32 +134,32 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
     */
     auto readFromMetadata = [&metadataPtr, &metadataIdx, &metadataBuffersIdx, &buffers]() -> uint64_t
     {
-        // check left space in metadata buffer
+        /// check left space in metadata buffer
         if (!buffers[metadataBuffersIdx].hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t)))
         {
-            // update metadata pointer and index
+            /// update metadata pointer and index
             metadataPtr = buffers[metadataBuffersIdx++].getBuffer<uint64_t>();
             metadataIdx = 0;
         }
         return metadataPtr[metadataIdx++];
     };
-    // NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
-    // 1. Retrieve number of slices from metadata buffer
+    /// NOTE: Do not change the order of reads from metadata (order is documented in function declaration)
+    /// 1. Retrieve number of slices from metadata buffer
     auto numberOfSlices = readFromMetadata();
 
     auto buffIdx = 0UL;
     auto slicesLocked = this->slices.wlock();
 
-    // recreate slices from buffers
+    /// recreate slices from buffers
     for (auto sliceIdx = 0UL; sliceIdx < numberOfSlices; ++sliceIdx)
     {
-        // 2. Retrieve number of buffers in i-th slice
+        /// 2. Retrieve number of buffers in i-th slice
         auto numberOfBuffers = readFromMetadata();
 
         const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
         auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers));
 
-        // insert recreated slice
+        /// insert recreated slice
         auto indexToInsert = std::find_if(
             slicesLocked->begin(),
             slicesLocked->end(),
@@ -221,8 +221,8 @@ void StreamJoinOperatorHandler::triggerAllSlices(PipelineExecutionContext* pipel
                 case WindowInfoState::ONCE_SEEN_DURING_TERMINATION: {
                     slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
 
-                    // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
-                    // For bucketing, this should be only done once
+                    /// Performing a cross product of all slices to make sure that each slice gets probe with each other slice
+                    /// For bucketing, this should be only done once
                     for (auto& sliceLeft : slicesAndStateForWindow.slices)
                     {
                         for (auto& sliceRight : slicesAndStateForWindow.slices)
@@ -247,7 +247,7 @@ void StreamJoinOperatorHandler::deleteAllSlices()
 
 void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& bufferMetaData, PipelineExecutionContext* pipelineCtx)
 {
-    // The watermark processor handles the minimal watermark across both streams
+    /// The watermark processor handles the minimal watermark across both streams
     uint64_t newGlobalWatermark
         = watermarkProcessorBuild->updateWatermark(bufferMetaData.watermarkTs, bufferMetaData.seqNumber, bufferMetaData.originId);
     NES_DEBUG("newGlobalWatermark {} bufferMetaData {} ", newGlobalWatermark, bufferMetaData.toString());
@@ -258,14 +258,14 @@ void StreamJoinOperatorHandler::checkAndTriggerWindows(const BufferMetaData& buf
         {
             if (windowInfo.windowEnd > newGlobalWatermark || slicesAndStateForWindow.windowState == WindowInfoState::EMITTED_TO_PROBE)
             {
-                // This window can not be triggered yet or has already been triggered
+                /// This window can not be triggered yet or has already been triggered
                 continue;
             }
             slicesAndStateForWindow.windowState = WindowInfoState::EMITTED_TO_PROBE;
             NES_INFO("Emitting all slices for window {}", windowInfo.toString());
 
-            // Performing a cross product of all slices to make sure that each slice gets probe with each other slice
-            // For bucketing, this should be only done once
+            /// Performing a cross product of all slices to make sure that each slice gets probe with each other slice
+            /// For bucketing, this should be only done once
             for (auto& sliceLeft : slicesAndStateForWindow.slices)
             {
                 for (auto& sliceRight : slicesAndStateForWindow.slices)
@@ -289,7 +289,7 @@ void StreamJoinOperatorHandler::deleteSlices(const BufferMetaData& bufferMetaDat
         auto& curSlice = *it;
         if (curSlice->getSliceStart() + windowSize < newGlobalWaterMarkProbe)
         {
-            // We can delete this slice/window
+            /// We can delete this slice/window
             NES_DEBUG(
                 "Deleting slice: {} as sliceStart+windowSize {} is smaller then watermark {}",
                 curSlice->toString(),
@@ -396,4 +396,4 @@ StreamJoinOperatorHandler::StreamJoinOperatorHandler(
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

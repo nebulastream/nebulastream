@@ -71,6 +71,6 @@ private:
     std::vector<uint64_t> fieldOffSets;
 };
 
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_

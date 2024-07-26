@@ -44,6 +44,6 @@ private:
     explicit SubExpressionNode(SubExpressionNode* other);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SUBEXPRESSIONNODE_HPP_

@@ -38,6 +38,6 @@ public:
      */
     virtual uint64_t stopSampling(std::size_t numItems) = 0;
 };
-} // namespace NES::Runtime::Profiler
+} /// namespace NES::Runtime::Profiler
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_

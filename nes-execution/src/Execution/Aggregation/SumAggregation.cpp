@@ -28,12 +28,12 @@ SumAggregationFunction::SumAggregationFunction(
 
 void SumAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord)
 {
-    // load memref
+    /// load memref
     auto oldValue = AggregationFunction::loadFromMemref(state, inputType);
-    // add the value
+    /// add the value
     auto inputValue = inputExpression->execute(inputRecord);
     auto newValue = oldValue + inputValue;
-    // put back to the memref
+    /// put back to the memref
     state.store(newValue);
 }
 
@@ -61,4 +61,4 @@ uint64_t SumAggregationFunction::getSize()
     return inputType->size();
 }
 
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation

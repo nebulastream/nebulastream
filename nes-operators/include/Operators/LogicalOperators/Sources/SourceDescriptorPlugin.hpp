@@ -33,6 +33,6 @@ public:
 
 using SourceDescriptorPluginRegistry = Util::PluginRegistry<SourceDescriptorPlugin>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SOURCEDESCRIPTORPLUGIN_HPP_

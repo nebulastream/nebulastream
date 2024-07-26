@@ -33,9 +33,9 @@
 
 namespace digestible
 {
-// XXX: yes, this could be a std::pair. But being able to refer to values by name
-// instead of .first and .second makes merge(), quantile(), and
-// cumulative_distribution() way more readable.
+/// XXX: yes, this could be a std::pair. But being able to refer to values by name
+/// instead of .first and .second makes merge(), quantile(), and
+/// cumulative_distribution() way more readable.
 template <typename Values = float, typename Weight = unsigned>
 struct centroid
 {
@@ -99,10 +99,10 @@ class tdigest
     tdigest_impl one;
     tdigest_impl two;
 
-    // XXX: buffer multiplier must be > 0. BUT how much greater
-    // will affect size vs speed balance. The effects of which
-    // have not been studied. Set to 2 to favor size. Informal
-    // benchmarks for this value yielded acceptable results.
+    /// XXX: buffer multiplier must be > 0. BUT how much greater
+    /// will affect size vs speed balance. The effects of which
+    /// have not been studied. Set to 2 to favor size. Informal
+    /// benchmarks for this value yielded acceptable results.
     static constexpr size_t buffer_multiplier = 2;
     tdigest_impl buffer;
 
@@ -271,7 +271,7 @@ void tdigest<Values, Weight>::insert(const tdigest<Values, Weight>& src)
     };
 
     std::for_each(src.active->values.begin(), src.active->values.end(), insert_fn);
-    // Explicitly merge any unmerged data for a consistent end state.
+    /// Explicitly merge any unmerged data for a consistent end state.
     merge();
 }
 
@@ -373,7 +373,7 @@ void tdigest<Values, Weight>::merge()
     {
         std::sort(inputs.begin(), inputs.end(), std::less<centroid_t>());
 
-        // Update min/max values only if sorted first/last centroids are single points.
+        /// Update min/max values only if sorted first/last centroids are single points.
         min_val = std::min(min_val, inputs.front().weight == 1 ? inputs.front().mean : std::numeric_limits<Values>::max());
 
         max_val = std::max(max_val, inputs.back().weight == 1 ? inputs.back().mean : std::numeric_limits<Values>::min());
@@ -382,7 +382,7 @@ void tdigest<Values, Weight>::merge()
     {
         std::sort(inputs.begin(), inputs.end(), std::greater<centroid_t>());
 
-        // Update min/max values only if sorted first/last centroids are single points.
+        /// Update min/max values only if sorted first/last centroids are single points.
         min_val = std::min(min_val, inputs.back().weight == 1 ? inputs.back().mean : std::numeric_limits<Values>::max());
 
         max_val = std::max(max_val, inputs.front().weight == 1 ? inputs.front().mean : std::numeric_limits<Values>::min());
@@ -439,8 +439,8 @@ void tdigest<Values, Weight>::merge()
 
     buffer.reset();
 
-    // Seed buffer with the current t-digest in preparation for the next
-    // merge.
+    /// Seed buffer with the current t-digest in preparation for the next
+    /// merge.
     inputs.assign(inactive.values.begin(), inactive.values.end());
 
     auto new_inactive = active;
@@ -496,8 +496,8 @@ double tdigest<Values, Weight>::quantile(double p) const
         return (min_val);
     }
 
-    // For smaller quantiles, interpolate between minimum value and the first
-    // centroid.
+    /// For smaller quantiles, interpolate between minimum value and the first
+    /// centroid.
     const auto& first = active->values.front();
     if (first.weight > 1 && index < (first.weight / 2))
     {
@@ -509,8 +509,8 @@ double tdigest<Values, Weight>::quantile(double p) const
         return (max_val);
     }
 
-    // For larger quantiles, interpolate between maximum value and the last
-    // centroid.
+    /// For larger quantiles, interpolate between maximum value and the last
+    /// centroid.
     const auto& last = active->values.back();
     if (last.weight > 1 && active->total_weight - index <= last.weight / 2)
     {
@@ -536,21 +536,21 @@ double tdigest<Values, Weight>::quantile(double p) const
         return (false);
     };
 
-    // Even though we're using adjacent_find here, we don't actually intend to find
-    // anything.  We just want to iterate over pairs of centroids until we calculate
-    // the quantile.
+    /// Even though we're using adjacent_find here, we don't actually intend to find
+    /// anything.  We just want to iterate over pairs of centroids until we calculate
+    /// the quantile.
     auto it = std::adjacent_find(active->values.begin(), active->values.end(), quantile_fn);
 
-    // Did we fail to find a pair of bracketing centroids?
+    /// Did we fail to find a pair of bracketing centroids?
     if (it == active->values.end())
     {
-        // Must be between max_val and the last centroid.
+        /// Must be between max_val and the last centroid.
         return active->values.back().mean;
     }
 
     return (quantile);
 }
 
-} // namespace digestible
+} /// namespace digestible
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_UTIL_DIGESTIBLE_H_

@@ -42,5 +42,5 @@ public:
     virtual bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) = 0;
 };
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_

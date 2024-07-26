@@ -57,6 +57,6 @@ private:
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const OriginId resultOriginId;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDWINDOWEMITACTION_HPP_

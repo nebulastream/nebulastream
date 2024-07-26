@@ -134,9 +134,9 @@ void BatchSort::execute(ExecutionContext& ctx, Record& record) const
     auto entrySize = Nautilus::FunctionCall("getStateEntrySizeProxy", getStateEntrySizeProxy, globalOperatorHandler);
     auto vector = Interface::PagedVectorRef(state, entrySize->getValue());
 
-    // create entry and store it in state
+    /// create entry and store it in state
     auto entry = vector.allocateEntry();
-    // first store sort fields encoded for radix sort
+    /// first store sort fields encoded for radix sort
     for (uint64_t i = 0; i < fieldIdentifiers.size(); ++i)
     {
         for (uint64_t j = 0; j < sortFieldIdentifiers.size(); ++j)
@@ -150,7 +150,7 @@ void BatchSort::execute(ExecutionContext& ctx, Record& record) const
             }
         }
     }
-    // store all fields after the encoded sort fields
+    /// store all fields after the encoded sort fields
     for (uint64_t i = 0; i < fieldIdentifiers.size(); ++i)
     {
         auto val = record.read(fieldIdentifiers[i]);
@@ -158,4 +158,4 @@ void BatchSort::execute(ExecutionContext& ctx, Record& record) const
         entry = entry + dataTypes[i]->size();
     }
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

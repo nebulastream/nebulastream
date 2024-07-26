@@ -49,6 +49,6 @@ private:
     explicit FloorExpressionNode(FloorExpressionNode* other);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_FLOOREXPRESSIONNODE_HPP_

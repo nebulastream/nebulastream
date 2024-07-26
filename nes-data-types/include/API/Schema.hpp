@@ -27,7 +27,7 @@ namespace Configurations
 {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-} // namespace Configurations
+} /// namespace Configurations
 
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
@@ -278,5 +278,5 @@ AttributeFieldPtr createField(const std::string& name, BasicType type);
 
 AttributeFieldPtr createField(const std::string& name, DataTypePtr type);
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_DATA_TYPES_INCLUDE_API_SCHEMA_HPP_

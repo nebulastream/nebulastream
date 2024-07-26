@@ -67,6 +67,6 @@ public:
     bool lastChunk;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_

@@ -64,5 +64,5 @@ private:
     SerializableSchemaPtr serializedSchema;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_NESFORMAT_HPP_

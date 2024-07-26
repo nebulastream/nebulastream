@@ -210,4 +210,4 @@ SourceDescriptorPtr KafkaSourceDescriptor::copy()
     return copy;
 }
 
-} // namespace NES
+} /// namespace NES

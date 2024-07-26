@@ -25,7 +25,7 @@ namespace Configurations
 {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-} // namespace Configurations
+} /// namespace Configurations
 
 namespace Monitoring
 {
@@ -78,7 +78,7 @@ public:
     uint64_t nodeId;
     uint64_t wallTimeNs;
     uint64_t memoryUsageInBytes;
-    uint64_t cpuLoadInJiffies; //user+system
+    uint64_t cpuLoadInJiffies; ///user+system
     uint64_t blkioBytesRead;
     uint64_t blkioBytesWritten;
     uint64_t batteryStatusInPercent;
@@ -111,6 +111,6 @@ void readFromBuffer(RuntimeMetrics& metrics, Runtime::TupleBuffer& buf, uint64_t
  */
 nlohmann::json asJson(const RuntimeMetrics& metrics);
 
-} // namespace Monitoring
-} // namespace NES
+} /// namespace Monitoring
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_RUNTIMEMETRICS_HPP_

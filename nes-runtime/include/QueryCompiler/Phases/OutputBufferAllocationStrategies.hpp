@@ -20,9 +20,9 @@ namespace NES::QueryCompilation
 
 enum class OutputBufferAssignmentStrategy : uint8_t
 {
-    // this strategy copies each field individually
+    /// this strategy copies each field individually
     FIELD_COPY,
-    // This strategy copies the whole record with a single assignment
+    /// This strategy copies the whole record with a single assignment
     RECORD_COPY
 };
 
@@ -43,6 +43,6 @@ enum class OutputBufferAllocationStrategy : uint8_t
     NO_OPTIMIZATION
 };
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP_

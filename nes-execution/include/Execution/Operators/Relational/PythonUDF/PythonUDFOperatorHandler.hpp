@@ -121,12 +121,12 @@ private:
     const SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
     std::string moduleName;
-    PyObject* pythonArguments; // arguments of python user defined function
-    PyObject* pythonFunction; // python function object
-    PyObject* pythonModule; // python module object
-    PyObject* pythonVariable; // temp python variable for setting arguments
+    PyObject* pythonArguments; /// arguments of python user defined function
+    PyObject* pythonFunction; /// python function object
+    PyObject* pythonModule; /// python module object
+    PyObject* pythonVariable; /// temp python variable for setting arguments
 };
 
-} // namespace NES::Runtime::Execution::Operators
-#endif // NAUTILUS_PYTHON_UDF_ENABLED
+} /// namespace NES::Runtime::Execution::Operators
+#endif /// NAUTILUS_PYTHON_UDF_ENABLED
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_PYTHONUDFOPERATORHANDLER_HPP_

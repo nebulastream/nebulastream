@@ -131,13 +131,13 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
     std::unordered_set<std::string>& loopHeaderCandidates,
     IR::BasicBlockPtr& priorBlock)
 {
-    // Follow the true-branch of the current, and all nested if-operations until either
-    // currentBlock is an already visited block, or currentBlock is the return-block.
-    // Newly encountered if-operations are added as loopHeadCandidates.
+    /// Follow the true-branch of the current, and all nested if-operations until either
+    /// currentBlock is an already visited block, or currentBlock is the return-block.
+    /// Newly encountered if-operations are added as loopHeadCandidates.
     while (!visitedBlocks.contains(currentBlock->getIdentifier())
            && currentBlock->getTerminatorOp()->getOperationType() != Operations::Operation::OperationType::ReturnOp)
     {
-        // findAndAddConstantOperations(currentBlock, constantValues);
+        /// findAndAddConstantOperations(currentBlock, constantValues);
         auto terminatorOp = currentBlock->getTerminatorOp();
         if (terminatorOp->getOperationType() == Operations::Operation::OperationType::BranchOp)
         {
@@ -156,21 +156,21 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
             currentBlock = ifOp->getTrueBlockInvocation().getBlock();
         }
     }
-    // If currentBlock is an already visited block that also is a loopHeaderCandidate, we found a loop-header-block.
+    /// If currentBlock is an already visited block that also is a loopHeaderCandidate, we found a loop-header-block.
     if (loopHeaderCandidates.contains(currentBlock->getIdentifier()))
     {
         currentBlock->incrementNumLoopBackEdge();
-        // Loop header blocks always have an if-operation as their terminator operation.
-        // But because we convert it to a loop-operation, the below condition is only true on the first visit.
+        /// Loop header blocks always have an if-operation as their terminator operation.
+        /// But because we convert it to a loop-operation, the below condition is only true on the first visit.
         if (currentBlock->getTerminatorOp()->getOperationType() == Operations::Operation::OperationType::IfOp)
         {
-            // We convert this if-operation to a general loop operation.
+            /// We convert this if-operation to a general loop operation.
             auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
             auto loopOp = std::make_shared<Operations::LoopOperation>(Operations::LoopOperation::LoopType::DefaultLoop);
             loopOp->getLoopHeadBlock().setBlock(currentBlock);
             loopOp->getLoopBodyBlock().setBlock(ifOp->getTrueBlockInvocation().getBlock());
             loopOp->getLoopEndBlock().setBlock(priorBlock);
-            // Copy the arguments of the if-operation's true- and false-block to the newly created loop-operation.
+            /// Copy the arguments of the if-operation's true- and false-block to the newly created loop-operation.
             for (auto& arg : ifOp->getTrueBlockInvocation().getArguments())
             {
                 loopOp->getLoopBodyBlock().addArgument(arg);
@@ -181,20 +181,20 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                 loopOp->getLoopFalseBlock().addArgument(arg);
             }
             currentBlock->replaceTerminatorOperation(loopOp);
-            // Next, we attempt to recognize whether the loop is a counted loop.
-            // If the loop-header block has more than 2 incoming edges, we disregard it as a counted loop candidate.
+            /// Next, we attempt to recognize whether the loop is a counted loop.
+            /// If the loop-header block has more than 2 incoming edges, we disregard it as a counted loop candidate.
             if (currentBlock->getNumLoopBackEdges() < 2 && currentBlock->getPredecessors().size() == 2)
             {
-                // First, we check whether the comparison operation of the loop-header-if-operation allows us to
-                // detect a counted loop.
+                /// First, we check whether the comparison operation of the loop-header-if-operation allows us to
+                /// detect a counted loop.
                 std::shared_ptr<Operations::CompareOperation> compareOp;
                 bool comparisonContainsEqual = false;
                 if (ifOp->getBooleanValue()->getOperationType() == Operations::Operation::OperationType::CompareOp)
                 {
                     compareOp = std::static_pointer_cast<Operations::CompareOperation>(ifOp->getBooleanValue());
                 }
-                // Check if less or equal than (<,==,or) or greater or equal than (>,==,or) is given.
-                // (<: ST(smaller than), >: GT(greater than)).
+                /// Check if less or equal than (<,==,or) or greater or equal than (>,==,or) is given.
+                /// (<: ST(smaller than), >: GT(greater than)).
                 if (ifOp->getBooleanValue()->getOperationType() == Operations::Operation::OperationType::OrOp)
                 {
                     auto orOp = std::static_pointer_cast<Operations::OrOperation>(ifOp->getBooleanValue());
@@ -203,9 +203,9 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                     {
                         auto potentialEqualsOp = std::static_pointer_cast<Operations::CompareOperation>(orOp->getRightInput());
                         auto potentialSTorGTOp = std::static_pointer_cast<Operations::CompareOperation>(orOp->getLeftInput());
-                        // A '<=' or '>=' operation is given, if the or operation has an '==' and a ('>' or '<')
-                        // operation as left and right input, and if both input compare operations compare exactly
-                        // the same values.
+                        /// A '<=' or '>=' operation is given, if the or operation has an '==' and a ('>' or '<')
+                        /// operation as left and right input, and if both input compare operations compare exactly
+                        /// the same values.
                         if (potentialEqualsOp->isEquals() && potentialSTorGTOp->isLessThanOrGreaterThan()
                             && potentialEqualsOp->getLeftInput() == potentialSTorGTOp->getLeftInput()
                             && potentialEqualsOp->getRightInput() == potentialSTorGTOp->getRightInput())
@@ -217,11 +217,11 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                 }
                 if (compareOp)
                 {
-                    // We detected a valid compare operation, which contains the loop-induction-variable and the
-                    // upperBound. However, we do cannot determine which is which yet.
-                    // Thus, we first take the block that linked back to the loop-header the 'loopEndBlock'(priorBlock)
-                    // and check whether it's second to last operation is a valid
-                    // candidate for the loop-count-operation (the operation that increments the induction variable).
+                    /// We detected a valid compare operation, which contains the loop-induction-variable and the
+                    /// upperBound. However, we do cannot determine which is which yet.
+                    /// Thus, we first take the block that linked back to the loop-header the 'loopEndBlock'(priorBlock)
+                    /// and check whether it's second to last operation is a valid
+                    /// candidate for the loop-count-operation (the operation that increments the induction variable).
                     auto countOp = priorBlock->getOperations().at(priorBlock->getOperations().size() - 2);
                     if (compareOp->getComparator() != Operations::CompareOperation::EQ
                         && (countOp->getOperationType() == Operations::Operation::OperationType::AddOp)
@@ -232,24 +232,24 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                             != -1
                         && !compareOp->getLeftInput()->getStamp()->isFloat())
                     {
-                        // A loop-count-operation, contains the loop-induction-variable, and the step size as inputs.
-                        // The result of the loop-count-operation is passed to the loop-header as the new value
-                        // of the induction variable. This allows us to figure out which input to the compare-operation
-                        // is the loop-induction-variable.
+                        /// A loop-count-operation, contains the loop-induction-variable, and the step size as inputs.
+                        /// The result of the loop-count-operation is passed to the loop-header as the new value
+                        /// of the induction variable. This allows us to figure out which input to the compare-operation
+                        /// is the loop-induction-variable.
                         auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(priorBlock->getTerminatorOp());
                         auto inductionVarArgIndex = branchOp->getNextBlockInvocation().getOperationArgIndex(countOp);
                         auto loopInductionVarArg = currentBlock->getArguments().at(inductionVarArgIndex);
                         std::shared_ptr<Operations::ConstIntOperation> inductionVar;
                         std::shared_ptr<Operations::ConstIntOperation> upperBound;
-                        // Get the block that appears before the loop-header-block in the control flow (from root).
-                        // We only check loops with 2 predecessors, so the predecessor that is not the loopEndBlock is correct.
+                        /// Get the block that appears before the loop-header-block in the control flow (from root).
+                        /// We only check loops with 2 predecessors, so the predecessor that is not the loopEndBlock is correct.
                         auto loopBeforeBlock
                             = (currentBlock->getPredecessors().at(0).lock()->getIdentifier() != priorBlock->getIdentifier())
                             ? currentBlock->getPredecessors().at(0).lock()
                             : currentBlock->getPredecessors().at(1).lock();
-                        // Check whether the loop-iteration-variable and/or the upperBound are defined in the loopBeforeBlock.
+                        /// Check whether the loop-iteration-variable and/or the upperBound are defined in the loopBeforeBlock.
                         auto compareOpConstants = getCompareOpConstants(currentBlock, loopBeforeBlock, compareOp);
-                        // If we successfully found the loop-iteration-variable, and the upperBound, we assign them.
+                        /// If we successfully found the loop-iteration-variable, and the upperBound, we assign them.
                         if (compareOpConstants.first && compareOpConstants.second)
                         {
                             if (compareOp->getLeftInput() == loopInductionVarArg)
@@ -291,7 +291,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                                       "variable could not be detected.");
                             return;
                         }
-                        // Get the stepSize from the loopEndBlock.
+                        /// Get the stepSize from the loopEndBlock.
                         std::shared_ptr<Operations::ConstIntOperation> stepSize = getStepSize(priorBlock, countOp);
                         if (!stepSize)
                         {
@@ -299,8 +299,8 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                                       "prior to the loopEndBlock.");
                             return;
                         }
-                        // Finally, we check whether the relation between the loop-induction-variable and the upperBound
-                        // and the stepSize are valid. Then we assign the values to the countedLoopInfo.
+                        /// Finally, we check whether the relation between the loop-induction-variable and the upperBound
+                        /// and the stepSize are valid. Then we assign the values to the countedLoopInfo.
                         auto countedLoopInfo = std::make_unique<Operations::CountedLoopInfo>();
                         if (inductionVar->getValue() < upperBound->getValue() && stepSize->getValue() > 0)
                         {
@@ -315,7 +315,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                                       "the step size is negative.");
                             return;
                         }
-                        // countedLoopInfo->loopEndBlock = std::move(priorBlock);
+                        /// countedLoopInfo->loopEndBlock = std::move(priorBlock);
                         loopOp->setLoopType(Operations::LoopOperation::LoopType::CountedLoop);
                         loopOp->setLoopInfo(std::move(countedLoopInfo));
                     }
@@ -331,7 +331,7 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::checkBranchForLoopHeadBlocks
                 }
                 else
                 {
-                    // loop-header does not use a comparison operation for boolean value.
+                    /// loop-header does not use a comparison operation for boolean value.
                     NES_DEBUG("Loop header without comparison operation not supported. This currently includes '!='");
                 }
             }
@@ -348,25 +348,25 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findLoopHeadBlocks(IR::Basic
 
     bool returnBlockVisited = false;
     bool noMoreIfBlocks = true;
-    // We iterate over the IR graph starting with currentBlock being the body of the root-operation.
-    // We stop iterating when we have visited the return block at least once, and there are no more
-    // unvisited if-blocks on the stack. If the IR graph is valid, no more unvisited if-operations exist.
+    /// We iterate over the IR graph starting with currentBlock being the body of the root-operation.
+    /// We stop iterating when we have visited the return block at least once, and there are no more
+    /// unvisited if-blocks on the stack. If the IR graph is valid, no more unvisited if-operations exist.
     do
     {
-        // Follow a branch through the query branch until currentBlock is either the return- or an already visited block.
+        /// Follow a branch through the query branch until currentBlock is either the return- or an already visited block.
         checkBranchForLoopHeadBlocks(currentBlock, ifBlocks, visitedBlocks, loopHeaderCandidates, priorBlock);
-        // Set the current values for the loop halting values.
+        /// Set the current values for the loop halting values.
         noMoreIfBlocks = ifBlocks.empty();
         returnBlockVisited
             = returnBlockVisited || (currentBlock->getTerminatorOp()->getOperationType() == Operations::Operation::OperationType::ReturnOp);
         if (!noMoreIfBlocks)
         {
             priorBlock = ifBlocks.top();
-            // When we take the false-branch of an ifOperation, we completely exhausted its true-branch.
-            // Since loops can only loop back on their true-branch, we can safely stop tracking it as a loop candidate.
+            /// When we take the false-branch of an ifOperation, we completely exhausted its true-branch.
+            /// Since loops can only loop back on their true-branch, we can safely stop tracking it as a loop candidate.
             loopHeaderCandidates.erase(ifBlocks.top()->getIdentifier());
-            // Set currentBlock to first block in false-branch of ifOperation.
-            // The false branch might contain nested loop-operations.
+            /// Set currentBlock to first block in false-branch of ifOperation.
+            /// The false branch might contain nested loop-operations.
             if (ifBlocks.top()->getTerminatorOp()->getOperationType() == Operations::Operation::OperationType::IfOp)
             {
                 currentBlock = std::static_pointer_cast<IR::Operations::IfOperation>(ifBlocks.top()->getTerminatorOp())
@@ -383,4 +383,4 @@ void LoopDetectionPhase::LoopDetectionPhaseContext::findLoopHeadBlocks(IR::Basic
         }
     } while (!(noMoreIfBlocks && returnBlockVisited));
 }
-} //namespace NES::Nautilus::IR
+} ///namespace NES::Nautilus::IR

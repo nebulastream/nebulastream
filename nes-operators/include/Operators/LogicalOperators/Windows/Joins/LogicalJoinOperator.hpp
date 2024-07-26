@@ -39,7 +39,7 @@ public:
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
-    //infer schema of two child operators
+    ///infer schema of two child operators
     bool inferSchema() override;
     OperatorPtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -77,5 +77,5 @@ private:
     std::string windowStartFieldName;
     std::string windowEndFieldName;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINOPERATOR_HPP_

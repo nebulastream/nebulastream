@@ -60,4 +60,4 @@ std::exception_ptr QueryCompilationResult::getError()
     return exception.value();
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

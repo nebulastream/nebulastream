@@ -21,21 +21,21 @@ namespace NES::Nautilus::IR::Operations
 
 enum class PrimitiveStamp : uint8_t
 {
-    //BasicTypes
-    // Type < 5 is INT
+    ///BasicTypes
+    /// Type < 5 is INT
     INT1 = 0,
     INT8 = 1,
     INT16 = 2,
     INT32 = 3,
     INT64 = 4,
-    // Type < 10 is UINT
+    /// Type < 10 is UINT
     UINT1 = 5,
     UINT8 = 6,
     UINT16 = 7,
     UINT32 = 8,
     UINT64 = 9,
 
-    // Type < 12 is Float
+    /// Type < 12 is Float
     FLOAT = 10,
     DOUBLE = 11,
 
@@ -43,10 +43,10 @@ enum class PrimitiveStamp : uint8_t
     CHAR = 13,
     VOID = 14,
 
-    // Pointer Types
+    /// Pointer Types
     INT8PTR = 15,
 
-    //DerivedTypes
+    ///DerivedTypes
     ARRAY = 32,
     CHARARRAY = 33,
     STRUCT = 34

@@ -43,9 +43,9 @@
 namespace NES::Nautilus::Backends::MLIR
 {
 
-//==-----------------------==//
-//==-- UTILITY FUNCTIONS --==//
-//==-----------------------==//
+///==-----------------------==///
+///==-- UTILITY FUNCTIONS --==///
+///==-----------------------==///
 mlir::Type MLIRLoweringProvider::getMLIRType(IR::Types::StampPtr type)
 {
     if (type->isVoid())
@@ -101,8 +101,8 @@ mlir::Value MLIRLoweringProvider::getConstBool(const std::string& location, bool
         getNameLoc(location), builder->getI1Type(), builder->getIntegerAttr(builder->getIndexType(), value));
 }
 
-// Todo Issue #3004: Currently, we are simply adding 'Query_1' as the FileLineLoc name. Moreover,
-//      the provided 'name' often is not meaningful either.
+/// Todo Issue #3004: Currently, we are simply adding 'Query_1' as the FileLineLoc name. Moreover,
+///      the provided 'name' often is not meaningful either.
 mlir::Location MLIRLoweringProvider::getNameLoc(const std::string& name)
 {
     auto baseLocation = mlir::FileLineColLoc::get(builder->getStringAttr("Query_1"), 0, 0);
@@ -158,7 +158,7 @@ mlir::arith::CmpFPredicate convertToFloatMLIRComparison(IR::Operations::CompareO
 {
     switch (comparisonType)
     {
-        // the U in U(LT/LE/..) stands for unordered, not unsigned! Float comparisons are always signed.
+        /// the U in U(LT/LE/..) stands for unordered, not unsigned! Float comparisons are always signed.
         case (IR::Operations::CompareOperation::Comparator::LT):
             return mlir::arith::CmpFPredicate::OLT;
         case (IR::Operations::CompareOperation::Comparator::LE):
@@ -179,13 +179,13 @@ mlir::arith::CmpFPredicate convertToFloatMLIRComparison(IR::Operations::CompareO
 mlir::FlatSymbolRefAttr MLIRLoweringProvider::insertExternalFunction(
     const std::string& name, void* functionPtr, mlir::Type resultType, std::vector<mlir::Type> argTypes, bool varArgs)
 {
-    // Create function arg & result types (currently only int for result).
+    /// Create function arg & result types (currently only int for result).
     mlir::LLVM::LLVMFunctionType llvmFnType = mlir::LLVM::LLVMFunctionType::get(resultType, argTypes, varArgs);
 
-    // The InsertionGuard saves the current insertion point (IP) and restores it after scope is left.
+    /// The InsertionGuard saves the current insertion point (IP) and restores it after scope is left.
     mlir::PatternRewriter::InsertionGuard insertGuard(*builder);
     builder->restoreInsertionPoint(*globalInsertPoint);
-    // Create function in global scope. Return reference.
+    /// Create function in global scope. Return reference.
     builder->create<mlir::LLVM::LLVMFuncOp>(theModule.getLoc(), name, llvmFnType, mlir::LLVM::Linkage::External, false);
 
     jitProxyFunctionSymbols.push_back(name);
@@ -197,19 +197,19 @@ mlir::FlatSymbolRefAttr MLIRLoweringProvider::insertExternalFunction(
     return mlir::SymbolRefAttr::get(context, name);
 }
 
-//==---------------------------------==//
-//==-- MAIN WORK - Generating MLIR --==//
-//==---------------------------------==//
+///==---------------------------------==///
+///==-- MAIN WORK - Generating MLIR --==///
+///==---------------------------------==///
 MLIRLoweringProvider::MLIRLoweringProvider(mlir::MLIRContext& context) : context(&context)
 {
-    // Create builder object, which helps to generate MLIR. Create Module, which contains generated MLIR.
+    /// Create builder object, which helps to generate MLIR. Create Module, which contains generated MLIR.
     builder = std::make_unique<mlir::OpBuilder>(&context);
     builder->getContext()->loadDialect<mlir::cf::ControlFlowDialect>();
     builder->getContext()->loadDialect<mlir::LLVM::LLVMDialect>();
     builder->getContext()->loadDialect<mlir::func::FuncDialect>();
     builder->getContext()->loadDialect<mlir::scf::SCFDialect>();
     this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
-    // Store InsertPoint for inserting globals such as Strings or TupleBuffers.
+    /// Store InsertPoint for inserting globals such as Strings or TupleBuffers.
     globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
 };
 
@@ -223,7 +223,7 @@ mlir::OwningOpRef<mlir::ModuleOp> MLIRLoweringProvider::generateModuleFromIR(std
 {
     ValueFrame firstFrame;
     generateMLIR(ir->getRootOperation(), firstFrame);
-    // If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
+    /// If MLIR module creation is incorrect, gracefully emit error message, return nullptr, and continue.
     if (failed(mlir::verify(theModule)))
     {
         theModule.emitError("module verification error");
@@ -396,7 +396,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BitWiseR
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::FunctionOperation> functionOp, ValueFrame& frame)
 {
-    // Generate execute function. Set input/output types and get its entry block.
+    /// Generate execute function. Set input/output types and get its entry block.
     llvm::SmallVector<mlir::Type, 4> inputTypes(0);
     for (auto inputArg : functionOp->getFunctionBasicBlock()->getArguments())
     {
@@ -407,21 +407,21 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::Function
 
     auto mlirFunction = builder->create<mlir::func::FuncOp>(getNameLoc("EntryPoint"), functionOp->getName(), functionInOutTypes);
 
-    // Avoid function name mangling.
+    /// Avoid function name mangling.
     mlirFunction->setAttr("llvm.emit_c_interface", mlir::UnitAttr::get(context));
     mlirFunction.addEntryBlock();
 
-    // Set InsertPoint to beginning of the execute function.
+    /// Set InsertPoint to beginning of the execute function.
     builder->setInsertionPointToStart(&mlirFunction.getBody().front());
 
-    // Store references to function args in the valueMap map.
+    /// Store references to function args in the valueMap map.
     auto valueMapIterator = mlirFunction.args_begin();
     for (int i = 0; i < (int)functionOp->getFunctionBasicBlock()->getArguments().size(); ++i)
     {
         frame.setValue(functionOp->getFunctionBasicBlock()->getArguments().at(i)->getIdentifier(), valueMapIterator[i]);
     }
 
-    // Generate MLIR for operations in function body (BasicBlock).
+    /// Generate MLIR for operations in function body (BasicBlock).
     generateMLIR(functionOp->getFunctionBasicBlock(), frame);
 
     theModule.push_back(mlirFunction);
@@ -439,9 +439,9 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::LoopOper
     builder->create<mlir::cf::BranchOp>(getNameLoc("branch"), mlirTargetBlock, mlirTargetBlockArguments);
 }
 
-//==--------------------------==//
-//==-- MEMORY (LOAD, STORE) --==//
-//==--------------------------==//
+///==--------------------------==///
+///==-- MEMORY (LOAD, STORE) --==///
+///==--------------------------==///
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddressOperation> addressOp, ValueFrame& frame)
 {
     mlir::Value recordOffset;
@@ -460,7 +460,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddressO
         getNameLoc("fieldOffset"),
         recordOffset,
         getConstInt("1", IR::Types::StampFactory::createInt64Stamp(), addressOp->getFieldOffsetInBytes()));
-    // Return I8* to first byte of field data
+    /// Return I8* to first byte of field data
     mlir::Value elementAddress = builder->create<mlir::LLVM::GEPOp>(
         getNameLoc("fieldAccess"),
         mlir::LLVM::LLVMPointerType::get(builder->getI8Type()),
@@ -506,16 +506,16 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ConstFlo
     }
 }
 
-//==---------------------------==//
-//==-- ARITHMETIC OPERATIONS --==//
-//==---------------------------==//
+///==---------------------------==///
+///==-- ARITHMETIC OPERATIONS --==///
+///==---------------------------==///
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::AddOperation> addOp, ValueFrame& frame)
 {
     auto leftInput = frame.getValue(addOp->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(addOp->getRightInput()->getIdentifier());
     if (addOp->getLeftInput()->getStamp()->isAddress())
     {
-        // if we add something to a ptr we have to use a llvm getelementptr
+        /// if we add something to a ptr we have to use a llvm getelementptr
         mlir::Value elementAddress = builder->create<mlir::LLVM::GEPOp>(
             getNameLoc("fieldAccess"),
             mlir::LLVM::LLVMPointerType::get(builder->getI8Type()),
@@ -643,7 +643,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::StoreOpe
 
 void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::ReturnOperation> returnOp, ValueFrame& frame)
 {
-    // Insert return into 'execute' function block. This is the FINAL return.
+    /// Insert return into 'execute' function block. This is the FINAL return.
     if (!returnOp->hasReturnValue())
     {
         builder->create<mlir::LLVM::ReturnOp>(getNameLoc("return"), mlir::ValueRange());
@@ -694,14 +694,14 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
 
     if ((leftStamp->isInteger() && leftStamp->isFloat()) || (leftStamp->isFloat() && rightStamp->isInteger()))
     {
-        // Avoid comparing integer to float
+        /// Avoid comparing integer to float
         NES_THROW_RUNTIME_ERROR("Type missmatch: cannot compare " << leftStamp->toString() << " to " << rightStamp->toString());
     }
     else if (
         compareOp->getComparator() == IR::Operations::CompareOperation::EQ && compareOp->getLeftInput()->getStamp()->isAddress()
         && compareOp->getRightInput()->getStamp()->isInteger())
     {
-        // add null check
+        /// add null check
         auto null = builder->create<mlir::LLVM::NullOp>(getNameLoc("null"), mlir::LLVM::LLVMPointerType::get(builder->getI8Type()));
         auto cmpOp = builder->create<mlir::LLVM::ICmpOp>(
             getNameLoc("comparison"), mlir::LLVM::ICmpPredicate::eq, frame.getValue(compareOp->getLeftInput()->getIdentifier()), null);
@@ -720,7 +720,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
     }
     else if (leftStamp->isInteger() && rightStamp->isInteger())
     {
-        // handle integer
+        /// handle integer
         auto cmpOp = builder->create<mlir::arith::CmpIOp>(
             getNameLoc("comparison"),
             convertToIntMLIRComparison(compareOp->getComparator(), leftStamp),
@@ -730,7 +730,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
     }
     else if (leftStamp->isFloat() && rightStamp->isFloat())
     {
-        // handle float comparison
+        /// handle float comparison
         auto cmpOp = builder->create<mlir::arith::CmpFOp>(
             getNameLoc("comparison"),
             convertToFloatMLIRComparison(compareOp->getComparator()),
@@ -740,7 +740,7 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::CompareO
     }
     else if (leftStamp->isBoolean() && rightStamp->isBoolean())
     {
-        // handle boolean comparison
+        /// handle boolean comparison
         auto cmpOp = builder->create<mlir::arith::CmpIOp>(
             getNameLoc("comparison"),
             mlir::arith::CmpIPredicate::eq,
@@ -791,18 +791,18 @@ void MLIRLoweringProvider::generateMLIR(std::shared_ptr<IR::Operations::BranchOp
 mlir::Block* MLIRLoweringProvider::generateBasicBlock(IR::Operations::BasicBlockInvocation& blockInvocation, ValueFrame&)
 {
     auto targetBlock = blockInvocation.getBlock();
-    // Check if the block already exists.
+    /// Check if the block already exists.
     if (blockMapping.contains(targetBlock->getIdentifier()))
     {
         return blockMapping[targetBlock->getIdentifier()];
     }
 
     auto parentBlockInsertionPoint = builder->saveInsertionPoint();
-    // Create new block.
+    /// Create new block.
     auto mlirBasicBlock = builder->createBlock(builder->getBlock()->getParent());
 
     auto targetBlockArguments = targetBlock->getArguments();
-    // Add attributes as arguments to block.
+    /// Add attributes as arguments to block.
     for (auto headBlockHeadTypes : targetBlockArguments)
     {
         mlirBasicBlock->addArgument(getMLIRType(headBlockHeadTypes->getStamp()), getNameLoc("arg"));
@@ -830,7 +830,7 @@ MLIRLoweringProvider::createFrameFromParentBlock(MLIRLoweringProvider::ValueFram
         invocationArguments.size() == childBlockArguments.size(),
         "the number of invocation parameters has to be the same as the number of block arguments in the invoked block.");
     ValueFrame childFrame;
-    // Copy all frame values to the child frame that are arguments of the child block.
+    /// Copy all frame values to the child frame that are arguments of the child block.
     for (uint64_t i = 0; i < invocationArguments.size(); i++)
     {
         auto parentOperation = invocationArguments[i];
@@ -854,7 +854,7 @@ void MLIRLoweringProvider::generateMLIR(
         auto mlirInput = frame.getValue(castOperation->getInput()->getIdentifier());
         if (inputIntegerStamp->getBitWidth() == outputIntegerStamp->getBitWidth())
         {
-            // we skip the cast if input bit width are the same.
+            /// we skip the cast if input bit width are the same.
             frame.setValue(castOperation->getIdentifier(), mlirInput);
         }
         else if (outputIntegerStamp->isSigned())
@@ -917,4 +917,4 @@ std::vector<llvm::JITTargetAddress> MLIRLoweringProvider::getJitProxyTargetAddre
 {
     return std::move(jitProxyFunctionTargetAddresses);
 }
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR

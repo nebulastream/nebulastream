@@ -49,7 +49,7 @@ KeyedWindowedQuery::KeyedWindowedQuery(Query& originalQuery, Windowing::WindowTy
 {
 }
 
-} //namespace WindowOperatorBuilder
+} ///namespace WindowOperatorBuilder
 
 Query& Query::window(const Windowing::WindowTypePtr& windowType, std::vector<API::WindowAggregationPtr> aggregations)
 {
@@ -130,7 +130,7 @@ Query& Query::windowByKey(
     if (windowType->instanceOf<Windowing::TimeBasedWindowType>())
     {
         auto timeBasedWindowType = windowType->as<Windowing::TimeBasedWindowType>();
-        // check if query contain watermark assigner, and add if missing (as default behaviour)
+        /// check if query contain watermark assigner, and add if missing (as default behaviour)
         if (!queryPlan->getRootOperators()[0]->instanceOf<WatermarkAssignerLogicalOperator>())
         {
             NES_DEBUG("add default watermark strategy as non is provided");
@@ -187,4 +187,4 @@ Query& Query::windowByKey(
     return *this;
 }
 
-} // namespace NES
+} /// namespace NES

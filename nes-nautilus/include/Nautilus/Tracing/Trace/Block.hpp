@@ -80,6 +80,6 @@ public:
     std::vector<uint32_t> predecessors;
 };
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_

@@ -54,9 +54,9 @@ void Operator::setStatisticId(StatisticId statisticId)
 
 bool Operator::hasMultipleChildrenOrParents() const
 {
-    //has multiple child operator
+    ///has multiple child operator
     bool hasMultipleChildren = (!getChildren().empty()) && getChildren().size() > 1;
-    //has multiple parent operator
+    ///has multiple parent operator
     bool hasMultipleParent = (!getParents().empty()) && getParents().size() > 1;
     NES_DEBUG("Operator: has multiple children {} or has multiple parent {}", hasMultipleChildren, hasMultipleParent);
     return hasMultipleChildren || hasMultipleParent;
@@ -201,13 +201,13 @@ NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) const
 {
     for (const auto& child : children)
     {
-        // If the child has a matching operator id then return it
+        /// If the child has a matching operator id then return it
         if (child->as<Operator>()->getId() == operatorId)
         {
             return child;
         }
 
-        // Look in for a matching operator in the grand children list
+        /// Look in for a matching operator in the grand children list
         auto found = child->as<Operator>()->getChildWithOperatorId(operatorId);
         if (found)
         {
@@ -221,13 +221,13 @@ NodePtr Operator::getChildWithStatisticId(StatisticId statisticId) const
 {
     for (const auto& child : children)
     {
-        // If the child has a matching statistic id then return it
+        /// If the child has a matching statistic id then return it
         if (child->as<Operator>()->getStatisticId() == statisticId)
         {
             return child;
         }
 
-        // Look in all children for a matching operator in the grand children list
+        /// Look in all children for a matching operator in the grand children list
         auto found = child->as<Operator>()->getChildWithStatisticId(statisticId);
         if (found)
         {
@@ -260,14 +260,14 @@ void Operator::removeProperty(const std::string& key)
 bool Operator::containAsGrandChild(NodePtr operatorNode)
 {
     auto operatorIdToCheck = operatorNode->as<Operator>()->getId();
-    // populate all ancestors
+    /// populate all ancestors
     std::vector<NodePtr> ancestors{};
     for (auto& child : children)
     {
         std::vector<NodePtr> childAndGrandChildren = child->getAndFlattenAllChildren(false);
         ancestors.insert(ancestors.end(), childAndGrandChildren.begin(), childAndGrandChildren.end());
     }
-    //Check if an operator with the id exists as ancestor
+    ///Check if an operator with the id exists as ancestor
     return std::any_of(
         ancestors.begin(),
         ancestors.end(),
@@ -277,14 +277,14 @@ bool Operator::containAsGrandChild(NodePtr operatorNode)
 bool Operator::containAsGrandParent(NES::NodePtr operatorNode)
 {
     auto operatorIdToCheck = operatorNode->as<Operator>()->getId();
-    // populate all ancestors
+    /// populate all ancestors
     std::vector<NodePtr> ancestors{};
     for (const auto& parent : parents)
     {
         std::vector<NodePtr> parentAndAncestors = parent->getAndFlattenAllAncestors();
         ancestors.insert(ancestors.end(), parentAndAncestors.begin(), parentAndAncestors.end());
     }
-    //Check if an operator with the id exists as ancestor
+    ///Check if an operator with the id exists as ancestor
     return std::any_of(
         ancestors.begin(),
         ancestors.end(),
@@ -329,4 +329,4 @@ std::string Operator::toString() const
     return out.str();
 }
 
-} // namespace NES
+} /// namespace NES

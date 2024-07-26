@@ -53,5 +53,5 @@ private:
     const std::string newSourceName;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_RENAMESOURCEOPERATOR_HPP_

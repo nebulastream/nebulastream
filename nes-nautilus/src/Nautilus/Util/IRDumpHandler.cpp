@@ -75,7 +75,7 @@ IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBloc
         }
     }
     else
-    { //ReturnOp todo changed #3234
+    { ///ReturnOp todo changed #3234
         return nullptr;
     }
 }
@@ -98,7 +98,7 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t)
             auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
             BasicBlockPtr lastTerminatorOp = getNextLowerOrEqualLevelBasicBlock(
                 ifOp->getTrueBlockInvocation().getBlock(),
-                ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1); //todo can lead to error #3234
+                ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1); ///todo can lead to error #3234
             dumpHelper(ifOp->getTrueBlockInvocation().getBlock());
             dumpHelper(ifOp->getFalseBlockInvocation().getBlock());
             if (lastTerminatorOp)
@@ -147,4 +147,4 @@ void NESIRDumpHandler::dump(const std::shared_ptr<Operations::FunctionOperation>
     out << "}\n";
 }
 
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR

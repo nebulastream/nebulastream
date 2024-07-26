@@ -53,13 +53,13 @@ bool RenameSourceOperator::inferSchema()
     {
         return false;
     }
-    //Update output schema by changing the qualifier and corresponding attribute names
+    ///Update output schema by changing the qualifier and corresponding attribute names
     auto newQualifierName = newSourceName + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (const auto& field : outputSchema->fields)
     {
-        //Extract field name without qualifier
+        ///Extract field name without qualifier
         auto fieldName = field->getName();
-        //Add new qualifier name to the field and update the field name
+        ///Add new qualifier name to the field and update the field name
         field->setName(newQualifierName + fieldName);
     }
     return true;
@@ -92,7 +92,7 @@ void RenameSourceOperator::inferStringSignature()
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("RenameSourceOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "RenameSourceOperator: Rename Source should have children.");
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
@@ -102,8 +102,8 @@ void RenameSourceOperator::inferStringSignature()
     auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
     signatureStream << "RENAME_STREAM(newStreamName=" << newSourceName << ")." << *childSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-} // namespace NES
+} /// namespace NES

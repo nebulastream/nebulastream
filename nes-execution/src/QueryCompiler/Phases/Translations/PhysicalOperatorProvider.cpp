@@ -20,4 +20,4 @@ PhysicalOperatorProvider::PhysicalOperatorProvider(QueryCompilerOptionsPtr optio
 {
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

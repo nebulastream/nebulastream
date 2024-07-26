@@ -84,7 +84,7 @@ public:
         std::vector<Nautilus::Record::RecordFieldIdentifier> customersProjection = {"c_custkey", "c_nationkey"};
         auto customersScanOperator = std::make_shared<Operators::Scan>(std::move(c_scanMemoryProviderPtr), customersProjection);
 
-        // build ht for first join
+        /// build ht for first join
         auto readCCustKey = std::make_shared<ReadFieldExpression>("c_custkey");
         std::vector<ExpressionPtr> customerJoinBuildValues = {std::make_shared<ReadFieldExpression>("c_nationkey")};
         auto customerJoinBuildOperator = std::make_shared<Operators::BatchJoinBuild>(
@@ -96,7 +96,7 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         customersScanOperator->setChild(customerJoinBuildOperator);
 
-        // create the customer pipeline
+        /// create the customer pipeline
         auto customerPipeline = std::make_shared<PhysicalOperatorPipeline>();
         customerPipeline->setRootOperator(customersScanOperator);
         std::vector<Runtime::Execution::OperatorHandlerPtr> customerJoinHandler = {std::make_shared<Operators::BatchJoinHandler>()};
@@ -118,13 +118,13 @@ public:
         /**
         * Order pipeline: Scan(Order) -> Probe(w/Customer) -> Selection -> Build
         */
-        // Scan the Order table
+        /// Scan the Order table
         auto ordersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(orderTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"o_orderkey", "o_orderdate", "o_custkey"};
         auto orderScanOperator = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
 
-        // Probe with Customer
+        /// Probe with Customer
         std::vector<ExpressionPtr> ordersProbeKeys = {std::make_shared<ReadFieldExpression>("o_custkey")};
         std::vector<Nautilus::Record::RecordFieldIdentifier> orderProbeFieldIdentifier = {"c_nationkey"};
 
@@ -148,7 +148,7 @@ public:
         auto orderDateSelectionOperator = std::make_shared<Selection>(andExpression);
         orderJoinProbeOperator->setChild(orderDateSelectionOperator);
 
-        // Build on Order
+        /// Build on Order
         std::vector<ExpressionPtr> orderJoinBuildKeys = {std::make_shared<ReadFieldExpression>("o_orderkey")};
         std::vector<ExpressionPtr> orderJoinBuildValues = {std::make_shared<ReadFieldExpression>("c_nationkey")};
         auto order_customersJoinBuildOperator = std::make_shared<Operators::BatchJoinBuild>(
@@ -161,7 +161,7 @@ public:
 
         orderDateSelectionOperator->setChild(order_customersJoinBuildOperator);
 
-        // create order_customersJoinBuild pipeline
+        /// create order_customersJoinBuild pipeline
         auto orderPipeline = std::make_shared<PhysicalOperatorPipeline>();
         orderPipeline->setRootOperator(orderScanOperator);
         auto orderJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
@@ -185,14 +185,14 @@ public:
         /**
         * LineItem pipeline: Scan(LineItem) -> Probe(w/Order) -> Build
         */
-        // Scan the LineItem table
+        /// Scan the LineItem table
         auto lineItemMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineItemTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProjection
             = {"l_orderkey", "l_suppkey", "l_extendedprice", "l_discount"};
         auto lineItemScanOperator = std::make_shared<Operators::Scan>(std::move(lineItemMemoryProviderPtr), lineItemProjection);
 
-        // Probe with Order
+        /// Probe with Order
         std::vector<ExpressionPtr> lineItemProbeKeys = {std::make_shared<ReadFieldExpression>("l_orderkey")};
         std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProbeFieldIdentifier
             = {"l_extendedprice", "l_discount", "c_nationkey"};
@@ -205,7 +205,7 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         lineItemScanOperator->setChild(lineItemJoinProbeOperator);
 
-        // Build on LineItem
+        /// Build on LineItem
         std::vector<ExpressionPtr> lineItemJoinBuildKeys = {std::make_shared<ReadFieldExpression>("l_suppkey")};
         std::vector<ExpressionPtr> lineItemJoinBuildValues
             = {std::make_shared<ReadFieldExpression>("l_extendedprice"),
@@ -221,7 +221,7 @@ public:
 
         lineItemJoinProbeOperator->setChild(lineItemJoinBuildOperator);
 
-        // Create the LineItem pipeline
+        /// Create the LineItem pipeline
         auto lineItemPipeline = std::make_shared<PhysicalOperatorPipeline>();
         lineItemPipeline->setRootOperator(lineItemScanOperator);
         auto lineItemJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
@@ -246,13 +246,13 @@ public:
         /**
         * Supplier pipeline: Scan(Supplier) -> Selection (c_nationkey == s_nationkey) --> Probe(w/LineItem) -> Build
         */
-        // Scan the Supplier table
+        /// Scan the Supplier table
         auto supplierMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(supplierTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> supplierProjection = {"s_nationkey", "s_suppkey"};
         auto supplierScanOperator = std::make_shared<Operators::Scan>(std::move(supplierMemoryProviderPtr), supplierProjection);
 
-        // Probe with LineItem
+        /// Probe with LineItem
         std::vector<ExpressionPtr> supplierProbeKeys = {std::make_shared<ReadFieldExpression>("s_suppkey")};
         std::vector<Nautilus::Record::RecordFieldIdentifier> supplierProbeFieldIdentifier
             = {"l_extendedprice", "l_discount", "c_nationkey"};
@@ -266,14 +266,14 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         supplierScanOperator->setChild(supplierJoinProbeOperator);
 
-        // Selection c_nationkey == s_nationkey
+        /// Selection c_nationkey == s_nationkey
         auto readsNationKey = std::make_shared<ReadFieldExpression>("s_nationkey");
         auto readCNationKey = std::make_shared<ReadFieldExpression>("c_nationkey");
         auto equalsExpression = std::make_shared<EqualsExpression>(readsNationKey, readCNationKey);
         auto suppliySelectionOperator = std::make_shared<Selection>(equalsExpression);
         supplierJoinProbeOperator->setChild(suppliySelectionOperator);
 
-        // Build on Supplier
+        /// Build on Supplier
         std::vector<ExpressionPtr> supplierJoinBuildKeys = {std::make_shared<ReadFieldExpression>("s_nationkey")};
         std::vector<ExpressionPtr> supplierJoinBuildValues
             = {std::make_shared<ReadFieldExpression>("l_extendedprice"), std::make_shared<ReadFieldExpression>("l_discount")};
@@ -287,7 +287,7 @@ public:
 
         suppliySelectionOperator->setChild(supplierJoinBuildOperator);
 
-        // Create the Supplier pipeline
+        /// Create the Supplier pipeline
         auto supplierPipeline = std::make_shared<PhysicalOperatorPipeline>();
         supplierPipeline->setRootOperator(supplierScanOperator);
         auto supplierJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
@@ -312,13 +312,13 @@ public:
         /**
         * Nation pipeline: Scan(Nation) -> Probe(w/Supplier) -> Build
         */
-        // Scan the Nation table
+        /// Scan the Nation table
         auto nationMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(nationTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> nationProjection = {"n_nationkey", "n_regionkey", "n_name"};
         auto nationScanOperator = std::make_shared<Operators::Scan>(std::move(nationMemoryProviderPtr), nationProjection);
 
-        // Probe with Supplier
+        /// Probe with Supplier
         std::vector<ExpressionPtr> nationProbeKeys = {std::make_shared<ReadFieldExpression>("n_nationkey")};
         std::vector<Nautilus::Record::RecordFieldIdentifier> nationProbeFieldIdentifier = {"l_extendedprice", "l_discount"};
         auto nationJoinProbeOperator = std::make_shared<BatchJoinProbe>(
@@ -330,7 +330,7 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         nationScanOperator->setChild(nationJoinProbeOperator);
 
-        // Build on Nation
+        /// Build on Nation
         std::vector<ExpressionPtr> nationJoinBuildKeys = {std::make_shared<ReadFieldExpression>("n_regionkey")};
         std::vector<ExpressionPtr> nationJoinBuildValues
             = {std::make_shared<ReadFieldExpression>("n_name"),
@@ -346,7 +346,7 @@ public:
 
         nationJoinProbeOperator->setChild(nationJoinBuildOperator);
 
-        // Create the Nation pipeline
+        /// Create the Nation pipeline
         auto nationPipeline = std::make_shared<PhysicalOperatorPipeline>();
         nationPipeline->setRootOperator(nationScanOperator);
         auto nationJoinHandler = std::make_shared<Operators::BatchJoinHandler>();
@@ -371,20 +371,20 @@ public:
         /**
         * Region pipeline: Scan(Region) -> Probe(w/Nation) -> Selection --> Build
         */
-        // Scan the Region table
+        /// Scan the Region table
         auto regionMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
             std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(regionTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> regionProjection = {"r_name", "r_regionkey"};
         auto regionScanOperator = std::make_shared<Operators::Scan>(std::move(regionMemoryProviderPtr), regionProjection);
 
-        // Selection r_name = 'ASIA' -> currently modeled as 1 (as in Query 3)
+        /// Selection r_name = 'ASIA' -> currently modeled as 1 (as in Query 3)
         auto asia = std::make_shared<ConstantInt32ValueExpression>(1);
         auto readRName = std::make_shared<ReadFieldExpression>("r_name");
         auto equalsExpression = std::make_shared<EqualsExpression>(readRName, asia);
         auto regionSelectionOperator = std::make_shared<Selection>(equalsExpression);
         regionScanOperator->setChild(regionSelectionOperator);
 
-        // Probe with Nation
+        /// Probe with Nation
         std::vector<ExpressionPtr> regionProbeKeys = {std::make_shared<ReadFieldExpression>("r_regionkey")};
         std::vector<Record::RecordFieldIdentifier> regionProbeFieldNames = {"n_name", "l_extendedprice", "l_discount"};
 
@@ -397,7 +397,7 @@ public:
             std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
         regionSelectionOperator->setChild(regionJoinProbeOperator);
 
-        // Aggregation: sum(l_extendedprice * (1 - l_discount)) as revenue
+        /// Aggregation: sum(l_extendedprice * (1 - l_discount)) as revenue
         auto lineItemExtendedpriceField = std::make_shared<ReadFieldExpression>("l_extendedprice");
         auto lineItemdiscountField = std::make_shared<ReadFieldExpression>("l_discount");
         auto oneConst = std::make_shared<ConstantFloatValueExpression>(1.0f);
@@ -420,7 +420,7 @@ public:
 
         regionJoinProbeOperator->setChild(aggregation);
 
-        // Create Region Pipeline
+        /// Create Region Pipeline
         auto regionPipeline = std::make_shared<PhysicalOperatorPipeline>();
         regionPipeline->setRootOperator(regionScanOperator);
         auto regionAggregationHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
@@ -430,5 +430,5 @@ public:
     }
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY5_HPP_

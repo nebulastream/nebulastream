@@ -118,7 +118,7 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate)
     ASSERT_EQ(stateStore->getFirstSlice()->getEnd(), 20);
     auto& hashMap = stateStore->getFirstSlice()->getState();
     ASSERT_EQ(hashMap->getCurrentSize(), 2);
-    // heck entries in hash table.
+    /// heck entries in hash table.
     struct KVPair : public Interface::ChainedHashMap::Entry
     {
         uint64_t key;
@@ -140,4 +140,4 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate)
     ASSERT_EQ(smt->lastChunk, true);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

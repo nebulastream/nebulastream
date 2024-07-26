@@ -248,5 +248,5 @@ UA_StatusCode OPCSink::getRetval() const
     return retval;
 }
 
-} // namespace NES
+} /// namespace NES
 #endif

@@ -64,4 +64,4 @@ const MetricPtr DiskCollector::readMetric() const
     return std::make_shared<Metric>(std::move(metrics), MetricType::DiskMetric);
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

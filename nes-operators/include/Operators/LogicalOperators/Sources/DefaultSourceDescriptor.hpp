@@ -61,6 +61,6 @@ private:
 
 using DefaultSourceDescriptorPtr = std::shared_ptr<DefaultSourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_DEFAULTSOURCEDESCRIPTOR_HPP_

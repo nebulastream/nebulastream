@@ -62,6 +62,6 @@ public:
     [[nodiscard]] const char* what() const noexcept override;
 };
 
-} // namespace NES::Exceptions
+} /// namespace NES::Exceptions
 
 #endif /// NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_

@@ -93,7 +93,7 @@ Configurations::GatheringModeConfigOption DefaultSourceType::getGatheringMode() 
 
 void DefaultSourceType::reset()
 {
-    //nothing
+    ///nothing
 }
 
 void DefaultSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce)
@@ -116,4 +116,4 @@ void DefaultSourceType::setGatheringMode(GatheringMode inputGatheringMode)
     gatheringMode->setValue(inputGatheringMode);
 }
 
-} // namespace NES
+} /// namespace NES

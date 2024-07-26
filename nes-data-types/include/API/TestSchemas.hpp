@@ -29,6 +29,6 @@ public:
 private:
     static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_

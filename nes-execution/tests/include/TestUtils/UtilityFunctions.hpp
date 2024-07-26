@@ -110,7 +110,7 @@ Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord,
 */
 std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
 
-// TODO Once #3693 is done, we can use the same function in UtilityFunction
+/// TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
 * @brief Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
 * @param csvFile
@@ -128,7 +128,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     const std::string& timestampFieldname = "ts",
     bool skipFirstLine = false);
 
-// TODO Once #3693 is done, we can use the same function in UtilityFunction
+/// TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
 * @brief casts a value in string format to the correct type and writes it to the TupleBuffer
 * @param value: string value that is cast to the PhysicalType and written to the TupleBuffer
@@ -227,6 +227,6 @@ PhysicalTypePtr getPhysicalTypePtr()
     return type;
 }
 
-} // namespace NES::Runtime::Execution::Util
+} /// namespace NES::Runtime::Execution::Util
 
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_

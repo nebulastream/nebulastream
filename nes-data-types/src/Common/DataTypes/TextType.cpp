@@ -23,7 +23,7 @@ bool TextType::equals(DataTypePtr otherDataType)
     return otherDataType->isText();
 }
 
-// A text type cannot be joined with another type.
+/// A text type cannot be joined with another type.
 DataTypePtr TextType::join(DataTypePtr)
 {
     return DataTypeFactory::createUndefined();
@@ -34,4 +34,4 @@ std::string TextType::toString()
     return "Text";
 }
 
-} // namespace NES
+} /// namespace NES

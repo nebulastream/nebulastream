@@ -37,7 +37,7 @@ std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFi
     int64_t lastStart = (timestamp - remainder);
     int64_t lowerBound = timestamp - windowSize;
 
-    // Getting the vector for the current worker (via workerThreadId)
+    /// Getting the vector for the current worker (via workerThreadId)
     auto& workerVec = windowsToFill[workerThreadId % windowsToFill.size()];
     workerVec.clear();
     for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide)
@@ -62,7 +62,7 @@ std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFi
 
 std::vector<WindowInfo> StreamJoinOperatorHandlerBucketing::getAllWindowsForSlice(StreamSlice& slice)
 {
-    // During bucketing one slice represents one window
+    /// During bucketing one slice represents one window
     return {WindowInfo(slice.getSliceStart(), slice.getSliceEnd())};
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

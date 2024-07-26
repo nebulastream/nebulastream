@@ -61,6 +61,6 @@ std::filesystem::path getLibPath(std::string libName);
  */
 [[maybe_unused]] std::filesystem::path getClangPath();
 
-} // namespace NES::Compiler::ExecutablePath
+} /// namespace NES::Compiler::ExecutablePath
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_UTIL_EXECUTABLEPATH_HPP_

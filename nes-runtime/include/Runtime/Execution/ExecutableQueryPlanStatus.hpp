@@ -22,13 +22,13 @@ namespace NES::Runtime::Execution
 enum class ExecutableQueryPlanStatus : uint8_t
 {
     Created,
-    Deployed, // Created->Deployed when calling setup()
-    Running, // Deployed->Running when calling start()
-    Finished, // Running->Finished when all data sources soft stop
-    Stopped, // Running->Stopped when calling stop() and in Running state
+    Deployed, /// Created->Deployed when calling setup()
+    Running, /// Deployed->Running when calling start()
+    Finished, /// Running->Finished when all data sources soft stop
+    Stopped, /// Running->Stopped when calling stop() and in Running state
     ErrorState,
     Invalid
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_

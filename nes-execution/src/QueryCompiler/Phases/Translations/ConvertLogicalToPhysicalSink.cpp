@@ -129,8 +129,8 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
     {
         NES_INFO("ConvertLogicalToPhysicalSink: Creating MQTT sink");
         const MQTTSinkDescriptorPtr mqttSinkDescriptor = sinkDescriptor->as<MQTTSinkDescriptor>();
-        // Two MQTT clients with the same client-id can not communicate with the same broker. Therefore, client-ids should generally be unique.
-        // If the user does not pass a client-id explicitly, we utilize the operatorId to generate a client-id that is guaranteed to be unique.
+        /// Two MQTT clients with the same client-id can not communicate with the same broker. Therefore, client-ids should generally be unique.
+        /// If the user does not pass a client-id explicitly, we utilize the operatorId to generate a client-id that is guaranteed to be unique.
         std::string clientId = mqttSinkDescriptor->getClientId() + "-" + operatorId.toString();
         return createMQTTSink(
             schema,
@@ -206,4 +206,4 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
     NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
     throw std::invalid_argument("Unknown Sink Descriptor Type");
 }
-} // namespace NES
+} /// namespace NES

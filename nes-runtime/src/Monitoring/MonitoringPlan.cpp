@@ -113,4 +113,4 @@ const std::set<MetricCollectorType> MonitoringPlan::getCollectorTypes() const
     return output;
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

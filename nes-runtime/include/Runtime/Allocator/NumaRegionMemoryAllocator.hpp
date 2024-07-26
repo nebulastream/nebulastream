@@ -20,12 +20,12 @@
 #    ifdef __linux__
 #        include <memory_resource>
 #    elif defined(__APPLE__)
-// TODO move non experimental when upgrading clang dep
+/// TODO move non experimental when upgrading clang dep
 #        include <experimental/memory_resource>
 namespace std::pmr
 {
 using memory_resource = std::experimental::pmr::memory_resource;
-} // namespace std::pmr
+} /// namespace std::pmr
 #    endif
 
 namespace NES::Runtime
@@ -55,6 +55,6 @@ private:
     const uint32_t numaNodeIndex;
 };
 using NumaRegionMemoryAllocatorPtr = std::shared_ptr<NumaRegionMemoryAllocator>;
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_

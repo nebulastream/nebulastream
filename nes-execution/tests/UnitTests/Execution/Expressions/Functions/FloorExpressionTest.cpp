@@ -38,13 +38,13 @@ public:
 TEST_F(FloorExpressionTest, evaluateFloorExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<FloorExpression>();
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)17.9));
         ASSERT_EQ(resultValue, (float)17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)17.5));
         ASSERT_EQ(resultValue, (float)17);
@@ -61,4 +61,4 @@ TEST_F(FloorExpressionTest, evaluateFloorExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

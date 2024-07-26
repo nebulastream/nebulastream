@@ -20,7 +20,7 @@ namespace NES::Nautilus
 {
 class Record;
 using RecordPtr = std::shared_ptr<Record>;
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 namespace NES::Runtime::Execution::Expressions
 {
@@ -44,6 +44,6 @@ public:
     virtual ~Expression() = default;
 };
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_

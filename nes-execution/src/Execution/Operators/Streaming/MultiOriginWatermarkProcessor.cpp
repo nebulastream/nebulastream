@@ -31,7 +31,7 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
     return std::make_shared<MultiOriginWatermarkProcessor>(origins);
 }
 
-// TODO use here the BufferMetaData class for the params #4177
+/// TODO use here the BufferMetaData class for the params #4177
 uint64_t MultiOriginWatermarkProcessor::updateWatermark(uint64_t ts, SequenceData sequenceData, OriginId origin)
 {
     bool found = false;
@@ -76,4 +76,4 @@ uint64_t MultiOriginWatermarkProcessor::getCurrentWatermark()
     return minimalWatermark;
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

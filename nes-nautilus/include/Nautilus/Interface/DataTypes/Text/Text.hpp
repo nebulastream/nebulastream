@@ -226,5 +226,5 @@ auto createDefault()
 
 Value<Text> transformReturnValues(TextValue* value);
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_

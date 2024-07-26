@@ -37,5 +37,5 @@ public:
     uint32_t const payloadSize;
 };
 
-} // namespace NES::Network::Messages
+} /// namespace NES::Network::Messages
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_EVENTBUFFERMESSAGE_HPP_

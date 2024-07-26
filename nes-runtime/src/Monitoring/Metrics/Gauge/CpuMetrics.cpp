@@ -176,4 +176,4 @@ nlohmann::json asJson(const CpuMetrics& metrics)
     return metrics.toJson();
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

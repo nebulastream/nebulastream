@@ -37,7 +37,7 @@ double calculateLn(double x)
 
 Value<> LnExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the  expression and retrieve the value.
+    /// Evaluate the  expression and retrieve the value.
     Value subValue = subExpression->execute(record);
 
     if (subValue->isType<Int8>())
@@ -82,10 +82,10 @@ Value<> LnExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type is applicable, throw an exception.
+        /// If no type is applicable, throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LnExpression>> lnFunction("ln");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

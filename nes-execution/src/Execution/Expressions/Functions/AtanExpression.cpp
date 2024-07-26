@@ -42,7 +42,7 @@ double calculateAtanFloat(float x)
 
 Value<> AtanExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     if (leftValue->isType<Float>())
     {
@@ -54,10 +54,10 @@ Value<> AtanExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Double or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AtanExpression>> atanFunction("atan");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

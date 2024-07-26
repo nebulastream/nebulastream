@@ -28,14 +28,14 @@ class expr;
 using ExprPtr = std::shared_ptr<expr>;
 class context;
 using ContextPtr = std::shared_ptr<context>;
-} // namespace z3
+} /// namespace z3
 
 namespace NES::Optimizer
 {
 class QuerySignatureContext;
 class QuerySignature;
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
-} // namespace NES::Optimizer
+} /// namespace NES::Optimizer
 
 namespace NES
 {
@@ -123,6 +123,6 @@ protected:
     OperatorState operatorState = OperatorState::TO_BE_PLACED;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_

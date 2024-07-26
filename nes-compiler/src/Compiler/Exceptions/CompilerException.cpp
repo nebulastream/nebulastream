@@ -21,4 +21,4 @@ Compiler::CompilerException::CompilerException(const std::string& message, const
 {
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

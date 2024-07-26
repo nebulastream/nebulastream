@@ -40,7 +40,7 @@ bool JSONParser::writeInputTupleToTupleBuffer(
 {
     NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount:  {}", tupleCount);
     std::vector<std::string> helperToken;
-    // extract values as strings from JSON message - should be improved with JSON library
+    /// extract values as strings from JSON message - should be improved with JSON library
     nlohmann::json parsedJSONObject;
     try
     {
@@ -50,20 +50,20 @@ bool JSONParser::writeInputTupleToTupleBuffer(
     {
         NES_THROW_RUNTIME_ERROR("JSONParser::writeInputTupleToTupleBuffer: Couldn't parse json tuple. ERROR: " << strerror(errno));
     }
-    // iterate over fields of schema and cast string values to correct type
+    /// iterate over fields of schema and cast string values to correct type
     std::basic_string<char> jsonValue;
     for (uint64_t fieldIndex = 0; fieldIndex < numberOfSchemaFields; fieldIndex++)
     {
         auto field = physicalTypes[fieldIndex];
         try
         {
-            //serialize() is called to get the web::json::value as a string. This is done for 2 reasons:
-            // 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
-            // 2. to have a single place for NESBasicPhysicalType conversion (could change this)
+            ///serialize() is called to get the web::json::value as a string. This is done for 2 reasons:
+            /// 1. to keep 'Parser.cpp' independent of cpprest (no need to deal with 'web::json::value' object)
+            /// 2. to have a single place for NESBasicPhysicalType conversion (could change this)
             NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current Field:  {}", schemaKeys[fieldIndex]);
             jsonValue = parsedJSONObject[schemaKeys[fieldIndex]].dump();
             if (jsonValue == "null")
-            { // key doesn't exist in parsedJSONObject, which is not an error itself
+            { /// key doesn't exist in parsedJSONObject, which is not an error itself
                 return false;
             }
         }
@@ -72,12 +72,12 @@ bool JSONParser::writeInputTupleToTupleBuffer(
             NES_ERROR("JSONParser::writeInputTupleToTupleBuffer: Error when parsing jsonTuple: {}", jsonException.what());
             return false;
         }
-        //JSON stings are send with " or '. We do not want to save these chars to our strings, though. Hence, we need to trim
-        //the strings. This behavior can be improved with a JSON library in the future.
+        ///JSON stings are send with " or '. We do not want to save these chars to our strings, though. Hence, we need to trim
+        ///the strings. This behavior can be improved with a JSON library in the future.
         jsonValue = NES::Util::trimChar(jsonValue, '"');
         jsonValue = NES::Util::trimChar(jsonValue, '\'');
         writeFieldValueToTupleBuffer(jsonValue, fieldIndex, tupleBuffer, schema, tupleCount, bufferManager);
     }
     return true;
 }
-} // namespace NES
+} /// namespace NES

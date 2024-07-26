@@ -61,11 +61,11 @@ void BatchAggregation::setup(ExecutionContext& ctx) const
 
 void BatchAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const
 {
-    // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local state and stores the pointer/memref to it in the execution context.
-    // 1. get the operator handler
+    /// Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
+    /// We use this here, to load the thread local state and stores the pointer/memref to it in the execution context.
+    /// 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local state according to the worker id.
+    /// 2. load the thread local state according to the worker id.
     auto defaultState = Nautilus::FunctionCall("getThreadLocalState", getThreadLocalState, globalOperatorHandler, ctx.getWorkerThreadId());
     auto threadLocalState = std::make_unique<ThreadLocalAggregationState>(defaultState);
     ctx.setLocalOperatorState(this, std::move(threadLocalState));
@@ -74,9 +74,9 @@ void BatchAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const
 
 void BatchAggregation::execute(ExecutionContext& ctx, Record& record) const
 {
-    // 1. get local state
+    /// 1. get local state
     auto aggregationState = (ThreadLocalAggregationState*)ctx.getLocalState(this);
-    // 2. update aggregates
+    /// 2. update aggregates
     for (const auto& aggregationFunction : aggregationFunctions)
     {
         aggregationFunction->lift(aggregationState->stateReference, record);
@@ -90,4 +90,4 @@ void BatchAggregation::terminate(ExecutionContext&) const
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

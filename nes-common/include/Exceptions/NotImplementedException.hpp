@@ -25,6 +25,6 @@ public:
     NotImplementedException(std::string msg, std::source_location location = std::source_location::current());
 };
 
-} // namespace NES::Exceptions
+} /// namespace NES::Exceptions
 
 #endif /// NES_COMMON_INCLUDE_EXCEPTIONS_NOTIMPLEMENTEDEXCEPTION_HPP_

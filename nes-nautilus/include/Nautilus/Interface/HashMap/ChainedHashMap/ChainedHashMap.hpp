@@ -57,7 +57,7 @@ public:
     public:
         Entry* next;
         hash_t hash;
-        // payload data follows this header
+        /// payload data follows this header
         explicit Entry(hash_t hash) : next(nullptr), hash(hash){};
     };
 
@@ -97,7 +97,7 @@ public:
     inline Entry* insertEntry(hash_t hash)
     {
         auto* newEntry = allocateNewEntry();
-        // call the constructor of Entry at the address of new Entry to initialize the object.
+        /// call the constructor of Entry at the address of new Entry to initialize the object.
         new (newEntry) Entry(hash);
         insert(newEntry, hash);
         return newEntry;
@@ -164,7 +164,7 @@ private:
     Entry* entryIndexToAddress(uint64_t entryIndex);
 
 private:
-    // ChainedHashMapRef is a friend to access private members and functions
+    /// ChainedHashMapRef is a friend to access private members and functions
     friend ChainedHashMapRef;
     const std::unique_ptr<std::pmr::memory_resource> allocator;
     const uint64_t pageSize;
@@ -178,6 +178,6 @@ private:
     Entry** entries;
     std::vector<int8_t*> pages;
 };
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_

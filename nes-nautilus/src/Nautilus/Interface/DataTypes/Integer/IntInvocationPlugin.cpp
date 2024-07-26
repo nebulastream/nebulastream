@@ -87,7 +87,7 @@ public:
             {
                 if (Tracing::TraceUtil::inTracer())
                 {
-                    // FIXME avoid division in tracing. For now we just substitute with an add.
+                    /// FIXME avoid division in tracing. For now we just substitute with an add.
                     auto result = left.add(right);
                     return Value<>(std::move(result));
                 }
@@ -108,7 +108,7 @@ public:
             {
                 if (Tracing::TraceUtil::inTracer())
                 {
-                    // FIXME avoid modulo in tracing. For now we just substitute with an add.
+                    /// FIXME avoid modulo in tracing. For now we just substitute with an add.
                     auto result = left.add(right);
                     return Value<>(std::move(result));
                 }
@@ -267,12 +267,12 @@ public:
 
     bool IsCastable(const Value<>& value, const TypeIdentifier* targetType) const override
     {
-        // signed conversions
+        /// signed conversions
         if (isa<Int8>(value.getValue())
             && (targetType->isType<Int16>() || targetType->isType<Int32>() || targetType->isType<Int64>() || targetType->isType<UInt8>()
                 || targetType->isType<UInt16>() || targetType->isType<UInt32>() || targetType->isType<UInt64>()))
         {
-            // int8 can be cast to Int16-Int64 and UInt8-UInt64
+            /// int8 can be cast to Int16-Int64 and UInt8-UInt64
             return true;
         }
         else if (
@@ -280,38 +280,38 @@ public:
             && (targetType->isType<Int32>() || targetType->isType<Int64>() || targetType->isType<UInt16>() || targetType->isType<UInt32>()
                 || targetType->isType<UInt64>()))
         {
-            // int16 can be cast to Int32-Int64 and UInt16-UInt64
+            /// int16 can be cast to Int32-Int64 and UInt16-UInt64
             return true;
         }
         else if (
             isa<Int32>(value.getValue()) && (targetType->isType<Int64>() || targetType->isType<UInt32>() || targetType->isType<UInt64>()))
         {
-            // int32 can be cast to Int64 and UInt32-UInt64
+            /// int32 can be cast to Int64 and UInt32-UInt64
             return true;
         }
         else if (isa<Int64>(value.getValue()) && targetType->isType<UInt64>())
         {
-            // int32 can be cast to Int64 and UInt32-UInt64
+            /// int32 can be cast to Int64 and UInt32-UInt64
             return true;
         }
-        // unsigned conversions
+        /// unsigned conversions
         if (isa<UInt8>(value.getValue())
             && (targetType->isType<Int16>() || targetType->isType<Int32>() || targetType->isType<Int64>() || targetType->isType<UInt16>()
                 || targetType->isType<UInt32>() || targetType->isType<UInt64>()))
         {
-            // uint8 can be cast to Int16-Int64 and UInt16-UInt64
+            /// uint8 can be cast to Int16-Int64 and UInt16-UInt64
             return true;
         }
         else if (
             isa<UInt16>(value.getValue())
             && (targetType->isType<Int32>() || targetType->isType<Int64>() || targetType->isType<UInt32>() || targetType->isType<UInt64>()))
         {
-            // uint16 can be cast to Int32-Int64 and UInt32-UInt64
+            /// uint16 can be cast to Int32-Int64 and UInt32-UInt64
             return true;
         }
         else if (isa<UInt32>(value.getValue()) && (targetType->isType<Int64>() || targetType->isType<UInt64>()))
         {
-            // uint32 can be cast to Int64 and UInt64
+            /// uint32 can be cast to Int64 and UInt64
             return true;
         }
         return false;
@@ -319,4 +319,4 @@ public:
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<IntInvocationPlugin> intPlugin;
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

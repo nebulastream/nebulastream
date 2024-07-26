@@ -38,7 +38,7 @@ public:
     */
     virtual void reconfigure(ReconfigurationMessage&, WorkerContext&)
     {
-        // nop
+        /// nop
     }
 
     /**
@@ -47,10 +47,10 @@ public:
    */
     virtual void postReconfigurationCallback(ReconfigurationMessage&)
     {
-        // nop
+        /// nop
     }
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_

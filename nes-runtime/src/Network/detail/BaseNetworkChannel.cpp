@@ -50,7 +50,7 @@ void BaseNetworkChannel::close(
     }
     else
     {
-        //todo #4313: pass number of threads on client announcement instead of on closing
+        ///todo #4313: pass number of threads on client announcement instead of on closing
         sendMessage<Messages::EndOfStreamMessage>(
             zmqSocket, channelId, Messages::ChannelType::DataChannel, terminationType, numSendingThreads, currentMessageSequenceNumber);
     }
@@ -58,4 +58,4 @@ void BaseNetworkChannel::close(
     NES_DEBUG("Socket(\"{}\") closed for {} {}", socketAddr, channelId, (isEventOnly ? " Event" : " Data"));
     isClosed = true;
 }
-} // namespace NES::Network::detail
+} /// namespace NES::Network::detail

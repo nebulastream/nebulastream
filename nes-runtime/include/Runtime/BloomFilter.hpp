@@ -58,5 +58,5 @@ private:
     uint8_t* bitField;
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_BLOOMFILTER_HPP_

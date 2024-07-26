@@ -86,7 +86,7 @@ void BufferManager::destroy()
                 "[BufferManager] Requested buffer manager shutdown but a buffer is still used allBuffers="
                 << allBuffers.size() << " available=" << numOfAvailableBuffers);
         }
-        // RAII takes care of deallocating memory here
+        /// RAII takes care of deallocating memory here
         allBuffers.clear();
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         availableBuffers.clear();
@@ -126,7 +126,7 @@ void BufferManager::initialize(uint32_t withAlignment)
     double percentage = (100.0 * requiredMemorySpace) / memorySizeInBytes;
     NES_DEBUG("NES memory allocation requires {} out of {} (so {}%) available bytes", requiredMemorySpace, memorySizeInBytes, percentage);
 
-    //    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
+    ///    NES_ASSERT2_FMT(bufferSize && !(bufferSize & (bufferSize - 1)), "size must be power of two " << bufferSize);
     NES_ASSERT2_FMT(
         requiredMemorySpace < memorySizeInBytes,
         "NES tries to allocate more memory than physically available requested=" << requiredMemorySpace
@@ -134,7 +134,7 @@ void BufferManager::initialize(uint32_t withAlignment)
     if (withAlignment > 0)
     {
         if ((withAlignment & (withAlignment - 1)))
-        { // not a pow of two
+        { /// not a pow of two
             NES_THROW_RUNTIME_ERROR("NES tries to align memory but alignment is not a pow of two");
         }
     }
@@ -189,7 +189,7 @@ void BufferManager::initialize(uint32_t withAlignment)
 
 TupleBuffer BufferManager::getBufferBlocking()
 {
-    //TODO: remove this
+    ///TODO: remove this
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     std::unique_lock lock(availableBuffersMutex);
     while (availableBuffers.empty())
@@ -270,7 +270,7 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
     auto candidate = std::lower_bound(unpooledBuffers.begin(), unpooledBuffers.end(), probe);
     if (candidate != unpooledBuffers.end())
     {
-        // it points to a segment of size at least bufferSize;
+        /// it points to a segment of size at least bufferSize;
         for (auto it = candidate; it != unpooledBuffers.end(); ++it)
         {
             if (it->size == bufferSize)
@@ -292,8 +292,8 @@ std::optional<TupleBuffer> BufferManager::getUnpooledBuffer(size_t bufferSize)
             }
         }
     }
-    // we could not find a buffer, allocate it
-    // we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
+    /// we could not find a buffer, allocate it
+    /// we have to align the buffer size as ARM throws an SIGBUS if we have unaligned accesses on atomics.
     auto alignedBufferSize = alignBufferSize(bufferSize, DEFAULT_ALIGNMENT);
     auto alignedBufferSizePlusControlBlock = alignBufferSize(bufferSize + sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
     auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), DEFAULT_ALIGNMENT);
@@ -431,7 +431,7 @@ BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(uint32_t bufferSize) :
 BufferManager::UnpooledBufferHolder::UnpooledBufferHolder(std::unique_ptr<detail::MemorySegment>&& mem, uint32_t size)
     : segment(std::move(mem)), size(size), free(false)
 {
-    // nop
+    /// nop
 }
 
 void BufferManager::UnpooledBufferHolder::markFree()
@@ -444,7 +444,7 @@ LocalBufferPoolPtr BufferManager::createLocalBufferPool(size_t numberOfReservedB
     std::unique_lock lock(availableBuffersMutex);
     std::deque<detail::MemorySegment*> buffers;
     NES_DEBUG("availableBuffers.size()={} requested buffers={}", availableBuffers.size(), numberOfReservedBuffers);
-    NES_ASSERT2_FMT((size_t)availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers"); //TODO improve error
+    NES_ASSERT2_FMT((size_t)availableBuffers.size() >= numberOfReservedBuffers, "not enough buffers"); ///TODO improve error
     for (std::size_t i = 0; i < numberOfReservedBuffers; ++i)
     {
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
@@ -501,4 +501,4 @@ TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> 
     return *optBuffer;
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

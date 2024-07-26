@@ -37,4 +37,4 @@ std::optional<Timestamp> Waypoint::getTimestamp() const
 {
     return timestamp;
 }
-} // namespace NES::Spatial::DataTypes::Experimental
+} /// namespace NES::Spatial::DataTypes::Experimental

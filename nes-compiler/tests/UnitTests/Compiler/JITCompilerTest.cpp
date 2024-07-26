@@ -86,4 +86,4 @@ TEST_F(JITCompilerTest, compileCppCode)
     NES_DEBUG("CompilationTime:{}", compilationResult.getCompilationTime());
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

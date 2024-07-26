@@ -35,7 +35,7 @@ namespace NES
 {
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {
@@ -100,7 +100,7 @@ public:
 
     bool operator<(const WindowSliceIdKey& other) const
     {
-        // For now, this should be fine as the sliceId is monotonically increasing
+        /// For now, this should be fine as the sliceId is monotonically increasing
         if (sliceId != other.sliceId)
         {
             return sliceId < other.sliceId;
@@ -146,7 +146,7 @@ public:
     std::string windowEndFieldName;
 };
 
-} // namespace Operators
+} /// namespace Operators
 
 namespace Util
 {
@@ -159,6 +159,6 @@ namespace Util
  */
 SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSchema);
 
-} // namespace Util
-} // namespace NES::Runtime::Execution
+} /// namespace Util
+} /// namespace NES::Runtime::Execution
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_

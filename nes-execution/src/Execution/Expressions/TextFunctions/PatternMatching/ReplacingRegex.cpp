@@ -52,13 +52,13 @@ TextValue* regexReplace(TextValue* text, TextValue* reg, TextValue* replacement)
 
 Value<> ReplacingRegex::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value<> text = textValue->execute(record);
 
-    // Evaluate the mid-sub expression and retrieve the value.
+    /// Evaluate the mid-sub expression and retrieve the value.
     Value<> pattern = regexpPattern->execute(record);
 
-    // Evaluate the right sub expression and retrieve the value.
+    /// Evaluate the right sub expression and retrieve the value.
     Value<> replacement = textReplacement->execute(record);
 
     if (text->isType<Text>() && pattern->isType<Text>() && replacement->isType<Text>())
@@ -76,4 +76,4 @@ Value<> ReplacingRegex::execute(NES::Nautilus::Record& record) const
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

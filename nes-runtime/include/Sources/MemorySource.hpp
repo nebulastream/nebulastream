@@ -23,7 +23,7 @@ namespace NES
 namespace detail::Runtime
 {
 class MemorySegment;
-} // namespace detail::Runtime
+} /// namespace detail::Runtime
 
 /**
  * @brief Memory Source that reads from main memory and produces buffers.
@@ -108,6 +108,6 @@ private:
 
 using MemorySourcePtr = std::shared_ptr<MemorySource>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_MEMORYSOURCE_HPP_

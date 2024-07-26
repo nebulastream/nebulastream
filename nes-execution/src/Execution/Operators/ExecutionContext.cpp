@@ -43,10 +43,10 @@ void* allocateBufferProxy(void* workerContextPtr)
         NES_THROW_RUNTIME_ERROR("worker context should not be null");
     }
     auto wkrCtx = static_cast<Runtime::WorkerContext*>(workerContextPtr);
-    // We allocate a new tuple buffer for the runtime.
-    // As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
-    // This increases the reference counter in the buffer.
-    // When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
+    /// We allocate a new tuple buffer for the runtime.
+    /// As we can only return it to operator code as a ptr we create a new TupleBuffer on the heap.
+    /// This increases the reference counter in the buffer.
+    /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
     auto buffer = wkrCtx->allocateTupleBuffer();
     auto* tb = new Runtime::TupleBuffer(buffer);
     return tb;
@@ -72,7 +72,7 @@ void emitBufferProxy(void* wc, void* pc, void* tupleBuffer)
      */
     pipelineCtx->emitBuffer(*tb, *workerCtx);
 
-    // delete tuple buffer as it was allocated within the pipeline and is not required anymore
+    /// delete tuple buffer as it was allocated within the pipeline and is not required anymore
     delete tb;
 }
 
@@ -253,4 +253,4 @@ void ExecutionContext::removeSequenceState() const
         "removeSequenceStateProxy", removeSequenceStateProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

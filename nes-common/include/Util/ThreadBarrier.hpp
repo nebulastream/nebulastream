@@ -63,7 +63,7 @@ public:
         }
         else
         {
-            // while loop to avoid spurious wakeup
+            /// while loop to avoid spurious wakeup
             while (count < size)
             {
                 cvar.wait(lock);
@@ -78,5 +78,5 @@ private:
     std::condition_variable cvar;
 };
 using ThreadBarrierPtr = std::shared_ptr<ThreadBarrier>;
-} // namespace NES
+} /// namespace NES
 #endif /// NES_COMMON_INCLUDE_UTIL_THREADBARRIER_HPP_

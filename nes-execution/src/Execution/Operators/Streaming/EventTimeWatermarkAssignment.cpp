@@ -34,7 +34,7 @@ EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeF
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    // We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
+    /// We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
     if (hasChild())
     {
         child->open(executionCtx, recordBuffer);
@@ -51,7 +51,7 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
     {
         state->currentWatermark = tsField;
     }
-    // call next operator
+    /// call next operator
     child->execute(ctx, record);
 }
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
@@ -61,4 +61,4 @@ void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordB
     Operator::close(executionCtx, recordBuffer);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

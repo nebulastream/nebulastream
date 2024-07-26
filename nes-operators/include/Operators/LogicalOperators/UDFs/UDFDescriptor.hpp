@@ -111,5 +111,5 @@ private:
     SchemaPtr inputSchema;
     const SchemaPtr outputSchema;
 };
-} // namespace NES::Catalogs::UDF
+} /// namespace NES::Catalogs::UDF
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_

@@ -88,4 +88,4 @@ OperatorPtr PhysicalSourceOperator::copy()
     return result;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

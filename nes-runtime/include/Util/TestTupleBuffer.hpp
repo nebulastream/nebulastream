@@ -349,11 +349,11 @@ public:
      *    ```
      */
     class TupleIterator : public std::iterator<
-                              std::input_iterator_tag, // iterator_category
-                              DynamicTuple, // value_type
-                              DynamicTuple, // difference_type
-                              DynamicTuple*, // pointer
-                              DynamicTuple // reference
+                              std::input_iterator_tag, /// iterator_category
+                              DynamicTuple, /// value_type
+                              DynamicTuple, /// difference_type
+                              DynamicTuple*, /// pointer
+                              DynamicTuple /// reference
                               >
     {
     public:
@@ -463,9 +463,9 @@ public:
                 "Current buffer is not big enough for index. Current buffer size: " + std::to_string(buffer.getBufferSize())
                 + ", Index: " + std::to_string(recordIndex));
         }
-        // std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
-        // On each iteration, the lambda function is called with the current field value, and the field index is increased.
-        // If the value is a std::string, we call writeVarSized() instead of write().
+        /// std::apply allows us to iterate over a tuple (with template recursion) with a lambda function.
+        /// On each iteration, the lambda function is called with the current field value, and the field index is increased.
+        /// If the value is a std::string, we call writeVarSized() instead of write().
         std::apply(
             [&](auto&&... fieldValue)
             {
@@ -538,7 +538,7 @@ private:
     template <size_t I = 0, typename... Types>
     void copyRecordFromBufferToTuple(std::tuple<Types...>& record, uint64_t recordIndex)
     {
-        // Check if I matches the size of the tuple, which means that all fields of the record have been processed.
+        /// Check if I matches the size of the tuple, which means that all fields of the record have been processed.
         if constexpr (I != sizeof...(Types))
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
@@ -548,11 +548,11 @@ private:
             }
             else
             {
-                // Get type of current tuple element and cast field value to this type. Add value to return tuple.
+                /// Get type of current tuple element and cast field value to this type. Add value to return tuple.
                 std::get<I>(record) = ((*this)[recordIndex][I]).read<typename std::tuple_element<I, std::tuple<Types...>>::type>();
             }
 
-            // Recursive call to copyRecordFromBufferToTuple with the field index (I) increased by 1.
+            /// Recursive call to copyRecordFromBufferToTuple with the field index (I) increased by 1.
             copyRecordFromBufferToTuple<I + 1>(record, recordIndex);
         }
     }
@@ -562,6 +562,6 @@ private:
     mutable TupleBuffer buffer;
 };
 
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts
 
 #endif /// NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_

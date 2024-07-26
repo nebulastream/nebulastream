@@ -188,4 +188,4 @@ void OPCSourceType::reset()
     setPassword(password->getDefaultValue());
 }
 
-} // namespace NES
+} /// namespace NES

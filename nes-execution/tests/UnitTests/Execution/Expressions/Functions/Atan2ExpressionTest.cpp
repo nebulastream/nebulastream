@@ -38,7 +38,7 @@ public:
 TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionFloat)
 {
     auto expression = BinaryExpressionWrapper<Atan2Expression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)0.5), Value<Float>((float)0.5));
         ASSERT_EQ(resultValue, 0.7853981633974483);
@@ -48,7 +48,7 @@ TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionFloat)
 TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionDouble)
 {
     auto expression = BinaryExpressionWrapper<Atan2Expression>();
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)0.5), Value<Double>((double)0.5));
         ASSERT_EQ(resultValue, 0.7853981633974483);
@@ -63,4 +63,4 @@ TEST_F(Atan2ExpressionTest, evaluateAtan2ExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Double>(0.5), Value<Int8>((Int8)1)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

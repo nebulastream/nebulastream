@@ -39,5 +39,5 @@ class MigratableStateInterface
      */
     virtual void restoreState(std::vector<Runtime::TupleBuffer>&) = 0;
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_MIGRATABLESTATEINTERFACE_HPP_

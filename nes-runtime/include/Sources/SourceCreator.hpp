@@ -317,7 +317,7 @@ DataSourcePtr createStaticDataSource(
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-} // namespace Experimental
+} /// namespace Experimental
 /**
  * @brief create a benchmark source
  * @param schema the schema of the source
@@ -547,5 +547,5 @@ DataSourcePtr createTCPSource(
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_

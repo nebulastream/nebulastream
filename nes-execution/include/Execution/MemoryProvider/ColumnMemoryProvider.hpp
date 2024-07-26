@@ -50,5 +50,5 @@ private:
     Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
 };
 
-} // namespace NES::Runtime::Execution::MemoryProvider
+} /// namespace NES::Runtime::Execution::MemoryProvider
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_

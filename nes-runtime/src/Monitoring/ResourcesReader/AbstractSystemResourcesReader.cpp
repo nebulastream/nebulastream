@@ -74,4 +74,4 @@ SystemResourcesReaderType AbstractSystemResourcesReader::getReaderType() const
 {
     return readerType;
 }
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

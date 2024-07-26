@@ -62,7 +62,7 @@ template <class X, class Y>
 requires(std::is_same<Any, X>::value)
 inline std::shared_ptr<X> cast(const std::shared_ptr<Y>& value)
 {
-    // copy value value
+    /// copy value value
     return value;
 }
 
@@ -100,6 +100,6 @@ SPECIALIZE_RAW_TO_NAUTILUS_TYPE(double, Double);
 SPECIALIZE_RAW_TO_NAUTILUS_TYPE(float, Float);
 SPECIALIZE_RAW_TO_NAUTILUS_TYPE(bool, Boolean);
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_

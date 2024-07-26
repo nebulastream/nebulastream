@@ -43,25 +43,25 @@ double calculateDegreesTest(double x)
 TEST_F(DegreesExpressionTest, evaluateDegreesExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<DegreesExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t)M_PI));
         ASSERT_EQ(resultValue, calculateDegreesTest((int8_t)M_PI));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>((int16_t)M_PI_2));
         ASSERT_EQ(resultValue, calculateDegreesTest((int16_t)M_PI_2));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t)M_PI_4));
         ASSERT_EQ(resultValue, calculateDegreesTest((int32_t)M_PI_4));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t)M_PI));
         ASSERT_EQ(resultValue, calculateDegreesTest((int64_t)M_PI));
@@ -72,17 +72,17 @@ TEST_F(DegreesExpressionTest, evaluateDegreesExpressionInteger)
 TEST_F(DegreesExpressionTest, evaluateDegreesExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<DegreesExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)M_PI));
         ASSERT_EQ(resultValue.as<Double>(), calculateDegreesTest((float)M_PI));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)2 * M_PI));
         ASSERT_EQ(resultValue, 360.00);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 }
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

@@ -92,4 +92,4 @@ uint64_t ThresholdWindow::hash() const
     hashValue = hashValue * 0x9e3779b1 + std::hash<std::string>{}(predicate->toString());
     return hashValue;
 }
-} // namespace NES::Windowing
+} /// namespace NES::Windowing

@@ -110,4 +110,4 @@ void Dyncall::reset()
     dcReset(vm);
 }
 
-} // namespace NES::Nautilus::Backends::BC
+} /// namespace NES::Nautilus::Backends::BC

@@ -106,6 +106,6 @@ private:
     std::vector<OperatorPtr> rootOperators;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_

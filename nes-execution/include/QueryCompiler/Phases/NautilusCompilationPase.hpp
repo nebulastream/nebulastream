@@ -55,6 +55,6 @@ public:
 private:
     const QueryCompilation::QueryCompilerOptionsPtr compilerOptions;
 };
-}; // namespace NES::QueryCompilation
+}; /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_NAUTILUSCOMPILATIONPASE_HPP_

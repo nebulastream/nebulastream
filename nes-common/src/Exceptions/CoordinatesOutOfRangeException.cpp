@@ -19,4 +19,4 @@ const char* CoordinatesOutOfRangeException::what() const noexcept
 {
     return "Invalid latitude or longitude";
 }
-} // namespace NES::Spatial::Exception
+} /// namespace NES::Spatial::Exception

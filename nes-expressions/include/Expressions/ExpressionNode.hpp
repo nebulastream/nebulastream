@@ -82,5 +82,5 @@ protected:
      */
     DataTypePtr stamp;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_

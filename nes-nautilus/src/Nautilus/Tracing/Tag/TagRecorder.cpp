@@ -23,7 +23,7 @@ TagRecorder::TagRecorder(TagAddress startAddress) : startAddress(startAddress)
 {
 }
 
-// check if gnu backtrace is available.
+/// check if gnu backtrace is available.
 #if defined(BACKWARD_HAS_BACKTRACE)
 TagVector TagRecorder::createBaseTag()
 {
@@ -214,4 +214,4 @@ void* getReturnAddress(uint32_t offset)
     }
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

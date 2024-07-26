@@ -37,10 +37,10 @@ ExpressionNodePtr AbsExpressionNode::create(const ExpressionNodePtr& child)
 
 void AbsExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of child, check if its numerical, assume same stamp
+    /// infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // increase lower bound to 0
+    /// increase lower bound to 0
     stamp = DataTypeFactory::copyTypeAndIncreaseLowerBound(stamp, 0_s64);
     NES_TRACE("AbsExpressionNode: increased the lower bound of stamp to 0: {}", toString());
 }
@@ -67,4 +67,4 @@ ExpressionNodePtr AbsExpressionNode::copy()
     return AbsExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

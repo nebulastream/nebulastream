@@ -28,6 +28,6 @@ class InvalidFieldException : public std::runtime_error
 public:
     explicit InvalidFieldException(const std::string& msg);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDFIELDEXCEPTION_HPP_

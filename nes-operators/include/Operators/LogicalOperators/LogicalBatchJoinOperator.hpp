@@ -39,7 +39,7 @@ public:
 
     [[nodiscard]] bool isIdentical(NodePtr const& rhs) const override;
     [[nodiscard]] std::string toString() const override;
-    //infer schema of two child operators
+    ///infer schema of two child operators
     bool inferSchema() override;
     OperatorPtr copy() override;
     [[nodiscard]] bool equal(NodePtr const& rhs) const override;
@@ -48,5 +48,5 @@ public:
 private:
     Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
 };
-} // namespace NES::Experimental
+} /// namespace NES::Experimental
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_

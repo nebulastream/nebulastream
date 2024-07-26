@@ -22,4 +22,4 @@ WindowProcessingException::WindowProcessingException(const std::string& message,
     : RuntimeException(message, NES::collectStacktrace(), location)
 {
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

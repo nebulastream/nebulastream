@@ -230,6 +230,6 @@ private:
     std::atomic<bool> isDestroyed{false};
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_

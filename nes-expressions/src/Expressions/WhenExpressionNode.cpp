@@ -39,7 +39,7 @@ void WhenExpressionNode::inferStamp(SchemaPtr schema)
     left->inferStamp(schema);
     right->inferStamp(schema);
 
-    //left expression has to be boolean
+    ///left expression has to be boolean
     if (!left->getStamp()->isBoolean())
     {
         NES_THROW_RUNTIME_ERROR(
@@ -48,7 +48,7 @@ void WhenExpressionNode::inferStamp(SchemaPtr schema)
             right->getStamp()->toString());
     }
 
-    //set stamp to right stamp, as only the left expression will be returned
+    ///set stamp to right stamp, as only the left expression will be returned
     stamp = right->getStamp();
     NES_TRACE("WhenExpressionNode: we assigned the following stamp: {}", stamp->toString())
 }
@@ -75,4 +75,4 @@ ExpressionNodePtr WhenExpressionNode::copy()
     return WhenExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

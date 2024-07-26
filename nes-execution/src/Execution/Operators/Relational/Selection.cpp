@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Operators
 
 void Selection::execute(ExecutionContext& ctx, Record& record) const
 {
-    // evaluate expression and call child operator if expression is valid
+    /// evaluate expression and call child operator if expression is valid
     if (expression->execute(record))
     {
         if (child != nullptr)
@@ -30,4 +30,4 @@ void Selection::execute(ExecutionContext& ctx, Record& record) const
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

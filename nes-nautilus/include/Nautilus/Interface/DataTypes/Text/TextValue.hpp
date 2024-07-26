@@ -116,5 +116,5 @@ private:
     TextValue(uint32_t size);
     const uint32_t size;
 };
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXTVALUE_HPP_

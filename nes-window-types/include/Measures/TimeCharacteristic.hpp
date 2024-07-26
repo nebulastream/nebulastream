@@ -94,6 +94,6 @@ private:
     AttributeFieldPtr field;
     TimeUnit unit;
 };
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_

@@ -30,4 +30,4 @@ void NesDefaultMemoryAllocator::do_deallocate(void* p, size_t, size_t)
     std::free(p);
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

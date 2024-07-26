@@ -90,7 +90,7 @@ PlanIterator::iterator& PlanIterator::iterator::operator++()
             auto child = children[i];
             NES_ASSERT(!child->getParents().empty(), "A child node should have a parent");
 
-            // check if current node is last parent of child.
+            /// check if current node is last parent of child.
             if (child->getParents().back() == current)
             {
                 workStack.push(child);
@@ -100,4 +100,4 @@ PlanIterator::iterator& PlanIterator::iterator::operator++()
     return *this;
 }
 
-} // namespace NES
+} /// namespace NES

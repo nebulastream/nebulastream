@@ -30,6 +30,6 @@ public:
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipeline);
     static OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITPHASE_HPP_

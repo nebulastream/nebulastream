@@ -24,7 +24,7 @@ namespace NES::Runtime
 {
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 namespace NES::Network::detail
 {
@@ -74,5 +74,5 @@ protected:
     Runtime::BufferManagerPtr bufferManager;
 };
 
-} // namespace NES::Network::detail
+} /// namespace NES::Network::detail
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_DETAIL_BASENETWORKCHANNEL_HPP_

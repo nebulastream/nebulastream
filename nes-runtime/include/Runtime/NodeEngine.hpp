@@ -90,6 +90,6 @@ private:
 
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_

@@ -65,8 +65,8 @@ TEST_F(JaccardTest, BaseTest)
 
     auto textValue3 = Value<Text>("da");
     auto dist3 = expression.eval(textValue3, textValue2);
-    //EXPECT_EQ(dist3, (double) 0.1);
-    //TODO ASSERT_NEAR does not work out of the box, dist3 is identified as boolean
+    ///EXPECT_EQ(dist3, (double) 0.1);
+    ///TODO ASSERT_NEAR does not work out of the box, dist3 is identified as boolean
 
     auto textValue4 = Value<Text>("duck");
     auto dist4 = expression.eval(textValue, textValue4);
@@ -81,4 +81,4 @@ TEST_F(JaccardTest, FailTest)
     EXPECT_ANY_THROW(expression.eval(textValue0, textValue1));
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

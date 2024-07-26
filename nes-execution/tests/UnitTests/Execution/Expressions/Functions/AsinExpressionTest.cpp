@@ -38,13 +38,13 @@ public:
 TEST_F(AsinExpressionTest, evaluateSinExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<AsinExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)1));
         ASSERT_EQ(resultValue, (double)std::asin((double)1));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)1));
         ASSERT_EQ(resultValue, (double)std::asin((double)1));
@@ -61,4 +61,4 @@ TEST_F(AsinExpressionTest, evaluateAsinExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

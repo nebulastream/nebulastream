@@ -32,4 +32,4 @@ uint8_t* GlobalHashTableLocking::insert(uint64_t key) const
     return buckets[getBucketPos(hashedKey)]->appendConcurrentUsingLocking(hashedKey);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

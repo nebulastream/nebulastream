@@ -26,4 +26,4 @@ Timestamp getTimestamp()
     return static_cast<Timestamp>(std::chrono::duration_cast<NanoSeconds>(Clock::now().time_since_epoch()).count());
 }
 
-} // namespace NES
+} /// namespace NES

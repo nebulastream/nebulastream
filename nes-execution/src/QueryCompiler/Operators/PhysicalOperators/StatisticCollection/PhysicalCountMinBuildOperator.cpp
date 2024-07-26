@@ -93,4 +93,4 @@ uint64_t PhysicalCountMinBuildOperator::getDepth() const
     return depth;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

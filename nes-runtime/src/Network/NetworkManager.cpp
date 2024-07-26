@@ -160,16 +160,16 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
     NES_DEBUG("NetworkManager: Asynchronously registering SubpartitionProducer: {}", nesPartition.toString());
     partitionManager->registerSubpartitionProducer(nesPartition, nodeLocation);
 
-    //create a promise that will be used to hand the channel back to the network sink that triggered its creation
+    ///create a promise that will be used to hand the channel back to the network sink that triggered its creation
     std::promise<NetworkChannelPtr> promise;
     auto future = promise.get_future();
 
-    //create a promise that is passed back to the caller and can be used to abort the connection process
+    ///create a promise that is passed back to the caller and can be used to abort the connection process
     std::promise<bool> abortConnectionPromise;
     auto abortConnectionFuture = abortConnectionPromise.get_future();
 
-    //start thread
-    //todo #4309: instead of starting one thread per connection attempt, hand this work to a designated thread pool
+    ///start thread
+    ///todo #4309: instead of starting one thread per connection attempt, hand this work to a designated thread pool
     std::thread thread(
         [zmqContext = server->getContext(),
          nodeLocation,
@@ -185,10 +185,10 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
          version,
          abortConnectionFuture = std::move(abortConnectionFuture)]() mutable
         {
-            //wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
+            ///wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
             auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
 
-            //create the channel
+            ///create the channel
             auto channel = NetworkChannel::create(
                 zmqContext,
                 nodeLocation.createZmqURI(),
@@ -201,10 +201,10 @@ std::pair<std::future<NetworkChannelPtr>, std::promise<bool>> NetworkManager::re
                 version,
                 std::move(future_optional));
 
-            //pass channel back to calling thread via promise
+            ///pass channel back to calling thread via promise
             promise.set_value(std::move(channel));
 
-            //notify the sink about successful connection via reconfiguration message
+            ///notify the sink about successful connection via reconfiguration message
             queryManager->addReconfigurationMessage(
                 reconfigurationMessage.getQueryId(), reconfigurationMessage.getParentPlanId(), reconfigurationMessage, false);
         });
@@ -239,16 +239,16 @@ std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>> NetworkMa
     uint8_t retryTimes)
 {
     NES_DEBUG("NetworkManager: Registering SubpartitionEvent Producer: {}", nesPartition.toString());
-    //create a promise that will be used to hand the channel back to the network sink that triggered its creation
+    ///create a promise that will be used to hand the channel back to the network sink that triggered its creation
     std::promise<EventOnlyNetworkChannelPtr> promise;
     auto future = promise.get_future();
 
-    //create a promise that is passed back to the caller and can be used to abort the connection process
+    ///create a promise that is passed back to the caller and can be used to abort the connection process
     std::promise<bool> abortConnectionPromise;
     auto abortConnectionFuture = abortConnectionPromise.get_future();
 
-    //start thread
-    //todo #4309: instead of starting one thread per connection attempt, hand this work to a designated thread pool
+    ///start thread
+    ///todo #4309: instead of starting one thread per connection attempt, hand this work to a designated thread pool
     std::thread thread(
         [zmqContext = server->getContext(),
          nodeLocation,
@@ -261,7 +261,7 @@ std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>> NetworkMa
          promise = std::move(promise),
          abortConnectionFuture = std::move(abortConnectionFuture)]() mutable
         {
-            //wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
+            ///wrap the abort-connection-future in and optional because the create function expects an optional as a parameter
             auto future_optional = std::make_optional<std::future<bool>>(std::move(abortConnectionFuture));
             (void)std::move(future_optional);
             auto channel = EventOnlyNetworkChannel::create(
@@ -272,9 +272,9 @@ std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>> NetworkMa
                 std::move(bufferManager),
                 highWaterMark,
                 waitTime,
-                retryTimes); //todo: insert stop future
+                retryTimes); ///todo: insert stop future
 
-            //pass channel back to calling thread via promise
+            ///pass channel back to calling thread via promise
             promise.set_value(std::move(channel));
         });
 
@@ -285,8 +285,8 @@ std::pair<std::future<EventOnlyNetworkChannelPtr>, std::promise<bool>> NetworkMa
 bool NetworkManager::registerSubpartitionEventConsumer(
     const NodeLocation& nodeLocation, const NesPartition& nesPartition, Runtime::RuntimeEventListenerPtr eventListener)
 {
-    // note that this increases the subpartition producer counter by one
-    // we want to do so to keep the partition alive until all outbound network channel + the inbound event channel are in-use
+    /// note that this increases the subpartition producer counter by one
+    /// we want to do so to keep the partition alive until all outbound network channel + the inbound event channel are in-use
     NES_DEBUG("NetworkManager: Registering Subpartition Event Consumer: {}", nesPartition.toString());
     return partitionManager->addSubpartitionEventListener(nesPartition, nodeLocation, eventListener);
 }
@@ -300,4 +300,4 @@ bool NetworkManager::getConnectSourceEventChannelsAsync()
 {
     return connectSourceEventChannelsAsync;
 }
-} // namespace NES::Network
+} /// namespace NES::Network

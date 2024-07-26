@@ -22,9 +22,9 @@ namespace NES::QueryCompilation
 
 enum class QueryCompilerType : uint8_t
 {
-    // Uses the default query compiler
+    /// Uses the default query compiler
     DEFAULT_QUERY_COMPILER,
-    // Uses the nautilus query compiler
+    /// Uses the nautilus query compiler
     NAUTILUS_QUERY_COMPILER
 };
 

@@ -96,4 +96,4 @@ void traceConstOperation(const AnyPtr& constValue, const Nautilus::Tracing::Valu
     }
 };
 
-} // namespace NES::Nautilus::Tracing::TraceUtil
+} /// namespace NES::Nautilus::Tracing::TraceUtil

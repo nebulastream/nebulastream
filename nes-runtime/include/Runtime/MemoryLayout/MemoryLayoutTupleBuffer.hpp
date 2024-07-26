@@ -62,6 +62,6 @@ protected:
     uint64_t capacity;
     uint64_t numberOfRecords = 0;
 };
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_

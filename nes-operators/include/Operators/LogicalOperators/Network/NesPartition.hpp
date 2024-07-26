@@ -76,7 +76,7 @@ private:
     PartitionId partitionId;
     SubpartitionId subpartitionId;
 };
-} // namespace NES::Network
+} /// namespace NES::Network
 namespace std
 {
 template <>
@@ -85,7 +85,7 @@ struct hash<NES::Network::NesPartition>
     std::uint64_t operator()(const NES::Network::NesPartition& k) const;
 };
 
-} // namespace std
+} /// namespace std
 
 namespace fmt
 {
@@ -94,5 +94,5 @@ struct formatter<NES::Network::NesPartition> : formatter<std::string>
 {
     auto format(const NES::Network::NesPartition& partition, format_context& ctx) -> decltype(ctx.out());
 };
-} //namespace fmt
+} ///namespace fmt
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_NETWORK_NESPARTITION_HPP_

@@ -52,6 +52,6 @@ public:
 };
 
 using SinkPluginRegistry = Util::PluginRegistry<DataSinkPlugin>;
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_DATASINKPLUGIN_HPP_

@@ -29,4 +29,4 @@ Value<> WriteFieldExpression::execute(Record& record) const
     return newValue;
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

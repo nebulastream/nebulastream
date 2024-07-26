@@ -47,14 +47,14 @@ std::string escapeJson(const std::string& str)
 
 void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr)
 {
-    // Get the first occurrence
+    /// Get the first occurrence
     uint64_t pos = data.find(toSearch);
-    // Repeat till end is reached
+    /// Repeat till end is reached
     while (pos != std::string::npos)
     {
-        // Replace this occurrence of Sub String
+        /// Replace this occurrence of Sub String
         data.replace(pos, toSearch.size(), replaceStr);
-        // Get the next occurrence from the current position
+        /// Get the next occurrence from the current position
         pos = data.find(toSearch, pos + replaceStr.size());
     }
 }
@@ -72,9 +72,9 @@ bool endsWith(const std::string& fullString, const std::string& ending)
 {
     if (fullString.length() >= ending.length())
     {
-        // get the start of the ending index of the full string and compare with the ending string
+        /// get the start of the ending index of the full string and compare with the ending string
         return (0 == fullString.compare(fullString.length() - ending.length(), ending.length(), ending));
-    } // if full string is smaller than the ending automatically return false
+    } /// if full string is smaller than the ending automatically return false
     return false;
 }
 
@@ -105,12 +105,12 @@ void writeRowToCsvFile(const std::string& csvFileName, const std::string& row)
 
 std::string updateSourceName(std::string queryPlanSourceConsumed, std::string subQueryPlanSourceConsumed)
 {
-    //Update the Source names by sorting and then concatenating the source names from the sub query plan
+    ///Update the Source names by sorting and then concatenating the source names from the sub query plan
     std::vector<std::string> sourceNames;
     sourceNames.emplace_back(subQueryPlanSourceConsumed);
     sourceNames.emplace_back(queryPlanSourceConsumed);
     std::sort(sourceNames.begin(), sourceNames.end());
-    // accumulating sourceNames with delimiters between all sourceNames to enable backtracking of origin
+    /// accumulating sourceNames with delimiters between all sourceNames to enable backtracking of origin
     auto updatedSourceName = std::accumulate(
         sourceNames.begin(), sourceNames.end(), std::string("-"), [](std::string a, std::string b) { return a + "_" + b; });
     return updatedSourceName;
@@ -149,7 +149,7 @@ uint64_t countLines(std::istream& stream)
 
 std::string_view trimWhiteSpaces(std::string_view in)
 {
-    // Skip all `isspace` elements from the left (begin) and from the right (end-1)
+    /// Skip all `isspace` elements from the left (begin) and from the right (end-1)
     auto left = in.begin();
     for (;; ++left)
     {
@@ -170,7 +170,7 @@ std::string_view trimWhiteSpaces(std::string_view in)
 
 std::string_view trimChar(std::string_view in, char trimFor)
 {
-    // Skip all `trimFor` elements from the left (begin) and from the right (end-1)
+    /// Skip all `trimFor` elements from the left (begin) and from the right (end-1)
     auto left = in.begin();
     for (;; ++left)
     {
@@ -185,4 +185,4 @@ std::string_view trimChar(std::string_view in, char trimFor)
     return {left, static_cast<std::string_view::size_type>(std::distance(left, right + 1))};
 }
 
-} // namespace NES::Util
+} /// namespace NES::Util

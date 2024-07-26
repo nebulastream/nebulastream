@@ -42,6 +42,6 @@ private:
     explicit IngestionTimeWatermarkStrategyDescriptor();
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_INGESTIONTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_

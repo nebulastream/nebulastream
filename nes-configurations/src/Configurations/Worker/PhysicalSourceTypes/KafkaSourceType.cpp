@@ -341,4 +341,4 @@ void KafkaSourceType::reset()
     setBatchSize(batchSize->getDefaultValue());
     setInputFormat(inputFormat->getDefaultValue());
 }
-} // namespace NES
+} /// namespace NES

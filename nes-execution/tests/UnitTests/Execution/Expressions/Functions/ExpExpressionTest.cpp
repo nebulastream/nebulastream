@@ -40,53 +40,53 @@ public:
 TEST_F(ExpExpressionTest, evaluateExpExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<ExpExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(5_s8));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    //Int16
+    ///Int16
     {
         auto resultValue = expression.eval(Value<Int16>(5_s16));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(5_s32));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(5_s64));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>(5_u8));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>(5_u16));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // UInt32
+    /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(5_u32));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt64
+    /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(5_u64));
         ASSERT_EQ(resultValue, std::exp(5));
@@ -97,13 +97,13 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionInteger)
 TEST_F(ExpExpressionTest, evaluateExpExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<ExpExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)5));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)5));
         ASSERT_EQ(resultValue, std::exp(5));
@@ -120,4 +120,4 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

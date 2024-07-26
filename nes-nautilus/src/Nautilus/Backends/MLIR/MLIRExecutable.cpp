@@ -37,4 +37,4 @@ MLIRExecutable::~MLIRExecutable()
     NES_DEBUG("~MLIRExecutable");
 }
 
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR

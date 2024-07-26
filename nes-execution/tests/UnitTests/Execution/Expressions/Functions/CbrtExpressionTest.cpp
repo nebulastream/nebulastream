@@ -39,20 +39,20 @@ public:
 TEST_F(CbrtExpressionTest, evaluateCbrtExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<CbrtExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(8_s8));
         ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(8_s32));
         ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(8_s64));
         ASSERT_EQ(resultValue, (float)2);
@@ -63,25 +63,25 @@ TEST_F(CbrtExpressionTest, evaluateCbrtExpressionInteger)
 TEST_F(CbrtExpressionTest, evaluateCbrtExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<CbrtExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)8));
         ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)8));
         ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)8));
         ASSERT_EQ(resultValue, (float)2);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)8));
         ASSERT_EQ(resultValue, (double)2);
@@ -98,4 +98,4 @@ TEST_F(CbrtExpressionTest, evaluateCbrtExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)));
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

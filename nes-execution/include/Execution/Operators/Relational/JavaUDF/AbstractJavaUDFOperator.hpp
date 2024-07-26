@@ -56,14 +56,14 @@ public:
 protected:
     const uint64_t operatorHandlerIndex;
 
-    // These needs to be the same Schemas as used in the operator handler.
-    // We need them here to support some functionality during for-loops in execute where we cannot access the handler.
+    /// These needs to be the same Schemas as used in the operator handler.
+    /// We need them here to support some functionality during for-loops in execute where we cannot access the handler.
     const SchemaPtr operatorInputSchema, operatorOutputSchema;
 
     Nautilus::Value<MemRef> createInputPojo(Record& record, Value<MemRef>& handler) const;
     Record extractRecordFromPojo(const Value<MemRef>& handler, const Value<MemRef>& outputPojoPtr) const;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_ABSTRACTJAVAUDFOPERATOR_HPP_

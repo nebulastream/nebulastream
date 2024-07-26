@@ -110,7 +110,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow)
     {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
         emitOperator.execute(ctx, record);
-        // If we have filled a buffer, we have to increase the sequence number for now. This should be fixed with issue #4343
+        /// If we have filled a buffer, we have to increase the sequence number for now. This should be fixed with issue #4343
         if (i == rowMemoryLayout->getCapacity())
         {
             seqNumber = seqNumber + 1;
@@ -160,4 +160,4 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer)
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

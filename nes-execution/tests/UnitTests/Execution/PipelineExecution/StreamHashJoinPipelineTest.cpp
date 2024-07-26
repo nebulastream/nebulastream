@@ -51,8 +51,8 @@ public:
         OperatorHandlerPtr hashJoinOpHandler,
         PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId, // mock pipeline id
-            DecomposedQueryPlanId(1), // mock query id
+            pipelineId, /// mock pipeline id
+            DecomposedQueryPlanId(1), /// mock query id
             bufferManager,
             noWorkerThreads,
             [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
@@ -118,7 +118,7 @@ public:
     {
         bool hashJoinWorks = true;
 
-        // Creating the input left and right buffers and the expected output buffer
+        /// Creating the input left and right buffers and the expected output buffer
         auto originId = 0UL;
         auto leftBuffers = Util::createBuffersFromCSVFile(fileNameBuffersLeft, leftSchema, bufferManager, originId++, timeStampFieldLeft);
         auto rightBuffers
@@ -129,7 +129,7 @@ public:
         NES_DEBUG("leftBuffer: \n{}", Util::printTupleBufferAsCSV(leftBuffers[0], leftSchema));
         NES_DEBUG("rightBuffers: \n{}", Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
 
-        // Creating the scan (for build) and emit operator (for sink)
+        /// Creating the scan (for build) and emit operator (for sink)
         auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
         auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
         auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
@@ -142,7 +142,7 @@ public:
         auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));
         auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderSink));
 
-        // Creating the left, right and sink hash join operator
+        /// Creating the left, right and sink hash join operator
         const auto handlerIndex = 0;
         const auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldLeft);
         const auto readTsFieldRight = std::make_shared<Expressions::ReadFieldExpression>(timeStampFieldRight);
@@ -181,7 +181,7 @@ public:
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        // Creating the hash join operator
+        /// Creating the hash join operator
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};
         OriginId outputOriginId = OriginId(2);
         auto hashJoinOpHandler = Operators::HJOperatorHandlerSlicing::create(
@@ -197,7 +197,7 @@ public:
             NES::Configurations::DEFAULT_HASH_PAGE_SIZE,
             NES::Configurations::DEFAULT_HASH_NUM_PARTITIONS);
 
-        // Building the pipeline
+        /// Building the pipeline
         auto pipelineBuildLeft = std::make_shared<PhysicalOperatorPipeline>();
         auto pipelineBuildRight = std::make_shared<PhysicalOperatorPipeline>();
         auto pipelineProbe = std::make_shared<PhysicalOperatorPipeline>();
@@ -229,7 +229,7 @@ public:
         hashJoinWorks = hashJoinWorks && (executablePipelineRight->setup(pipelineExecCtxRight) == 0);
         hashJoinWorks = hashJoinWorks && (executablePipelineSink->setup(pipelineExecCtxSink) == 0);
 
-        // Executing left and right buffers
+        /// Executing left and right buffers
         for (auto buffer : leftBuffers)
         {
             executablePipelineLeft->execute(buffer, pipelineExecCtxLeft, *workerContext);
@@ -243,10 +243,10 @@ public:
         hashJoinOpHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxLeft));
         hashJoinOpHandler->stop(QueryTerminationType::Graceful, std::make_shared<PipelineExecutionContext>(pipelineExecCtxRight));
 
-        // Assure that at least one buffer has been emitted
+        /// Assure that at least one buffer has been emitted
         hashJoinWorks = hashJoinWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
-        // Executing sink buffers
+        /// Executing sink buffers
         std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
         buildEmittedBuffers.insert(
             buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(), pipelineExecCtxRight.emittedBuffers.end());
@@ -289,7 +289,7 @@ TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline)
     const auto windowStartFieldName = joinSchema->get(0)->getName();
     const auto windowEndFieldName = joinSchema->get(1)->getName();
 
-    // read values from csv file into one buffer for each join side and for one window
+    /// read values from csv file into one buffer for each join side and for one window
     const auto windowSize = 1000UL;
     const std::string fileNameBuffersLeft(std::string(TEST_DATA_DIRECTORY) + "window.csv");
     const std::string fileNameBuffersRight(std::string(TEST_DATA_DIRECTORY) + "window2.csv");
@@ -317,7 +317,7 @@ INSTANTIATE_TEST_CASE_P(
     HashJoinPipelineTest,
     ::testing::Values(
         "PipelineInterpreter",
-        "PipelineCompiler"), //CPPPipelineCompiler is currently not working
+        "PipelineCompiler"), ///CPPPipelineCompiler is currently not working
     [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

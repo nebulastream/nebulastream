@@ -65,6 +65,6 @@ private:
     GeoLocation location;
     std::optional<Timestamp> timestamp;
 };
-} // namespace NES::Spatial::DataTypes::Experimental
+} /// namespace NES::Spatial::DataTypes::Experimental
 
 #endif /// NES_COMMON_INCLUDE_UTIL_MOBILITY_WAYPOINT_HPP_

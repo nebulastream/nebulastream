@@ -54,7 +54,7 @@ public:
             throw WindowProcessingException(
                 "The ts " + std::to_string(ts) + " can't be smaller then the lastWatermarkTs " + std::to_string(lastWatermarkTs));
         }
-        // get a read lock
+        /// get a read lock
         std::lock_guard<std::mutex> lock(mutex);
         localResultVector.clear();
 
@@ -63,7 +63,7 @@ public:
         int64_t lastStart = (timestamp - remainder);
         int64_t lowerBound = timestamp - windowSize;
 
-        // iterate over all windows that cover the ts
+        /// iterate over all windows that cover the ts
         for (int64_t start = lastStart; start >= 0 && start > lowerBound; start -= windowSlide)
         {
             auto bucketRef = buckets.find(start);
@@ -99,7 +99,7 @@ public:
     std::list<std::shared_ptr<SliceType>> extractBucketsUntilTs(uint64_t ts)
     {
         std::lock_guard<std::mutex> lock(mutex);
-        // drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
+        /// drop all slices as long as the list is not empty and the first slice ends before or at the current ts.
         std::list<std::shared_ptr<SliceType>> resultBuckets;
         for (auto i = buckets.begin(), last = buckets.end(); i != last && i->first + windowSize <= ts;)
         {
@@ -125,7 +125,7 @@ private:
     virtual SliceTypePtr allocateNewSlice(uint64_t startTs, uint64_t endTs) = 0;
 
 private:
-    // use int64_t here because window could start at negative start points.
+    /// use int64_t here because window could start at negative start points.
     int64_t windowSize;
     int64_t windowSlide;
     std::map<uint64_t, SliceTypePtr> buckets;
@@ -133,6 +133,6 @@ private:
     std::vector<SliceType*> localResultVector;
     std::mutex mutex;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_BUCKETSTORE_HPP_

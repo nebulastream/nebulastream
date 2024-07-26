@@ -60,5 +60,5 @@ public:
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::ChainedHashMap>> threadLocalSliceStores;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_

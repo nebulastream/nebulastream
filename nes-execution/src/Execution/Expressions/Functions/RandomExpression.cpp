@@ -34,9 +34,9 @@ double random(uint32_t seed)
 
 Value<> RandomExpression::execute(NES::Nautilus::Record& record) const
 {
-    //Evaluate the sub expression and retrieve the value.
+    ///Evaluate the sub expression and retrieve the value.
     Value subValue = subExpression->execute(record);
-    //check the type and then call the function.
+    ///check the type and then call the function.
     if (subValue->isType<Int8>())
     {
         return FunctionCall<>("random", random, subValue.as<Int8>());
@@ -79,10 +79,10 @@ Value<> RandomExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<RandomExpression>> randomFunction("random");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

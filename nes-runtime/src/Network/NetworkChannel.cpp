@@ -61,12 +61,12 @@ std::unique_ptr<T> createNetworkChannel(
         ChannelId channelId(nesPartition, Runtime::NesThread::getId());
         zmq::socket_t zmqSocket(*zmqContext, ZMQ_DEALER);
         zmqSocket.set(zmq::sockopt::linger, linger);
-        // Sets the timeout for receive operation on the socket. If the value is 0, zmq_recv(3) will return immediately,
-        // with a EAGAIN error if there is no message to receive. If the value is -1, it will block until a message is available.
-        // For all other values, it will wait for a message for that amount of time before returning with an EAGAIN error.
+        /// Sets the timeout for receive operation on the socket. If the value is 0, zmq_recv(3) will return immediately,
+        /// with a EAGAIN error if there is no message to receive. If the value is -1, it will block until a message is available.
+        /// For all other values, it will wait for a message for that amount of time before returning with an EAGAIN error.
         zmqSocket.set(zmq::sockopt::rcvtimeo, rcvtimeo);
-        // set the high watermark: this zmqSocket will accept only highWaterMark messages and then it ll block
-        // until more space is available
+        /// set the high watermark: this zmqSocket will accept only highWaterMark messages and then it ll block
+        /// until more space is available
         if (highWaterMark > 0)
         {
             zmqSocket.set(zmq::sockopt::sndhwm, highWaterMark);
@@ -76,10 +76,10 @@ std::unique_ptr<T> createNetworkChannel(
         int i = 0;
         constexpr auto mode = (T::canSendEvent && !T::canSendData) ? Network::Messages::ChannelType::EventOnlyChannel
                                                                    : Network::Messages::ChannelType::DataChannel;
-        //if retry times are set to 0, keep retrying indefinitely
+        ///if retry times are set to 0, keep retrying indefinitely
         while (i < retryTimes || retryTimes == 0)
         {
-            //if the thread creater requested to abort, return nullptr
+            ///if the thread creater requested to abort, return nullptr
             if (abortConnection.has_value() && abortConnection.value().wait_for(std::chrono::seconds(0)) == std::future_status::ready)
             {
                 NES_DEBUG("Aborting network channel connection process on caller request");
@@ -114,8 +114,8 @@ std::unique_ptr<T> createNetworkChannel(
                     auto optRecvStatus2 = zmqSocket.recv(recvMsg, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus2.has_value(), "invalid recv");
                     auto* serverReadyMsg = recvMsg.data<Messages::ServerReadyMessage>();
-                    // check if server responds with a ServerReadyMessage
-                    // check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
+                    /// check if server responds with a ServerReadyMessage
+                    /// check if the server has the correct corresponding channel registered, this is guaranteed by matching IDs
                     if (!(serverReadyMsg->getChannelId().getNesPartition() == channelId.getNesPartition()))
                     {
                         NES_ERROR(
@@ -130,7 +130,7 @@ std::unique_ptr<T> createNetworkChannel(
                     return std::make_unique<T>(std::move(zmqSocket), channelId, std::move(socketAddr), std::move(bufferManager));
                 }
                 case Messages::MessageType::ErrorMessage: {
-                    // if server receives a message that an error occurred
+                    /// if server receives a message that an error occurred
                     zmq::message_t errorEnvelope;
                     auto optRecvStatus3 = zmqSocket.recv(errorEnvelope, kZmqRecvDefault);
                     NES_ASSERT2_FMT(optRecvStatus3.has_value(), "invalid recv");
@@ -139,10 +139,10 @@ std::unique_ptr<T> createNetworkChannel(
                     {
                         if constexpr (std::is_same_v<T, EventOnlyNetworkChannel>)
                         {
-                            // for an event-only channel it's ok to get this message
-                            // it means the producer is already done so, it won't be able
-                            // to receive any event. We should figure out if this case must be
-                            // handled somewhere else. For instance, what does this mean for FT and upstream backup?
+                            /// for an event-only channel it's ok to get this message
+                            /// it means the producer is already done so, it won't be able
+                            /// to receive any event. We should figure out if this case must be
+                            /// handled somewhere else. For instance, what does this mean for FT and upstream backup?
                             NES_ERROR("EventOnlyNetworkChannel: Received partition deleted error from server {}", socketAddr);
                             return nullptr;
                         }
@@ -161,7 +161,7 @@ std::unique_ptr<T> createNetworkChannel(
                     break;
                 }
                 default: {
-                    // got a wrong message type!
+                    /// got a wrong message type!
                     NES_ERROR("{}: received unknown message {}", channelName, static_cast<int>(recvHeader->getMsgType()));
                     return nullptr;
                 }
@@ -172,7 +172,7 @@ std::unique_ptr<T> createNetworkChannel(
                 i,
                 retryTimes,
                 std::to_string(backOffTime.count()));
-            std::this_thread::sleep_for(backOffTime); // TODO make this async
+            std::this_thread::sleep_for(backOffTime); /// TODO make this async
             backOffTime *= 2;
             backOffTime = std::min(std::chrono::milliseconds(2000), backOffTime);
             i++;
@@ -197,7 +197,7 @@ std::unique_ptr<T> createNetworkChannel(
     return nullptr;
 }
 
-} // namespace detail
+} /// namespace detail
 
 NetworkChannel::NetworkChannel(
     zmq::socket_t&& zmqSocket, const ChannelId channelId, std::string&& address, Runtime::BufferManagerPtr bufferManager)
@@ -272,4 +272,4 @@ EventOnlyNetworkChannelPtr EventOnlyNetworkChannel::create(
         zmqContext, std::move(socketAddr), nesPartition, protocol, bufferManager, highWaterMark, waitTime, retryTimes);
 }
 
-} // namespace NES::Network
+} /// namespace NES::Network

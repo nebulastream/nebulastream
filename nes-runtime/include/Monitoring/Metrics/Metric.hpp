@@ -188,6 +188,6 @@ private:
     MetricType type;
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICS_METRIC_HPP_

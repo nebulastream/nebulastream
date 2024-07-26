@@ -40,6 +40,6 @@ public:
 
 using CompilationBackendRegistry = Util::NamedPluginRegistry<CompilationBackend>;
 
-} // namespace NES::Nautilus::Backends
+} /// namespace NES::Nautilus::Backends
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_COMPILATIONBACKEND_HPP_

@@ -50,5 +50,5 @@ public:
         const Runtime::BufferManagerPtr& bufferManager) override;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_NESBINARYPARSER_HPP_

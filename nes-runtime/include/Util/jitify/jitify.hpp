@@ -91,7 +91,7 @@
 #endif
 #include <algorithm>
 #include <cctype>
-#include <cstring> // For strtok_r etc.
+#include <cstring> /// For strtok_r etc.
 #include <deque>
 #include <fstream>
 #include <iomanip>
@@ -111,17 +111,17 @@
 #endif
 
 #include <cuda.h>
-#include <cuda_runtime_api.h> // For dim3, cudaStream_t
+#include <cuda_runtime_api.h> /// For dim3, cudaStream_t
 #if CUDA_VERSION >= 8000
 #    define NVRTC_GET_TYPE_NAME 1
 #endif
 #include <nvrtc.h>
 
-// For use by get_current_executable_path().
+/// For use by get_current_executable_path().
 #ifdef __linux__
-#    include <linux/limits.h> // For PATH_MAX
+#    include <linux/limits.h> /// For PATH_MAX
 
-#    include <cstdlib> // For realpath
+#    include <cstdlib> /// For realpath
 #    define JITIFY_PATH_MAX PATH_MAX
 #elif defined(_WIN32) || defined(_WIN64)
 #    include <windows.h>
@@ -130,18 +130,18 @@
 #    error "Unsupported platform"
 #endif
 
-#ifdef _MSC_VER // MSVC compiler
-#    include <dbghelp.h> // For UnDecorateSymbolName
+#ifdef _MSC_VER /// MSVC compiler
+#    include <dbghelp.h> /// For UnDecorateSymbolName
 #else
-#    include <cxxabi.h> // For abi::__cxa_demangle
+#    include <cxxabi.h> /// For abi::__cxa_demangle
 #endif
 
 #if defined(_WIN32) || defined(_WIN64)
-// WAR for strtok_r being called strtok_s on Windows
+/// WAR for strtok_r being called strtok_s on Windows
 #    pragma push_macro("strtok_r")
 #    undef strtok_r
 #    define strtok_r strtok_s
-// WAR for min and max possibly being macros defined by windows.h
+/// WAR for min and max possibly being macros defined by windows.h
 #    pragma push_macro("min")
 #    pragma push_macro("max")
 #    undef min
@@ -179,7 +179,7 @@
         extern "C" uint8_t _jitify_binary_##name##_end[] asm("_binary_" #name "_end"); \
         JITIFY_FORCE_UNDEFINED_SYMBOL(_jitify_binary_##name##_start); \
         JITIFY_FORCE_UNDEFINED_SYMBOL(_jitify_binary_##name##_end)
-#endif // JITIFY_ENABLE_EMBEDDED_FILES
+#endif /// JITIFY_ENABLE_EMBEDDED_FILES
 
 /*! Jitify library namespace
  */
@@ -195,12 +195,12 @@ namespace jitify
  */
 typedef std::istream* (*file_callback_type)(std::string filename, std::iostream& tmp_stream);
 
-// Exclude from Doxygen
-//! \cond
+/// Exclude from Doxygen
+///! \cond
 
 class JitCache;
 
-// Simple cache using LRU discard policy
+/// Simple cache using LRU discard policy
 template <typename KeyType, typename ValueType>
 class ObjectCache
 {
@@ -247,7 +247,7 @@ public:
         rank_iterator rank = std::find(_ranked_keys.begin(), _ranked_keys.end(), k);
         if (rank != _ranked_keys.begin())
         {
-            // Move key to front of ranks
+            /// Move key to front of ranks
             _ranked_keys.erase(rank);
             _ranked_keys.push_front(k);
         }
@@ -271,7 +271,7 @@ public:
     inline value_type& emplace(const key_type& k, Args&&... args)
     {
         this->discard_old(1);
-        // Note: Use of piecewise_construct allows non-movable non-copyable types
+        /// Note: Use of piecewise_construct allows non-movable non-copyable types
         auto iter = _objects.emplace(std::piecewise_construct, std::forward_as_tuple(k), std::forward_as_tuple(args...)).first;
         _ranked_keys.push_front(iter->first);
         return iter->second;
@@ -281,7 +281,7 @@ public:
 namespace detail
 {
 
-// Convenience wrapper for std::vector that provides handy constructors
+/// Convenience wrapper for std::vector that provides handy constructors
 template <typename T>
 class vector : public std::vector<T>
 {
@@ -289,7 +289,7 @@ class vector : public std::vector<T>
 
 public:
     vector() : super_type() { }
-    vector(size_t n) : super_type(n) { } // Note: Not explicit, allows =0
+    vector(size_t n) : super_type(n) { } /// Note: Not explicit, allows =0
     vector(std::vector<T> const& vals) : super_type(vals) { }
     template <int N>
     vector(T const (&vals)[N]) : super_type(vals, vals + N)
@@ -299,7 +299,7 @@ public:
     vector(std::initializer_list<T> vals) : super_type(vals) { }
 };
 
-// Helper functions for parsing/manipulating source code
+/// Helper functions for parsing/manipulating source code
 
 inline std::string replace_characters(std::string str, std::string const& oldchars, char newchar)
 {
@@ -331,7 +331,7 @@ public:
         {
             throw std::runtime_error(std::string("dlopen failed: ") + dlerror());
         }
-        dlerror(); // Clear any existing error
+        dlerror(); /// Clear any existing error
     }
     ~EmbeddedData()
     {
@@ -354,7 +354,7 @@ public:
     const uint8_t* begin(std::string key) const { return (*this)[key + "_start"]; }
     const uint8_t* end(std::string key) const { return (*this)[key + "_end"]; }
 };
-#endif // JITIFY_ENABLE_EMBEDDED_FILES
+#endif /// JITIFY_ENABLE_EMBEDDED_FILES
 
 inline bool is_tokenchar(char c)
 {
@@ -380,9 +380,9 @@ inline std::string replace_token(std::string src, std::string token, std::string
 }
 inline std::string path_base(std::string p)
 {
-    // "/usr/local/myfile.dat" -> "/usr/local"
-    // "foo/bar"  -> "foo"
-    // "foo/bar/" -> "foo/bar"
+    /// "/usr/local/myfile.dat" -> "/usr/local"
+    /// "foo/bar"  -> "foo"
+    /// "foo/bar/" -> "foo/bar"
 #if defined _WIN32 || defined _WIN64
     const char* sep = "\\/";
 #else
@@ -415,7 +415,7 @@ inline std::string path_join(std::string p1, std::string p2)
     }
     return p1 + p2;
 }
-// Elides "/." and "/.." tokens from path.
+/// Elides "/." and "/.." tokens from path.
 inline std::string path_simplify(const std::string& path)
 {
     std::vector<std::string> dirs;
@@ -426,7 +426,7 @@ inline std::string path_simplify(const std::string& path)
         if (path[i] == '/')
         {
             if (after_slash)
-                continue; // Ignore repeat slashes
+                continue; /// Ignore repeat slashes
             after_slash = true;
             if (cur_dir == ".." && !dirs.empty() && dirs.back() != "..")
             {
@@ -437,7 +437,7 @@ inline std::string path_simplify(const std::string& path)
                 dirs.pop_back();
             }
             else if (cur_dir != ".")
-            { // Ignore /./
+            { /// Ignore /./
                 dirs.push_back(cur_dir);
             }
             cur_dir.clear();
@@ -475,7 +475,7 @@ inline unsigned long long hash_larson64(const char* s, unsigned long long seed =
 
 inline uint64_t hash_combine(uint64_t a, uint64_t b)
 {
-    // Note: The magic number comes from the golden ratio
+    /// Note: The magic number comes from the golden ratio
     return a ^ (0x9E3779B97F4A7C17ull + b + (b >> 2) + (a << 6));
 }
 
@@ -515,7 +515,7 @@ inline bool extract_include_info_from_compile_error(std::string log, std::string
 
 inline bool is_include_directive_with_quotes(const std::string& source, int line_num)
 {
-    // TODO: Check each find() for failure.
+    /// TODO: Check each find() for failure.
     size_t beg = 0;
     for (int i = 1; i < line_num; ++i)
     {
@@ -533,7 +533,7 @@ inline std::string comment_out_code_line(int line_num, std::string source)
     {
         beg = source.find("\n", beg) + 1;
     }
-    return (source.substr(0, beg) + "//" + source.substr(beg));
+    return (source.substr(0, beg) + "///" + source.substr(beg));
 }
 
 inline void print_with_line_numbers(std::string const& source)
@@ -563,7 +563,7 @@ inline std::vector<std::string> split_string(std::string str, long maxsplit = -1
         results.push_back(str);
         return results;
     }
-    // Note: +1 to include NULL-terminator
+    /// Note: +1 to include NULL-terminator
     std::vector<char> v_str(str.c_str(), str.c_str() + (str.size() + 1));
     char* c_str = v_str.data();
     char* saveptr = c_str;
@@ -578,11 +578,11 @@ inline std::vector<std::string> split_string(std::string str, long maxsplit = -1
         }
         results.push_back(token);
     }
-    // Check if there's a final piece
+    /// Check if there's a final piece
     token += ::strlen(token) + 1;
     if (token - v_str.data() < (ptrdiff_t)str.size())
     {
-        // Find the start of the final piece
+        /// Find the start of the final piece
         token += ::strspn(token, delims.c_str());
         if (*token)
         {
@@ -607,7 +607,7 @@ inline bool load_source(
     std::istream* source_stream = 0;
     std::stringstream string_stream;
     std::ifstream file_stream;
-    // First detect direct source-code string ("my_program\nprogram_code...")
+    /// First detect direct source-code string ("my_program\nprogram_code...")
     size_t newline_pos = filename.find("\n");
     if (newline_pos != std::string::npos)
     {
@@ -622,17 +622,17 @@ inline bool load_source(
     }
     if (sources.count(filename))
     {
-        // Already got this one
+        /// Already got this one
         return true;
     }
     if (!source_stream)
     {
         std::string fullpath = path_join(current_dir, filename);
-        // Try loading from callback
+        /// Try loading from callback
         if (!file_callback || !((source_stream = file_callback(fullpath, string_stream)) != 0))
         {
 #if JITIFY_ENABLE_EMBEDDED_FILES
-            // Try loading as embedded file
+            /// Try loading as embedded file
             EmbeddedData embedded;
             std::string source;
             try
@@ -642,9 +642,9 @@ inline bool load_source(
                 source_stream = &string_stream;
             }
             catch (std::runtime_error const&)
-#endif // JITIFY_ENABLE_EMBEDDED_FILES
+#endif /// JITIFY_ENABLE_EMBEDDED_FILES
             {
-                // Try loading from filesystem
+                /// Try loading from filesystem
                 bool found_file = false;
                 if (search_current_dir)
                 {
@@ -655,7 +655,7 @@ inline bool load_source(
                         found_file = true;
                     }
                 }
-                // Search include directories
+                /// Search include directories
                 if (!found_file)
                 {
                     for (int i = 0; i < (int)include_paths.size(); ++i)
@@ -671,7 +671,7 @@ inline bool load_source(
                     }
                     if (!found_file)
                     {
-                        // Try loading from builtin headers
+                        /// Try loading from builtin headers
                         fullpath = path_join("__jitify_builtin", filename);
                         auto it = get_jitsafe_headers_map().find(filename);
                         if (it != get_jitsafe_headers_map().end())
@@ -689,7 +689,7 @@ inline bool load_source(
         }
         if (fullpaths)
         {
-            // Record the full file path corresponding to this include name.
+            /// Record the full file path corresponding to this include name.
             (*fullpaths)[filename] = path_simplify(fullpath);
         }
     }
@@ -704,42 +704,42 @@ inline bool load_source(
     {
         ++linenum;
 
-        // HACK WAR for static variables not allowed on the device (unless
-        // __shared__)
-        // TODO: This breaks static member variables
-        // line = replace_token(line, "static const", "/*static*/ const");
+        /// HACK WAR for static variables not allowed on the device (unless
+        /// __shared__)
+        /// TODO: This breaks static member variables
+        /// line = replace_token(line, "static const", "/*static*/ const");
 
-        // TODO: Need to watch out for /* */ comments too
-        std::string cleanline = line.substr(0, line.find("//")); // Strip line comments
-        // if( cleanline.back() == "\r" ) { // Remove Windows line ending
-        //	cleanline = cleanline.substr(0, cleanline.size()-1);
-        //}
-        // TODO: Should trim whitespace before checking .empty()
+        /// TODO: Need to watch out for /* */ comments too
+        std::string cleanline = line.substr(0, line.find("///")); /// Strip line comments
+        /// if( cleanline.back() == "\r" ) { /// Remove Windows line ending
+        ///	cleanline = cleanline.substr(0, cleanline.size()-1);
+        ///}
+        /// TODO: Should trim whitespace before checking .empty()
         if (cleanline.empty() && remove_next_blank_line)
         {
             remove_next_blank_line = false;
             continue;
         }
-        // Maintain a file hash for use in #pragma once WAR
+        /// Maintain a file hash for use in #pragma once WAR
         hash = hash_larson64(line.c_str(), hash);
         if (cleanline.find("#pragma once") != std::string::npos)
         {
             pragma_once = true;
-            // Note: This is an attempt to recover the original line numbering,
-            //         which otherwise gets off-by-one due to the include guard.
+            /// Note: This is an attempt to recover the original line numbering,
+            ///         which otherwise gets off-by-one due to the include guard.
             remove_next_blank_line = true;
-            // line = "//" + line; // Comment out the #pragma once line
+            /// line = "///" + line; /// Comment out the #pragma once line
             continue;
         }
 
-        // HACK WAR for Thrust using "#define FOO #pragma bar"
-        // TODO: This is not robust to block comments, line continuations, or tabs.
+        /// HACK WAR for Thrust using "#define FOO #pragma bar"
+        /// TODO: This is not robust to block comments, line continuations, or tabs.
         size_t pragma_beg = cleanline.find("#pragma ");
         if (pragma_beg != std::string::npos)
         {
             std::string line_after_pragma = line.substr(pragma_beg + 8);
-            // TODO: Handle block comments (currently they cause a compilation error).
-            size_t comment_start = line_after_pragma.find("//");
+            /// TODO: Handle block comments (currently they cause a compilation error).
+            size_t comment_start = line_after_pragma.find("///");
             std::string pragma_args = line_after_pragma.substr(0, comment_start);
             std::string comment = comment_start != std::string::npos ? line_after_pragma.substr(comment_start) : "";
             line = line.substr(0, pragma_beg) + "_Pragma(\"" + pragma_args + "\")" + comment;
@@ -747,13 +747,13 @@ inline bool load_source(
 
         source += line + "\n";
     }
-    // HACK TESTING (WAR for cub)
-    // source = "#define cudaDeviceSynchronize() cudaSuccess\n" + source;
-    ////source = "cudaError_t cudaDeviceSynchronize() { return cudaSuccess; }\n" +
+    /// HACK TESTING (WAR for cub)
+    /// source = "#define cudaDeviceSynchronize() cudaSuccess\n" + source;
+    ///source = "cudaError_t cudaDeviceSynchronize() { return cudaSuccess; }\n" +
     /// source;
 
-    // WAR for #pragma once causing problems when there are multiple inclusions
-    //   of the same header from different paths.
+    /// WAR for #pragma once causing problems when there are multiple inclusions
+    ///   of the same header from different paths.
     if (pragma_once)
     {
         std::stringstream ss;
@@ -763,29 +763,29 @@ inline bool load_source(
         include_guard_header += "#ifndef " + include_guard_name;
         include_guard_header += "#define " + include_guard_name;
         std::string include_guard_footer;
-        include_guard_footer += "#endif // " + include_guard_name;
+        include_guard_footer += "#endif /// " + include_guard_name;
         source = include_guard_header + source + "\n" + include_guard_footer;
     }
-    // return filename;
+    /// return filename;
     return true;
 }
 
-} // namespace detail
+} /// namespace detail
 
-//! \endcond
+///! \endcond
 
 /*! Jitify reflection utilities namespace
  */
 namespace reflection
 {
 
-//  Provides type and value reflection via a function 'reflect':
-//    reflect<Type>()   -> "Type"
-//    reflect(value)    -> "(T)value"
-//    reflect<VAL>()    -> "VAL"
-//    reflect<Type,VAL> -> "VAL"
-//    reflect_template<float,NonType<int,7>,char>() -> "<float,7,char>"
-//    reflect_template({"float", "7", "char"}) -> "<float,7,char>"
+///  Provides type and value reflection via a function 'reflect':
+///    reflect<Type>()   -> "Type"
+///    reflect(value)    -> "(T)value"
+///    reflect<VAL>()    -> "VAL"
+///    reflect<Type,VAL> -> "VAL"
+///    reflect_template<float,NonType<int,7>,char>() -> "<float,7,char>"
+///    reflect_template({"float", "7", "char"}) -> "<float,7,char>"
 
 /*! A wrapper class for non-type template parameters.
  */
@@ -795,11 +795,11 @@ struct NonType
     constexpr static T VALUE = VALUE_;
 };
 
-// Forward declaration
+/// Forward declaration
 template <typename T>
 inline std::string reflect(T const& value);
 
-//! \cond
+///! \cond
 
 namespace detail
 {
@@ -811,7 +811,7 @@ inline std::string value_string(const T& x)
     ss << x;
     return ss.str();
 }
-// WAR for non-printable characters
+/// WAR for non-printable characters
 template <>
 inline std::string value_string<char>(const char& x)
 {
@@ -840,14 +840,14 @@ inline std::string value_string<wchar_t>(const wchar_t& x)
     ss << (long)x;
     return ss.str();
 }
-// Specialisation for bool true/false literals
+/// Specialisation for bool true/false literals
 template <>
 inline std::string value_string<bool>(const bool& x)
 {
     return x ? "true" : "false";
 }
 
-// Removes all tokens that start with double underscores.
+/// Removes all tokens that start with double underscores.
 inline void strip_double_underscore_tokens(char* s)
 {
     using jitify::detail::is_tokenchar;
@@ -862,33 +862,33 @@ inline void strip_double_underscore_tokens(char* s)
     } while ((*w++ = *s++));
 }
 
-//#if CUDA_VERSION < 8000
-#ifdef _MSC_VER // MSVC compiler
+///#if CUDA_VERSION < 8000
+#ifdef _MSC_VER /// MSVC compiler
 inline std::string demangle_cuda_symbol(const char* mangled_name)
 {
-    // We don't have a way to demangle CUDA symbol names under MSVC.
+    /// We don't have a way to demangle CUDA symbol names under MSVC.
     return mangled_name;
 }
 inline std::string demangle_native_type(const std::type_info& typeinfo)
 {
-    // Get the decorated name and skip over the leading '.'.
+    /// Get the decorated name and skip over the leading '.'.
     const char* decorated_name = typeinfo.raw_name() + 1;
     char undecorated_name[4096];
     if (UnDecorateSymbolName(
             decorated_name,
             undecorated_name,
             sizeof(undecorated_name) / sizeof(*undecorated_name),
-            UNDNAME_NO_ARGUMENTS | // Treat input as a type name
-                UNDNAME_NAME_ONLY // No "class" and "struct" prefixes
+            UNDNAME_NO_ARGUMENTS | /// Treat input as a type name
+                UNDNAME_NAME_ONLY /// No "class" and "struct" prefixes
             /*UNDNAME_NO_MS_KEYWORDS*/))
-    { // No "__cdecl", "__ptr64" etc.
-        // WAR for UNDNAME_NO_MS_KEYWORDS messing up function types.
+    { /// No "__cdecl", "__ptr64" etc.
+        /// WAR for UNDNAME_NO_MS_KEYWORDS messing up function types.
         strip_double_underscore_tokens(undecorated_name);
         return undecorated_name;
     }
     throw std::runtime_error("UnDecorateSymbolName failed");
 }
-#else // not MSVC
+#else /// not MSVC
 inline std::string demangle_cuda_symbol(const char* mangled_name)
 {
     size_t bufsize = 0;
@@ -898,11 +898,11 @@ inline std::string demangle_cuda_symbol(const char* mangled_name)
     auto demangled_ptr = std::unique_ptr<char, decltype(free)*>(abi::__cxa_demangle(mangled_name, buf, &bufsize, &status), free);
     if (status == 0)
     {
-        demangled_name = demangled_ptr.get(); // all worked as expected
+        demangled_name = demangled_ptr.get(); /// all worked as expected
     }
     else if (status == -2)
     {
-        demangled_name = mangled_name; // we interpret this as plain C name
+        demangled_name = mangled_name; /// we interpret this as plain C name
     }
     else if (status == -1)
     {
@@ -918,8 +918,8 @@ inline std::string demangle_native_type(const std::type_info& typeinfo)
 {
     return demangle_cuda_symbol(typeinfo.name());
 }
-#endif // not MSVC
-//#endif // CUDA_VERSION < 8000
+#endif /// not MSVC
+///#endif /// CUDA_VERSION < 8000
 
 template <typename>
 class JitifyTypeNameWrapper_
@@ -931,13 +931,13 @@ struct type_reflection
 {
     inline static std::string name()
     {
-        //#if CUDA_VERSION < 8000
-        // TODO: Use nvrtcGetTypeName once it has the same behavior as this.
-        // WAR for typeid discarding cv qualifiers on value-types
-        // Wrap type in dummy template class to preserve cv-qualifiers, then strip
-        // off the wrapper from the resulting string.
+        ///#if CUDA_VERSION < 8000
+        /// TODO: Use nvrtcGetTypeName once it has the same behavior as this.
+        /// WAR for typeid discarding cv qualifiers on value-types
+        /// Wrap type in dummy template class to preserve cv-qualifiers, then strip
+        /// off the wrapper from the resulting string.
         std::string wrapped_name = demangle_native_type(typeid(JitifyTypeNameWrapper_<T>));
-        // Note: The reflected name of this class also has namespace prefixes.
+        /// Note: The reflected name of this class also has namespace prefixes.
         const std::string wrapper_class_name = "JitifyTypeNameWrapper_<";
         size_t start = wrapped_name.find(wrapper_class_name);
         if (start == std::string::npos)
@@ -947,27 +947,27 @@ struct type_reflection
         start += wrapper_class_name.size();
         std::string name = wrapped_name.substr(start, wrapped_name.size() - (start + 1));
         return name;
-        //#else
-        //         std::string ret;
-        //         nvrtcResult status = nvrtcGetTypeName<T>(&ret);
-        //         if( status != NVRTC_SUCCESS ) {
-        //                 throw std::runtime_error(std::string("nvrtcGetTypeName
-        // failed:
-        //")+ nvrtcGetErrorString(status));
-        //         }
-        //         return ret;
-        //#endif
+        ///#else
+        ///         std::string ret;
+        ///         nvrtcResult status = nvrtcGetTypeName<T>(&ret);
+        ///         if( status != NVRTC_SUCCESS ) {
+        ///                 throw std::runtime_error(std::string("nvrtcGetTypeName
+        /// failed:
+        ///")+ nvrtcGetErrorString(status));
+        ///         }
+        ///         return ret;
+        ///#endif
     }
-}; // namespace detail
+}; /// namespace detail
 template <typename T, T VALUE>
 struct type_reflection<NonType<T, VALUE>>
 {
     inline static std::string name() { return jitify::reflection::reflect(VALUE); }
 };
 
-} // namespace detail
+} /// namespace detail
 
-//! \endcond
+///! \endcond
 
 /*! Create an Instance object that contains a const reference to the
  *  value.  We use this to wrap abstract objects from which we want to extract
@@ -999,9 +999,9 @@ struct Type
 {
 };
 
-// Type reflection
-// E.g., reflect<float>() -> "float"
-// Note: This strips trailing const and volatile qualifiers
+/// Type reflection
+/// E.g., reflect<float>() -> "float"
+/// Note: This strips trailing const and volatile qualifiers
 /*! Generate a code-string for a type.
  *  \code{.cpp}reflect<float>() --> "float"\endcode
  */
@@ -1010,8 +1010,8 @@ inline std::string reflect()
 {
     return detail::type_reflection<T>::name();
 }
-// Value reflection
-// E.g., reflect(3.14f) -> "(float)3.14"
+/// Value reflection
+/// E.g., reflect(3.14f) -> "(float)3.14"
 /*! Generate a code-string for a value.
  *  \code{.cpp}reflect(3.14f) --> "(float)3.14"\endcode
  */
@@ -1020,8 +1020,8 @@ inline std::string reflect(T const& value)
 {
     return "(" + reflect<T>() + ")" + detail::value_string(value);
 }
-// Non-type template arg reflection (implicit conversion to int64_t)
-// E.g., reflect<7>() -> "7_s64"
+/// Non-type template arg reflection (implicit conversion to int64_t)
+/// E.g., reflect<7>() -> "7_s64"
 /*! Generate a code-string for an integer non-type template argument.
  *  \code{.cpp}reflect<7>() --> "7_s64"\endcode
  */
@@ -1030,8 +1030,8 @@ inline std::string reflect()
 {
     return reflect<NonType<int64_t, N>>();
 }
-// Non-type template arg reflection (explicit type)
-// E.g., reflect<int,7>() -> "(int)7"
+/// Non-type template arg reflection (explicit type)
+/// E.g., reflect<int,7>() -> "(int)7"
 /*! Generate a code-string for a generic non-type template argument.
  *  \code{.cpp} reflect<int,7>() --> "(int)7" \endcode
  */
@@ -1040,8 +1040,8 @@ inline std::string reflect()
 {
     return reflect<NonType<T, N>>();
 }
-// Type reflection via value
-// E.g., reflect(Type<float>()) -> "float"
+/// Type reflection via value
+/// E.g., reflect(Type<float>()) -> "float"
 /*! Generate a code-string for a type wrapped as a Type instance.
  *  \code{.cpp}reflect(Type<float>()) --> "float"\endcode
  */
@@ -1064,8 +1064,8 @@ inline std::string reflect(jitify::reflection::Instance<T>& value)
     return detail::demangle_native_type(typeid(value.value));
 }
 
-// Type from value
-// E.g., type_of(3.14f) -> Type<float>()
+/// Type from value
+/// E.g., type_of(3.14f) -> Type<float>()
 /*! Create a Type object representing a value's type.
  *  \param value The value whose type is to be captured.
  */
@@ -1083,7 +1083,7 @@ inline Type<T const> type_of(T const&)
     return Type<T const>();
 }
 
-// Multiple value reflections one call, returning list of strings
+/// Multiple value reflections one call, returning list of strings
 template <typename... Args>
 inline std::vector<std::string> reflect_all(Args... args)
 {
@@ -1104,41 +1104,41 @@ inline std::string reflect_list(jitify::detail::vector<std::string> const& args,
     return ss.str();
 }
 
-// Template instantiation reflection
-// inline std::string reflect_template(std::vector<std::string> const& args) {
+/// Template instantiation reflection
+/// inline std::string reflect_template(std::vector<std::string> const& args) {
 inline std::string reflect_template(jitify::detail::vector<std::string> const& args)
 {
-    // Note: The space in " >" is a WAR to avoid '>>' appearing
+    /// Note: The space in " >" is a WAR to avoid '>>' appearing
     return reflect_list(args, "<", " >");
 }
-// TODO: See if can make this evaluate completely at compile-time
+/// TODO: See if can make this evaluate completely at compile-time
 template <typename... Ts>
 inline std::string reflect_template()
 {
     return reflect_template({reflect<Ts>()...});
-    // return reflect_template<sizeof...(Ts)>({reflect<Ts>()...});
+    /// return reflect_template<sizeof...(Ts)>({reflect<Ts>()...});
 }
 
-} // namespace reflection
+} /// namespace reflection
 
-//! \cond
+///! \cond
 
 namespace detail
 {
 
-// Demangles nested variable names using the PTX name mangling scheme
-// (which follows the Itanium64 ABI). E.g., _ZN1a3Foo2bcE -> a::Foo::bc.
+/// Demangles nested variable names using the PTX name mangling scheme
+/// (which follows the Itanium64 ABI). E.g., _ZN1a3Foo2bcE -> a::Foo::bc.
 inline std::string demangle_ptx_variable_name(const char* name)
 {
     std::stringstream ss;
     const char* c = name;
     if (*c++ != '_' || *c++ != 'Z')
-        return name; // Non-mangled name
+        return name; /// Non-mangled name
     if (*c++ != 'N')
-        return ""; // Not a nested name, unsupported
+        return ""; /// Not a nested name, unsupported
     while (true)
     {
-        // Parse identifier length.
+        /// Parse identifier length.
         int n = 0;
         while (std::isdigit(*c))
         {
@@ -1146,20 +1146,20 @@ inline std::string demangle_ptx_variable_name(const char* name)
             c++;
         }
         if (!n)
-            return ""; // Invalid or unsupported mangled name
-        // Parse identifier.
+            return ""; /// Invalid or unsupported mangled name
+        /// Parse identifier.
         const char* c0 = c;
         while (n-- && *c)
             c++;
         if (!*c)
-            return ""; // Mangled name is truncated
+            return ""; /// Mangled name is truncated
         std::string id(c0, c);
-        // Identifiers starting with "_GLOBAL" are anonymous namespaces.
+        /// Identifiers starting with "_GLOBAL" are anonymous namespaces.
         ss << (id.substr(0, 7) == "_GLOBAL" ? "(anonymous namespace)" : id);
-        // Nested name specifiers end with 'E'.
+        /// Nested name specifiers end with 'E'.
         if (*c == 'E')
             break;
-        // There are more identifiers to come, add join token.
+        /// There are more identifiers to come, add join token.
         ss << "::";
     }
     return ss.str();
@@ -1187,9 +1187,9 @@ inline bool endswith(const std::string& str, const std::string& suffix)
     return str.size() >= suffix.size() && str.substr(str.size() - suffix.size()) == suffix;
 }
 
-// Infers the JIT input type from the filename suffix. If no known suffix is
-// present, the filename is assumed to refer to a library, and the associated
-// suffix (and possibly prefix) is automatically added to the filename.
+/// Infers the JIT input type from the filename suffix. If no known suffix is
+/// present, the filename is assumed to refer to a library, and the associated
+/// suffix (and possibly prefix) is automatically added to the filename.
 inline CUjitInputType get_cuda_jit_input_type(std::string* filename)
 {
     if (endswith(*filename, ".ptx"))
@@ -1208,7 +1208,7 @@ inline CUjitInputType get_cuda_jit_input_type(std::string* filename)
                  *filename,
 #if defined _WIN32 || defined _WIN64
                  ".obj"
-#else // Linux
+#else /// Linux
                  ".o"
 #endif
                  ))
@@ -1216,13 +1216,13 @@ inline CUjitInputType get_cuda_jit_input_type(std::string* filename)
         return CU_JIT_INPUT_OBJECT;
     }
     else
-    { // Assume library
+    { /// Assume library
 #if defined _WIN32 || defined _WIN64
         if (!endswith(*filename, ".lib"))
         {
             *filename += ".lib";
         }
-#else // Linux
+#else /// Linux
         if (!endswith(*filename, ".a"))
         {
             *filename = "lib" + *filename + ".a";
@@ -1263,8 +1263,8 @@ class CUDAKernel
     {
         CUresult result;
 #ifndef JITIFY_PRINT_LINKER_LOG
-        // WAR since linker log does not seem to be constructed using a single call
-        // to cuModuleLoadDataEx.
+        /// WAR since linker log does not seem to be constructed using a single call
+        /// to cuModuleLoadDataEx.
         if (link_files.empty())
         {
             result = cuModuleLoadDataEx(&_module, _ptx.c_str(), (unsigned)_opts.size(), _opts.data(), _optvals.data());
@@ -1280,13 +1280,13 @@ class CUDAKernel
                 CUjitInputType jit_input_type;
                 if (link_file == ".")
                 {
-                    // Special case for linking to current executable.
+                    /// Special case for linking to current executable.
                     link_file = get_current_executable_path();
                     jit_input_type = CU_JIT_INPUT_OBJECT;
                 }
                 else
                 {
-                    // Infer based on filename.
+                    /// Infer based on filename.
                     jit_input_type = get_cuda_jit_input_type(&link_file);
                 }
                 result = cuLinkAddFile(_link_state, jit_input_type, link_file.c_str(), 0, 0, 0);
@@ -1327,8 +1327,8 @@ class CUDAKernel
         std::cout << "---------------------------------------" << std::endl;
 #endif
         cuda_safe_call(result);
-        // Allow _func_name to be empty to support cases where we want to generate
-        // PTX containing extern symbol definitions but no kernels.
+        /// Allow _func_name to be empty to support cases where we want to generate
+        /// PTX containing extern symbol definitions but no kernels.
         if (!_func_name.empty())
         {
             cuda_safe_call(cuModuleGetFunction(&_kernel, _module, _func_name.c_str()));
@@ -1348,8 +1348,8 @@ class CUDAKernel
         _module = 0;
     }
 
-    // create a map of __constant__ and __device__ variables in the ptx file
-    // mapping demangled to mangled name
+    /// create a map of __constant__ and __device__ variables in the ptx file
+    /// mapping demangled to mangled name
     inline void create_global_variable_map()
     {
         size_t pos = 0;
@@ -1367,9 +1367,9 @@ class CUDAKernel
             size_t symbol_end = line.find_last_of("[");
             std::string entry = line.substr(symbol_start, symbol_end - symbol_start);
             std::string key = detail::demangle_ptx_variable_name(entry.c_str());
-            // Skip unsupported mangled names. E.g., a static variable defined inside
-            // a function (such variables are not directly addressable from outside
-            // the function, so skipping them is the correct behavior).
+            /// Skip unsupported mangled names. E.g., a static variable defined inside
+            /// a function (such variables are not directly addressable from outside
+            /// the function, so skipping them is the correct behavior).
             if (key == "")
                 continue;
             _global_map[key] = entry;
@@ -1520,27 +1520,27 @@ public:
 };
 
 static const char* jitsafe_header_preinclude_h = R"(
-//// WAR for Thrust (which appears to have forgotten to include this in result_of_adaptable_function.h
-//#include <type_traits>
+/// WAR for Thrust (which appears to have forgotten to include this in result_of_adaptable_function.h
+///#include <type_traits>
 
-//// WAR for Thrust (which appear to have forgotten to include this in error_code.h)
-//#include <string>
+/// WAR for Thrust (which appear to have forgotten to include this in error_code.h)
+///#include <string>
 
-// WAR for generics/shfl.h
+/// WAR for generics/shfl.h
 #define THRUST_STATIC_ASSERT(x)
 
-// WAR for CUB
+/// WAR for CUB
 #ifdef __host__
 #undef __host__
 #endif
 #define __host__
 
-// WAR to allow exceptions to be parsed
+/// WAR to allow exceptions to be parsed
 #define try
 #define catch(...)
 )"
 #if defined(_WIN32) || defined(_WIN64)
-                                                 // WAR for NVRTC <= 11.0 not defining _WIN64.
+                                                 /// WAR for NVRTC <= 11.0 not defining _WIN64.
                                                  R"(
 #ifndef _WIN64
 #define _WIN64 1
@@ -1655,18 +1655,18 @@ struct iterator_traits<T const*> {
   typedef T const*                   pointer;
   typedef T const&                   reference;
 };
-}  // namespace std
+}  /// namespace std
 )";
 
-// TODO: This is incomplete; need floating point limits
-//   Joe Eaton: added IEEE float and double types, none of the smaller types
-//              using type specific structs since we can't template on floats.
+/// TODO: This is incomplete; need floating point limits
+///   Joe Eaton: added IEEE float and double types, none of the smaller types
+///              using type specific structs since we can't template on floats.
 static const char* jitsafe_header_limits = R"(
 #pragma once
 #include <cfloat>
 #include <climits>
 #include <cstdint>
-// TODO: epsilon(), infinity(), etc
+/// TODO: epsilon(), infinity(), etc
 namespace std {
 namespace __jitify_detail {
 #if __cplusplus >= 201103L
@@ -1685,7 +1685,7 @@ struct FloatLimits {
           float min() JITIFY_CXX11_NOEXCEPT {      return FLT_MIN; }
    static JITIFY_CXX11_CONSTEXPR inline __host__ __device__ 
           float max() JITIFY_CXX11_NOEXCEPT {      return FLT_MAX; }
-#endif  // __cplusplus >= 201103L
+#endif  /// __cplusplus >= 201103L
    enum {
    is_specialized    = true,
    is_signed         = true,
@@ -1720,7 +1720,7 @@ struct DoubleLimits {
           double min() noexcept { return DBL_MIN; }
    static JITIFY_CXX11_CONSTEXPR inline __host__ __device__ 
           double max() noexcept { return DBL_MAX; }
-#endif  // __cplusplus >= 201103L
+#endif  /// __cplusplus >= 201103L
    enum {
    is_specialized    = true,
    is_signed         = true,
@@ -1755,7 +1755,7 @@ struct IntegerLimits {
 	static constexpr inline __host__ __device__ T lowest() noexcept {
 		return Min;
 	}
-#endif  // __cplusplus >= 201103L
+#endif  /// __cplusplus >= 201103L
 	enum {
        is_specialized = true,
        digits = (Digits == -1) ? (int)(sizeof(T)*8 - (Min != 0)) : Digits,
@@ -1768,7 +1768,7 @@ struct IntegerLimits {
        is_modulo  = false
 	};
 };
-} // namespace __jitify_detail
+} /// namespace __jitify_detail
 template<typename T> struct numeric_limits {
     enum { is_specialized = false };
 };
@@ -1808,18 +1808,18 @@ __jitify_detail::IntegerLimits<long long,         LLONG_MIN,LLONG_MAX>
 template<> struct numeric_limits<unsigned long long> : public 
 __jitify_detail::IntegerLimits<unsigned long long,0,        ULLONG_MAX> 
 {};
-//template<typename T> struct numeric_limits { static const bool 
-//is_signed = ((T)(-1)<0); };
+///template<typename T> struct numeric_limits { static const bool
+///is_signed = ((T)(-1)<0); };
 template<> struct numeric_limits<float>              : public 
 __jitify_detail::FloatLimits 
 {};
 template<> struct numeric_limits<double>             : public 
 __jitify_detail::DoubleLimits 
 {};
-}  // namespace std
+}  /// namespace std
 )";
 
-// TODO: This is highly incomplete
+/// TODO: This is highly incomplete
 static const char* jitsafe_header_type_traits = R"(
     #pragma once
     #if __cplusplus >= 201103L
@@ -1883,15 +1883,15 @@ static const char* jitsafe_header_type_traits = R"(
     template<class T> struct is_array<T[]> : true_type {};
     template<class T, size_t N> struct is_array<T[N]> : true_type {};
 
-    //partial implementation only of is_function
+    ///partial implementation only of is_function
     template<class> struct is_function : false_type { };
-    template<class Ret, class... Args> struct is_function<Ret(Args...)> : true_type {}; //regular
-    template<class Ret, class... Args> struct is_function<Ret(Args......)> : true_type {}; // variadic
+    template<class Ret, class... Args> struct is_function<Ret(Args...)> : true_type {}; ///regular
+    template<class Ret, class... Args> struct is_function<Ret(Args......)> : true_type {}; /// variadic
 
     template<class> struct result_of;
     template<class F, typename... Args>
     struct result_of<F(Args...)> {
-    // TODO: This is a hack; a proper implem is quite complicated.
+    /// TODO: This is a hack; a proper implem is quite complicated.
     typedef typename F::result_type type;
     };
 
@@ -1931,7 +1931,7 @@ static const char* jitsafe_header_type_traits = R"(
     template< class T > struct add_pointer<T, true> { using type = T; };
     template< class T, class... Args > struct add_pointer<T(Args...), true> { using type = T(*)(Args...); };
     template< class T, class... Args > struct add_pointer<T(Args..., ...), true> { using type = T(*)(Args..., ...); };
-    }  // namespace __jitify_detail
+    }  /// namespace __jitify_detail
     template< class T > struct add_pointer : __jitify_detail::add_pointer<T, is_function<T>::value> {};
     #if __cplusplus >= 201402L
     template< class T > using add_pointer_t = typename add_pointer<T>::type;
@@ -1953,7 +1953,7 @@ static const char* jitsafe_header_type_traits = R"(
     struct integral_constant {
     static constexpr T value = v;
     typedef T value_type;
-    typedef integral_constant type; // using injected-class-name
+    typedef integral_constant type; /// using injected-class-name
     constexpr operator value_type() const noexcept { return value; }
     #if __cplusplus >= 201402L
     constexpr value_type operator()() const noexcept { return value; }
@@ -1972,7 +1972,7 @@ static const char* jitsafe_header_type_traits = R"(
     template <class T> auto add_lvalue_reference(...) -> type_identity<T>;
     template <class T> auto add_rvalue_reference(int) -> type_identity<T&&>;
     template <class T> auto add_rvalue_reference(...) -> type_identity<T>;
-    } // namespace _jitify_detail
+    } /// namespace _jitify_detail
 
     template <class T> struct add_lvalue_reference : decltype(__jitify_detail::add_lvalue_reference<T>(0)) {};
     template <class T> struct add_rvalue_reference : decltype(__jitify_detail::add_rvalue_reference<T>(0)) {};
@@ -2005,7 +2005,7 @@ static const char* jitsafe_header_type_traits = R"(
     typedef typename remove_reference<T>::type type_sans_ref;
     static const bool value = (is_integral<T>::value || (is_integral<type_sans_ref>::value
       && is_const<type_sans_ref>::value && !is_volatile<type_sans_ref>::value));
-    }; // end is_int_or_cref
+    }; /// end is_int_or_cref
     template<typename From, typename To> struct is_convertible_sfinae {
     private:
     typedef char                          yes;
@@ -2015,26 +2015,26 @@ static const char* jitsafe_header_type_traits = R"(
     static inline typename remove_reference<From>::type& from() { typename remove_reference<From>::type* ptr = 0; return *ptr; }
     public:
     static const bool value = sizeof(test(from())) == sizeof(yes);
-    }; // end is_convertible_sfinae
+    }; /// end is_convertible_sfinae
     template<typename From, typename To> struct is_convertible_needs_simple_test {
     static const bool from_is_void      = is_void<From>::value;
     static const bool to_is_void        = is_void<To>::value;
     static const bool from_is_float     = is_floating_point<typename remove_reference<From>::type>::value;
     static const bool to_is_int_or_cref = is_int_or_cref<To>::value;
     static const bool value = (from_is_void || to_is_void || (from_is_float && to_is_int_or_cref));
-    }; // end is_convertible_needs_simple_test
+    }; /// end is_convertible_needs_simple_test
     template<typename From, typename To, bool = is_convertible_needs_simple_test<From,To>::value>
     struct is_convertible {
     static const bool value = (is_void<To>::value || (is_int_or_cref<To>::value && !is_void<From>::value));
-    }; // end is_convertible
+    }; /// end is_convertible
     template<typename From, typename To> struct is_convertible<From, To, false> {
     static const bool value = (is_convertible_sfinae<typename add_reference<From>::type, To>::value);
-    }; // end is_convertible
-    } // end __jitify_detail
-    // implementation of is_convertible taken from thrust's pre C++11 path
+    }; /// end is_convertible
+    } /// end __jitify_detail
+    /// implementation of is_convertible taken from thrust's pre C++11 path
     template<typename From, typename To> struct is_convertible
     : public integral_constant<bool, __jitify_detail::is_convertible<From, To>::value>
-    { }; // end is_convertible
+    { }; /// end is_convertible
 
     template<class A, class B> struct is_base_of { };
 
@@ -2077,11 +2077,11 @@ static const char* jitsafe_header_type_traits = R"(
     template <> struct make_signed<wchar_t>            { typedef signed int type; };
     #endif
 
-    }  // namespace std
-    #endif // c++11
+    }  /// namespace std
+    #endif /// c++11
 )";
 
-// TODO: INT_FAST8_MAX et al. and a few other misc constants
+/// TODO: INT_FAST8_MAX et al. and a few other misc constants
 static const char* jitsafe_header_stdint_h = "#pragma once\n"
                                              "#include <climits>\n"
                                              "namespace __jitify_stdint_ns {\n"
@@ -2098,7 +2098,7 @@ static const char* jitsafe_header_stdint_h = "#pragma once\n"
                                              "typedef signed int       int_least32_t;\n"
                                              "typedef signed long long int_least64_t;\n"
                                              "typedef signed long long intmax_t;\n"
-                                             "typedef signed long      intptr_t; //optional\n"
+                                             "typedef signed long      intptr_t; ///optional\n"
                                              "typedef unsigned char      uint8_t;\n"
                                              "typedef unsigned short     uint16_t;\n"
                                              "typedef unsigned int       uint32_t;\n"
@@ -2117,11 +2117,11 @@ static const char* jitsafe_header_stdint_h = "#pragma once\n"
                                              "#if defined _WIN32 || defined _WIN64\n"
                                              "#define WCHAR_MIN   0\n"
                                              "#define WCHAR_MAX   USHRT_MAX\n"
-                                             "typedef unsigned long long uintptr_t; //optional\n"
+                                             "typedef unsigned long long uintptr_t; ///optional\n"
                                              "#else\n"
                                              "#define WCHAR_MIN   INT_MIN\n"
                                              "#define WCHAR_MAX   INT_MAX\n"
-                                             "typedef unsigned long      uintptr_t; //optional\n"
+                                             "typedef unsigned long      uintptr_t; ///optional\n"
                                              "#endif\n"
                                              "#define INT32_MIN   INT_MIN\n"
                                              "#define INT64_MIN   LLONG_MIN\n"
@@ -2142,11 +2142,11 @@ static const char* jitsafe_header_stdint_h = "#pragma once\n"
                                              "#define PTRDIFF_MIN INTPTR_MIN\n"
                                              "#define PTRDIFF_MAX INTPTR_MAX\n"
                                              "#define SIZE_MAX    UINT64_MAX\n"
-                                             "} // namespace __jitify_stdint_ns\n"
+                                             "} /// namespace __jitify_stdint_ns\n"
                                              "namespace std { using namespace __jitify_stdint_ns; }\n"
                                              "using namespace __jitify_stdint_ns;\n";
 
-// TODO: offsetof
+/// TODO: offsetof
 static const char* jitsafe_header_stddef_h = "#pragma once\n"
                                              "#include <climits>\n"
                                              "namespace __jitify_stddef_ns {\n"
@@ -2157,7 +2157,7 @@ static const char* jitsafe_header_stddef_h = "#pragma once\n"
                                              "#elif defined(__APPLE__)\n"
                                              "  typedef long double max_align_t;\n"
                                              "#else\n"
-                                             "  // Define max_align_t to match the GCC definition.\n"
+                                             "  /// Define max_align_t to match the GCC definition.\n"
                                              "  typedef struct {\n"
                                              "    long long __jitify_max_align_nonce1\n"
                                              "        __attribute__((__aligned__(__alignof__(long long))));\n"
@@ -2165,17 +2165,17 @@ static const char* jitsafe_header_stddef_h = "#pragma once\n"
                                              "        __attribute__((__aligned__(__alignof__(long double))));\n"
                                              "  } max_align_t;\n"
                                              "#endif\n"
-                                             "#endif  // __cplusplus >= 201103L\n"
+                                             "#endif  /// __cplusplus >= 201103L\n"
                                              "#if __cplusplus >= 201703L\n"
                                              "enum class byte : unsigned char {};\n"
-                                             "#endif  // __cplusplus >= 201703L\n"
-                                             "} // namespace __jitify_stddef_ns\n"
+                                             "#endif  /// __cplusplus >= 201703L\n"
+                                             "} /// namespace __jitify_stddef_ns\n"
                                              "namespace std {\n"
-                                             "  // NVRTC provides built-in definitions of ::size_t and ::ptrdiff_t.\n"
+                                             "  /// NVRTC provides built-in definitions of ::size_t and ::ptrdiff_t.\n"
                                              "  using ::size_t;\n"
                                              "  using ::ptrdiff_t;\n"
                                              "  using namespace __jitify_stddef_ns;\n"
-                                             "} // namespace std\n"
+                                             "} /// namespace std\n"
                                              "using namespace __jitify_stddef_ns;\n";
 
 static const char* jitsafe_header_stdlib_h = "#pragma once\n"
@@ -2197,20 +2197,20 @@ static const char* jitsafe_header_cstring = "#pragma once\n"
                                             "char* strcpy ( char * destination, const char * source );\n"
                                             "int strcmp ( const char * str1, const char * str2 );\n"
                                             "char* strerror( int errnum );\n"
-                                            "} // namespace __jitify_cstring_ns\n"
+                                            "} /// namespace __jitify_cstring_ns\n"
                                             "namespace std { using namespace __jitify_cstring_ns; }\n"
                                             "using namespace __jitify_cstring_ns;\n";
 
-// HACK TESTING (WAR for cub)
+/// HACK TESTING (WAR for cub)
 static const char* jitsafe_header_iostream = "#pragma once\n"
                                              "#include <ostream>\n"
                                              "#include <istream>\n";
-// HACK TESTING (WAR for Thrust)
+/// HACK TESTING (WAR for Thrust)
 static const char* jitsafe_header_ostream = "#pragma once\n"
                                             "\n"
                                             "namespace std {\n"
-                                            "template<class CharT,class Traits=void>\n" // = std::char_traits<CharT>
-                                            // >\n"
+                                            "template<class CharT,class Traits=void>\n" /// = std::char_traits<CharT>
+                                            /// >\n"
                                             "struct basic_ostream {\n"
                                             "};\n"
                                             "typedef basic_ostream<char> ostream;\n"
@@ -2223,18 +2223,18 @@ static const char* jitsafe_header_ostream = "#pragma once\n"
                                             "#if __cplusplus >= 201103L\n"
                                             "template< class CharT, class Traits, class T > basic_ostream<CharT, "
                                             "Traits>& operator<<( basic_ostream<CharT,Traits>&& os, const T& value );\n"
-                                            "#endif  // __cplusplus >= 201103L\n"
-                                            "}  // namespace std\n";
+                                            "#endif  /// __cplusplus >= 201103L\n"
+                                            "}  /// namespace std\n";
 
 static const char* jitsafe_header_istream = "#pragma once\n"
                                             "\n"
                                             "namespace std {\n"
-                                            "template<class CharT,class Traits=void>\n" // = std::char_traits<CharT>
-                                            // >\n"
+                                            "template<class CharT,class Traits=void>\n" /// = std::char_traits<CharT>
+                                            /// >\n"
                                             "struct basic_istream {\n"
                                             "};\n"
                                             "typedef basic_istream<char> istream;\n"
-                                            "}  // namespace std\n";
+                                            "}  /// namespace std\n";
 
 static const char* jitsafe_header_sstream = "#pragma once\n"
                                             "#include <ostream>\n"
@@ -2249,40 +2249,40 @@ static const char* jitsafe_header_utility = "#pragma once\n"
                                             "	inline pair() {}\n"
                                             "	inline pair(T1 const& first_, T2 const& second_)\n"
                                             "		: first(first_), second(second_) {}\n"
-                                            "	// TODO: Standard includes many more constructors...\n"
-                                            "	// TODO: Comparison operators\n"
+                                            "	/// TODO: Standard includes many more constructors...\n"
+                                            "	/// TODO: Comparison operators\n"
                                             "};\n"
                                             "template<class T1, class T2>\n"
                                             "pair<T1,T2> make_pair(T1 const& first, T2 const& second) {\n"
                                             "	return pair<T1,T2>(first, second);\n"
                                             "}\n"
-                                            "}  // namespace std\n";
+                                            "}  /// namespace std\n";
 
-// TODO: incomplete
+/// TODO: incomplete
 static const char* jitsafe_header_vector = "#pragma once\n"
                                            "namespace std {\n"
-                                           "template<class T, class Allocator=void>\n" // = std::allocator> \n"
+                                           "template<class T, class Allocator=void>\n" /// = std::allocator> \n"
                                            "struct vector {\n"
                                            "};\n"
-                                           "}  // namespace std\n";
+                                           "}  /// namespace std\n";
 
-// TODO: incomplete
+/// TODO: incomplete
 static const char* jitsafe_header_string = "#pragma once\n"
                                            "namespace std {\n"
                                            "template<class CharT,class Traits=void,class Allocator=void>\n"
                                            "struct basic_string {\n"
                                            "basic_string();\n"
-                                           "basic_string( const CharT* s );\n" //, const Allocator& alloc =
-                                           // Allocator() );\n"
+                                           "basic_string( const CharT* s );\n" ///, const Allocator& alloc =
+                                           /// Allocator() );\n"
                                            "const CharT* c_str() const;\n"
                                            "bool empty() const;\n"
                                            "void operator+=(const char *);\n"
                                            "void operator+=(const basic_string &);\n"
                                            "};\n"
                                            "typedef basic_string<char> string;\n"
-                                           "}  // namespace std\n";
+                                           "}  /// namespace std\n";
 
-// TODO: incomplete
+/// TODO: incomplete
 static const char* jitsafe_header_stdexcept = "#pragma once\n"
                                               "namespace std {\n"
                                               "struct runtime_error {\n"
@@ -2290,9 +2290,9 @@ static const char* jitsafe_header_stdexcept = "#pragma once\n"
                                               "explicit runtime_error( const char* what_arg );"
                                               "virtual const char* what() const;\n"
                                               "};\n"
-                                              "}  // namespace std\n";
+                                              "}  /// namespace std\n";
 
-// TODO: incomplete
+/// TODO: incomplete
 static const char* jitsafe_header_complex = "#pragma once\n"
                                             "namespace std {\n"
                                             "template<typename T>\n"
@@ -2324,10 +2324,10 @@ static const char* jitsafe_header_complex = "#pragma once\n"
                                             "template<typename T>\n"
                                             "complex<T> operator*(const T& lhs, const complex<T>& rhs)\n"
                                             "  { return complexs<T>(rhs.real()*lhs,rhs.imag()*lhs); }\n"
-                                            "}  // namespace std\n";
+                                            "}  /// namespace std\n";
 
-// TODO: This is incomplete (missing binary and integer funcs, macros,
-// constants, types)
+/// TODO: This is incomplete (missing binary and integer funcs, macros,
+/// constants, types)
 static const char* jitsafe_header_math_h = "#pragma once\n"
                                            "namespace __jitify_math_ns {\n"
                                            "#if __cplusplus >= 201103L\n"
@@ -2399,22 +2399,22 @@ static const char* jitsafe_header_math_h = "#pragma once\n"
                                            "template<typename T> inline long long llrint(T x) { return ::llrint(x); "
                                            "}\n"
                                            "DEFINE_MATH_UNARY_FUNC_WRAPPER(nearbyint)\n"
-                                           // TODO: remainder, remquo, copysign, nan, nextafter, nexttoward, fdim,
-                                           // fmax, fmin, fma
+                                           /// TODO: remainder, remquo, copysign, nan, nextafter, nexttoward, fdim,
+                                           /// fmax, fmin, fma
                                            "#endif\n"
                                            "#undef DEFINE_MATH_UNARY_FUNC_WRAPPER\n"
-                                           "} // namespace __jitify_math_ns\n"
+                                           "} /// namespace __jitify_math_ns\n"
                                            "namespace std { using namespace __jitify_math_ns; }\n"
                                            "#define M_PI 3.14159265358979323846\n"
-                                           // Note: Global namespace already includes CUDA math funcs
-                                           "//using namespace __jitify_math_ns;\n";
+                                           /// Note: Global namespace already includes CUDA math funcs
+                                           "///using namespace __jitify_math_ns;\n";
 
 static const char* jitsafe_header_memory_h = R"(
     #pragma once
     #include <string.h>
  )";
 
-// TODO: incomplete
+/// TODO: incomplete
 static const char* jitsafe_header_mutex = R"(
     #pragma once
     #if __cplusplus >= 201103L
@@ -2425,7 +2425,7 @@ static const char* jitsafe_header_mutex = R"(
     bool try_lock();
     void unlock();
     };
-    }  // namespace std
+    }  /// namespace std
     #endif
  )";
 
@@ -2449,7 +2449,7 @@ static const char* jitsafe_header_algorithm = R"(
       return (b < a) ? b : a;
     }
 
-    }  // namespace std
+    }  /// namespace std
     #endif
  )";
 
@@ -2476,9 +2476,9 @@ static const char* jitsafe_header_time_h = R"(
       long tv_nsec;
     };
     #endif
-    }  // namespace __jitify_time_ns
+    }  /// namespace __jitify_time_ns
     namespace std {
-      // NVRTC provides built-in definitions of ::size_t and ::clock_t.
+      /// NVRTC provides built-in definitions of ::size_t and ::clock_t.
       using ::size_t;
       using ::clock_t;
       using namespace __jitify_time_ns;
@@ -2491,7 +2491,7 @@ static const char* jitsafe_header_tuple = R"(
     #if __cplusplus >= 201103L
     namespace std {
     template<class... Types > class tuple;
-    } // namespace std
+    } /// namespace std
     #endif
  )";
 
@@ -2499,9 +2499,9 @@ static const char* jitsafe_header_assert = R"(
     #pragma once
  )";
 
-// WAR: These need to be pre-included as a workaround for NVRTC implicitly using
-// /usr/include as an include path. The other built-in headers will be included
-// lazily as needed.
+/// WAR: These need to be pre-included as a workaround for NVRTC implicitly using
+/// /usr/include as an include path. The other built-in headers will be included
+/// lazily as needed.
 static const char* preinclude_jitsafe_header_names[]
     = {"jitify_preinclude.h", "limits.h", "math.h", "memory.h", "stdint.h", "stdlib.h", "stdio.h", "string.h", "time.h", "assert.h"};
 
@@ -2557,7 +2557,7 @@ static const std::map<std::string, std::string>& get_jitsafe_headers_map()
 
 inline void add_options_from_env(std::vector<std::string>& options)
 {
-    // Add options from environment variable
+    /// Add options from environment variable
     const char* env_options = std::getenv("JITIFY_OPTIONS");
     if (env_options)
     {
@@ -2569,7 +2569,7 @@ inline void add_options_from_env(std::vector<std::string>& options)
             options.push_back(opt);
         }
     }
-    // Add options from JITIFY_OPTIONS macro
+    /// Add options from JITIFY_OPTIONS macro
 #ifdef JITIFY_OPTIONS
 #    define JITIFY_TOSTRING_IMPL(x) #x
 #    define JITIFY_TOSTRING(x) JITIFY_TOSTRING_IMPL(x)
@@ -2582,22 +2582,22 @@ inline void add_options_from_env(std::vector<std::string>& options)
     }
 #    undef JITIFY_TOSTRING
 #    undef JITIFY_TOSTRING_IMPL
-#endif // JITIFY_OPTIONS
+#endif /// JITIFY_OPTIONS
 }
 
 inline void detect_and_add_cuda_arch(std::vector<std::string>& options)
 {
     for (int i = 0; i < (int)options.size(); ++i)
     {
-        // Note that this will also match the middle of "--gpu-architecture".
+        /// Note that this will also match the middle of "--gpu-architecture".
         if (options[i].find("-arch") != std::string::npos)
         {
-            // Arch already specified in options
+            /// Arch already specified in options
             return;
         }
     }
-    // Use the compute capability of the current device
-    // TODO: Check these API calls for errors
+    /// Use the compute capability of the current device
+    /// TODO: Check these API calls for errors
     cudaError_t status;
     int device;
     status = cudaGetDevice(&device);
@@ -2610,33 +2610,41 @@ inline void detect_and_add_cuda_arch(std::vector<std::string>& options)
     int cc_minor;
     cudaDeviceGetAttribute(&cc_minor, cudaDevAttrComputeCapabilityMinor, device);
     int cc = cc_major * 10 + cc_minor;
-    // Note: We must limit the architecture to the max supported by the current
-    //         version of NVRTC, otherwise newer hardware will cause errors
-    //         on older versions of CUDA.
-    // TODO: It would be better to detect this somehow, rather than hard-coding it
+    /// Note: We must limit the architecture to the max supported by the current
+    ///         version of NVRTC, otherwise newer hardware will cause errors
+    ///         on older versions of CUDA.
+    /// TODO: It would be better to detect this somehow, rather than hard-coding it
 
-    // Tegra chips do not have forwards compatibility, so we need to special case
-    // them.
+    /// Tegra chips do not have forwards compatibility, so we need to special case
+    /// them.
     bool is_tegra
-        = ((cc_major == 3 && cc_minor == 2) || // Logan
-           (cc_major == 5 && cc_minor == 3) || // Erista
-           (cc_major == 6 && cc_minor == 2) || // Parker
-           (cc_major == 7 && cc_minor == 2)); // Xavier
+        = ((cc_major == 3 && cc_minor == 2) || /// Logan
+           (cc_major == 5 && cc_minor == 3) || /// Erista
+           (cc_major == 6 && cc_minor == 2) || /// Parker
+           (cc_major == 7 && cc_minor == 2)); /// Xavier
     if (!is_tegra)
     {
-        // ensure that future CUDA versions just work (even if suboptimal)
+        /// ensure that future CUDA versions just work (even if suboptimal)
         const int cuda_major = std::min(10, CUDA_VERSION / 1000);
-        // clang-format off
-    switch (cuda_major) {
-      case 10: cc = std::min(cc, 75); break; // Turing
-      case  9: cc = std::min(cc, 70); break; // Volta
-      case  8: cc = std::min(cc, 61); break; // Pascal
-      case  7: cc = std::min(cc, 52); break; // Maxwell
-      default:
-        throw std::runtime_error("Unexpected CUDA major version " +
-                                 std::to_string(cuda_major));
-    }
-        // clang-format on
+        /// clang-format off
+        switch (cuda_major)
+        {
+            case 10:
+                cc = std::min(cc, 75);
+                break; /// Turing
+            case 9:
+                cc = std::min(cc, 70);
+                break; /// Volta
+            case 8:
+                cc = std::min(cc, 61);
+                break; /// Pascal
+            case 7:
+                cc = std::min(cc, 52);
+                break; /// Maxwell
+            default:
+                throw std::runtime_error("Unexpected CUDA major version " + std::to_string(cuda_major));
+        }
+        /// clang-format on
     }
 
     std::stringstream ss;
@@ -2646,23 +2654,23 @@ inline void detect_and_add_cuda_arch(std::vector<std::string>& options)
 
 inline void detect_and_add_cxx11_flag(std::vector<std::string>& options)
 {
-    // Reverse loop so we can erase on the fly.
+    /// Reverse loop so we can erase on the fly.
     for (int i = (int)options.size() - 1; i >= 0; --i)
     {
         if (options[i].find("-std=c++98") != std::string::npos)
         {
-            // NVRTC doesn't support specifying c++98 explicitly, so we remove it.
+            /// NVRTC doesn't support specifying c++98 explicitly, so we remove it.
             options.erase(options.begin() + i);
             return;
         }
         else if (options[i].find("-std") != std::string::npos)
         {
-            // Some other standard was explicitly specified, don't change anything.
+            /// Some other standard was explicitly specified, don't change anything.
             return;
         }
     }
-    // Jitify must be compiled with C++11 support, so we default to enabling it
-    // for the JIT-compiled code too.
+    /// Jitify must be compiled with C++11 support, so we default to enabling it
+    /// for the JIT-compiled code too.
     options.push_back("-std=c++11");
 }
 
@@ -2735,33 +2743,33 @@ inline void ptx_remove_unused_globals(std::string* ptx)
         lines.push_back(line);
         auto terms = split_string(line);
         if (terms.size() <= 1)
-            continue; // Ignore lines with no arguments
-        if (terms[0].substr(0, 2) == "//")
-            continue; // Ignore comment lines
+            continue; /// Ignore lines with no arguments
+        if (terms[0].substr(0, 2) == "///")
+            continue; /// Ignore comment lines
         if (terms[0].substr(0, 7) == ".global" || terms[0].substr(0, 6) == ".const")
         {
             line_num_to_global_name.emplace(line_num, ptx_parse_decl_name(line));
             continue;
         }
         if (terms[0][0] == '.')
-            continue; // Ignore .version, .reg, .param etc.
-        // Note: The first term will always be an instruction name; starting at 1
-        // also allows unchecked inspection of the previous term.
+            continue; /// Ignore .version, .reg, .param etc.
+        /// Note: The first term will always be an instruction name; starting at 1
+        /// also allows unchecked inspection of the previous term.
         for (int i = 1; i < (int)terms.size(); ++i)
         {
-            if (terms[i].substr(0, 2) == "//")
-                break; // Ignore comments
-            // Note: The characters '.' and '%' are not treated as delimiters.
+            if (terms[i].substr(0, 2) == "///")
+                break; /// Ignore comments
+            /// Note: The characters '.' and '%' are not treated as delimiters.
             const char* token_delims = " \t()[]{},;+-*/~&|^?:=!<>\"'\\";
             for (auto token : split_string(terms[i], -1, token_delims))
             {
-                if ( // Ignore non-names
+                if ( /// Ignore non-names
                     !(std::isalpha(token[0]) || token[0] == '_' || token[0] == '$') || token.find('.') != std::string::npos ||
-                    // Ignore variable/parameter declarations
+                    /// Ignore variable/parameter declarations
                     terms[i - 1][0] == '.' ||
-                    // Ignore branch instructions
+                    /// Ignore branch instructions
                     (token == "bra" && terms[i - 1][0] == '@') ||
-                    // Ignore branch labels
+                    /// Ignore branch labels
                     (token.substr(0, 2) == "BB" && terms[i - 1].substr(0, 3) == "bra"))
                 {
                     continue;
@@ -2779,7 +2787,7 @@ inline void ptx_remove_unused_globals(std::string* ptx)
             const std::string& name = it->second;
             if (!name_set.count(name))
             {
-                continue; // Remove unused .global declaration.
+                continue; /// Remove unused .global declaration.
             }
         }
         oss << lines[line_num] << '\n';
@@ -2797,7 +2805,7 @@ inline nvrtcResult compile_kernel(
     std::string* mangled_instantiation = 0)
 {
     std::string program_source = sources[program_name];
-    // Build arrays of header names and sources
+    /// Build arrays of header names and sources
     std::vector<const char*> header_names_c;
     std::vector<const char*> header_sources_c;
     int num_headers = (int)(sources.size() - 1);
@@ -2816,7 +2824,7 @@ inline nvrtcResult compile_kernel(
         header_sources_c.push_back(code.c_str());
     }
 
-    // TODO: This WAR is expected to be unnecessary as of CUDA > 10.2.
+    /// TODO: This WAR is expected to be unnecessary as of CUDA > 10.2.
     bool should_remove_unused_globals = detail::pop_remove_unused_globals_flag(&options);
 
     std::vector<const char*> options_c(options.size() + 2);
@@ -2831,8 +2839,8 @@ inline nvrtcResult compile_kernel(
     std::string inst_dummy;
     if (!instantiation.empty())
     {
-        // WAR for no nvrtcAddNameExpression before CUDA 8.0
-        // Force template instantiation by adding dummy reference to kernel
+        /// WAR for no nvrtcAddNameExpression before CUDA 8.0
+        /// Force template instantiation by adding dummy reference to kernel
         inst_dummy = "__jitify_instantiation";
         program_source += "\nvoid* " + inst_dummy + " = (void*)" + instantiation + ";\n";
     }
@@ -2890,13 +2898,13 @@ inline nvrtcResult compile_kernel(
     {
 #if CUDA_VERSION >= 8000
         const char* mangled_instantiation_cstr;
-        // Note: The returned string pointer becomes invalid after
-        //         nvrtcDestroyProgram has been called, so we save it.
+        /// Note: The returned string pointer becomes invalid after
+        ///         nvrtcDestroyProgram has been called, so we save it.
         CHECK_NVRTC(nvrtcGetLoweredName(nvrtc_program, instantiation.c_str(), &mangled_instantiation_cstr));
         *mangled_instantiation = mangled_instantiation_cstr;
 #else
-        // Extract mangled kernel template instantiation from PTX
-        inst_dummy += " = "; // Note: This must match how the PTX is generated
+        /// Extract mangled kernel template instantiation from PTX
+        inst_dummy += " = "; /// Note: This must match how the PTX is generated
         int mi_beg = ptx->find(inst_dummy) + inst_dummy.size();
         int mi_end = ptx->find(";", mi_beg);
         *mangled_instantiation = ptx->substr(mi_beg, mi_end - mi_beg);
@@ -2917,7 +2925,7 @@ inline void load_program(
     std::vector<std::string>* program_options,
     std::string* program_name)
 {
-    // Extract include paths from compile options
+    /// Extract include paths from compile options
     std::vector<std::string>::iterator iter = program_options->begin();
     while (iter != program_options->end())
     {
@@ -2933,21 +2941,21 @@ inline void load_program(
         }
     }
 
-    // Load program source
+    /// Load program source
     if (!detail::load_source(cuda_source, *program_sources, "", *include_paths, file_callback, program_name))
     {
         throw std::runtime_error("Source not found: " + cuda_source);
     }
 
-    // Maps header include names to their full file paths.
+    /// Maps header include names to their full file paths.
     std::map<std::string, std::string> header_fullpaths;
 
-    // Load header sources
+    /// Load header sources
     for (std::string const& header : headers)
     {
         if (!detail::load_source(header, *program_sources, "", *include_paths, file_callback, nullptr, &header_fullpaths))
         {
-            // **TODO: Deal with source not found
+            /// **TODO: Deal with source not found
             throw std::runtime_error("Source not found: " + header);
         }
     }
@@ -2964,15 +2972,15 @@ inline void load_program(
     std::vector<std::string> compiler_options, linker_files, linker_paths;
     detail::split_compiler_and_linker_options(*program_options, &compiler_options, &linker_files, &linker_paths);
 
-    // If no arch is specified at this point we use whatever the current
-    // context is. This ensures we pick up the correct internal headers
-    // for arch-dependent compilation, e.g., some intrinsics are only
-    // present for specific architectures.
+    /// If no arch is specified at this point we use whatever the current
+    /// context is. This ensures we pick up the correct internal headers
+    /// for arch-dependent compilation, e.g., some intrinsics are only
+    /// present for specific architectures.
     detail::detect_and_add_cuda_arch(compiler_options);
     detail::detect_and_add_cxx11_flag(compiler_options);
 
-    // Iteratively try to compile the sources, and use the resulting errors to
-    // identify missing headers.
+    /// Iteratively try to compile the sources, and use the resulting errors to
+    /// identify missing headers.
     std::string log;
     nvrtcResult ret;
     while ((ret = detail::compile_kernel(*program_name, *program_sources, compiler_options, "", &log)) == NVRTC_ERROR_COMPILATION)
@@ -2985,8 +2993,8 @@ inline void load_program(
 #if JITIFY_PRINT_LOG
             detail::print_compile_log(*program_name, log);
 #endif
-            // There was a non include-related compilation error
-            // TODO: How to handle error?
+            /// There was a non include-related compilation error
+            /// TODO: How to handle error?
             throw std::runtime_error("Runtime compilation failed");
         }
 
@@ -2997,9 +3005,9 @@ inline void load_program(
             is_included_with_quotes = is_include_directive_with_quotes(parent_source, line_num);
         }
 
-        // Try to load the new header
-        // Note: This fullpath lookup is needed because the compiler error
-        // messages have the include name of the header instead of its full path.
+        /// Try to load the new header
+        /// Note: This fullpath lookup is needed because the compiler error
+        /// messages have the include name of the header instead of its full path.
         std::string include_parent_fullpath = header_fullpaths[include_parent];
         std::string include_path = detail::path_base(include_parent_fullpath);
         if (detail::load_source(
@@ -3019,15 +3027,15 @@ inline void load_program(
 #endif
         }
         else
-        { // Failed to find header file.
-            // Comment-out the include line and print a warning
+        { /// Failed to find header file.
+            /// Comment-out the include line and print a warning
             if (!program_sources->count(include_parent))
             {
-                // ***TODO: Unless there's another mechanism (e.g., potentially
-                //            the parent path vs. filename problem), getting
-                //            here means include_parent was found automatically
-                //            in a system include path.
-                //            We need a WAR to zap it from *its parent*.
+                /// ***TODO: Unless there's another mechanism (e.g., potentially
+                ///            the parent path vs. filename problem), getting
+                ///            here means include_parent was found automatically
+                ///            in a system include path.
+                ///            We need a WAR to zap it from *its parent*.
 
                 typedef std::map<std::string, std::string> source_map;
                 for (source_map::const_iterator it = program_sources->begin(); it != program_sources->end(); ++it)
@@ -3123,9 +3131,9 @@ inline void get_1d_max_occupancy(
     }
 }
 
-} // namespace detail
+} /// namespace detail
 
-//! \endcond
+///! \endcond
 
 class KernelInstantiation;
 class Kernel;
@@ -3159,20 +3167,20 @@ public:
     {
         detail::add_options_from_env(_options);
 
-        // Bootstrap the cuda context to avoid errors
+        /// Bootstrap the cuda context to avoid errors
         cudaFree(0);
     }
 };
 
 class Program_impl
 {
-    // A friendly class
+    /// A friendly class
     friend class Kernel_impl;
     friend class KernelLauncher_impl;
     friend class KernelInstantiation_impl;
-    // TODO: This can become invalid if JitCache is destroyed before the
-    //         Program object is. However, this can't happen if JitCache
-    //           instances are static.
+    /// TODO: This can become invalid if JitCache is destroyed before the
+    ///         Program object is. However, this can't happen if JitCache
+    ///           instances are static.
     JitCache_impl& _cache;
     uint64_t _hash;
     ProgramConfig* _config;
@@ -3260,9 +3268,9 @@ class KernelLauncher
 public:
     inline KernelLauncher(KernelInstantiation const& kernel_inst, dim3 grid, dim3 block, unsigned int smem = 0, cudaStream_t stream = 0);
 
-    // Note: It's important that there is no implicit conversion required
-    //         for arg_ptrs, because otherwise the parameter pack version
-    //         below gets called instead (probably resulting in a segfault).
+    /// Note: It's important that there is no implicit conversion required
+    ///         for arg_ptrs, because otherwise the parameter pack version
+    ///         below gets called instead (probably resulting in a segfault).
     /*! Launch the kernel.
    *
    *  \param arg_ptrs  A vector of pointers to each function argument for the
@@ -3285,7 +3293,7 @@ public:
         _impl->safe_launch(arg_ptrs, arg_types);
     }
 
-    // Regular function call syntax
+    /// Regular function call syntax
     /*! Launch the kernel.
    *
    *  \see launch
@@ -3474,14 +3482,14 @@ public:
    *  \note Template type deduction is not possible, so all types must be
    *    explicitly specified.
    */
-    // inline KernelInstantiation instantiate(std::vector<std::string> const&
-    // template_args) const {
+    /// inline KernelInstantiation instantiate(std::vector<std::string> const&
+    /// template_args) const {
     inline KernelInstantiation instantiate(std::vector<std::string> const& template_args = std::vector<std::string>()) const
     {
         return KernelInstantiation(*this, template_args);
     }
 
-    // Regular template instantiation syntax (note limited flexibility)
+    /// Regular template instantiation syntax (note limited flexibility)
     /*! Instantiate the kernel.
    *
    *  \note The template arguments specified on this function are
@@ -3497,8 +3505,8 @@ public:
     {
         return this->instantiate(std::vector<std::string>({reflection::reflect<TemplateArgs>()...}));
     }
-    // Template-like instantiation syntax
-    //   E.g., instantiate(myvar,Type<MyType>())(grid,block)
+    /// Template-like instantiation syntax
+    ///   E.g., instantiate(myvar,Type<MyType>())(grid,block)
     /*! Instantiate the kernel.
    *
    *  \param targs The template arguments for the kernel, represented as
@@ -3737,7 +3745,7 @@ inline void KernelInstantiation_impl::build_kernel()
 Kernel_impl::Kernel_impl(Program_impl const& program, std::string name, jitify::detail::vector<std::string> options)
     : _program(program), _name(name), _options(options)
 {
-    // Merge options from parent
+    /// Merge options from parent
     _options.insert(_options.end(), _program.options().begin(), _program.options().end());
     detail::detect_and_add_cuda_arch(_options);
     detail::detect_and_add_cxx11_flag(_options);
@@ -3757,7 +3765,7 @@ Program_impl::Program_impl(
     file_callback_type file_callback)
     : _cache(cache)
 {
-    // Compute hash of source, headers and options
+    /// Compute hash of source, headers and options
     std::string options_string = reflection::reflect_list(options);
     using detail::hash_combine;
     using detail::hash_larson64;
@@ -3767,16 +3775,16 @@ Program_impl::Program_impl(
         _hash = hash_combine(_hash, hash_larson64(headers[i].c_str()));
     }
     _hash = hash_combine(_hash, (uint64_t)file_callback);
-    // Add pre-include built-in JIT-safe headers
+    /// Add pre-include built-in JIT-safe headers
     for (int i = 0; i < detail::preinclude_jitsafe_headers_count; ++i)
     {
         const char* hdr_name = detail::preinclude_jitsafe_header_names[i];
         const std::string& hdr_source = detail::get_jitsafe_headers_map().at(hdr_name);
         headers.push_back(std::string(hdr_name) + "\n" + hdr_source);
     }
-    // Merge options from parent
+    /// Merge options from parent
     options.insert(options.end(), _cache._options.begin(), _cache._options.end());
-    // Load sources
+    /// Load sources
 #if JITIFY_THREAD_SAFE
     std::lock_guard<std::mutex> lock(cache._program_cache_mutex);
 #endif
@@ -3910,7 +3918,7 @@ inline Lambda<T> make_Lambda(Capture const& capture, std::string func, T lambda)
 
 #define JITIFY_LAMBDA_(x, ...) JITIFY_MAKE_LAMBDA(JITIFY_CAPTURE(x), JITIFY_ARGS(x), __VA_ARGS__)
 
-// macro sequence to strip surrounding brackets
+/// macro sequence to strip surrounding brackets
 #define JITIFY_STRIP_PARENS(X) X
 #define JITIFY_PASS_PARAMETERS(X) JITIFY_STRIP_PARENS(JITIFY_ARGS X)
 
@@ -3928,8 +3936,8 @@ inline Lambda<T> make_Lambda(Capture const& capture, std::string func, T lambda)
  */
 #define JITIFY_LAMBDA(capture, ...) JITIFY_LAMBDA_(JITIFY_ARGS(JITIFY_PASS_PARAMETERS(capture)), JITIFY_ARGS(__VA_ARGS__))
 
-// TODO: Try to implement for_each that accepts iterators instead of indices
-//       Add compile guard for NOCUDA compilation
+/// TODO: Try to implement for_each that accepts iterators instead of indices
+///       Add compile guard for NOCUDA compilation
 /*! Call a function for a range of indices
  *
  *  \param policy Determines the location and device parameters for
@@ -3958,7 +3966,7 @@ CUresult parallel_for(ExecutionPolicy policy, IndexType begin, IndexType end, La
         {
             lambda._func(i);
         }
-        return CUDA_SUCCESS; // FIXME - replace with non-CUDA enum type?
+        return CUDA_SUCCESS; /// FIXME - replace with non-CUDA enum type?
     }
 
     thread_local static JitCache kernel_cache(policy.cache_size);
@@ -4011,8 +4019,8 @@ namespace serialization
 namespace detail
 {
 
-// This should be incremented whenever the serialization format changes in any
-// incompatible way.
+/// This should be incremented whenever the serialization format changes in any
+/// incompatible way.
 static constexpr const size_t kSerializationVersion = 2;
 
 inline void serialize(std::ostream& stream, size_t u)
@@ -4021,7 +4029,7 @@ inline void serialize(std::ostream& stream, size_t u)
     char bytes[8];
     for (int i = 0; i < (int)sizeof(bytes); ++i)
     {
-        // Convert to little-endian bytes.
+        /// Convert to little-endian bytes.
         bytes[i] = (unsigned char)(u64 >> (i * CHAR_BIT));
     }
     stream.write(bytes, sizeof(bytes));
@@ -4034,7 +4042,7 @@ inline bool deserialize(std::istream& stream, size_t* size)
     uint64_t u64 = 0;
     for (int i = 0; i < (int)sizeof(bytes); ++i)
     {
-        // Convert from little-endian bytes.
+        /// Convert from little-endian bytes.
         u64 |= uint64_t((unsigned char)(bytes[i])) << (i * CHAR_BIT);
     }
     *size = u64;
@@ -4144,7 +4152,7 @@ inline bool deserialize_magic_number(std::istream& stream)
     return serialization_version == kSerializationVersion;
 }
 
-} // namespace detail
+} /// namespace detail
 
 template <typename... Values>
 inline std::string serialize(Values const&... values)
@@ -4164,7 +4172,7 @@ inline bool deserialize(std::string const& serialized, Values*... values)
     return detail::deserialize(ss, values...);
 }
 
-} // namespace serialization
+} /// namespace serialization
 
 class Program;
 class Kernel;
@@ -4182,7 +4190,7 @@ private:
     std::vector<std::string> _options;
     std::map<std::string, std::string> _sources;
 
-    // Private constructor used by deserialize()
+    /// Private constructor used by deserialize()
     Program() { }
 
 public:
@@ -4229,7 +4237,7 @@ public:
         std::vector<std::string> const& given_options = {},
         file_callback_type file_callback = nullptr)
     {
-        // Add pre-include built-in JIT-safe headers
+        /// Add pre-include built-in JIT-safe headers
         std::vector<std::string> headers = given_headers;
         for (int i = 0; i < detail::preinclude_jitsafe_headers_count; ++i)
         {
@@ -4266,7 +4274,7 @@ public:
    */
     std::string serialize() const
     {
-        // Note: Must update kSerializationVersion if this is changed.
+        /// Note: Must update kSerializationVersion if this is changed.
         return serialization::serialize(_name, _options, _sources);
     };
 
@@ -4305,7 +4313,7 @@ public:
    */
     KernelInstantiation instantiate(std::vector<std::string> const& template_args = std::vector<std::string>()) const;
 
-    // Regular template instantiation syntax (note limited flexibility)
+    /// Regular template instantiation syntax (note limited flexibility)
     /*! Instantiate the kernel.
    *
    *  \note The template arguments specified on this function are
@@ -4319,8 +4327,8 @@ public:
     template <typename... TemplateArgs>
     KernelInstantiation instantiate() const;
 
-    // Template-like instantiation syntax
-    //   E.g., instantiate(myvar,Type<MyType>())(grid,block)
+    /// Template-like instantiation syntax
+    ///   E.g., instantiate(myvar,Type<MyType>())(grid,block)
     /*! Instantiate the kernel.
    *
    *  \param targs The template arguments for the kernel, represented as
@@ -4340,7 +4348,7 @@ class KernelInstantiation
     friend class KernelLauncher;
     std::unique_ptr<detail::CUDAKernel> _cuda_kernel;
 
-    // Private constructor used by deserialize()
+    /// Private constructor used by deserialize()
     KernelInstantiation(
         std::string const& func_name,
         std::string const& ptx,
@@ -4403,7 +4411,7 @@ public:
    */
     std::string serialize() const
     {
-        // Note: Must update kSerializationVersion if this is changed.
+        /// Note: Must update kSerializationVersion if this is changed.
         return serialization::serialize(
             _cuda_kernel->function_name(), _cuda_kernel->ptx(), _cuda_kernel->link_files(), _cuda_kernel->link_paths());
     }
@@ -4534,9 +4542,9 @@ public:
     {
     }
 
-    // Note: It's important that there is no implicit conversion required
-    //         for arg_ptrs, because otherwise the parameter pack version
-    //         below gets called instead (probably resulting in a segfault).
+    /// Note: It's important that there is no implicit conversion required
+    ///         for arg_ptrs, because otherwise the parameter pack version
+    ///         below gets called instead (probably resulting in a segfault).
     /*! Launch the kernel.
    *
    *  \param arg_ptrs  A vector of pointers to each function argument for the
@@ -4615,9 +4623,9 @@ inline KernelLauncher KernelInstantiation::configure_1d_max_occupancy(
     return this->configure(grid, block, smem, stream);
 }
 
-} // namespace experimental
+} /// namespace experimental
 
-} // namespace jitify
+} /// namespace jitify
 
 #if defined(_WIN32) || defined(_WIN64)
 #    pragma pop_macro("max")

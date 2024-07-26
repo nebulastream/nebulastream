@@ -149,6 +149,6 @@ public:
         uint8_t retryTimes);
 };
 
-} // namespace NES::Network
+} /// namespace NES::Network
 
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_NETWORKCHANNEL_HPP_

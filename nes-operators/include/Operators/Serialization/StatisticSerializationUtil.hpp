@@ -78,6 +78,6 @@ public:
     static Statistic::WindowStatisticDescriptorPtr deserializeDescriptor(const StatisticWindowDescriptorMessage& descriptorMessage);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_STATISTICSERIALIZATIONUTIL_HPP_

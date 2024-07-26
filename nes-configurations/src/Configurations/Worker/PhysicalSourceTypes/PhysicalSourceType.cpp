@@ -43,4 +43,4 @@ std::string PhysicalSourceType::getSourceTypeAsString()
 {
     return std::string(magic_enum::enum_name(getSourceType()));
 }
-} // namespace NES
+} /// namespace NES

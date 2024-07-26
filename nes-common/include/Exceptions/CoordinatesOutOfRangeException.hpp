@@ -27,6 +27,6 @@ class CoordinatesOutOfRangeException : public std::exception
 {
     const char* what() const noexcept;
 };
-} // namespace NES::Spatial::Exception
+} /// namespace NES::Spatial::Exception
 
 #endif /// NES_COMMON_INCLUDE_EXCEPTIONS_COORDINATESOUTOFRANGEEXCEPTION_HPP_

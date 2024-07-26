@@ -62,4 +62,4 @@ bool DataType::isText() const
     return false;
 }
 
-} // namespace NES
+} /// namespace NES

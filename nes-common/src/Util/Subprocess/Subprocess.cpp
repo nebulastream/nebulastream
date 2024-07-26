@@ -34,7 +34,7 @@ enum class ends_of_pipe : uint8_t
 
 Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv)
 {
-    // initialize pipes
+    /// initialize pipes
     if (pipe(outPipe) == -1)
     {
         throw std::system_error(errno, std::system_category());
@@ -66,7 +66,7 @@ Subprocess::Subprocess(std::string cmd, std::vector<std::string> argv)
     this->logThread = std::thread(
         [this]()
         {
-            // read till end of process:
+            /// read till end of process:
             while (!stopped && !feof(outputFile))
             {
                 readFromFile(outputFile, std::cout);
@@ -125,11 +125,11 @@ void Subprocess::executeCommandInChildProcess(const std::vector<std::string>& ar
 void Subprocess::readFromFile(FILE* file, std::ostream& ostream)
 {
     char buffer[READ_BUFFER_SIZE];
-    // use buffer to read and add to result
+    /// use buffer to read and add to result
     if (!feof(file) && fgets((char*)buffer, READ_BUFFER_SIZE, file) != nullptr)
     {
         ostream << (char*)buffer;
     }
 }
 
-} // namespace NES::Util
+} /// namespace NES::Util

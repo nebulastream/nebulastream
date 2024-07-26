@@ -22,7 +22,7 @@ namespace Nautilus
 {
 class CompilationOptions;
 }
-} // namespace NES
+} /// namespace NES
 
 #include <vector>
 #include <llvm/IR/Module.h>
@@ -39,11 +39,11 @@ namespace NES::Nautilus::Backends::MLIR
 class LLVMIROptimizer
 {
 public:
-    LLVMIROptimizer(); // Disable default constructor
-    ~LLVMIROptimizer(); // Disable default destructor
+    LLVMIROptimizer(); /// Disable default constructor
+    ~LLVMIROptimizer(); /// Disable default destructor
 
     static std::function<llvm::Error(llvm::Module*)>
     getLLVMOptimizerPipeline(const CompilationOptions& options, const DumpHelper& dumpHelper);
 };
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_LLVMIROPTIMIZER_HPP_

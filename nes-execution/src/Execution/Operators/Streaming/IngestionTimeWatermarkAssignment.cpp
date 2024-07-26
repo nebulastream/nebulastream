@@ -34,7 +34,7 @@ IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionP
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    // We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
+    /// We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
     if (hasChild())
     {
         child->open(executionCtx, recordBuffer);
@@ -54,4 +54,4 @@ void IngestionTimeWatermarkAssignment::execute(ExecutionContext& executionCtx, R
     child->execute(executionCtx, record);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

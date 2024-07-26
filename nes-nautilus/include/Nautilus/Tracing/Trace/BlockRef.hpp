@@ -32,6 +32,6 @@ public:
     std::vector<ValueRef> arguments;
     friend std::ostream& operator<<(std::ostream& os, const BlockRef& ref);
 };
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_

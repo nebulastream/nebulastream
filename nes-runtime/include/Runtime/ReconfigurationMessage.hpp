@@ -127,7 +127,7 @@ public:
         , parentPlanId(that.parentPlanId)
         , userdata(that.userdata)
     {
-        // nop
+        /// nop
     }
 
     /**
@@ -216,5 +216,5 @@ private:
     /// custom data
     std::any userdata;
 };
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_

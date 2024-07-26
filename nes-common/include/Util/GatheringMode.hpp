@@ -27,6 +27,6 @@ enum class GatheringMode : uint8_t
     ADAPTIVE_MODE = 2
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_UTIL_GATHERINGMODE_HPP_

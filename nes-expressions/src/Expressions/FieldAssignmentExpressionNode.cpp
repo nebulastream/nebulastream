@@ -39,7 +39,7 @@ bool FieldAssignmentExpressionNode::equal(NodePtr const& rhs) const
     if (rhs->instanceOf<FieldAssignmentExpressionNode>())
     {
         auto otherFieldAssignment = rhs->as<FieldAssignmentExpressionNode>();
-        // a field assignment expression has always two children.
+        /// a field assignment expression has always two children.
         return getField()->equal(otherFieldAssignment->getField()) && getAssignment()->equal(otherFieldAssignment->getAssignment());
     }
     return false;
@@ -64,13 +64,13 @@ ExpressionNodePtr FieldAssignmentExpressionNode::getAssignment() const
 
 void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of assignment expression
+    /// infer stamp of assignment expression
     getAssignment()->inferStamp(schema);
 
-    // field access
+    /// field access
     auto field = getField();
 
-    //Update the field name with fully qualified field name
+    ///Update the field name with fully qualified field name
     auto fieldName = field->getFieldName();
     auto existingField = schema->getField(fieldName);
     if (existingField)
@@ -80,8 +80,8 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema)
     }
     else
     {
-        //Since this is a new field add the source name from schema
-        //Check if field name is already fully qualified
+        ///Since this is a new field add the source name from schema
+        ///Check if field name is already fully qualified
         if (fieldName.find(Schema::ATTRIBUTE_NAME_SEPARATOR) != std::string::npos)
         {
             field->updateFieldName(fieldName);
@@ -94,12 +94,12 @@ void FieldAssignmentExpressionNode::inferStamp(SchemaPtr schema)
 
     if (field->getStamp()->isUndefined())
     {
-        // if the field has no stamp set it to the one of the assignment
+        /// if the field has no stamp set it to the one of the assignment
         field->setStamp(getAssignment()->getStamp());
     }
     else
     {
-        // the field already has a type, check if it is compatible with the assignment
+        /// the field already has a type, check if it is compatible with the assignment
         field->getStamp()->equals(getAssignment()->getStamp());
     }
 }
@@ -108,4 +108,4 @@ ExpressionNodePtr FieldAssignmentExpressionNode::copy()
     return FieldAssignmentExpressionNode::create(getField()->copy()->as<FieldAccessExpressionNode>(), getAssignment()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

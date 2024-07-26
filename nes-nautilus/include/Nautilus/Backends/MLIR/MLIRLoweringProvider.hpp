@@ -59,9 +59,9 @@ namespace NES::Nautilus::Backends::MLIR
 class MLIRLoweringProvider
 {
 public:
-    // A ValueFrame is hashmap that binds operation names to MLIR values.
-    // It is used to 'pass' values between mlir operations.
-    // Control Flow can cause new ValueFrames to be created, to correctly model value access rights (scopes).
+    /// A ValueFrame is hashmap that binds operation names to MLIR values.
+    /// It is used to 'pass' values between mlir operations.
+    /// Control Flow can cause new ValueFrames to be created, to correctly model value access rights (scopes).
     using ValueFrame = Frame<std::string, mlir::Value>;
 
     /**
@@ -89,7 +89,7 @@ public:
     std::vector<llvm::JITTargetAddress> getJitProxyTargetAddresses();
 
 private:
-    // MLIR variables
+    /// MLIR variables
     mlir::MLIRContext* context;
     mlir::ModuleOp theModule;
     std::unique_ptr<mlir::OpBuilder> builder;
@@ -97,12 +97,12 @@ private:
     std::vector<std::string> jitProxyFunctionSymbols;
     std::vector<llvm::JITTargetAddress> jitProxyFunctionTargetAddresses;
     std::unordered_set<std::string> inductionVars;
-    // Utility
+    /// Utility
     mlir::RewriterBase::InsertPoint* globalInsertPoint;
     mlir::Value globalString;
     mlir::FlatSymbolRefAttr printfReference;
     llvm::StringMap<mlir::Value> printfStrings;
-    std::unordered_map<std::string, mlir::Block*> blockMapping; //Keeps track of already created basic blocks.
+    std::unordered_map<std::string, mlir::Block*> blockMapping; ///Keeps track of already created basic blocks.
 
     /**
      * @brief Generates MLIR from a  basic block. Iterates over basic block operations and calls generate.
@@ -217,5 +217,5 @@ private:
      */
     ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
 };
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_

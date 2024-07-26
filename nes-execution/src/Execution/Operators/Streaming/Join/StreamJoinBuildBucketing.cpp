@@ -28,7 +28,7 @@ void* getAllWindowsToFillProxy(
     return dynamic_cast<StreamJoinOperatorHandlerBucketing*>(opHandler)->getAllWindowsToFillForTs(ts, workerThreadId);
 }
 
-// TODO ask Philipp why I can not write this directly in Nautilus. How can I cast a UINT64 to INT64?
+/// TODO ask Philipp why I can not write this directly in Nautilus. How can I cast a UINT64 to INT64?
 uint64_t calcNumWindowsProxy(uint64_t ts, uint64_t windowSize, uint64_t windowSlide)
 {
     int64_t timestamp = ts;
@@ -89,7 +89,7 @@ void* getDefaultMemRefProxy()
 
 void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    // We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
+    /// We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
     Operator::open(ctx, recordBuffer);
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<MemRef> allWindowsToFill = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRefProxy);
@@ -104,12 +104,12 @@ void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) co
 
     if (!checkIfLocalStateUpToDate(timestampVal, joinState))
     {
-        // If the current local state is not up-to-date anymore then we have to update it
+        /// If the current local state is not up-to-date anymore then we have to update it
         auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         updateLocalState(joinState, opHandlerMemRef, timestampVal, workerThreadId);
     }
 
-    // Iterating over all windows and then inserting the current record in all windows
+    /// Iterating over all windows and then inserting the current record in all windows
     for (Value<UInt64> curWindowIdx = 0_u64; curWindowIdx < joinState->numWindowsToFill; curWindowIdx = curWindowIdx + 1_u64)
     {
         insertRecordForWindow(joinState->allWindowsToFill, curWindowIdx, workerThreadId, record);
@@ -153,4 +153,4 @@ StreamJoinBuildBucketing::StreamJoinBuildBucketing(
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

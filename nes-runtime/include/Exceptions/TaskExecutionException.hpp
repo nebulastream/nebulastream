@@ -40,5 +40,5 @@ private:
     const std::string message;
     const Runtime::Execution::SuccessorExecutablePipeline pipeline;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_

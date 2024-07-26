@@ -33,5 +33,5 @@ public:
 private:
     std::string message;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDARGUMENTEXCEPTION_HPP_

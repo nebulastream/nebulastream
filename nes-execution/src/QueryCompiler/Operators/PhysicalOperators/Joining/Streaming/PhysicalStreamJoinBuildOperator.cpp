@@ -133,4 +133,4 @@ const std::string& PhysicalStreamJoinBuildOperator::getJoinFieldName() const
     return joinFieldName;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

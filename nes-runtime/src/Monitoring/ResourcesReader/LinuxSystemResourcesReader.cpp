@@ -169,7 +169,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics()
         "/sys/fs/cgroup/cpuacct/cpu.cfs_period_us",
         "/sys/fs/cgroup/cpuacct/cpu.cfs_quota_us"};
 
-    // memory metrics
+    /// memory metrics
     try
     {
         NES_TRACE("LinuxSystemResourcesReader: Reading memory.usage_in_bytes for metrics");
@@ -181,7 +181,7 @@ RegistrationMetrics LinuxSystemResourcesReader::readRegistrationMetrics()
         NES_ERROR("LinuxSystemResourcesReader: Error reading static memory metrics {}", e.what());
     }
 
-    // CPU metrics
+    /// CPU metrics
     try
     {
         auto cpuStats = LinuxSystemResourcesReader::readCpuStats();
@@ -244,13 +244,13 @@ CpuMetricsWrapper LinuxSystemResourcesReader::readCpuStats()
         auto i = 0;
         while (std::getline(fileStat, line))
         {
-            // line starts with "cpu"
+            /// line starts with "cpu"
             if (!line.compare(0, 3, "cpu"))
             {
                 std::istringstream ss(line);
                 std::vector<std::string> tokens{std::istream_iterator<std::string>{ss}, std::istream_iterator<std::string>{}};
 
-                // check columns
+                /// check columns
                 if (tokens.size() != 11)
                 {
                     NES_THROW_RUNTIME_ERROR("LinuxSystemResourcesReader: /proc/stat incorrect");
@@ -299,7 +299,7 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats()
     {
         NES_TRACE("LinuxSystemResourcesReader: Reading network stats.");
 
-        // alternatively also /sys/class/net/intf/statistics can be parsed
+        /// alternatively also /sys/class/net/intf/statistics can be parsed
         FILE* fp = fopen(metricLocation.c_str(), "re");
         char buf[200];
         char ifname[20];
@@ -320,7 +320,7 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats()
         uint64_t tCarrier = 0;
         uint64_t tCompressed = 0;
 
-        // skip first two lines
+        /// skip first two lines
         for (int i = 0; i < 2; i++)
         {
             fgets(buf, 200, fp);
@@ -350,11 +350,11 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats()
                 &tCarrier,
                 &tCompressed);
             auto outputValue = NetworkMetrics();
-            // the name of the network interface
-            // TODO: add proper handling of ifname as string (see issue #1725)
+            /// the name of the network interface
+            /// TODO: add proper handling of ifname as string (see issue #1725)
             outputValue.interfaceName = i++;
 
-            // the received metric fields
+            /// the received metric fields
             outputValue.rBytes = rBytes;
             outputValue.rPackets = rPackets;
             outputValue.rErrs = rErrs;
@@ -364,7 +364,7 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats()
             outputValue.rCompressed = rCompressed;
             outputValue.rMulticast = rMulticast;
 
-            // the transmitted metric fields
+            /// the transmitted metric fields
             outputValue.tBytes = tBytes;
             outputValue.tPackets = tPackets;
             outputValue.tErrs = tErrs;
@@ -374,7 +374,7 @@ NetworkMetricsWrapper LinuxSystemResourcesReader::readNetworkStats()
             outputValue.tCarrier = tCarrier;
             outputValue.tCompressed = tCompressed;
 
-            // extension of the wrapper class object
+            /// extension of the wrapper class object
             output.addNetworkMetrics(std::move(outputValue));
         }
         fclose(fp);
@@ -464,4 +464,4 @@ uint64_t LinuxSystemResourcesReader::getWallTimeInNs()
     uint64_t duration = value.count();
     return duration;
 }
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

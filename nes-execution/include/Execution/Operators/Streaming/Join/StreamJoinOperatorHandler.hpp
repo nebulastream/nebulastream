@@ -228,13 +228,13 @@ protected:
     const OriginId outputOriginId;
     std::atomic<uint64_t> sequenceNumber;
     std::atomic<bool> alreadySetup{false};
-    // TODO with issue #4517 we can remove the sizes
+    /// TODO with issue #4517 we can remove the sizes
     size_t sizeOfRecordLeft;
     size_t sizeOfRecordRight;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
     BufferManagerPtr bufferManager;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLER_HPP_

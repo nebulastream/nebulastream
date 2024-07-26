@@ -58,5 +58,5 @@ public:
      */
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_MAPUDF_MAPUDFLOGICALOPERATOR_HPP_

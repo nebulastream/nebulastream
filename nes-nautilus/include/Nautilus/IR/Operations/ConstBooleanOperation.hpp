@@ -30,8 +30,8 @@ public:
     static bool classof(const Operation* Op);
 
 private:
-    bool constantValue; // Can also hold uInts
+    bool constantValue; /// Can also hold uInts
 };
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_CONSTBOOLEANOPERATION_HPP_

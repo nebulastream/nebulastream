@@ -113,6 +113,6 @@ private:
     uintptr_t data = 0;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_

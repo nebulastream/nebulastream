@@ -38,14 +38,14 @@ public:
 TEST_F(AbsExpressionTest, evaluateAbsExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<AbsExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)-17.4));
         ASSERT_EQ(resultValue, (float)17.4);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)-17.4));
         ASSERT_EQ(resultValue, (double)17.4);
@@ -56,28 +56,28 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionFloat)
 TEST_F(AbsExpressionTest, evaluateAbsExpressionUnsignedInt)
 {
     auto expression = UnaryExpressionWrapper<AbsExpression>();
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>((uint8_t)17));
         ASSERT_EQ(resultValue, (uint8_t)17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt8>());
     }
 
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>(static_cast<uint16_t>(UINT8_MAX)));
         ASSERT_EQ(resultValue, static_cast<uint16_t>(UINT8_MAX));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>());
     }
 
-    // UInt32
+    /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(static_cast<uint32_t>(UINT16_MAX)));
         ASSERT_EQ(resultValue, static_cast<uint32_t>(UINT16_MAX));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
 
-    // UInt64
+    /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(static_cast<uint64_t>(UINT32_MAX)));
         ASSERT_EQ(resultValue, static_cast<uint64_t>(UINT32_MAX));
@@ -88,28 +88,28 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionUnsignedInt)
 TEST_F(AbsExpressionTest, evaluateAbsExpressionSignedInt)
 {
     auto expression = UnaryExpressionWrapper<AbsExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(static_cast<int8_t>(17)));
         ASSERT_EQ(resultValue, static_cast<int8_t>(17));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int8>());
     }
 
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(static_cast<int16_t>(-INT8_MAX)));
         ASSERT_EQ(resultValue, static_cast<int16_t>(INT8_MAX));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int16>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(static_cast<int32_t>(-INT16_MAX)));
         ASSERT_EQ(resultValue, static_cast<int32_t>(INT16_MAX));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
     }
 
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(static_cast<int64_t>(-INT32_MAX)));
         ASSERT_EQ(resultValue, static_cast<int64_t>(INT32_MAX));
@@ -127,4 +127,4 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

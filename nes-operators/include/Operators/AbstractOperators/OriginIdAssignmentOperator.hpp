@@ -57,6 +57,6 @@ public:
 protected:
     OriginId originId;
 };
-} // namespace NES
-// namespace NES
+} /// namespace NES
+/// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_

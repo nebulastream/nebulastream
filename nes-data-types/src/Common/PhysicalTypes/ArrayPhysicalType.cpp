@@ -32,16 +32,16 @@ bool ArrayPhysicalType::isCharArrayType() const noexcept
 std::string ArrayPhysicalType::convertRawToString(void const* data) const noexcept
 {
     const auto* dataC = static_cast<char const*>(data);
-    // check if the pointer is valid
+    /// check if the pointer is valid
     if (!data)
     {
         return "";
     }
-    // we print a fixed char directly because the last char terminated the output.
+    /// we print a fixed char directly because the last char terminated the output.
     if (physicalComponentType->type->isChar())
     {
-        // This char is fixed size, so we have to convert it to a fixed size string.
-        // Otherwise, we would copy all data till the termination character.
+        /// This char is fixed size, so we have to convert it to a fixed size string.
+        /// Otherwise, we would copy all data till the termination character.
         return std::string(dataC, size());
     }
 
@@ -64,16 +64,16 @@ std::string ArrayPhysicalType::convertRawToString(void const* data) const noexce
 std::string ArrayPhysicalType::convertRawToStringWithoutFill(void const* data) const noexcept
 {
     const auto* dataC = static_cast<char const*>(data);
-    // check if the pointer is valid
+    /// check if the pointer is valid
     if (!dataC)
     {
         return "";
     }
-    // we print a fixed char directly because the last char terminated the output.
+    /// we print a fixed char directly because the last char terminated the output.
     if (physicalComponentType->type->isChar())
     {
-        // Only copy the actual content of the char. If the size is larger than the schema definition
-        // only copy until the defined size of the schema
+        /// Only copy the actual content of the char. If the size is larger than the schema definition
+        /// only copy until the defined size of the schema
         if (std::string(dataC).length() < size())
         {
             return std::string(dataC);
@@ -106,4 +106,4 @@ std::string ArrayPhysicalType::toString() const noexcept
     sstream << physicalComponentType->toString() << '[' << length << ']';
     return sstream.str();
 }
-} // namespace NES
+} /// namespace NES

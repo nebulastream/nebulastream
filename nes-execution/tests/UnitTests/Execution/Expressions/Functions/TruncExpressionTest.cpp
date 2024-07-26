@@ -39,51 +39,51 @@ public:
 TEST_F(TruncExpressionTest, evaluateTruncExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<TruncExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>((int8_t)1.5));
         ASSERT_EQ(resultValue, (float)1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>((int16_t)1.5));
         ASSERT_EQ(resultValue, (float)1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>((int32_t)1.5));
         ASSERT_EQ(resultValue, (float)1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>((int64_t)1.5));
         ASSERT_EQ(resultValue, (float)1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>((uint8_t)1.5));
         ASSERT_EQ(resultValue, (float)1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>((uint16_t)1.5));
         ASSERT_EQ(resultValue, (float)1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // UInt32
+    /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>((uint32_t)1.5));
         ASSERT_EQ(resultValue, (float)1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt64
+    /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>((uint64_t)1.5));
         ASSERT_EQ(resultValue, (float)1.0);
@@ -94,13 +94,13 @@ TEST_F(TruncExpressionTest, evaluateTruncExpressionInteger)
 TEST_F(TruncExpressionTest, evaluateTruncExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<TruncExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)1.5));
         ASSERT_EQ(resultValue, std::trunc(1.5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)1.5));
         ASSERT_EQ(resultValue, std::trunc(1.5));
@@ -117,4 +117,4 @@ TEST_F(TruncExpressionTest, evaluateTruncExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

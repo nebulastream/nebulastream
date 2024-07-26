@@ -40,4 +40,4 @@ const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& PhysicalStrea
     return joinOperatorHandler;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

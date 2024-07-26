@@ -46,4 +46,4 @@ bool SchemaType::contains(const std::string& fieldName)
     return false;
 }
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations

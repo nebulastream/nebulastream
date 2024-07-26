@@ -30,5 +30,5 @@ NES::Spatial::DataTypes::Experimental::GeoLocation S2Utilities::s2pointToLocatio
     S2LatLng latLng(point);
     return {latLng.lat().degrees(), latLng.lng().degrees()};
 }
-} // namespace NES::Spatial::Util
+} /// namespace NES::Spatial::Util
 #endif

@@ -46,7 +46,7 @@ public:
     bool inferStamp(SchemaPtr schema) override;
 
 private:
-    // Field where the watermark should be retrieved
+    /// Field where the watermark should be retrieved
     ExpressionNodePtr onField;
     TimeUnit unit;
     TimeMeasure allowedLateness;
@@ -54,6 +54,6 @@ private:
     explicit EventTimeWatermarkStrategyDescriptor(const ExpressionNodePtr& onField, TimeMeasure allowedLateness, TimeUnit unit);
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_EVENTTIMEWATERMARKSTRATEGYDESCRIPTOR_HPP_

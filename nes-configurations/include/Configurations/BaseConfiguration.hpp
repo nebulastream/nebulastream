@@ -87,6 +87,6 @@ protected:
     std::map<std::string, Configurations::BaseOption*> getOptionMap();
 };
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_

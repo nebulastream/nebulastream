@@ -63,6 +63,6 @@ protected:
     const std::vector<ExpressionNodePtr> inputFields;
     const std::vector<ExpressionNodePtr> outputFields;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_

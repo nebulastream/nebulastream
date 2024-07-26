@@ -38,7 +38,7 @@ template <typename>
 class NetworkDataSender;
 template <typename>
 class NetworkEventSender;
-} // namespace NES::Network::detail
+} /// namespace NES::Network::detail
 
 namespace NES::Runtime
 {
@@ -82,7 +82,7 @@ class TupleBuffer
     [[nodiscard]] constexpr explicit TupleBuffer(detail::BufferControlBlock* controlBlock, uint8_t* ptr, uint32_t size) noexcept
         : controlBlock(controlBlock), ptr(ptr), size(size)
     {
-        // nop
+        /// nop
     }
 
 public:
@@ -161,12 +161,12 @@ public:
             return *this;
         }
 
-        // Override the content of this with those of `other`
+        /// Override the content of this with those of `other`
         auto* const oldControlBlock = std::exchange(controlBlock, other.controlBlock);
         ptr = other.ptr;
         size = other.size;
 
-        // Update reference counts: If the new and old controlBlocks differ, retain the new one and release the old one.
+        /// Update reference counts: If the new and old controlBlocks differ, retain the new one and release the old one.
         if (oldControlBlock != controlBlock)
         {
             retain();
@@ -181,15 +181,15 @@ public:
     /// @brief Assign the `other` resource to this TupleBuffer; Might release the resource this currently points to.
     inline TupleBuffer& operator=(TupleBuffer&& other) noexcept
     {
-        // Especially for rvalues, the following branch should most likely never be taken if the caller writes
-        // reasonable code. Therefore, this branch is considered unlikely.
+        /// Especially for rvalues, the following branch should most likely never be taken if the caller writes
+        /// reasonable code. Therefore, this branch is considered unlikely.
         if PLACEHOLDER_UNLIKELY (this == std::addressof(other))
         {
             return *this;
         }
 
-        // Swap content of this with those of `other` to let the other's destructor take care of releasing the overwritten
-        // resource.
+        /// Swap content of this with those of `other` to let the other's destructor take care of releasing the overwritten
+        /// resource.
         using std::swap;
         swap(*this, other);
 
@@ -209,7 +209,7 @@ public:
     /// @dev Accessible via ADL in an unqualified call.
     inline friend void swap(TupleBuffer& lhs, TupleBuffer& rhs) noexcept
     {
-        // Enable ADL to spell out to onlookers how swap should be used.
+        /// Enable ADL to spell out to onlookers how swap should be used.
         using std::swap;
 
         swap(lhs.ptr, rhs.ptr);
@@ -384,5 +384,5 @@ T* allocateWithin(TupleBuffer& buffer)
     return ptr;
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_

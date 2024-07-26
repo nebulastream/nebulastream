@@ -24,7 +24,7 @@ namespace NES
 {
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Nautilus::Interface
 {
@@ -128,5 +128,5 @@ private:
     double bloomFalsePosRate;
 };
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_

@@ -108,24 +108,24 @@ void PagedVector::appendAllPages(PagedVector& other)
 
     for (auto otherPos = 0_u64; otherPos < other.totalNumberOfEntries; ++otherPos)
     {
-        // Checking, if we require a new page
+        /// Checking, if we require a new page
         if (numberOfEntries >= capacityPerPage)
         {
             NES_INFO("appending new page");
             appendPage();
         }
 
-        // Copy from the other to this
+        /// Copy from the other to this
         auto* ptrThis = this->getEntry(this->getNumberOfEntries());
         auto* ptrOther = other.getEntry(otherPos);
         std::memcpy(ptrThis, ptrOther, entrySize);
 
-        // Increment the numberOfEntries and totalNumberOfEntries
+        /// Increment the numberOfEntries and totalNumberOfEntries
         this->numberOfEntries += 1;
         this->totalNumberOfEntries += 1;
     }
 
-    // As a last step, we clear other to make sure that the pages belong to this
+    /// As a last step, we clear other to make sure that the pages belong to this
     other.clear();
     other.numberOfEntries = 0;
     other.totalNumberOfEntries = 0;
@@ -135,4 +135,4 @@ uint64_t PagedVector::getPageSize() const
 {
     return pageSize;
 }
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

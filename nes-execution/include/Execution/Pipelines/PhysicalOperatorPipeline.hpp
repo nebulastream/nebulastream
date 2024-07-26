@@ -39,6 +39,6 @@ private:
     Operators::OperatorPtr rootOperator;
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_PHYSICALOPERATORPIPELINE_HPP_

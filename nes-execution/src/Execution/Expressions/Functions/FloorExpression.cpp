@@ -38,15 +38,15 @@ double calculateFloor(double x)
 
 Value<> FloorExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
-    // Evaluate the right sub expression and retrieve the value.
+    /// Evaluate the right sub expression and retrieve the value.
 
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-    // leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
-    // In all cases we can call the same calculateFloor function as under the hood C++ can do an implicit cast from
-    // primitive integer types to the double argument.
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
+    /// As we don't know the exact type of value here, we have to check the type and then call the function.
+    /// leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
+    /// In all cases we can call the same calculateFloor function as under the hood C++ can do an implicit cast from
+    /// primitive integer types to the double argument.
+    /// Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (leftValue->isType<Float>())
     {
         return FunctionCall<>("calculateFloor", calculateFloor, leftValue.as<Float>());
@@ -57,9 +57,9 @@ Value<> FloorExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<FloorExpression>> floorFunction("floor");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

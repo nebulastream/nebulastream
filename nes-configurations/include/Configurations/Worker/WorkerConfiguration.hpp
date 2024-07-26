@@ -254,7 +254,7 @@ public:
 
 #ifdef TFDEF
     BoolOption isTensorflowSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Tensorflow model execution supported by the worker"};
-#endif // TFDEF
+#endif /// TFDEF
 
     /**
      * @brief Configuration numberOfQueues.
@@ -369,7 +369,7 @@ private:
         };
     }
 };
-} // namespace Configurations
-} // namespace NES
+} /// namespace Configurations
+} /// namespace NES
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_

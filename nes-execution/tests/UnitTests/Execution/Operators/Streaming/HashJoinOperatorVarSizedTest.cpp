@@ -126,8 +126,8 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
 
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        INVALID_PIPELINE_ID, // mock pipeline id
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
+        INVALID_PIPELINE_ID, /// mock pipeline id
+        INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
         buildHelper.bufferManager,
         buildHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, WorkerContextRef)
@@ -141,7 +141,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
 
     hashJoinOpHandler->start(std::make_shared<PipelineExecutionContext>(pipelineContext), 0);
 
-    // Execute record and thus fill the hash table
+    /// Execute record and thus fill the hash table
     for (auto i = 0UL; i < buildHelper.numberOfTuplesToProduce + 1; ++i)
     {
         auto record = Record(
@@ -268,8 +268,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
 
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
-        INVALID_PIPELINE_ID, // mock pipeline id
-        DecomposedQueryPlanId(1), // mock query id
+        INVALID_PIPELINE_ID, /// mock pipeline id
+        DecomposedQueryPlanId(1), /// mock query id
         hashJoinProbeHelper.bufferManager,
         hashJoinProbeHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, WorkerContextRef)
@@ -333,7 +333,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
     uint64_t lastTupleTimeStampWindow = hashJoinProbeHelper.windowSize - 1;
     std::vector<Record> tmpRecordsLeft, tmpRecordsRight;
 
-    //create buffers
+    ///create buffers
     for (auto i = 0UL; i < hashJoinProbeHelper.numberOfTuplesToProduce + 1; ++i)
     {
         auto recordLeft = Record(
@@ -364,8 +364,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
     }
 
     NES_DEBUG("filling left side with size = {}", leftRecords.size());
-    //push buffers to build left
-    //for all record buffers
+    ///push buffers to build left
+    ///for all record buffers
     for (auto i = 0UL; i < leftRecords.size(); i++)
     {
         auto tupleBuffer = hashJoinProbeHelper.bufferManager->getBufferBlocking();
@@ -376,7 +376,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         }
         uint64_t size = leftRecords[i].size();
         recordBufferLeft.setNumRecords(uint64_t(0));
-        //for one record in the buffer
+        ///for one record in the buffer
         for (auto& u : leftRecords[i])
         {
             hashJoinBuildLeft->execute(executionContext, u);
@@ -404,7 +404,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         }
         uint64_t size = rightRecords[i].size();
         recordBufferRight.setNumRecords(uint64_t(0));
-        //for one record in the buffer
+        ///for one record in the buffer
         for (auto u = 0UL; u < rightRecords[i].size(); u++)
         {
             hashJoinBuildRight->execute(executionContext, rightRecords[i][u]);
@@ -429,7 +429,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         hashJoinProbe->open(executionContext, recordBuffer);
     }
 
-    // Delete all buffers that have been emitted from the build phase
+    /// Delete all buffers that have been emitted from the build phase
     hashJoinOperatorTest->emittedBuffers.erase(
         hashJoinOperatorTest->emittedBuffers.begin(), hashJoinOperatorTest->emittedBuffers.begin() + numberOfEmittedBuffersBuild);
 
@@ -438,8 +438,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
     if (hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfSlices() != 1)
     {
         NES_ERROR("Not exactly one active window! {}", hashJoinOpHandler->as<Operators::StreamJoinOperatorHandler>()->getNumberOfSlices());
-        //TODO: this is tricky now we can either activate deletion but then the later code cannot check the window size or we test this here
-        //        return false;
+        ///TODO: this is tricky now we can either activate deletion but then the later code cannot check the window size or we test this here
+        ///        return false;
     }
 
     Value<UInt64> zeroValue((uint64_t)0UL);
@@ -503,19 +503,19 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
                             joinedRecord.write(
                                 joinSchema.joinSchema->get(2)->getName(), leftRecordInner.read(hashJoinProbeHelper.joinFieldNameLeft));
 
-                            // Writing the leftSchema fields
+                            /// Writing the leftSchema fields
                             for (auto& field : hashJoinProbeHelper.leftSchema->fields)
                             {
                                 joinedRecord.write(field->getName(), leftRecordInner.read(field->getName()));
                             }
 
-                            // Writing the rightSchema fields
+                            /// Writing the rightSchema fields
                             for (auto& field : hashJoinProbeHelper.rightSchema->fields)
                             {
                                 joinedRecord.write(field->getName(), rightRecordInner.read(field->getName()));
                             }
 
-                            // Check if this joinedRecord is in the emitted records
+                            /// Check if this joinedRecord is in the emitted records
                             auto it = std::find(collector->records.begin(), collector->records.end(), joinedRecord);
                             if (it == collector->records.end())
                             {
@@ -558,7 +558,7 @@ public:
 
 TEST_F(HashJoinOperatorVarSizedTest, joinBuildTest)
 {
-    // Activating and installing error listener
+    /// Activating and installing error listener
     auto runner = std::make_shared<TestRunner>();
     installGlobalErrorListener(runner);
 
@@ -584,7 +584,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTest)
 
     HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameLeft, bm, leftSchema, timeStampField, this, isLeftSide);
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
-    // As we are only building here the left side, we do not emit any buffers
+    /// As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
@@ -612,7 +612,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestRight)
 
     HashJoinBuildHelper buildHelper(hashJoinBuild, joinFieldNameRight, bm, rightSchema, timeStampField, this, isLeftSide);
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
-    // As we are only building here the left side, we do not emit any buffers
+    /// As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
@@ -643,7 +643,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultiplePagesPerBucket)
     buildHelper.numPartitions = 1;
 
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
-    // As we are only building here the left side, we do not emit any buffers
+    /// As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
@@ -674,7 +674,7 @@ TEST_F(HashJoinOperatorVarSizedTest, joinBuildTestMultipleWindows)
     buildHelper.windowSize = 5;
 
     ASSERT_TRUE(hashJoinBuildAndCheck(buildHelper));
-    // As we are only building here the left side, we do not emit any buffers
+    /// As we are only building here the left side, we do not emit any buffers
     ASSERT_EQ(emittedBuffers.size(), 0);
 }
 
@@ -745,4 +745,4 @@ TEST_F(HashJoinOperatorVarSizedTest, joinProbeTestMultipleWindows)
     ASSERT_TRUE(hashJoinProbeAndCheck(hashJoinProbeHelper));
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

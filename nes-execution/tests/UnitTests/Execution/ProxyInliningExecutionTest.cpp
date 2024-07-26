@@ -56,14 +56,14 @@ Value<UInt64> getNumberOfTuples(Value<MemRef> tupleBufferRef)
 
 void executeFunctionWithOptions(const CompilationOptions& options, const DumpHelper& dumpHelper)
 {
-    // Create TupleBuffer and generate execution trace.
+    /// Create TupleBuffer and generate execution trace.
     auto bufferManager = std::make_unique<Runtime::BufferManager>();
     auto tupleBuffer = bufferManager->getBufferNoBlocking();
     Value<MemRef> tupleBufferPointer = Value<MemRef>((int8_t*)std::addressof(tupleBuffer));
     tupleBufferPointer.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() { return getNumberOfTuples(tupleBufferPointer); });
 
-    // Execute function that contains 'getNumberOfTuples' as external function call.
+    /// Execute function that contains 'getNumberOfTuples' as external function call.
     AbstractCompilationBackendTest abstractCompilationBackendTest{};
     auto result = abstractCompilationBackendTest.prepare(executionTrace, options, dumpHelper);
     auto function = result->getInvocableMember<uint64_t, uint8_t*>("execute");
@@ -72,7 +72,7 @@ void executeFunctionWithOptions(const CompilationOptions& options, const DumpHel
 
 TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningTest)
 {
-    // Create the required CompilationOptions and the DumpHelper.
+    /// Create the required CompilationOptions and the DumpHelper.
     CompilationOptions options;
     options.setProxyInlining(true);
     options.setDumpToFile(true);
@@ -80,14 +80,14 @@ TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningTest)
     options.setIdentifier("ProxyInliningCompilationTest.ll");
     auto dumpHelper = DumpHelper::create(options.getIdentifier(), true, true, options.getDumpOutputPath());
 
-    // Execute the getNumberOfTuples() function.
+    /// Execute the getNumberOfTuples() function.
     executeFunctionWithOptions(options, dumpHelper);
 
-    // When compiling with O0, the generated code should contain a function call to getNumberOfTuples.
+    /// When compiling with O0, the generated code should contain a function call to getNumberOfTuples.
     std::ifstream generatedProxyIR(dumpHelper.getOutputPath() + std::filesystem::path::preferred_separator + options.getIdentifier());
     NES_ASSERT2_FMT(generatedProxyIR.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
 
-    // When compiling with O1+, the generated LLVM IR should not contain a function call.
+    /// When compiling with O1+, the generated LLVM IR should not contain a function call.
     std::string line;
     bool foundExecute = false;
     while (std::getline(generatedProxyIR, line))
@@ -101,10 +101,10 @@ TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningTest)
         }
         else
         {
-            // The generated execute function should not contain any tail calls.
+            /// The generated execute function should not contain any tail calls.
             NES_ASSERT2_FMT(line.find("@tail call") == std::string::npos, "execute contained a tail call even though \
             all tail calls should have been removed via proxy function inlining.");
-            // Check if we reached the end of the execute function.
+            /// Check if we reached the end of the execute function.
             if (line == "}")
             {
                 break;
@@ -116,7 +116,7 @@ TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningTest)
 
 TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningWithoutOptimizationTest)
 {
-    // Create the required CompilationOptions and the DumpHelper.
+    /// Create the required CompilationOptions and the DumpHelper.
     CompilationOptions options;
     options.setProxyInlining(true);
     options.setDumpToFile(true);
@@ -125,14 +125,14 @@ TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningWithoutOptim
     options.setIdentifier("ProxyInliningCompilationTest.ll");
     auto dumpHelper = DumpHelper::create(options.getIdentifier(), true, true, options.getDumpOutputPath());
 
-    // Execute the getNumberOfTuples() function.
+    /// Execute the getNumberOfTuples() function.
     executeFunctionWithOptions(options, dumpHelper);
 
-    // Check if a file that contains the generated LLVM IR (generated function code linked with proxy functions).
+    /// Check if a file that contains the generated LLVM IR (generated function code linked with proxy functions).
     std::ifstream generatedProxyIR(dumpHelper.getOutputPath() + std::filesystem::path::preferred_separator + options.getIdentifier());
     NES_ASSERT2_FMT(generatedProxyIR.peek() != std::ifstream::traits_type::eof(), "No proxy file was generated.");
 
-    // When compiling with O0, the generated LLVM IR should contain a function call to getNumberOfTuples.
+    /// When compiling with O0, the generated LLVM IR should contain a function call to getNumberOfTuples.
     std::string line;
     bool foundExecute = false;
     bool callFound = false;
@@ -148,7 +148,7 @@ TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningWithoutOptim
         else
         {
             callFound = callFound || (line.find("call") == std::string::npos);
-            // Check if we reached the end of the execute function.
+            /// Check if we reached the end of the execute function.
             if (line == "}")
             {
                 break;
@@ -160,7 +160,7 @@ TEST_P(ProxyFunctionInliningExecutionTest, getNumberOfTuplesInliningWithoutOptim
     generatedProxyIR.close();
 }
 
-// Tests all registered compilation backends.
+/// Tests all registered compilation backends.
 auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(
     testFunctionCalls,
@@ -168,4 +168,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("MLIR"),
     [](const testing::TestParamInfo<ProxyFunctionInliningExecutionTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

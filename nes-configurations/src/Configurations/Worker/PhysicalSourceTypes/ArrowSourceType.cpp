@@ -253,4 +253,4 @@ void ArrowSourceType::reset()
     setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
 }
 
-} // namespace NES
+} /// namespace NES

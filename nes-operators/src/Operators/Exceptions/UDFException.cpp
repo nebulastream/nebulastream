@@ -23,4 +23,4 @@ UDFException::UDFException(const std::string& message) : Exceptions::RequestExec
     NES_ERROR("{}", message);
 }
 
-} // namespace NES
+} /// namespace NES

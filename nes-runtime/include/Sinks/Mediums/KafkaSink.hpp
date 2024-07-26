@@ -27,7 +27,7 @@ namespace cppkafka
 class Configuration;
 class Producer;
 class MessageBuilder;
-} // namespace cppkafka
+} /// namespace cppkafka
 namespace NES
 {
 
@@ -101,6 +101,6 @@ private:
 };
 using KafkaSinkPtr = std::shared_ptr<KafkaSink>;
 
-} // namespace NES
-#endif // ENABLE_KAFKA_BUILD
+} /// namespace NES
+#endif /// ENABLE_KAFKA_BUILD
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_KAFKASINK_HPP_

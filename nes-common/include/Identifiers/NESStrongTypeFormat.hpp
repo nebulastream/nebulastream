@@ -31,5 +31,5 @@ struct formatter<NES::NESStrongType<T, Tag, invalid, initial>> : formatter<std::
         return fmt::format_to(ctx.out(), "{}", t.getRawValue());
     }
 };
-} // namespace fmt
+} /// namespace fmt
 #endif /// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_

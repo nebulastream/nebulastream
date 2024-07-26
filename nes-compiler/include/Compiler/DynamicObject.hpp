@@ -50,6 +50,6 @@ protected:
     [[nodiscard]] virtual void* getInvocableFunctionPtr(const std::string& member) = 0;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_DYNAMICOBJECT_HPP_

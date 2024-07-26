@@ -48,6 +48,6 @@ private:
     StatisticDataCodec sinkDataCodec;
 };
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_STATISTICSINKDESCRIPTOR_HPP_

@@ -106,5 +106,5 @@ private:
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MEMORYSOURCETYPE_HPP_

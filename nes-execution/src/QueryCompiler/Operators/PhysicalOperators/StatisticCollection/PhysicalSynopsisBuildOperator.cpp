@@ -45,4 +45,4 @@ PhysicalSynopsisBuildOperator::PhysicalSynopsisBuildOperator(
     : nameOfFieldToTrack(nameOfFieldToTrack), metricHash(metricHash), windowType(windowType), sendingPolicy(sendingPolicy)
 {
 }
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

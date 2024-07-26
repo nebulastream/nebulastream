@@ -52,6 +52,6 @@ protected:
     const MemoryProvider::MemoryProviderPtr leftMemProvider;
     const MemoryProvider::MemoryProviderPtr rightMemProvider;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJPROBE_HPP_

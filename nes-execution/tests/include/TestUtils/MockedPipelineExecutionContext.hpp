@@ -35,6 +35,6 @@ public:
     std::vector<TupleBuffer> buffers;
     std::set<SequenceData> seenSeqChunkLastChunk;
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINEEXECUTIONCONTEXT_HPP_

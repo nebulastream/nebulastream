@@ -87,7 +87,7 @@ void* getHJBucketAtPosVarSizedProxy(void* hashSlicePtr, uint64_t joinBuildSideIn
 
 void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    // As this operator functions as a scan, we have to set the execution context for this pipeline
+    /// As this operator functions as a scan, we have to set the execution context for this pipeline
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
     ctx.setChunkNumber(recordBuffer.getChunkNr());
@@ -95,7 +95,7 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
     ctx.setOrigin(recordBuffer.getOriginId());
     Operator::open(ctx, recordBuffer);
 
-    // Getting all needed references and values
+    /// Getting all needed references and values
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto joinPartitionIdSliceIdMemRef = recordBuffer.getBuffer();
 
@@ -114,7 +114,7 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
         joinPartitionIdSliceIdMemRef,
         Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
-    // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
+    /// During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
     const ValueId<WorkerThreadId> workerThreadIdForPagedVectors(INITIAL<WorkerThreadId>);
 
     const auto hashSliceRefLeft
@@ -151,7 +151,7 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
             createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
             if (joinExpression->execute(joinedRecord).as<Boolean>())
             {
-                // Calling the child operator for this joinedRecord
+                /// Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }
         }
@@ -174,4 +174,4 @@ HJProbeVarSized::HJProbeVarSized(
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

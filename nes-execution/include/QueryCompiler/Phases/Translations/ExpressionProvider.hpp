@@ -27,7 +27,7 @@ namespace Runtime::Execution::Expressions
 {
 class Expression;
 using ExpressionPtr = std::shared_ptr<Expression>;
-} // namespace Runtime::Execution::Expressions
+} /// namespace Runtime::Execution::Expressions
 
 namespace QueryCompilation
 {
@@ -42,6 +42,6 @@ private:
     lowerConstantExpression(const std::shared_ptr<ConstantValueExpressionNode>& expressionNode);
 };
 
-} // namespace QueryCompilation
-} // namespace NES
+} /// namespace QueryCompilation
+} /// namespace NES
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_

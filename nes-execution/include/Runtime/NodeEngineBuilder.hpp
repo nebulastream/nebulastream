@@ -58,5 +58,5 @@ private:
     QueryManagerPtr queryManager;
     const Configurations::WorkerConfiguration& workerConfiguration;
 };
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif /// NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

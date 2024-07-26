@@ -49,7 +49,7 @@ public:
      */
     static NES::Spatial::DataTypes::Experimental::GeoLocation s2pointToLocation(S2Point point);
 };
-} // namespace Util
-} // namespace NES::Spatial
+} /// namespace Util
+} /// namespace NES::Spatial
 #endif
 #endif /// NES_COMMON_INCLUDE_UTIL_MOBILITY_S2UTILITIES_HPP_

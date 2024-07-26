@@ -52,6 +52,6 @@ public:
 private:
     std::vector<OperatorPtr> getOperatorsBySchema(const SchemaPtr& schema) const;
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBINARYOPERATOR_HPP_

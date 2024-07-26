@@ -41,33 +41,33 @@ public:
 
 TEST_F(DataTypeTest, ConstructValueTest)
 {
-    // construct primitive
+    /// construct primitive
     auto f1 = Value<Int8>(42_s8);
     ASSERT_EQ(f1, 42_s8);
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(f1.value->getType())->getNumberOfBits(), 8);
 
-    // construct by rvalue
+    /// construct by rvalue
     auto f2 = Value<>(Int8(42));
     ASSERT_EQ(f2.as<Int8>()->getValue(), 42_s8);
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(f2.value->getType())->getNumberOfBits(), 8);
 
-    // construct by lvalue
+    /// construct by lvalue
     auto lvalue = Int8(42);
     auto f3 = Value<>(lvalue);
     ASSERT_EQ(f3.as<Int8>()->getValue(), 42_s8);
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(f3.value->getType())->getNumberOfBits(), 8);
 
-    // construct by shared ptr
+    /// construct by shared ptr
     auto f4 = Value<>(std::make_shared<Int8>(42));
     ASSERT_EQ(f4.as<Int8>()->getValue(), 42_s8);
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(f4.value->getType())->getNumberOfBits(), 8);
 
-    // construct by assignment to any
+    /// construct by assignment to any
     Value<> f5(42_s8);
     ASSERT_EQ(f5.as<Int8>()->getValue(), 42_s8);
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(f5.value->getType())->getNumberOfBits(), 8);
 
-    // construct by assignment to typed
+    /// construct by assignment to typed
     Value<Int8> f6(42_s8);
     ASSERT_EQ(f6.as<Int8>()->getValue(), 42_s8);
     ASSERT_EQ(cast<IR::Types::IntegerStamp>(f6.value->getType())->getNumberOfBits(), 8);
@@ -76,7 +76,7 @@ TEST_F(DataTypeTest, ConstructValueTest)
 TEST_F(DataTypeTest, AssignmentValueTest)
 {
     {
-        // Assign same type
+        /// Assign same type
         Value<Int8> a(0_s8);
         Value<Int8> b(42_s8);
         a = b;
@@ -85,7 +85,7 @@ TEST_F(DataTypeTest, AssignmentValueTest)
     }
 
     {
-        // Assign type to any type
+        /// Assign type to any type
         Value<> a = 32;
         Value<Int8> b(42_s8);
         a = b;
@@ -94,7 +94,7 @@ TEST_F(DataTypeTest, AssignmentValueTest)
     }
 
     {
-        // Assign any to any type
+        /// Assign any to any type
         Value<> a = 32;
         Value<> b = 42.0f;
         a = b;
@@ -273,42 +273,42 @@ TEST_F(DataTypeTest, IntCastTest)
     Value<Int64> i64(32_s64);
 
     {
-        // cast i8 to i16
+        /// cast i8 to i16
         auto v1 = i8 + i16;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int16::type);
         ASSERT_EQ(v1.as<Int16>()->getValue(), 64_s16);
     }
 
     {
-        // cast i8 to i32
+        /// cast i8 to i32
         auto v1 = i8 + i32;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int32::type);
         ASSERT_EQ(v1.as<Int32>()->getValue(), 64_s32);
     }
 
     {
-        // cast i8 to i64
+        /// cast i8 to i64
         auto v1 = i8 + i64;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int64::type);
         ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_s64);
     }
 
     {
-        // cast i16 to i32
+        /// cast i16 to i32
         auto v1 = i16 + i32;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int32::type);
         ASSERT_EQ(v1.as<Int32>()->getValue(), 64_s32);
     }
 
     {
-        // cast i16 to i64
+        /// cast i16 to i64
         auto v1 = i16 + i64;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int64::type);
         ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_s64);
     }
 
     {
-        // cast i32 to i64
+        /// cast i32 to i64
         auto v1 = i32 + i64;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int64::type);
         ASSERT_EQ(v1.as<Int64>()->getValue(), 64_s64);
@@ -323,42 +323,42 @@ TEST_F(DataTypeTest, UIntCastTest)
     Value<UInt64> ui64 = 32_u64;
 
     {
-        // cast ui8 to ui16
+        /// cast ui8 to ui16
         auto v1 = ui8 + ui16;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt16::type);
         ASSERT_EQ(v1.as<UInt16>()->getValue(), 64_u16);
     }
 
     {
-        // cast ui8 to ui32
+        /// cast ui8 to ui32
         auto v1 = ui8 + ui32;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
         ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
 
     {
-        // cast ui8 to ui64
+        /// cast ui8 to ui64
         auto v1 = ui8 + ui64;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt64::type);
         ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_u64);
     }
 
     {
-        // cast ui16 to ui32
+        /// cast ui16 to ui32
         auto v1 = ui16 + ui32;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
         ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
 
     {
-        // cast ui16 to ui64
+        /// cast ui16 to ui64
         auto v1 = ui16 + ui64;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt64::type);
         ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_u64);
     }
 
     {
-        // cast ui32 to ui64
+        /// cast ui32 to ui64
         auto v1 = ui32 + ui64;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt64::type);
         ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_u64);
@@ -378,89 +378,89 @@ TEST_F(DataTypeTest, UIntAndIntCastTest)
     Value<Int64> i64(32_s64);
 
     {
-        // cast ui8 and i8
+        /// cast ui8 and i8
         auto v1 = ui8 + i8;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt8::type);
         ASSERT_EQ(v1.as<UInt8>()->getValue(), 64_u8);
     }
 
     {
-        // cast ui8 and i16
+        /// cast ui8 and i16
         auto v1 = ui8 + i16;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int16::type);
         ASSERT_EQ(v1.as<Int16>()->getValue(), 64_s16);
     }
 
     {
-        // cast ui8 to i32
+        /// cast ui8 to i32
         auto v1 = ui8 + i32;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int32::type);
         ASSERT_EQ(v1.as<Int32>()->getValue(), 64_s32);
     }
 
     {
-        // cast ui8 to i64
+        /// cast ui8 to i64
         auto v1 = ui8 + i64;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int64::type);
         ASSERT_EQ(v1.as<Int64>()->getValue(), 64_s64);
     }
 
     {
-        // cast ui16 to i8
+        /// cast ui16 to i8
         auto v1 = ui16 + i8;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt16::type);
         ASSERT_EQ(v1.as<UInt16>()->getValue(), 64_u16);
     }
 
     {
-        // cast ui16 to i16
+        /// cast ui16 to i16
         auto v1 = ui16 + i16;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt16::type);
         ASSERT_EQ(v1.as<UInt16>()->getValue(), 64_u16);
     }
 
     {
-        // cast ui16 to i32
+        /// cast ui16 to i32
         auto v1 = ui16 + i32;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int32::type);
         ASSERT_EQ(v1.as<Int32>()->getValue(), 64_s32);
     }
 
     {
-        // cast ui16 to i64
+        /// cast ui16 to i64
         auto v1 = ui16 + i64;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int64::type);
         ASSERT_EQ(v1.as<Int64>()->getValue(), 64_s64);
     }
 
     {
-        // cast ui32 to i8
+        /// cast ui32 to i8
         auto v1 = ui32 + i8;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
         ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
     {
-        // cast ui32 to i16
+        /// cast ui32 to i16
         auto v1 = ui32 + i16;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
         ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
 
     {
-        // cast ui32 to i32
+        /// cast ui32 to i32
         auto v1 = ui32 + i32;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt32::type);
         ASSERT_EQ(v1.as<UInt32>()->getValue(), 64_u32);
     }
     {
-        // cast ui32 to i64
+        /// cast ui32 to i64
         auto v1 = ui32 + i64;
         ASSERT_EQ(v1->getTypeIdentifier(), &Int64::type);
         ASSERT_EQ(v1.as<Int64>()->getValue(), 64_s64);
     }
 
     {
-        // cast ui64 to i64
+        /// cast ui64 to i64
         auto v1 = ui64 + i64;
         ASSERT_EQ(v1->getTypeIdentifier(), &UInt64::type);
         ASSERT_EQ(v1.as<UInt64>()->getValue(), 64_u64);
@@ -487,42 +487,42 @@ TEST_F(DataTypeTest, FloatCastTest)
     auto doubleV = Value<Double>(1.0);
 
     {
-        // cast i16 to floatV
+        /// cast i16 to floatV
         auto v1 = i16 + floatV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Float::type);
         ASSERT_EQ(v1.as<Float>()->getValue(), (float)43);
     }
 
     {
-        // cast i32 to floatV
+        /// cast i32 to floatV
         auto v1 = i32 + floatV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Float::type);
         ASSERT_EQ(v1.as<Float>()->getValue(), (float)43);
     }
 
     {
-        // cast i64 to floatV
+        /// cast i64 to floatV
         auto v1 = i64 + floatV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Float::type);
         ASSERT_EQ(v1.as<Float>()->getValue(), (float)43);
     }
 
     {
-        // cast i16 to doubleV
+        /// cast i16 to doubleV
         auto v1 = i16 + doubleV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Double::type);
         ASSERT_EQ(v1.as<Double>()->getValue(), (double)43);
     }
 
     {
-        // cast i32 to doubleV
+        /// cast i32 to doubleV
         auto v1 = i32 + doubleV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Double::type);
         ASSERT_EQ(v1.as<Double>()->getValue(), (double)43);
     }
 
     {
-        // cast i64 to doubleV
+        /// cast i64 to doubleV
         auto v1 = i64 + doubleV;
         ASSERT_EQ(v1->getTypeIdentifier(), &Double::type);
         ASSERT_EQ(v1.as<Double>()->getValue(), (double)43);
@@ -545,4 +545,4 @@ TEST_F(DataTypeTest, LoadMemberTest)
     ASSERT_EQ(getMember(ref, TestS, z).load<UInt64>(), 30_u64);
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

@@ -59,6 +59,6 @@ private:
     std::string soAbsolutePath;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_UTIL_SHAREDLIBRARY_HPP_

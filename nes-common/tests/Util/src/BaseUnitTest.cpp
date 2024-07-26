@@ -20,7 +20,7 @@ namespace Exceptions
 {
 extern void installGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
 extern void removeGlobalErrorListener(std::shared_ptr<ErrorListener> const&);
-} // namespace Exceptions
+} /// namespace Exceptions
 
 namespace Testing
 {
@@ -144,6 +144,6 @@ std::string TestSourceNameHelper::operator*()
     return oss.str();
 }
 
-} // namespace detail
-} // namespace Testing
-} // namespace NES
+} /// namespace detail
+} /// namespace Testing
+} /// namespace NES

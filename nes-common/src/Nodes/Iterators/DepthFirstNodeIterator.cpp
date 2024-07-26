@@ -41,7 +41,7 @@ DepthFirstNodeIterator::iterator::iterator() = default;
 
 bool DepthFirstNodeIterator::iterator::operator!=(const iterator& other) const
 {
-    // todo currently we only check if we reached the end of the iterator.
+    /// todo currently we only check if we reached the end of the iterator.
     if (workStack.empty() && other.workStack.empty())
     {
         return false;
@@ -71,4 +71,4 @@ DepthFirstNodeIterator::iterator& DepthFirstNodeIterator::iterator::operator++()
     }
     return *this;
 }
-} // namespace NES
+} /// namespace NES

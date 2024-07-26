@@ -33,5 +33,5 @@ public:
      */
     virtual bool isValid(const std::string&) const = 0;
 };
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_CONFIGURATIONVALIDATION_HPP_

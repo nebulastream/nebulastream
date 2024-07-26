@@ -73,5 +73,5 @@ protected:
      */
     virtual HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) = 0;
 };
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_

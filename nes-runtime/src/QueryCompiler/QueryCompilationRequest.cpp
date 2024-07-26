@@ -71,4 +71,4 @@ Runtime::NodeEnginePtr QueryCompilationRequest::getNodeEngine()
     return nodeEngine;
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

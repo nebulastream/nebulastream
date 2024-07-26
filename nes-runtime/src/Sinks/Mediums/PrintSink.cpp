@@ -69,11 +69,11 @@ std::string PrintSink::toString() const
 
 void PrintSink::setup()
 {
-    // currently not required
+    /// currently not required
 }
 void PrintSink::shutdown()
 {
-    // currently not required
+    /// currently not required
 }
 
-} // namespace NES
+} /// namespace NES

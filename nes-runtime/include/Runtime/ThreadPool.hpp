@@ -96,7 +96,7 @@ public:
     uint32_t getNumberOfThreads() const;
 
 private:
-    //indicating if the thread pool is running, used for multi-thread execution
+    ///indicating if the thread pool is running, used for multi-thread execution
     const WorkerId nodeId;
     std::atomic<bool> running{false};
     const uint32_t numThreads;
@@ -114,6 +114,6 @@ private:
 
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>;
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_THREADPOOL_HPP_

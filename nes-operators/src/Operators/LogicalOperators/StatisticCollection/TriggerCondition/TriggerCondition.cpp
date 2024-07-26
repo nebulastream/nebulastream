@@ -19,4 +19,4 @@ bool TriggerCondition::operator!=(const TriggerCondition& rhs) const
 {
     return !(*this == rhs);
 }
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

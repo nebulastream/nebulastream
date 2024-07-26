@@ -282,7 +282,7 @@ protected:
     std::chrono::milliseconds gatheringInterval{0};
     GatheringMode gatheringMode;
     SourceType type;
-    Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful}; // protected by mutex
+    Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful}; /// protected by mutex
     std::atomic_bool wasStarted{false};
     std::atomic_bool futureRetrieved{false};
     std::atomic_bool running{false};
@@ -292,7 +292,7 @@ protected:
     bool sourceSharing = false;
     const std::string physicalSourceName;
 
-    //this counter is used to count the number of queries that use this source
+    ///this counter is used to count the number of queries that use this source
     std::atomic<uint64_t> refCounter = 0;
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
 
@@ -318,11 +318,11 @@ private:
     */
     virtual void runningRoutineWithIngestionRate();
 
-    bool endOfStreamSent{false}; // protected by startStopMutex
+    bool endOfStreamSent{false}; /// protected by startStopMutex
 };
 
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_

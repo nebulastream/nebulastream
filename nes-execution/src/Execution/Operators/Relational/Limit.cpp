@@ -27,25 +27,25 @@ bool IncrementThreadSaveAndCheckLimit(void* op)
     auto* opHandler = static_cast<LimitOperatorHandler*>(op);
 
     auto value = opHandler->counter++;
-    // Are we under the limit?
+    /// Are we under the limit?
     return value < opHandler->limit;
 }
 
 void Limit::execute(ExecutionContext& ctx, Record& record) const
 {
-    // 1) get the global operator state
+    /// 1) get the global operator state
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    // 2) check if the limit was reached
+    /// 2) check if the limit was reached
     if (Nautilus::FunctionCall("IncrementThreadSaveAndCheckLimit", IncrementThreadSaveAndCheckLimit, globalOperatorHandler))
     {
         child->execute(ctx, record);
     }
     else
     {
-        // In the future we need here to somehow signal the parent or data source that we already finished
+        /// In the future we need here to somehow signal the parent or data source that we already finished
         return;
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -45,5 +45,5 @@ public:
 
     [[nodiscard]] operator uint16_t() const;
 };
-} // namespace NES::Testing
+} /// namespace NES::Testing
 #endif /// NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_

@@ -55,7 +55,7 @@ namespace Runtime
 {
 
 class ThreadPool;
-using ThreadPoolPtr = std::shared_ptr<ThreadPool>; // TODO consider moving this atomic in c++20
+using ThreadPoolPtr = std::shared_ptr<ThreadPool>; /// TODO consider moving this atomic in c++20
 
 class AsyncTaskExecutor;
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
@@ -416,7 +416,7 @@ protected:
 
     std::unordered_map<DecomposedQueryPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
-    //TODO:check if it would be better to put it in the thread context
+    ///TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
     cuckoohash_map<DecomposedQueryPlanId, QueryStatisticsPtr> queryToStatisticsMap;
 
@@ -663,6 +663,6 @@ using QueryManagerPtr = std::shared_ptr<AbstractQueryManager>;
 using DynamicQueryManagerPtr = std::shared_ptr<DynamicQueryManager>;
 using MultiQueueQueryManagerPtr = std::shared_ptr<MultiQueueQueryManager>;
 
-} // namespace Runtime
-} // namespace NES
+} /// namespace Runtime
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_

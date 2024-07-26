@@ -279,7 +279,7 @@ public:
      */
     static DataTypePtr copyTypeAndDecreaseUpperBound(DataTypePtr stamp, int64_t maxUpperBound);
 
-    // functions to increase lower and decrease upper bound at the same time:
+    /// functions to increase lower and decrease upper bound at the same time:
     /**
      * @brief If the given bounds are tighter than the one on the given stamp, create a new stamp with tighter bounds. If not, return original stamp.
      * @param stamp Datatype to copy
@@ -305,6 +305,6 @@ public:
     static DataTypePtr createFloatFromInteger(DataTypePtr stamp);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPEFACTORY_HPP_

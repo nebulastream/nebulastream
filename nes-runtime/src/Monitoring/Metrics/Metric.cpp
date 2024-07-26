@@ -70,4 +70,4 @@ nlohmann::json asJson(std::shared_ptr<Metric> ptrMetric)
     return asJson(*ptrMetric);
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

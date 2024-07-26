@@ -25,5 +25,5 @@ class BaseTypedRef : public Any
 public:
     BaseTypedRef(const TypeIdentifier* identifier) : Any(identifier){};
 };
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BASETYPEDREF_HPP_

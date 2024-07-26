@@ -40,7 +40,7 @@ void AllEntriesMetricStore::addMetrics(WorkerId nodeId, MetricPtr metric)
     {
         NES_TRACE("AllEntriesMetricStore: Found stored metrics for node with ID {}", nodeId);
         nodeMetrics = storedMetrics[nodeId];
-        // check if the metric type exists
+        /// check if the metric type exists
         if (!nodeMetrics->contains(metric->getMetricType()))
         {
             NES_TRACE(
@@ -88,4 +88,4 @@ StoredNodeMetricsPtr AllEntriesMetricStore::getAllMetrics(WorkerId nodeId)
     return storedMetrics[nodeId];
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

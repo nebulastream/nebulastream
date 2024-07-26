@@ -49,6 +49,6 @@ protected:
     explicit SqrtExpressionNode(SqrtExpressionNode* other);
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_SQRTEXPRESSIONNODE_HPP_

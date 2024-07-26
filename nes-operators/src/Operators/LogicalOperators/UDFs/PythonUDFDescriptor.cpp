@@ -42,4 +42,4 @@ std::stringstream PythonUDFDescriptor::generateInferStringSignature()
     signatureStream << "PYTHON_UDF(functionName=" + functionName + ", functionString=" + functionString + ")";
     return signatureStream;
 }
-} // namespace NES::Catalogs::UDF
+} /// namespace NES::Catalogs::UDF

@@ -28,4 +28,4 @@ std::unique_ptr<Nautilus::Backends::Executable> AbstractCompilationBackendTest::
     return compiler->compile(ir, options, dumpHelper);
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

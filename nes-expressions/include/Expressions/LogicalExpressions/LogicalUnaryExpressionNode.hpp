@@ -38,6 +38,6 @@ public:
 protected:
     explicit LogicalUnaryExpressionNode(LogicalUnaryExpressionNode* other);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALUNARYEXPRESSIONNODE_HPP_

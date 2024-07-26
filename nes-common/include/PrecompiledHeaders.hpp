@@ -14,13 +14,13 @@
 
 #ifndef NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_
 #define NES_COMMON_INCLUDE_PRECOMPILEDHEADERS_HPP_
-// This is a list of often used and expensive header libraries that we want to precompile
+/// This is a list of often used and expensive header libraries that we want to precompile
 
-// Commonly-used first-party headers that do not often change (e.g., logging, basic components)
+/// Commonly-used first-party headers that do not often change (e.g., logging, basic components)
 #include <Util/Logger/Logger.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 
-// Commonly used Standard Library or third-party headers
+/// Commonly used Standard Library or third-party headers
 #include <algorithm>
 #include <chrono>
 #include <filesystem>

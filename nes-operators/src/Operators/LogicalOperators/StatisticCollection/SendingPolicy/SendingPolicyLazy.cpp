@@ -36,4 +36,4 @@ SendingPolicyLazy::SendingPolicyLazy(StatisticDataCodec sinkDataCodec) : Sending
 {
 }
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

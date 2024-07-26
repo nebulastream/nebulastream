@@ -32,7 +32,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
     std::vector<OperatorPtr> rootOperators = decomposedQueryPlan->getRootOperators();
     NES_DEBUG("QueryPlanSerializationUtil: serializing the operator chain for each root operator independently");
 
-    //Serialize Query Plan operators
+    ///Serialize Query Plan operators
     auto& serializedOperatorMap = *serializableDecomposedQueryPlan->mutable_operatormap();
     auto bfsIterator = PlanIterator(decomposedQueryPlan);
     for (auto itr = bfsIterator.begin(); itr != PlanIterator::end(); ++itr)
@@ -40,7 +40,7 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
         auto visitingOp = (*itr)->as<Operator>();
         if (serializedOperatorMap.find(visitingOp->getId().getRawValue()) != serializedOperatorMap.end())
         {
-            // skip rest of the steps as the operator is already serialized
+            /// skip rest of the steps as the operator is already serialized
             continue;
         }
         NES_TRACE("QueryPlan: Inserting operator in collection of already visited node.");
@@ -48,14 +48,14 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
         serializedOperatorMap[visitingOp->getId().getRawValue()] = serializeOperator;
     }
 
-    //Serialize the root operator ids
+    ///Serialize the root operator ids
     for (const auto& rootOperator : rootOperators)
     {
         auto rootOperatorId = rootOperator->getId();
         serializableDecomposedQueryPlan->add_rootoperatorids(rootOperatorId.getRawValue());
     }
 
-    //Serialize the sub query plan and query plan id
+    ///Serialize the sub query plan and query plan id
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
     serializableDecomposedQueryPlan->set_decomposedqueryplanid(decomposedQueryPlan->getDecomposedQueryPlanId().getRawValue());
     serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan->getSharedQueryId().getRawValue());
@@ -69,14 +69,14 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     std::vector<OperatorPtr> rootOperators;
     std::map<uint64_t, OperatorPtr> operatorIdToOperatorMap;
 
-    //Deserialize all operators in the operator map
+    ///Deserialize all operators in the operator map
     for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap())
     {
         const auto& serializedOperator = operatorIdAndSerializedOperator.second;
         operatorIdToOperatorMap[serializedOperator.operatorid()] = OperatorSerializationUtil::deserializeOperator(serializedOperator);
     }
 
-    //Add deserialized children
+    ///Add deserialized children
     for (const auto& operatorIdAndSerializedOperator : serializableDecomposedQueryPlan->operatormap())
     {
         const auto serializedOperator = operatorIdAndSerializedOperator.second;
@@ -87,13 +87,13 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
         }
     }
 
-    //add root operators
+    ///add root operators
     for (auto rootOperatorId : serializableDecomposedQueryPlan->rootoperatorids())
     {
         rootOperators.emplace_back(operatorIdToOperatorMap[rootOperatorId]);
     }
 
-    //set properties of the query plan
+    ///set properties of the query plan
     DecomposedQueryPlanId decomposableQueryPlanId = DecomposedQueryPlanId(serializableDecomposedQueryPlan->decomposedqueryplanid());
     SharedQueryId sharedQueryId = SharedQueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
@@ -201,4 +201,4 @@ SerializableQueryState DecomposedQueryPlanSerializationUtil::serializeQueryState
             return QUERY_STATE_MARKED_FOR_MIGRATION;
     }
 }
-} // namespace NES
+} /// namespace NES

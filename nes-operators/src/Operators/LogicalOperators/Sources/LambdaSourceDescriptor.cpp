@@ -123,4 +123,4 @@ uint64_t LambdaSourceDescriptor::getTaskQueueId() const
 {
     return taskQueueId;
 }
-} // namespace NES
+} /// namespace NES

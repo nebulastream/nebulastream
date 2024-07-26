@@ -30,5 +30,5 @@ private:
     const ExpressionPtr expression;
 };
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_TANEXPRESSION_HPP_

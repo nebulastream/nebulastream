@@ -37,7 +37,7 @@ using RegisterFile = std::array<int64_t, REGISTERS>;
 enum class ByteCode : short
 {
     REG_MOV,
-    // ADD
+    /// ADD
     ADD_i8,
     ADD_i16,
     ADD_i32,
@@ -48,7 +48,7 @@ enum class ByteCode : short
     ADD_ui64,
     ADD_f,
     ADD_d,
-    // SUB
+    /// SUB
     SUB_i8,
     SUB_i16,
     SUB_i32,
@@ -59,7 +59,7 @@ enum class ByteCode : short
     SUB_ui64,
     SUB_f,
     SUB_d,
-    // MUL
+    /// MUL
     MUL_i8,
     MUL_i16,
     MUL_i32,
@@ -70,7 +70,7 @@ enum class ByteCode : short
     MUL_ui64,
     MUL_f,
     MUL_d,
-    // DIV
+    /// DIV
     DIV_i8,
     DIV_i16,
     DIV_i32,
@@ -81,7 +81,7 @@ enum class ByteCode : short
     DIV_ui64,
     DIV_f,
     DIV_d,
-    // Equal
+    /// Equal
     EQ_i8,
     EQ_i16,
     EQ_i32,
@@ -93,7 +93,7 @@ enum class ByteCode : short
     EQ_f,
     EQ_d,
     EQ_b,
-    // LessThan
+    /// LessThan
     LESS_THAN_i8,
     LESS_THAN_i16,
     LESS_THAN_i32,
@@ -104,7 +104,7 @@ enum class ByteCode : short
     LESS_THAN_ui64,
     LESS_THAN_f,
     LESS_THAN_d,
-    // greater than
+    /// greater than
     GREATER_THAN_i8,
     GREATER_THAN_i16,
     GREATER_THAN_i32,
@@ -115,7 +115,7 @@ enum class ByteCode : short
     GREATER_THAN_ui64,
     GREATER_THAN_f,
     GREATER_THAN_d,
-    // Load
+    /// Load
     LOAD_i8,
     LOAD_i16,
     LOAD_i32,
@@ -127,7 +127,7 @@ enum class ByteCode : short
     LOAD_f,
     LOAD_d,
     LOAD_b,
-    // Store
+    /// Store
     STORE_i8,
     STORE_i16,
     STORE_i32,
@@ -139,13 +139,13 @@ enum class ByteCode : short
     STORE_f,
     STORE_d,
     STORE_b,
-    // AND
+    /// AND
     AND_b,
-    // OR
+    /// OR
     OR_b,
-    // Negate
+    /// Negate
     NOT_b,
-    // Cast
+    /// Cast
     CAST_i8_i16,
     CAST_i8_i32,
     CAST_i8_i64,
@@ -183,29 +183,29 @@ enum class ByteCode : short
     CAST_i32_d,
     CAST_i64_f,
     CAST_i64_d,
-    // Function calls
-    // TODO #3466 come up with a better approach to call dynamically into runtime functions
-    // functions with void return
+    /// Function calls
+    /// TODO #3466 come up with a better approach to call dynamically into runtime functions
+    /// functions with void return
     CALL_v,
     CALL_v_ptr,
     CALL_v_ptr_ui64,
     CALL_v_ptr_ptr_ptr,
     CALL_v_ptr_ptr_ptr_ui64_ui64_ui64_ui64,
-    // functions with ui64 return
+    /// functions with ui64 return
     CALL_ui64_ptr,
     CALL_ui64_ui64_i8,
     CALL_ui64_ui64_i32,
     CALL_ui64_ui64_i64,
-    // functions with i64 return
+    /// functions with i64 return
     CALL_i64,
     CALL_i64_i64,
     CALL_i64_i64_i64,
-    // functions with ptr return
+    /// functions with ptr return
     CALL_ptr_ptr,
     CALL_ptr_ptr_ptr,
     CALL_ptr_ptr_i64,
     CALL_ptr_ptr_ui64,
-    // dynamic function calls using dyncall.h
+    /// dynamic function calls using dyncall.h
     DYNCALL_reset,
     DYNCALL_arg_b,
     DYNCALL_arg_i8,
@@ -299,7 +299,7 @@ void call(const OpCode& c, RegisterFile& regs)
 
     if constexpr (std::is_void_v<ReturnType>)
     {
-        // if ReturnType is void we don't return a result.
+        /// if ReturnType is void we don't return a result.
         if constexpr (sizeof...(Args) == 0)
         {
             ptr();
@@ -336,7 +336,7 @@ void call(const OpCode& c, RegisterFile& regs)
     }
     else
     {
-        // the function has a return type. So we return a result.
+        /// the function has a return type. So we return a result.
         ReturnType returnValue;
         if constexpr (sizeof...(Args) == 0)
         {
@@ -590,6 +590,6 @@ public:
     std::string toString();
 };
 
-} // namespace NES::Nautilus::Backends::BC
+} /// namespace NES::Nautilus::Backends::BC
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BYTECODE_HPP_

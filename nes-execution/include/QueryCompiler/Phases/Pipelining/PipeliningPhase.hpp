@@ -27,6 +27,6 @@ public:
     virtual PipelineQueryPlanPtr apply(DecomposedQueryPlanPtr decomposedQueryPlan) = 0;
     virtual ~PipeliningPhase() = default;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_

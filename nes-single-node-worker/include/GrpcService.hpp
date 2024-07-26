@@ -41,5 +41,5 @@ public:
 private:
     SingleNodeWorker delegate;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_SINGLE_NODE_WORKER_INCLUDE_GRPCSERVICE_HPP_

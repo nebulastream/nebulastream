@@ -101,4 +101,4 @@ TEST_F(LimitOperatorTest, TestLimitZero)
     ASSERT_EQ(collector->records.size(), LIMIT);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

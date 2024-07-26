@@ -38,5 +38,5 @@ private:
     std::unique_ptr<TimeFunction> timeFunction;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_INGESTIONTIMEWATERMARKASSIGNMENT_HPP_

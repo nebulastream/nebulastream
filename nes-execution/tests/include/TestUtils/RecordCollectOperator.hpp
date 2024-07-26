@@ -29,6 +29,6 @@ public:
     mutable std::vector<Record> records;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_

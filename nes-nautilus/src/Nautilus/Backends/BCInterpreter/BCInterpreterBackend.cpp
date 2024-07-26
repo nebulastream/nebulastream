@@ -22,7 +22,7 @@
 namespace NES::Nautilus::Backends::BC
 {
 
-// this makes nes crash if the logger singleton is destroyed before BCInterpreterBackend object as its dtor prints
+/// this makes nes crash if the logger singleton is destroyed before BCInterpreterBackend object as its dtor prints
 [[maybe_unused]] static CompilationBackendRegistry::Add<BCInterpreterBackend> bcInterpreterBackend("BCInterpreter");
 
 std::unique_ptr<Executable>
@@ -40,4 +40,4 @@ BCInterpreterBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilation
     return std::make_unique<BCInterpreter>(std::get<0>(result), std::get<1>(result));
 }
 
-} // namespace NES::Nautilus::Backends::BC
+} /// namespace NES::Nautilus::Backends::BC

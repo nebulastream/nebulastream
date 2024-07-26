@@ -24,6 +24,6 @@ using Timestamp = uint64_t;
 
 Timestamp getTimestamp();
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_COMMON_INCLUDE_UTIL_TIMEMEASUREMENT_HPP_

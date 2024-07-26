@@ -45,7 +45,7 @@ void checkWindowsTriggerProxy(
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto* workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
-    //update last seen watermark by this worker
+    ///update last seen watermark by this worker
     opHandler->updateWatermarkForWorker(watermarkTs, workerCtx->getId());
     auto minWatermark = opHandler->getMinWatermarkForWorker();
 
@@ -55,7 +55,7 @@ void checkWindowsTriggerProxy(
 
 void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const
 {
-    // Update the watermark for the nlj operator and trigger slices
+    /// Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Nautilus::FunctionCall(
         "checkWindowsTriggerProxy",
@@ -91,4 +91,4 @@ StreamJoinBuild::StreamJoinBuild(
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

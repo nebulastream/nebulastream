@@ -21,13 +21,13 @@ namespace NES
 
 uint64_t TextPhysicalType::size() const
 {
-    // returning the size of the index to the child buffer that contains the text data
+    /// returning the size of the index to the child buffer that contains the text data
     return sizeof(uint32_t);
 }
 
 std::string TextPhysicalType::convertRawToString(void const* data) const noexcept
 {
-    // We always read the exact number of bytes contained by the Text.
+    /// We always read the exact number of bytes contained by the Text.
     return convertRawToStringWithoutFill(data);
 }
 
@@ -39,7 +39,7 @@ std::string TextPhysicalType::convertRawToStringWithoutFill(void const* data) co
         return "";
     }
 
-    // Read the length of the Text from the first StringLengthType bytes from the buffer and adjust the data pointer.
+    /// Read the length of the Text from the first StringLengthType bytes from the buffer and adjust the data pointer.
     using StringLengthType = uint32_t;
     StringLengthType textLength = *static_cast<uint32_t const*>(data);
     const auto* textPointer = static_cast<char const*>(data);
@@ -57,4 +57,4 @@ std::string TextPhysicalType::toString() const noexcept
     return "TEXT";
 }
 
-} // namespace NES
+} /// namespace NES

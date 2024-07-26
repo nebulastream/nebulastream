@@ -62,7 +62,7 @@ std::string FieldAccessExpressionNode::toString() const
 
 void FieldAccessExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // check if the access field is defined in the schema.
+    /// check if the access field is defined in the schema.
     auto existingField = schema->getField(fieldName);
     if (existingField)
     {
@@ -77,4 +77,4 @@ ExpressionNodePtr FieldAccessExpressionNode::copy()
 {
     return std::make_shared<FieldAccessExpressionNode>(*this);
 }
-} // namespace NES
+} /// namespace NES

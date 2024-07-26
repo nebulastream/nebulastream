@@ -124,9 +124,9 @@ public:
     template <class T>
     std::vector<std::shared_ptr<T>> getOperatorByType() const
     {
-        // Find all the nodes in the query plan
+        /// Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
-        // Maintain a list of visited nodes as there are multiple root nodes
+        /// Maintain a list of visited nodes as there are multiple root nodes
         std::set<OperatorId> visitedOpIds;
         for (const auto& rootOperator : rootOperators)
         {
@@ -136,7 +136,7 @@ public:
                 auto visitingOp = (*itr)->as<Operator>();
                 if (visitedOpIds.contains(visitingOp->getId()))
                 {
-                    // skip rest of the steps as the node found in already visited node list
+                    /// skip rest of the steps as the node found in already visited node list
                     continue;
                 }
                 visitedOpIds.insert(visitingOp->getId());
@@ -294,8 +294,8 @@ private:
     QueryId queryId = INVALID_QUERY_ID;
     std::string sourceConsumed;
     QueryState currentState;
-    // Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
+    /// Default placement strategy is top-down; we set the correct placement strategy in the Experimental Add Request
     Optimizer::PlacementStrategy placementStrategy = Optimizer::PlacementStrategy::TopDown;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_PLANS_QUERY_QUERYPLAN_HPP_

@@ -117,7 +117,7 @@ uint64_t getNumberOfTuplesForPageProxy(void* hashWindowPtr, uint64_t joinBuildSi
 
 void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    // As this operator functions as a scan, we have to set the execution context for this pipeline
+    /// As this operator functions as a scan, we have to set the execution context for this pipeline
     ctx.setWatermarkTs(recordBuffer.getWatermarkTs());
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
     ctx.setChunkNumber(recordBuffer.getChunkNr());
@@ -125,7 +125,7 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     ctx.setOrigin(recordBuffer.getOriginId());
     Operator::open(ctx, recordBuffer);
 
-    // Getting all needed references or values
+    /// Getting all needed references or values
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto joinPartitionIdSliceIdMemRef = recordBuffer.getBuffer();
     const auto windowStart
@@ -159,10 +159,10 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
         Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
         partitionId);
 
-    //for every left page
+    ///for every left page
     for (Value<UInt64> leftPageNo(0_u64); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1)
     {
-        //for every key in left page
+        ///for every key in left page
         auto leftPageRef = Nautilus::FunctionCall(
             "getPageFromBucketAtPosProxyForHashJoin",
             getPageFromBucketAtPosProxyForHashJoin,
@@ -177,15 +177,15 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
             Value<UInt64> zeroValue = 0_u64;
             auto leftRecord = leftMemProvider->read({}, leftRecordRef, zeroValue);
 
-            //for every right page
+            ///for every right page
             for (Value<UInt64> rightPageNo((uint64_t)0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1)
             {
-                //TODO: introduce Bloomfilter here #3909
-                //                if (!rhsPage->bloomFilterCheck(lhsKeyPtr, sizeOfLeftKey)) {
-                //                    continue;
-                //                }
+                ///TODO: introduce Bloomfilter here #3909
+                ///                if (!rhsPage->bloomFilterCheck(lhsKeyPtr, sizeOfLeftKey)) {
+                ///                    continue;
+                ///                }
 
-                //for every key in right page
+                ///for every key in right page
                 auto rightPageRef = Nautilus::FunctionCall(
                     "getPageFromBucketAtPosProxyForHashJoin",
                     getPageFromBucketAtPosProxyForHashJoin,
@@ -203,13 +203,13 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
                     createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
                     if (joinExpression->execute(joinedRecord).as<Boolean>())
                     {
-                        // Calling the child operator for this joinedRecord
+                        /// Calling the child operator for this joinedRecord
                         child->execute(ctx, joinedRecord);
-                    } //end of key expression compare
-                } //end of for every right key
-            } //end of for every right page
-        } //end of for every left key
-    } //end of for every left page
+                    } ///end of key expression compare
+                } ///end of for every right key
+            } ///end of for every right page
+        } ///end of for every left key
+    } ///end of for every left page
 }
 
 HJProbe::HJProbe(
@@ -222,9 +222,9 @@ HJProbe::HJProbe(
     bool withDeletion)
     : StreamJoinProbe(operatorHandlerIndex, joinSchema, joinExpression, windowMetaData, joinStrategy, windowingStrategy, withDeletion)
     ,
-    // As we are only ever reading a single record, we do not care about the buffer size
+    /// As we are only ever reading a single record, we do not care about the buffer size
     leftMemProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.leftSchema))
     , rightMemProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.rightSchema))
 {
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

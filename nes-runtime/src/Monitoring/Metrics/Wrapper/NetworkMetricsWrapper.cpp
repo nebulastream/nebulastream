@@ -78,7 +78,7 @@ void NetworkMetricsWrapper::readFromBuffer(Runtime::TupleBuffer& buf, uint64_t t
 
     for (unsigned int n = 0; n < buf.getNumberOfTuples(); n++)
     {
-        //for each core parse the according CpuMetrics
+        ///for each core parse the according CpuMetrics
         NetworkMetrics metrics{};
         NES::Monitoring::readFromBuffer(metrics, buf, tupleIndex + n);
         interfaceList.emplace_back(metrics);
@@ -198,4 +198,4 @@ nlohmann::json asJson(const NetworkMetricsWrapper& metrics)
     return metrics.toJson();
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

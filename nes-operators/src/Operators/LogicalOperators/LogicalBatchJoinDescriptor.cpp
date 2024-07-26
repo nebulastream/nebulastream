@@ -100,4 +100,4 @@ void LogicalBatchJoinDescriptor::setNumberOfInputEdgesProbe(uint64_t numberOfInp
     LogicalBatchJoinDescriptor::numberOfInputEdgesProbe = numberOfInputEdgesRight;
 }
 
-}; // namespace NES::Join::Experimental
+}; /// namespace NES::Join::Experimental
