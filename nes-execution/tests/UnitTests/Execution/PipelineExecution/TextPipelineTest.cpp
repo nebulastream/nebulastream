@@ -122,7 +122,8 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     TextPipelineTest,
-    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    ::testing::ValuesIn(
+        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<TextPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution
