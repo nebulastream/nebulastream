@@ -285,6 +285,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     KeyedTimeWindowPipelineTest,
-    ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    ::testing::ValuesIn(
+        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<KeyedTimeWindowPipelineTest::ParamType>& info) { return info.param; });
 } /// namespace NES::Runtime::Execution
