@@ -62,6 +62,7 @@ class ExecutableDataType : public AbstractDataType {
     ExecDataType operator<<(const ExecDataType& rightExp) const override;
     ExecDataType operator>>(const ExecDataType& rightExp) const override;
     ExecDataType operator!() const override;
+    nautilus::val<ValueType> operator()() const { return rawValue; }
 
 
     template<typename CastedDataType>

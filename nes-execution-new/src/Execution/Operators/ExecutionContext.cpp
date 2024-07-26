@@ -45,7 +45,7 @@ void* allocateBufferProxy(void* workerContextPtr) {
 }
 
 nautilus::val<int8_t*> ExecutionContext::allocateBuffer() {
-    auto bufferPtr = invoke( allocateBufferProxy, workerContext);
+    auto bufferPtr = invoke(allocateBufferProxy, workerContext);
     return bufferPtr;
 }
 

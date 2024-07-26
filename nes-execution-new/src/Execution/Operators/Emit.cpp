@@ -40,7 +40,8 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
 void Emit::execute(ExecutionContext& ctx, Record& record) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     // emit buffer if it reached the maximal capacity
-    if (emitState->outputIndex >= maxRecordsPerBuffer) {
+    const auto result = emitState->outputIndex >= nautilus::val<uint64_t>(maxRecordsPerBuffer);
+    if (result.value) {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);

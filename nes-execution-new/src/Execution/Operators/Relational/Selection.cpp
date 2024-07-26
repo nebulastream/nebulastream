@@ -19,10 +19,12 @@ namespace NES::Runtime::Execution::Operators {
 
 void Selection::execute(ExecutionContext& ctx, Record& record) const {
     // evaluate expression and call child operator if expression is valid
-    if (expression->execute(record)) {
-        if (child != nullptr) {
+    const auto expressionResult = expression->execute(record);
+    const auto expressionResultExecutableDataType = std::dynamic_pointer_cast<ExecutableDataType<bool>>(expressionResult);
+    if (expressionResultExecutableDataType->getRawValue()) {
+//        if (child != nullptr) {
             child->execute(ctx, record);
-        }
+//        }
     }
 }
 

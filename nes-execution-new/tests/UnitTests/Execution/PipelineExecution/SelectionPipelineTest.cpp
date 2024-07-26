@@ -80,11 +80,12 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
-    scanOperator->setChild(selectionOperator);
+//    scanOperator->setChild(selectionOperator);
 
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-    selectionOperator->setChild(emitOperator);
+//    selectionOperator->setChild(emitOperator);
+    scanOperator->setChild(emitOperator);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
