@@ -43,6 +43,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include "Nautilus/Backends/CompilationBackend.hpp"
 
 namespace NES::Runtime::Execution
 {
