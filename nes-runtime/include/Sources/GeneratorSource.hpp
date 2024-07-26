@@ -86,5 +86,5 @@ public:
     SourceType getType() const override;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_GENERATORSOURCE_HPP_

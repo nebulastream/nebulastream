@@ -47,6 +47,6 @@ using ConstantFloatValueExpression = ConstantValueExpression<float>;
 using ConstantDoubleValueExpression = ConstantValueExpression<double>;
 using ConstantBooleanValueExpression = ConstantValueExpression<bool>;
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_

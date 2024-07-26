@@ -37,7 +37,7 @@ public:
         : public std::
               iterator<std::forward_iterator_tag, OperatorPipelinePtr, OperatorPipelinePtr, OperatorPipelinePtr*, OperatorPipelinePtr&>
     {
-        // use PipelineQueryPlanIterator as a fiend to access its state
+        /// use PipelineQueryPlanIterator as a fiend to access its state
         friend class PipelineQueryPlanIterator;
 
     public:
@@ -87,6 +87,6 @@ public:
 private:
     PipelineQueryPlanPtr queryPlan;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PIPELINEQUERYPLANITERATOR_HPP_

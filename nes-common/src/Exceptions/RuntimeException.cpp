@@ -25,7 +25,7 @@ struct formatter<std::source_location> : formatter<std::string>
         return fmt::format_to(ctx.out(), "{}:{} {}", loc.file_name(), loc.line(), loc.function_name());
     }
 };
-} // namespace fmt
+} /// namespace fmt
 
 namespace NES::Exceptions
 {
@@ -81,4 +81,4 @@ const char* RuntimeException::what() const noexcept
     return errorMessage.c_str();
 }
 
-} // namespace NES::Exceptions
+} /// namespace NES::Exceptions

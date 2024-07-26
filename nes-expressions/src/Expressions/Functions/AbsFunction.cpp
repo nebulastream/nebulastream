@@ -30,10 +30,10 @@ public:
         {
             NES_THROW_RUNTIME_ERROR("AbsExpressions can only be evaluated on numeric values.");
         }
-        return DataTypeFactory::createDouble(); // TODO: change to createInt64(): issue #3760
+        return DataTypeFactory::createDouble(); /// TODO: change to createInt64(): issue #3760
     }
 };
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<AbsFunction> absFunction("abs");
 
-} // namespace NES
+} /// namespace NES

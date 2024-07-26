@@ -81,6 +81,6 @@ private:
     bool optimize;
     bool dumpQueryPlans;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONREQUEST_HPP_

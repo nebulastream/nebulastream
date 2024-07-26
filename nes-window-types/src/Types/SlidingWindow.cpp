@@ -70,4 +70,4 @@ uint64_t SlidingWindow::hash() const
     return hashValue;
 }
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing

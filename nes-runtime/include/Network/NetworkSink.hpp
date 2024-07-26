@@ -193,5 +193,5 @@ private:
     const uint8_t retryTimes;
     DecomposedQueryPlanVersion version;
 };
-} // namespace NES::Network
+} /// namespace NES::Network
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_NETWORKSINK_HPP_

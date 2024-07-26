@@ -47,4 +47,4 @@ OperatorPtr PhysicalEmitOperator::copy()
     return result;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

@@ -20,7 +20,7 @@ namespace NES
 {
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Nautilus::MemRefUtils
 {
@@ -60,5 +60,5 @@ void memCopy(Value<MemRef>&& destination, Value<MemRef>&& source, Value<UInt64>&
 #define getMember(objectReference, classType, member) \
     (objectReference + ((uint64_t) __builtin_offsetof(classType, member))).as<NES::Nautilus::MemRef>()
 
-} // namespace NES::Nautilus::MemRefUtils
+} /// namespace NES::Nautilus::MemRefUtils
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_

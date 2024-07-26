@@ -45,4 +45,4 @@ bool BranchOperation::classof(const Operation* Op)
     return Op->getOperationType() == OperationType::BranchOp;
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

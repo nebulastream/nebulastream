@@ -66,6 +66,6 @@ private:
     std::shared_ptr<Operations::FunctionOperation> rootOperation;
 };
 
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_IRGRAPH_HPP_

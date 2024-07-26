@@ -105,4 +105,4 @@ SourceType LambdaSource::getType() const
 {
     return SourceType::LAMBDA_SOURCE;
 }
-} // namespace NES
+} /// namespace NES

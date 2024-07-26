@@ -38,5 +38,5 @@ private:
     const std::string message;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_BUFFERACCESSEXCEPTION_HPP_

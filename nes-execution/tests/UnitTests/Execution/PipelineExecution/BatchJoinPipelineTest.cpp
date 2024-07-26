@@ -102,7 +102,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
-    // Fill buffer
+    /// Fill buffer
     testBuffer[0]["k1"].write(+1_s64);
     testBuffer[0]["v1"].write(+10_s64);
     testBuffer[1]["k1"].write(+1_s64);
@@ -132,4 +132,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<BatchJoinPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

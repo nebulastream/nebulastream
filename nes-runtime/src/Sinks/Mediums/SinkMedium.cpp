@@ -127,4 +127,4 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         }
     }
 }
-} // namespace NES
+} /// namespace NES

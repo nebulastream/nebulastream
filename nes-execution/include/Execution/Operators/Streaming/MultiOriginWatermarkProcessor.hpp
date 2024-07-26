@@ -60,6 +60,6 @@ private:
     std::vector<std::shared_ptr<NES::Sequencing::NonBlockingMonotonicSeqQueue<uint64_t>>> watermarkProcessors = {};
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_MULTIORIGINWATERMARKPROCESSOR_HPP_

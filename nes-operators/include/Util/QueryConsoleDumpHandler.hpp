@@ -58,6 +58,6 @@ private:
     void multilineDumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_UTIL_QUERYCONSOLEDUMPHANDLER_HPP_

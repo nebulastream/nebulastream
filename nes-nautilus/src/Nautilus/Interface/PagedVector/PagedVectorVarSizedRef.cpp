@@ -53,7 +53,7 @@ void* getEntryVarSizedProxy(void* pagedVectorVarSizedPtr, uint64_t entryPos)
         }
     }
 
-    // As we might have not set the number of tuples of the last tuple buffer
+    /// As we might have not set the number of tuples of the last tuple buffer
     if (entryPos < pagedVectorVarSized->getNumberOfEntriesOnCurrentPage())
     {
         auto entryPtrOnPage = entryPos * pagedVectorVarSized->getEntrySize();
@@ -126,7 +126,7 @@ void PagedVectorVarSizedRef::writeRecord(Record record)
             auto textEntryMapKey
                 = Nautilus::FunctionCall("storeTextProxy", storeTextProxy, pagedVectorVarSizedRef, fieldValue.as<Text>()->getReference());
             pageEntry.as<MemRef>().store(textEntryMapKey.as<UInt64>());
-            // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
+            /// We need casting sizeof() to a uint64 as it otherwise fails on MacOS
             pageEntry = pageEntry + Value<UInt64>((uint64_t)sizeof(uint64_t));
         }
         else
@@ -151,7 +151,7 @@ Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos)
         if (fieldType->type->isText())
         {
             auto textEntryMapKey = pageEntry.as<MemRef>().load<UInt64>();
-            // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
+            /// We need casting sizeof() to a uint64 as it otherwise fails on MacOS
             pageEntry = pageEntry + Value<UInt64>((uint64_t)sizeof(uint64_t));
             auto text = Nautilus::FunctionCall("loadTextProxy", loadTextProxy, pagedVectorVarSizedRef, textEntryMapKey);
             record.write(fieldName, text);
@@ -231,4 +231,4 @@ void PagedVectorVarSizedRefIter::setPos(Value<UInt64> newValue)
     pos = newValue;
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

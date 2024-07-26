@@ -61,4 +61,4 @@ const std::string IntegerStamp::toString() const
     return prefix + std::to_string(getNumberOfBits());
 }
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types

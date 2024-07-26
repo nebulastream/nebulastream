@@ -40,6 +40,6 @@ public:
     virtual ~ExternalAPI() = default;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_EXTERNALAPI_HPP_

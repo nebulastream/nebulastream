@@ -28,6 +28,6 @@ public:
     static OperatorFusionPolicyPtr create();
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_

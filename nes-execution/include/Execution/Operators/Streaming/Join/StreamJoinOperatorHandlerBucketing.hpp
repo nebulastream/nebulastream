@@ -32,6 +32,6 @@ public:
 private:
     std::vector<std::vector<StreamSlice*>> windowsToFill;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERBUCKETING_HPP_

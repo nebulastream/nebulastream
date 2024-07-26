@@ -154,6 +154,6 @@ private:
     PagedVectorVarSizedRef pagedVectorVarSized;
 };
 
-} //namespace NES::Nautilus::Interface
+} ///namespace NES::Nautilus::Interface
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_HPP_

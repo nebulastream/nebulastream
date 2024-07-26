@@ -30,7 +30,7 @@ namespace QueryCompilation
 class QueryCompiler;
 }
 
-//TODO(#136): QueryStatus is not yet implemented
+///TODO(#136): QueryStatus is not yet implemented
 class QueryStatus
 {
 };
@@ -94,5 +94,5 @@ public:
      */
     [[nodiscard]] QueryStatus queryStatus(QueryId) const;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_SINGLE_NODE_WORKER_INCLUDE_SINGLENODEWORKER_HPP_

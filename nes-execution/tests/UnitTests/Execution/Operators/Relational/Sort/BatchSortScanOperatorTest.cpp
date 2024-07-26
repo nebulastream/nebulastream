@@ -74,7 +74,7 @@ void fillState(
     std::mt19937 random(SEED);
     for (size_t j = 0; j < numberOfRecord; ++j)
     {
-        // create random values
+        /// create random values
         std::vector<T> recordValues(numberOfFields);
         for (size_t i = 0; i < numberOfFields; ++i)
         {
@@ -93,7 +93,7 @@ void fillState(
                 NES_NOT_IMPLEMENTED();
             }
         }
-        // allocate entry and fill encoded fields and full record
+        /// allocate entry and fill encoded fields and full record
         auto entry = stateRef.allocateEntry();
         for (size_t i = 0; i < sortFieldIndexes.size(); ++i)
         {
@@ -157,7 +157,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest)
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
     ASSERT_EQ(collector->records[0].numberOfFields(), 1);
 
-    // Records should be in ascending order
+    /// Records should be in ascending order
     auto prev = collector->records[0].read("f1").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i)
     {
@@ -202,7 +202,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest)
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
     ASSERT_EQ(collector->records[0].numberOfFields(), 2);
 
-    // Records in f2 should be in ascending order
+    /// Records in f2 should be in ascending order
     auto prev = collector->records[0].read("f2").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i)
     {
@@ -245,7 +245,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest)
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
     ASSERT_EQ(collector->records[0].numberOfFields(), 1);
 
-    // Records should be in descending order
+    /// Records should be in descending order
     auto prev = collector->records[0].read("f1").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i)
     {
@@ -289,7 +289,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest)
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
     ASSERT_EQ(collector->records[0].numberOfFields(), 2);
 
-    // Records in f2, f1 should be in ascending order
+    /// Records in f2, f1 should be in ascending order
     auto prev1 = collector->records[0].read("f1").as<NautilusType>();
     auto prev2 = collector->records[0].read("f2").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i)
@@ -297,7 +297,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest)
         Value<NautilusType> cur1 = collector->records[i].read("f1").as<NautilusType>();
         Value<NautilusType> cur2 = collector->records[i].read("f2").as<NautilusType>();
         ASSERT_LE(prev2, cur2);
-        // If the first fields are equal we compare the second field
+        /// If the first fields are equal we compare the second field
         if (prev2 == cur2)
         {
             ASSERT_LE(prev1, cur1);
@@ -315,7 +315,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage)
     using NativeType = typename TypeParam::first_type;
     using NautilusType = typename TypeParam::second_type;
     constexpr int NUM_RECORDS
-        = Interface::PagedVector::PAGE_SIZE / sizeof(NativeType) * 2 + sizeof(NativeType); // 2 full pages + 1 record -> 3 Pages
+        = Interface::PagedVector::PAGE_SIZE / sizeof(NativeType) * 2 + sizeof(NativeType); /// 2 full pages + 1 record -> 3 Pages
     constexpr auto NUM_FIELDS = 1;
 
     std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
@@ -341,7 +341,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage)
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
     ASSERT_EQ(collector->records[0].numberOfFields(), 1);
 
-    // Records should be in ascending order
+    /// Records should be in ascending order
     auto prev = collector->records[0].read("f1").as<NautilusType>();
     for (int i = 1; i < NUM_RECORDS; ++i)
     {
@@ -352,4 +352,4 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage)
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -26,8 +26,8 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SerializableSchema;
 using SerializableSchemaPtr = std::shared_ptr<SerializableSchema>;
 
-// TODO SchemaSerializationUtil should be converted to namespace
-// TODO serializeSchema should return nothing
+/// TODO SchemaSerializationUtil should be converted to namespace
+/// TODO serializeSchema should return nothing
 
 /**
  * @brief The SchemaSerializationUtil offers functionality to serialize and de-serialize schemas to the
@@ -51,6 +51,6 @@ public:
     */
     static SchemaPtr deserializeSchema(const SerializableSchema& serializedSchema);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_SCHEMASERIALIZATIONUTIL_HPP_

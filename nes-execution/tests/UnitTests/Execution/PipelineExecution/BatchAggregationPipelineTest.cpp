@@ -103,7 +103,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
-    // Fill buffer
+    /// Fill buffer
     testBuffer[0]["f1"].write(+10_s64);
     testBuffer[1]["f1"].write(+20_s64);
     testBuffer[2]["f1"].write(+30_s64);
@@ -173,7 +173,7 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
-    // Fill buffer
+    /// Fill buffer
     testBuffer[0]["f1"].write(+1_s64);
     testBuffer[0]["f2"].write(+10_s64);
     testBuffer[1]["f1"].write(+1_s64);
@@ -203,4 +203,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<BatchAggregationPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

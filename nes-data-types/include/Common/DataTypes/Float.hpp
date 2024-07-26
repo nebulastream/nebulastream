@@ -71,6 +71,6 @@ public:
     double const upperBound;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FLOAT_HPP_

@@ -36,4 +36,4 @@ BorrowedPort::operator uint16_t() const
     return port;
 }
 
-} // namespace NES::Testing
+} /// namespace NES::Testing

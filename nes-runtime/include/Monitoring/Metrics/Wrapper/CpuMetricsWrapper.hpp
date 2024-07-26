@@ -118,6 +118,6 @@ void readFromBuffer(CpuMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, uint6
  */
 nlohmann::json asJson(const CpuMetricsWrapper& metrics);
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_CPUMETRICSWRAPPER_HPP_

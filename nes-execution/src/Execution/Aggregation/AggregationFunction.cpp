@@ -250,4 +250,4 @@ Nautilus::Value<> AggregationFunction::createConstValue(int64_t value, const Phy
 
 AggregationFunction::~AggregationFunction() = default;
 
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation

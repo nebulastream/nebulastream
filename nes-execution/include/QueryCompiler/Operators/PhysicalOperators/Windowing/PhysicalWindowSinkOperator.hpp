@@ -42,6 +42,6 @@ public:
     std::string toString() const override;
     OperatorPtr copy() override;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_PHYSICALWINDOWSINKOPERATOR_HPP_

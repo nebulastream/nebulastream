@@ -24,7 +24,7 @@ namespace NES
 using WatermarkTs = uint64_t;
 using OriginId = uint64_t;
 using SequenceNumber = uint64_t;
-} // namespace NES
+} /// namespace NES
 
 namespace NES::Windowing
 {
@@ -84,10 +84,10 @@ public:
 private:
     mutable std::mutex watermarkLatch;
     const uint64_t numberOfOrigins;
-    // The watermark processor maintains a local watermark processor for each origin.
+    /// The watermark processor maintains a local watermark processor for each origin.
     std::map<uint64_t, std::unique_ptr<WatermarkProcessor>> localWatermarkProcessor;
 };
 using MultiOriginWatermarkProcessorPtr = std::unique_ptr<MultiOriginWatermarkProcessor>;
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_MULTIORIGINWATERMARKPROCESSOR_HPP_

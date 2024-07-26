@@ -51,6 +51,6 @@ private:
 
 using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_

@@ -40,7 +40,7 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
 public:
     explicit ReconfigurationPipelineExecutionContext(DecomposedQueryPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
-            INVALID_PIPELINE_ID, // this is a dummy pipelineID
+            INVALID_PIPELINE_ID, /// this is a dummy pipelineID
             queryExecutionPlanId,
             queryManager->getBufferManager(),
             queryManager->getNumberOfWorkerThreads(),
@@ -48,7 +48,7 @@ public:
             [](TupleBuffer&) {},
             std::vector<Execution::OperatorHandlerPtr>())
     {
-        // nop
+        /// nop
     }
 };
 
@@ -59,7 +59,7 @@ class ReconfigurationEntryPointPipelineStage : public Execution::ExecutablePipel
 public:
     explicit ReconfigurationEntryPointPipelineStage() : base(PipelineStageArity::Unary)
     {
-        // nop
+        /// nop
     }
 
     ExecutionResult execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext)
@@ -91,7 +91,7 @@ public:
         return ExecutionResult::Ok;
     }
 };
-} // namespace detail
+} /// namespace detail
 
 ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext& workerContext)
 {
@@ -115,12 +115,12 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
 
         switch (result)
         {
-            //OK comes from sinks and intermediate operators
+            ///OK comes from sinks and intermediate operators
             case ExecutionResult::Ok: {
                 completedWork(task, workerContext);
                 return ExecutionResult::Ok;
             }
-            //Finished indicate that the processing is done
+            ///Finished indicate that the processing is done
             case ExecutionResult::Finished: {
                 completedWork(task, workerContext);
                 return ExecutionResult::Finished;
@@ -184,7 +184,7 @@ ExecutionResult DynamicQueryManager::terminateLoop(WorkerContext& workerContext)
     while (taskQueue.read(task))
     {
         if (!hitReconfiguration)
-        { // execute all pending tasks until first reconfiguration
+        { /// execute all pending tasks until first reconfiguration
             task(workerContext);
             if (task.isReconfiguration())
             {
@@ -194,7 +194,7 @@ ExecutionResult DynamicQueryManager::terminateLoop(WorkerContext& workerContext)
         else
         {
             if (task.isReconfiguration())
-            { // execute only pending reconfigurations
+            { /// execute only pending reconfigurations
                 task(workerContext);
             }
         }
@@ -209,7 +209,7 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution:
     {
         if (!(*nextPipeline)->isRunning())
         {
-            // we ignore task if the pipeline is not running anymore.
+            /// we ignore task if the pipeline is not running anymore.
             NES_WARNING("Pushed task for non running executable pipeline id={}", (*nextPipeline)->getPipelineId());
             return;
         }
@@ -238,7 +238,7 @@ ExecutionResult MultiQueueQueryManager::terminateLoop(WorkerContext& workerConte
     while (taskQueues[workerContext.getQueueId()].read(task))
     {
         if (!hitReconfiguration)
-        { // execute all pending tasks until first reconfiguration
+        { /// execute all pending tasks until first reconfiguration
             task(workerContext);
             if (task.isReconfiguration())
             {
@@ -248,7 +248,7 @@ ExecutionResult MultiQueueQueryManager::terminateLoop(WorkerContext& workerConte
         else
         {
             if (task.isReconfiguration())
-            { // execute only pending reconfigurations
+            { /// execute only pending reconfigurations
                 task(workerContext);
             }
         }
@@ -265,7 +265,7 @@ void MultiQueueQueryManager::addWorkForNextPipeline(
     {
         if (!(*nextPipeline)->isRunning())
         {
-            // we ignore task if the pipeline is not running anymore.
+            /// we ignore task if the pipeline is not running anymore.
             NES_WARNING("Pushed task for non running executable pipeline id={}", (*nextPipeline)->getPipelineId());
             return;
         }
@@ -308,7 +308,7 @@ void DynamicQueryManager::updateStatistics(
     if (queryToStatisticsMap.contains(decomposedQueryPlanId))
     {
         auto statistics = queryToStatisticsMap.find(decomposedQueryPlanId);
-        // with multiple queryIdAndCatalogEntryMapping this won't be correct
+        /// with multiple queryIdAndCatalogEntryMapping this won't be correct
         auto qSize = taskQueue.size();
         statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
     }
@@ -447,7 +447,7 @@ bool DynamicQueryManager::addReconfigurationMessage(
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(sizeof(ReconfigurationMessage));
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
-    new (buffer.getBuffer()) ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking); // memcpy using copy ctor
+    new (buffer.getBuffer()) ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking); /// memcpy using copy ctor
     return addReconfigurationMessage(sharedQueryId, queryExecutionPlanId, std::move(buffer), blocking);
 }
 
@@ -527,7 +527,7 @@ bool MultiQueueQueryManager::addReconfigurationMessage(
         task->postWait();
         task->postReconfiguration();
     }
-    //    }
+    ///    }
     return true;
 }
 
@@ -540,18 +540,18 @@ class PoisonPillEntryPointPipelineStage : public Execution::ExecutablePipelineSt
 public:
     explicit PoisonPillEntryPointPipelineStage() : base(PipelineStageArity::Unary)
     {
-        // nop
+        /// nop
     }
 
     virtual ~PoisonPillEntryPointPipelineStage() = default;
 
     ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) { return ExecutionResult::AllFinished; }
 };
-} // namespace detail
+} /// namespace detail
 
 void DynamicQueryManager::poisonWorkers()
 {
-    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(1); // there is always one buffer manager
+    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(1); /// there is always one buffer manager
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
 
@@ -559,8 +559,8 @@ void DynamicQueryManager::poisonWorkers()
         INVALID_DECOMPOSED_QUERY_PLAN_ID, inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(
         INVALID_PIPELINE_ID,
-        INVALID_SHARED_QUERY_ID, // any query plan
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, // any sub query plan
+        INVALID_SHARED_QUERY_ID, /// any query plan
+        INVALID_DECOMPOSED_QUERY_PLAN_ID, /// any sub query plan
         inherited0::shared_from_this(),
         pipelineContext,
         std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),
@@ -576,15 +576,15 @@ void DynamicQueryManager::poisonWorkers()
 
 void MultiQueueQueryManager::poisonWorkers()
 {
-    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(1); // there is always one buffer manager
+    auto optBuffer = bufferManagers[0]->getUnpooledBuffer(1); /// there is always one buffer manager
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
 
     auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(
         INVALID_DECOMPOSED_QUERY_PLAN_ID, inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(
-        INVALID_PIPELINE_ID, // any query plan
-        INVALID_SHARED_QUERY_ID, // any sub query plan
+        INVALID_PIPELINE_ID, /// any query plan
+        INVALID_SHARED_QUERY_ID, /// any sub query plan
         INVALID_DECOMPOSED_QUERY_PLAN_ID,
         inherited0::shared_from_this(),
         pipelineContext,
@@ -603,4 +603,4 @@ void MultiQueueQueryManager::poisonWorkers()
     }
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

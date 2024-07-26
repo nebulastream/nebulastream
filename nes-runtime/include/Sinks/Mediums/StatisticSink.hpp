@@ -54,6 +54,6 @@ private:
     StatisticFormatPtr statisticSinkFormat;
 };
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_STATISTICSINK_HPP_

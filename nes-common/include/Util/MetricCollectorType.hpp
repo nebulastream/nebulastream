@@ -29,6 +29,6 @@ enum class MetricCollectorType : uint8_t
     INVALID
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_COMMON_INCLUDE_UTIL_METRICCOLLECTORTYPE_HPP_

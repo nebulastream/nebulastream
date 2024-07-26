@@ -54,6 +54,6 @@ private:
     explicit Cardinality(const FieldAccessExpressionNodePtr& field);
 };
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_STATISTICCOLLECTION_METRICS_CARDINALITY_HPP_

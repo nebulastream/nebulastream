@@ -132,19 +132,19 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write(+1_s64); /// does not qualify
     testBuffer[0]["key"].write(0_u32);
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f1"].write(+2_s64); /// qualifies
     testBuffer[1]["key"].write(0_u32);
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f1"].write(+3_s64); /// qualifies
     testBuffer[2]["key"].write(0_u32);
     testBuffer[2]["f2"].write(+30_s64);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64); // does not qualify
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write(+1_s64); /// does not qualify
     testBuffer[3]["key"].write(0_u32);
     testBuffer[3]["f2"].write(+40_s64);
     testBuffer.setNumberOfTuples(4);
@@ -230,34 +230,34 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
-    // Fill buffer
-    testBuffer[0]["f1"].write(+1_s64); // does not qualify
+    /// Fill buffer
+    testBuffer[0]["f1"].write(+1_s64); /// does not qualify
     testBuffer[0]["key"].write(0_u32);
     testBuffer[0]["f2"].write(+10_s64);
-    testBuffer[1]["f1"].write(+2_s64); // qualifies
+    testBuffer[1]["f1"].write(+2_s64); /// qualifies
     testBuffer[1]["key"].write(0_u32);
     testBuffer[1]["f2"].write(+20_s64);
-    testBuffer[2]["f1"].write(+3_s64); // qualifies
+    testBuffer[2]["f1"].write(+3_s64); /// qualifies
     testBuffer[2]["key"].write(0_u32);
     testBuffer[2]["f2"].write(+30_s64);
 
-    // the last tuple closes the window
-    testBuffer[3]["f1"].write(+1_s64); // does not qualify, closes the threshold window for key 0
+    /// the last tuple closes the window
+    testBuffer[3]["f1"].write(+1_s64); /// does not qualify, closes the threshold window for key 0
     testBuffer[3]["key"].write(0_u32);
     testBuffer[3]["f2"].write(+40_s64);
 
-    testBuffer[4]["f1"].write(+1_s64); // does not qualify
+    testBuffer[4]["f1"].write(+1_s64); /// does not qualify
     testBuffer[4]["key"].write(1_u32);
     testBuffer[4]["f2"].write(+100_s64);
-    testBuffer[5]["f1"].write(+2_s64); // qualifies
+    testBuffer[5]["f1"].write(+2_s64); /// qualifies
     testBuffer[5]["key"].write(1_u32);
     testBuffer[5]["f2"].write(+200_s64);
-    testBuffer[6]["f1"].write(+3_s64); // qualifies
+    testBuffer[6]["f1"].write(+3_s64); /// qualifies
     testBuffer[6]["key"].write(1_u32);
     testBuffer[6]["f2"].write(+300_s64);
 
-    // the last tuple closes the window
-    testBuffer[7]["f1"].write(+1_s64); // does not qualify, closes the threshold window for key 1
+    /// the last tuple closes the window
+    testBuffer[7]["f1"].write(+1_s64); /// does not qualify, closes the threshold window for key 1
     testBuffer[7]["key"].write(1_u32);
     testBuffer[7]["f2"].write(+400_s64);
     testBuffer.setNumberOfTuples(8);
@@ -284,10 +284,10 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     EXPECT_EQ(resulttestBuffer[1][maxAggregationResultFieldName].read<int64_t>(), 300);
 }
 
-// TODO #3468: parameterize the aggregation function instead of repeating the similar test
+/// TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     KeyedThresholdWindowPipelineTest,
     ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<KeyedThresholdWindowPipelineTest::ParamType>& info) { return info.param; });
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

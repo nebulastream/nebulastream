@@ -95,14 +95,14 @@ uint64_t BasicBlock::getIndexOfArgument(Operations::OperationPtr arg)
     return -1;
 }
 
-// void BasicBlock::popOperation() { operations.pop_back(); }
+/// void BasicBlock::popOperation() { operations.pop_back(); }
 void BasicBlock::replaceTerminatorOperation(Operations::OperationPtr loopOperation)
 {
     operations.pop_back();
     operations.emplace_back(std::move(loopOperation));
 }
 
-// NESIR Assembly
+/// NESIR Assembly
 std::shared_ptr<BasicBlock> BasicBlock::addOperation(Operations::OperationPtr operation)
 {
     operations.push_back(operation);
@@ -147,9 +147,9 @@ void BasicBlock::addNextBlock(std::shared_ptr<BasicBlock> nextBlock, std::vector
         nextBlockIn.addArgument(op);
     }
     addOperation(branchOp);
-    // add this block as a predecessor to the next block
-    //Todo #3167 : can we use this to replace the addPredecessor pass? (also: addTrueBlock, and addFalseBlock)
-    // nextBlock->addPredecessor(shared_from_this());
+    /// add this block as a predecessor to the next block
+    ///Todo #3167 : can we use this to replace the addPredecessor pass? (also: addTrueBlock, and addFalseBlock)
+    /// nextBlock->addPredecessor(shared_from_this());
 }
 void BasicBlock::removeOperation(Operations::OperationPtr operation)
 {
@@ -163,7 +163,7 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
 
 [[nodiscard]] std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> BasicBlock::getNextBlocks()
 {
-    // std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> nextBlocks;
+    /// std::pair<std::shared_ptr<BasicBlock>, std::shared_ptr<BasicBlock>> nextBlocks;
     if (operations.back()->getOperationType() == IR::Operations::Operation::OperationType::BranchOp)
     {
         auto branchOp = std::static_pointer_cast<IR::Operations::BranchOperation>(operations.back());
@@ -192,4 +192,4 @@ void BasicBlock::addOperationBefore(Operations::OperationPtr before, Operations:
     }
 }
 
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR

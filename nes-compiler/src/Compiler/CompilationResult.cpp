@@ -32,4 +32,4 @@ uint64_t CompilationResult::getCompilationTime() const
     return timer.getRuntime();
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

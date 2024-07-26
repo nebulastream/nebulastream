@@ -27,7 +27,7 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
     std::basic_string<char> leftJoinKeyNameEqui;
     std::basic_string<char> rightJoinKeyNameEqui;
 
-    // Maintain a list of visited nodes as there are multiple root nodes
+    /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<std::shared_ptr<NES::BinaryExpressionNode>> visitedExpressions;
 
     NES_DEBUG("Iterate over all ExpressionNode to check join field.");
@@ -40,13 +40,13 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
             auto visitingOp = (*itr)->as<BinaryExpressionNode>();
             if (visitedExpressions.contains(visitingOp))
             {
-                // skip rest of the steps as the node found in already visited node list
+                /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             else
             {
                 visitedExpressions.insert(visitingOp);
-                //Find the schema for left and right join key
+                ///Find the schema for left and right join key
                 if (!(*itr)->as<BinaryExpressionNode>()->getLeft()->instanceOf<BinaryExpressionNode>()
                     && (*itr)->instanceOf<EqualsExpressionNode>())
                 {
@@ -58,10 +58,10 @@ std::pair<std::basic_string<char>, std::basic_string<char>> findEquiJoinKeyNames
 
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
                     visitedExpressions.insert(visitingOp);
-                } // if Equals
-            } // else new node
-        } // if binary expression
-    } // for
+                } /// if Equals
+            } /// else new node
+        } /// if binary expression
+    } /// for
     return std::make_pair(leftJoinKeyNameEqui, rightJoinKeyNameEqui);
 }
-} // namespace NES
+} /// namespace NES

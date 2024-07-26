@@ -138,5 +138,5 @@ private:
     SourceType sourceType;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_

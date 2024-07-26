@@ -124,7 +124,7 @@ struct StringConverter<bool>
     }
 };
 
-} // namespace impl
+} /// namespace impl
 
 /**
     * @brief Exception class.
@@ -465,7 +465,7 @@ public:
         */
     [[nodiscard]] size_t Size() const;
 
-    // Sequence operators
+    /// Sequence operators
 
     /**
         * @brief Insert sequence item at given index.
@@ -605,5 +605,5 @@ void Serialize(Node const& root, char const* filename, SerializeConfig const& co
 void Serialize(Node const& root, std::iostream& stream, SerializeConfig const& config);
 void Serialize(Node const& root, std::string& string, SerializeConfig const& config);
 
-} // namespace Yaml
+} /// namespace Yaml
 #endif /// NES_COMMON_INCLUDE_UTIL_YAML_YAML_HPP_

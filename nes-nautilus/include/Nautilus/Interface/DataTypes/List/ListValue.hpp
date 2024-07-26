@@ -154,5 +154,5 @@ bool listEquals(const ListValue<T>* left, const ListValue<T>* right)
     return left->equals(right);
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_

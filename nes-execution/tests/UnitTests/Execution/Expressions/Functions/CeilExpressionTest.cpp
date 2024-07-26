@@ -39,13 +39,13 @@ public:
 TEST_F(CeilExpressionTest, evaluateCeilExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<CeilExpression>();
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)4.3));
         ASSERT_EQ(resultValue, (float)5);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)4.8));
         ASSERT_EQ(resultValue, (float)5);
@@ -62,4 +62,4 @@ TEST_F(CeilExpressionTest, evaluateCeilExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

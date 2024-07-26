@@ -116,6 +116,6 @@ protected:
     std::mutex mutexMergeLocalToGlobalHashTable;
     QueryCompilation::StreamJoinStrategy joinStrategy;
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJSLICE_HPP_

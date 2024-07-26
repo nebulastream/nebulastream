@@ -36,4 +36,4 @@ public:
 
 [[maybe_unused]] const static LogicalFunctionRegistry::Add<RadiansFunction> RadiansFunction("radians");
 
-} // namespace NES
+} /// namespace NES

@@ -72,33 +72,33 @@ uint64_t hashBytes(void* data, uint64_t length)
     {
         case 7:
             h ^= static_cast<uint64_t>(data8[6]) << 48U;
-            // FALLTHROUGH
+            /// FALLTHROUGH
         case 6:
             h ^= static_cast<uint64_t>(data8[5]) << 40U;
-            // FALLTHROUGH
+            /// FALLTHROUGH
         case 5:
             h ^= static_cast<uint64_t>(data8[4]) << 32U;
-            // FALLTHROUGH
+            /// FALLTHROUGH
         case 4:
             h ^= static_cast<uint64_t>(data8[3]) << 24U;
-            // FALLTHROUGH
+            /// FALLTHROUGH
         case 3:
             h ^= static_cast<uint64_t>(data8[2]) << 16U;
-            // FALLTHROUGH
+            /// FALLTHROUGH
         case 2:
             h ^= static_cast<uint64_t>(data8[1]) << 8U;
-            // FALLTHROUGH
+            /// FALLTHROUGH
         case 1:
             h ^= static_cast<uint64_t>(data8[0]);
             h *= m;
-            // FALLTHROUGH
+            /// FALLTHROUGH
         default:
             break;
     }
 
     h ^= h >> r;
 
-    // final step
+    /// final step
     h *= m;
     h ^= h >> r;
     return h;
@@ -107,15 +107,15 @@ uint64_t hashBytes(void* data, uint64_t length)
 template <typename T>
 uint64_t hashValue(uint64_t seed, T value)
 {
-    // Combine two hashes by XORing them
-    // As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
+    /// Combine two hashes by XORing them
+    /// As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
     return seed ^ hashInt(value);
 }
 
 uint64_t hashTextValue(uint64_t seed, TextValue* value)
 {
-    // Combine two hashes by XORing them
-    // As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
+    /// Combine two hashes by XORing them
+    /// As done by duckDB https://github.com/duckdb/duckdb/blob/09f803d3ad2972e36b15612c4bc15d65685a743e/src/include/duckdb/common/types/hash.hpp#L42
     return seed ^ hashBytes((void*)value->c_str(), value->length());
 }
 
@@ -188,4 +188,4 @@ HashFunction::HashValue MurMur3HashFunction::calculateWithState(HashFunction::Ha
     NES_THROW_RUNTIME_ERROR("This does not hash the value. Please use calculate().");
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

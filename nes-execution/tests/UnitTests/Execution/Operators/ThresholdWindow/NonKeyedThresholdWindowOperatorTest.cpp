@@ -39,7 +39,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-// TODO #3468: parameterize the aggregation function instead of repeating the similar test
+/// TODO #3468: parameterize the aggregation function instead of repeating the similar test
 class NonKeyedThresholdWindowOperatorTest : public Testing::BaseUnitTest
 {
 public:
@@ -65,7 +65,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
 
@@ -95,7 +95,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -115,7 +115,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
     auto physicalTypeFactory = DefaultPhysicalTypeFactory();
@@ -143,7 +143,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -163,7 +163,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
 
@@ -189,7 +189,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -236,7 +236,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMinAggTest)
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -285,7 +285,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest)
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -334,7 +334,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest)
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +4_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +6_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +6_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -386,7 +386,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithCountAggTest)
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +4_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +6_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +6_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -402,14 +402,14 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithCountAggTest)
  */
 TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregations)
 {
-    //set up
+    ///set up
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto readF3 = std::make_shared<Expressions::ReadFieldExpression>("f3");
     auto readF4 = std::make_shared<Expressions::ReadFieldExpression>("f4");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldNameSum = "Sum";
     auto aggregationResultFieldNameMax = "Max";
@@ -466,7 +466,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregati
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}, {"f3", +50_s64}, {"f4", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +3_s64}, {"f3", +90_s64}, {"f4", +4_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}, {"f3", +50_s64}, {"f4", +2_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}, {"f3", +50_s64}, {"f4", +2_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -490,7 +490,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTes
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42.5);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
 
     auto aggregationResultFieldName = "sum";
 
@@ -520,7 +520,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTes
 
     auto recordFifty = Record({{"f1", Value<>(50.25)}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", Value<>(90.35)}, {"f2", +3_s64}});
-    auto recordTwenty = Record({{"f1", Value<>(20.85)}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", Value<>(20.85)}, {"f2", +4_s64}}); /// closes the window
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
     thresholdWindowOperator->execute(ctx, recordTwenty);
@@ -540,7 +540,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratin
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f2");
     auto fortyTwo = std::make_shared<Expressions::ConstantInt32ValueExpression>(42);
     auto greaterThanExpression = std::make_shared<Expressions::GreaterThanExpression>(readF1, fortyTwo);
-    // Attribute(f1) > 42, sum(f2)
+    /// Attribute(f1) > 42, sum(f2)
 
     auto sumAggregationResultFieldName = "sum";
     auto avgAggregationResultFieldName = "avg";
@@ -583,10 +583,10 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratin
 
     auto recordFifty = Record({{"f1", +50_s64}, {"f2", +2_s64}});
     auto recordNinety = Record({{"f1", +90_s64}, {"f2", +4_s64}});
-    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); // closes the window
+    auto recordTwenty = Record({{"f1", +20_s64}, {"f2", +4_s64}}); /// closes the window
     auto recordSixty = Record({{"f1", +60_s64}, {"f2", +1_s64}});
     auto recordSeventy = Record({{"f1", +70_s64}, {"f2", +7_s64}});
-    auto recordTwelve = Record({{"f1", +12_s64}, {"f2", +8_s64}}); // closes the window
+    auto recordTwelve = Record({{"f1", +12_s64}, {"f2", +8_s64}}); /// closes the window
 
     thresholdWindowOperator->execute(ctx, recordFifty);
     thresholdWindowOperator->execute(ctx, recordNinety);
@@ -605,4 +605,4 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratin
     thresholdWindowOperator->terminate(ctx);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

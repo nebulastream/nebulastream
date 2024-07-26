@@ -72,6 +72,6 @@ public:
     */
     static ValueTypePtr deserializeDataValue(const SerializableDataValue& serializedDataValue);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_SERIALIZATION_DATATYPESERIALIZATIONUTIL_HPP_

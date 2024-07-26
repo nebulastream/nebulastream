@@ -45,7 +45,7 @@ public:
  */
 TEST_F(SliceAssignerTest, assignTumblingWindow)
 {
-    // note we model tumbling windows as sliding windows with same size and slide.
+    /// note we model tumbling windows as sliding windows with same size and slide.
     auto windowAssigner = SliceAssigner(100, 100);
 
     ASSERT_EQ(windowAssigner.getSliceStartTs(0), 0);
@@ -54,7 +54,7 @@ TEST_F(SliceAssignerTest, assignTumblingWindow)
     ASSERT_EQ(windowAssigner.getSliceStartTs(50), 0);
     ASSERT_EQ(windowAssigner.getSliceEndTs(50), 100);
 
-    // test window edge
+    /// test window edge
     ASSERT_EQ(windowAssigner.getSliceStartTs(99), 0);
     ASSERT_EQ(windowAssigner.getSliceEndTs(99), 100);
     ASSERT_EQ(windowAssigner.getSliceStartTs(100), 100);
@@ -79,7 +79,7 @@ TEST_F(SliceAssignerTest, assignTumblingWindow)
  */
 TEST_F(SliceAssignerTest, assignRegularSlidingWindow)
 {
-    // note we model tumbling windows as sliding windows with same size and slide.
+    /// note we model tumbling windows as sliding windows with same size and slide.
     auto windowAssigner = SliceAssigner(100, 50);
 
     ASSERT_EQ(windowAssigner.getSliceStartTs(0), 0);
@@ -118,43 +118,43 @@ TEST_F(SliceAssignerTest, assignRegularSlidingWindow)
  */
 TEST_F(SliceAssignerTest, assignIrRegularSlidingWindow)
 {
-    // note we model tumbling windows as sliding windows with same size and slide.
+    /// note we model tumbling windows as sliding windows with same size and slide.
     auto windowAssigner = SliceAssigner(100, 30);
 
-    // Slice 1
+    /// Slice 1
     ASSERT_EQ(windowAssigner.getSliceStartTs(0), 0);
     ASSERT_EQ(windowAssigner.getSliceEndTs(0), 30);
     ASSERT_EQ(windowAssigner.getSliceStartTs(29), 0);
     ASSERT_EQ(windowAssigner.getSliceEndTs(29), 30);
-    // Slice 2
+    /// Slice 2
     ASSERT_EQ(windowAssigner.getSliceStartTs(30), 30);
     ASSERT_EQ(windowAssigner.getSliceEndTs(30), 60);
     ASSERT_EQ(windowAssigner.getSliceStartTs(59), 30);
     ASSERT_EQ(windowAssigner.getSliceEndTs(59), 60);
-    // Slice 3
+    /// Slice 3
     ASSERT_EQ(windowAssigner.getSliceStartTs(65), 60);
     ASSERT_EQ(windowAssigner.getSliceEndTs(65), 90);
-    // Slice 4
+    /// Slice 4
     ASSERT_EQ(windowAssigner.getSliceStartTs(95), 90);
     ASSERT_EQ(windowAssigner.getSliceEndTs(95), 100);
-    // Slice 5
+    /// Slice 5
     ASSERT_EQ(windowAssigner.getSliceStartTs(105), 100);
     ASSERT_EQ(windowAssigner.getSliceEndTs(105), 120);
-    // Slice 6
+    /// Slice 6
     ASSERT_EQ(windowAssigner.getSliceStartTs(120), 120);
     ASSERT_EQ(windowAssigner.getSliceEndTs(120), 130);
-    // Slice 7
+    /// Slice 7
     ASSERT_EQ(windowAssigner.getSliceStartTs(130), 130);
     ASSERT_EQ(windowAssigner.getSliceEndTs(130), 150);
-    // Slice 8
+    /// Slice 8
     ASSERT_EQ(windowAssigner.getSliceStartTs(150), 150);
     ASSERT_EQ(windowAssigner.getSliceEndTs(150), 160);
-    // Slice 9
+    /// Slice 9
     ASSERT_EQ(windowAssigner.getSliceStartTs(160), 160);
     ASSERT_EQ(windowAssigner.getSliceEndTs(160), 180);
-    // Slice 10
+    /// Slice 10
     ASSERT_EQ(windowAssigner.getSliceStartTs(180), 180);
     ASSERT_EQ(windowAssigner.getSliceEndTs(180), 190);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

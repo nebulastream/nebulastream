@@ -61,7 +61,7 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(
     mlir::PassManager passManager(module->getContext());
     applyPassManagerCLOptions(passManager);
 
-    // Apply optimization passes.
+    /// Apply optimization passes.
     if (!optimizationPasses.empty())
     {
         for (auto optimizationPass : optimizationPasses)
@@ -73,7 +73,7 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(
     {
         passManager.addPass(mlir::createInlinerPass());
     }
-    // Apply lowering passes.
+    /// Apply lowering passes.
     if (!loweringPasses.empty())
     {
         for (auto loweringPass : loweringPasses)
@@ -88,7 +88,7 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(
         passManager.addPass(mlir::cf::createConvertControlFlowToLLVMPass());
     }
 
-    // Run passes.
+    /// Run passes.
     if (mlir::failed(passManager.run(*module)))
     {
         llvm::errs() << "MLIRPassManager::lowerAndOptimizeMLIRModule: Failed to apply passes to generated MLIR" << '\n';
@@ -96,4 +96,4 @@ int MLIRPassManager::lowerAndOptimizeMLIRModule(
     }
     return 0;
 }
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR

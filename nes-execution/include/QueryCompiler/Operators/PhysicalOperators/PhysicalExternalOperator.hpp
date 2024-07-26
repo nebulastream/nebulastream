@@ -64,6 +64,6 @@ public:
 private:
     Runtime::Execution::ExecutablePipelineStagePtr executablePipelineStage;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALEXTERNALOPERATOR_HPP_

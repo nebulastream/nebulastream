@@ -175,5 +175,5 @@ private:
     Configurations::FloatConfigOption flushIntervalMS;
     Configurations::InputFormatConfigOption inputFormat;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_MQTTSOURCETYPE_HPP_

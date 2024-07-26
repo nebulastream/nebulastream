@@ -30,4 +30,4 @@ public:
 };
 
 [[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<CPPCompilerPipelineProvider> cppPipelineProvider("CPPPipelineCompiler");
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

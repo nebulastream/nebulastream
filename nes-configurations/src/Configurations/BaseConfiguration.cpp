@@ -40,7 +40,7 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config)
         {
             throw ConfigurationException("Identifier: " + identifier + " is not known. Check if it exposed in the getOptions function.");
         }
-        // check if config is empty
+        /// check if config is empty
         if (node.IsScalar())
         {
             std::string value = node.As<std::string>();
@@ -51,7 +51,7 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config)
         }
         else if ((node.IsSequence() || node.IsMap()) && node.Size() == 0)
         {
-            // if the node is a sequence or map and has no elements
+            /// if the node is a sequence or map and has no elements
             throw ConfigurationException("Value for " + identifier + " is empty.");
         }
         try
@@ -121,7 +121,7 @@ void BaseConfiguration::overwriteConfigWithCommandLineInput(const std::map<std::
         const std::string identifierStart = "--";
         if (identifier.starts_with(identifierStart))
         {
-            // remove the -- in the beginning
+            /// remove the -- in the beginning
             identifier = identifier.substr(identifierStart.size());
         }
 
@@ -201,7 +201,7 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
             try
             {
                 std::ofstream output;
-                output.open(yamlFilePath, std::ios::app); // append mode
+                output.open(yamlFilePath, std::ios::app); /// append mode
                 output << yamlConfigValue;
             }
             catch (const std::exception& e)
@@ -223,11 +223,11 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
         size_t startPos = yamlContent.find(searchKey);
         if (startPos != std::string::npos)
         {
-            // move the position to the start of the value
+            /// move the position to the start of the value
             startPos += searchKey.size();
-            // find the end of the line
+            /// find the end of the line
             size_t endPos = yamlContent.find('\n', startPos);
-            // replace the old value with the new value for workerId
+            /// replace the old value with the new value for workerId
             yamlContent.replace(startPos, endPos - startPos, workerId.toString());
         }
         else
@@ -242,4 +242,4 @@ bool BaseConfiguration::persistWorkerIdInYamlConfigFile(std::string yamlFilePath
     return true;
 }
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations

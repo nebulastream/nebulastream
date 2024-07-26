@@ -23,4 +23,4 @@ SliceAssigner::SliceAssigner(uint64_t windowSize, uint64_t windowSlide) : window
         windowSize >= windowSlide, "Currently the window assigner dose not support windows with a larger slide then the window size.");
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

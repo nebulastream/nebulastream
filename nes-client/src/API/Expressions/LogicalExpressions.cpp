@@ -75,4 +75,4 @@ ExpressionNodePtr operator!(ExpressionItem exp)
     return !exp.getExpressionNode();
 }
 
-} // namespace NES
+} /// namespace NES

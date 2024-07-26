@@ -32,17 +32,17 @@ class Metric;
 class MetricCollector
 {
 protected:
-    //  -- Constructors --
+    ///  -- Constructors --
     MetricCollector();
     MetricCollector(WorkerId workerId);
     MetricCollector(const MetricCollector&) = default;
     MetricCollector(MetricCollector&&) = default;
-    //  -- Assignment --
+    ///  -- Assignment --
     MetricCollector& operator=(const MetricCollector&) = default;
     MetricCollector& operator=(MetricCollector&&) = default;
 
 public:
-    //  -- Destructor --
+    ///  -- Destructor --
     virtual ~MetricCollector() = default;
 
     /**
@@ -89,6 +89,6 @@ private:
 
 using MetricCollectorPtr = std::shared_ptr<MetricCollector>;
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICCOLLECTORS_METRICCOLLECTOR_HPP_

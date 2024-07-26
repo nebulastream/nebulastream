@@ -27,4 +27,4 @@ bool NumberValidation::isValid(const std::string& parameter) const
     }
     return true;
 }
-} // namespace NES::Configurations
+} /// namespace NES::Configurations

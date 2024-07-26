@@ -74,8 +74,8 @@ public:
         for (auto i = 0u; i < numOfChildren; ++i)
         {
             auto childBuffer = buffer.loadChildBuffer(i);
-            // We need to retain the `childBuffer` here, because the send function operates asynchronously and we therefore
-            // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
+            /// We need to retain the `childBuffer` here, because the send function operates asynchronously and we therefore
+            /// need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
             childBuffer.retain();
             sendMessageNoHeader<Messages::DataBufferMessage, kZmqSendMore>(
                 this->zmqSocket,
@@ -104,8 +104,8 @@ public:
             return false;
         }
 
-        // again, we need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
-        // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
+        /// again, we need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
+        /// need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
         buffer.retain();
         auto const sentBytesOpt = this->zmqSocket.send(
             zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, buffer.getControlBlock()), kZmqSendDefault);
@@ -122,5 +122,5 @@ public:
     }
 };
 
-} // namespace NES::Network::detail
+} /// namespace NES::Network::detail
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKDATASENDER_HPP_

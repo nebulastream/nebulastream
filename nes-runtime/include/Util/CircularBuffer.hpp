@@ -23,7 +23,7 @@ namespace NES
 namespace detail
 {
 
-// true if const iterator, false otherwise
+/// true if const iterator, false otherwise
 template <class, bool>
 class CircularBufferIterator;
 
@@ -85,16 +85,16 @@ public:
     }
 
 private:
-    // reuse typenames
+    /// reuse typenames
     friend cbT;
     using uint64_type = typename cbT::uint64_type;
     CircularBufferIterator(uint64_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept : idx(idx), container(rv){};
     uint64_type idx;
 
-    // non-const/const representation of container
+    /// non-const/const representation of container
     std::conditional_t<isConst, const cbT, cbT>* container;
-}; // class CircularBufferIterator
-} // namespace detail
+}; /// class CircularBufferIterator
+} /// namespace detail
 
 /**
  * @brief A templated class for a circular buffer. The implementation
@@ -117,7 +117,7 @@ template <
 class CircularBuffer
 {
 public:
-    // STL-style typedefs, similar to std::deque
+    /// STL-style typedefs, similar to std::deque
     using value_type = T;
     using allocator_type = Allocator;
     using uint64_type = std::uint64_t;
@@ -134,7 +134,7 @@ public:
      */
     explicit CircularBuffer(uint64_t size) : maxSize(size), buffer(std::make_unique<T[]>(size)){};
 
-    // copy and move
+    /// copy and move
     CircularBuffer(const CircularBuffer& other) = delete;
     CircularBuffer(CircularBuffer&& other) noexcept = default;
 
@@ -143,19 +143,19 @@ public:
 
     ~CircularBuffer() = default;
 
-    // front/end, access begin or end ptr
+    /// front/end, access begin or end ptr
     reference front() noexcept { return *begin(); }
     reference back() noexcept { return *(end() - 1); }
     [[nodiscard]] const_reference front() const noexcept { return *begin(); }
     [[nodiscard]] const_reference back() const noexcept { return *(end() - 1); }
 
-    // size-capacity
+    /// size-capacity
     [[nodiscard]] uint64_type size() const noexcept { return currentSize; }
     [[nodiscard]] uint64_type capacity() const noexcept { return maxSize; }
     [[nodiscard]] bool empty() const { return currentSize == 0; }
     [[nodiscard]] bool full() const { return maxSize == currentSize; }
 
-    // iterators
+    /// iterators
     iterator begin() noexcept { return iterator(0, this); }
     iterator end() noexcept { return iterator(size(), this); }
     [[nodiscard]] const_iterator cbegin() const noexcept { return const_iterator(0, this); }
@@ -163,13 +163,13 @@ public:
     [[nodiscard]] const_iterator begin() const noexcept { return cbegin(); }
     [[nodiscard]] const_iterator end() const noexcept { return cend(); }
 
-    // random-access: [] and at
+    /// random-access: [] and at
     reference operator[](uint64_type idx) { return buffer[(head + idx) % maxSize]; }
     reference at(uint64_type idx) { return buffer[(head + idx) % maxSize]; }
     const_reference operator[](const uint64_type idx) const { return buffer[(head + idx) % maxSize]; }
     [[nodiscard]] const_reference at(const uint64_type idx) const { return buffer[(head + idx) % maxSize]; }
 
-    // modifiers: push and emplace front
+    /// modifiers: push and emplace front
     template <bool b = true, typename = std::enable_if_t<b && std::is_copy_assignable<T>::value>>
     void push(const T& value) noexcept(std::is_nothrow_copy_assignable<T>::value)
     {
@@ -221,7 +221,7 @@ public:
         front_() = T(std::forward<Args>(args)...);
     }
 
-    // modifier: pop only in back
+    /// modifier: pop only in back
     T pop()
     {
         if (empty())
@@ -234,19 +234,19 @@ public:
     }
 
 private:
-    // indicates writes
+    /// indicates writes
     uint64_t head{0};
 
-    // maximum size of buffer
+    /// maximum size of buffer
     uint64_type maxSize;
 
-    // current size of buffer
+    /// current size of buffer
     uint64_type currentSize{0};
 
-    // the buffer, of type T[]
+    /// the buffer, of type T[]
     std::unique_ptr<T[]> buffer;
 
-    // front and back, with wrap-around, for assignment
+    /// front and back, with wrap-around, for assignment
     reference front_() noexcept { return buffer[head]; }
     [[nodiscard]] const_reference front_() const noexcept { return buffer[head]; }
     reference back_() noexcept { return buffer[(head + currentSize - 1) % maxSize]; }
@@ -279,6 +279,6 @@ private:
     void incrementHeadByGivenSize(size_t increment) noexcept { head = (head + maxSize - increment) % maxSize; }
     void decrementHeadByGivenSize(size_t decrement) noexcept { head = (head + maxSize - decrement) % maxSize; }
 
-}; // class CircularBuffer
-} // namespace NES
+}; /// class CircularBuffer
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_UTIL_CIRCULARBUFFER_HPP_

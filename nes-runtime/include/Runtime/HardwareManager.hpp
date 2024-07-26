@@ -42,7 +42,7 @@ public:
     public:
         explicit CpuDescriptor(uint16_t coreId = -1, uint16_t cpuId = -1) : coreId(coreId), cpuId(cpuId)
         {
-            // nop
+            /// nop
         }
 
         /**
@@ -74,7 +74,7 @@ public:
     public:
         explicit NumaDescriptor(uint32_t node_id = -1) : nodeId(node_id), physicalCpus()
         {
-            // nop
+            /// nop
         }
 
         NumaDescriptor(const NumaDescriptor& other) { *this = other; }
@@ -158,6 +158,6 @@ private:
     uint32_t numPhysicalCpus = 0;
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_HARDWAREMANAGER_HPP_

@@ -77,4 +77,4 @@ void FileMutex::unlock()
     NES_ASSERT(-1 != fcntl(fd, F_SETLK, &lock), "Cannot acquire lock");
 }
 
-} // namespace NES::Util
+} /// namespace NES::Util

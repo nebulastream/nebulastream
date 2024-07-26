@@ -99,10 +99,10 @@ public:
      */
     explicit StartSourceEvent() : BaseEvent(EventType::kStartSourceEvent) { }
 
-    // todo only for compliance, don't call!
+    /// todo only for compliance, don't call!
     uint8_t* data() override { return nullptr; }
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_

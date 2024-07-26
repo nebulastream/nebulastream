@@ -75,6 +75,6 @@ public:
     uint64_t getWallTimeInNs() override;
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_LINUXSYSTEMRESOURCESREADER_HPP_

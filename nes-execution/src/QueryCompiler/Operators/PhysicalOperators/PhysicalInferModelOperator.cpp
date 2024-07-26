@@ -87,4 +87,4 @@ const std::vector<ExpressionNodePtr>& PhysicalInferModelOperator::getOutputField
     return outputFields;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

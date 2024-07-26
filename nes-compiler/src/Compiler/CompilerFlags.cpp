@@ -35,4 +35,4 @@ void CompilerFlags::mergeFlags(const CompilerFlags& flags)
     }
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

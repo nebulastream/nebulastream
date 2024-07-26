@@ -26,6 +26,6 @@ public:
     uint32_t blockId;
     uint32_t operationId;
 };
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPERATIONREF_HPP_

@@ -72,4 +72,4 @@ HJOperatorHandlerPtr HJOperatorHandlerSlicing::create(
         numPartitions);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

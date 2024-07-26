@@ -177,6 +177,6 @@ private:
    */
     DCCallVM* vm;
 };
-} // namespace NES::Nautilus::Backends::BC
+} /// namespace NES::Nautilus::Backends::BC
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_

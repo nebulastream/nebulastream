@@ -23,7 +23,7 @@
 namespace NES::Nautilus::IR
 {
 
-// class Operation;
+/// class Operation;
 using OperationPtr = std::shared_ptr<Operations::Operation>;
 /**
  * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m
@@ -43,7 +43,7 @@ public:
 
 private:
     std::ostream& out;
-    std::unordered_set<std::string> visitedBlocks; //We keep track of visited blocks to avoid multi or infinite dumping.
+    std::unordered_set<std::string> visitedBlocks; ///We keep track of visited blocks to avoid multi or infinite dumping.
 
     /**
      * @brief Traverses the NESIR to find a BB that is on the same or higher 'blockScopeLevel' compared to the initial 'basicBlock'.
@@ -70,6 +70,6 @@ private:
     void dumpHelper(BasicBlockPtr const& basicBlock);
 };
 
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_IRDUMPHANDLER_HPP_

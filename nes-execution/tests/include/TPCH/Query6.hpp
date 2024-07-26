@@ -80,7 +80,7 @@ public:
         auto selection1 = std::make_shared<Selection>(andExpression);
         scan->setChild(selection1);
 
-        // l_discount between 0.06 - 0.01 and 0.06 + 0.01
+        /// l_discount between 0.06 - 0.01 and 0.06 + 0.01
         auto readDiscount = std::make_shared<ReadFieldExpression>("l_discount");
         auto const_0_05 = std::make_shared<ConstantFloatValueExpression>(0.04);
         auto const_0_07 = std::make_shared<ConstantFloatValueExpression>(0.08);
@@ -89,7 +89,7 @@ public:
         auto andExpression2 = std::make_shared<AndExpression>(lessThanExpression3, lessThanExpression4);
         auto andExpression3 = std::make_shared<AndExpression>(andExpression, andExpression2);
 
-        // l_quantity < 24
+        /// l_quantity < 24
         auto const_24 = std::make_shared<ConstantInt32ValueExpression>(24);
         auto readQuantity = std::make_shared<ReadFieldExpression>("l_quantity");
         auto lessThanExpression5 = std::make_shared<LessThanExpression>(readQuantity, const_24);
@@ -99,7 +99,7 @@ public:
         auto selection2 = std::make_shared<Selection>(andExpression4);
         selection1->setChild(selection2);
 
-        // sum(l_extendedprice * l_discount)
+        /// sum(l_extendedprice * l_discount)
         auto l_extendedprice = std::make_shared<Expressions::ReadFieldExpression>("l_extendedprice");
         auto l_discount = std::make_shared<Expressions::ReadFieldExpression>("l_discount");
         auto revenue = std::make_shared<Expressions::MulExpression>(l_extendedprice, l_discount);
@@ -110,7 +110,7 @@ public:
         auto aggregation = std::make_shared<Operators::BatchAggregation>(0 /*handler index*/, aggregationFunctions);
         selection2->setChild(aggregation);
 
-        // create aggregation pipeline
+        /// create aggregation pipeline
         auto aggregationPipeline = std::make_shared<PhysicalOperatorPipeline>();
         aggregationPipeline->setRootOperator(scan);
         std::vector<OperatorHandlerPtr> aggregationHandler = {std::make_shared<Operators::BatchAggregationHandler>()};
@@ -118,7 +118,7 @@ public:
         plan.appendPipeline(aggregationPipeline, pipeline1Context);
 
         auto aggScan = std::make_shared<BatchAggregationScan>(0 /*handler index*/, aggregationFunctions);
-        // emit operator
+        /// emit operator
         auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         resultSchema->addField("revenue", BasicType::FLOAT32);
         auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
@@ -126,7 +126,7 @@ public:
         auto emit = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
         aggScan->setChild(emit);
 
-        // create emit pipeline
+        /// create emit pipeline
         auto emitPipeline = std::make_shared<PhysicalOperatorPipeline>();
         emitPipeline->setRootOperator(aggScan);
         auto pipeline2Context = std::make_shared<MockedPipelineExecutionContext>(aggregationHandler);
@@ -135,5 +135,5 @@ public:
     }
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TPCH_QUERY6_HPP_

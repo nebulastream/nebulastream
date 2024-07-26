@@ -29,7 +29,7 @@ namespace NES
 class ZmqSink : public SinkMedium
 {
 public:
-    //TODO: remove internal flag once the new network stack is in place
+    ///TODO: remove internal flag once the new network stack is in place
     ZmqSink(
         SinkFormatPtr format,
         Runtime::NodeEnginePtr nodeEngine,
@@ -76,7 +76,7 @@ private:
     bool disconnect();
 };
 using ZmqSinkPtr = std::shared_ptr<ZmqSink>;
-} // namespace NES
+} /// namespace NES
 
 namespace fmt
 {
@@ -88,6 +88,6 @@ struct formatter<NES::ZmqSink> : formatter<std::string>
         return fmt::format_to(ctx.out(), "{} {}", zmq_sink.getHost(), zmq_sink.getPort());
     }
 };
-} //namespace fmt
+} ///namespace fmt
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_ZMQSINK_HPP_

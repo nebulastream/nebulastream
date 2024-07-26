@@ -100,6 +100,6 @@ private:
     bool enabled;
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_MONITORINGAGENT_HPP_

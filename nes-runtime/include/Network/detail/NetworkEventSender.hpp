@@ -63,8 +63,8 @@ public:
             return true;
         }
         sendMessage<Messages::EventBufferMessage, kZmqSendMore>(this->zmqSocket, eventType, payloadSize);
-        // We need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
-        // need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
+        /// We need to retain the `inputBuffer` here, because the send function operates asynchronously and we therefore
+        /// need to pass the responsibility of freeing the tupleBuffer instance to ZMQ's callback.
         inputBuffer.retain();
         auto const sentBytesOpt = this->zmqSocket.send(
             zmq::message_t(ptr, payloadSize, &Runtime::detail::zmqBufferRecyclingCallback, inputBuffer.getControlBlock()), kZmqSendDefault);
@@ -81,6 +81,6 @@ public:
         return false;
     }
 };
-} // namespace NES::Network::detail
+} /// namespace NES::Network::detail
 
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_DETAIL_NETWORKEVENTSENDER_HPP_

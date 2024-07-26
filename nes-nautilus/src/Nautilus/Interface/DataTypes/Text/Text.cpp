@@ -218,12 +218,12 @@ TextValue* textReplace(const TextValue* text, const TextValue* source, const Tex
         resultText->str()[k] = text->c_str()[restSourceIndex];
         restSourceIndex++;
     }
-    // if the text still contain the search sequence we have to replace again.
+    /// if the text still contain the search sequence we have to replace again.
     if (textPosition(resultText, source) != 0)
     {
         auto tmpText = resultText;
         resultText = textReplace(tmpText, source, target);
-        // The text value is manually allocated with create. So we have to free it manually.
+        /// The text value is manually allocated with create. So we have to free it manually.
         tmpText->~TextValue();
     }
     return resultText;
@@ -497,8 +497,8 @@ bool textLike(const TextValue* text, TextValue* inputPattern, Boolean caseSensit
     std::string target = std::string(text->c_str(), text->length());
     NES_DEBUG("Received the following source string {}", target);
     NES_DEBUG("Received the following source string {}", pattern);
-    // LIKE and GLOB adoption requires syntax conversion functions
-    // would make regex case in sensitive for LIKE
+    /// LIKE and GLOB adoption requires syntax conversion functions
+    /// would make regex case in sensitive for LIKE
     if (caseSensitive.getValue())
     {
         std::regex regexPattern(pattern, std::regex::icase);
@@ -530,4 +530,4 @@ const TypedRef<TextValue>& Text::getReference() const
     return rawReference;
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

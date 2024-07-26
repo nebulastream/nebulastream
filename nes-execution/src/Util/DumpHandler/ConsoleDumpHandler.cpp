@@ -94,4 +94,4 @@ void ConsoleDumpHandler::dump(std::string, std::string, QueryCompilation::Pipeli
 {
     out << "Dumping pipelineQueryPlan: " << pipelineQueryPlan->toString() << std::endl;
 }
-} // namespace NES
+} /// namespace NES

@@ -58,6 +58,6 @@ private:
     Nautilus::Backends::Executable::Invocable<void, void*, void*, void*> pipelineFunction;
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_COMPILEDEXECUTABLEPIPELINESTAGE_HPP_

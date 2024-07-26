@@ -36,8 +36,8 @@ HashFunction::HashValue H3Hash::init()
 
 HashFunction::HashValue H3Hash::calculateWithState(HashFunction::HashValue& hash, Value<>& value, Value<MemRef>& state)
 {
-    // As the bitwise operations are not supported on floating points, we have to change the value to an unsigned int
-    // This is okay, as we are only interested in the bits as-is and not the represented value
+    /// As the bitwise operations are not supported on floating points, we have to change the value to an unsigned int
+    /// This is okay, as we are only interested in the bits as-is and not the represented value
     if (value->isType<Double>())
     {
         value = FunctionCall(
@@ -69,4 +69,4 @@ H3Hash::H3Hash(uint64_t numberOfKeyBits) : entrySizeH3HashSeed(sizeof(uint64_t))
 {
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

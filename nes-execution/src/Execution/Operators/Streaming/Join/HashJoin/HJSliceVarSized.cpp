@@ -133,4 +133,4 @@ uint64_t HJSliceVarSized::getNumberOfTuplesRight()
     return sum;
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

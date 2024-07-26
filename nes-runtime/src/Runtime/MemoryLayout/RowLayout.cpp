@@ -59,4 +59,4 @@ uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) con
     return offSet;
 }
 
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts

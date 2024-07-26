@@ -68,9 +68,9 @@ Value<> BitcounterExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Integer.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<BitcounterExpression>> bitcountFunction("bitcount");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

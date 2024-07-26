@@ -84,12 +84,12 @@ std::string MonitoringSink::toString() const
 
 void MonitoringSink::setup()
 {
-    // currently not required
+    /// currently not required
 }
 
 void MonitoringSink::shutdown()
 {
-    // currently not required
+    /// currently not required
 }
 
-} // namespace NES
+} /// namespace NES

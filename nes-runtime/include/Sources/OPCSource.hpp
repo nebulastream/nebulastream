@@ -146,7 +146,7 @@ private:
 };
 
 using OPCSourcePtr = std::shared_ptr<OPCSource>;
-} // namespace NES
+} /// namespace NES
 
 #endif
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_OPCSOURCE_HPP_

@@ -32,6 +32,6 @@ public:
     static AbstractSystemResourcesReaderPtr getSystemResourcesReader();
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_RESOURCESREADER_SYSTEMRESOURCESREADERFACTORY_HPP_

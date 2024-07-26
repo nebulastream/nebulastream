@@ -68,9 +68,9 @@ OperatorPtr PhysicalJoinSinkOperator::copy()
         leftInputSchema,
         rightInputSchema,
         outputSchema,
-        operatorHandler); // todo is this a valid copy? looks like we could loose the schemas and handlers at the move operator
+        operatorHandler); /// todo is this a valid copy? looks like we could loose the schemas and handlers at the move operator
     result->addAllProperties(properties);
     return result;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

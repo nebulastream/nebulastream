@@ -95,4 +95,4 @@ Value<> AbsExpression::execute(NES::Nautilus::Record& record) const
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AbsExpression>> absFunction("abs");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

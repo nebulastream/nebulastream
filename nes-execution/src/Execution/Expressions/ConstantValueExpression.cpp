@@ -40,4 +40,4 @@ template class ConstantValueExpression<float>;
 template class ConstantValueExpression<bool>;
 template class ConstantValueExpression<double>;
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

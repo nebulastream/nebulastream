@@ -38,7 +38,7 @@ void* executeFlatMapUDF(void* state, void* instance, void* pojoObjectPtr)
     NES_ASSERT2_FMT(state != nullptr, "op handler context should not be null");
     NES_ASSERT2_FMT(pojoObjectPtr != nullptr, "pojoObjectPtr should not be null");
     auto handler = static_cast<JavaUDFOperatorHandler*>(state);
-    // Call udf function
+    /// Call udf function
     jobject udfResult = jni::getEnv()->CallObjectMethod((jobject)instance, handler->getUDFMethodId(), pojoObjectPtr);
     jni::jniErrorCheck();
     return udfResult;
@@ -49,7 +49,7 @@ bool hasNext(void*, void* instance)
     auto env = jni::getEnv();
     jclass iteratorInterface = env->FindClass("java/util/Iterator");
     jmethodID hasNextMethod = env->GetMethodID(iteratorInterface, "hasNext", "()Z");
-    // TODO check for exception
+    /// TODO check for exception
     return env->CallBooleanMethod((jobject)instance, hasNextMethod);
 }
 
@@ -68,7 +68,7 @@ void* getIteratorFromCollection(void*, void* collection)
     jclass collectionInterface = env->FindClass("java/util/Collection");
     jmethodID iteratorMethod = env->GetMethodID(collectionInterface, "iterator", "()Ljava/util/Iterator;");
     jobject iterator = env->CallObjectMethod((jobject)collection, iteratorMethod);
-    // TODO check for exception
+    /// TODO check for exception
     return iterator;
 }
 
@@ -80,29 +80,29 @@ void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const
     auto state = (LocalUDFState*)ctx.getLocalState(this);
     auto handler = state->handler;
 
-    // create variables for input pojo ptr java input class
+    /// create variables for input pojo ptr java input class
     auto inputPojoPtr = createInputPojo(record, handler);
 
-    // Call udf and get the result value.
-    // For flatmap we assume that they return a collection of values.
+    /// Call udf and get the result value.
+    /// For flatmap we assume that they return a collection of values.
     auto outputPojoPtr = FunctionCall<>("executeFlatMapUDF", executeFlatMapUDF, handler, state->instance, inputPojoPtr);
     FunctionCall<>("freeObject", freeObject, inputPojoPtr);
 
-    // get the iterator of the collection
+    /// get the iterator of the collection
 
     auto iterator = FunctionCall("getIteratorFromCollection", getIteratorFromCollection, handler, outputPojoPtr);
 
-    // iterate over all elements in iterator.
+    /// iterate over all elements in iterator.
     while (FunctionCall("hasNext", hasNext, handler, iterator))
     {
         auto element = FunctionCall("next", next, handler, iterator);
         auto resultRecord = extractRecordFromPojo(handler, element);
         FunctionCall<>("freeObject", freeObject, element);
-        // Trigger execution of next operator
+        /// Trigger execution of next operator
         child->execute(ctx, resultRecord);
     }
 
     FunctionCall<>("freeObject", freeObject, outputPojoPtr);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

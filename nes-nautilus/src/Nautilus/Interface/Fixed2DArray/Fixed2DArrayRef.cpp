@@ -46,4 +46,4 @@ Value<MemRef> Fixed2DArrayRowRef::operator[](const Value<>& colIndex) const
     return (baseAddress + offSet).as<MemRef>();
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

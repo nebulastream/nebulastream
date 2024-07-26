@@ -71,6 +71,6 @@ private:
     std::thread logThread;
 };
 
-} // namespace NES::Util
+} /// namespace NES::Util
 
 #endif /// NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_

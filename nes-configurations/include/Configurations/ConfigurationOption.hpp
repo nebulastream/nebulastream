@@ -228,6 +228,6 @@ using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>
 using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode>>;
 using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_

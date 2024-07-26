@@ -35,11 +35,11 @@ ArithmeticalUnaryExpressionNode::ArithmeticalUnaryExpressionNode(ArithmeticalUna
  */
 void ArithmeticalUnaryExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of child
+    /// infer stamp of child
     auto child = this->child();
     child->inferStamp(schema);
 
-    // get stamp from child
+    /// get stamp from child
     auto child_stamp = child->getStamp();
     if (!child_stamp->isNumeric())
     {
@@ -66,4 +66,4 @@ std::string ArithmeticalUnaryExpressionNode::toString() const
     return "ArithmeticalExpression()";
 }
 
-} // namespace NES
+} /// namespace NES

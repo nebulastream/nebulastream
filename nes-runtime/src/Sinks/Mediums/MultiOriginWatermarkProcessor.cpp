@@ -36,7 +36,7 @@ std::shared_ptr<MultiOriginWatermarkProcessor> MultiOriginWatermarkProcessor::cr
 void MultiOriginWatermarkProcessor::updateWatermark(WatermarkTs ts, SequenceNumber sequenceNumber, OriginId originId)
 {
     std::unique_lock lock(watermarkLatch);
-    // insert new local watermark processor if the id is not present in the map
+    /// insert new local watermark processor if the id is not present in the map
     if (localWatermarkProcessor.find(originId) == localWatermarkProcessor.end())
     {
         localWatermarkProcessor[originId] = std::make_unique<WatermarkProcessor>();
@@ -62,7 +62,7 @@ bool MultiOriginWatermarkProcessor::isWatermarkSynchronized(OriginId originId) c
 WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const
 {
     std::unique_lock lock(watermarkLatch);
-    // check if we already registered each expected origin in the local watermark processor map
+    /// check if we already registered each expected origin in the local watermark processor map
     if (localWatermarkProcessor.size() != numberOfOrigins)
     {
         return 0;
@@ -75,4 +75,4 @@ WatermarkTs MultiOriginWatermarkProcessor::getCurrentWatermark() const
     return maxWatermarkTs;
 }
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing

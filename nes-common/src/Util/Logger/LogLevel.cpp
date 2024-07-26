@@ -26,4 +26,4 @@ std::basic_string_view<char> getLogName(LogLevel value)
 {
     return magic_enum::enum_name(value);
 }
-} // namespace NES
+} /// namespace NES

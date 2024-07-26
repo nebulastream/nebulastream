@@ -30,7 +30,7 @@ void* createGlobalState(void* op, void* sliceMergeTaskPtr)
     auto handler = static_cast<NonKeyedSliceMergingHandler*>(op);
     auto sliceMergeTask = static_cast<SliceMergeTask<NonKeyedSlice>*>(sliceMergeTaskPtr);
     auto globalState = handler->createGlobalSlice(sliceMergeTask);
-    // we give nautilus the ownership, thus deletePartition must be called.
+    /// we give nautilus the ownership, thus deletePartition must be called.
     return globalState.release();
 }
 
@@ -108,11 +108,11 @@ void NonKeyedSliceMerging::setup(ExecutionContext& executionCtx) const
 
 void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const
 {
-    // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
+    /// Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
+    /// We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     if (this->child != nullptr)
         this->child->open(ctx, buffer);
-    // 1. get the operator handler
+    /// 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
     auto startSliceTs = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, startSlice).load<UInt64>();
@@ -120,11 +120,11 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     auto sequenceNumber = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, sequenceNumber).load<UInt64>();
     auto chunkNumber = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, chunkNumber).load<UInt64>();
     auto lastChunk = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, lastChunk).load<Boolean>();
-    // 2. load the thread local slice store according to the worker id.
+    /// 2. load the thread local slice store according to the worker id.
     auto combinedSlice = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask);
     FunctionCall("freeNonKeyedSliceMergeTask", freeNonKeyedSliceMergeTask, sliceMergeTask);
 
-    // 3. emit the combined slice via an action
+    /// 3. emit the combined slice via an action
     sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk, combinedSlice);
 }
 
@@ -148,4 +148,4 @@ Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& glob
     return globalSlice;
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

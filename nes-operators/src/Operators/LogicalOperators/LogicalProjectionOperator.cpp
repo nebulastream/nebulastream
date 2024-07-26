@@ -67,10 +67,10 @@ bool LogicalProjectionOperator::inferSchema()
     outputSchema->clear();
     for (const auto& expression : expressions)
     {
-        //Infer schema of the field expression
+        ///Infer schema of the field expression
         expression->inferStamp(inputSchema);
 
-        // Build the output schema
+        /// Build the output schema
         if (expression->instanceOf<FieldRenameExpressionNode>())
         {
             auto fieldRename = expression->as<FieldRenameExpressionNode>();
@@ -123,7 +123,7 @@ void LogicalProjectionOperator::inferStringSignature()
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("LogicalProjectionOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalProjectionOperator: Project should have children.");
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
@@ -144,8 +144,8 @@ void LogicalProjectionOperator::inferStringSignature()
     auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
     signatureStream << ")." << *childSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-} // namespace NES
+} /// namespace NES

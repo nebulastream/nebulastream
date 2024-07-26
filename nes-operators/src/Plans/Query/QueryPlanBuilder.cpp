@@ -151,7 +151,7 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
             auto visitingOp = (*itr)->as<BinaryExpressionNode>();
             if (visitedExpressions.contains(visitingOp))
             {
-                // skip rest of the steps as the node found in already visited node list
+                /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             else
@@ -171,12 +171,12 @@ QueryPlanPtr QueryPlanBuilder::addJoin(
     auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
     auto rightQueryPlanJoinType = rootOperatorRhs->getOutputSchema();
 
-    // check if query contain watermark assigner, and add if missing (as default behaviour)
+    /// check if query contain watermark assigner, and add if missing (as default behaviour)
     leftQueryPlan = checkAndAddWatermarkAssignment(leftQueryPlan, windowType);
     rightQueryPlan = checkAndAddWatermarkAssignment(rightQueryPlan, windowType);
 
-    //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
-    //TODO(Ventura?>Steffen) can we know this at this query submission time?
+    ///TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
+    ///TODO(Ventura?>Steffen) can we know this at this query submission time?
     auto joinDefinition = Join::LogicalJoinDescriptor::create(joinExpression, windowType, 1, 1, joinType);
 
     NES_DEBUG("QueryPlanBuilder: add join operator to query plan");
@@ -197,9 +197,9 @@ QueryPlanPtr QueryPlanBuilder::addBatchJoin(
     auto leftJoinType = leftQueryPlan->getRootOperators()[0]->getOutputSchema();
     auto rightQueryPlanJoinType = rootOperatorRhs->getOutputSchema();
 
-    // todo here again we wan't to extend to distributed joins:
-    //TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
-    //TODO(Ventura?>Steffen) can we know this at this query submission time?
+    /// todo here again we wan't to extend to distributed joins:
+    ///TODO 1,1 should be replaced once we have distributed joins with the number of child input edges
+    ///TODO(Ventura?>Steffen) can we know this at this query submission time?
     auto joinDefinition = Join::Experimental::LogicalBatchJoinDescriptor::create(buildKeyFieldAccess, probeKeyFieldAccess, 1, 1);
 
     auto op = LogicalOperatorFactory::createBatchJoinOperator(joinDefinition);
@@ -266,4 +266,4 @@ std::shared_ptr<FieldAccessExpressionNode> QueryPlanBuilder::checkExpression(Exp
     }
     return expression->as<FieldAccessExpressionNode>();
 }
-} // namespace NES
+} /// namespace NES

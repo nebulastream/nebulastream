@@ -55,6 +55,6 @@ public:
 };
 
 using SourcePluginRegistry = Util::PluginRegistry<DataSourcePlugin>;
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_DATASOURCEPLUGIN_HPP_

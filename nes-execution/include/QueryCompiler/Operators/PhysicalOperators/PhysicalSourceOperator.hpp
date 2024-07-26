@@ -65,6 +65,6 @@ private:
     SourceDescriptorPtr sourceDescriptor;
     OriginId originId;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALSOURCEOPERATOR_HPP_

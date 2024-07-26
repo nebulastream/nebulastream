@@ -55,7 +55,7 @@ std::vector<BufferSequenceNumber> InMemoryLineageManager::findTupleBufferAncesto
     }
     else
     {
-        //if a tuple buffer was not found return empty vector
+        ///if a tuple buffer was not found return empty vector
         return std::vector<BufferSequenceNumber>(0);
     }
 }
@@ -65,4 +65,4 @@ size_t InMemoryLineageManager::getLineageSize() const
     std::unique_lock<std::mutex> lock(mutex);
     return this->bufferAncestorMapping.size();
 }
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

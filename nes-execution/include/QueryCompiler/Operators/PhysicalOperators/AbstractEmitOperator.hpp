@@ -23,6 +23,6 @@ namespace NES::QueryCompilation::PhysicalOperators
 class AbstractEmitOperator
 {
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_

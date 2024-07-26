@@ -180,7 +180,7 @@ void invertedLoop()
     Value end = Value(300);
     do
     {
-        // body
+        /// body
         i = i + 1;
     } while (i < end);
 }
@@ -344,17 +344,17 @@ Value<> TracingBreaker()
         if (agg < 350)
         {
             if (agg < 350)
-            { //the 'false' case of this if this if-operation has no operations -> Block_9
-                // agg = agg + 1;
+            { ///the 'false' case of this if this if-operation has no operations -> Block_9
+                /// agg = agg + 1;
             }
             else
             {
-                //    agg = agg + 2;// leads to empty block
+                ///    agg = agg + 2;/// leads to empty block
             }
         }
     }
     return agg;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_BASICTRACEFUNCTIONS_HPP_

@@ -61,6 +61,6 @@ private:
     static ExpressionNodePtr deserializeLogicalExpressions(const SerializableExpression& serializedExpression);
     static ExpressionNodePtr deserializeArithmeticalExpressions(const SerializableExpression& serializedExpression);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONSERIALIZATIONUTIL_HPP_

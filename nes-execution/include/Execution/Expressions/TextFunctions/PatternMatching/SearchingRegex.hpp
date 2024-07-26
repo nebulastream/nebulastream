@@ -38,6 +38,6 @@ private:
     const ExpressionPtr regexpPattern;
 };
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_PATTERNMATCHING_SEARCHINGREGEX_HPP_

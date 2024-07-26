@@ -45,12 +45,12 @@ public:
     Configurations::QueryCompilerConfiguration queryCompilerConfiguration = {"queryCompilerConfiguration", "QueryCompiler Configuration"};
 };
 
-//TODO(#130): Generalize and move into `nes-configuration`
-// CLI > ConfigFile
+///TODO(#130): Generalize and move into `nes-configuration`
+/// CLI > ConfigFile
 template <typename T>
 auto loadConfiguration(const int argc, const char** argv)
 {
-    // Convert the POSIX command line arguments to a map of strings.
+    /// Convert the POSIX command line arguments to a map of strings.
     std::map<std::string, std::string> commandLineParams;
     for (int i = 1; i < argc; ++i)
     {
@@ -59,19 +59,19 @@ auto loadConfiguration(const int argc, const char** argv)
         commandLineParams.insert({arg.substr(0, pos), arg.substr(pos + 1, arg.length() - 1)});
     }
 
-    // Create a configuration object with default values.
+    /// Create a configuration object with default values.
     T config;
 
-    // Read options from the YAML file.
+    /// Read options from the YAML file.
     if (const auto configPath = commandLineParams.find("--" + Configurations::CONFIG_PATH); configPath != commandLineParams.end())
     {
         config.overwriteConfigWithYAMLFileInput(configPath->second);
     }
 
-    // Options specified on the command line have the highest precedence.
+    /// Options specified on the command line have the highest precedence.
     config.overwriteConfigWithCommandLineInput(commandLineParams);
 
     return config;
 }
-} // namespace NES::Configuration
+} /// namespace NES::Configuration
 #endif /// NES_SINGLE_NODE_WORKER_INCLUDE_CONFIGURATION_HPP_

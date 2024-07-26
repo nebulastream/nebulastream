@@ -49,5 +49,5 @@ private:
     const Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;
 };
 
-} // namespace NES::Runtime::Execution::MemoryProvider
+} /// namespace NES::Runtime::Execution::MemoryProvider
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWMEMORYPROVIDER_HPP_

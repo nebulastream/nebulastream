@@ -48,33 +48,33 @@ public:
 
 TEST_F(QueryPlanBuilderTest, testHasOperator)
 {
-    //test createQueryPlan
+    ///test createQueryPlan
     auto queryPlan = QueryPlanBuilder::createQueryPlan("test_stream");
     EXPECT_EQ(queryPlan->getSourceConsumed(), "test_stream");
-    //test addRename
+    ///test addRename
     queryPlan = QueryPlanBuilder::addRename("testStream", queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<RenameSourceOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<RenameSourceOperator>()[0]->getNewSourceName(), "testStream");
-    //test addFilter
+    ///test addFilter
     auto filterExpression
         = ExpressionNodePtr(LessExpressionNode::create(NES::Attribute("a").getExpressionNode(), NES::Attribute("b").getExpressionNode()));
     queryPlan = QueryPlanBuilder::addFilter(filterExpression, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalFilterOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<LogicalFilterOperator>()[0]->getPredicate(), filterExpression);
-    //test addProjection
+    ///test addProjection
     std::vector<ExpressionNodePtr> expressions;
     expressions.push_back(Attribute("id").getExpressionNode());
     queryPlan = QueryPlanBuilder::addProjection(expressions, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalProjectionOperator>().size() == 1);
     EXPECT_EQ(queryPlan->getOperatorByType<LogicalProjectionOperator>()[0]->getExpressions(), expressions);
-    //test addMap
+    ///test addMap
     queryPlan = QueryPlanBuilder::addMap(Attribute("b") = 1, queryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalMapOperator>().size() == 1);
-    //test addUnion
+    ///test addUnion
     auto rightQueryPlan = QueryPlanBuilder::createQueryPlan("test_stream_b");
     queryPlan = QueryPlanBuilder::addUnion(queryPlan, rightQueryPlan);
     EXPECT_TRUE(queryPlan->getOperatorByType<LogicalUnionOperator>().size() == 1);
-    // test addSink
+    /// test addSink
     auto sinkDescriptorPtr = NES::PrintSinkDescriptor::create();
     queryPlan = QueryPlanBuilder::addSink(queryPlan, sinkDescriptorPtr);
     EXPECT_TRUE(queryPlan->getOperatorByType<SinkLogicalOperator>().size() == 1);

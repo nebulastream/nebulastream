@@ -39,9 +39,9 @@ using ExecutablePipelinePtr = std::shared_ptr<ExecutablePipeline>;
 class ExecutableQueryPlan;
 using ExecutableQueryPlanPtr = std::shared_ptr<ExecutableQueryPlan>;
 
-} // namespace Execution
+} /// namespace Execution
 
-} // namespace Runtime
+} /// namespace Runtime
 
 class ExpressionNode;
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
@@ -60,7 +60,7 @@ using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 class JoinOperatorHandler;
 using JoinOperatorHandlerPtr = std::shared_ptr<JoinOperatorHandler>;
 
-} // namespace Join
+} /// namespace Join
 
 namespace Windowing
 {
@@ -77,7 +77,7 @@ using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescript
 class WindowAggregationDescriptor;
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
-} // namespace Windowing
+} /// namespace Windowing
 
 class Operator;
 using OperatorPtr = std::shared_ptr<Operator>;
@@ -165,7 +165,7 @@ namespace Phases
 class PhaseFactory;
 using PhaseFactoryPtr = std::shared_ptr<PhaseFactory>;
 
-} // namespace Phases
+} /// namespace Phases
 
 namespace PhysicalOperators
 {
@@ -174,10 +174,10 @@ using PhysicalOperatorPtr = std::shared_ptr<PhysicalOperator>;
 
 class PhysicalCountMinBuildOperator;
 class PhysicalHyperLogLogBuildOperator;
-} // namespace PhysicalOperators
+} /// namespace PhysicalOperators
 
-} // namespace QueryCompilation
+} /// namespace QueryCompilation
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILERFORWARDDECLARATION_HPP_

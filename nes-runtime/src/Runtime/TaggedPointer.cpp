@@ -47,7 +47,7 @@ void TaggedPointer<T>::reset(T* ptr, uint16_t tag)
     data = pointer;
 }
 
-// explicit instantiation of tagged ptr
+/// explicit instantiation of tagged ptr
 template class TaggedPointer<Runtime::detail::BufferControlBlock>;
 
-} // namespace NES
+} /// namespace NES

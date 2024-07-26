@@ -98,16 +98,16 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest)
         sortOperator.execute(ctx, record);
     }
 
-    // Check if the records have been collected in the operator handler state
+    /// Check if the records have been collected in the operator handler state
     auto state = handler->getState();
     ASSERT_EQ(state->getNumberOfEntries(), NUM_RECORDS);
 
     for (size_t i = 0; i < NUM_RECORDS; i++)
     {
         auto entry = state->getEntry(i);
-        ASSERT_EQ(*(reinterpret_cast<EncodedType*>(entry)), encodeData(static_cast<Type>(i * 10))); // f1 encoded value
-        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 1), static_cast<Type>(i * 10)); // f1 original value
-        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 2), static_cast<Type>(i)); // f2 original value
+        ASSERT_EQ(*(reinterpret_cast<EncodedType*>(entry)), encodeData(static_cast<Type>(i * 10))); /// f1 encoded value
+        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 1), static_cast<Type>(i * 10)); /// f1 original value
+        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 2), static_cast<Type>(i)); /// f2 original value
     }
 }
 
@@ -141,16 +141,16 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest)
         sortOperator.execute(ctx, record);
     }
 
-    // Check if the records have been collected in the operator handler state
+    /// Check if the records have been collected in the operator handler state
     auto state = handler->getState();
     ASSERT_EQ(state->getNumberOfEntries(), NUM_RECORDS);
 
     for (size_t i = 0; i < NUM_RECORDS; i++)
     {
         auto entry = state->getEntry(i);
-        ASSERT_EQ(*(reinterpret_cast<EncodedType*>(entry)), encodeData(static_cast<Type>(i))); // f2 encoded value
-        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 1), static_cast<Type>(i * 10)); // f1 original value
-        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 2), static_cast<Type>(i)); // f2 original value
+        ASSERT_EQ(*(reinterpret_cast<EncodedType*>(entry)), encodeData(static_cast<Type>(i))); /// f2 encoded value
+        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 1), static_cast<Type>(i * 10)); /// f1 original value
+        ASSERT_EQ(*(reinterpret_cast<Type*>(entry) + 2), static_cast<Type>(i)); /// f2 original value
     }
 }
 
@@ -161,7 +161,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest)
 {
     using Type = typename TypeParam::first_type;
     using EncodedType = typename TypeParam::second_type;
-    constexpr auto NUM_RECORDS = 1025; // 1025 * 2 (Fields) * 2 Bytes = 4100 Bytes > 4096 Bytes (Page Size)
+    constexpr auto NUM_RECORDS = 1025; /// 1025 * 2 (Fields) * 2 Bytes = 4100 Bytes > 4096 Bytes (Page Size)
 
     std::vector<Record> records;
     createRecords<Type, EncodedType>(records, NUM_RECORDS);
@@ -186,4 +186,4 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest)
     auto state = handler->getState();
     ASSERT_EQ(state->getNumberOfEntries(), NUM_RECORDS);
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

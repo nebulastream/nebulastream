@@ -22,8 +22,8 @@ namespace NES
 
 Node::Node()
 {
-// The CMAKE_NES_TRACE_NODE_CREATION flag enables the stack trace collection for every node creation.
-// This can be useful for the debugging of optimizations, but could lead to a substantial performance impact.
+/// The CMAKE_NES_TRACE_NODE_CREATION flag enables the stack trace collection for every node creation.
+/// This can be useful for the debugging of optimizations, but could lead to a substantial performance impact.
 #ifdef NES_TRACE_NODE_CREATION
     stackTrace = collectAndPrintStacktrace();
 #else
@@ -38,10 +38,10 @@ bool Node::addChildWithEqual(const NodePtr& newNode)
         NES_DEBUG("Node: Adding node to its self so skip add child with equal operation.");
         return false;
     }
-    // add the node to the children
+    /// add the node to the children
     children.push_back(newNode);
 
-    // add the current node as a parents to the newNode
+    /// add the current node as a parents to the newNode
     newNode->parents.push_back(shared_from_this());
     return true;
 }
@@ -53,16 +53,16 @@ bool Node::addChild(const NodePtr newNode)
         NES_ERROR("Node: Adding node to its self so will skip add child operation.");
         return false;
     }
-    // checks if current new node is not part of children
+    /// checks if current new node is not part of children
     if (vectorContainsTheNode(children, newNode))
     {
         NES_ERROR("Node: the node is already part of its children so skip add child operation.");
         return false;
     }
-    // add the node to the children
+    /// add the node to the children
     children.push_back(newNode);
 
-    // add the current node as a parents to the newNode
+    /// add the current node as a parents to the newNode
     if (!vectorContainsTheNode(newNode->parents, shared_from_this()))
     {
         newNode->parents.push_back(shared_from_this());
@@ -78,12 +78,12 @@ bool Node::removeChild(NodePtr const& node)
         return false;
     }
 
-    // check all children.
+    /// check all children.
     for (auto nodeItr = children.begin(); nodeItr != children.end(); ++nodeItr)
     {
         if ((*nodeItr).get() == node.get())
         {
-            // remove this from nodeItr's parents
+            /// remove this from nodeItr's parents
             for (auto it = (*nodeItr)->parents.begin(); it != (*nodeItr)->parents.end(); it++)
             {
                 if ((*it).get() == this)
@@ -92,7 +92,7 @@ bool Node::removeChild(NodePtr const& node)
                     break;
                 }
             }
-            // remove nodeItr from children
+            /// remove nodeItr from children
             children.erase(nodeItr);
             return true;
         }
@@ -109,13 +109,13 @@ bool Node::addParent(const NodePtr newNode)
         return false;
     }
 
-    // checks if current new node is not part of parents
+    /// checks if current new node is not part of parents
     if (vectorContainsTheNode(parents, newNode))
     {
         NES_WARNING("Node: the node is already part of its parents so ignore add parent operation.");
         return false;
     }
-    // add the node to the parents
+    /// add the node to the parents
     parents.push_back(newNode);
     if (!vectorContainsTheNode(newNode->children, shared_from_this()))
     {
@@ -126,7 +126,7 @@ bool Node::addParent(const NodePtr newNode)
 
 bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode)
 {
-    //Perform sanity checks
+    ///Perform sanity checks
     if (newNode.get() == this)
     {
         NES_WARNING("Node:  Adding node to its self so will skip insertBetweenThisAndParentNodes operation.");
@@ -139,7 +139,7 @@ bool Node::insertBetweenThisAndParentNodes(NodePtr const& newNode)
         return false;
     }
 
-    //replace this with the new node in all its parent
+    ///replace this with the new node in all its parent
     NES_DEBUG("Node: Create temporary copy of this nodes parents.");
     std::vector<NodePtr> copyOfParents = parents;
 
@@ -246,7 +246,7 @@ bool Node::removeParent(NodePtr const& node)
         return false;
     }
 
-    // check all parents.
+    /// check all parents.
     for (auto nodeItr = parents.begin(); nodeItr != parents.end(); ++nodeItr)
     {
         if ((*nodeItr).get() == node.get())
@@ -295,7 +295,7 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode)
 
     if (!oldNode->equal(newNode))
     {
-        // newNode is already inside children or parents and it's not oldNode
+        /// newNode is already inside children or parents and it's not oldNode
         if (find(children, newNode) || find(parents, newNode))
         {
             NES_DEBUG("Node: the new node is already part of the children or predecessors of the current node.");
@@ -324,7 +324,7 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode)
         {
             newNode->addParent(currentNode);
         }
-        return true; //TODO: I think this is wrong
+        return true; ///TODO: I think this is wrong
     }
     NES_ERROR("Node: could not remove parent from  old node: {}", oldNode->toString());
 
@@ -334,25 +334,25 @@ bool Node::replace(const NodePtr& newNode, const NodePtr& oldNode)
 bool Node::swap(const NodePtr& newNode, const NodePtr& oldNode)
 {
     auto node = findRecursively(shared_from_this(), oldNode);
-    // oldNode is not in current graph
+    /// oldNode is not in current graph
     if (!node)
     {
         return false;
     }
-    // detecting if newNode is one of oldNode's siblings
+    /// detecting if newNode is one of oldNode's siblings
     for (auto&& parent : node->parents)
     {
         for (auto&& child : parent->children)
         {
             if (child == newNode)
             {
-                // we don't want to handle this case
+                /// we don't want to handle this case
                 return false;
             }
         }
     }
 
-    // reset all parents belongs to newNode
+    /// reset all parents belongs to newNode
     newNode->parents.clear();
     uint64_t criteria = 0;
     while (node->parents.size() > criteria)
@@ -387,15 +387,15 @@ bool Node::swapLeftAndRightBranch()
 
 bool Node::remove(const NodePtr& node)
 {
-    // NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
+    /// NOTE: if there is a cycle inside the operator topology, it won't behave correctly.
     return removeChild(node) || removeParent(node);
 }
 
 bool Node::removeAndLevelUpChildren(const NodePtr& node)
 {
-    // if a successor of node is equal to children,
-    // it's confused to merge two equal operators,
-    // HERE we don't deal with this case
+    /// if a successor of node is equal to children,
+    /// it's confused to merge two equal operators,
+    /// HERE we don't deal with this case
     for (auto&& n : node->children)
     {
         if (find(children, n))
@@ -583,7 +583,7 @@ NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind)
     for (auto&& currentNode : nodes)
     {
         if (nodeToFind->equal(currentNode))
-        { // TODO: need to check this when merge is used. nodeToFind.get() == currentNode.get()
+        { /// TODO: need to check this when merge is used. nodeToFind.get() == currentNode.get()
             return currentNode;
         }
     }
@@ -592,15 +592,15 @@ NodePtr Node::find(const std::vector<NodePtr>& nodes, const NodePtr& nodeToFind)
 
 NodePtr Node::findRecursively(NodePtr const& root, NodePtr const& nodeToFind)
 {
-    // DFS
+    /// DFS
     NodePtr resultNode = nullptr;
-    // two operator are equal, may not the same object
+    /// two operator are equal, may not the same object
     if (root->isIdentical(nodeToFind))
     {
         return root;
     }
 
-    // not equal
+    /// not equal
     for (auto& currentNode : root->children)
     {
         resultNode = findRecursively(currentNode, nodeToFind);
@@ -646,14 +646,14 @@ bool Node::equalWithAllChildrenHelper(const NodePtr& node1, const NodePtr& node2
 
 bool Node::equalWithAllChildren(const NodePtr& otherNode)
 {
-    // the root is equal
+    /// the root is equal
     if (!equal(otherNode))
     {
         return false;
     }
 
     return equalWithAllChildrenHelper(shared_from_this(), otherNode);
-} // namespace NES
+} /// namespace NES
 
 bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2)
 {
@@ -690,7 +690,7 @@ bool Node::equalWithAllParentsHelper(const NodePtr& node1, const NodePtr& node2)
 
 bool Node::equalWithAllParents(const NodePtr& node)
 {
-    // the root is equal
+    /// the root is equal
     if (!equal(node))
     {
         return false;
@@ -734,7 +734,7 @@ std::vector<NodePtr> Node::getAndFlattenAllChildren(bool withDuplicateChildren)
 void Node::getAndFlattenAllChildrenHelper(
     const NodePtr& node, std::vector<NodePtr>& allChildren, const NodePtr& excludedNode, bool allowDuplicate)
 {
-    // todo this implementation may be slow
+    /// todo this implementation may be slow
     for (auto&& currentNode : node->children)
     {
         if (allowDuplicate)
@@ -773,14 +773,14 @@ bool Node::isCyclic()
         node->recStack = false;
     }
 
-    // since *this is not in allChildren vector
-    // we test it individually
+    /// since *this is not in allChildren vector
+    /// we test it individually
     if (isCyclicHelper(*this))
     {
         return true;
     }
 
-    // test all sub-node in the DAG
+    /// test all sub-node in the DAG
     for (auto&& node : allChildren)
     {
         if (isCyclicHelper(*node))
@@ -803,7 +803,7 @@ bool Node::isCyclic()
 
 bool Node::isCyclicHelper(Node& node)
 {
-    // DFS
+    /// DFS
     node.visited = true;
     node.recStack = true;
     for (auto&& n : node.children)
@@ -832,4 +832,4 @@ std::ostream& operator<<(std::ostream& os, const NodePtr& node)
     return os << node->toString();
 }
 
-} // namespace NES
+} /// namespace NES

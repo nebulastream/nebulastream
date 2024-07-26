@@ -132,5 +132,5 @@ private:
 };
 
 using ZmqSourcePtr = std::shared_ptr<ZmqSource>;
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_ZMQSOURCE_HPP_

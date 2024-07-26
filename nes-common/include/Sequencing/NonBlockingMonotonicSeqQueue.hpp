@@ -148,14 +148,14 @@ public:
         if (sequenceData.sequenceNumber < currentSeq)
         {
             NES_FATAL_ERROR("Invalid sequence number {} as it is < {}", sequenceData.sequenceNumber, currentSeq);
-            // TODO add exception, currently tests fail
-            // throw Exceptions::RuntimeException("Invalid sequence number " + std::to_string(sequenceNumber)
-            //                                   + " as it is <= " + std::to_string(currentSeq));
+            /// TODO add exception, currently tests fail
+            /// throw Exceptions::RuntimeException("Invalid sequence number " + std::to_string(sequenceNumber)
+            ///                                   + " as it is <= " + std::to_string(currentSeq));
         }
-        // First emplace the value to the specific block of the sequenceNumber.
-        // After this call it is safe to assume that a block, which contains the sequenceNumber exists.
+        /// First emplace the value to the specific block of the sequenceNumber.
+        /// After this call it is safe to assume that a block, which contains the sequenceNumber exists.
         emplaceValueInBlock(sequenceData, value);
-        // Try to shift the current sequence number
+        /// Try to shift the current sequence number
         shiftCurrentValue();
     }
 
@@ -167,11 +167,11 @@ public:
     auto getCurrentValue() const
     {
         auto currentBlock = std::atomic_load(&head);
-        // get the current sequence number and access the associated block
+        /// get the current sequence number and access the associated block
         auto currentSequenceNumber = currentSeq.load();
         auto targetBlockIndex = currentSequenceNumber / blockSize;
         currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
-        // read the value from the correct slot.
+        /// read the value from the correct slot.
         auto seqIndexInBlock = currentSequenceNumber % blockSize;
         auto& value = currentBlock->log[seqIndexInBlock];
         return value.getValue();
@@ -190,39 +190,39 @@ private:
      */
     void emplaceValueInBlock(SequenceData seq, T value)
     {
-        // Each block contains blockSize elements and covers sequence numbers from
-        // [blockIndex * blockSize] till [blockIndex * blockSize + blockSize]
-        // Calculate the target block index, which contains the sequence number
+        /// Each block contains blockSize elements and covers sequence numbers from
+        /// [blockIndex * blockSize] till [blockIndex * blockSize + blockSize]
+        /// Calculate the target block index, which contains the sequence number
         auto targetBlockIndex = seq.sequenceNumber / blockSize;
-        // Lookup the current block
+        /// Lookup the current block
         auto currentBlock = std::atomic_load(&head);
-        // if the blockIndex is smaller the target block index we travers the next block
+        /// if the blockIndex is smaller the target block index we travers the next block
         while (currentBlock->blockIndex < targetBlockIndex)
         {
-            // append new block if the next block is a nullptr
+            /// append new block if the next block is a nullptr
             auto nextBlock = std::atomic_load(&currentBlock->next);
             if (nextBlock == nullptr)
             {
                 auto newBlock = std::make_shared<Block>(currentBlock->blockIndex + 1);
                 std::atomic_compare_exchange_weak(&currentBlock->next, &nextBlock, newBlock);
-                // we don't care if this or another thread succeeds, as we just start over again in the loop
-                // and use what ever is now stored in currentBlock.next
+                /// we don't care if this or another thread succeeds, as we just start over again in the loop
+                /// and use what ever is now stored in currentBlock.next
             }
             else
             {
-                // move to the next block
+                /// move to the next block
                 currentBlock = nextBlock;
             }
         }
 
-        // check if we really found the correct block
+        /// check if we really found the correct block
         if (!(seq.sequenceNumber >= currentBlock->blockIndex * blockSize
               && seq.sequenceNumber < currentBlock->blockIndex * blockSize + blockSize))
         {
             throw Exceptions::RuntimeException("The found block is wrong");
         }
 
-        // Emplace value in block
+        /// Emplace value in block
         auto seqIndexInBlock = seq.sequenceNumber % blockSize;
         currentBlock->log[seqIndexInBlock].setSeqNumber(seq.sequenceNumber);
         currentBlock->log[seqIndexInBlock].emplaceChunk(seq.chunkNumber, seq.lastChunk, value);
@@ -240,26 +240,26 @@ private:
         while (checkForUpdate)
         {
             auto currentBlock = std::atomic_load(&head);
-            // we are looking for the next sequence number
+            /// we are looking for the next sequence number
             auto currentSequenceNumber = currentSeq.load();
-            // find the correct block, that contains the current sequence number.
+            /// find the correct block, that contains the current sequence number.
             auto targetBlockIndex = currentSequenceNumber / blockSize;
             currentBlock = getTargetBlock(currentBlock, targetBlockIndex);
 
-            // check if next value is set
-            // next seqNumber
+            /// check if next value is set
+            /// next seqNumber
             auto nextSeqNumber = currentSequenceNumber + 1;
             if (nextSeqNumber % blockSize == 0)
             {
-                // the next sequence number is the first element in the next block.
+                /// the next sequence number is the first element in the next block.
                 auto nextBlock = std::atomic_load(&currentBlock->next);
                 if (nextBlock != nullptr)
                 {
-                    // this will always be the first element
+                    /// this will always be the first element
                     auto& value = nextBlock->log[0];
                     if (value.getSeqNumber() == nextSeqNumber && value.seenAllChunks())
                     {
-                        // Modify currentSeq and head
+                        /// Modify currentSeq and head
                         if (std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber))
                         {
                             std::atomic_compare_exchange_weak(&head, &currentBlock, nextBlock);
@@ -274,7 +274,7 @@ private:
                 auto& value = currentBlock->log[seqIndexInBlock];
                 if (value.getSeqNumber() == nextSeqNumber && value.seenAllChunks())
                 {
-                    // the next sequence number is still in the current block thus we only have to exchange the currentSeq.
+                    /// the next sequence number is still in the current block thus we only have to exchange the currentSeq.
                     std::atomic_compare_exchange_weak(&currentSeq, &currentSequenceNumber, nextSeqNumber);
                     continue;
                 }
@@ -294,24 +294,24 @@ private:
     {
         while (currentBlock->blockIndex < targetBlockIndex)
         {
-            // append new block if the next block is a nullptr
+            /// append new block if the next block is a nullptr
             auto nextBlock = std::atomic_load(&currentBlock->next);
             if (!nextBlock)
             {
                 throw Exceptions::RuntimeException("The next block dose not exist. This should not happen here.");
             }
-            // move to the next block
+            /// move to the next block
             currentBlock = nextBlock;
         }
         return currentBlock;
     }
 
-    // Stores a reference to the current block
+    /// Stores a reference to the current block
     std::shared_ptr<Block> head;
-    // Stores the current sequence number
+    /// Stores the current sequence number
     std::atomic<SequenceNumber> currentSeq;
 };
 
-} // namespace NES::Sequencing
+} /// namespace NES::Sequencing
 
 #endif /// NES_COMMON_INCLUDE_SEQUENCING_NONBLOCKINGMONOTONICSEQQUEUE_HPP_

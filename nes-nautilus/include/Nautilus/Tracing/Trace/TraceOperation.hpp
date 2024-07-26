@@ -47,6 +47,6 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const TraceOperation& operation);
 };
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_

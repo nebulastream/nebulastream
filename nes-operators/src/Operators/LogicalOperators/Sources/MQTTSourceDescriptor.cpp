@@ -59,6 +59,6 @@ SourceDescriptorPtr MQTTSourceDescriptor::copy()
     return copy;
 }
 
-} // namespace NES
+} /// namespace NES
 
 #endif

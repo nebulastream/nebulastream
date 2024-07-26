@@ -31,7 +31,7 @@ GeoLocationFactory::createFromString(std::string, std::map<std::string, std::str
             coordStr = it->second;
         }
     }
-    //if the input string is empty, construct an invalid location
+    ///if the input string is empty, construct an invalid location
     if (coordStr.empty())
     {
         return {200, 200};
@@ -48,4 +48,4 @@ NES::Spatial::DataTypes::Experimental::GeoLocation GeoLocationFactory::createFro
     }
     return {};
 }
-} //namespace NES::Configurations::Spatial::Index::Experimental
+} ///namespace NES::Configurations::Spatial::Index::Experimental

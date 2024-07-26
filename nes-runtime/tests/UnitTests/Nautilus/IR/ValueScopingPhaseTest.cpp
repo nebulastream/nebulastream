@@ -56,19 +56,19 @@ public:
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { std::cout << "Tear down TraceTest test class." << std::endl; }
 
-    // Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
+    /// Takes a Nautilus function, creates the trace, converts it Nautilus IR, and applies all available phases.
     std::vector<IR::BasicBlockPtr> createTraceAndApplyPhases(std::function<Value<>()> nautilusFunction)
     {
         auto execution = Nautilus::Tracing::traceFunctionSymbolicallyWithReturn([nautilusFunction]() { return nautilusFunction(); });
         auto executionTrace = ssaCreationPhase.apply(std::move(execution));
         auto ir = irCreationPhase.apply(executionTrace);
-        // auto dpsSortedGraphNodes = enumerateIRForTests(ir);
+        /// auto dpsSortedGraphNodes = enumerateIRForTests(ir);
         removeBrOnlyBlocksPhase.apply(ir);
         loopDetectionPhase.applyLoopDetection(ir);
         structuredControlFlowPhase.apply(ir);
-        // return enumerateIRForTests(ir);
+        /// return enumerateIRForTests(ir);
         valueScopingPhase.apply(ir);
-        // return dpsSortedGraphNodes;
+        /// return dpsSortedGraphNodes;
         return enumerateIRForTests(ir);
     }
 
@@ -153,11 +153,11 @@ public:
         {
             if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::IfOp)
             {
-                // Check that the currentBlock is actually part of the solution set.
+                /// Check that the currentBlock is actually part of the solution set.
                 if (correctBlocks.contains(currentBlock->getIdentifier()))
                 {
                     auto ifOp = std::static_pointer_cast<IR::Operations::IfOperation>(currentBlock->getTerminatorOp());
-                    // Check that the merge-block id is set correctly, if the if-operation has a merge-block.
+                    /// Check that the merge-block id is set correctly, if the if-operation has a merge-block.
                     auto correctMergeBlockId = correctBlocks.at(currentBlock->getIdentifier())->correctMergeBlockId;
                     if (!correctMergeBlockId.empty())
                     {
@@ -207,7 +207,7 @@ public:
             else if (currentBlock->getTerminatorOp()->getOperationType() == IR::Operations::Operation::LoopOp)
             {
                 auto loopOp = std::static_pointer_cast<IR::Operations::LoopOperation>(currentBlock->getTerminatorOp());
-                // Check loop operation for correctness.
+                /// Check loop operation for correctness.
                 if (correctBlocks.contains(currentBlock->getIdentifier()))
                 {
                     if (correctBlocks.at(currentBlock->getIdentifier())->countedLoopInfo)
@@ -254,7 +254,7 @@ public:
                                 "\n Loop operation in block: " << currentBlock->getIdentifier() << " should be default loop, but is not.");
                         }
                     }
-                    // Check that the number of loop back edges is set correctly.
+                    /// Check that the number of loop back edges is set correctly.
                     backLinksAreCorrect
                         &= currentBlock->getNumLoopBackEdges() == correctBlocks.at(currentBlock->getIdentifier())->correctNumberOfBackLinks;
                     if (!backLinksAreCorrect)
@@ -296,37 +296,37 @@ public:
     }
 };
 
-//==----------------------------------------------------------==//
-//==------------------ NAUTILUS PHASE TESTS ------------------==//
-//==----------------------------------------------------------==//
+///==----------------------------------------------------------==///
+///==------------------ NAUTILUS PHASE TESTS ------------------==///
+///==----------------------------------------------------------==///
 Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5()
 {
-    // Value agg = Value(0);
-    // Value agg2 = Value(2);
-    // Value limit = Value(3);
-    // // for (Value inductionVar_1 = Value(0); inductionVar_1 <= 10; inductionVar_1 = inductionVar_1 + 1) {
-    // //     agg = agg + 1;
-    // // }
-    // if(agg < 10) {
-    //     if(agg < limit) {
-    //         agg = agg + 1;
-    //     } else {
-    //         agg = agg + 4;
-    //     }
-    // } else {
-    //     agg = agg + 2;
-    //     // for (Value inductionVar_1 = Value(0); inductionVar_1 <= 10; inductionVar_1 = inductionVar_1 + 1) {
-    //     //     if(agg < 10) {
-    //     //         agg = agg + 1;
-    //     //     }
-    //     // }
-    // }
-    // if(agg < limit) {
-    //     agg = agg + 3;
-    // } else {
-    //     agg = agg + 4;
-    // }
-    // return agg + agg2;
+    /// Value agg = Value(0);
+    /// Value agg2 = Value(2);
+    /// Value limit = Value(3);
+    /// for (Value inductionVar_1 = Value(0); inductionVar_1 <= 10; inductionVar_1 = inductionVar_1 + 1) {
+    ///     agg = agg + 1;
+    /// }
+    /// if(agg < 10) {
+    ///     if(agg < limit) {
+    ///         agg = agg + 1;
+    ///     } else {
+    ///         agg = agg + 4;
+    ///     }
+    /// } else {
+    ///     agg = agg + 2;
+    ///     /// for (Value inductionVar_1 = Value(0); inductionVar_1 <= 10; inductionVar_1 = inductionVar_1 + 1) {
+    ///     ///     if(agg < 10) {
+    ///     ///         agg = agg + 1;
+    ///     ///     }
+    ///     /// }
+    /// }
+    /// if(agg < limit) {
+    ///     agg = agg + 3;
+    /// } else {
+    ///     agg = agg + 4;
+    /// }
+    /// return agg + agg2;
     Value agg = Value(0);
     if (agg < 50)
     {
@@ -350,27 +350,27 @@ Value<> oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHe
     {
         agg = agg + 100000;
     }
-    // Value start = Value(1);
-    // Value limit = Value(1000000);
+    /// Value start = Value(1);
+    /// Value limit = Value(1000000);
     while (agg < 10)
     {
         agg = agg + 3;
-        // start = start + 2;
+        /// start = start + 2;
     }
     return agg;
 }
 TEST_P(ValueScopingPhaseTest, 5_oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader)
 {
     std::unordered_map<std::string, CorrectBlockValuesPtr> correctBlocks;
-    // createCorrectBlock(correctBlocks, "0", 0, "5");
-    // createCorrectBlock(correctBlocks, "1", 1, "", createCorrectCountedLoopInfo(0, 10, 1, "7"));
-    // createCorrectBlock(correctBlocks, "9", 0, "5");
+    /// createCorrectBlock(correctBlocks, "0", 0, "5");
+    /// createCorrectBlock(correctBlocks, "1", 1, "", createCorrectCountedLoopInfo(0, 10, 1, "7"));
+    /// createCorrectBlock(correctBlocks, "9", 0, "5");
     auto dpsSortedBlocks = createTraceAndApplyPhases(&oneMergeBlockThatClosesOneIfAndBecomesMergeForTwoAndIsFollowedUpByLoopHeader_5);
-    // ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
+    /// ASSERT_EQ(checkIRForCorrectness(dpsSortedBlocks, correctBlocks), true);
 }
 
-// Tests all registered compilation backends.
-// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+/// Tests all registered compilation backends.
+/// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 auto pluginNames = Backends::CompilationBackendRegistry::getPluginNames();
 INSTANTIATE_TEST_CASE_P(
     testLoopCompilation,
@@ -378,4 +378,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::ValuesIn(pluginNames.begin(), pluginNames.end()),
     [](const testing::TestParamInfo<ValueScopingPhaseTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

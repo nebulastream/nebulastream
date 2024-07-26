@@ -198,6 +198,6 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType)
     }
     return false;
 }
-} // namespace NES::PhysicalTypes
+} /// namespace NES::PhysicalTypes
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_

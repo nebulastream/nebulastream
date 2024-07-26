@@ -84,4 +84,4 @@ TEST_F(MapOperatorTest, overrideFieldTest)
     ASSERT_EQ(collector->records[0].read("f1"), 22);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

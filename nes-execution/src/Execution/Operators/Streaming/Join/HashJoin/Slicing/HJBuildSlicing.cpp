@@ -109,10 +109,10 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
     Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
 
-    //check if we can reuse window
+    ///check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd))
     {
-        //we need a new slice
+        ///we need a new slice
         joinState->sliceReference = Nautilus::FunctionCall(
             "getHJSliceProxy",
             getHJSliceProxy,
@@ -139,10 +139,10 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const
             to_underlying(joinBuildSide));
     }
 
-    //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    ///get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto entryMemRef = Nautilus::FunctionCall(
         "insertFunctionProxy", insertFunctionProxy, joinState->hashTableReference, record.read(joinFieldName).as<UInt64>());
-    //write data
+    ///write data
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : schema->fields)
     {
@@ -161,7 +161,7 @@ void* getDefaultMemRef()
 
 void HJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
-    // We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
+    /// We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
     Operator::open(ctx, recordBuffer);
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<MemRef> dummyRef1 = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRef);
@@ -169,4 +169,4 @@ void HJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) con
     auto joinState = std::make_unique<LocalJoinState>(operatorHandlerMemRef, dummyRef1, dummyRef2);
     ctx.setLocalOperatorState(this, std::move(joinState));
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

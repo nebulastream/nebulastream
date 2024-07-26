@@ -49,6 +49,6 @@ private:
     ConvertLogicalToPhysicalSink() = default;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_CONVERTLOGICALTOPHYSICALSINK_HPP_

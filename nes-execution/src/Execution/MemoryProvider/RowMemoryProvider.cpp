@@ -39,7 +39,7 @@ Nautilus::Record RowMemoryProvider::read(
     Nautilus::Value<Nautilus::MemRef>& bufferAddress,
     Nautilus::Value<Nautilus::UInt64>& recordIndex) const
 {
-    // read all fields
+    /// read all fields
     auto rowLayout = std::dynamic_pointer_cast<Runtime::MemoryLayouts::RowLayout>(rowMemoryLayoutPtr);
     auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
     std::vector<Nautilus::Value<Nautilus::Any>> fieldValues;
@@ -75,4 +75,4 @@ void RowMemoryProvider::write(
     }
 }
 
-} // namespace NES::Runtime::Execution::MemoryProvider
+} /// namespace NES::Runtime::Execution::MemoryProvider

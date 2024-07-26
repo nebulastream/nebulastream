@@ -75,7 +75,7 @@ void HJOperatorHandler::emitSliceIdsToProbe(
 
         for (auto i = 0UL; i < getNumPartitions(); ++i)
         {
-            //create task for current window and current partition
+            ///create task for current window and current partition
             auto buffer = pipelineCtx->getBufferManager()->getBufferBlocking();
             auto bufferAs = buffer.getBuffer<JoinPartitionIdSliceIdWindow>();
             bufferAs->partitionId = i;
@@ -161,4 +161,4 @@ void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key)
     return localHashTable->insert(key);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

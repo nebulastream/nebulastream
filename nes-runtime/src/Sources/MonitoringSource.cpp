@@ -61,7 +61,7 @@ std::optional<Runtime::TupleBuffer> MonitoringSource::receiveData()
     metricCollector->fillBuffer(buf);
     NES_TRACE("MonitoringSource: Generated buffer with{} tuple and size {}", buf.getNumberOfTuples(), schema->getSchemaSizeInBytes());
 
-    //update statistics
+    ///update statistics
     generatedTuples += buf.getNumberOfTuples();
     generatedBuffers++;
 
@@ -100,4 +100,4 @@ std::chrono::milliseconds MonitoringSource::getWaitTime() const
     return waitTime;
 }
 
-} // namespace NES
+} /// namespace NES

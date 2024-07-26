@@ -32,4 +32,4 @@ FlounderCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compi
 
 [[maybe_unused]] static CompilationBackendRegistry::Add<FlounderCompilationBackend> flounderCompilerBackend("Flounder");
 
-} // namespace NES::Nautilus::Backends::Flounder
+} /// namespace NES::Nautilus::Backends::Flounder

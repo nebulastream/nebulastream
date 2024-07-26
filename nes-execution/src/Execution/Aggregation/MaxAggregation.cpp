@@ -88,13 +88,13 @@ Nautilus::Value<> callMax(const Nautilus::Value<>& leftValue, const Nautilus::Va
 
 void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord)
 {
-    // load
+    /// load
     auto oldValue = AggregationFunction::loadFromMemref(state, inputType);
-    // compare
-    // TODO implement the function in nautilus if #3500 is fixed
+    /// compare
+    /// TODO implement the function in nautilus if #3500 is fixed
     auto inputValue = inputExpression->execute(inputRecord);
     auto result = callMax(inputValue, oldValue);
-    // store
+    /// store
     state.store(result);
 }
 
@@ -102,9 +102,9 @@ void MaxAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, N
 {
     auto left = AggregationFunction::loadFromMemref(state1, inputType);
     auto right = AggregationFunction::loadFromMemref(state2, inputType);
-    // TODO implement the function in nautilus if #3500 is fixed
+    /// TODO implement the function in nautilus if #3500 is fixed
     auto result = callMax(left, right);
-    // store
+    /// store
     state1.store(result);
 }
 
@@ -122,4 +122,4 @@ uint64_t MaxAggregationFunction::getSize()
 {
     return inputType->size();
 }
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation

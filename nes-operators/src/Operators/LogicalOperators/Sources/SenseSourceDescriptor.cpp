@@ -66,4 +66,4 @@ SourceDescriptorPtr SenseSourceDescriptor::copy()
     return copy;
 }
 
-} // namespace NES
+} /// namespace NES

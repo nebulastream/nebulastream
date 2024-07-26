@@ -405,11 +405,11 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum)
 
     auto sumAgg = Aggregation::SumAggregationFunction(dataType, dataType, readFieldExpression, "result");
 
-    // create an aggregation value based on the aggregation function type and data type
+    /// create an aggregation value based on the aggregation function type and data type
     auto sumValue = getAggregationValue(aggFunctionType, testParam);
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)sumValue.get());
 
-    // create an incoming value using the selected data type
+    /// create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
     auto inputRecord = Record({{"value", incomingValue}});
     sumAgg.lift(memref, inputRecord);
@@ -417,14 +417,14 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum)
     auto result = Record();
     sumAgg.lower(memref, result);
 
-    EXPECT_EQ(result.read("result")->getType()->toString(), testParam); // Check if the type corresponds to the input type
+    EXPECT_EQ(result.read("result")->getType()->toString(), testParam); /// Check if the type corresponds to the input type
 }
 
 /**
  * Tests the lift, combine, lower and reset functions of the Avg Aggregation
  */
-// TODO #3602 Disabled because this test checks that the output type is the same as the input type.
-// However, the average of two ints can be a float.
+/// TODO #3602 Disabled because this test checks that the output type is the same as the input type.
+/// However, the average of two ints can be a float.
 TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg)
 {
     physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -436,11 +436,11 @@ TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg)
 
     auto avgAgg = Aggregation::AvgAggregationFunction(dataType, dataType, readFieldExpression, "result");
 
-    // create an aggregation value based on the aggregation function type and data type
+    /// create an aggregation value based on the aggregation function type and data type
     auto avgValue = getAggregationValue(aggFunctionType, testParam);
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)avgValue.get());
 
-    // create an incoming value using the selected data type
+    /// create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
     auto inputRecord = Record({{"value", incomingValue}});
     avgAgg.lift(memref, inputRecord);
@@ -448,7 +448,7 @@ TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg)
     auto result = Record();
     avgAgg.lower(memref, result);
 
-    EXPECT_EQ(result.read("result")->getType()->toString(), testParam); // Check if the type corresponds to the input type
+    EXPECT_EQ(result.read("result")->getType()->toString(), testParam); /// Check if the type corresponds to the input type
 }
 
 /**
@@ -465,11 +465,11 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMin)
 
     auto minAgg = Aggregation::MinAggregationFunction(dataType, dataType, readFieldExpression, "result");
 
-    // create an aggregation value based on the aggregation function type and data type
+    /// create an aggregation value based on the aggregation function type and data type
     auto minValue = getAggregationValue(aggFunctionType, testParam);
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)minValue.get());
 
-    // create an incoming value using the selected data type
+    /// create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
 
     auto inputRecord = Record({{"value", incomingValue}});
@@ -478,7 +478,7 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMin)
     auto result = Record();
     minAgg.lower(memref, result);
 
-    EXPECT_EQ(result.read("result")->getType()->toString(), testParam); // Check if the type corresponds to the input type
+    EXPECT_EQ(result.read("result")->getType()->toString(), testParam); /// Check if the type corresponds to the input type
 }
 
 /**
@@ -495,11 +495,11 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMax)
 
     auto maxAgg = Aggregation::MaxAggregationFunction(dataType, dataType, readFieldExpression, "result");
 
-    // create an aggregation value based on the aggregation function type and data type
+    /// create an aggregation value based on the aggregation function type and data type
     auto maxValue = getAggregationValue(aggFunctionType, testParam);
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)maxValue.get());
 
-    // create an incoming value using the selected data type
+    /// create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
     auto inputRecord = Record({{"value", incomingValue}});
     maxAgg.lift(memref, inputRecord);
@@ -507,7 +507,7 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMax)
     auto result = Record();
     maxAgg.lower(memref, result);
 
-    EXPECT_EQ(result.read("result")->getType()->toString(), testParam); // Check if the type corresponds to the input type
+    EXPECT_EQ(result.read("result")->getType()->toString(), testParam); /// Check if the type corresponds to the input type
 }
 
 /**
@@ -526,11 +526,11 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount)
 
     auto countAgg = Aggregation::CountAggregationFunction(dataType, unsignedIntegerType, readFieldExpression, "result");
 
-    // create an aggregation value based on the aggregation function type and data type
+    /// create an aggregation value based on the aggregation function type and data type
     auto countValue = getAggregationValue(aggFunctionType, ui64);
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)countValue.get());
 
-    // create an incoming value using the selected data type
+    /// create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
     auto inputRecord = Record({{"value", incomingValue}});
     countAgg.lift(memref, inputRecord);
@@ -538,15 +538,15 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount)
     auto result = Record();
     countAgg.lower(memref, result);
 
-    // Check if the type count agg is of ui64 type irrespective of the input type
+    /// Check if the type count agg is of ui64 type irrespective of the input type
     EXPECT_EQ(result.read("result")->getType()->toString(), ui64);
 }
 
-// TODO #3468: parameterize the aggregation function instead of repeating the similar test
+/// TODO #3468: parameterize the aggregation function instead of repeating the similar test
 INSTANTIATE_TEST_CASE_P(
     scanEmitPipelineAgg,
     AggregationFunctionDataTypeTest,
     ::testing::Values("i8", "i16", "i32", "i64", "ui8", "ui16", "ui32", "ui64", "f32", "f64"),
     [](const testing::TestParamInfo<AggregationFunctionDataTypeTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

@@ -56,6 +56,6 @@ private:
     const SchemaPtr leftSchema;
     const SchemaPtr rightSchema;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJPROBEVARSIZED_HPP_

@@ -41,6 +41,6 @@ public:
 
 using PhysicalSourceFactoryPluginRegistry = Util::PluginRegistry<PhysicalSourceFactoryPlugin>;
 
-} // namespace Configurations
-} // namespace NES
+} /// namespace Configurations
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCEFACTORYPLUGIN_HPP_

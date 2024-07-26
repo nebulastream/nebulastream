@@ -178,6 +178,6 @@ private:
     std::vector<OperatorId> operatorIds;
     Type pipelineType;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_OPERATORPIPELINE_HPP_

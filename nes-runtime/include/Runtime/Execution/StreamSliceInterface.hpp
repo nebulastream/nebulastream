@@ -48,5 +48,5 @@ public:
 
     virtual ~StreamSliceInterface() = default;
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_

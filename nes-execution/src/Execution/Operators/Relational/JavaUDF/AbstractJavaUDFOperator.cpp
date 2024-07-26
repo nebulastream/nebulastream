@@ -61,14 +61,14 @@ void AbstractJavaUDFOperator::close(ExecutionContext& executionCtx, RecordBuffer
 
 Record AbstractJavaUDFOperator::extractRecordFromPojo(const Value<MemRef>& handler, const Value<MemRef>& outputPojoPtr) const
 {
-    // Create new record for result
+    /// Create new record for result
     auto resultRecord = Record();
 
-    // Reading result values from jvm into result record
-    // Same differentiation as for input class above
+    /// Reading result values from jvm into result record
+    /// Same differentiation as for input class above
     if (operatorOutputSchema->fields.size() == 1)
     {
-        // 1. Simple, the output schema contains only one field
+        /// 1. Simple, the output schema contains only one field
         const auto field = operatorOutputSchema->fields[0];
         const auto fieldName = field->getName();
 
@@ -122,7 +122,7 @@ Record AbstractJavaUDFOperator::extractRecordFromPojo(const Value<MemRef>& handl
     else
     {
         auto outputClassPtr = FunctionCall<>("getObjectClass", getObjectClass, outputPojoPtr);
-        // 2. Complex, a plain old java object with multiple primitive types as map output
+        /// 2. Complex, a plain old java object with multiple primitive types as map output
         for (int i = 0; i < (int)operatorOutputSchema->fields.size(); i++)
         {
             const auto field = operatorOutputSchema->fields[i];
@@ -181,15 +181,15 @@ Record AbstractJavaUDFOperator::extractRecordFromPojo(const Value<MemRef>& handl
 
 Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record, Value<MemRef>& handler) const
 {
-    // Loading record values into java input class
-    // We derive the types of the values from the schema. The type can be complex of simple.
-    // 1. Simple: tuples with one field represented through an object type (String, Integer, ..)
-    // 2. Complex: plain old java object containing the multiple primitive types
+    /// Loading record values into java input class
+    /// We derive the types of the values from the schema. The type can be complex of simple.
+    /// 1. Simple: tuples with one field represented through an object type (String, Integer, ..)
+    /// 2. Complex: plain old java object containing the multiple primitive types
     if (operatorInputSchema->fields.size() == 1)
     {
-        // 1. Simple, the input schema contains only one field
+        /// 1. Simple, the input schema contains only one field
         auto field = operatorInputSchema->fields[0];
-        // Record should contain only one field
+        /// Record should contain only one field
         assert(record.getAllFields().size() == 1);
         auto fieldName = record.getAllFields()[0];
         const auto type = field->getDataType();
@@ -235,12 +235,12 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
     {
         auto inputClassPtr = FunctionCall("findInputClass", findInputClass, handler);
         auto inputPojoPtr = FunctionCall("allocateObject", allocateObject, inputClassPtr);
-        // 2. Complex, a plain old java object with multiple primitive types as map input
+        /// 2. Complex, a plain old java object with multiple primitive types as map input
         for (int i = 0; i < (int)operatorInputSchema->fields.size(); i++)
         {
             auto field = operatorInputSchema->fields[i];
             auto fieldName = field->getName();
-            // TODO reduce code and collapsed proxy functions.
+            /// TODO reduce code and collapsed proxy functions.
             const auto type = field->getDataType();
             if (type->equals(DataTypeFactory::createBoolean()))
             {
@@ -335,4 +335,4 @@ Nautilus::Value<MemRef> AbstractJavaUDFOperator::createInputPojo(Record& record,
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

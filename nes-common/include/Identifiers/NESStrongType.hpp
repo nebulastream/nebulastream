@@ -95,7 +95,7 @@ static constexpr Ident INVALID = Ident(Ident::INVALID);
 template <NESIdentifier Ident>
 static constexpr Ident INITIAL = Ident(Ident::INITIAL);
 
-} // namespace NES
+} /// namespace NES
 
 namespace std
 {
@@ -104,6 +104,6 @@ struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
 {
     size_t operator()(NES::NESStrongType<T, Tag, invalid, initial> const& x) const { return std::hash<T>()(x.getRawValue()); }
 };
-} // namespace std
+} /// namespace std
 
 #endif /// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPE_HPP_

@@ -56,6 +56,6 @@ private:
     Windowing::LogicalWindowDescriptorPtr windowDefinition;
 };
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_WINDOWING_CONTENTBASEDWINDOW_PHYSICALTHRESHOLDWINDOWOPERATOR_HPP_

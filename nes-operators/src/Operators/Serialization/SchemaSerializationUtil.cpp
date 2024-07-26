@@ -26,16 +26,16 @@ namespace NES
 SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& schema, SerializableSchema* serializedSchema)
 {
     NES_DEBUG("SchemaSerializationUtil:: serialize schema {}", schema->toString());
-    // serialize all field in schema
+    /// serialize all field in schema
     for (const auto& field : schema->fields)
     {
         auto* serializedField = serializedSchema->add_fields();
         serializedField->set_name(field->getName());
-        // serialize data type
+        /// serialize data type
         DataTypeSerializationUtil::serializeDataType(field->getDataType(), serializedField->mutable_type());
     }
 
-    // Serialize layoutType
+    /// Serialize layoutType
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         serializedSchema->set_layouttype(SerializableSchema_MemoryLayoutType_ROW_LAYOUT);
@@ -52,18 +52,18 @@ SerializableSchemaPtr SchemaSerializationUtil::serializeSchema(const SchemaPtr& 
 
 SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& serializedSchema)
 {
-    // de-serialize field from serialized schema to the schema object.
+    /// de-serialize field from serialized schema to the schema object.
     NES_DEBUG("SchemaSerializationUtil:: deserialize schema ");
     auto deserializedSchema = Schema::create();
     for (const auto& serializedField : serializedSchema.fields())
     {
         const auto& fieldName = serializedField.name();
-        // de-serialize data type
+        /// de-serialize data type
         auto type = DataTypeSerializationUtil::deserializeDataType(serializedField.type());
         deserializedSchema->addField(fieldName, type);
     }
 
-    // Deserialize layoutType
+    /// Deserialize layoutType
     switch (serializedSchema.layouttype())
     {
         case SerializableSchema_MemoryLayoutType_ROW_LAYOUT: {
@@ -82,4 +82,4 @@ SchemaPtr SchemaSerializationUtil::deserializeSchema(const SerializableSchema& s
     }
     return deserializedSchema;
 }
-} // namespace NES
+} /// namespace NES

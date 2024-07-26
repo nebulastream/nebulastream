@@ -34,8 +34,8 @@ namespace NES::Nautilus::Backends::MLIR
 class JITCompiler
 {
 public:
-    JITCompiler(); // Disable default constructor
-    ~JITCompiler(); // Disable default destructor
+    JITCompiler(); /// Disable default constructor
+    ~JITCompiler(); /// Disable default destructor
 
     static std::unique_ptr<mlir::ExecutionEngine> jitCompileModule(
         mlir::OwningOpRef<mlir::ModuleOp>& mlirModule,
@@ -45,5 +45,5 @@ public:
         const CompilationOptions& options,
         const DumpHelper& dumpHelper);
 };
-} // namespace NES::Nautilus::Backends::MLIR
+} /// namespace NES::Nautilus::Backends::MLIR
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_

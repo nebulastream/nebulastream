@@ -72,7 +72,7 @@ MemoryLayout::MemoryLayout(uint64_t bufferSize, SchemaPtr schema) : bufferSize(b
         recordSize += physicalFieldSize->size();
         nameFieldIndexMap[field->getName()] = fieldIndex;
     }
-    // calculate the buffer capacity only if the record size is larger then zero
+    /// calculate the buffer capacity only if the record size is larger then zero
     capacity = recordSize > 0 ? bufferSize / recordSize : 0;
 }
 
@@ -128,4 +128,4 @@ bool MemoryLayout::operator!=(const MemoryLayout& rhs) const
 {
     return !(rhs == *this);
 }
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts

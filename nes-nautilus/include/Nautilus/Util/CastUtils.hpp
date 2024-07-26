@@ -161,6 +161,6 @@ T* cast_if(Typed* typed)
     return nullptr;
 };
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_CASTUTILS_HPP_

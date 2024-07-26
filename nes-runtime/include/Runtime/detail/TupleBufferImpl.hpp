@@ -44,7 +44,7 @@ constexpr uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
 {
     if (bufferSize % withAlignment)
     {
-        // make sure that each buffer is a multiple of the alignment
+        /// make sure that each buffer is a multiple of the alignment
         return bufferSize + (withAlignment - bufferSize % withAlignment);
     }
     return bufferSize;
@@ -365,7 +365,7 @@ private:
  */
 void zmqBufferRecyclingCallback(void* ptr, void* hint);
 
-} // namespace detail
-} // namespace NES::Runtime
+} /// namespace detail
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_

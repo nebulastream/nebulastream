@@ -61,4 +61,4 @@ void NonKeyedSliceMergingHandler::stop(Runtime::QueryTerminationType, Runtime::E
     NES_DEBUG("stop NonKeyedSliceMergingHandler");
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -82,7 +82,7 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
             auto child = children[i];
             NES_ASSERT(!child->getPredecessors().empty(), "A child node should have a parent");
 
-            // check if current node is last parent of child.
+            /// check if current node is last parent of child.
             if (child->getSuccessors().back() == current)
             {
                 workStack.push(child);
@@ -91,4 +91,4 @@ PipelineQueryPlanIterator::iterator& PipelineQueryPlanIterator::iterator::operat
     }
     return *this;
 }
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

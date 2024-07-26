@@ -32,15 +32,15 @@ HyperLogLogDistinctCountApproximation::HyperLogLogDistinctCountApproximation(
 
 void hlladd(void* memrefPtr, uint64_t hash)
 {
-    //get the HyperLogLog instance
+    ///get the HyperLogLog instance
     HyperLogLogDistinctCountApproximationValue* obj = static_cast<HyperLogLogDistinctCountApproximationValue*>(memrefPtr);
-    // pass the hash value
+    /// pass the hash value
     obj->hyperLogLog.add(hash);
 }
 
 void HyperLogLogDistinctCountApproximation::lift(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record)
 {
-    // create instance of Murmur3HashFunction and hash the income value
+    /// create instance of Murmur3HashFunction and hash the income value
     NES::Nautilus::Interface::MurMur3HashFunction murMur3HashFunction;
     auto inputValue = inputExpression->execute(record);
     NES::Nautilus::Interface::HashFunction::HashValue hashValueNautilus = murMur3HashFunction.calculate(inputValue);
@@ -87,4 +87,4 @@ void HyperLogLogDistinctCountApproximation::reset(Nautilus::Value<Nautilus::MemR
     Nautilus::FunctionCall<>("clearHLL", clearHLL, memref);
 }
 
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation

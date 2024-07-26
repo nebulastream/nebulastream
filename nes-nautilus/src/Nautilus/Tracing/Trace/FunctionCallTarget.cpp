@@ -27,4 +27,4 @@ std::ostream& operator<<(std::ostream& os, const FunctionCallTarget& target)
     os << target.mangledName;
     return os;
 }
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

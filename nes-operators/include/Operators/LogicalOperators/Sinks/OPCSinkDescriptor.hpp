@@ -76,6 +76,6 @@ private:
 
 typedef std::shared_ptr<OPCSinkDescriptor> OPCSinkDescriptorPtr;
 
-} // namespace NES
+} /// namespace NES
 #endif
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_OPCSINKDESCRIPTOR_HPP_

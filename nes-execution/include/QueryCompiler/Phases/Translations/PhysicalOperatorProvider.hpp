@@ -35,6 +35,6 @@ public:
 protected:
     QueryCompilerOptionsPtr options;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_PHYSICALOPERATORPROVIDER_HPP_

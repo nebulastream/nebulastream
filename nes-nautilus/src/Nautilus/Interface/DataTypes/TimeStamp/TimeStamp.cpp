@@ -32,10 +32,10 @@ tm convertToUTC_TM(int64_t milliseconds)
     return *gmtime(&tt);
 }
 
-// Convert a string in the format "YYYY-MM-DDTHH:MM:SS" to milliseconds since the year 0 (UTC (Universal Time Coordinated)). //1970-01-07T14:23:27
+/// Convert a string in the format "YYYY-MM-DDTHH:MM:SS" to milliseconds since the year 0 (UTC (Universal Time Coordinated)). ///1970-01-07T14:23:27
 uint64_t stringtomillisecondsproxy(TextValue* t)
 {
-    // Parse the input string to extract the date and time.
+    /// Parse the input string to extract the date and time.
     int year = 0;
     int month = 0;
     int day = 0;
@@ -54,11 +54,11 @@ uint64_t stringtomillisecondsproxy(TextValue* t)
         std::sscanf(t->c_str(), "%d-%d-%d", &year, &month, &day);
         NES_DEBUG(" the year {} the month {} and the day {}", year, month, day);
     }
-    //TODO: Currently, we only support this format in a rather naive way, with issue #3616 we want to enhance the format, e.g., by
-    // distinguishing Date and Time input strings or support user-defined formats.
+    ///TODO: Currently, we only support this format in a rather naive way, with issue #3616 we want to enhance the format, e.g., by
+    /// distinguishing Date and Time input strings or support user-defined formats.
 
-    // Create a `std::tm` object with the parsed date and time.
-    //time_t tmp = {0};
+    /// Create a `std::tm` object with the parsed date and time.
+    ///time_t tmp = {0};
     struct tm tm = convertToUTC_TM(0L);
     if (year >= 0)
     {
@@ -85,11 +85,11 @@ uint64_t stringtomillisecondsproxy(TextValue* t)
         tm.tm_sec = second;
     }
 
-    // Convert the `std::tm` object to a `std::time_t` object.
+    /// Convert the `std::tm` object to a `std::time_t` object.
     std::time_t time = timegm(&tm);
-    // Convert the `std::time_t` object to milliseconds since the Unix epoch.
+    /// Convert the `std::time_t` object to milliseconds since the Unix epoch.
     std::chrono::duration<int64_t, std::milli> dur(time);
-    // As we current only expect time formats with hour, minutes and seconds, we need to multiply by 1000 to represent milliseconds
+    /// As we current only expect time formats with hour, minutes and seconds, we need to multiply by 1000 to represent milliseconds
     return dur.count() * SECONDS_TO_MILLISECONDS;
 }
 
@@ -141,11 +141,11 @@ std::shared_ptr<Boolean> TimeStamp::greaterThan(const TimeStamp& otherValue) con
 
 uint64_t centuryProxy(uint64_t milliseconds)
 {
-    // Convert the timestamp to a tm struct.
+    /// Convert the timestamp to a tm struct.
     tm time = convertToUTC_TM(milliseconds);
-    // Extract the year
+    /// Extract the year
     int year = time.tm_year + 1900;
-    // Divide the year by 100
+    /// Divide the year by 100
     return (year / 100) + 1;
 }
 
@@ -198,15 +198,15 @@ Value<Text> TimeStamp::interval()
 
 TextValue* weekdayNameproxy(int64_t milliseconds)
 {
-    // Convert the timestamp to a tm struct.
+    /// Convert the timestamp to a tm struct.
     tm time = convertToUTC_TM(milliseconds);
-    // Extract the day of the week
+    /// Extract the day of the week
     int dayOfWeek = time.tm_wday;
-    // Use an array of weekday names
+    /// Use an array of weekday names
     const std::string weekdayNames[] = {"Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"};
-    // Return the name of the day of the week
+    /// Return the name of the day of the week
     auto weekdayName = weekdayNames[dayOfWeek];
-    //Value<TextValue> valueweekdayname = (TextValue)weekdayName);
+    ///Value<TextValue> valueweekdayname = (TextValue)weekdayName);
     NES_TRACE("Find the weekday name {}", weekdayName);
     NES::Nautilus::TextValue* t = NES::Nautilus::TextValue::create(weekdayName);
     return t;
@@ -218,7 +218,7 @@ Value<Text> TimeStamp::getWeekdayName()
 
 uint64_t agecurrentTime(uint64_t milliseconds)
 {
-    //get current timestamp
+    ///get current timestamp
     auto current = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
     auto age = current - milliseconds;
     return age;
@@ -361,4 +361,4 @@ std::string TimeStamp::toString()
     return result->toString();
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

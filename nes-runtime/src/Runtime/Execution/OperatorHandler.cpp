@@ -26,4 +26,4 @@ void OperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>&)
 {
     NES_WARNING("Not possible to restore state in default implementation");
 };
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

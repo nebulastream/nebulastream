@@ -24,9 +24,9 @@ std::string Iterator::serializeTupleAsJson()
 {
     uint8_t* tuplePointer = &this->buffer.getBuffer<uint8_t>()[currentSeek];
 
-    // Iterate over all fields in a tuple.
-    // Use the field name in the schema as the name in the JSON object
-    // Use the offset array to determine where in the buffer the data for a field is stored.
+    /// Iterate over all fields in a tuple.
+    /// Use the field name in the schema as the name in the JSON object
+    /// Use the offset array to determine where in the buffer the data for a field is stored.
     auto jsonObject = nlohmann::json{};
     for (uint32_t fieldIndex = 0; fieldIndex < fieldNames.size(); fieldIndex++)
     {
@@ -43,7 +43,7 @@ std::string Iterator::serializeTupleAsJson()
         else if (physicalType->isBasicType())
         {
             auto basicFieldType = std::dynamic_pointer_cast<BasicPhysicalType>(physicalType);
-            // Just reinterpret the binary data at the field-specific offset in the tuple buffer.
+            /// Just reinterpret the binary data at the field-specific offset in the tuple buffer.
             switch (basicFieldType->nativeType)
             {
                 using enum NES::BasicPhysicalType::NativeType;
@@ -82,18 +82,18 @@ std::string Iterator::serializeTupleAsJson()
                     break;
                 case CHAR:
                     jsonObject[fieldName] = *reinterpret_cast<char const*>(fieldData);
-                    break; // TODO: Remove support for single CHAR fields: https://github.com/nebulastream/nebulastream/issues/4941
+                    break; /// TODO: Remove support for single CHAR fields: https://github.com/nebulastream/nebulastream/issues/4941
                 case UNDEFINED:
                     NES_FATAL_ERROR("Encountered unsupported type during conversion to JSON: {}", physicalType->toString());
             }
         }
         else
         {
-            // TODO Remove Support for CHAR arrays: https://github.com/nebulastream/nebulastream/issues/4907
+            /// TODO Remove Support for CHAR arrays: https://github.com/nebulastream/nebulastream/issues/4907
             NES_FATAL_ERROR("Encountered unsupported type during conversion to JSON: {}", physicalType->toString());
         }
     }
     return jsonObject.dump();
 }
 
-} // namespace NES
+} /// namespace NES

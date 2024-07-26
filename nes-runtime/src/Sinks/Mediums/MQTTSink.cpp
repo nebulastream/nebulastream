@@ -105,15 +105,15 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
         NES_ERROR("MQTTSink::writeData input buffer invalid");
         return false;
     }
-    // Print received Tuple Buffer for debugging purposes.
+    /// Print received Tuple Buffer for debugging purposes.
     auto layout = Runtime::MemoryLayouts::RowLayout::create(sinkFormat->getSchemaPtr(), inputBuffer.getBufferSize());
     auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, inputBuffer);
     NES_TRACE("MQTTSink::writeData {}", buffer.toString(sinkFormat->getSchemaPtr()));
 
     try
     {
-        // Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
-        // and afterward sent to an MQTT broker, via the MQTT client
+        /// Main share work performed here. The input TupleBuffer is iterated over and each tuple is converted to a json string
+        /// and afterward sent to an MQTT broker, via the MQTT client
         for (auto formattedTuple : sinkFormat->getTupleIterator(inputBuffer))
         {
             if (formattedTuple == "")
@@ -126,8 +126,8 @@ bool MQTTSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
             std::this_thread::sleep_for(minDelayBetweenSends);
         }
 
-        // When the client is asynchronous it can happen that the client's buffer is large enough to buffer all messages
-        // that were not successfully sent to an MQTT broker.
+        /// When the client is asynchronous it can happen that the client's buffer is large enough to buffer all messages
+        /// that were not successfully sent to an MQTT broker.
         if ((asynchronousClient && client->getNumberOfUnsentMessages() > 0))
         {
             NES_ERROR("MQTTSink::writeData: {} messages could not be sent", client->getNumberOfUnsentMessages());
@@ -174,7 +174,7 @@ bool MQTTSink::connect()
                                 .clean_session(true)
                                 .automatic_reconnect(true)
                                 .finalize();
-            // Connect to the MQTT broker
+            /// Connect to the MQTT broker
             NES_DEBUG("MQTTSink::connect: connect to address= {}", address);
             client->connect(connOpts);
             connected = true;
@@ -248,4 +248,4 @@ bool MQTTSink::getAsynchronousClient() const
     return asynchronousClient;
 }
 #endif
-} // namespace NES
+} /// namespace NES

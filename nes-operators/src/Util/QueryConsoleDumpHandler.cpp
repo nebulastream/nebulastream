@@ -92,4 +92,4 @@ void QueryConsoleDumpHandler::dump(std::string, std::string, QueryPlanPtr queryP
 {
     out << "Dumping queryPlan: " << queryPlan->toString() << std::endl;
 }
-} // namespace NES
+} /// namespace NES

@@ -23,6 +23,6 @@ namespace NES::QueryCompilation::PhysicalOperators
 class AbstractScanOperator
 {
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTSCANOPERATOR_HPP_

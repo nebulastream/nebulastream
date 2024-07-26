@@ -113,7 +113,7 @@ TEST_F(H3HashTest, simpleH3testDouble)
 
     for (uint64_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key)
     {
-        // To use the same hashes as for the uint64_t, we have to memcpy it into a double
+        /// To use the same hashes as for the uint64_t, we have to memcpy it into a double
         double keyDouble;
         std::memcpy(&keyDouble, &key, sizeof(double));
         for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row)
@@ -147,7 +147,7 @@ TEST_F(H3HashTest, simpleH3testFloat)
 
     for (uint32_t key = 0; key < NUMBER_OF_KEYS_TO_TEST; ++key)
     {
-        // To use the same hashes as for the uint32_t, we have to memcpy it into a double
+        /// To use the same hashes as for the uint32_t, we have to memcpy it into a double
         float keyFloat;
         std::memcpy(&keyFloat, &key, sizeof(float));
         for (auto row = 0UL; row < NUMBER_OF_ROWS; ++row)
@@ -281,4 +281,4 @@ TEST_F(H3HashTest, simpleH3testUInt8)
     }
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

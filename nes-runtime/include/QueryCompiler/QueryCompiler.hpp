@@ -39,6 +39,6 @@ protected:
     QueryCompilerOptionsPtr const queryCompilerOptions;
 };
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_

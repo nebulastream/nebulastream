@@ -56,4 +56,4 @@ MetricCollectorPtr MonitoringCatalog::getMetricCollector(MetricType metricType)
     return nullptr;
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

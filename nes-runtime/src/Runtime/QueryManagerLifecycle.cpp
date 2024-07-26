@@ -43,23 +43,23 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
                                                                            << qep->getSharedQueryId());
     {
         std::scoped_lock lock(queryMutex);
-        // test if elements already exist
+        /// test if elements already exist
         NES_DEBUG(
             "AbstractQueryManager: resolving sources for query  {}  with sources= {}", qep->getSharedQueryId(), qep->getSources().size());
 
         for (const auto& source : qep->getSources())
         {
-            // source already exists, add qep to source set if not there
+            /// source already exists, add qep to source set if not there
             OperatorId sourceOperatorId = source->getOperatorId();
 
             NES_DEBUG("AbstractQueryManager: Source  {}  not found. Creating new element with with qep ", sourceOperatorId);
-            //If source sharing is active and this is the first query for this source, init the map
+            ///If source sharing is active and this is the first query for this source, init the map
             if (sourceToQEPMapping.find(sourceOperatorId) == sourceToQEPMapping.end())
             {
                 sourceToQEPMapping[sourceOperatorId] = std::vector<Execution::ExecutableQueryPlanPtr>();
             }
 
-            //bookkeep which qep is now reading from this source
+            ///bookkeep which qep is now reading from this source
             sourceToQEPMapping[sourceOperatorId].push_back(qep);
         }
     }
@@ -70,7 +70,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
         qep->getSharedQueryId(),
         qep->getDecomposedQueryPlanId());
 
-    //TODO: This assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
+    ///TODO: This assumes 1) that there is only one pipeline per query and 2) that the subqueryplan id is unique => both can become a problem
     queryToStatisticsMap.insert(
         qep->getDecomposedQueryPlanId(), std::make_shared<QueryStatistics>(qep->getSharedQueryId(), qep->getDecomposedQueryPlanId()));
 
@@ -82,7 +82,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
         qep->getStatus() == Execution::ExecutableQueryPlanStatus::Created,
         "Invalid status for starting the QEP " << qep->getDecomposedQueryPlanId());
 
-    // 1. start the qep and handlers, if any
+    /// 1. start the qep and handlers, if any
     if (!qep->setup() || !qep->start())
     {
         NES_FATAL_ERROR("AbstractQueryManager: query execution plan could not started");
@@ -94,7 +94,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     std::vector<Network::NetworkSourcePtr> netSources;
     std::vector<Network::NetworkSinkPtr> netSinks;
 
-    // 2a. sort net sinks and sources
+    /// 2a. sort net sinks and sources
     for (const auto& sink : qep->getSinks())
     {
         if (auto netSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink); netSink)
@@ -118,13 +118,13 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
         netSources.end(),
         [](const Network::NetworkSourcePtr& lhs, const Network::NetworkSourcePtr& rhs) { return *lhs < *rhs; });
 
-    // 2b. pre-start net sinks
+    /// 2b. pre-start net sinks
     for (const auto& netSink : netSinks)
     {
         netSink->preSetup();
     }
 
-    // 2b. start net sinks
+    /// 2b. start net sinks
     for (const auto& sink : netSinks)
     {
         startFutures.emplace_back(asyncTaskExecutor->runAsync(
@@ -136,7 +136,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
             }));
     }
 
-    // 3a. pre-start net sources
+    /// 3a. pre-start net sources
     for (const auto& source : netSources)
     {
         std::stringstream s;
@@ -152,7 +152,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
         }
     }
 
-    // 3b. start net sources
+    /// 3b. start net sources
     for (const auto& source : netSources)
     {
         std::stringstream s;
@@ -173,7 +173,7 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
         NES_ASSERT(future.wait(), "Cannot start query");
     }
 
-    // 4. start data sinks
+    /// 4. start data sinks
     for (const auto& sink : qep->getSinks())
     {
         if (std::dynamic_pointer_cast<Network::NetworkSink>(sink))
@@ -200,7 +200,7 @@ bool MultiQueueQueryManager::registerQuery(const Execution::ExecutableQueryPlanP
         queryToStatisticsMap.size() <= numberOfQueues,
         "AbstractQueryManager::registerQuery: not enough queues are free for numberOfQueues=" << numberOfQueues << " query cnt="
                                                                                               << queryToStatisticsMap.size());
-    //currently we assume all queues have same number of threads, so we can do this.
+    ///currently we assume all queues have same number of threads, so we can do this.
     queryToTaskQueueIdMap[qep->getDecomposedQueryPlanId()] = currentTaskQueueId++;
     NES_DEBUG("queryToTaskQueueIdMap add for= {}  queue= {}", qep->getSharedQueryId(), currentTaskQueueId - 1);
     return ret;
@@ -213,10 +213,10 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
         queryManagerStatus.load() == QueryManagerStatus::Running,
         "AbstractQueryManager::startQuery: cannot accept new query id " << qep->getDecomposedQueryPlanId() << " "
                                                                         << qep->getSharedQueryId());
-    //    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
-    //               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
+    ///    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
+    ///               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
-    // 5. start data sources
+    /// 5. start data sources
     for (const auto& source : qep->getSources())
     {
         if (std::dynamic_pointer_cast<Network::NetworkSource>(source))
@@ -237,7 +237,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
         }
     }
 
-    //apply any pending reconfigurations to the sinks
+    ///apply any pending reconfigurations to the sinks
     for (const auto& sink : qep->getSinks())
     {
         const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
@@ -247,7 +247,7 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
         }
     }
 
-    // register start timestamp of query in statistics
+    /// register start timestamp of query in statistics
     if (queryToStatisticsMap.contains(qep->getDecomposedQueryPlanId()))
     {
         auto statistics = queryToStatisticsMap.find(qep->getDecomposedQueryPlanId());
@@ -295,7 +295,7 @@ bool AbstractQueryManager::canTriggerEndOfStream(DataSourcePtr source, Runtime::
         "source=" << source->getOperatorId() << " wants to terminate but is not part of the mapping process");
 
     bool overallResult = true;
-    //we have to check for each query on this source if we can terminate and return a common answer
+    ///we have to check for each query on this source if we can terminate and return a common answer
     for (auto qep : sourceToQEPMapping[source->getOperatorId()])
     {
         bool ret = queryStatusListener->canTriggerEndOfStream(
@@ -350,7 +350,7 @@ bool AbstractQueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qe
         }
         case std::future_status::timeout:
         case std::future_status::deferred: {
-            // TODO we need to fail the query now as it could not be stopped?
+            /// TODO we need to fail the query now as it could not be stopped?
             NES_ASSERT2_FMT(false, "Cannot stop query within deadline getDecomposedQueryPlanId()=" << qep->getDecomposedQueryPlanId());
             break;
         }
@@ -395,7 +395,7 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
     {
         if (type == QueryTerminationType::Graceful)
         {
-            // graceful shutdown :: only leaf sources
+            /// graceful shutdown :: only leaf sources
             if (!std::dynamic_pointer_cast<Network::NetworkSource>(source))
             {
                 NES_ASSERT2_FMT(source->stop(QueryTerminationType::Graceful), "Cannot terminate source " << source->getOperatorId());
@@ -415,9 +415,9 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
         }
     }
 
-    // TODO evaluate if we need to have this a wait instead of a get
-    // TODO for instance we could wait N seconds and if the stopped is not successful by then
-    // TODO we need to trigger a hard local kill of a QEP
+    /// TODO evaluate if we need to have this a wait instead of a get
+    /// TODO for instance we could wait N seconds and if the stopped is not successful by then
+    /// TODO we need to trigger a hard local kill of a QEP
     auto terminationFuture = qep->getTerminationFuture();
     auto terminationStatus = terminationFuture.wait_for(std::chrono::minutes(10));
     switch (terminationStatus)
@@ -432,7 +432,7 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
         }
         case std::future_status::timeout:
         case std::future_status::deferred: {
-            // TODO we need to fail the query now as it could not be stopped?
+            /// TODO we need to fail the query now as it could not be stopped?
             NES_ASSERT2_FMT(false, "Cannot stop query within deadline " << qep->getDecomposedQueryPlanId());
             break;
         }
@@ -456,10 +456,10 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source)
     auto sourceId = source->getOperatorId();
     auto pipelineSuccessors = source->getExecutableSuccessors();
 
-    // send EOS to `source` itself, iff a network source
+    /// send EOS to `source` itself, iff a network source
     if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr)
     {
-        //add soft eaos for network source
+        ///add soft eaos for network source
         auto reconfMessage = ReconfigurationMessage(
             INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, ReconfigurationType::SoftEndOfStream, netSource);
         addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, reconfMessage, false);
@@ -467,8 +467,8 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source)
 
     for (auto successor : pipelineSuccessors)
     {
-        // create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
-        // If successor is a data sink we send the reconfiguration message to the query plan.
+        /// create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
+        /// If successor is a data sink we send the reconfiguration message to the query plan.
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor))
         {
             auto reconfMessage = ReconfigurationMessage(
@@ -511,8 +511,8 @@ bool AbstractQueryManager::addHardEndOfStream(DataSourcePtr source)
 
     for (auto successor : pipelineSuccessors)
     {
-        // create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
-        // If successor is a data sink we send the reconfiguration message to the query plan.
+        /// create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
+        /// If successor is a data sink we send the reconfiguration message to the query plan.
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor))
         {
             auto reconfMessage = ReconfigurationMessage(
@@ -556,8 +556,8 @@ bool AbstractQueryManager::addFailureEndOfStream(DataSourcePtr source)
 
     for (auto successor : pipelineSuccessors)
     {
-        // create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
-        // If successor is a data sink we send the reconfiguration message to the query plan.
+        /// create reconfiguration message. If the successor is an executable pipeline we send a reconfiguration message to the pipeline.
+        /// If successor is a data sink we send the reconfiguration message to the query plan.
         if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&successor))
         {
             auto reconfMessage = ReconfigurationMessage(
@@ -628,4 +628,4 @@ bool AbstractQueryManager::addEndOfStream(DataSourcePtr source, Runtime::QueryTe
     return success;
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

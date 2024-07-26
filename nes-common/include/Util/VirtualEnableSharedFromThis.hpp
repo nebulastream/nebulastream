@@ -38,14 +38,14 @@ struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this
 {
     ~virtual_enable_shared_from_this() NES_NOEXCEPT(isNoexceptDestructible) override = default;
 
-    //TODO: fix Function 'shared_from_this' hides a non-virtual function from struct 'enable_shared_from_this<virtual_enable_shared_from_this_base<isNoexceptDestructible>>'
+    ///TODO: fix Function 'shared_from_this' hides a non-virtual function from struct 'enable_shared_from_this<virtual_enable_shared_from_this_base<isNoexceptDestructible>>'
     template <typename T1 = T>
     std::shared_ptr<T1> shared_from_this()
     {
         return std::dynamic_pointer_cast<T1>(virtual_enable_shared_from_this_base<isNoexceptDestructible>::shared_from_this());
     }
 
-    //TODO: fix Function 'weak_from_this' hides a non-virtual function from struct 'enable_shared_from_this<virtual_enable_shared_from_this_base<isNoexceptDestructible>>'
+    ///TODO: fix Function 'weak_from_this' hides a non-virtual function from struct 'enable_shared_from_this<virtual_enable_shared_from_this_base<isNoexceptDestructible>>'
     template <typename T1 = T>
     std::weak_ptr<T1> weak_from_this()
     {
@@ -53,6 +53,6 @@ struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this
     }
 };
 
-} // namespace NES::detail
+} /// namespace NES::detail
 
 #endif /// NES_COMMON_INCLUDE_UTIL_VIRTUALENABLESHAREDFROMTHIS_HPP_

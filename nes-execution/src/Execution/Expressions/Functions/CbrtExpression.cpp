@@ -36,17 +36,17 @@ double calculateCbrt(double x)
 
 Value<> CbrtExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the sub expression and retrieve the value.
+    /// Evaluate the sub expression and retrieve the value.
     Value value = subExpression->execute(record);
 
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-    // leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
-    // In all cases we can call the same calculateCbrt function as under the hood C++ can do an implicit cast from
-    // primitive integer types to the double argument.
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
+    /// As we don't know the exact type of value here, we have to check the type and then call the function.
+    /// leftValue.as<Int8>() makes an explicit cast from Value to Value<Int8>.
+    /// In all cases we can call the same calculateCbrt function as under the hood C++ can do an implicit cast from
+    /// primitive integer types to the double argument.
+    /// Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (value->isType<Int8>())
     {
-        // call the calculateCbrt function with the correct type
+        /// call the calculateCbrt function with the correct type
         return FunctionCall<>("calculateCbrt", calculateCbrt, value.as<Int8>());
     }
     else if (value->isType<Int16>())
@@ -71,10 +71,10 @@ Value<> CbrtExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<CbrtExpression>> cbrtFunction("cbtr");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

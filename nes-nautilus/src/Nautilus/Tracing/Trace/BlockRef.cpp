@@ -34,4 +34,4 @@ std::ostream& operator<<(std::ostream& os, const BlockRef& block)
     return os;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

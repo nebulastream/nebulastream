@@ -40,12 +40,12 @@ public:
 private:
     const uint64_t operatorHandlerIndex;
 
-    // These needs to be the same Schemas as used in the operator handler.
-    // We need them here to support some functionality during for-loops in execute where we cannot access the handler.
+    /// These needs to be the same Schemas as used in the operator handler.
+    /// We need them here to support some functionality during for-loops in execute where we cannot access the handler.
     const SchemaPtr inputSchema, outputSchema;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
-#endif // NAUTILUS_PYTHON_UDF_ENABLED
+#endif /// NAUTILUS_PYTHON_UDF_ENABLED
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_

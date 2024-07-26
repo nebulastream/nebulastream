@@ -57,5 +57,5 @@ private:
     const std::vector<Record::RecordFieldIdentifier> sortFieldIdentifiers;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTSCAN_HPP_

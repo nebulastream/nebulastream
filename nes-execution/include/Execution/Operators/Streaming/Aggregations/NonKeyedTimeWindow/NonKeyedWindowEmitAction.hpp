@@ -46,6 +46,6 @@ private:
     const std::string endTsFieldName;
     const OriginId resultOriginId;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_NONKEYEDTIMEWINDOW_NONKEYEDWINDOWEMITACTION_HPP_

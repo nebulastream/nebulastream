@@ -71,6 +71,6 @@ private:
     const uint64_t milliSeconds;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_

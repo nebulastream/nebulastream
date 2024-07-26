@@ -65,4 +65,4 @@ void NonKeyedWindowEmitAction::emitSlice(
 
     Nautilus::FunctionCall("deleteNonKeyedSlice", deleteNonKeyedSlice, globalSlice);
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

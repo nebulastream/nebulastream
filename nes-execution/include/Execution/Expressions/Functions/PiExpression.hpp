@@ -29,5 +29,5 @@ public:
 private:
     const ExpressionPtr SubExpression;
 };
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_

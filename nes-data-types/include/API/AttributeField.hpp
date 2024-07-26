@@ -67,5 +67,5 @@ private:
     DataTypePtr dataType;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_DATA_TYPES_INCLUDE_API_ATTRIBUTEFIELD_HPP_

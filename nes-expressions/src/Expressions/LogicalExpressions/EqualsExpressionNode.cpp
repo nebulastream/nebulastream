@@ -51,4 +51,4 @@ ExpressionNodePtr EqualsExpressionNode::copy()
     return EqualsExpressionNode::create(children[0]->as<ExpressionNode>()->copy(), children[1]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

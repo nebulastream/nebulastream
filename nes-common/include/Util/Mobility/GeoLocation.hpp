@@ -106,7 +106,7 @@ private:
     double latitude;
     double longitude;
 };
-} // namespace DataTypes::Experimental
-} // namespace NES::Spatial
+} /// namespace DataTypes::Experimental
+} /// namespace NES::Spatial
 
 #endif /// NES_COMMON_INCLUDE_UTIL_MOBILITY_GEOLOCATION_HPP_

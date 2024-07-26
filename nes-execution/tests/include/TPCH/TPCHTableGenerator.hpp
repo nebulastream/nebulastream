@@ -73,7 +73,7 @@ DSSType call_dbgen_mk(size_t idx, MKRetType (*mk_fn)(DSS_HUGE, DSSType* val, Arg
 
     return value;
 }
-} // namespace
+} /// namespace
 namespace NES
 {
 
@@ -99,13 +99,13 @@ public:
 
     const SchemaPtr customersSchema = Schema::create()
                                           ->addField("c_custkey", BasicType::INT32)
-                                          //  ->addField("c_name", BasicType::INT64)
-                                          //  ->addField("c_address", BasicType::INT64)
+                                          ///  ->addField("c_name", BasicType::INT64)
+                                          ///  ->addField("c_address", BasicType::INT64)
                                           ->addField("c_nationkey", BasicType::INT32)
-                                          //  ->addField("c_phone", BasicType::INT64)
+                                          ///  ->addField("c_phone", BasicType::INT64)
                                           ->addField("c_acctbal", BasicType::FLOAT32)
                                           ->addField("c_mksegment", BasicType::INT32);
-    //->addField("c_comment", BasicType::INT64)
+    ///->addField("c_comment", BasicType::INT64)
 
     const SchemaPtr ordersSchema = Schema::create()
                                        ->addField("o_orderkey", BasicType::INT32)
@@ -113,10 +113,10 @@ public:
                                        ->addField("o_orderstatus", BasicType::INT8)
                                        ->addField("o_totalprice", BasicType::FLOAT32)
                                        ->addField("o_orderdate", BasicType::INT32)
-                                       //->addField("o_orderpriority", BasicType::INT64)
-                                       //->addField("o_clerk", BasicType::INT64)
+                                       ///->addField("o_orderpriority", BasicType::INT64)
+                                       ///->addField("o_clerk", BasicType::INT64)
                                        ->addField("o_shippriority", BasicType::INT32);
-    //  ->addField("o_comment", BasicType::INT64);
+    ///  ->addField("o_comment", BasicType::INT64);
 
     const SchemaPtr lineItemSchema = Schema::create()
                                          ->addField("l_orderkey", BasicType::INT32)
@@ -135,39 +135,39 @@ public:
 
     const SchemaPtr partSchema = Schema::create()
                                      ->addField("p_partkey", BasicType::INT32)
-                                     // ->addField("p_name", BasicType::INT32)
-                                     //->addField("p_mfgr", BasicType::INT32)
-                                     //->addField("p_brand", BasicType::INT32)
-                                     // ->addField("p_type", BasicType::FLOAT32)
+                                     /// ->addField("p_name", BasicType::INT32)
+                                     ///->addField("p_mfgr", BasicType::INT32)
+                                     ///->addField("p_brand", BasicType::INT32)
+                                     /// ->addField("p_type", BasicType::FLOAT32)
                                      ->addField("p_size", BasicType::INT32)
-                                     // ->addField("p_container", BasicType::FLOAT32)
+                                     /// ->addField("p_container", BasicType::FLOAT32)
                                      ->addField("p_retailprice", BasicType::FLOAT32);
-    //->addField("p_comment", BasicType::INT8);
+    ///->addField("p_comment", BasicType::INT8);
 
     const SchemaPtr partsuppSchema = Schema::create()
                                          ->addField("ps_partkey", BasicType::INT32)
                                          ->addField("ps_suppkey", BasicType::INT32)
                                          ->addField("ps_availqty", BasicType::INT32)
                                          ->addField("ps_supplycost", BasicType::FLOAT32);
-    //->addField("ps_comment", BasicType::INT8);
+    ///->addField("ps_comment", BasicType::INT8);
 
     const SchemaPtr supplierSchema = Schema::create()
                                          ->addField("s_suppkey", BasicType::INT32)
-                                         // ->addField("s_name", BasicType::INT32)
-                                         // ->addField("s_address", BasicType::INT32)
+                                         /// ->addField("s_name", BasicType::INT32)
+                                         /// ->addField("s_address", BasicType::INT32)
                                          ->addField("s_nationkey", BasicType::INT32)
-                                         // ->addField("s_phone", BasicType::FLOAT32)
+                                         /// ->addField("s_phone", BasicType::FLOAT32)
                                          ->addField("s_acctbal", BasicType::FLOAT32);
-    //->addField("s_comment", BasicType::FLOAT32);
+    ///->addField("s_comment", BasicType::FLOAT32);
 
     const SchemaPtr nationSchema = Schema::create()
                                        ->addField("n_nationkey", BasicType::INT32)
                                        ->addField("n_name", BasicType::INT32)
                                        ->addField("n_regionkey", BasicType::INT32);
-    // ->addField("n_comment", BasicType::INT32);
+    /// ->addField("n_comment", BasicType::INT32);
 
     const SchemaPtr regionSchema = Schema::create()->addField("r_regionkey", BasicType::INT32)->addField("r_name", BasicType::INT32);
-    //->addField("r_comment", BasicType::INT32);
+    ///->addField("r_comment", BasicType::INT32);
 
     const std::unordered_map<TPCHTable, SchemaPtr> tableSchemas
         = {{TPCHTable::Part, partSchema},
@@ -209,13 +209,13 @@ public:
             _scale_factor < 1.0f || std::round(_scale_factor) == _scale_factor,
             "Due to tpch_dbgen limitations, only scale factors less than one can have a fractional part.");
 
-        const auto cache_directory = fmt::format("tpch_cached_tables/sf-{}-c-{}", _scale_factor, bufferManager->getBufferSize()); // NOLINT
+        const auto cache_directory = fmt::format("tpch_cached_tables/sf-{}-c-{}", _scale_factor, bufferManager->getBufferSize()); /// NOLINT
         if (std::filesystem::is_directory(cache_directory))
         {
             return loadTablesFromPath(cache_directory);
         }
 
-        // Init tpch_dbgen - it is important this is done before any data structures from tpch_dbgen are read.
+        /// Init tpch_dbgen - it is important this is done before any data structures from tpch_dbgen are read.
         dbgen_reset_seeds();
         dbgen_init_scale_factor(_scale_factor);
         using ChunkOffset = uint64_t;
@@ -226,11 +226,11 @@ public:
         const auto nation_count = static_cast<ChunkOffset>(tdefs[NATION].base);
         const auto region_count = static_cast<ChunkOffset>(tdefs[REGION].base);
 
-        // The `* 4` part is defined in the TPC-H specification.
-        // TableBuilder lineitem_builder{_benchmark_config->chunk_size,
-        //                             lineitem_column_types,
-        //                            lineitem_column_names,
-        //                           ChunkOffset{order_count * 4}};
+        /// The `* 4` part is defined in the TPC-H specification.
+        /// TableBuilder lineitem_builder{_benchmark_config->chunk_size,
+        ///                             lineitem_column_types,
+        ///                            lineitem_column_names,
+        ///                           ChunkOffset{order_count * 4}};
 
         NES_DEBUG("Generate lineitem with size {}", order_count * 4);
 
@@ -249,17 +249,17 @@ public:
         for (size_t row_idx = 0; row_idx < customer_count; row_idx++)
         {
             auto customer = call_dbgen_mk<customer_t>(row_idx + 1, mk_cust, TPCHTable::Customer);
-            // TODO fix mktsegment
+            /// TODO fix mktsegment
             int32_t mktsegment = std::strncmp(customer.mktsegment, "BUILDING", 8) == 0;
             customerBuilder.append(std::make_tuple(
                 (int32_t)customer.custkey,
-                //customer.name,
-                //customer.address,
+                ///customer.name,
+                ///customer.address,
                 (int32_t)customer.nation_code,
-                // customer.phone,
+                /// customer.phone,
                 convert_money(customer.acctbal),
                 (int32_t)mktsegment
-                //customer.comment
+                ///customer.comment
                 ));
         }
 
@@ -276,10 +276,10 @@ public:
                 /*write as one char*/ (int8_t)order.orderstatus,
                 convert_money(order.totalprice),
                 getDate(order.odate),
-                //order.opriority,
-                //order.clerk,
+                ///order.opriority,
+                ///order.clerk,
                 (int32_t)order.spriority
-                //order.comment
+                ///order.comment
                 ));
 
             for (auto line_idx = 0; line_idx < order.lines; ++line_idx)
@@ -299,9 +299,9 @@ public:
                     getDate(lineitem.sdate),
                     getDate(lineitem.cdate),
                     getDate(lineitem.rdate)
-                    //lineitem.shipinstruct,
-                    //lineitem.shipmode,
-                    //lineitem.comment
+                    ///lineitem.shipinstruct,
+                    ///lineitem.shipmode,
+                    ///lineitem.comment
                     ));
                 l++;
             }
@@ -316,19 +316,19 @@ public:
 
             partBuilder.append(std::make_tuple(
                 (int32_t)part.partkey,
-                // part.name,
-                // part.mfgr,
-                // part.brand,
-                // part.type,
+                /// part.name,
+                /// part.mfgr,
+                /// part.brand,
+                /// part.type,
                 (int32_t)part.size,
-                // part.container,
+                /// part.container,
                 convert_money(part.retailprice)
-                //  part.comment
+                ///  part.comment
                 ));
 
-            // Some scale factors (e.g., 0.05) are not supported by tpch-dbgen as they produce non-unique partkey/suppkey
-            // combinations. The reason is probably somewhere in the magic in PART_SUPP_BRIDGE. As the partkey is
-            // ascending, those are easy to identify:
+            /// Some scale factors (e.g., 0.05) are not supported by tpch-dbgen as they produce non-unique partkey/suppkey
+            /// combinations. The reason is probably somewhere in the magic in PART_SUPP_BRIDGE. As the partkey is
+            /// ascending, those are easy to identify:
 
             DSS_HUGE last_partkey = {};
             auto suppkeys = std::vector<DSS_HUGE>{};
@@ -336,7 +336,7 @@ public:
             for (const auto& partsupp : part.s)
             {
                 {
-                    // Make sure we do not generate non-unique combinations (see above)
+                    /// Make sure we do not generate non-unique combinations (see above)
                     if (partsupp.partkey != last_partkey)
                     {
                         NES_ASSERT(partsupp.partkey > last_partkey, "Expected partkey to be generated in ascending order");
@@ -351,7 +351,7 @@ public:
 
                 partsuppBuilder.append(std::make_tuple(
                     (int32_t)partsupp.partkey, (int32_t)partsupp.suppkey, (int32_t)partsupp.qty, convert_money(partsupp.scost)
-                    // partsupp.comment
+                    /// partsupp.comment
                     ));
             }
         }
@@ -364,12 +364,12 @@ public:
             const auto supplier = call_dbgen_mk<supplier_t>(supplier_idx + 1, mk_supp, TPCHTable::Supplier);
             supplierBuilder.append(std::make_tuple(
                 (int32_t)supplier.suppkey,
-                // supplier.name,
-                //supplier.address,
+                /// supplier.name,
+                ///supplier.address,
                 (int32_t)supplier.nation_code,
-                // supplier.phone,
+                /// supplier.phone,
                 convert_money(supplier.acctbal)
-                //  supplier.comment
+                ///  supplier.comment
                 ));
         }
 
@@ -381,9 +381,9 @@ public:
             const auto nation = call_dbgen_mk<code_t>(nation_idx + 1, mk_nation, TPCHTable::Nation);
             nationBuilder.append(std::make_tuple(
                 (int32_t)nation.code,
-                //nation.text,
+                ///nation.text,
                 (int32_t)nation.join
-                // nation.comment
+                /// nation.comment
                 ));
         }
 
@@ -394,8 +394,8 @@ public:
         {
             const auto region = call_dbgen_mk<code_t>(region_idx + 1, mk_region, TPCHTable::Region);
             regionBuilder.append(std::make_tuple((int32_t)region.code
-                                                 // region.text,
-                                                 // region.comment
+                                                 /// region.text,
+                                                 /// region.comment
                                                  ));
         }
 
@@ -443,14 +443,14 @@ public:
 
     void findAndReplaceAll(std::string& data, const std::string& toSearch, const std::string& replaceStr)
     {
-        // Get the first occurrence
+        /// Get the first occurrence
         uint64_t pos = data.find(toSearch);
-        // Repeat till end is reached
+        /// Repeat till end is reached
         while (pos != std::string::npos)
         {
-            // Replace this occurrence of Sub String
+            /// Replace this occurrence of Sub String
             data.replace(pos, toSearch.size(), replaceStr);
-            // Get the next occurrence from the current position
+            /// Get the next occurrence from the current position
             pos = data.find(toSearch, pos + replaceStr.size());
         }
     }
@@ -472,6 +472,6 @@ private:
     TPCH_Scale_Factor scaleFactor;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TPCH_TPCHTABLEGENERATOR_HPP_

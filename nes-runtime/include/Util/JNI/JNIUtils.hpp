@@ -181,6 +181,6 @@ std::string getStringObjectValue(jstring object);
  */
 const std::string convertToJNIName(const std::string& javaClassName);
 
-} // namespace NES::jni
+} /// namespace NES::jni
 
 #endif /// NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_

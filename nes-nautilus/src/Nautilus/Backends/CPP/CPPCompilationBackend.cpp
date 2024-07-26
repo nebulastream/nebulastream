@@ -53,4 +53,4 @@ CPPCompilationBackend::compile(std::shared_ptr<IR::IRGraph> ir, const Compilatio
     return std::make_unique<CPPExecutable>(res.getDynamicObject());
 }
 
-} // namespace NES::Nautilus::Backends::CPP
+} /// namespace NES::Nautilus::Backends::CPP

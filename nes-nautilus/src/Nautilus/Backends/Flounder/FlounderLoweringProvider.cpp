@@ -123,7 +123,7 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
     if (!this->activeBlocks.contains(block->getIdentifier()))
     {
         this->activeBlocks.emplace(block->getIdentifier());
-        // FlounderFrame blockFrame;
+        /// FlounderFrame blockFrame;
         auto blockLabel = program.label("Block_" + block->getIdentifier());
         program << program.section(blockLabel);
 
@@ -239,7 +239,7 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
 {
     auto leftInput = frame.getValue(addOpt->getLeftInput()->getIdentifier());
     auto rightInput = frame.getValue(addOpt->getRightInput()->getIdentifier());
-    // perform add
+    /// perform add
     auto result = createVreg(addOpt->getIdentifier(), addOpt->getStamp(), frame);
     program << program.mov(result, leftInput);
     auto addFOp = program.add(result, rightInput);
@@ -384,7 +384,7 @@ void FlounderLoweringProvider::LoweringContext::process(std::shared_ptr<IR::Oper
 {
     auto trueLabel = program.label("Block_" + ifOpt->getTrueBlockInvocation().getBlock()->getIdentifier());
     auto falseLabel = program.label("Block_" + ifOpt->getFalseBlockInvocation().getBlock()->getIdentifier());
-    // clear all non args
+    /// clear all non args
     auto falseBlockFrame = processBlockInvocation(ifOpt->getFalseBlockInvocation(), frame);
     auto trueBlockFrame = processBlockInvocation(ifOpt->getTrueBlockInvocation(), frame);
 
@@ -526,4 +526,4 @@ void FlounderLoweringProvider::LoweringContext::process(const std::shared_ptr<IR
     }
 }
 
-} // namespace NES::Nautilus::Backends::Flounder
+} /// namespace NES::Nautilus::Backends::Flounder

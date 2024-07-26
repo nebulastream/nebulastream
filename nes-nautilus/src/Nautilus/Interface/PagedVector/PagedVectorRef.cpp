@@ -44,12 +44,12 @@ Value<UInt64> PagedVectorRef::getCapacityPerPage() const
 
 Value<MemRef> PagedVectorRef::allocateEntry()
 {
-    // check if we should allocate a new page
+    /// check if we should allocate a new page
     if (getNumberOfEntries() >= getCapacityPerPage())
     {
         FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef);
     }
-    // gets the current page and reserve space for the new entry.
+    /// gets the current page and reserve space for the new entry.
     auto page = getCurrentPage();
     auto entry = page + (getNumberOfEntries() * entrySize);
     setNumberOfEntries(getNumberOfEntries() + 1_u64);
@@ -75,7 +75,7 @@ Value<UInt64> PagedVectorRef::getTotalNumberOfEntries()
 
 Value<MemRef> PagedVectorRef::getEntry(const Value<UInt64>& pos)
 {
-    // Calculating on what page and at what position the entry lies
+    /// Calculating on what page and at what position the entry lies
     Value<UInt64> capacityPerPage = getCapacityPerPage();
     auto pagePos = (pos / capacityPerPage).as<UInt64>();
     auto positionOnPage = pos - (pagePos * capacityPerPage);
@@ -180,4 +180,4 @@ void PagedVectorRefIter::setPos(Value<UInt64> newValue)
 {
     pos = newValue;
 }
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

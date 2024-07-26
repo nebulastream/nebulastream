@@ -98,7 +98,7 @@ private:
     {
         if constexpr (std::is_same<Type, std::string>::value)
         {
-            return strValue; // No conversion needed
+            return strValue; /// No conversion needed
         }
         else if constexpr (std::is_same<Type, float>::value)
         {
@@ -110,7 +110,7 @@ private:
         }
         else if constexpr (std::is_same<Type, bool>::value)
         {
-            // Simple boolean conversion (true for "true", false otherwise)
+            /// Simple boolean conversion (true for "true", false otherwise)
             return strValue == "true";
         }
         else if constexpr (NESIdentifier<Type>)
@@ -222,6 +222,6 @@ using FloatOption = ScalarOption<float>;
 using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_

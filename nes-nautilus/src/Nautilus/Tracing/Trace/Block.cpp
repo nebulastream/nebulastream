@@ -33,16 +33,16 @@ bool Block::isLocalValueRef(ValueRef& ref)
             }
         }
     }
-    //if (ref.blockId == blockId) {
-    // this is a local ref
-    //    return true;
-    //}
+    ///if (ref.blockId == blockId) {
+    /// this is a local ref
+    ///    return true;
+    ///}
     return std::find(arguments.begin(), arguments.end(), ref) != arguments.end();
 }
 
 void Block::addArgument(ValueRef ref)
 {
-    // only add ref to arguments if it not already exists
+    /// only add ref to arguments if it not already exists
     if (std::find(arguments.begin(), arguments.end(), ref) == arguments.end())
     {
         arguments.emplace_back(ref);
@@ -69,4 +69,4 @@ std::ostream& operator<<(std::ostream& os, const Block& block)
     return os;
 }
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing

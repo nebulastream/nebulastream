@@ -30,7 +30,7 @@ namespace Operators
 {
 class Operator;
 class OperatorState;
-} // namespace Operators
+} /// namespace Operators
 
 /**
  * The execution context manages state of operators within a pipeline and provides access to some global functionality.
@@ -212,6 +212,6 @@ private:
     Value<Boolean> lastChunk;
 };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_

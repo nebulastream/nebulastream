@@ -184,5 +184,5 @@ private:
     Configurations::IntConfigOption batchSize;
     Configurations::InputFormatConfigOption inputFormat;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_KAFKASOURCETYPE_HPP_

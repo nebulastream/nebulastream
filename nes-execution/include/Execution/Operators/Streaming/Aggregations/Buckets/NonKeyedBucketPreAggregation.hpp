@@ -46,6 +46,6 @@ private:
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETPREAGGREGATION_HPP_

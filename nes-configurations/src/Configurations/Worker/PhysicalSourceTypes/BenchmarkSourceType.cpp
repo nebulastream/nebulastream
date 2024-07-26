@@ -27,7 +27,7 @@ struct MemoryAreaDeleter
     void operator()(uint8_t* ptr) const { free(ptr); }
 };
 
-} // namespace detail
+} /// namespace detail
 
 BenchmarkSourceType::BenchmarkSourceType(
     const std::string& logicalSourceName,
@@ -148,7 +148,7 @@ bool BenchmarkSourceType::equal(const PhysicalSourceTypePtr& other)
 
 void BenchmarkSourceType::reset()
 {
-    //nothing
+    ///nothing
 }
 
-} // namespace NES
+} /// namespace NES

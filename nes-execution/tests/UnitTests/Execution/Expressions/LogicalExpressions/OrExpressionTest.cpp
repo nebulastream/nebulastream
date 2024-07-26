@@ -51,4 +51,4 @@ TEST_F(OrExpressionTest, baseBoolCases)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

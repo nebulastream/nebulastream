@@ -50,6 +50,6 @@ private:
 
 using BinarySourceDescriptorPtr = std::shared_ptr<BinarySourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_BINARYSOURCEDESCRIPTOR_HPP_

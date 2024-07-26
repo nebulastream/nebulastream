@@ -21,7 +21,7 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
 {
     auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
 
-    // Checking, if we maybe already have this slice
+    /// Checking, if we maybe already have this slice
     auto sliceStart = sliceAssigner.getSliceStartTs(timestamp);
     auto sliceEnd = sliceAssigner.getSliceEndTs(timestamp);
     auto sliceId = StreamSlice::getSliceIdentifier(sliceStart, sliceEnd);
@@ -31,12 +31,12 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
         return slice.value();
     }
 
-    // No slice was found for the timestamp
+    /// No slice was found for the timestamp
     NES_DEBUG("Creating slice for slice start={} and end={} for ts={}", sliceStart, sliceEnd, timestamp);
     auto newSlice = createNewSlice(sliceStart, sliceEnd);
     slicesWriteLocked->emplace_back(newSlice);
 
-    // For all possible slices in their respective windows, reset the state
+    /// For all possible slices in their respective windows, reset the state
     for (auto windowInfo : getAllWindowsForSlice(*newSlice))
     {
         NES_DEBUG("reset the state for window {}", windowInfo.toString());
@@ -73,10 +73,10 @@ std::vector<WindowInfo> StreamJoinOperatorHandlerSlicing::getAllWindowsForSlice(
     const auto lastWindowEnd = sliceStart + windowSize;
     for (auto curWindowEnd = firstWindowEnd; curWindowEnd <= lastWindowEnd; curWindowEnd += windowSlide)
     {
-        // For now, we expect the windowEnd to be the windowId
+        /// For now, we expect the windowEnd to be the windowId
         allWindows.emplace_back(curWindowEnd - windowSize, curWindowEnd);
     }
 
     return allWindows;
 }
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

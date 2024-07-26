@@ -146,4 +146,4 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction)
     EXPECT_EQ(result.read("booleanVariable"), false);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

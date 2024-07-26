@@ -89,48 +89,48 @@ void BatchJoinBuild::setup(ExecutionContext& executionCtx) const
 
 void BatchJoinBuild::open(ExecutionContext& ctx, RecordBuffer&) const
 {
-    // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local pagedVector and store it in the local state.
-    // 1. get the operator handler
+    /// Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
+    /// We use this here, to load the thread local pagedVector and store it in the local state.
+    /// 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local pagedVector according to the worker id.
+    /// 2. load the thread local pagedVector according to the worker id.
     auto state = Nautilus::FunctionCall("getPagedVectorProxy", getPagedVectorProxy, globalOperatorHandler, ctx.getWorkerThreadId());
     auto entrySize = keySize + valueSize + /*next ptr*/ sizeof(int64_t) + /*hash*/ sizeof(int64_t);
     auto pagedVector = Interface::PagedVectorRef(state, entrySize);
-    // 3. store the reference to the pagedVector in the local operator state.
+    /// 3. store the reference to the pagedVector in the local operator state.
     auto sliceStoreState = std::make_unique<LocalJoinBuildState>(pagedVector);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
 }
 
 void BatchJoinBuild::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const
 {
-    // 1. derive key values
+    /// 1. derive key values
     std::vector<Value<>> keyValues;
     for (const auto& exp : keyExpressions)
     {
         keyValues.emplace_back(exp->execute(record));
     }
 
-    // 3. load the reference to the pagedVector.
+    /// 3. load the reference to the pagedVector.
     auto state = reinterpret_cast<LocalJoinBuildState*>(ctx.getLocalState(this));
     auto& pagedVector = state->pagedVector;
 
-    // 4. store entry in the pagedVector
+    /// 4. store entry in the pagedVector
 
-    // 4.1 calculate hash
+    /// 4.1 calculate hash
     auto hash = hashFunction->calculate(keyValues);
 
-    // 4.2 create entry and store it in pagedVector
+    /// 4.2 create entry and store it in pagedVector
     auto entry = pagedVector.allocateEntry();
-    // 4.3a store hash value at next offset
+    /// 4.3a store hash value at next offset
     auto hashPtr = (entry + (uint64_t)sizeof(int64_t)).as<MemRef>();
     hashPtr.store(hash);
 
-    // 4.3b store key values
+    /// 4.3b store key values
     auto keyPtr = (hashPtr + (uint64_t)sizeof(int64_t)).as<MemRef>();
     storeKeys(keyValues, keyPtr);
 
-    // 4.3c store value values
+    /// 4.3c store value values
     std::vector<Value<>> values;
     for (const auto& exp : valueExpressions)
     {
@@ -160,4 +160,4 @@ void BatchJoinBuild::storeValues(std::vector<Value<>> values, Value<MemRef> valu
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

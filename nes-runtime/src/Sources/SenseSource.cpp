@@ -82,4 +82,4 @@ const string& SenseSource::getUdfs() const
     return udfs;
 }
 
-} // namespace NES
+} /// namespace NES

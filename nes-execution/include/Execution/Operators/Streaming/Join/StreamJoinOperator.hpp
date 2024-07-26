@@ -99,5 +99,5 @@ public:
     QueryCompilation::StreamJoinStrategy joinStrategy;
     QueryCompilation::WindowingStrategy windowingStrategy;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATOR_HPP_

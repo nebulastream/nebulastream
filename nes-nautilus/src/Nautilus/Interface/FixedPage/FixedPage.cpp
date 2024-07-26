@@ -62,7 +62,7 @@ void FixedPage::addHashToBloomFilter(const uint64_t hash)
 std::string FixedPage::getContentAsString(SchemaPtr schema) const
 {
     std::stringstream ss;
-    //for each item in the page
+    ///for each item in the page
     for (auto i = 0UL; i < currentPos; i++)
     {
         ss << "Page entry no=" << i << std::endl;
@@ -144,4 +144,4 @@ FixedPage::FixedPage(FixedPage* otherPage)
 {
     otherPage->bloomFilter = std::make_unique<Runtime::BloomFilter>(capacity, bloomFalsePosRate);
 }
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

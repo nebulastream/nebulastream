@@ -57,4 +57,4 @@ StatisticSinkDescriptor::StatisticSinkDescriptor(
 {
 }
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

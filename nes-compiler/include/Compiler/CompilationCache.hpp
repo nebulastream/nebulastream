@@ -55,6 +55,6 @@ private:
     std::recursive_mutex mutex;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_COMPILATIONCACHE_HPP_

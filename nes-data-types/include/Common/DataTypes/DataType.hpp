@@ -34,7 +34,7 @@ public:
     /**
      * @brief Checks if this data type is Undefined.
      */
-    // Todo 4909: we should use dynamic_cast instead. (https://github.com/nebulastream/nebulastream/issues/4909)
+    /// Todo 4909: we should use dynamic_cast instead. (https://github.com/nebulastream/nebulastream/issues/4909)
     [[nodiscard]] virtual bool isUndefined() const;
 
     /**
@@ -105,6 +105,6 @@ public:
     virtual std::string toString() = 0;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_DATATYPE_HPP_

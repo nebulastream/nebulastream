@@ -51,7 +51,7 @@ std::shared_ptr<CompilationRequest> CompilationRequest::create(
     bool debug,
     std::vector<std::shared_ptr<ExternalAPI>> externalApis)
 {
-    // creates a unique name for a compilation request.
+    /// creates a unique name for a compilation request.
     auto time = std::time(nullptr);
     auto localtime = *std::localtime(&time);
 
@@ -110,4 +110,4 @@ bool CompilationRequest::operator!=(const CompilationRequest& rhs) const
     return !(rhs == *this);
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

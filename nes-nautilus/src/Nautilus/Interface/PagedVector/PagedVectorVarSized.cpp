@@ -58,7 +58,7 @@ PagedVectorVarSized::PagedVectorVarSized(
     totalNumberOfEntries = 0;
     setEntrySizeAndCapacityPerPage();
 
-    // store pages with records
+    /// store pages with records
     this->pages.assign(buffers.begin(), buffers.end());
 
     if (this->pages.empty())
@@ -114,10 +114,10 @@ void PagedVectorVarSized::appendVarSizedDataPage()
 uint64_t PagedVectorVarSized::storeText(const char* text, uint32_t length)
 {
     NES_ASSERT2_FMT(length > 0, "Length of text has to be larger than 0!");
-    // create a new entry for the varSizedDataEntryMap
+    /// create a new entry for the varSizedDataEntryMap
     VarSizedDataEntryMapValue textMapValue(currVarSizedDataEntry, length, varSizedDataPages.size() - 1);
 
-    // store the text in the varSizedDataPages
+    /// store the text in the varSizedDataPages
     while (length > 0)
     {
         auto remainingSpace = pageSize - (currVarSizedDataEntry - varSizedDataPages.back().getBuffer());
@@ -147,7 +147,7 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey)
     auto textLength = textMapValue.entryLength;
     auto bufferIdx = textMapValue.entryBufIdx;
 
-    // buffer size should be multiple of pageSize for efficiency reasons
+    /// buffer size should be multiple of pageSize for efficiency reasons
     auto bufferSize = ((textLength + pageSize - 1) / pageSize) * pageSize;
     auto buffer = bufferManager->getUnpooledBuffer(bufferSize);
 
@@ -156,7 +156,7 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey)
         auto textValue = TextValue::create(buffer.value(), textLength);
         auto destPtr = textValue->str();
 
-        // load the text from the varSizedDataPages into the buffer
+        /// load the text from the varSizedDataPages into the buffer
         while (textLength > 0)
         {
             auto varSizedDataPage = varSizedDataPages[bufferIdx];
@@ -185,7 +185,7 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey)
 
 void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other)
 {
-    // TODO optimize appending the maps, see #4639
+    /// TODO optimize appending the maps, see #4639
     NES_ASSERT2_FMT(entrySize == other.entrySize, "Can not combine PagedVector of different entrySize for now!");
 
     pages.back().setNumberOfTuples(numberOfEntriesOnCurrPage);
@@ -276,4 +276,4 @@ uint64_t PagedVectorVarSized::getCapacityPerPage() const
     return capacityPerPage;
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

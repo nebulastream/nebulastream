@@ -52,6 +52,6 @@ private:
     std::unordered_set<std::string> compilerFlags;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_COMPILERFLAGS_HPP_

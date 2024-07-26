@@ -36,10 +36,10 @@ ExpressionNodePtr ExpExpressionNode::create(ExpressionNodePtr const& child)
 
 void ExpExpressionNode::inferStamp(SchemaPtr schema)
 {
-    // infer stamp of child, check if its numerical, assume same stamp
+    /// infer stamp of child, check if its numerical, assume same stamp
     ArithmeticalUnaryExpressionNode::inferStamp(schema);
 
-    // change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly.
+    /// change stamp to float with bounds [0, DOUBLE_MAX]. Results of EXP are always positive and become high quickly.
     stamp = DataTypeFactory::createFloat(0.0, std::numeric_limits<double>::max());
     NES_TRACE("ExpExpressionNode: change stamp to float with bounds [0, DOUBLE_MAX]: {}", toString());
 }
@@ -66,4 +66,4 @@ ExpressionNodePtr ExpExpressionNode::copy()
     return ExpExpressionNode::create(children[0]->as<ExpressionNode>()->copy());
 }
 
-} // namespace NES
+} /// namespace NES

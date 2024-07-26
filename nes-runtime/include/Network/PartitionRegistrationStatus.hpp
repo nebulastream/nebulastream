@@ -31,5 +31,5 @@ enum class PartitionRegistrationStatus : uint8_t
     /// a partition was never registered
     NotFound,
 };
-} // namespace NES::Network
+} /// namespace NES::Network
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_PARTITIONREGISTRATIONSTATUS_HPP_

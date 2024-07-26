@@ -83,7 +83,7 @@ std::string NetworkSource::toString() const
     return "NetworkSource: " + nesPartition.toString();
 }
 
-// this is necessary to use std::visit below (see example: https://en.cppreference.com/w/cpp/utility/variant/visit)
+/// this is necessary to use std::visit below (see example: https://en.cppreference.com/w/cpp/utility/variant/visit)
 namespace detail
 {
 template <class... Ts>
@@ -93,7 +93,7 @@ struct overloaded : Ts...
 };
 template <class... Ts>
 overloaded(Ts...) -> overloaded<Ts...>;
-} // namespace detail
+} /// namespace detail
 
 bool NetworkSource::bind()
 {
@@ -125,7 +125,7 @@ bool NetworkSource::start()
             auto newReconf = ReconfigurationMessage(
                 sharedQueryId, decomposedQueryPlanId, Runtime::ReconfigurationType::Initialize, shared_from_base<DataSource>());
             queryManager->addReconfigurationMessage(sharedQueryId, decomposedQueryPlanId, newReconf, true);
-            break; // hack as currently we assume only one executableSuccessor
+            break; /// hack as currently we assume only one executableSuccessor
         }
         NES_DEBUG("NetworkSource: start completed on {}", nesPartition);
         return true;
@@ -204,9 +204,9 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             break;
         }
         case Runtime::ReconfigurationType::Initialize: {
-            // we need to check again because between the invocations of
-            // NetworkSource::start() and NetworkSource::reconfigure() the query might have
-            // been stopped for some reason
+            /// we need to check again because between the invocations of
+            /// NetworkSource::start() and NetworkSource::reconfigure() the query might have
+            /// been stopped for some reason
             if (networkManager->isPartitionConsumerRegistered(nesPartition) == PartitionRegistrationStatus::Deleted)
             {
                 NES_WARNING(
@@ -232,7 +232,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
                         "NetworkSource: reconfigure() cannot get event channel {} on Thread {}",
                         nesPartition.toString(),
                         Runtime::NesThread::getId());
-                    return; // partition was deleted on the other side of the channel... no point in waiting for a channel
+                    return; /// partition was deleted on the other side of the channel... no point in waiting for a channel
                 }
                 workerContext.storeEventOnlyChannel(this->operatorId, std::move(channel));
                 NES_DEBUG(
@@ -241,8 +241,8 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
             break;
         }
         case Runtime::ReconfigurationType::Destroy: {
-            // necessary as event channel are lazily created so in the case of an immediate stop
-            // they might not be established yet
+            /// necessary as event channel are lazily created so in the case of an immediate stop
+            /// they might not be established yet
             terminationType = Runtime::QueryTerminationType::Graceful;
             isTermination = true;
             break;
@@ -270,7 +270,7 @@ void NetworkSource::reconfigure(Runtime::ReconfigurationMessage& task, Runtime::
     {
         if (!workerContext.doesEventChannelExist(this->operatorId))
         {
-            //todo #4490: allow aborting connection here
+            ///todo #4490: allow aborting connection here
             auto channel = workerContext.waitForAsyncConnectionEventChannel(this->operatorId);
             if (channel)
             {
@@ -333,7 +333,7 @@ void NetworkSource::runningRoutine(const Runtime::BufferManagerPtr&, const Runti
 
 void NetworkSource::onEndOfStream(Runtime::QueryTerminationType terminationType)
 {
-    // propagate EOS to the locally running QEPs that use the network source
+    /// propagate EOS to the locally running QEPs that use the network source
     NES_DEBUG("Going to inject eos for {} terminationType={}", nesPartition, terminationType);
     if (Runtime::QueryTerminationType::Graceful == terminationType)
     {
@@ -358,7 +358,7 @@ bool NetworkSource::startNewVersion()
     sinkLocation = newDescriptor.getNodeLocation();
     nesPartition = newDescriptor.getNesPartition();
     nextSourceDescriptor = std::nullopt;
-    //bind the sink to the new partition
+    ///bind the sink to the new partition
     bind();
     auto reconfMessage = Runtime::ReconfigurationMessage(
         INVALID_SHARED_QUERY_ID,
@@ -417,4 +417,4 @@ bool NetworkSource::scheduleNewDescriptor(const NetworkSourceDescriptor& network
     }
     return false;
 }
-} // namespace NES::Network
+} /// namespace NES::Network

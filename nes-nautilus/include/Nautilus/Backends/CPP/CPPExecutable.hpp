@@ -40,6 +40,6 @@ public:
 private:
     std::shared_ptr<Compiler::DynamicObject> obj;
 };
-} // namespace NES::Nautilus::Backends::CPP
+} /// namespace NES::Nautilus::Backends::CPP
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_

@@ -67,6 +67,6 @@ public:
         const uint64_t pageSizeLeft,
         const uint64_t pageSizeRight);
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_BUCKETING_NLJOPERATORHANDLERBUCKETING_HPP_

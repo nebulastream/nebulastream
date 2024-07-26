@@ -36,23 +36,23 @@ template <class SliceType, typename SliceStore>
 void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::trigger(
     WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, SequenceData sequenceData, uint64_t watermarkTs)
 {
-    // the watermark update is an atomic process and returns the last and the current watermark.
+    /// the watermark update is an atomic process and returns the last and the current watermark.
     NES_TRACE("{} Trigger {}-{}-{}", windowSize, originId, sequenceData.toString(), watermarkTs);
     auto currentWatermark = watermarkProcessor->updateWatermark(watermarkTs, sequenceData, originId);
 
     if (lastTriggerWatermark == currentWatermark)
     {
-        // if the current watermark has not changed, we don't have to trigger any windows and return.
+        /// if the current watermark has not changed, we don't have to trigger any windows and return.
         return;
     }
 
-    // the watermark has changed get the lock to trigger
+    /// the watermark has changed get the lock to trigger
     std::lock_guard<std::mutex> lock(triggerMutex);
-    // update currentWatermark, such that other threads to have to acquire the lock
+    /// update currentWatermark, such that other threads to have to acquire the lock
     NES_TRACE("{} Trigger slices between {}-{}", windowSize, lastTriggerWatermark, currentWatermark);
     lastTriggerWatermark = currentWatermark;
 
-    // collect all buckets that end <= watermark from all thread local bucket stores.
+    /// collect all buckets that end <= watermark from all thread local bucket stores.
     std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>> collectedBuckets;
     for (auto& bucketStore : threadLocalBuckets)
     {
@@ -77,10 +77,10 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::dispatchSliceMe
     std::shared_ptr<AbstractBufferProvider> bufferProvider,
     std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices)
 {
-    // for all thread local buckets that have been collected, emit a merge task to combine this buckets.
-    // note: the sliceMetaData set is ordered implicitly by the slice start time as the std::map
-    // is an associative container that contains a sorted set of unique objects of type Key.
-    // Thus, we emit slice deployment tasks in increasing order.
+    /// for all thread local buckets that have been collected, emit a merge task to combine this buckets.
+    /// note: the sliceMetaData set is ordered implicitly by the slice start time as the std::map
+    /// is an associative container that contains a sorted set of unique objects of type Key.
+    /// Thus, we emit slice deployment tasks in increasing order.
     for (const auto& [metaData, slices] : collectedSlices)
     {
         auto buffer = bufferProvider->getBufferBlocking();
@@ -88,7 +88,7 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::dispatchSliceMe
         buffer.setChunkNumber(1);
         buffer.setLastChunk(true);
 
-        // allocate a slice merge task withing the buffer.
+        /// allocate a slice merge task withing the buffer.
         auto task = allocateWithin<SliceMergeTask<SliceType>>(buffer);
         task->startSlice = std::get<0>(metaData);
         task->endSlice = std::get<1>(metaData);
@@ -111,15 +111,15 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::stop(
 {
     NES_DEBUG("shutdown AbstractBucketPreAggregationHandler: {}", queryTerminationType);
 
-    // get the lock to trigger -> this should actually not be necessary, as stop can not be called concurrently to the processing.
+    /// get the lock to trigger -> this should actually not be necessary, as stop can not be called concurrently to the processing.
     std::lock_guard<std::mutex> lock(triggerMutex);
     if (queryTerminationType == Runtime::QueryTerminationType::Graceful)
     {
-        // collect all remaining slices from all thread local slice stores.
+        /// collect all remaining slices from all thread local slice stores.
         std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>> collectedSlices;
         for (auto& threadLocalSliceStore : threadLocalBuckets)
         {
-            // we can directly access the buckets as no other worker can concurrently change them
+            /// we can directly access the buckets as no other worker can concurrently change them
             for (auto& ref : threadLocalSliceStore->getSlices())
             {
                 auto& slice = ref.second;
@@ -141,8 +141,8 @@ AbstractBucketPreAggregationHandler<SliceType, SliceStore>::~AbstractBucketPreAg
     NES_DEBUG("~AbstractBucketPreAggregationHandler");
 }
 
-// Instantiate types
+/// Instantiate types
 template class AbstractBucketPreAggregationHandler<NonKeyedSlice, NonKeyedBucketStore>;
 template class AbstractBucketPreAggregationHandler<KeyedSlice, KeyedBucketStore>;
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

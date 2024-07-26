@@ -25,6 +25,6 @@ public:
     explicit ClientException(const std::string& message);
 };
 
-} // namespace NES::Client
+} /// namespace NES::Client
 
 #endif /// NES_CLIENT_INCLUDE_CLIENT_CLIENTEXCEPTION_HPP_

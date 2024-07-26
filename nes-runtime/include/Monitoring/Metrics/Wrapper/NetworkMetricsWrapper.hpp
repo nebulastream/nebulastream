@@ -103,6 +103,6 @@ void readFromBuffer(NetworkMetricsWrapper& wrapper, Runtime::TupleBuffer& buf, u
  */
 nlohmann::json asJson(const NetworkMetricsWrapper& metrics);
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICS_WRAPPER_NETWORKMETRICSWRAPPER_HPP_

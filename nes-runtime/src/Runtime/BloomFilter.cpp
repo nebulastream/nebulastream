@@ -84,4 +84,4 @@ BloomFilter::~BloomFilter()
     }
 }
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

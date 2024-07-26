@@ -59,7 +59,7 @@ void NLJBuildBucketing::insertRecordForWindow(
         workerThreadId,
         Value<UInt64>(to_underlying(joinBuildSide)));
 
-    // Write record to the pagedVector
+    /// Write record to the pagedVector
     auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(curPagedVectorRef, schema);
     pagedVectorVarSizedRef.writeRecord(record);
 }
@@ -89,4 +89,4 @@ NLJBuildBucketing::NLJBuildBucketing(
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

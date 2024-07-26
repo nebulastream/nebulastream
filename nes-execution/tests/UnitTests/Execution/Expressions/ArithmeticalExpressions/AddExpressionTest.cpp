@@ -40,24 +40,24 @@ TEST_F(AddExpressionTest, addIntegers)
 {
     auto addExpression = BinaryExpressionWrapper<AddExpression>();
 
-    // Int8
+    /// Int8
     {
         auto resultValue = addExpression.eval(Value<Int8>(42_s8), Value<Int8>(42_s8));
         ASSERT_EQ(resultValue, 84);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int8>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = addExpression.eval(Value<Int16>(42_s16), Value<Int16>(42_s16));
         ASSERT_EQ(resultValue, 84);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int16>());
-    } // Int32
+    } /// Int32
     {
         auto resultValue = addExpression.eval(Value<Int32>(42), Value<Int32>(42));
         ASSERT_EQ(resultValue, 84);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = addExpression.eval(Value<Int64>(42_s64), Value<Int64>(42_s64));
         ASSERT_EQ(resultValue, 84);
@@ -69,23 +69,23 @@ TEST_F(AddExpressionTest, addUnsignedIntegers)
 {
     auto addExpression = BinaryExpressionWrapper<AddExpression>();
 
-    // UInt8
+    /// UInt8
     {
         auto resultValue = addExpression.eval(Value<UInt8>(42_u8), Value<UInt8>(42_u8));
         ASSERT_EQ(resultValue, 84_u8);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt8>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = addExpression.eval(Value<UInt16>(42_u16), Value<UInt16>(42_u16));
         ASSERT_EQ(resultValue, 84_u16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>());
-    } // UInt32
+    } /// UInt32
     {
         auto resultValue = addExpression.eval(Value<UInt32>(42u), Value<UInt32>(42u));
         ASSERT_EQ(resultValue, 84_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    } // UInt64
+    } /// UInt64
     {
         auto resultValue = addExpression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
         ASSERT_EQ(resultValue, 84_u64);
@@ -96,13 +96,13 @@ TEST_F(AddExpressionTest, addUnsignedIntegers)
 TEST_F(AddExpressionTest, addFloat)
 {
     auto addExpression = BinaryExpressionWrapper<AddExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = addExpression.eval(Value<Float>((float)42), Value<Float>((float)42));
         ASSERT_EQ(resultValue, (float)84);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Float>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = addExpression.eval(Value<Double>((double)42), Value<Double>((double)42));
         ASSERT_EQ(resultValue, (float)84);
@@ -113,11 +113,11 @@ TEST_F(AddExpressionTest, addFloat)
 TEST_F(AddExpressionTest, addTimeStamps)
 {
     auto addExpression = BinaryExpressionWrapper<AddExpression>();
-    long ms = 1666798551744; // Wed Oct 26 2022 15:35:51
+    long ms = 1666798551744; /// Wed Oct 26 2022 15:35:51
     std::chrono::hours dur(ms);
     NES_DEBUG("{}", dur.count());
     auto c1 = Value<TimeStamp>(TimeStamp((uint64_t)dur.count()));
-    // TimeStamp
+    /// TimeStamp
     {
         auto resultValue
             = addExpression.eval(Value<TimeStamp>(TimeStamp((uint64_t)dur.count())), Value<TimeStamp>(TimeStamp((uint64_t)dur.count())));
@@ -126,4 +126,4 @@ TEST_F(AddExpressionTest, addTimeStamps)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

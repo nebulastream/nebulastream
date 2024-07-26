@@ -90,6 +90,6 @@ protected:
 };
 
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_

@@ -218,5 +218,5 @@ std::string OPCSource::getPassword() const
     return password;
 }
 
-} // namespace NES
+} /// namespace NES
 #endif

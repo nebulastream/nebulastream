@@ -46,6 +46,6 @@ public:
      */
     static LogicalSourceTypePtr createFromYaml(Yaml::Node& yamlConfig);
 };
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_

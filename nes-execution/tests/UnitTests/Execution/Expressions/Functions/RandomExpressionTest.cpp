@@ -39,73 +39,73 @@ public:
 TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<RandomExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(1_s8));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(2_s16));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(3_s32));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(4_s64));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>(1_u8));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>(2_u16));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt32
+    /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(3_u32));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt64
+    /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(4_u64));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>((uint8_t)1));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>((uint16_t)2));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt32
+    /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>((uint32_t)3));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // UInt64
+    /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>((uint64_t)4));
         ASSERT_TRUE((bool)(resultValue > 0.0 && resultValue < 1.0));
@@ -136,4 +136,4 @@ TEST_F(RandomExpressionTest, evaluateSinExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

@@ -24,7 +24,7 @@ SchemaPtr TestSchemas::getSchemaTemplate(const std::string& name)
     if (it != testSchemaCatalog.end())
     {
         auto newSchema = std::make_shared<Schema>();
-        // Use copyFields() to create a deep copy of the fields
+        /// Use copyFields() to create a deep copy of the fields
         newSchema->copyFields(it->second);
         return newSchema;
     }
@@ -59,4 +59,4 @@ std::unordered_map<std::string, SchemaPtr> NES::TestSchemas::testSchemaCatalog =
          ->addField("value", BasicType::UINT64)
          ->addField("value2", BasicType::UINT64)
          ->addField("timestamp", BasicType::UINT64)}};
-} // namespace NES
+} /// namespace NES

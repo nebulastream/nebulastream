@@ -60,4 +60,4 @@ bool MapUDFLogicalOperator::isIdentical(const NodePtr& other) const
     return equal(other) && id == other->as<MapUDFLogicalOperator>()->id;
 }
 
-} // namespace NES
+} /// namespace NES

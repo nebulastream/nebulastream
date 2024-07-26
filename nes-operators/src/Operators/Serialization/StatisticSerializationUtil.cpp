@@ -119,14 +119,14 @@ StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescripto
 {
     Statistic::WindowStatisticDescriptorPtr statisticDescriptor;
 
-    // 1. Deserializing the field expression
+    /// 1. Deserializing the field expression
     auto expression = ExpressionSerializationUtil::deserializeExpression(descriptorMessage.field());
     if (!expression->instanceOf<FieldAccessExpressionNode>())
     {
         NES_THROW_RUNTIME_ERROR("Expects a FieldAccessExpressionNode for deserializing a WindowStatisticDescriptor!");
     }
 
-    // 2. Deserializing the descriptor details
+    /// 2. Deserializing the descriptor details
     if (descriptorMessage.details().Is<StatisticWindowDescriptorMessage_CountMinDetails>())
     {
         StatisticWindowDescriptorMessage_CountMinDetails countMinDetails;
@@ -149,4 +149,4 @@ StatisticSerializationUtil::deserializeDescriptor(const StatisticWindowDescripto
     return statisticDescriptor;
 }
 
-} // namespace NES
+} /// namespace NES

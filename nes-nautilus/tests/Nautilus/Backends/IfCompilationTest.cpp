@@ -135,14 +135,14 @@ TEST_P(IfCompilationTest, nestedIFThenNoElse)
     ASSERT_EQ(function(), 12);
 }
 
-// Todo leads to redundant if that can be replaced with br
+/// Todo leads to redundant if that can be replaced with br
 Value<> doubleIfCondition()
 {
     Value value = Value(1);
     Value iw = Value(1);
     if (iw == 8)
     {
-        // iw = iw + 14;
+        /// iw = iw + 14;
     }
     if (iw == 1)
     {
@@ -333,8 +333,8 @@ TEST_P(IfCompilationTest, nestedBooleanFunction)
     ASSERT_EQ(function(1), 42);
 }
 
-// Tests all registered compilation backends.
-// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
+/// Tests all registered compilation backends.
+/// To select a specific compilation backend use ::testing::Values("MLIR") instead of ValuesIn.
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     IfCompilationTest,
@@ -342,4 +342,4 @@ INSTANTIATE_TEST_CASE_P(
         Backends::CompilationBackendRegistry::getPluginNames().begin(), Backends::CompilationBackendRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<IfCompilationTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

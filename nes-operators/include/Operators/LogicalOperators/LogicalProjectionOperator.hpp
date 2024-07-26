@@ -58,5 +58,5 @@ private:
     std::vector<ExpressionNodePtr> expressions;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALPROJECTIONOPERATOR_HPP_

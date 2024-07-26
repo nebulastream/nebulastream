@@ -134,7 +134,7 @@ bool MonitoringAgent::addMonitoringStreams(const Configurations::WorkerConfigura
     {
         for (auto metricType : monitoringPlan->getMetricTypes())
         {
-            // auto generate the specifics
+            /// auto generate the specifics
             std::string metricTypeString = std::string(magic_enum::enum_name(metricType));
             MonitoringSourceTypePtr sourceType = MonitoringSourceType::create(
                 metricTypeString,
@@ -159,4 +159,4 @@ void MonitoringAgent::setNodeId(WorkerId nodeId)
     this->nodeId = nodeId;
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

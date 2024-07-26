@@ -85,6 +85,6 @@ public:
 };
 
 using MonitoringSourcePtr = std::shared_ptr<MonitoringSource>;
-}; // namespace NES
+}; /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_MONITORINGSOURCE_HPP_

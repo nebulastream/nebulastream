@@ -46,6 +46,6 @@ private:
 
 using SenseSourceDescriptorPtr = std::shared_ptr<SenseSourceDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_SENSESOURCEDESCRIPTOR_HPP_

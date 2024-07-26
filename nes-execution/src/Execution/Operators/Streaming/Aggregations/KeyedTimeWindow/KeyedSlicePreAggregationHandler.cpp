@@ -44,4 +44,4 @@ KeyedSlicePreAggregationHandler::~KeyedSlicePreAggregationHandler()
     NES_DEBUG("~GlobalSlicePreAggregationHandler");
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -37,4 +37,4 @@ uint8_t* GlobalHashTableLockFree::insert(uint64_t key) const
     return entry;
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

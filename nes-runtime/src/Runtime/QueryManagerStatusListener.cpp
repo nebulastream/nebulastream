@@ -44,7 +44,7 @@ void AbstractQueryManager::notifyQueryStatusChange(
             {
                 NES_ASSERT2_FMT(
                     source->stop(Runtime::QueryTerminationType::Graceful),
-                    "Cannot cleanup source " << source->getOperatorId()); // just a clean-up op
+                    "Cannot cleanup source " << source->getOperatorId()); /// just a clean-up op
             }
         }
         addReconfigurationMessage(
@@ -78,9 +78,9 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
         std::unique_lock lock(queryMutex);
         plansToFail = sourceToQEPMapping[failedSource->getOperatorId()];
     }
-    // we cant fail a query from a source because failing a query eventually calls stop on the failed query
-    // this means we are going to call join on the source thread
-    // however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
+    /// we cant fail a query from a source because failing a query eventually calls stop on the failed query
+    /// this means we are going to call join on the source thread
+    /// however, notifySourceFailure may be called from the source thread itself, thus, resulting in a deadlock
     for (auto qepToFail : plansToFail)
     {
         auto future = asyncTaskExecutor->runAsync(
@@ -143,7 +143,7 @@ void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipel
 void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType)
 {
     std::unique_lock lock(queryMutex);
-    //THIS is now shutting down all
+    ///THIS is now shutting down all
     for (auto& entry : sourceToQEPMapping[source->getOperatorId()])
     {
         NES_TRACE(
@@ -177,4 +177,4 @@ void AbstractQueryManager::notifySinkCompletion(
     NES_ASSERT2_FMT(qep, "invalid decomposed query plan id " << decomposedQueryPlanId << " for sink " << sink->toString());
     qep->notifySinkCompletion(sink, terminationType);
 }
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

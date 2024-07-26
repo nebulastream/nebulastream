@@ -39,25 +39,25 @@ public:
 TEST_F(SinExpressionTest, evaluateSinExpressionInteger)
 {
     auto expression = UnaryExpressionWrapper<SinExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(90_s8));
         ASSERT_EQ(resultValue, (double)0.8939966636005579);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(90_s16));
         ASSERT_EQ(resultValue, (double)0.8939966636005579);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(90_s32));
         ASSERT_EQ(resultValue, (double)0.8939966636005579);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(90_s64));
         ASSERT_EQ(resultValue, (double)0.8939966636005579);
@@ -68,13 +68,13 @@ TEST_F(SinExpressionTest, evaluateSinExpressionInteger)
 TEST_F(SinExpressionTest, evaluateSinExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<SinExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)90));
         ASSERT_EQ(resultValue, (double)0.8939966636005579);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)90));
         ASSERT_EQ(resultValue, (double)0.8939966636005579);
@@ -91,4 +91,4 @@ TEST_F(SinExpressionTest, evaluateSinExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

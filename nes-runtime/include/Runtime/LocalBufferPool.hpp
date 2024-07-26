@@ -103,6 +103,6 @@ private:
     mutable std::mutex mutex;
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_

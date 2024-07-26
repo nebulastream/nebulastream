@@ -100,4 +100,4 @@ OperatorId NetworkSinkDescriptor::getUniqueId() const
 {
     return uniqueNetworkSinkId;
 }
-} // namespace NES::Network
+} /// namespace NES::Network

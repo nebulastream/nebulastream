@@ -34,7 +34,7 @@ void UDFLogicalOperator::inferStringSignature()
 {
     NES_TRACE("UDFLogicalOperator: Inferring String signature for {}", toString());
     NES_ASSERT(children.size() == 1, "UDFLogicalOperator should have exactly 1 child.");
-    // Infer query signatures for child operator.
+    /// Infer query signatures for child operator.
     auto child = children[0]->as<LogicalOperator>();
     child->inferStringSignature();
 
@@ -46,21 +46,21 @@ void UDFLogicalOperator::inferStringSignature()
 
 bool UDFLogicalOperator::inferSchema()
 {
-    // Set the input schema.
+    /// Set the input schema.
     if (!LogicalUnaryOperator::inferSchema())
     {
         return false;
     }
-    // The output schema of this operation is determined by the UDF.
+    /// The output schema of this operation is determined by the UDF.
     outputSchema->clear();
     outputSchema->copyFields(udfDescriptor->getOutputSchema());
-    // Update output schema by changing the qualifier and corresponding attribute names
+    /// Update output schema by changing the qualifier and corresponding attribute names
     const auto newQualifierName = inputSchema->getQualifierNameForSystemGeneratedFields() + Schema::ATTRIBUTE_NAME_SEPARATOR;
     for (const auto& field : outputSchema->fields)
     {
-        //Extract field name without qualifier
+        ///Extract field name without qualifier
         auto fieldName = field->getName();
-        //Add new qualifier name to the field and update the field name
+        ///Add new qualifier name to the field and update the field name
         field->setName(newQualifierName + fieldName);
     }
     verifySchemaCompatibility(udfDescriptor->getInputSchema(), children[0]->as<Operator>()->getOutputSchema());
@@ -84,9 +84,9 @@ bool UDFLogicalOperator::isIdentical(const NodePtr& other) const
 
 void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema, const Schema& childOperatorOutputSchema) const
 {
-    // The code below detects all schema violations, prints them to the ERROR output log,
-    // then throws an exception containing all of them.
-    // This makes it easier to users to fix all violations at once.
+    /// The code below detects all schema violations, prints them to the ERROR output log,
+    /// then throws an exception containing all of them.
+    /// This makes it easier to users to fix all violations at once.
     std::vector<std::string> errors;
     if (udfInputSchema.getSize() != childOperatorOutputSchema.getSize())
     {
@@ -98,9 +98,9 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
         auto fieldInChild = childOperatorOutputSchema.getField(fieldName);
         if (!fieldInChild)
         {
-            // If both schemas have size 1, the names do not matter.
-            // In this case the UDF is assumed to not have a complex type but a boxed simple type, e.g., Integer, which is not named.
-            // The UDF execution code just reads the first attribute from the child operator output schema, regardless of its name.
+            /// If both schemas have size 1, the names do not matter.
+            /// In this case the UDF is assumed to not have a complex type but a boxed simple type, e.g., Integer, which is not named.
+            /// The UDF execution code just reads the first attribute from the child operator output schema, regardless of its name.
             if (udfInputSchema.getSize() == 1)
             {
                 fieldInChild = childOperatorOutputSchema.fields[0];
@@ -115,7 +115,7 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
         const auto childType = fieldInChild->getDataType();
         if (type->equals(DataTypeFactory::createInt64()) && childType->equals(DataTypeFactory::createUInt64()))
         {
-            // This is not an error condition because we need to map timestamps, which are always UINT64, to Java long.
+            /// This is not an error condition because we need to map timestamps, which are always UINT64, to Java long.
             NES_WARNING("Mapping UINT64 field in child operator output schema to signed Java long in UDF input schema: {}", fieldName)
         }
         else if (
@@ -155,4 +155,4 @@ void UDFLogicalOperator::verifySchemaCompatibility(const Schema& udfInputSchema,
         throw TypeInferenceException(message.str());
     }
 }
-} // namespace NES
+} /// namespace NES

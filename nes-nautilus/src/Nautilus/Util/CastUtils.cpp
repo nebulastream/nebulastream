@@ -29,4 +29,4 @@ Typed::Typed(const TypeIdentifier* typeIdentifier) : typeIdentifier(typeIdentifi
 {
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

@@ -30,5 +30,5 @@ enum class PlacementStrategy : uint8_t
     ELEGANT_ENERGY = 6,
     ELEGANT_BALANCED = 7
 };
-} // namespace NES::Optimizer
+} /// namespace NES::Optimizer
 #endif /// NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTSTRATEGY_HPP_

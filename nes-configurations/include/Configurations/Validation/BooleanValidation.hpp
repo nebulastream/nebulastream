@@ -34,6 +34,6 @@ public:
          */
     bool isValid(const std::string& boolean) const override;
 };
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_BOOLEANVALIDATION_HPP_

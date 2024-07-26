@@ -70,7 +70,7 @@ public:
     {
         std::unique_lock<std::mutex> lock(queueMutex);
 
-        //TODO: I am not sure if this is the right way to go
+        ///TODO: I am not sure if this is the right way to go
         while (!bufferQueue.empty())
         {
             NES_TRACE("reset pop={}", bufferQueue.front())
@@ -84,7 +84,7 @@ public:
         {
             std::unique_lock<std::mutex> lock(queueMutex);
 
-            // wait while the queue is full
+            /// wait while the queue is full
             while (bufferQueue.size() >= capacity)
             {
                 notFull.wait(lock);
@@ -100,13 +100,13 @@ public:
         {
             std::unique_lock<std::mutex> lock(queueMutex);
 
-            // wait while the queue is empty
+            /// wait while the queue is empty
             while (bufferQueue.size() == 0)
             {
                 notEmpty.wait(lock);
             }
             T retVal = bufferQueue.front();
-            //      NES_DEBUG("BlockingQueue: popping element {}", bufferQueue.front());
+            ///      NES_DEBUG("BlockingQueue: popping element {}", bufferQueue.front());
             bufferQueue.pop();
 
             notFull.notify_one();
@@ -120,14 +120,14 @@ public:
             auto timeout = std::chrono::milliseconds(timeout_ms);
             std::unique_lock<std::mutex> lock(queueMutex);
 
-            // wait while the queue is empty
+            /// wait while the queue is empty
             auto ret = notEmpty.wait_for(lock, timeout, [=, this]() { return bufferQueue.size() > 0; });
             if (!ret)
             {
                 return std::nullopt;
             }
             T retVal = bufferQueue.front();
-            //        NES_DEBUG("BlockingQueue: popping element timeout {}", bufferQueue.front());
+            ///        NES_DEBUG("BlockingQueue: popping element timeout {}", bufferQueue.front());
             bufferQueue.pop();
 
             notFull.notify_one();
@@ -135,5 +135,5 @@ public:
         }
     }
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_COMMON_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_

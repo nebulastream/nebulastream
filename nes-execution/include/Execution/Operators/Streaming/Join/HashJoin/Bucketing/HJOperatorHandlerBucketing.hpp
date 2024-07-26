@@ -83,6 +83,6 @@ public:
         uint64_t pageSize,
         uint64_t numPartitions);
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_BUCKETING_HJOPERATORHANDLERBUCKETING_HPP_

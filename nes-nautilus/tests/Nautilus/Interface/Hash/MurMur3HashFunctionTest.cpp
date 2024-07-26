@@ -51,4 +51,4 @@ TEST_F(HashTest, IntHashTest)
     ASSERT_EQ(res, 9297814887077134198_u64);
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

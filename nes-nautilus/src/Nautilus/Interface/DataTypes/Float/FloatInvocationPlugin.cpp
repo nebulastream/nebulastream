@@ -206,10 +206,10 @@ public:
 
     std::optional<Value<>> CastTo(const Value<>& left, const TypeIdentifier* toType) const override
     {
-        // this method only performs float to double casts.
+        /// this method only performs float to double casts.
         if (isa<Float>(left.value) && toType->isType<Double>())
         {
-            // cast float to double
+            /// cast float to double
             auto& leftValue = left.getValue();
             auto& sourceValue = leftValue.staticCast<Float>();
             auto value = sourceValue.getValue();
@@ -261,12 +261,12 @@ public:
 
     bool IsCastable(const Value<>& value, const TypeIdentifier* toType) const override
     {
-        // cast from float to double
+        /// cast from float to double
         if (isa<Float>(value.getValue()) && toType->isType<Double>())
         {
             return true;
         }
-        // cast from int to float or double
+        /// cast from int to float or double
         return (isa<UInt8>(value.getValue()) || isa<UInt16>(value.getValue()) || isa<UInt32>(value.getValue())
                 || isa<UInt64>(value.getValue()) || isa<Int8>(value.getValue()) || isa<Int16>(value.getValue())
                 || isa<Int32>(value.getValue()) || isa<Int64>(value.getValue()))
@@ -275,4 +275,4 @@ public:
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<FloatInvocationPlugin> floatPlugin;
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

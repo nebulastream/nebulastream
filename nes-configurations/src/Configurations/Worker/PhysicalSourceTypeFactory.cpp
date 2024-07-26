@@ -77,7 +77,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string, s
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlConfig)
 {
     std::vector<PhysicalSourceTypePtr> physicalSources;
-    //Iterate over all physical sources defined in the yaml file
+    ///Iterate over all physical sources defined in the yaml file
     std::string logicalSourceName, physicalSourceName, sourceType;
     if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
         && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
@@ -125,7 +125,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
     std::string sourceType,
     const std::map<std::string, std::string>& commandLineParams)
 {
-    // check if a plugin is registered to handle this source type
+    /// check if a plugin is registered to handle this source type
     for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins())
     {
         if (auto type = plugin->createPhysicalSourceType(sourceType, commandLineParams))
@@ -162,7 +162,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
     std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, Yaml::Node& yamlConfig)
 {
-    // check a plugin is registered to handle this source type
+    /// check a plugin is registered to handle this source type
     for (const auto& plugin : PhysicalSourceFactoryPluginRegistry ::getPlugins())
     {
         if (auto type = plugin->createPhysicalSourceType(sourceType, yamlConfig))
@@ -201,4 +201,4 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
     }
 }
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations

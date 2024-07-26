@@ -100,29 +100,29 @@ void NonKeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const
 
 void NonKeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const
 {
-    // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
-    // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
-    // 1. get the operator handler
+    /// Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
+    /// We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
+    /// 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local slice store according to the worker id.
+    /// 2. load the thread local slice store according to the worker id.
     auto sliceStore = Nautilus::FunctionCall("getSliceStoreProxy", getSliceStoreProxy, globalOperatorHandler, ctx.getWorkerThreadId());
-    // 3. store the reference to the slice store in the local operator state.
+    /// 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalGlobalPreAggregationState>(sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
-    // 4. initialize timestamp function
+    /// 4. initialize timestamp function
     timeFunction->open(ctx, rb);
 }
 
 void NonKeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext& ctx, NES::Nautilus::Record& record) const
 {
-    // For each input record, we derive its timestamp, we derive the correct slice from the slice store, and we manipulate the thread local aggregate.
-    // 1. derive the current ts for the record.
+    /// For each input record, we derive its timestamp, we derive the correct slice from the slice store, and we manipulate the thread local aggregate.
+    /// 1. derive the current ts for the record.
     auto timestampValue = timeFunction->getTs(ctx, record);
-    // 2. load the reference to the slice store and find the correct slice.
+    /// 2. load the reference to the slice store and find the correct slice.
     auto sliceStore = static_cast<LocalGlobalPreAggregationState*>(ctx.getLocalState(this));
     auto sliceState
         = Nautilus::FunctionCall("findSliceStateByTsProxy", findSliceStateByTsProxy, sliceStore->sliceStoreState, timestampValue);
-    // 3. manipulate the current aggregate values
+    /// 3. manipulate the current aggregate values
     uint64_t stateOffset = 0;
     for (const auto& aggregationFunction : aggregationFunctions)
     {
@@ -135,8 +135,8 @@ void NonKeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) co
 {
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
 
-    // After we processed all records in the record buffer we call triggerThreadLocalStateProxy
-    // with the current watermark ts to check if we can trigger a window.
+    /// After we processed all records in the record buffer we call triggerThreadLocalStateProxy
+    /// with the current watermark ts to check if we can trigger a window.
     Nautilus::FunctionCall(
         "triggerThreadLocalStateProxy",
         triggerThreadLocalStateProxy,
@@ -151,4 +151,4 @@ void NonKeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) co
         ctx.getWatermarkTs());
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

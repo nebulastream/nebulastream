@@ -69,7 +69,7 @@ public:
  */
 auto initPipelineOperator(SchemaPtr schema, auto memoryLayout)
 {
-    //auto mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
+    ///auto mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
     auto flatMapOperator = std::make_shared<Operators::FlatMapJavaUDF>(0, schema, schema);
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -289,4 +289,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
     [](const testing::TestParamInfo<FlatMapJavaUDFPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

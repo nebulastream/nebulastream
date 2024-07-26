@@ -97,7 +97,7 @@ public:
         [[nodiscard]] inline operator bool() const { return promise != nullptr; }
 
     private:
-        std::shared_ptr<std::promise<R>> promise; // we need this variable to keep the promise machinery alive
+        std::shared_ptr<std::promise<R>> promise; /// we need this variable to keep the promise machinery alive
         std::shared_future<R> future;
         AsyncTaskExecutor& owner;
     };
@@ -179,7 +179,7 @@ private:
         inline void operator()()
         {
             func();
-            gc(); // deallocates the internal AsyncTask for garbage collection
+            gc(); /// deallocates the internal AsyncTask for garbage collection
         }
 
     private:
@@ -218,8 +218,8 @@ public:
         {
             throw Exceptions::RuntimeException("Async Executor is destroyed");
         }
-        // allocates a task on the heap and captures all arguments and types in the AsyncTask
-        // next, everything is captured in the AsyncTaskWrapper, which has no types.
+        /// allocates a task on the heap and captures all arguments and types in the AsyncTask
+        /// next, everything is captured in the AsyncTaskWrapper, which has no types.
         constexpr auto taskSize = sizeof(AsyncTask<std::invoke_result_t<std::decay_t<Function>, std::decay_t<Args>...>, Args...>);
         auto* taskPtr = allocateAsyncTask(taskSize);
         NES_ASSERT(taskPtr, "Cannot allocate async task");
@@ -260,6 +260,6 @@ private:
 };
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_ASYNCTASKEXECUTOR_HPP_

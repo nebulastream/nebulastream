@@ -38,6 +38,6 @@ public:
     ~FixedChar() override = default;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FIXEDCHAR_HPP_

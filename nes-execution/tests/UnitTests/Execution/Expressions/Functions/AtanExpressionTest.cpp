@@ -38,7 +38,7 @@ public:
 TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble)
 {
     auto expression = UnaryExpressionWrapper<AtanExpression>();
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>(0.5));
         ASSERT_EQ(resultValue, std::atan(0.5));
@@ -49,7 +49,7 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionDouble)
 TEST_F(AtanExpressionTest, evaluateAtanExpressionFloat)
 {
     auto expression = UnaryExpressionWrapper<AtanExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)0.5));
         ASSERT_EQ(resultValue, std::atan((float)0.5));
@@ -67,4 +67,4 @@ TEST_F(AtanExpressionTest, evaluateAtanExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Int8>((Int8)1)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

@@ -132,6 +132,6 @@ private:
     uint64_t totalNumberOfEntries;
 };
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTOR_HPP_

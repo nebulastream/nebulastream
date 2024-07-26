@@ -52,7 +52,7 @@ template <IsEnum T>
 void EnumOption<T>::parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams)
 {
     auto value = inputParams[identifier];
-    // Check if the value is a member of this enum type.
+    /// Check if the value is a member of this enum type.
     if (!magic_enum::enum_contains<T>(value))
     {
         std::stringstream ss;
@@ -76,6 +76,6 @@ std::string EnumOption<T>::toString()
     return os.str();
 }
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_

@@ -56,5 +56,5 @@ private:
     uint64_t keySize;
     uint64_t valueSize;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATION_HPP_

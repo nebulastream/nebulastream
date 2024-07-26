@@ -159,7 +159,7 @@ struct LoggerHolder
 };
 std::shared_ptr<Logger> LoggerHolder::singleton = nullptr;
 
-} // namespace detail
+} /// namespace detail
 
 namespace Logger
 {
@@ -177,6 +177,6 @@ std::shared_ptr<detail::Logger> getInstance()
     return detail::LoggerHolder::singleton;
 }
 
-} // namespace Logger
+} /// namespace Logger
 
-} // namespace NES
+} /// namespace NES

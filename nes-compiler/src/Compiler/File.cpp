@@ -41,7 +41,7 @@ std::shared_ptr<File> File::createFile(const std::string& absoluteFilePath, cons
 std::string File::read() const
 {
     const std::lock_guard<std::mutex> fileLock(fileMutex);
-    // read source file in
+    /// read source file in
     std::ifstream file(path);
     file.clear();
     std::string sourceCode((std::istreambuf_iterator<char>(file)), std::istreambuf_iterator<char>());
@@ -59,4 +59,4 @@ std::mutex& File::getFileMutex()
     return fileMutex;
 }
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler

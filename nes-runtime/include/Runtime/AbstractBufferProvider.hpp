@@ -39,7 +39,7 @@ class AbstractBufferProvider
 public:
     virtual ~AbstractBufferProvider()
     {
-        // nop
+        /// nop
     }
 
     virtual void destroy() = 0;
@@ -110,7 +110,7 @@ public:
     virtual FixedSizeBufferPoolPtr createFixedSizeBufferPool(size_t numberOfReservedBuffers) = 0;
 };
 
-//// free functions for buffer provider
+/// free functions for buffer provider
 
 /**
  * @brief This function allocates a TupleBuffer of a desired size via a provider
@@ -120,5 +120,5 @@ public:
  */
 TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_

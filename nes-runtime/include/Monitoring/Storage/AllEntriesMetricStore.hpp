@@ -68,6 +68,6 @@ private:
     mutable std::mutex storeMutex;
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring
 
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_STORAGE_ALLENTRIESMETRICSTORE_HPP_

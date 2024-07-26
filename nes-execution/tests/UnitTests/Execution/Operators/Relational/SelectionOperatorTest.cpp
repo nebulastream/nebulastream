@@ -91,4 +91,4 @@ TEST_F(SelectionOperatorTest, wrongSelectionTypeTest)
     ASSERT_ANY_THROW(selectionOperator.execute(ctx, record));
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

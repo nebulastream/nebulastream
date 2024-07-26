@@ -27,7 +27,7 @@ bool Cardinality::operator==(const StatisticMetric& rhs) const
 {
     if (rhs.instanceOf<Cardinality>())
     {
-        // We assume that if the field has the same name, the metric is equal
+        /// We assume that if the field has the same name, the metric is equal
         auto rhsCardinality = dynamic_cast<const Cardinality&>(rhs);
         return field->getFieldName() == rhsCardinality.field->getFieldName();
     }
@@ -42,4 +42,4 @@ std::string Cardinality::toString() const
 Cardinality::Cardinality(const FieldAccessExpressionNodePtr& field) : StatisticMetric(field)
 {
 }
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

@@ -1,34 +1,34 @@
 // clang-format off
-//  __  __             _        ______                          _____
-// |  \/  |           (_)      |  ____|                        / ____|_     _
-// | \  / | __ _  __ _ _  ___  | |__   _ __  _   _ _ __ ___   | |   _| |_ _| |_
-// | |\/| |/ _` |/ _` | |/ __| |  __| | '_ \| | | | '_ ` _ \  | |  |_   _|_   _|
-// | |  | | (_| | (_| | | (__  | |____| | | | |_| | | | | | | | |____|_|   |_|
-// |_|  |_|\__,_|\__, |_|\___| |______|_| |_|\__,_|_| |_| |_|  \_____|
-//                __/ | https://github.com/Neargye/magic_enum
-//               |___/  version 0.8.2
-//
-// Licensed under the MIT License <http://opensource.org/licenses/MIT>.
-// SPDX-License-Identifier: MIT
-// Copyright (c) 2019 - 2022 Daniil Goncharov <neargye@gmail.com>.
-//
-// Permission is hereby  granted, free of charge, to any  person obtaining a copy
-// of this software and associated  documentation files (the "Software"), to deal
-// in the Software  without restriction, including without  limitation the rights
-// to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
-// copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
-// furnished to do so, subject to the following conditions:
-//
-// The above copyright notice and this permission notice shall be included in all
-// copies or substantial portions of the Software.
-//
-// THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
-// IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
-// FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
-// AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
-// LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-// OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
-// SOFTWARE.
+///  __  __             _        ______                          _____
+/// |  \/  |           (_)      |  ____|                        / ____|_     _
+/// | \  / | __ _  __ _ _  ___  | |__   _ __  _   _ _ __ ___   | |   _| |_ _| |_
+/// | |\/| |/ _` |/ _` | |/ __| |  __| | '_ \| | | | '_ ` _ \  | |  |_   _|_   _|
+/// | |  | | (_| | (_| | | (__  | |____| | | | |_| | | | | | | | |____|_|   |_|
+/// |_|  |_|\__,_|\__, |_|\___| |______|_| |_|\__,_|_| |_| |_|  \_____|
+///                __/ | https://github.com/Neargye/magic_enum
+///               |___/  version 0.8.2
+///
+/// Licensed under the MIT License <http://opensource.org/licenses/MIT>.
+/// SPDX-License-Identifier: MIT
+/// Copyright (c) 2019 - 2022 Daniil Goncharov <neargye@gmail.com>.
+///
+/// Permission is hereby  granted, free of charge, to any  person obtaining a copy
+/// of this software and associated  documentation files (the "Software"), to deal
+/// in the Software  without restriction, including without  limitation the rights
+/// to  use, copy,  modify, merge,  publish, distribute,  sublicense, and/or  sell
+/// copies  of  the Software,  and  to  permit persons  to  whom  the Software  is
+/// furnished to do so, subject to the following conditions:
+///
+/// The above copyright notice and this permission notice shall be included in all
+/// copies or substantial portions of the Software.
+///
+/// THE SOFTWARE  IS PROVIDED "AS  IS", WITHOUT WARRANTY  OF ANY KIND,  EXPRESS OR
+/// IMPLIED,  INCLUDING BUT  NOT  LIMITED TO  THE  WARRANTIES OF  MERCHANTABILITY,
+/// FITNESS FOR  A PARTICULAR PURPOSE AND  NONINFRINGEMENT. IN NO EVENT  SHALL THE
+/// AUTHORS  OR COPYRIGHT  HOLDERS  BE  LIABLE FOR  ANY  CLAIM,  DAMAGES OR  OTHER
+/// LIABILITY, WHETHER IN AN ACTION OF  CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+/// OUT OF OR IN CONNECTION WITH THE SOFTWARE  OR THE USE OR OTHER DEALINGS IN THE
+/// SOFTWARE.
 
 #ifndef NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_SWITCH_HPP_
 #define NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_SWITCH_HPP_
@@ -148,7 +148,7 @@ constexpr decltype(auto) constexpr_switch(F&& f, E value, Def&& def) {
 }
 #endif
 
-}// namespace detail
+}/// namespace detail
 
 template<typename Result = detail::default_result_type, typename E, typename F, typename R = detail::result_t<E, Result, F>>
 constexpr decltype(auto) enum_switch(F&& f, E value) {
@@ -182,7 +182,7 @@ constexpr decltype(auto) enum_switch(F&& f, E value, Result&& result) {
 #endif
 }
 
-}// namespace magic_enum
+}/// namespace magic_enum
 
 template<>
 struct std::common_type<magic_enum::detail::nonesuch, magic_enum::detail::nonesuch>
@@ -194,5 +194,5 @@ struct std::common_type<T, magic_enum::detail::nonesuch> : magic_enum::detail::i
 template<typename T>
 struct std::common_type<magic_enum::detail::nonesuch, T> : magic_enum::detail::identity<T> {};
 
-// clang-format on
+/// clang-format on
 #endif /// NES_COMMON_INCLUDE_UTIL_MAGICENUM_MAGIC_ENUM_SWITCH_HPP_

@@ -40,24 +40,24 @@ TEST_F(DivExpressionTest, divIntegers)
 {
     auto expression = BinaryExpressionWrapper<DivExpression>();
 
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(4_s8), Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int8>());
     }
-    // Int16
+    /// Int16
     {
         auto resultValue = expression.eval(Value<Int16>(4_s16), Value<Int16>(4_s16));
         ASSERT_EQ(resultValue, 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int16>());
-    } // Int32
+    } /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(4), Value<Int32>(4));
         ASSERT_EQ(resultValue, 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Int32>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(4_s64), Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, 1);
@@ -69,23 +69,23 @@ TEST_F(DivExpressionTest, divUnsignedIntegers)
 {
     auto expression = BinaryExpressionWrapper<DivExpression>();
 
-    // UInt8
+    /// UInt8
     {
         auto resultValue = expression.eval(Value<UInt8>(4_u8), Value<UInt8>(4_u8));
         ASSERT_EQ(resultValue, 1_u8);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt8>());
     }
-    // UInt16
+    /// UInt16
     {
         auto resultValue = expression.eval(Value<UInt16>(4_u16), Value<UInt16>(4_u16));
         ASSERT_EQ(resultValue, 1_u16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt16>());
-    } // UInt32
+    } /// UInt32
     {
         auto resultValue = expression.eval(Value<UInt32>(4u), Value<UInt32>(4u));
         ASSERT_EQ(resultValue, 1_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
-    } // UInt64
+    } /// UInt64
     {
         auto resultValue = expression.eval(Value<UInt64>(4_u64), Value<UInt64>(4_u64));
         ASSERT_EQ(resultValue, 1_u64);
@@ -96,14 +96,14 @@ TEST_F(DivExpressionTest, divUnsignedIntegers)
 TEST_F(DivExpressionTest, divFloat)
 {
     auto expression = BinaryExpressionWrapper<DivExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)4), Value<Float>((float)4));
         ASSERT_EQ(resultValue, (float)1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Float>());
     }
 
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)4), Value<Double>((double)4));
         ASSERT_EQ(resultValue, (double)1);
@@ -111,4 +111,4 @@ TEST_F(DivExpressionTest, divFloat)
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

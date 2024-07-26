@@ -52,8 +52,8 @@ ValueTypePtr ConstantValueExpressionNode::getConstantValue() const
 
 void ConstantValueExpressionNode::inferStamp(SchemaPtr)
 {
-    // the stamp of constant value expressions is defined by the constant value type.
-    // thus ut is already assigned correctly when the expression node is created.
+    /// the stamp of constant value expressions is defined by the constant value type.
+    /// thus ut is already assigned correctly when the expression node is created.
 }
 
 ExpressionNodePtr ConstantValueExpressionNode::copy()
@@ -61,4 +61,4 @@ ExpressionNodePtr ConstantValueExpressionNode::copy()
     return std::make_shared<ConstantValueExpressionNode>(*this);
 }
 
-} // namespace NES
+} /// namespace NES

@@ -81,4 +81,4 @@ void* ProxyCallOperation::getFunctionPtr()
     return functionPtr;
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

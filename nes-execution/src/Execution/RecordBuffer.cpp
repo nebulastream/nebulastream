@@ -159,4 +159,4 @@ void RecordBuffer::setCreationTs(const Value<NES::Nautilus::UInt64>& creationTs)
         creationTs);
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

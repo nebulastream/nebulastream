@@ -34,10 +34,10 @@ bool Integer::equals(DataTypePtr otherDataType)
 
 DataTypePtr Integer::join(DataTypePtr otherDataType)
 {
-    // An integer can be joined with integer types and float types.
+    /// An integer can be joined with integer types and float types.
     if (otherDataType->isFloat())
     {
-        // The other type is a float, thus we return a large enough float as a jointed type.
+        /// The other type is a float, thus we return a large enough float as a jointed type.
         auto otherFloat = as<Float>(otherDataType);
         auto newBits = std::max(bits, otherFloat->getBits());
         auto newUpperBound = fmax(static_cast<double>(upperBound), otherFloat->upperBound);
@@ -46,7 +46,7 @@ DataTypePtr Integer::join(DataTypePtr otherDataType)
     }
     if (otherDataType->isInteger())
     {
-        // The other type is an Integer, thus we return a large enough integer.
+        /// The other type is an Integer, thus we return a large enough integer.
         auto otherInteger = as<Integer>(otherDataType);
         auto newBits = std::max(bits, otherInteger->getBits());
         auto newUpperBound = std::max(upperBound, otherInteger->upperBound);
@@ -61,4 +61,4 @@ std::string Integer::toString()
     return fmt::format("INTEGER({} bits)", bits);
 }
 
-} // namespace NES
+} /// namespace NES

@@ -29,12 +29,12 @@ double calculateDegrees(double x)
 
 Value<> DegreesExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value subValue = SubExpression->execute(record);
-    //check the type and then call the function.
+    ///check the type and then call the function.
     if (subValue->isType<Int8>())
     {
-        // call the calculateMod function with the correct type
+        /// call the calculateMod function with the correct type
         return FunctionCall<>("calculateDegrees", calculateDegrees, subValue.as<Int8>());
     }
     else if (subValue->isType<Int16>())
@@ -59,10 +59,10 @@ Value<> DegreesExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<DegreesExpression>> degreeFunction("degree");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

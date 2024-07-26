@@ -336,5 +336,5 @@ DataSinkPtr createMQTTSink(
     uint64_t numberOfOrigins = 1);
 #endif
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_

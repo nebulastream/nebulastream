@@ -53,6 +53,6 @@ private:
     bool useCompilationCache = false;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_JITCOMPILERBUILDER_HPP_

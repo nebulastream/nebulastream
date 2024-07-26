@@ -37,4 +37,4 @@ bool LogicalBinaryExpressionNode::equal(NodePtr const& rhs) const
     return false;
 }
 
-} // namespace NES
+} /// namespace NES

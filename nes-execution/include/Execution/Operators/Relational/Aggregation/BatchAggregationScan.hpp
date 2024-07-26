@@ -39,5 +39,5 @@ private:
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHAGGREGATIONSCAN_HPP_

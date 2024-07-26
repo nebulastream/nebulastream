@@ -27,5 +27,5 @@ public:
     compile(std::shared_ptr<IR::IRGraph> ir, const CompilationOptions& options, const DumpHelper& dumpHelper) override;
 };
 
-} // namespace NES::Nautilus::Backends::CPP
+} /// namespace NES::Nautilus::Backends::CPP
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_

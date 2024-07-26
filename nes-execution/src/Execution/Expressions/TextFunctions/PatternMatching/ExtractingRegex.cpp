@@ -48,13 +48,13 @@ TextValue* regexExtract(TextValue* text, TextValue* reg, int idx)
 
 Value<> ExtractingRegex::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the left sub expression and retrieve the value.
+    /// Evaluate the left sub expression and retrieve the value.
     Value<> text = textValue->execute(record);
 
-    // Evaluate the mid-sub expression and retrieve the value.
+    /// Evaluate the mid-sub expression and retrieve the value.
     Value<> pattern = regexpPattern->execute(record);
 
-    // Evaluate the right sub expression and retrieve the value.
+    /// Evaluate the right sub expression and retrieve the value.
     Value pos = idx->execute(record);
 
     if (text->isType<Text>() && pattern->isType<Text>())
@@ -101,7 +101,7 @@ Value<> ExtractingRegex::execute(NES::Nautilus::Record& record) const
         }
         else
         {
-            // If no type was applicable we throw an exception.
+            /// If no type was applicable we throw an exception.
             NES_THROW_RUNTIME_ERROR("Idx only defined on a numeric input argument that is of type Integer.");
         }
     }
@@ -111,4 +111,4 @@ Value<> ExtractingRegex::execute(NES::Nautilus::Record& record) const
     }
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

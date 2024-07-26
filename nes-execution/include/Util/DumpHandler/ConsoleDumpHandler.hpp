@@ -24,7 +24,7 @@ namespace QueryCompilation
 {
 class PipelineQueryPlan;
 using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
-} // namespace QueryCompilation
+} /// namespace QueryCompilation
 
 class Node;
 using NodePtr = std::shared_ptr<Node>;
@@ -68,6 +68,6 @@ private:
     void multilineDumpHelper(NodePtr const& op, uint64_t depth, uint64_t indent, std::ostream& out) const;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_

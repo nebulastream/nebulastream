@@ -84,7 +84,7 @@ void BinarySource::fillBuffer(Runtime::TupleBuffer& buf)
      * advance internal file pointer, if we reach the file end, set to file begin
      */
 
-    // 'std::streamoff' (aka 'long') and 'size_t' (aka 'unsigned long')
+    /// 'std::streamoff' (aka 'long') and 'size_t' (aka 'unsigned long')
     if (input.tellg() > 0 && (unsigned)input.tellg() == fileSize)
     {
         input.seekg(0, std::ifstream::beg);
@@ -106,4 +106,4 @@ const std::string& BinarySource::getFilePath() const
 {
     return filePath;
 }
-} // namespace NES
+} /// namespace NES

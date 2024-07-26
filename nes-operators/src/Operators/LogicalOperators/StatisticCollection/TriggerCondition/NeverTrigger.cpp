@@ -37,4 +37,4 @@ bool NeverTrigger::shallTrigger(const ExpressionNode&)
     return false;
 }
 
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

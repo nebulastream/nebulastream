@@ -44,7 +44,7 @@ Nautilus::Record ColumnMemoryProvider::read(
     Nautilus::Value<Nautilus::UInt64>& recordIndex) const
 {
     auto& schema = columnMemoryLayoutPtr->getSchema();
-    // read all fields
+    /// read all fields
     Nautilus::Record record;
     for (uint64_t i = 0; i < schema->getSize(); i++)
     {
@@ -73,4 +73,4 @@ void ColumnMemoryProvider::write(
     }
 }
 
-} // namespace NES::Runtime::Execution::MemoryProvider
+} /// namespace NES::Runtime::Execution::MemoryProvider

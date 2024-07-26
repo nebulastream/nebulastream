@@ -35,14 +35,14 @@ BatchAggregationScan::BatchAggregationScan(
 void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const
 {
     Operators::Operator::open(ctx, rb);
-    // 1. get the operator handler
+    /// 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    // 2. load the thread local state.
+    /// 2. load the thread local state.
 
-    // TODO merge all thread local states to support concurrent aggregations with multiple thread local states.
+    /// TODO merge all thread local states to support concurrent aggregations with multiple thread local states.
     auto state = Nautilus::FunctionCall("getThreadLocalState", getStates, globalOperatorHandler, ctx.getWorkerThreadId());
 
-    // 3. perform final aggregation.
+    /// 3. perform final aggregation.
     Record result;
     for (const auto& aggregationFunction : aggregationFunctions)
     {
@@ -51,4 +51,4 @@ void BatchAggregationScan::open(ExecutionContext& ctx, RecordBuffer& rb) const
     child->execute(ctx, result);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

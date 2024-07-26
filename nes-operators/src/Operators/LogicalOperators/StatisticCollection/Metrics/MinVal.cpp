@@ -31,7 +31,7 @@ bool MinVal::operator==(const StatisticMetric& rhs) const
 {
     if (rhs.instanceOf<MinVal>())
     {
-        // We assume that if the field has the same name, the metric is equal
+        /// We assume that if the field has the same name, the metric is equal
         auto rhsMinVal = dynamic_cast<const MinVal&>(rhs);
         return field->getFieldName() == rhsMinVal.field->getFieldName();
     }
@@ -42,4 +42,4 @@ std::string MinVal::toString() const
 {
     return "MinVal over " + field->toString();
 }
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

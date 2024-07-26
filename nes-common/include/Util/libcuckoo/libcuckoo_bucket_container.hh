@@ -108,9 +108,9 @@ public:
     libcuckoo_bucket_container(size_type hp, const allocator_type &allocator)
             : allocator_(allocator), bucket_allocator_(allocator), hashpower_(hp),
               buckets_(bucket_allocator_.allocate(size())) {
-        // The bucket default constructor is nothrow, so we don't have to
-        // worry about dealing with exceptions when constructing all the
-        // elements.
+        /// The bucket default constructor is nothrow, so we don't have to
+        /// worry about dealing with exceptions when constructing all the
+        /// elements.
         static_assert(std::is_nothrow_constructible<bucket>::value,
                       "libcuckoo_bucket_container requires bucket to be nothrow "
                       "constructible");
@@ -136,7 +136,7 @@ public:
     libcuckoo_bucket_container(libcuckoo_bucket_container &&bc)
  noexcept             : allocator_(std::move(bc.allocator_)), bucket_allocator_(allocator_),
               hashpower_(bc.hashpower()), buckets_(std::move(bc.buckets_)) {
-        // De-activate the other buckets container
+        /// De-activate the other buckets container
         bc.buckets_ = nullptr;
     }
 
@@ -167,12 +167,12 @@ public:
                        typename traits_::propagate_on_container_swap());
         swap_allocator(bucket_allocator_, bc.bucket_allocator_,
                        typename traits_::propagate_on_container_swap());
-        // Regardless of whether we actually swapped the allocators or not, it will
-        // always be okay to do the remainder of the swap. This is because if the
-        // allocators were swapped, then the subsequent operations are okay. If the
-        // allocators weren't swapped but compare equal, then we're okay. If they
-        // weren't swapped and compare unequal, then behavior is undefined, so
-        // we're okay.
+        /// Regardless of whether we actually swapped the allocators or not, it will
+        /// always be okay to do the remainder of the swap. This is because if the
+        /// allocators were swapped, then the subsequent operations are okay. If the
+        /// allocators weren't swapped but compare equal, then we're okay. If they
+        /// weren't swapped and compare unequal, then behavior is undefined, so
+        /// we're okay.
         size_t bc_hashpower = bc.hashpower();
         bc.hashpower(hashpower());
         hashpower(bc_hashpower);
@@ -194,7 +194,7 @@ public:
     bucket &operator[](size_type i) { return buckets_[i]; }
     const bucket &operator[](size_type i) const { return buckets_[i]; }
 
-    // Constructs live data in a bucket
+    /// Constructs live data in a bucket
     template <typename K, typename... Args>
     void setKV(size_type ind, size_type slot, partial_t p, K &&k,
                Args &&... args) {
@@ -205,11 +205,11 @@ public:
                            std::piecewise_construct,
                            std::forward_as_tuple(std::forward<K>(k)),
                            std::forward_as_tuple(std::forward<Args>(args)...));
-        // This must occur last, to enforce a strong exception guarantee
+        /// This must occur last, to enforce a strong exception guarantee
         b.occupied(slot) = true;
     }
 
-    // Destroys live data in a bucket
+    /// Destroys live data in a bucket
     void eraseKV(size_type ind, size_type slot) {
         bucket &b = buckets_[ind];
         assert(b.occupied(slot));
@@ -217,8 +217,8 @@ public:
         traits_::destroy(allocator_, std::addressof(b.storage_kvpair(slot)));
     }
 
-    // Destroys all the live data in the buckets. Does not deallocate the bucket
-    // memory.
+    /// Destroys all the live data in the buckets. Does not deallocate the bucket
+    /// memory.
     void clear() noexcept {
         static_assert(
                 std::is_nothrow_destructible<key_type>::value &&
@@ -235,9 +235,9 @@ public:
         }
     }
 
-    // Destroys and deallocates all data in the buckets. After this operation,
-    // the bucket container will have no allocated data. It is still valid to
-    // swap, move or copy assign to this container.
+    /// Destroys and deallocates all data in the buckets. After this operation,
+    /// the bucket container will have no allocated data. It is still valid to
+    /// swap, move or copy assign to this container.
     void clear_and_deallocate() noexcept {
         destroy_buckets();
     }
@@ -246,7 +246,7 @@ private:
     using bucket_traits_ = typename traits_::template rebind_traits<bucket>;
     using bucket_pointer = typename bucket_traits_::pointer;
 
-    // true here means the allocators from `src` are propagated on libcuckoo_copy
+    /// true here means the allocators from `src` are propagated on libcuckoo_copy
     template <typename A>
     void copy_allocator(A &dst, const A &src, std::true_type) {
         dst = src;
@@ -255,14 +255,14 @@ private:
     template <typename A>
     void copy_allocator(A &, const A &, std::false_type) {}
 
-    // true here means the allocators from `src` are propagated on libcuckoo_swap
+    /// true here means the allocators from `src` are propagated on libcuckoo_swap
     template <typename A> void swap_allocator(A &dst, A &src, std::true_type) {
         std::swap(dst, src);
     }
 
     template <typename A> void swap_allocator(A &, A &, std::false_type) {}
 
-    // true here means the bucket allocator should be propagated
+    /// true here means the bucket allocator should be propagated
     void move_assign(libcuckoo_bucket_container &src, std::true_type) {
         allocator_ = std::move(src.allocator_);
         bucket_allocator_ = allocator_;
@@ -285,9 +285,9 @@ private:
         if (buckets_ == nullptr) {
             return;
         }
-        // The bucket default constructor is nothrow, so we don't have to
-        // worry about dealing with exceptions when constructing all the
-        // elements.
+        /// The bucket default constructor is nothrow, so we don't have to
+        /// worry about dealing with exceptions when constructing all the
+        /// elements.
         static_assert(std::is_nothrow_destructible<bucket>::value,
                       "libcuckoo_bucket_container requires bucket to be nothrow "
                       "destructible");
@@ -299,7 +299,7 @@ private:
         buckets_ = nullptr;
     }
 
-    // `true` here refers to whether or not we should move
+    /// `true` here refers to whether or not we should move
     void move_or_copy(size_type dst_ind, size_type dst_slot, bucket &src,
                       size_type src_slot, std::true_type) {
         setKV(dst_ind, dst_slot, src.partial(src_slot), src.movable_key(src_slot),
@@ -320,7 +320,7 @@ private:
             std::integral_constant<bool, B> move) {
         assert(dst_hp >= src.hashpower());
         libcuckoo_bucket_container dst(dst_hp, get_allocator());
-        // Move/copy all occupied slots of the source buckets
+        /// Move/copy all occupied slots of the source buckets
         for (size_t i = 0; i < src.size(); ++i) {
             for (size_t j = 0; j < SLOT_PER_BUCKET; ++j) {
                 if (src.buckets_[i].occupied(j)) {
@@ -328,32 +328,32 @@ private:
                 }
             }
         }
-        // Take away the pointer from `dst` and return it
+        /// Take away the pointer from `dst` and return it
         bucket_pointer dst_pointer = dst.buckets_;
         dst.buckets_ = nullptr;
         return dst_pointer;
     }
 
-    // This allocator matches the value_type, but is not used to construct
-    // storage_value_type pairs, or allocate buckets
+    /// This allocator matches the value_type, but is not used to construct
+    /// storage_value_type pairs, or allocate buckets
     allocator_type allocator_;
-    // This allocator is used for actually allocating buckets. It is simply
-    // copy-constructed from `allocator_`, and will always be copied whenever
-    // allocator_ is copied.
+    /// This allocator is used for actually allocating buckets. It is simply
+    /// copy-constructed from `allocator_`, and will always be copied whenever
+    /// allocator_ is copied.
     typename traits_::template rebind_alloc<bucket> bucket_allocator_;
-    // This needs to be atomic, since it can be read and written by multiple
-    // threads not necessarily synchronized by a lock.
+    /// This needs to be atomic, since it can be read and written by multiple
+    /// threads not necessarily synchronized by a lock.
     std::atomic<size_type> hashpower_;
-    // These buckets are protected by striped locks (external to the
-    // BucketContainer), which must be obtained before accessing a bucket.
+    /// These buckets are protected by striped locks (external to the
+    /// BucketContainer), which must be obtained before accessing a bucket.
     bucket_pointer buckets_;
 
-    // If the key and value are Trivial, the bucket be serilizable. Since we
-    // already disallow user-specialized instances of std::pair, we know that the
-    // default implementation of std::pair uses a default copy constructor, so
-    // this should be okay. We could in theory just check if the type is
-    // TriviallyCopyable but this check is not available on some compilers we
-    // want to support.
+    /// If the key and value are Trivial, the bucket be serilizable. Since we
+    /// already disallow user-specialized instances of std::pair, we know that the
+    /// default implementation of std::pair uses a default copy constructor, so
+    /// this should be okay. We could in theory just check if the type is
+    /// TriviallyCopyable but this check is not available on some compilers we
+    /// want to support.
     template <typename ThisKey, typename ThisT>
     friend typename std::enable_if<std::is_trivial<ThisKey>::value &&
                                    std::is_trivial<ThisT>::value,

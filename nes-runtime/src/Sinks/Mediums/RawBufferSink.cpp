@@ -60,7 +60,7 @@ std::string RawBufferSink::toString() const
 void RawBufferSink::setup()
 {
     NES_DEBUG("Setting up raw buffer sink; filePath={}, append={}", filePath, append);
-    // Remove an existing file unless the append mode is APPEND.
+    /// Remove an existing file unless the append mode is APPEND.
     if (!append)
     {
         if (std::filesystem::exists(filePath.c_str()))
@@ -75,7 +75,7 @@ void RawBufferSink::setup()
         }
     }
 
-    // Open the file stream
+    /// Open the file stream
     if (!outputFile.is_open())
     {
         outputFile.open(filePath, std::ofstream::binary | std::ofstream::out);
@@ -95,8 +95,8 @@ void RawBufferSink::shutdown()
 
 bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
 {
-    // Stop execution if the file could not be opened during setup.
-    // This results in ExecutionResult::Error for the task.
+    /// Stop execution if the file could not be opened during setup.
+    /// This results in ExecutionResult::Error for the task.
     if (!isOpen)
     {
         NES_DEBUG("The output file could not be opened during setup of the file sink.");
@@ -120,4 +120,4 @@ bool RawBufferSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::Worker
     return true;
 }
 
-} // namespace NES
+} /// namespace NES

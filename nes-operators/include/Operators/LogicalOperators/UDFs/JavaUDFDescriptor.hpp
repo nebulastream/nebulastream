@@ -23,14 +23,14 @@
 
 namespace NES::jni
 {
-// Utility types
+/// Utility types
 using JavaSerializedInstance = std::vector<char>;
 using JavaByteCode = std::vector<char>;
-// We use a vector for JavaUDFByteCodeList because we need to insert the classes into the JVM in a well-defined order
-// that is provided by the Java client.
+/// We use a vector for JavaUDFByteCodeList because we need to insert the classes into the JVM in a well-defined order
+/// that is provided by the Java client.
 using JavaClassDefinition = std::pair<std::string, JavaByteCode>;
 using JavaUDFByteCodeList = std::vector<JavaClassDefinition>;
-} // namespace NES::jni
+} /// namespace NES::jni
 
 namespace NES::Catalogs::UDF
 {
@@ -167,5 +167,5 @@ private:
     const std::string outputClassName;
 };
 
-} // namespace NES::Catalogs::UDF
+} /// namespace NES::Catalogs::UDF
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_JAVAUDFDESCRIPTOR_HPP_

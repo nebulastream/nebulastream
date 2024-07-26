@@ -29,7 +29,7 @@ FieldAccessExpressionNodePtr StatisticMetric::getField() const
 
 StatisticMetricHash StatisticMetric::hash() const
 {
-    // We do not want to hash the qualifierSourceName, only the field name without it
+    /// We do not want to hash the qualifierSourceName, only the field name without it
     auto fieldNameToHash = field->getFieldName();
     if (field->getFieldName().find(Schema::ATTRIBUTE_NAME_SEPARATOR))
     {
@@ -47,4 +47,4 @@ FieldAccessExpressionNodePtr Over(std::string name)
 {
     return FieldAccessExpressionNode::create(std::move(name))->as<FieldAccessExpressionNode>();
 }
-} //namespace NES::Statistic
+} ///namespace NES::Statistic

@@ -20,4 +20,4 @@ InvalidLogicalOperatorException::InvalidLogicalOperatorException(const std::stri
     : Exceptions::RequestExecutionException(message)
 {
 }
-} // namespace NES::Exceptions
+} /// namespace NES::Exceptions

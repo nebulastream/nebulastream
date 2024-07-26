@@ -240,5 +240,5 @@ private:
     Configurations::IntConfigOption socketBufferSize;
     Configurations::IntConfigOption bytesUsedForSocketBufferSizeTransfer;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_

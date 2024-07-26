@@ -48,6 +48,6 @@ private:
     std::vector<TagAddress> addresses;
 };
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAG_HPP_

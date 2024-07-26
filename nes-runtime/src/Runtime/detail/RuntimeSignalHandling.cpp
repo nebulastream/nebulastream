@@ -63,16 +63,16 @@ void nesTerminateHandler()
         }
         else
         {
-            // normal termination
+            /// normal termination
             return;
         }
     }
     catch (const std::exception& e)
-    { // for proper `std::` exceptions
+    { /// for proper `std::` exceptions
         currentException = std::make_shared<std::exception>(e);
     }
     catch (...)
-    { // last resort for things like `throw 1;`
+    { /// last resort for things like `throw 1;`
         currentException = std::make_shared<std::runtime_error>("Unknown exception caught");
     }
     Exceptions::invokeErrorHandlers(currentException, std::move(stacktrace));
@@ -102,11 +102,11 @@ void nesUnexpectedException()
         }
     }
     catch (const std::exception& e)
-    { // for proper `std::` exceptions
+    { /// for proper `std::` exceptions
         currentException = std::make_shared<std::exception>(e);
     }
     catch (...)
-    { // last resort for things like `throw 1;`
+    { /// last resort for things like `throw 1;`
         currentException = std::make_shared<std::runtime_error>("Unknown exception caught");
     }
     Exceptions::invokeErrorHandlers(currentException, std::move(stacktrace));
@@ -122,7 +122,7 @@ public:
 #ifdef __linux__
         std::set_unexpected(nesUnexpectedException);
 #elif defined(__APPLE__)
-        // unexpected was removed in C++17 but only apple clang libc did actually remove it..
+        /// unexpected was removed in C++17 but only apple clang libc did actually remove it..
 #else
 #    error "Unknown platform"
 #endif
@@ -134,5 +134,5 @@ public:
 };
 static ErrorHandlerLoader loader;
 
-} // namespace detail
-} // namespace NES::Runtime
+} /// namespace detail
+} /// namespace NES::Runtime

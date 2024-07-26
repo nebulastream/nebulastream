@@ -38,17 +38,17 @@ double calculateAcos(double x)
 
 Value<> AcosExpression::execute(NES::Nautilus::Record& record) const
 {
-    // Evaluate the  expression and retrieve the value.
+    /// Evaluate the  expression and retrieve the value.
     Value Value = Expression->execute(record);
 
-    // As we don't know the exact type of value here, we have to check the type and then call the function.
-    // Value.as<Int8>() makes an explicit cast from Value to Value<Int8>.
-    // In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
-    // primitive integer types to the double argument.
-    // Later we will introduce implicit casts on this level to hide this casting boilerplate code.
+    /// As we don't know the exact type of value here, we have to check the type and then call the function.
+    /// Value.as<Int8>() makes an explicit cast from Value to Value<Int8>.
+    /// In all cases we can call the same calculateMod function as under the hood C++ can do an implicit cast from
+    /// primitive integer types to the double argument.
+    /// Later we will introduce implicit casts on this level to hide this casting boilerplate code.
     if (Value->isType<Int8>())
     {
-        // call the calculateAcos function with the correct type
+        /// call the calculateAcos function with the correct type
         return FunctionCall<>("calculateAcos", calculateAcos, Value.as<Int8>());
     }
     else if (Value->isType<Int16>())
@@ -73,10 +73,10 @@ Value<> AcosExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        // If no type was applicable we throw an exception.
+        /// If no type was applicable we throw an exception.
         throw Exceptions::NotImplementedException(
             "This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AcosExpression>> acosFunction("acos");
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

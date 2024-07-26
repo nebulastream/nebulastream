@@ -119,5 +119,5 @@ private:
     MMapCircularBuffer circularBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_

@@ -41,4 +41,4 @@ const std::string FloatStamp::toString() const
     return "f" + std::to_string(getNumberOfBits());
 }
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types

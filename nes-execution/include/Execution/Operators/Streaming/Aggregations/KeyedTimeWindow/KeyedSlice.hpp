@@ -69,6 +69,6 @@ private:
     std::unique_ptr<Nautilus::Interface::ChainedHashMap> state;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDSLICE_HPP_

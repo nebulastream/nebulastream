@@ -75,7 +75,7 @@ IR::BasicBlockPtr NESIRDumpHandler::getNextLowerOrEqualLevelBasicBlock(BasicBloc
         }
     }
     else
-    { //ReturnOp todo changed #3234
+    { ///ReturnOp todo changed #3234
         return nullptr;
     }
 }
@@ -86,9 +86,9 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
     {
         case Operations::Operation::OperationType::BranchOp: {
             auto branchOp = std::static_pointer_cast<Operations::BranchOperation>(terminatorOp);
-            //if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() > scopeLevel) {
+            ///if (branchOp->getNextBlockInvocation().getBlock()->getScopeLevel() > scopeLevel) {
             dumpHelper(branchOp->getNextBlockInvocation().getBlock());
-            //}
+            ///}
             break;
         }
         case Operations::Operation::OperationType::LoopOp: {
@@ -100,11 +100,11 @@ void NESIRDumpHandler::dumpHelper(OperationPtr const& terminatorOp, int32_t scop
             auto ifOp = std::static_pointer_cast<Operations::IfOperation>(terminatorOp);
             BasicBlockPtr lastTerminatorOp = getNextLowerOrEqualLevelBasicBlock(
                 ifOp->getTrueBlockInvocation().getBlock(),
-                ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1); //todo can lead to error #3234
+                ifOp->getTrueBlockInvocation().getBlock()->getScopeLevel() - 1); ///todo can lead to error #3234
             dumpHelper(ifOp->getTrueBlockInvocation().getBlock());
             if (ifOp->getFalseBlockInvocation().getBlock()
                 && ifOp->getFalseBlockInvocation().getBlock()->getScopeLevel() >= (uint32_t)scopeLevel)
-            { //todo remove scopeLevel check #3234
+            { ///todo remove scopeLevel check #3234
                 dumpHelper(ifOp->getFalseBlockInvocation().getBlock());
             }
             if (lastTerminatorOp)
@@ -126,7 +126,7 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock)
     {
         int32_t indent = basicBlock->getScopeLevel() + 1;
         visitedBlocks.emplace(basicBlock->getIdentifier());
-        //out << '\n' << std::string(basicBlock->getScopeLevel() * 4, ' ') << "Block_" << basicBlock->getIdentifier() << '(';
+        ///out << '\n' << std::string(basicBlock->getScopeLevel() * 4, ' ') << "Block_" << basicBlock->getIdentifier() << '(';
         out << '\n' << "Block_" << basicBlock->getIdentifier() << '(';
         if (basicBlock->getArguments().size() > 0)
         {
@@ -141,7 +141,7 @@ void NESIRDumpHandler::dumpHelper(BasicBlockPtr const& basicBlock)
         for (auto operation : basicBlock->getOperations())
         {
             out << std::string(4, ' ') << operation->toString() << " :" << operation->getStamp()->toString() << std::endl;
-            //  out << std::string(indent * 4, ' ') << operation->toString() << std::endl;
+            ///  out << std::string(indent * 4, ' ') << operation->toString() << std::endl;
         }
         OperationPtr terminatorOp = basicBlock->getOperations().back();
         dumpHelper(terminatorOp, basicBlock->getScopeLevel());
@@ -155,4 +155,4 @@ void NESIRDumpHandler::dump(const std::shared_ptr<Operations::FunctionOperation>
     out << "}\n";
 }
 
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR

@@ -49,7 +49,7 @@ void Parser::writeFieldValueToTupleBuffer(
     {
         throw Exceptions::RuntimeException("Input string for parsing is empty");
     }
-    // TODO replace with csv parsing library
+    /// TODO replace with csv parsing library
     try
     {
         if (physicalType->isBasicType())
@@ -110,7 +110,7 @@ void Parser::writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::CHAR: {
-                    //verify that only a single char was transmitted
+                    ///verify that only a single char was transmitted
                     if (inputString.size() > 1)
                     {
                         NES_FATAL_ERROR(
@@ -122,7 +122,7 @@ void Parser::writeFieldValueToTupleBuffer(
                     break;
                 }
                 case NES::BasicPhysicalType::NativeType::BOOLEAN: {
-                    //verify that a valid bool was transmitted (valid{true,false,0,1})
+                    ///verify that a valid bool was transmitted (valid{true,false,0,1})
                     bool value = !strcasecmp(inputString.c_str(), "true") || !strcasecmp(inputString.c_str(), "1");
                     if (!value)
                     {
@@ -150,12 +150,12 @@ void Parser::writeFieldValueToTupleBuffer(
             tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
         }
         else
-        { // char array(string) case
-            // TODO Replace code to handle CHAR array with TEXT field; this code contains a buffer overflow bug: https://github.com/nebulastream/nebulastream/issues/4941
-            // obtain pointer from buffer to fill with content via strcpy
+        { /// char array(string) case
+            /// TODO Replace code to handle CHAR array with TEXT field; this code contains a buffer overflow bug: https://github.com/nebulastream/nebulastream/issues/4941
+            /// obtain pointer from buffer to fill with content via strcpy
             char* value = tupleBuffer[tupleCount][schemaFieldIndex].read<char*>();
-            // remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
-            // improve behavior with json library
+            /// remove quotation marks from start and end of value (ASSUMES QUOTATIONMARKS AROUND STRINGS)
+            /// improve behavior with json library
             strcpy(value, inputString.c_str());
         }
     }
@@ -165,4 +165,4 @@ void Parser::writeFieldValueToTupleBuffer(
     }
 }
 
-} //namespace NES
+} ///namespace NES

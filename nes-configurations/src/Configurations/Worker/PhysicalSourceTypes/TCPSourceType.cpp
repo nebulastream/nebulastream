@@ -458,4 +458,4 @@ void TCPSourceType::setBytesUsedForSocketBufferSizeTransfer(uint32_t bytesUsedFo
     bytesUsedForSocketBufferSizeTransfer->setValue(bytesUsedForSocketBufferSizeTransferValue);
 }
 
-} // namespace NES
+} /// namespace NES

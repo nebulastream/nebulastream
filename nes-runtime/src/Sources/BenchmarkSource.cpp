@@ -88,14 +88,14 @@ BenchmarkSource::BenchmarkSource(
     schemaSize = this->schema->getSchemaSizeInBytes();
     bufferSize = localBufferManager->getBufferSize();
 
-    //if the memory area is smaller than a buffer
+    ///if the memory area is smaller than a buffer
     if (memoryAreaSize <= bufferSize)
     {
         numberOfTuplesToProduce = std::floor(double(memoryAreaSize) / double(this->schemaSize));
     }
     else
     {
-        //if the memory area spans multiple buffers
+        ///if the memory area spans multiple buffers
         auto restTuples = memoryAreaSize / this->schemaSize;
         auto numberOfTuplesPerBuffer = std::floor(double(bufferSize) / double(this->schemaSize));
         if (restTuples > numberOfTuplesPerBuffer)
@@ -222,7 +222,7 @@ void BenchmarkSource::close()
 
 std::optional<Runtime::TupleBuffer> BenchmarkSource::receiveData()
 {
-    //the benchmark source does not follow the receive pattern and overwrites the running routine
+    ///the benchmark source does not follow the receive pattern and overwrites the running routine
     NES_NOT_IMPLEMENTED();
     Runtime::TupleBuffer buffer;
     return buffer;
@@ -237,4 +237,4 @@ NES::SourceType BenchmarkSource::getType() const
 {
     return SourceType::MEMORY_SOURCE;
 }
-} // namespace NES
+} /// namespace NES

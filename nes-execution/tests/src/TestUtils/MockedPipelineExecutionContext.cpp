@@ -36,8 +36,8 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     bool logSeenSeqChunk,
     BufferManagerPtr bufferManager)
     : PipelineExecutionContext(
-        INVALID_PIPELINE_ID, // mock pipeline id
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, // mock query id
+        INVALID_PIPELINE_ID, /// mock pipeline id
+        INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
         bufferManager,
         1,
         [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef)
@@ -69,7 +69,7 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
             buffers.emplace_back(std::move(buffer));
         },
         std::move(handler)){
-        // nop
+        /// nop
     };
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

@@ -84,4 +84,4 @@ NES::Spatial::Protobuf::SpatialType SpatialTypeUtility::toProtobufEnum(Experimen
             exit(EXIT_FAILURE);
     }
 }
-} // namespace NES::Spatial::Util
+} /// namespace NES::Spatial::Util

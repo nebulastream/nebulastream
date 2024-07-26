@@ -18,10 +18,10 @@
 #include <Runtime/Events.hpp>
 #include <Util/Logger/Logger.hpp>
 
-// Note that we updated the PartitionManager's logic:
-// currently, we do not delete partitions even if their counter is set to 0
-// in the past, we deleted that
-// rationale: we need a placeholder to keep track of information regarding partitions that were present on a node
+/// Note that we updated the PartitionManager's logic:
+/// currently, we do not delete partitions even if their counter is set to 0
+/// in the past, we deleted that
+/// rationale: we need a placeholder to keep track of information regarding partitions that were present on a node
 
 namespace NES::Network
 {
@@ -60,7 +60,7 @@ DecomposedQueryPlanVersion PartitionManager::PartitionConsumerEntry::getVersion(
 PartitionManager::PartitionProducerEntry::PartitionProducerEntry(NodeLocation&& senderLocation)
     : receiverLocation(std::move(senderLocation))
 {
-    // nop
+    /// nop
 }
 
 uint64_t PartitionManager::PartitionProducerEntry::count() const
@@ -103,11 +103,11 @@ void PartitionManager::pinSubpartitionConsumer(NesPartition partition)
 bool PartitionManager::registerSubpartitionConsumer(NesPartition partition, NodeLocation senderLocation, DataEmitterPtr emitterPtr)
 {
     std::unique_lock lock(consumerPartitionsMutex);
-    //check if partition is present
+    ///check if partition is present
     auto it = consumerPartitions.find(partition);
     if (it != consumerPartitions.end())
     {
-        // partition is contained
+        /// partition is contained
         it->second.pin();
     }
     else
@@ -127,7 +127,7 @@ bool PartitionManager::unregisterSubpartitionConsumer(NesPartition partition)
         it != consumerPartitions.end(),
         "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
 
-    // safeguard
+    /// safeguard
     if (it->second.count() == 0)
     {
         NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
@@ -207,7 +207,7 @@ void PartitionManager::clear()
 
 PartitionRegistrationStatus PartitionManager::getConsumerRegistrationStatus(NesPartition partition) const
 {
-    //check if partition is present
+    ///check if partition is present
     std::unique_lock lock(consumerPartitionsMutex);
     if (auto it = consumerPartitions.find(partition); it != consumerPartitions.end())
     {
@@ -218,7 +218,7 @@ PartitionRegistrationStatus PartitionManager::getConsumerRegistrationStatus(NesP
 
 PartitionRegistrationStatus PartitionManager::getProducerRegistrationStatus(NesPartition partition) const
 {
-    //check if partition is present
+    ///check if partition is present
     std::unique_lock lock(producerPartitionsMutex);
     if (auto it = producerPartitions.find(partition); it != producerPartitions.end())
     {
@@ -230,11 +230,11 @@ PartitionRegistrationStatus PartitionManager::getProducerRegistrationStatus(NesP
 bool PartitionManager::registerSubpartitionProducer(NesPartition partition, NodeLocation receiverLocation)
 {
     std::unique_lock lock(producerPartitionsMutex);
-    //check if partition is present
+    ///check if partition is present
     auto it = producerPartitions.find(partition);
     if (it != producerPartitions.end())
     {
-        // partition is contained
+        /// partition is contained
         it->second.pin();
     }
     else
@@ -242,14 +242,14 @@ bool PartitionManager::registerSubpartitionProducer(NesPartition partition, Node
         it = producerPartitions.insert_or_assign(it, partition, PartitionProducerEntry(std::move(receiverLocation)));
     }
     NES_DEBUG("PartitionManager: Registering Subpartition Producer {}={}", partition.toString(), (*it).second.count());
-    return (*it).second.count() == 1; // first time
+    return (*it).second.count() == 1; /// first time
 }
 
 bool PartitionManager::addSubpartitionEventListener(
     NesPartition partition, NodeLocation receiverLocation, Runtime::RuntimeEventListenerPtr eventListener)
 {
     std::unique_lock lock(producerPartitionsMutex);
-    //check if partition is present
+    ///check if partition is present
     if (auto it = producerPartitions.find(partition); it == producerPartitions.end())
     {
         it = producerPartitions.insert_or_assign(it, partition, PartitionProducerEntry(std::move(receiverLocation)));
@@ -270,7 +270,7 @@ bool PartitionManager::unregisterSubpartitionProducer(NesPartition partition)
         it != producerPartitions.end(),
         "PartitionManager: error while unregistering partition " << partition << " reason: partition not found");
 
-    // safeguard
+    /// safeguard
     if (it->second.count() == 0)
     {
         NES_DEBUG("PartitionManager: Partition {}, counter is at 0.", partition.toString());
@@ -311,4 +311,4 @@ PartitionManager::~PartitionManager()
 {
     clear();
 }
-} // namespace NES::Network
+} /// namespace NES::Network

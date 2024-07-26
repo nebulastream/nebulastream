@@ -43,4 +43,4 @@ OperationPtr BitWiseRightShiftOperation::getRightInput()
 {
     return rightInput.lock();
 }
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

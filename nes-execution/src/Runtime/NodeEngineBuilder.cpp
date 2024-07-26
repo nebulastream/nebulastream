@@ -79,10 +79,10 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     {
         std::vector<BufferManagerPtr> bufferManagers;
 
-        //get the list of queue where to pin from the config
+        ///get the list of queue where to pin from the config
         auto numberOfQueues = workerConfiguration.numberOfQueues.getValue();
 
-        //create one buffer manager per queue
+        ///create one buffer manager per queue
         if (numberOfQueues == 1)
         {
             bufferManagers.push_back(std::make_shared<BufferManager>(
@@ -94,7 +94,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
             {
                 bufferManagers.push_back(std::make_shared<BufferManager>(
                     workerConfiguration.bufferSizeInBytes.getValue(),
-                    //if we run in static with multiple queues, we divide the whole buffer manager among the queues
+                    ///if we run in static with multiple queues, we divide the whole buffer manager among the queues
                     workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues));
             }
         }
@@ -160,4 +160,4 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     }
 }
 
-} //namespace NES::Runtime
+} ///namespace NES::Runtime

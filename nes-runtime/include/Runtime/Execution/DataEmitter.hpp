@@ -67,5 +67,5 @@ public:
      */
     virtual bool startNewVersion() { return false; };
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

@@ -73,6 +73,6 @@ public:
     int64_t const upperBound;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_INTEGER_HPP_

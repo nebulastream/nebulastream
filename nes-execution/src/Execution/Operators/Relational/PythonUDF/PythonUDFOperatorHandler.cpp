@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Operators
 void PythonUDFOperatorHandler::initPython()
 {
     this->moduleName = this->functionName + "Module";
-    // initialize python interpreter
+    /// initialize python interpreter
     Py_Initialize();
     PyObject* pythonCode = Py_CompileString(this->function.c_str(), "", Py_file_input);
     if (pythonCode == NULL)
@@ -35,7 +35,7 @@ void PythonUDFOperatorHandler::initPython()
             NES_THROW_RUNTIME_ERROR("Could not compile String.");
         }
     }
-    // add python code into our module
+    /// add python code into our module
     this->pythonModule = PyImport_ExecCodeModule(this->moduleName.c_str(), pythonCode);
     if (this->pythonModule == NULL)
     {
@@ -65,6 +65,6 @@ void PythonUDFOperatorHandler::finalize()
     }
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
-#endif // NAUTILUS_PYTHON_UDF_ENABLED
+#endif /// NAUTILUS_PYTHON_UDF_ENABLED

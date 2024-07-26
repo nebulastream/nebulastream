@@ -53,6 +53,6 @@ public:
     void execute(ExecutionContext& ctx, Record& record) const override;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJBUILDSLICING_HPP_

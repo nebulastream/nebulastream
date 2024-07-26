@@ -80,8 +80,8 @@ void MQTTClientWrapper::sendPayload(std::string payload)
 {
     if (asyncClient)
     {
-        //qualityOfService to enable cleanSessions(require > 0), retained not necessary (broker can store up to 1
-        // -> retained message, which is delivered to a newly subscribed client(correct topic) first)
+        ///qualityOfService to enable cleanSessions(require > 0), retained not necessary (broker can store up to 1
+        /// -> retained message, which is delivered to a newly subscribed client(correct topic) first)
         sendTopic->publish(std::move(payload), qualityOfService, false);
     }
     else
@@ -114,5 +114,5 @@ void MQTTClientWrapper::UserCallback::delivery_complete(mqtt::delivery_token_ptr
 {
     NES_TRACE("\n\t[Delivery complete for token: {}]", (tok ? tok->get_message_id() : -1));
 }
-} // namespace NES
-#endif //ENABLE_MQTT_BUILD
+} /// namespace NES
+#endif ///ENABLE_MQTT_BUILD

@@ -77,6 +77,6 @@ protected:
 private:
     OperatorFusionPolicyPtr operatorFusionPolicy;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_DEFAULTPIPELININGPHASE_HPP_

@@ -112,7 +112,7 @@ RuntimePathConfig loadRuntimePathConfig()
         throw CompilerException("Runtime environment can't be detected.");
     }
 
-    // verify is runtime path config is valid
+    /// verify is runtime path config is valid
     if (!std::filesystem::exists(runtimePathConfig.clangBinaryPath))
     {
         throw CompilerException("Selected clang binary path dose not exists. Path: " + runtimePathConfig.clangBinaryPath);
@@ -173,7 +173,7 @@ std::filesystem::path recursiveFindFileReverse(std::filesystem::path currentPath
     }
     return currentPath;
 }
-} // namespace detail
+} /// namespace detail
 
 #if __APPLE__
 #    include <mach-o/dyld.h>
@@ -307,10 +307,10 @@ std::filesystem::path getPublicIncludes()
 }
 std::filesystem::path getClangPath()
 {
-    // Depending on the current environment the clang executable could be found at different places.
-    // 1. if the system is installed then we should find a nes-clang executable next to the current executable, e.g. nesCoordinator.
-    // 2. if we are in the build environment CLANG_EXECUTABLE should indicate the location of clang.
-    // TODO check locations on MacOS.
+    /// Depending on the current environment the clang executable could be found at different places.
+    /// 1. if the system is installed then we should find a nes-clang executable next to the current executable, e.g. nesCoordinator.
+    /// 2. if we are in the build environment CLANG_EXECUTABLE should indicate the location of clang.
+    /// TODO check locations on MacOS.
     auto executablePath = getExecutablePath();
     auto nesClangPath = executablePath.parent_path().append("nes-clang");
     if (std::filesystem::exists(nesClangPath))
@@ -328,4 +328,4 @@ std::filesystem::path getClangPath()
     throw CompilerException("Path to clang executable not found");
 }
 
-} // namespace NES::Compiler::ExecutablePath
+} /// namespace NES::Compiler::ExecutablePath

@@ -29,7 +29,7 @@ GeoLocation::GeoLocation()
 
 GeoLocation::GeoLocation(double latitude, double longitude)
 {
-    //Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
+    ///Coordinates with the value NaN lead to the creation of an object which symbolizes an invalid location
     if (!(std::isnan(latitude) && std::isnan(longitude)) && !checkValidityOfCoordinates(latitude, longitude))
     {
         NES_ERROR("Trying to create a location with invalid coordinates");
@@ -68,7 +68,7 @@ GeoLocation GeoLocation::fromString(const std::string& coordinates)
 
 bool GeoLocation::operator==(const GeoLocation& other) const
 {
-    //if both objects are an invalid location, consider them equal
+    ///if both objects are an invalid location, consider them equal
     if (!this->isValid() && !other.isValid())
     {
         return true;
@@ -100,4 +100,4 @@ bool GeoLocation::checkValidityOfCoordinates(double latitude, double longitude)
 {
     return !(std::abs(latitude) > 90 || std::abs(longitude) > 180);
 }
-} // namespace NES::Spatial::DataTypes::Experimental
+} /// namespace NES::Spatial::DataTypes::Experimental

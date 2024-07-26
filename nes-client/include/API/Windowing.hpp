@@ -41,8 +41,8 @@ using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
 class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-} // namespace Windowing
-} // namespace NES
+} /// namespace Windowing
+} /// namespace NES
 /**
  * @brief The following declares API functions for windowing.
  */
@@ -187,6 +187,6 @@ Windowing::TimeUnit Days();
  */
 [[maybe_unused]] ExpressionNodePtr RecordCreationTs();
 
-} // namespace NES::API
+} /// namespace NES::API
 
 #endif /// NES_CLIENT_INCLUDE_API_WINDOWING_HPP_

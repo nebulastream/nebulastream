@@ -29,7 +29,7 @@ using CSVParserPtr = std::shared_ptr<CSVParser>;
 namespace Runtime::detail
 {
 class MemorySegment;
-} // namespace Runtime::detail
+} /// namespace Runtime::detail
 
 namespace Experimental
 {
@@ -137,7 +137,7 @@ private:
     uint64_t tupleSizeInBytes;
     uint64_t bufferSize;
 
-    size_t numTuples; // in table
+    size_t numTuples; /// in table
     size_t numTuplesEmitted = 0;
     size_t numBuffersEmitted = 0;
 
@@ -146,7 +146,7 @@ private:
 
 using StaticDataSourcePtr = std::shared_ptr<StaticDataSource>;
 
-} // namespace Experimental
-} // namespace NES
+} /// namespace Experimental
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_STATICDATASOURCE_HPP_

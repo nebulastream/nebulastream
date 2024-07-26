@@ -88,5 +88,5 @@ private:
     };
 };
 
-} // namespace NES::Nautilus::IR
+} /// namespace NES::Nautilus::IR
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_PHASES_REMOVEBRONLYBLOCKSPHASE_HPP_

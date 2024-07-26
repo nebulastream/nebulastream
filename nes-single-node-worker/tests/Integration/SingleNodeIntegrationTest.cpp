@@ -160,8 +160,8 @@ TEST_F(SingleNodeIntegrationTest, TestQueryRegistration)
     auto numberOfTuples
         = std::accumulate(buffers.begin(), buffers.end(), 0, [](auto acc, const auto& buffer) { return acc + buffer.getNumberOfTuples(); });
 
-    // 2 Default Sources producing 32 Buffer (10 tuple per buffer) each
+    /// 2 Default Sources producing 32 Buffer (10 tuple per buffer) each
     constexpr auto EXPECTED_NUMBER_OF_TUPLES = 2 * 32 * 10;
     EXPECT_EQ(numberOfTuples, EXPECTED_NUMBER_OF_TUPLES) << "Query did not produce the expected number of tuples";
 }
-} // namespace NES::Testing
+} /// namespace NES::Testing

@@ -242,5 +242,5 @@ private:
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
 };
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERPHYSICALTONAUTILUSOPERATORS_HPP_

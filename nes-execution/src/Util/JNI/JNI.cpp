@@ -45,7 +45,7 @@ Permission is hereby granted, free of charge, to any person obtaining a copy
 namespace NES::jni
 {
 
-// Static Variables
+/// Static Variables
 static std::atomic_bool isJVMInitialized(false);
 static JavaVM* jvmInstance = nullptr;
 
@@ -58,7 +58,7 @@ static bool getEnv(JavaVM* vm, JNIEnv** env)
 static bool isAttached(JavaVM* vm)
 {
     JNIEnv* env = nullptr;
-    // we can assume that get env will not return JNI_EVERSION
+    /// we can assume that get env will not return JNI_EVERSION
     return getEnv(vm, &env);
 }
 
@@ -117,8 +117,8 @@ JNIEnv* getEnv()
 
     if (env.get() != nullptr && !isAttached(jvmInstance))
     {
-        // we got detached, so clear it.
-        // will be re-populated from static javaVm below.
+        /// we got detached, so clear it.
+        /// will be re-populated from static javaVm below.
         env = ScopedEnv{};
     }
 
@@ -209,4 +209,4 @@ bool JVM::isInitialized()
     return isJVMInitialized;
 }
 
-} // namespace NES::jni
+} /// namespace NES::jni

@@ -86,6 +86,6 @@ private:
         std::shared_ptr<AbstractBufferProvider> bufferProvider,
         std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices);
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_ABSTRACTSLICEPREAGGREGATIONHANDLER_HPP_

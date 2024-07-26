@@ -68,6 +68,6 @@ private:
 
 using ZmqSinkDescriptorPtr = std::shared_ptr<ZmqSinkDescriptor>;
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_ZMQSINKDESCRIPTOR_HPP_

@@ -49,7 +49,7 @@ Copyright (c) 2016 Mitchell Dowd
 /* The following code contains portions of jnipp, provided by @mitchdowd (https://github.com/mitchdowd/jnipp)
 */
 
-// Forward Declarations
+/// Forward Declarations
 struct JNIEnv_;
 struct JavaVM_;
 struct _jmethodID;
@@ -159,6 +159,6 @@ public:
     explicit InitializationException(const char* msg) : RuntimeException(msg) { }
 };
 
-} // namespace NES::jni
+} /// namespace NES::jni
 
 #endif /// NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_

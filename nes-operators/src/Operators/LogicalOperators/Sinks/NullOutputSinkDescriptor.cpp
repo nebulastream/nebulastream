@@ -37,4 +37,4 @@ bool NullOutputSinkDescriptor::equal(SinkDescriptorPtr const& other)
     return other->instanceOf<NullOutputSinkDescriptor>();
 }
 
-} // namespace NES
+} /// namespace NES

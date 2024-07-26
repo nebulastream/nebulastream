@@ -28,4 +28,4 @@ Value<> LessThanExpression::execute(Record& record) const
     return leftValue < rightValue;
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

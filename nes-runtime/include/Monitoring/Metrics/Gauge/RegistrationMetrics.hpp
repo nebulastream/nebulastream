@@ -29,7 +29,7 @@ namespace Configurations
 {
 class SchemaType;
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
-} // namespace Configurations
+} /// namespace Configurations
 
 namespace Monitoring
 {
@@ -101,10 +101,10 @@ public:
     WorkerId nodeId;
     uint64_t totalMemoryBytes;
     uint64_t cpuCoreNum;
-    uint64_t totalCPUJiffies; //user+idle+system (This value can change everytime it is read via AbstractSystemResourcesReader)
-    // Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
-    int64_t cpuPeriodUS; //the CPU CFS scheduler period in microseconds
-    int64_t cpuQuotaUS; // CPU CFS quota in microseconds
+    uint64_t totalCPUJiffies; ///user+idle+system (This value can change everytime it is read via AbstractSystemResourcesReader)
+    /// Using 1.5 CPUs is equivalent to --cpu-period="100000" and --cpu-quota="150000"
+    int64_t cpuPeriodUS; ///the CPU CFS scheduler period in microseconds
+    int64_t cpuQuotaUS; /// CPU CFS quota in microseconds
 
     bool isMoving;
     bool hasBattery;
@@ -137,6 +137,6 @@ void readFromBuffer(RegistrationMetrics& metrics, Runtime::TupleBuffer& buf, uin
  */
 nlohmann::json asJson(const RegistrationMetrics& metrics);
 
-} // namespace Monitoring
-} // namespace NES
+} /// namespace Monitoring
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_MONITORING_METRICS_GAUGE_REGISTRATIONMETRICS_HPP_

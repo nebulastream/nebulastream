@@ -45,5 +45,5 @@ private:
     Runtime::TupleBuffer buffer;
     FormatTypes sinkFormatType;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_

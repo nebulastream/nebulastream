@@ -88,5 +88,5 @@ private:
 
     const uint64_t width;
 };
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_STATISTICCOLLECTION_PHYSICALHYPERLOGLOGBUILDOPERATOR_HPP_

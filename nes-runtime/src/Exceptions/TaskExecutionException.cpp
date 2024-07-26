@@ -29,4 +29,4 @@ Runtime::Execution::SuccessorExecutablePipeline TaskExecutionException::getExecu
     return pipeline;
 }
 
-} // namespace NES
+} /// namespace NES

@@ -100,6 +100,6 @@ private:
     };
 };
 
-} // namespace NES::Nautilus::Backends::Flounder
+} /// namespace NES::Nautilus::Backends::Flounder
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_

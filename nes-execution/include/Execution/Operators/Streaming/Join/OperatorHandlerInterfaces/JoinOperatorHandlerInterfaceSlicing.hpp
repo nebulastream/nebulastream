@@ -35,6 +35,6 @@ public:
      */
     virtual StreamSlice* getCurrentSliceOrCreate() = 0;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_OPERATORHANDLERINTERFACES_JOINOPERATORHANDLERINTERFACESLICING_HPP_

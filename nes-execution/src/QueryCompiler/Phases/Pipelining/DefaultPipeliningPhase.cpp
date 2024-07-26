@@ -40,13 +40,13 @@ PipeliningPhasePtr DefaultPipeliningPhase::create(const OperatorFusionPolicyPtr&
 
 PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomposedQueryPlan)
 {
-    // splits the query plan of physical operators in pipelines
+    /// splits the query plan of physical operators in pipelines
     NES_DEBUG("Pipeline: query id: {} - {}", decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId());
     std::map<OperatorPtr, OperatorPipelinePtr> pipelineOperatorMap;
     auto pipelinePlan = PipelineQueryPlan::create(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId());
     for (const auto& sinkOperators : decomposedQueryPlan->getRootOperators())
     {
-        // create a new pipeline for each sink
+        /// create a new pipeline for each sink
         auto pipeline = OperatorPipeline::createSinkPipeline();
         pipeline->prependOperator(sinkOperators->copy());
         pipelinePlan->addPipeline(pipeline);
@@ -61,14 +61,14 @@ void DefaultPipeliningPhase::processMultiplex(
     OperatorPipelinePtr currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
-    // if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
+    /// if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
     if (!currentPipeline->hasOperators())
     {
         auto successorPipeline = currentPipeline->getSuccessors()[0];
         pipelinePlan->removePipeline(currentPipeline);
         currentPipeline = successorPipeline;
     }
-    // for all children operators add a new pipeline
+    /// for all children operators add a new pipeline
     for (const auto& node : currentOperator->getChildren())
     {
         auto newPipeline = OperatorPipeline::create();
@@ -84,15 +84,15 @@ void DefaultPipeliningPhase::processDemultiplex(
     OperatorPipelinePtr currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
-    // if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
+    /// if the current pipeline has no operators we will remove it, because we want to omit empty pipelines
     if (!currentPipeline->hasOperators())
     {
         auto successorPipeline = currentPipeline->getSuccessors()[0];
         pipelinePlan->removePipeline(currentPipeline);
         currentPipeline = successorPipeline;
     }
-    // check if current operator is already part of a pipeline.
-    // if yes lookup the pipeline fom the map. If not create a new one
+    /// check if current operator is already part of a pipeline.
+    /// if yes lookup the pipeline fom the map. If not create a new one
     if (pipelineOperatorMap.find(currentOperator) != pipelineOperatorMap.end())
     {
         pipelineOperatorMap[currentOperator]->addSuccessor(currentPipeline);
@@ -114,7 +114,7 @@ void DefaultPipeliningPhase::processPipelineBreakerOperator(
     const OperatorPipelinePtr& currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
-    // for pipeline breakers we create a new pipeline
+    /// for pipeline breakers we create a new pipeline
     currentPipeline->prependOperator(currentOperator->as<PhysicalOperators::PhysicalOperator>()->copy());
 
     for (const auto& node : currentOperator->getChildren())
@@ -132,7 +132,7 @@ void DefaultPipeliningPhase::processFusibleOperator(
     const OperatorPipelinePtr& currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperator)
 {
-    // for operator we can fuse, we just append them to the current pipeline.
+    /// for operator we can fuse, we just append them to the current pipeline.
     currentPipeline->prependOperator(currentOperator->copy());
     for (const auto& node : currentOperator->getChildren())
     {
@@ -161,7 +161,7 @@ void DefaultPipeliningPhase::processSource(
     OperatorPipelinePtr currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& sourceOperator)
 {
-    // Source operators will always be part of their own pipeline.
+    /// Source operators will always be part of their own pipeline.
     if (currentPipeline->hasOperators())
     {
         auto newPipeline = OperatorPipeline::create();
@@ -179,14 +179,14 @@ void DefaultPipeliningPhase::process(
     const OperatorPipelinePtr& currentPipeline,
     const PhysicalOperators::PhysicalOperatorPtr& currentOperators)
 {
-    // Pipelining only works on physical operators.
+    /// Pipelining only works on physical operators.
     if (!currentOperators->instanceOf<PhysicalOperators::PhysicalOperator>())
     {
         throw QueryCompilationException(
             "Pipelining can only be applied to physical operator. But current operator was: " + currentOperators->toString());
     }
 
-    // Depending on the operator we apply different pipelining strategies
+    /// Depending on the operator we apply different pipelining strategies
     if (currentOperators->instanceOf<PhysicalOperators::PhysicalSourceOperator>())
     {
         processSource(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
@@ -212,4 +212,4 @@ void DefaultPipeliningPhase::process(
         processPipelineBreakerOperator(pipelinePlan, pipelineOperatorMap, currentPipeline, currentOperators);
     }
 }
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

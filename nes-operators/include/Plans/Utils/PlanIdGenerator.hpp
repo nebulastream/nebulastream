@@ -44,5 +44,5 @@ public:
      */
     static QueryId getNextQueryId();
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANIDGENERATOR_HPP_

@@ -46,6 +46,6 @@ public:
 protected:
     explicit UnaryExpressionNode(UnaryExpressionNode* other);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_

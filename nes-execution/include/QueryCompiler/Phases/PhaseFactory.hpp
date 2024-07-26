@@ -62,6 +62,6 @@ public:
     virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
-} // namespace NES::QueryCompilation::Phases
+} /// namespace NES::QueryCompilation::Phases
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PHASEFACTORY_HPP_

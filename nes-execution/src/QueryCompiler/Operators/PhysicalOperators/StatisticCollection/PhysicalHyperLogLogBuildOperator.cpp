@@ -74,4 +74,4 @@ uint64_t PhysicalHyperLogLogBuildOperator::getWidth() const
     return width;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

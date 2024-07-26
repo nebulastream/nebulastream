@@ -115,6 +115,6 @@ inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
     return *(basePointer + recordIndex);
 }
 
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_

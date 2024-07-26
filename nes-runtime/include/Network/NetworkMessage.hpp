@@ -156,7 +156,7 @@ public:
 
     explicit ServerReadyMessage(ChannelId channelId) : ExchangeMessage(channelId)
     {
-        // nop
+        /// nop
     }
 };
 
@@ -209,7 +209,7 @@ public:
 
     explicit ErrorMessage(ChannelId channelId, ErrorType error) : ExchangeMessage(channelId), errorCode(error)
     {
-        // nop
+        /// nop
     }
 
     [[nodiscard]] ErrorType getErrorType() const { return errorCode; }
@@ -287,6 +287,6 @@ public:
     uint32_t const numOfChildren;
 };
 
-} // namespace NES::Network::Messages
+} /// namespace NES::Network::Messages
 
 #endif /// NES_RUNTIME_INCLUDE_NETWORK_NETWORKMESSAGE_HPP_

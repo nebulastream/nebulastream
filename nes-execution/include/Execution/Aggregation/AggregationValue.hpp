@@ -80,7 +80,7 @@ struct MaxAggregationValue : AggregationValue
  */
 struct HyperLogLogDistinctCountApproximationValue : AggregationValue
 {
-    //TODO: #3889 for approximation we require some flexibility to define the size, e.g., appr. window count, etc. to get the best possible result
+    ///TODO: #3889 for approximation we require some flexibility to define the size, e.g., appr. window count, etc. to get the best possible result
     hll::HyperLogLog hyperLogLog = hll::HyperLogLog(10);
 };
 
@@ -89,10 +89,10 @@ struct HyperLogLogDistinctCountApproximationValue : AggregationValue
  */
 struct QuantileEstimationValue : AggregationValue
 {
-    //TODO: #3889 here the same, unsigned is fix, size depends on use case? might be abitrary for this algorithm
+    ///TODO: #3889 here the same, unsigned is fix, size depends on use case? might be abitrary for this algorithm
     digestible::tdigest<float, unsigned> digest = digestible::tdigest(10);
 };
 
-} // namespace NES::Runtime::Execution::Aggregation
+} /// namespace NES::Runtime::Execution::Aggregation
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_

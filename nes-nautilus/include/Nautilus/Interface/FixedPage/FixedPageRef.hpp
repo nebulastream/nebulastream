@@ -20,7 +20,7 @@
 
 namespace NES::Nautilus::Interface
 {
-// Forward declaration
+/// Forward declaration
 class FixedPageRefIter;
 
 /**
@@ -164,6 +164,6 @@ private:
     Value<MemRef> addr;
     FixedPageRef fixedPageRef;
 };
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_

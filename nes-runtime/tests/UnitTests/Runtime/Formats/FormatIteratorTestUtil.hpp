@@ -76,7 +76,7 @@ public:
         CreateExpectedTypeFunc createExpectedType,
         const Values&... values)
     {
-        // Iterate over all values in the current tuple and add them to the expected KV pairs.
+        /// Iterate over all values in the current tuple and add them to the expected KV pairs.
         expectedKVPairs.push_back(std::vector<ExpectedType>());
         auto testTuple = std::make_tuple(setExpectedValue(values, schema, expectedKVPairs.back(), createExpectedType)...);
         testTupleBuffer->pushRecordToBuffer(testTuple);
@@ -211,6 +211,6 @@ public:
     }
 };
 
-} // namespace NES::Runtime
+} /// namespace NES::Runtime
 
 #endif /// NES_RUNTIME_TESTS_UNITTESTS_RUNTIME_FORMATS_FORMATITERATORTESTUTIL_HPP_

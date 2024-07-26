@@ -28,4 +28,4 @@ DataTypePtr BinaryLogicalFunction::inferStamp(const std::vector<DataTypePtr>& in
     return inferBinary(inputStamps[0], inputStamps[1]);
 }
 
-} // namespace NES
+} /// namespace NES

@@ -19,4 +19,4 @@ bool Identifier::isIdentifier(const Any& val)
 {
     return dynamic_cast<const Identifier*>(&val) != nullptr;
 }
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

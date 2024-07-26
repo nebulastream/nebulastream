@@ -51,5 +51,5 @@ private:
     explicit AvgAggregationDescriptor(FieldAccessExpressionNodePtr onField);
     AvgAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_AVGAGGREGATIONDESCRIPTOR_HPP_

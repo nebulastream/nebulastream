@@ -26,7 +26,7 @@ namespace NES::Nautilus::Interface
 class MurMur3HashFunction : public HashFunction
 {
 public:
-    // Seed as an initialisation.
+    /// Seed as an initialisation.
     const uint64_t SEED = 902850234;
 
     /**
@@ -59,6 +59,6 @@ public:
      */
     HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
 };
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_MURMUR3HASHFUNCTION_HPP_

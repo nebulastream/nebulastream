@@ -57,5 +57,5 @@ private:
     BasicBlockInvocation loopEndBlock;
     std::shared_ptr<LoopInfo> loopInfo;
 };
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_

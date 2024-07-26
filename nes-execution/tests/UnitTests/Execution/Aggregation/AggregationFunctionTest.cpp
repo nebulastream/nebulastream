@@ -60,20 +60,20 @@ TEST_F(AggregationFunctionTest, sumAggregation)
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>(1_s64);
     auto inputRecord = Record({{"value", incomingValue}});
-    // test lift
+    /// test lift
     sumAgg.lift(memref, inputRecord);
     ASSERT_EQ(sumValue.sum, 1);
 
-    // test combine
+    /// test combine
     sumAgg.combine(memref, memref);
     ASSERT_EQ(sumValue.sum, 2);
 
-    // test lower
+    /// test lower
     auto result = Record();
     sumAgg.lower(memref, result);
     ASSERT_EQ(result.read("result"), 2);
 
-    // test reset
+    /// test reset
     sumAgg.reset(memref);
     EXPECT_EQ(sumValue.sum, 0);
 }
@@ -94,21 +94,21 @@ TEST_F(AggregationFunctionTest, countAggregation)
     auto countValue = Aggregation::CountAggregationValue<uint64_t>();
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&countValue);
 
-    // test lift
+    /// test lift
     Record inputRecord;
     countAgg.lift(memref, inputRecord);
     ASSERT_EQ(countValue.count, 1_u64);
 
-    // test combine
+    /// test combine
     countAgg.combine(memref, memref);
     ASSERT_EQ(countValue.count, 2_u64);
 
-    // test lower
+    /// test lower
     auto result = Record();
     countAgg.lower(memref, result);
     ASSERT_EQ(result.read("result"), 2_u64);
 
-    // test reset
+    /// test reset
     countAgg.reset(memref);
     EXPECT_EQ(countValue.count, 0_u64);
 }
@@ -127,24 +127,24 @@ TEST_F(AggregationFunctionTest, AvgAggregation)
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&avgValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>(2_s64);
-    // test lift
+    /// test lift
     auto inputRecord = Record({{"value", incomingValue}});
     avgAgg.lift(memref, inputRecord);
     EXPECT_EQ(avgValue.count, 1);
     EXPECT_EQ(avgValue.sum, 2);
 
-    // test combine
+    /// test combine
     avgAgg.combine(memref, memref);
     EXPECT_EQ(avgValue.count, 2);
     EXPECT_EQ(avgValue.sum, 4);
 
-    // test lower
+    /// test lower
     auto result = Record();
     avgAgg.lower(memref, result);
 
     EXPECT_EQ(result.read("result"), 2);
 
-    // test reset
+    /// test reset
     avgAgg.reset(memref);
     EXPECT_EQ(avgValue.count, 0);
     EXPECT_EQ(avgValue.sum, 0);
@@ -168,51 +168,51 @@ TEST_F(AggregationFunctionTest, MinAggregation)
     auto incomingValueOne = Nautilus::Value<Nautilus::Int64>(1_s64);
     auto incomingValueTwo = Nautilus::Value<Nautilus::Int64>(2_s64);
 
-    // lift value in minAgg with an initial value of 5, thus the current min should be 5
+    /// lift value in minAgg with an initial value of 5, thus the current min should be 5
     auto inputRecord = Record({{"value", incomingValueFive}});
     minAgg.lift(memref, inputRecord);
     ASSERT_EQ(minValue.min, incomingValueFive);
 
-    // lift value in minAgg with a higher value of 10, thus the current min should still be 5
+    /// lift value in minAgg with a higher value of 10, thus the current min should still be 5
     inputRecord = Record({{"value", incomingValueTen}});
     minAgg.lift(memref, inputRecord);
     ASSERT_EQ(minValue.min, incomingValueFive);
 
-    // lift value in minAgg with a lower value of 1, thus the current min should change to 1
+    /// lift value in minAgg with a lower value of 1, thus the current min should change to 1
     inputRecord = Record({{"value", incomingValueOne}});
     minAgg.lift(memref, inputRecord);
     ASSERT_EQ(minValue.min, incomingValueOne);
 
-    // lift value in minAgg with a higher value of 2, thus the current min should still be 1
+    /// lift value in minAgg with a higher value of 2, thus the current min should still be 1
     inputRecord = Record({{"value", incomingValueOne}});
     minAgg.lift(memref, inputRecord);
     ASSERT_EQ(minValue.min, incomingValueOne);
 
-    // combine memrefs in minAgg
+    /// combine memrefs in minAgg
     auto anotherMinValue = Aggregation::MinAggregationValue<int64_t>();
     auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&anotherMinValue);
     inputRecord = Record({{"value", incomingValueTen}});
     minAgg.lift(anotherMemref, inputRecord);
 
-    // test if memref1 < memref2
+    /// test if memref1 < memref2
     minAgg.combine(memref, anotherMemref);
     ASSERT_EQ(minValue.min, incomingValueOne);
 
-    // test if memref1 > memref2
+    /// test if memref1 > memref2
     minAgg.combine(anotherMemref, memref);
     ASSERT_EQ(anotherMinValue.min, incomingValueOne);
 
-    // test if memref1 = memref2
+    /// test if memref1 = memref2
     inputRecord = Record({{"value", incomingValueOne}});
     minAgg.lift(anotherMemref, inputRecord);
     ASSERT_EQ(anotherMinValue.min, incomingValueOne);
 
-    // lower value in minAgg
+    /// lower value in minAgg
     auto result = Record();
     minAgg.lower(memref, result);
     ASSERT_EQ(result.read("result"), 1);
 
-    // test reset
+    /// test reset
     minAgg.reset(memref);
     EXPECT_EQ(minValue.min, std::numeric_limits<int64_t>::max());
 }
@@ -235,57 +235,57 @@ TEST_F(AggregationFunctionTest, MaxAggregation)
     auto incomingValueOne = Nautilus::Value<Nautilus::Int64>(1_s64);
     auto incomingValueFifteen = Nautilus::Value<Nautilus::Int64>(15_s64);
 
-    // lift value in maxAgg with an initial value of 5, thus the current min should be 5
+    /// lift value in maxAgg with an initial value of 5, thus the current min should be 5
 
     auto inputRecord = Record({{"value", incomingValueFive}});
     maxAgg.lift(memref, inputRecord);
     ASSERT_EQ(maxValue.max, incomingValueFive);
 
-    // lift value in maxAgg with a higher value of 10, thus the current min should change to 10
+    /// lift value in maxAgg with a higher value of 10, thus the current min should change to 10
 
     inputRecord = Record({{"value", incomingValueTen}});
     maxAgg.lift(memref, inputRecord);
     ASSERT_EQ(maxValue.max, incomingValueTen);
 
-    // lift value in maxAgg with a lower value of 1, thus the current min should still be 10
+    /// lift value in maxAgg with a lower value of 1, thus the current min should still be 10
 
     inputRecord = Record({{"value", incomingValueOne}});
     maxAgg.lift(memref, inputRecord);
     ASSERT_EQ(maxValue.max, incomingValueTen);
 
-    // lift value in maxAgg with a higher value of 15, thus the current min should change to 15
+    /// lift value in maxAgg with a higher value of 15, thus the current min should change to 15
 
     inputRecord = Record({{"value", incomingValueFifteen}});
     maxAgg.lift(memref, inputRecord);
     ASSERT_EQ(maxValue.max, incomingValueFifteen);
 
-    // combine memrefs in maxAgg
+    /// combine memrefs in maxAgg
     auto anotherMaxValue = Aggregation::MaxAggregationValue<int64_t>();
     auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&anotherMaxValue);
 
     inputRecord = Record({{"value", incomingValueOne}});
     maxAgg.lift(anotherMemref, inputRecord);
 
-    // test if memref1 > memref2
+    /// test if memref1 > memref2
     maxAgg.combine(memref, anotherMemref);
     ASSERT_EQ(maxValue.max, incomingValueFifteen);
 
-    // test if memref1 < memref2
+    /// test if memref1 < memref2
     maxAgg.combine(anotherMemref, memref);
     ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
 
-    // test if memref1 = memref2
+    /// test if memref1 = memref2
     inputRecord = Record({{"value", incomingValueFifteen}});
     maxAgg.lift(anotherMemref, inputRecord);
     maxAgg.combine(memref, anotherMemref);
     ASSERT_EQ(anotherMaxValue.max, incomingValueFifteen);
 
-    // lower value in minAgg
+    /// lower value in minAgg
     auto result = Record();
     maxAgg.lower(memref, result);
     ASSERT_EQ(result.read("result"), incomingValueFifteen);
 
-    // test reset
+    /// test reset
     maxAgg.reset(memref);
     EXPECT_EQ(maxValue.max, std::numeric_limits<int64_t>::min());
 }
@@ -306,24 +306,24 @@ TEST_F(AggregationFunctionTest, HyperLogLogAggregationSimpleTest)
     auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*)&distinctCountValue);
     auto incomingValue = Nautilus::Value<Nautilus::Int64>(1_s64);
 
-    // lift several records in HyperLogLogAgg with an initial value of 1
+    /// lift several records in HyperLogLogAgg with an initial value of 1
     auto inputRecord = Record({{"value", incomingValue}});
 
-    // lift value in distinctCountEstimation
+    /// lift value in distinctCountEstimation
     distinctCountEstimation.lift(memref, inputRecord);
     distinctCountEstimation.lift(memref, inputRecord);
     distinctCountEstimation.lift(memref, inputRecord);
     distinctCountEstimation.lift(memref, inputRecord);
     distinctCountEstimation.lift(memref, inputRecord);
 
-    // combine memrefs in HyperLogLogAgg
+    /// combine memrefs in HyperLogLogAgg
     distinctCountEstimation.combine(memref, memref);
 
-    // lower value in HyperLogLogAgg
+    /// lower value in HyperLogLogAgg
     auto result = Record();
     distinctCountEstimation.lower(memref, result);
     EXPECT_TRUE((bool)(result.read("result") > (1.0 * 0.9) && result.read("result") < (1.0 * 1.1)));
-    // HyperLogLog estimates the distinct count thus we use 10% variance of the result
+    /// HyperLogLog estimates the distinct count thus we use 10% variance of the result
 }
 
 /**
@@ -347,7 +347,7 @@ TEST_F(AggregationFunctionTest, HyperLogLogComplexTest)
     auto incomingValue1 = Nautilus::Value<Nautilus::Int64>(1_s64);
     auto incomingValue7 = Nautilus::Value<Nautilus::Int64>(7_s64);
 
-    // lift value in distinctCountEstimation
+    /// lift value in distinctCountEstimation
     auto inputRecord4 = Record({{"value", incomingValue4}});
     distinctCountEstimation.lift(memref, inputRecord4);
     auto inputRecord3 = Record({{"value", incomingValue3}});
@@ -363,11 +363,11 @@ TEST_F(AggregationFunctionTest, HyperLogLogComplexTest)
     auto inputRecord7 = Record({{"value", incomingValue7}});
     distinctCountEstimation.lift(memref, inputRecord7);
 
-    // lower value in minAgg
+    /// lower value in minAgg
     auto result = Record();
     distinctCountEstimation.lower(memref, result);
     EXPECT_TRUE((bool)(result.read("result") > (6.0 * 0.9) && result.read("result") < (6.0 * 1.1)));
-    // HyperLogLog estimates the distinct count thus we use 10% variance of the result
+    /// HyperLogLog estimates the distinct count thus we use 10% variance of the result
 }
 
 /**
@@ -392,7 +392,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantile)
     auto incomingValue1 = Nautilus::Value<Nautilus::Int64>(1_s64);
     auto incomingValue7 = Nautilus::Value<Nautilus::Int64>(7_s64);
 
-    // lift value in distinctCountEstimation
+    /// lift value in distinctCountEstimation
     auto inputRecord4 = Record({{"value", incomingValue4}});
     quantileEstimationAgg.lift(memref, inputRecord4);
     quantileEstimationValue.digest.merge();
@@ -422,13 +422,13 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantile)
     quantileEstimationValue.digest.merge();
     ASSERT_EQ(quantileEstimationValue.digest.size(), 10);
 
-    // lower value in minAgg
+    /// lower value in minAgg
     auto result = Record();
     quantileEstimationAgg.lower(memref, result);
     double expResult = quantileEstimationValue.digest.min() + (50 * quantileEstimationValue.digest.max() / 100);
-    // the estimate quantile result = minVal + (quantile (0-100%) * maxVal/100) = 4.5 for this example
+    /// the estimate quantile result = minVal + (quantile (0-100%) * maxVal/100) = 4.5 for this example
     EXPECT_TRUE((bool)(result.read("result") > (expResult * 0.9) && result.read("result") < (expResult * 1.1)));
-    // Tdigest is an estimation the median thus we use 10% variance of the result
+    /// Tdigest is an estimation the median thus we use 10% variance of the result
 }
 
 /**
@@ -455,7 +455,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantileCombine)
     auto incomingValue7 = Nautilus::Value<Nautilus::Int64>(7_s64);
     auto incomingValue10 = Nautilus::Value<Nautilus::Int64>(10_s64);
 
-    // lift value in distinctCountEstimation
+    /// lift value in distinctCountEstimation
     auto inputRecord4 = Record({{"value", incomingValue4}});
     quantileEstimationAgg.lift(memref, inputRecord4);
     auto inputRecord3 = Record({{"value", incomingValue3}});
@@ -471,26 +471,26 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantileCombine)
     auto inputRecord7 = Record({{"value", incomingValue7}});
     quantileEstimationAgg.lift(memref, inputRecord7);
 
-    // create a second memref
+    /// create a second memref
     quantileEstimationAgg.lift(memref2, inputRecord7);
     auto inputRecord10 = Record({{"value", incomingValue10}});
     quantileEstimationAgg.lift(memref2, inputRecord10);
 
-    // combine memrefs in HyperLogLogAgg
+    /// combine memrefs in HyperLogLogAgg
     quantileEstimationAgg.combine(memref, memref2);
-    //combine calls merge of the tdigest thus we can skip it here
+    ///combine calls merge of the tdigest thus we can skip it here
     ASSERT_EQ(quantileEstimationValue.digest.min(), 1.0f);
     ASSERT_EQ(quantileEstimationValue.digest.max(), 10.0f);
     ASSERT_EQ(quantileEstimationValue.digest.size(), 10);
 
-    // lower value in minAgg
+    /// lower value in minAgg
     auto result = Record();
     quantileEstimationAgg.lower(memref, result);
     double expResult = quantileEstimationValue.digest.min() + (50 * quantileEstimationValue.digest.max() / 100);
-    // the estimate quantile result = minVal + (quantile (0-100%) * maxVal/100) =  1+(50*10/100) = 6 for this example;
-    // note that min is in one memref and max is in the other memref to test combine
+    /// the estimate quantile result = minVal + (quantile (0-100%) * maxVal/100) =  1+(50*10/100) = 6 for this example;
+    /// note that min is in one memref and max is in the other memref to test combine
     EXPECT_TRUE((bool)(result.read("result") > (expResult * 0.9) && result.read("result") < (expResult * 1.1)));
-    // Tdigest is an estimation the median thus we use 10% variance of the result
+    /// Tdigest is an estimation the median thus we use 10% variance of the result
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

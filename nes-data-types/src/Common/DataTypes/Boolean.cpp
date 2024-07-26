@@ -37,4 +37,4 @@ std::string Boolean::toString()
     return "Boolean";
 }
 
-} // namespace NES
+} /// namespace NES

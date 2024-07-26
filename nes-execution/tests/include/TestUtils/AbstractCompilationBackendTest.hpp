@@ -43,6 +43,6 @@ public:
         const CompilationOptions& options = CompilationOptions(),
         const DumpHelper& dumpHelper = DumpHelper::create("", true, false, ""));
 };
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_

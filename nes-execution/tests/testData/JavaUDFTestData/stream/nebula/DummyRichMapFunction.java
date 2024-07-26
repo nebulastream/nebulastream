@@ -1,5 +1,5 @@
 package stream.nebula;
-// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
+/// IMPORTANT: If you make changes to this file, be sure to run buildJar.sh _and_ reload the cmake project to update the JAR file.
 import java.io.Serializable;
 
 /**
@@ -10,9 +10,9 @@ import java.io.Serializable;
  */
 public class DummyRichMapFunction implements MapFunction<Integer, Integer> {
 
-    // This field makes DependentClass a direct dependency of DummyRichMapFunction and RecursiveDependentClass an indirect dependency.
+    /// This field makes DependentClass a direct dependency of DummyRichMapFunction and RecursiveDependentClass an indirect dependency.
     public DependentClass dependentClass = new DependentClass();
-    // This field is used to verify that we store the actual instance in the UDF descriptor.
+    /// This field is used to verify that we store the actual instance in the UDF descriptor.
     public int instanceVariable = 0;
 
     /**
@@ -47,11 +47,11 @@ public class DummyRichMapFunction implements MapFunction<Integer, Integer> {
      * DependentClass is a direct dependency of {@link DummyRichMapFunction} because it is the type of the declared field `dependentClass'.
      */
     public static class DependentClass implements Serializable {
-        // This field makes RecursiveDependentClass a direct dependency of DependentClass and therefore an indirect dependency of MapFunction.
+        /// This field makes RecursiveDependentClass a direct dependency of DependentClass and therefore an indirect dependency of MapFunction.
         public RecursiveDependentClass recursiveDependentClass = new RecursiveDependentClass();
     }
 
-    //
+    ///
 
     /**
      * RecursiveDependentClass is an indirect dependency of {@link DummyRichMapFunction} because it is a dependency of {@link DependentClass}.

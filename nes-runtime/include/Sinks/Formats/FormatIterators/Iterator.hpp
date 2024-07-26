@@ -38,9 +38,9 @@ public:
     {
         auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
-        // Iterate over all fields of a tuple. Store sizes in fieldOffsets, to calculate correct offsets in the step below.
-        // Also, store types of fields in a separate array. Is later used to convert values to strings correctly.
-        // Iteratively add up all the sizes in the offset array, to correctly determine where each field starts in the TupleBuffer
+        /// Iterate over all fields of a tuple. Store sizes in fieldOffsets, to calculate correct offsets in the step below.
+        /// Also, store types of fields in a separate array. Is later used to convert values to strings correctly.
+        /// Iteratively add up all the sizes in the offset array, to correctly determine where each field starts in the TupleBuffer
         uint32_t fieldOffset = 0;
         for (const auto& field : schema->fields)
         {
@@ -128,5 +128,5 @@ private:
     std::vector<std::string> fieldNames;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_

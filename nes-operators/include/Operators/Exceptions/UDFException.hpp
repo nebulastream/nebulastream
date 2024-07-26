@@ -48,5 +48,5 @@ private:
     const std::string message;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_

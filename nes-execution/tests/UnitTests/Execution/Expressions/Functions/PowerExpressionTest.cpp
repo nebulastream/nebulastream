@@ -39,20 +39,20 @@ public:
 TEST_F(PowerExpressionTest, evaluatePowerExpressionInteger)
 {
     auto expression = BinaryExpressionWrapper<PowerExpression>();
-    // Int8
+    /// Int8
     {
         auto resultValue = expression.eval(Value<Int8>(2_s8), Value<Int8>(4_s8));
         ASSERT_EQ(resultValue, (float)16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
-    // Int32
+    /// Int32
     {
         auto resultValue = expression.eval(Value<Int32>(2_s32), Value<Int32>(4_s32));
         ASSERT_EQ(resultValue, (float)16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Int64
+    /// Int64
     {
         auto resultValue = expression.eval(Value<Int64>(2_s64), Value<Int64>(4_s64));
         ASSERT_EQ(resultValue, (float)16);
@@ -63,25 +63,25 @@ TEST_F(PowerExpressionTest, evaluatePowerExpressionInteger)
 TEST_F(PowerExpressionTest, evaluatePowerExpressionFloat)
 {
     auto expression = BinaryExpressionWrapper<PowerExpression>();
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)4), Value<Float>((float)0));
         ASSERT_EQ(resultValue, (float)1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Float
+    /// Float
     {
         auto resultValue = expression.eval(Value<Float>((float)2), Value<Float>((float)4));
         ASSERT_EQ(resultValue, (float)16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)2), Value<Double>((double)4));
         ASSERT_EQ(resultValue, (float)16);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
-    // Double
+    /// Double
     {
         auto resultValue = expression.eval(Value<Double>((double)4), Value<Double>((double)0));
         ASSERT_EQ(resultValue, (double)1);
@@ -98,4 +98,4 @@ TEST_F(PowerExpressionTest, evaluatePowerExpressionOnWrongType)
     ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

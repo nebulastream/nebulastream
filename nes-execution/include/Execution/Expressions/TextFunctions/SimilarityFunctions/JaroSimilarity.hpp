@@ -37,6 +37,6 @@ private:
     const ExpressionPtr flagExpression;
 };
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_JAROSIMILARITY_HPP_

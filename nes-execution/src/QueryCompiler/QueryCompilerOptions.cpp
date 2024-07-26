@@ -198,4 +198,4 @@ const std::string QueryCompilerOptions::getCUDASdkPath() const
     return cudaSdkPath;
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

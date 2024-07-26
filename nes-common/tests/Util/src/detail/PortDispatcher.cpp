@@ -30,13 +30,13 @@ PortDispatcher& getPortDispatcher()
     return portDispatcher;
 }
 
-// trim from start (in place)
+/// trim from start (in place)
 static inline void ltrim(std::string& s)
 {
     s.erase(s.begin(), std::find_if(s.begin(), s.end(), [](unsigned char ch) { return !std::isspace(ch); }));
 }
 
-// trim from end (in place)
+/// trim from end (in place)
 static inline void rtrim(std::string& s)
 {
     s.erase(std::find_if(s.rbegin(), s.rend(), [](unsigned char ch) { return !std::isspace(ch); }).base(), s.end());
@@ -105,7 +105,7 @@ PortDispatcher::PortDispatcher(uint16_t startPort, uint32_t numberOfPorts)
 BorrowedPortPtr PortDispatcher::getNextPort()
 {
     uint64_t tryCount = 0;
-    //We try 100 times
+    ///We try 100 times
     while (++tryCount < 100)
     {
         auto nextIndex = data.getNextIndex();
@@ -120,7 +120,7 @@ BorrowedPortPtr PortDispatcher::getNextPort()
             ++numOfBorrowedPorts;
             return std::make_shared<BorrowedPort>(data[nextIndex].port, nextIndex, this);
         }
-        usleep(100 * 1000); // 100ms
+        usleep(100 * 1000); /// 100ms
     }
     std::cerr << "Cannot find free port" << std::endl;
     NES_ASSERT(false, "Cannot find free port");
@@ -150,4 +150,4 @@ PortDispatcher::~PortDispatcher()
     tearDown();
 }
 
-} // namespace NES::Testing::detail
+} /// namespace NES::Testing::detail

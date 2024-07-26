@@ -148,4 +148,4 @@ NES::SourceType MemorySource::getType() const
 {
     return SourceType::MEMORY_SOURCE;
 }
-} // namespace NES
+} /// namespace NES

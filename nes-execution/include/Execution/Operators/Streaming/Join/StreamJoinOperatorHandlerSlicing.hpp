@@ -33,6 +33,6 @@ public:
     StreamSlice* getCurrentSliceOrCreate() override;
     std::vector<WindowInfo> getAllWindowsForSlice(StreamSlice& slice) override;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINOPERATORHANDLERSLICING_HPP_

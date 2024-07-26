@@ -77,13 +77,13 @@ private:
     const size_t pageSize;
     std::mutex pageAddMutex;
 
-    //used for printStatistics
+    ///used for printStatistics
     std::atomic<uint64_t> pageFullCnt = 0;
     std::atomic<uint64_t> allocateNewPageCnt = 0;
     std::atomic<uint64_t> emptyPageStillExistsCnt = 0;
     std::atomic<bool> insertInProgress;
     std::atomic<Nautilus::Interface::FixedPage*> currentPage;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_

@@ -81,6 +81,6 @@ private:
     uint64_t multiplier;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_DATA_TYPES_INCLUDE_API_TIMEUNIT_HPP_

@@ -26,7 +26,7 @@ namespace NES::Nautilus::IR::Types
 class IntegerStamp : public Stamp
 {
 public:
-    // Bit width for the integer
+    /// Bit width for the integer
     enum class BitWidth : uint8_t
     {
         I8,
@@ -35,7 +35,7 @@ public:
         I64
     };
 
-    // Signedness semantics.
+    /// Signedness semantics.
     enum class SignednessSemantics : uint8_t
     {
         Signed, /// Signed integer
@@ -85,6 +85,6 @@ private:
     const SignednessSemantics signedness;
 };
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_INTEGERSTAMP_HPP_

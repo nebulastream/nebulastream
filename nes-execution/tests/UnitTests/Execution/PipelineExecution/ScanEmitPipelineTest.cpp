@@ -151,4 +151,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<ScanEmitPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

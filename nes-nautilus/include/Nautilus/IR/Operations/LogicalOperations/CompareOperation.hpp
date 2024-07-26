@@ -53,5 +53,5 @@ private:
     OperationWPtr rightInput;
     Comparator comparator;
 };
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_COMPAREOPERATION_HPP_

@@ -44,4 +44,4 @@ getWindowingParameters(Windowing::TimeBasedWindowType& windowType)
         }
     }
 }
-} // namespace NES::QueryCompilation::Util
+} /// namespace NES::QueryCompilation::Util

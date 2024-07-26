@@ -57,6 +57,6 @@ private:
     ExecutablePath::RuntimePathConfig runtimePathConfig;
 };
 
-} // namespace NES::Compiler
+} /// namespace NES::Compiler
 
 #endif /// NES_COMPILER_INCLUDE_COMPILER_CPPCOMPILER_CPPCOMPILER_HPP_

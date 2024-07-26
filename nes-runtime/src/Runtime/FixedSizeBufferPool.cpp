@@ -49,7 +49,7 @@ FixedSizeBufferPool::FixedSizeBufferPool(
 
 FixedSizeBufferPool::~FixedSizeBufferPool()
 {
-    // nop
+    /// nop
 }
 
 BufferManagerType FixedSizeBufferPool::getBufferManagerType() const
@@ -60,7 +60,7 @@ BufferManagerType FixedSizeBufferPool::getBufferManagerType() const
 void FixedSizeBufferPool::destroy()
 {
     NES_DEBUG("Destroying LocalBufferPool");
-    //    std::unique_lock lock(mutex);
+    ///    std::unique_lock lock(mutex);
     bool expected = false;
     if (!isDestroyed.compare_exchange_strong(expected, true))
     {
@@ -69,7 +69,7 @@ void FixedSizeBufferPool::destroy()
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
     while (!exclusiveBuffers.empty())
     {
-        // return exclusive buffers to the global pool
+        /// return exclusive buffers to the global pool
         auto* memSegment = exclusiveBuffers.front();
         exclusiveBuffers.pop_front();
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
@@ -80,7 +80,7 @@ void FixedSizeBufferPool::destroy()
     detail::MemorySegment* memSegment = nullptr;
     while (exclusiveBuffers.read(memSegment))
     {
-        // return exclusive buffers to the global pool
+        /// return exclusive buffers to the global pool
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
@@ -104,7 +104,7 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::mi
     std::unique_lock lock(mutex);
     auto pred = [this]()
     {
-        return !exclusiveBuffers.empty(); // false if waiting must be continued
+        return !exclusiveBuffers.empty(); /// false if waiting must be continued
     };
     if (!cvar.wait_for(lock, timeout, std::move(pred)))
     {
@@ -141,7 +141,7 @@ TupleBuffer FixedSizeBufferPool::getBufferBlocking()
     buffer << this;
     NES_TRACE("TupleBuffer FixedSizeBufferPool::getBufferBlocking: {}", buffer.str());
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    // try to get an exclusive buffer
+    /// try to get an exclusive buffer
     std::unique_lock lock(mutex);
     while (exclusiveBuffers.empty())
     {
@@ -171,7 +171,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
     NES_VERIFY(memSegment, "null memory segment");
     if (isDestroyed)
     {
-        // return recycled buffer to the global pool
+        /// return recycled buffer to the global pool
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
@@ -182,7 +182,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
             NES_THROW_RUNTIME_ERROR(
                 "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
         }
-        // add back an exclusive buffer to the local pool
+        /// add back an exclusive buffer to the local pool
 #ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
         std::unique_lock lock(mutex);
         exclusiveBuffers.emplace_back(memSegment);
@@ -220,4 +220,4 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t)
     NES_ASSERT2_FMT(false, "This is not supported currently");
     return std::optional<TupleBuffer>();
 }
-} // namespace NES::Runtime
+} /// namespace NES::Runtime

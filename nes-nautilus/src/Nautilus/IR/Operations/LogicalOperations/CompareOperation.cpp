@@ -100,4 +100,4 @@ std::string CompareOperation::toString()
     return identifier + " = " + getLeftInput()->getIdentifier() + " " + comperator + " " + getRightInput()->getIdentifier();
 }
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

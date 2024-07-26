@@ -237,6 +237,6 @@ protected:
     OperatorProperties properties;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_

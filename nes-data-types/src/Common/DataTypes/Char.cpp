@@ -37,4 +37,4 @@ std::string Char::toString()
     return "Char";
 }
 
-} // namespace NES
+} /// namespace NES

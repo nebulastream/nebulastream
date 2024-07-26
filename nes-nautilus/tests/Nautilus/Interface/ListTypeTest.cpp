@@ -74,7 +74,7 @@ TEST_F(ListTypeTest, createListTypeFromArray)
     {
         ASSERT_EQ(list->data()[i], i);
     }
-    // free list value explicitly here.
+    /// free list value explicitly here.
     list->~ListValue<int32_t>();
 }
 
@@ -90,7 +90,7 @@ TEST_F(ListTypeTest, concatTest)
     {
         ASSERT_EQ(result->data()[i], i % 6);
     }
-    // free each list value explicitly here.
+    /// free each list value explicitly here.
     list1->~ListValue<int32_t>();
     list2->~ListValue<int32_t>();
     result->~ListValue<int32_t>();
@@ -119,7 +119,7 @@ TEST_F(ListTypeTest, listPosition)
     ASSERT_EQ(list1->listPosition(5), 5);
     ASSERT_EQ(list1->listPosition(0), 0);
     ASSERT_EQ(list1->listPosition(7), -1);
-    // free each list value explicitly here.
+    /// free each list value explicitly here.
     list1->~ListValue<int32_t>();
 }
 
@@ -135,7 +135,7 @@ TEST_F(ListTypeTest, reverse)
     ASSERT_EQ(result->data()[3], 2);
     ASSERT_EQ(result->data()[4], 1);
     ASSERT_EQ(result->data()[5], 0);
-    // free each list value explicitly here.
+    /// free each list value explicitly here.
     list1->~ListValue<int32_t>();
     result->~ListValue<int32_t>();
 }
@@ -150,7 +150,7 @@ TEST_F(ListTypeTest, appendTest)
     {
         ASSERT_EQ(result->data()[i], i);
     }
-    // free each list value explicitly here.
+    /// free each list value explicitly here.
     list1->~ListValue<int32_t>();
     result->~ListValue<int32_t>();
 }
@@ -161,7 +161,7 @@ TEST_F(ListTypeTest, containsTest)
     auto list1 = ListValue<int32_t>::create(array, 6);
     ASSERT_EQ(list1->contains(3), true);
     ASSERT_EQ(list1->contains(6), false);
-    // free each list value explicitly here.
+    /// free each list value explicitly here.
     list1->~ListValue<int32_t>();
 }
 
@@ -176,9 +176,9 @@ TEST_F(ListTypeTest, sortTest)
     {
         EXPECT_EQ(result->data()[i - 1], i);
     }
-    // free each list value explicitly here.
+    /// free each list value explicitly here.
     list1->~ListValue<int32_t>();
     result->~ListValue<int32_t>();
 }
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

@@ -21,9 +21,9 @@ namespace NES::Optimizer
 {
 enum class MemoryLayoutPolicy : uint8_t
 {
-    // Enforces a row layout for all operators within a query.
+    /// Enforces a row layout for all operators within a query.
     FORCE_ROW_LAYOUT,
-    // Enforces a columnar layout for all operators within a query.
+    /// Enforces a columnar layout for all operators within a query.
     FORCE_COLUMN_LAYOUT
 };
 }

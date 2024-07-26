@@ -80,4 +80,4 @@ TEST_F(HammingTest, FailTestInputLength)
     EXPECT_ANY_THROW(expression.eval(textValue2, textValue1));
 }
 
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

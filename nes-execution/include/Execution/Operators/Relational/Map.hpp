@@ -37,5 +37,5 @@ private:
     const Runtime::Execution::Expressions::ExpressionPtr mapExpression;
 };
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_MAP_HPP_

@@ -66,6 +66,6 @@ private:
     std::atomic<bool> setUpCalled{false};
     std::atomic<bool> tearDownCalled{false};
 };
-} // namespace NES::Testing
+} /// namespace NES::Testing
 
 #endif /// NES_COMMON_TESTS_UTIL_INCLUDE_BASEINTEGRATIONTEST_HPP_

@@ -27,7 +27,7 @@ void jniErrorCheck(const std::source_location location)
     auto exception = env->ExceptionOccurred();
     if (exception)
     {
-        // print exception
+        /// print exception
         jboolean isCopy = false;
         auto clazz = env->FindClass("java/lang/Object");
         auto toString = env->GetMethodID(clazz, "toString", "()Ljava/lang/String;");
@@ -224,4 +224,4 @@ const std::string convertToJNIName(const std::string& javaClassName)
     return result;
 }
 
-} // namespace NES::jni
+} /// namespace NES::jni

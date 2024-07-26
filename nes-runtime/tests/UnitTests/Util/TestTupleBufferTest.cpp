@@ -68,7 +68,7 @@ public:
 
 TEST_P(TestTupleBufferTest, readWritetestBufferTest)
 {
-    // Reading and writing a full tuple
+    /// Reading and writing a full tuple
     for (int i = 0; i < 10; ++i)
     {
         auto testTuple = std::make_tuple((uint16_t)i, true, i * 2.0);
@@ -76,7 +76,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTest)
         ASSERT_EQ((testBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(i)), testTuple);
     }
 
-    // Reading and writing a full tuple via DynamicTuple and DynamicField
+    /// Reading and writing a full tuple via DynamicTuple and DynamicField
     for (auto i = 0; i < 10; ++i)
     {
         (*testBuffer)[i]["test$t1"].write<uint16_t>(i);
@@ -98,7 +98,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestVarSizeData)
         ASSERT_EQ((testBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(i)), testTuple);
     }
 
-    // Reading and writing a full tuple via DynamicTuple and DynamicField
+    /// Reading and writing a full tuple via DynamicTuple and DynamicField
     for (auto i = 0_u64; i < 10; ++i)
     {
         (*testBufferVarSize)[i]["test$t1"].write<uint16_t>(i);
@@ -122,7 +122,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestFullBuffer)
         ASSERT_EQ((testBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(i)), testTuple);
     }
 
-    // Reading and writing a full tuple via DynamicTuple and DynamicField
+    /// Reading and writing a full tuple via DynamicTuple and DynamicField
     for (auto i = 0_u64; i < testBuffer->getCapacity(); ++i)
     {
         (*testBuffer)[i]["test$t1"].write<uint16_t>(i);
@@ -144,7 +144,7 @@ TEST_P(TestTupleBufferTest, readWritetestBufferTestFullBufferVarSizeData)
         ASSERT_EQ((testBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(i)), testTuple);
     }
 
-    // Reading and writing a full tuple via DynamicTuple and DynamicField
+    /// Reading and writing a full tuple via DynamicTuple and DynamicField
     for (auto i = 0_u64; i < testBufferVarSize->getCapacity(); ++i)
     {
         (*testBufferVarSize)[i]["test$t1"].write<uint16_t>(i);
@@ -217,10 +217,10 @@ TEST_P(TestTupleBufferTest, countOccurrencesTestVarSizeData)
 TEST_P(TestTupleBufferTest, DynamicTupleCompare)
 {
     std::vector<std::tuple<FIXED_SIZED_DATA_TYPES>> tuples = {
-        {1, true, 42}, // 0
-        {2, false, 43}, // 1
-        {1, true, 42}, // 2
-        {2, false, 43}, // 3
+        {1, true, 42}, /// 0
+        {2, false, 43}, /// 1
+        {1, true, 42}, /// 2
+        {2, false, 43}, /// 3
 
     };
 
@@ -230,19 +230,19 @@ TEST_P(TestTupleBufferTest, DynamicTupleCompare)
         ASSERT_EQ((testBuffer->readRecordFromBuffer<FIXED_SIZED_DATA_TYPES>(testBuffer->getNumberOfTuples() - 1)), tuple);
     }
 
-    // Check if the same tuple is equal to itself
+    /// Check if the same tuple is equal to itself
     ASSERT_TRUE((*testBuffer)[0] == (*testBuffer)[0]);
     ASSERT_TRUE((*testBuffer)[1] == (*testBuffer)[1]);
     ASSERT_TRUE((*testBuffer)[2] == (*testBuffer)[2]);
     ASSERT_TRUE((*testBuffer)[3] == (*testBuffer)[3]);
 
-    // Check that a tuple is not equal to another tuple that is different
+    /// Check that a tuple is not equal to another tuple that is different
     ASSERT_TRUE((*testBuffer)[0] != (*testBuffer)[1]);
     ASSERT_TRUE((*testBuffer)[1] != (*testBuffer)[2]);
     ASSERT_TRUE((*testBuffer)[2] != (*testBuffer)[3]);
     ASSERT_TRUE((*testBuffer)[3] != (*testBuffer)[0]);
 
-    // Check if tuple have the same values but at different positions
+    /// Check if tuple have the same values but at different positions
     ASSERT_TRUE((*testBuffer)[0] == (*testBuffer)[2]);
     ASSERT_TRUE((*testBuffer)[1] == (*testBuffer)[3]);
 }
@@ -250,10 +250,10 @@ TEST_P(TestTupleBufferTest, DynamicTupleCompare)
 TEST_P(TestTupleBufferTest, DynamicTupleCompareVarSizeData)
 {
     std::vector<std::tuple<VAR_SIZED_DATA_TYPES>> tuples = {
-        {1, "true", 42, "aaaaa"}, // 0
-        {2, "false", 43, "bbbbb"}, // 1
-        {1, "true", 42, "aaaaa"}, // 2
-        {2, "false", 43, "bbbbb"}, // 3
+        {1, "true", 42, "aaaaa"}, /// 0
+        {2, "false", 43, "bbbbb"}, /// 1
+        {1, "true", 42, "aaaaa"}, /// 2
+        {2, "false", 43, "bbbbb"}, /// 3
     };
 
     for (auto tuple : tuples)
@@ -262,19 +262,19 @@ TEST_P(TestTupleBufferTest, DynamicTupleCompareVarSizeData)
         ASSERT_EQ((testBufferVarSize->readRecordFromBuffer<VAR_SIZED_DATA_TYPES>(testBufferVarSize->getNumberOfTuples() - 1)), tuple);
     }
 
-    // Check if the same tuple is equal to itself
+    /// Check if the same tuple is equal to itself
     ASSERT_TRUE((*testBufferVarSize)[0] == (*testBufferVarSize)[0]);
     ASSERT_TRUE((*testBufferVarSize)[1] == (*testBufferVarSize)[1]);
     ASSERT_TRUE((*testBufferVarSize)[2] == (*testBufferVarSize)[2]);
     ASSERT_TRUE((*testBufferVarSize)[3] == (*testBufferVarSize)[3]);
 
-    // Check that a tuple is not equal to another tuple that is different
+    /// Check that a tuple is not equal to another tuple that is different
     ASSERT_TRUE((*testBufferVarSize)[0] != (*testBufferVarSize)[1]);
     ASSERT_TRUE((*testBufferVarSize)[1] != (*testBufferVarSize)[2]);
     ASSERT_TRUE((*testBufferVarSize)[2] != (*testBufferVarSize)[3]);
     ASSERT_TRUE((*testBufferVarSize)[3] != (*testBufferVarSize)[0]);
 
-    // Check if tuple have the same values but at different positions
+    /// Check if tuple have the same values but at different positions
     ASSERT_TRUE((*testBufferVarSize)[0] == (*testBufferVarSize)[2]);
     ASSERT_TRUE((*testBufferVarSize)[1] == (*testBufferVarSize)[3]);
 }
@@ -284,4 +284,4 @@ INSTANTIATE_TEST_CASE_P(
     TestTupleBufferTest,
     ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
     [](const testing::TestParamInfo<TestTupleBufferTest::ParamType>& info) { return std::string(magic_enum::enum_name(info.param)); });
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts

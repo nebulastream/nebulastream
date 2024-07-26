@@ -81,7 +81,7 @@ void LogicalLimitOperator::inferStringSignature()
     NES_TRACE("LogicalLimitOperator: Inferring String signature for {}", operatorNode->toString());
     NES_ASSERT(!children.empty(), "LogicalLimitOperator: Limit should have children");
 
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
@@ -92,8 +92,8 @@ void LogicalLimitOperator::inferStringSignature()
     auto childSignature = children[0]->as<LogicalOperator>()->getHashBasedSignature();
     signatureStream << "LIMIT(" << limit << ")." << *childSignature.begin()->second.begin();
 
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signatureStream.str());
     hashBasedSignature[hashCode] = {signatureStream.str()};
 }
-} // namespace NES
+} /// namespace NES

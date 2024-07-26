@@ -73,6 +73,6 @@ void traceUnaryOperation(const Tracing::OpCode& op, const Tracing::ValueRef& res
 */
 void traceStoreOperation(const Tracing::ValueRef& memRef, const Tracing::ValueRef& valueRef);
 
-} // namespace NES::Nautilus::Tracing::TraceUtil
+} /// namespace NES::Nautilus::Tracing::TraceUtil
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACEUTIL_HPP_

@@ -89,6 +89,6 @@ protected:
 template <class T>
 concept DerivedBaseOption = std::is_base_of_v<BaseOption, T>;
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_

@@ -173,6 +173,6 @@ private:
     }
 };
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations
 
 #endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_QUERYCOMPILERCONFIGURATION_HPP_

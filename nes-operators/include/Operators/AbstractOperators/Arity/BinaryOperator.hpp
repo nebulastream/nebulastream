@@ -117,6 +117,6 @@ protected:
     std::vector<OriginId> rightInputOriginIds;
 };
 
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ARITY_BINARYOPERATOR_HPP_

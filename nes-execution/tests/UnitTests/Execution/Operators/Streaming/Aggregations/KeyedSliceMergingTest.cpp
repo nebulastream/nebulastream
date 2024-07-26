@@ -192,4 +192,4 @@ TEST_F(KeyedSliceMergingTest, aggregate)
     merging.close(ctx, recordBuffer);
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

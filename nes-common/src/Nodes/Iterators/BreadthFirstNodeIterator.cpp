@@ -40,7 +40,7 @@ BreadthFirstNodeIterator::iterator::iterator() = default;
 
 bool BreadthFirstNodeIterator::iterator::operator!=(const iterator& other) const
 {
-    // todo currently we only check if we reached the end of the iterator.
+    /// todo currently we only check if we reached the end of the iterator.
     if (workQueue.empty() && other.workQueue.empty())
     {
         return false;
@@ -70,4 +70,4 @@ BreadthFirstNodeIterator::iterator& BreadthFirstNodeIterator::iterator::operator
     }
     return *this;
 }
-} // namespace NES
+} /// namespace NES

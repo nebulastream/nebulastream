@@ -58,4 +58,4 @@ public:
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<ListInvocationPlugin> ListInvocationPlugin;
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

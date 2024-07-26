@@ -84,24 +84,24 @@ bool LogicalWindowOperator::inferSchema()
     {
         return false;
     }
-    // infer the default input and output schema
+    /// infer the default input and output schema
     NES_DEBUG("LogicalWindowOperator: TypeInferencePhase: infer types for window operator with input schema {}", inputSchema->toString());
 
-    // infer type of aggregation
+    /// infer type of aggregation
     auto windowAggregation = windowDefinition->getWindowAggregation();
     for (const auto& agg : windowAggregation)
     {
         agg->inferStamp(inputSchema);
     }
 
-    //Construct output schema
-    //First clear()
+    ///Construct output schema
+    ///First clear()
     outputSchema->clear();
-    // Distinguish process between different window types (currently time-based and content-based)
+    /// Distinguish process between different window types (currently time-based and content-based)
     auto windowType = windowDefinition->getWindowType();
     if (windowType->instanceOf<Windowing::TimeBasedWindowType>())
     {
-        // typeInference
+        /// typeInference
         if (!windowType->as<Windowing::TimeBasedWindowType>()->inferStamp(inputSchema))
         {
             return false;
@@ -113,7 +113,7 @@ bool LogicalWindowOperator::inferSchema()
     }
     else if (windowType->instanceOf<Windowing::ContentBasedWindowType>())
     {
-        // type Inference for Content-based Windows requires the typeInferencePhaseContext
+        /// type Inference for Content-based Windows requires the typeInferencePhaseContext
         auto contentBasedWindowType = windowType->as<Windowing::ContentBasedWindowType>();
         if (contentBasedWindowType->getContentBasedSubWindowType()
             == Windowing::ContentBasedWindowType::ContentBasedSubWindowType::THRESHOLDWINDOW)
@@ -132,7 +132,7 @@ bool LogicalWindowOperator::inferSchema()
 
     if (windowDefinition->isKeyed())
     {
-        // infer the data type of the key field.
+        /// infer the data type of the key field.
         auto keyList = windowDefinition->getKeys();
         for (const auto& key : keyList)
         {
@@ -155,7 +155,7 @@ void LogicalWindowOperator::inferStringSignature()
     OperatorPtr operatorNode = shared_from_this()->as<Operator>();
     NES_TRACE("Inferring String signature for {}", operatorNode->toString());
 
-    //Infer query signatures for child operators
+    ///Infer query signatures for child operators
     for (const auto& child : children)
     {
         const LogicalOperatorPtr childOperator = child->as<LogicalOperator>();
@@ -188,7 +188,7 @@ void LogicalWindowOperator::inferStringSignature()
     signatureStream << "." << *childSignature.begin()->second.begin();
 
     auto signature = signatureStream.str();
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator(signature);
     hashBasedSignature[hashCode] = {signature};
 }
@@ -209,4 +209,4 @@ std::vector<std::string> LogicalWindowOperator::getGroupByKeyNames() const
     return groupByKeyNames;
 }
 
-} // namespace NES
+} /// namespace NES

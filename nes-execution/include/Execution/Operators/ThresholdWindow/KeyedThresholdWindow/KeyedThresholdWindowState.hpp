@@ -33,10 +33,10 @@ public:
     KeyedThresholdWindowState(const KeyedThresholdWindowState& other);
 
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggregationValues{};
-    uint64_t recordCount = 0; // counts the records contributing to the aggregate,
+    uint64_t recordCount = 0; /// counts the records contributing to the aggregate,
     bool isWindowOpen = false;
     std::mutex mutex;
 };
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_KEYEDTHRESHOLDWINDOW_KEYEDTHRESHOLDWINDOWSTATE_HPP_

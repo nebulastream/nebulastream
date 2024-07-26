@@ -84,7 +84,7 @@ private:
      */
     SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType);
 };
-} // namespace QueryCompilation
-} // namespace NES
+} /// namespace QueryCompilation
+} /// namespace NES
 
 #endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_

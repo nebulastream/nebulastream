@@ -46,10 +46,10 @@ void HJBuildBucketing::insertRecordForWindow(
         workerThreadId,
         Value<UInt64>(to_underlying(joinBuildSide)));
 
-    //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
+    ///get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto entryMemRef
         = Nautilus::FunctionCall("insertFunctionProxy", insertFunctionProxy, hashTableReference, record.read(joinFieldName).as<UInt64>());
-    //write data
+    ///write data
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : schema->fields)
     {
@@ -86,4 +86,4 @@ HJBuildBucketing::HJBuildBucketing(
 {
 }
 
-} // namespace NES::Runtime::Execution::Operators
+} /// namespace NES::Runtime::Execution::Operators

@@ -63,4 +63,4 @@ SourceDescriptorPtr CsvSourceDescriptor::copy()
     return copy;
 }
 
-} // namespace NES
+} /// namespace NES

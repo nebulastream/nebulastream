@@ -64,4 +64,4 @@ std::string KafkaSinkDescriptor::getSinkFormatAsString() const
     return sinkFormat;
 }
 
-} // namespace NES
+} /// namespace NES

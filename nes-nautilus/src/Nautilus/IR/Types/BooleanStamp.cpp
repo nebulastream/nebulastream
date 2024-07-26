@@ -24,4 +24,4 @@ const std::string BooleanStamp::toString() const
     return "bool";
 }
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types

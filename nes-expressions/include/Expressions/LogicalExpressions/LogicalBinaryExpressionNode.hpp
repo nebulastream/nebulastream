@@ -37,6 +37,6 @@ protected:
     ~LogicalBinaryExpressionNode() override = default;
     explicit LogicalBinaryExpressionNode(LogicalBinaryExpressionNode* other);
 };
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LOGICALBINARYEXPRESSIONNODE_HPP_

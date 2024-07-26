@@ -31,7 +31,7 @@ namespace Runtime
 {
 class BufferManager;
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
-} // namespace Runtime
+} /// namespace Runtime
 
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
@@ -86,5 +86,5 @@ public:
 private:
     std::vector<PhysicalTypePtr> physicalTypes;
 };
-} //namespace NES
+} ///namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_PARSER_HPP_

@@ -24,7 +24,7 @@ namespace NES::Nautilus::IR::Types
 {
 class Stamp;
 using StampPtr = std::shared_ptr<Stamp>;
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types
 
 namespace NES::Nautilus::IR::Operations
 {
@@ -93,5 +93,5 @@ using OperationPtr = std::shared_ptr<Operation>;
 using OperationWPtr = std::weak_ptr<Operation>;
 using OperationRawPtr = Operation*;
 
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_

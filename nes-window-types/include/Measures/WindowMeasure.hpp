@@ -32,6 +32,6 @@ public:
     virtual ~WindowMeasure() = default;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_WINDOW_TYPES_INCLUDE_MEASURES_WINDOWMEASURE_HPP_

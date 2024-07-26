@@ -121,7 +121,7 @@ private:
     template <typename E, std::size_t... is>
     constexpr void initializeFrom(E const& payload, std::size_t pSize, std::integer_sequence<std::size_t, is...>) noexcept(false)
     {
-        // Chars are allowed to be of smaller size than
+        /// Chars are allowed to be of smaller size than
         if constexpr (std::is_same_v<T, char>)
         {
             if (pSize > size)
@@ -195,7 +195,7 @@ template <std::size_t size>
 class Array<char, size> final : public ArrayBase<char, size>
 {
 public:
-    using ArrayBase<char, size>::ArrayBase; // XXX: Array base with zero args
+    using ArrayBase<char, size>::ArrayBase; /// XXX: Array base with zero args
 
     /**
      * @brief Create array from std::string, storing the null-terminator at the string's end.
@@ -217,7 +217,7 @@ public:
     };
 };
 
-// Default the operators on ArrayBase to the existing operators on std::array.
+/// Default the operators on ArrayBase to the existing operators on std::array.
 
 template <typename T, std::size_t sl, std::size_t sr, typename = std::enable_if_t<std::is_same_v<std::decay_t<T>, char> || sl == sr>>
 inline bool operator==(Array<T, sl> const&& l, Array<T, sl> const&& r) noexcept
@@ -297,8 +297,8 @@ inline bool operator!=(Array<T, sl> const& l, Array<T, sl> const& r) noexcept
     }
 }
 
-// Boilerplate operators which allowing arguments on LHS and RHS which constructs a std::array of the type that is
-// determined by the other operand.
+/// Boilerplate operators which allowing arguments on LHS and RHS which constructs a std::array of the type that is
+/// determined by the other operand.
 
 template <
     typename T,
@@ -429,7 +429,7 @@ Array(std::array<J, size>&&) -> Array<J, size>;
 /// c-style array
 template <typename J>
 Array(J const& array) -> Array<std::decay_t<decltype(array[0])>, std::extent<J>::value>;
-} // namespace NES::ExecutableTypes
+} /// namespace NES::ExecutableTypes
 
 /**
  * Specialize the std::hash for NES Array data type
@@ -444,8 +444,8 @@ struct std::hash<NES::ExecutableTypes::Array<T, N>>
         std::hash<T> hasher;
         size_t result = 0;
         for (size_t i = 0; i < N; ++i)
-        { // FIXME: Potential bottleneck (#2014)
-            // taken from https://codereview.stackexchange.com/questions/171999/specializing-stdhash-for-stdarray
+        { /// FIXME: Potential bottleneck (#2014)
+            /// taken from https://codereview.stackexchange.com/questions/171999/specializing-stdhash-for-stdarray
             result = result * 31 + hasher(key[i]);
         }
         return result;
@@ -462,6 +462,6 @@ struct formatter<NES::ExecutableTypes::Array<char, size>> : formatter<std::strin
         return fmt::format_to(ctx.out(), "{}", executable_type_array);
     }
 };
-} //namespace fmt
+} ///namespace fmt
 
 #endif /// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_ARRAY_HPP_

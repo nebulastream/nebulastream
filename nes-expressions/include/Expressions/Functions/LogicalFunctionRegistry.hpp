@@ -58,5 +58,5 @@ public:
     [[nodiscard]] virtual DataTypePtr inferBinary(const DataTypePtr& left, const DataTypePtr& right) const = 0;
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FUNCTIONS_LOGICALFUNCTIONREGISTRY_HPP_

@@ -149,4 +149,4 @@ nlohmann::json asJson(const RuntimeMetrics& metrics)
     return metrics.toJson();
 }
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

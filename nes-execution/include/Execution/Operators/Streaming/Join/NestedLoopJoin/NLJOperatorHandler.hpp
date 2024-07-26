@@ -71,5 +71,5 @@ protected:
  */
 void* getNLJPagedVectorProxy(void* ptrNljWindow, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt);
 
-}; // namespace NES::Runtime::Execution::Operators
+}; /// namespace NES::Runtime::Execution::Operators
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJOPERATORHANDLER_HPP_

@@ -29,6 +29,6 @@ class InvalidLogicalOperatorException : public Exceptions::RequestExecutionExcep
 public:
     explicit InvalidLogicalOperatorException(const std::string& message);
 };
-} // namespace NES::Exceptions
+} /// namespace NES::Exceptions
 
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDLOGICALOPERATOREXCEPTION_HPP_

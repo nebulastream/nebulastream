@@ -69,6 +69,6 @@ private:
     uint64_t minimumCount = 0;
 };
 
-} // namespace NES::Windowing
+} /// namespace NES::Windowing
 
 #endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_THRESHOLDWINDOW_HPP_

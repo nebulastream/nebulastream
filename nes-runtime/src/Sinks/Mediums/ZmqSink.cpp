@@ -76,7 +76,7 @@ ZmqSink::~ZmqSink()
 
 bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef)
 {
-    std::unique_lock lock(writeMutex); // TODO this is an anti-pattern in ZMQ
+    std::unique_lock lock(writeMutex); /// TODO this is an anti-pattern in ZMQ
     connect();
     if (!connected)
     {
@@ -91,7 +91,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     }
 
     if (!schemaWritten && !internal)
-    { //TODO:atomic
+    { ///TODO:atomic
         NES_DEBUG("FileSink::getData: write schema");
         auto fSchema = sinkFormat->getFormattedSchema();
         if (!fSchema.empty())
@@ -99,7 +99,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             NES_DEBUG("ZmqSink writes schema buffer");
             try
             {
-                // Send Header
+                /// Send Header
                 std::array<uint64_t, 2> const envelopeData{fSchema.size(), inputBuffer.getWatermark()};
                 constexpr auto envelopeSize = sizeof(uint64_t) * 2;
                 static_assert(envelopeSize == sizeof(envelopeData));
@@ -111,7 +111,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
                     return false;
                 }
 
-                // Send payload
+                /// Send payload
                 zmq::mutable_buffer payload{fSchema.data(), fSchema.size()};
                 if (auto const sentPayloadSize = socket.send(payload, zmq::send_flags::none).value_or(0); sentPayloadSize != payload.size())
                 {
@@ -150,7 +150,7 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     {
         ++sentBuffer;
 
-        // Create envelope
+        /// Create envelope
         std::array<uint64_t, 2> const envelopeData{inputBuffer.getNumberOfTuples(), inputBuffer.getWatermark()};
         static_assert(sizeof(envelopeData) == sizeof(uint64_t) * 2);
         zmq::message_t envelope{&(envelopeData[0]), sizeof(envelopeData)};
@@ -160,8 +160,8 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
             return false;
         }
 
-        // Create message.
-        // Copying the entire payload here to avoid UB.
+        /// Create message.
+        /// Copying the entire payload here to avoid UB.
         zmq::message_t payload{buffer.data(), buffer.size()};
         if (auto const sentPayload = socket.send(payload, zmq::send_flags::none).value_or(0); sentPayload != inputBuffer.getBufferSize())
         {
@@ -173,8 +173,8 @@ bool ZmqSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContex
     }
     catch (const zmq::error_t& ex)
     {
-        // recv() throws ETERM when the zmq context is destroyed,
-        //  as when AsyncZmqListener::Stop() is called
+        /// recv() throws ETERM when the zmq context is destroyed,
+        ///  as when AsyncZmqListener::Stop() is called
         if (ex.num() != ETERM)
         {
             NES_ERROR("ZmqSink:  {}", ex.what());
@@ -208,8 +208,8 @@ bool ZmqSink::connect()
         }
         catch (const zmq::error_t& ex)
         {
-            // recv() throws ETERM when the zmq context is destroyed,
-            //  as when AsyncZmqListener::Stop() is called
+            /// recv() throws ETERM when the zmq context is destroyed,
+            ///  as when AsyncZmqListener::Stop() is called
             if (ex.num() != ETERM)
             {
                 NES_ERROR("ZmqSink:  {}", ex.what());
@@ -255,4 +255,4 @@ std::string ZmqSink::getHost() const
     return host;
 }
 
-} // namespace NES
+} /// namespace NES

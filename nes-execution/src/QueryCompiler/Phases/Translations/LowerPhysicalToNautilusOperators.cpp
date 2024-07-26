@@ -200,21 +200,21 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapUDFOperator>())
     {
-        // for creating the handler that the nautilus udf operator needs to execute the udf
+        /// for creating the handler that the nautilus udf operator needs to execute the udf
         const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalMapUDFOperator>();
         const auto udfDescriptor = udfOperator->getUDFDescriptor();
         const auto methodName = udfDescriptor->getMethodName();
         const auto udfInputSchema = udfDescriptor->getInputSchema();
         const auto udfOutputSchema = udfDescriptor->getOutputSchema();
 
-        // for converting the Physical UDF Operator to the Nautilus Operator
+        /// for converting the Physical UDF Operator to the Nautilus Operator
         const auto operatorInputSchema = udfOperator->getInputSchema();
         const auto operatorOutputSchema = udfOperator->getOutputSchema();
 
         if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>())
         {
 #ifdef ENABLE_JNI
-            // creating the java udf handler
+            /// creating the java udf handler
             const auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
             const auto className = javaUDFDescriptor->getClassName();
             const auto byteCodeList = javaUDFDescriptor->getByteCodeList();
@@ -241,12 +241,12 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 indexForThisHandler, operatorInputSchema, operatorOutputSchema);
             parentOperator->setChild(mapJavaUDF);
             return mapJavaUDF;
-#endif // ENABLE_JNI
+#endif /// ENABLE_JNI
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
         }
         else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>())
         {
-            // creating the python udf handler
+            /// creating the python udf handler
             const auto pythonUDFDescriptor = udfDescriptor->as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
             const auto functionString = pythonUDFDescriptor->getFunctionString();
 
@@ -255,12 +255,12 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             operatorHandlers.push_back(handler);
             const auto indexForThisHandler = operatorHandlers.size() - 1;
 
-            // auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
+            /// auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
             auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(
                 indexForThisHandler, operatorInputSchema, operatorOutputSchema);
             parentOperator->setChild(mapPythonUDF);
             return mapPythonUDF;
-#endif // NAUTILUS_PYTHON_UDF_ENABLED
+#endif /// NAUTILUS_PYTHON_UDF_ENABLED
         }
         else
         {
@@ -270,20 +270,20 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     }
     else if (operatorNode->instanceOf<PhysicalOperators::PhysicalFlatMapUDFOperator>())
     {
-        // for creating the handler that the nautilus udf operator needs to execute the udf
+        /// for creating the handler that the nautilus udf operator needs to execute the udf
         const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalFlatMapUDFOperator>();
         const auto udfDescriptor = udfOperator->getUDFDescriptor();
         const auto methodName = udfDescriptor->getMethodName();
         const auto udfInputSchema = udfDescriptor->getInputSchema();
         const auto udfOutputSchema = udfDescriptor->getOutputSchema();
 
-        // for converting the Physical UDF Operator to the Nautilus Operator
+        /// for converting the Physical UDF Operator to the Nautilus Operator
         const auto operatorInputSchema = udfOperator->getInputSchema();
         const auto operatorOutputSchema = udfOperator->getOutputSchema();
 
         if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>())
         {
-            // creating the java udf handler
+            /// creating the java udf handler
             const auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
             const auto className = javaUDFDescriptor->getClassName();
             const auto byteCodeList = javaUDFDescriptor->getByteCodeList();
@@ -310,21 +310,21 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
             parentOperator->setChild(flatMapJavaUDF);
             return flatMapJavaUDF;
         }
-#endif // ENABLE_JNI
+#endif /// ENABLE_JNI
     }
     else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>())
     {
         auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getWindowDefinition()->getWindowAggregation();
 
         std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
-        // iterate over all aggregation functions
+        /// iterate over all aggregation functions
         for (size_t i = 0; i < aggs.size(); ++i)
         {
             auto aggregationType = aggs[i]->getType();
-            // collect aggValues for each aggType
+            /// collect aggValues for each aggType
             aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
         }
-        // pass aggValues to ThresholdWindowHandler
+        /// pass aggValues to ThresholdWindowHandler
         auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
         operatorHandlers.push_back(handler);
         auto indexForThisHandler = operatorHandlers.size() - 1;
@@ -478,7 +478,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         return joinBuildNautilus;
     }
 
-    // Check if a plugin is registered that handles this physical operator
+    /// Check if a plugin is registered that handles this physical operator
     for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins())
     {
         auto resultOperator = plugin->lower(operatorNode, operatorHandlers);
@@ -599,8 +599,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
     auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
-    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
+    /// We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    /// TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalSWS->getOutputSchema()->get(0)->getName();
     auto endTs = physicalSWS->getOutputSchema()->get(1)->getName();
     auto windowType = physicalSWS->getWindowDefinition()->getWindowType();
@@ -651,8 +651,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 
     auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
-    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
+    /// We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    /// TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalSWS->getOutputSchema()->get(0)->getName();
     auto endTs = physicalSWS->getOutputSchema()->get(1)->getName();
     auto windowType = physicalSWS->getWindowDefinition()->getWindowType();
@@ -696,10 +696,10 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto sliceMergingOperatorHandlerIndex = operatorHandlers.size() - 1;
     auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
-    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
+    /// We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    /// TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
 
-    // TODO refactor operator selection
+    /// TODO refactor operator selection
     auto windowType = physicalGSMO->getWindowDefinition()->getWindowType();
     auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
@@ -739,8 +739,8 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto sliceMergingOperatorHandlerIndex = operatorHandlers.size() - 1;
     auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
     auto aggregationFunctions = lowerAggregations(aggregations);
-    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
-    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
+    /// We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    /// TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
     auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
     auto keys = physicalGSMO->getWindowDefinition()->getKeys();
@@ -796,9 +796,9 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 std::unique_ptr<Runtime::Execution::Operators::TimeFunction>
 LowerPhysicalToNautilusOperators::lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeWindow)
 {
-    // Depending on the window type we create a different time function.
-    // If the window type is ingestion time or we use the special record creation ts field, create an ingestion time function.
-    // TODO remove record creation ts if it is not needed anymore
+    /// Depending on the window type we create a different time function.
+    /// If the window type is ingestion time or we use the special record creation ts field, create an ingestion time function.
+    /// TODO remove record creation ts if it is not needed anymore
     if (timeWindow->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime
         || timeWindow->getTimeCharacteristic()->getField()->getName() == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME)
     {
@@ -806,7 +806,7 @@ LowerPhysicalToNautilusOperators::lowerTimeFunction(const Windowing::TimeBasedWi
     }
     else if (timeWindow->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime)
     {
-        // For event time fields, we look up the reference field name and create an expression to read the field.
+        /// For event time fields, we look up the reference field name and create an expression to read the field.
         auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
         auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
         return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
@@ -933,7 +933,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
 {
     auto wao = operatorPtr->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
 
-    //Add either event time or ingestion time watermark strategy
+    ///Add either event time or ingestion time watermark strategy
     if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>())
     {
         auto eventTimeWatermarkStrategy = wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
@@ -959,7 +959,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
 {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
-    // pass buffer size here
+    /// pass buffer size here
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider
         = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
@@ -971,7 +971,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
 {
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
-    // pass buffer size here
+    /// pass buffer size here
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider
         = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
@@ -1046,7 +1046,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
         {
             DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
 
-            // lower the data types
+            /// lower the data types
             auto physicalInputType = physicalTypeFactory.getPhysicalType(agg->getInputStamp());
             auto physicalFinalType = physicalTypeFactory.getPhysicalType(agg->getFinalAggregateStamp());
 
@@ -1075,7 +1075,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
                     return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(
                         physicalInputType, physicalFinalType, aggregationInputExpression, aggregationResultFieldIdentifier);
                 case Windowing::WindowAggregationDescriptor::Type::Median:
-                    // TODO 3331: add median aggregation function
+                    /// TODO 3331: add median aggregation function
                     break;
                 case Windowing::WindowAggregationDescriptor::Type::Sum: {
                     return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(
@@ -1093,7 +1093,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
     DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
     auto physicalType = physicalTypeFactory.getPhysicalType(std::move(inputType));
     auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
-    // TODO 3468: Check if we can make this ugly nested switch case better
+    /// TODO 3468: Check if we can make this ugly nested switch case better
     switch (aggregationType)
     {
         case Windowing::WindowAggregationDescriptor::Type::Avg:
@@ -1233,4 +1233,4 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

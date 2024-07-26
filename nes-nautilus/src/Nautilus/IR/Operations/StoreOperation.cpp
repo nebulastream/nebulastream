@@ -40,4 +40,4 @@ std::string StoreOperation::toString()
 {
     return "store(" + getValue()->getIdentifier() + ", " + getAddress()->getIdentifier() + ")";
 }
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

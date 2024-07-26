@@ -84,6 +84,6 @@ public:
 private:
 };
 using NullOutputSinkPtr = std::shared_ptr<NullOutputSink>;
-} // namespace NES
+} /// namespace NES
 
 #endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_NULLOUTPUTSINK_HPP_

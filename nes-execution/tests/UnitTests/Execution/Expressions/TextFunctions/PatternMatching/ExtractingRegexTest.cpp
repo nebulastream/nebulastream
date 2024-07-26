@@ -51,7 +51,7 @@ public:
 TEST_F(ExtractingRegexTest, evaluateExtractingRegex1)
 {
     auto expression = TernaryExpressionWrapper<ExtractingRegex>();
-    // Simple Replace
+    /// Simple Replace
     {
         auto l = Value<Text>("abc");
         auto m = Value<Text>(".b.");
@@ -64,7 +64,7 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex1)
 TEST_F(ExtractingRegexTest, evaluateExtractingRegex2)
 {
     auto expression = TernaryExpressionWrapper<ExtractingRegex>();
-    // Replacement notation for groups
+    /// Replacement notation for groups
     {
         auto l = Value<Text>("abc");
         auto m = Value<Text>(".b.");
@@ -76,7 +76,7 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex2)
 TEST_F(ExtractingRegexTest, evaluateExtractingRegex3)
 {
     auto expression = TernaryExpressionWrapper<ExtractingRegex>();
-    // Regex string correction
+    /// Regex string correction
     {
         auto l = Value<Text>("abc");
         auto m = Value<Text>("([a-z])(b)");
@@ -88,7 +88,7 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex3)
 TEST_F(ExtractingRegexTest, evaluateExtractingRegex4)
 {
     auto expression = TernaryExpressionWrapper<ExtractingRegex>();
-    // Regex swap
+    /// Regex swap
     {
         auto l = Value<Text>("abc");
         auto m = Value<Text>("([a-z])(b)");
@@ -97,4 +97,4 @@ TEST_F(ExtractingRegexTest, evaluateExtractingRegex4)
         EXPECT_EQ(resultValue, Value<Text>("b"));
     }
 }
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions

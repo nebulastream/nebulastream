@@ -101,7 +101,7 @@ ExpressionItem::ExpressionItem(ExpressionNodePtr exp) : expression(std::move(exp
 
 ExpressionItem ExpressionItem::as(std::string newName)
 {
-    //rename expression node
+    ///rename expression node
     if (!expression->instanceOf<FieldAccessExpressionNode>())
     {
         NES_ERROR("Renaming is only allowed on Field Access Attributes");
@@ -173,4 +173,4 @@ ExpressionItem::operator ExpressionNodePtr()
     return expression;
 }
 
-} // namespace NES
+} /// namespace NES

@@ -33,4 +33,4 @@ ExpressionNodePtr UnaryExpressionNode::child() const
 {
     return children[0]->as<ExpressionNode>();
 }
-} // namespace NES
+} /// namespace NES

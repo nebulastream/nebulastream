@@ -90,7 +90,7 @@ RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<R
         NES_THROW_RUNTIME_ERROR("fieldIndex out of bounds! " << layout->getFieldOffSets().size() << " >= " << fieldIndex);
     }
 
-    // via pointer arithmetic gets the starting field address
+    /// via pointer arithmetic gets the starting field address
     auto* bufferBasePointer = &(buffer.getBuffer<uint8_t>()[0]);
     auto offSet = layout->getFieldOffset(0, fieldIndex);
     auto* basePointer = bufferBasePointer + offSet;
@@ -121,6 +121,6 @@ inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
     return *reinterpret_cast<T*>(basePointer + recordSize * recordIndex);
 }
 
-} // namespace NES::Runtime::MemoryLayouts
+} /// namespace NES::Runtime::MemoryLayouts
 
 #endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_

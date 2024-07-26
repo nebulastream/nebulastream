@@ -97,14 +97,14 @@ OperatorPtr SourceLogicalOperator::copy()
 
 void SourceLogicalOperator::inferStringSignature()
 {
-    //Update the signature
+    ///Update the signature
     auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")");
     hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
 }
 
 void SourceLogicalOperator::inferInputOrigins()
 {
-    // Data sources have no input origins.
+    /// Data sources have no input origins.
 }
 
 std::vector<OriginId> SourceLogicalOperator::getOutputOriginIds() const
@@ -112,4 +112,4 @@ std::vector<OriginId> SourceLogicalOperator::getOutputOriginIds() const
     return OriginIdAssignmentOperator::getOutputOriginIds();
 }
 
-} // namespace NES
+} /// namespace NES

@@ -29,7 +29,7 @@ class TraceContext;
 class SymbolicExecutionContext
 {
 public:
-    // The number of iterations we want to spend maximally to explore executions.
+    /// The number of iterations we want to spend maximally to explore executions.
     static const uint64_t MAX_ITERATIONS = 100000;
     /**
      * @brief Performs a symbolic execution of a CMP operation.
@@ -89,6 +89,6 @@ private:
     uint64_t iterations = 0;
 };
 
-} // namespace NES::Nautilus::Tracing
+} /// namespace NES::Nautilus::Tracing
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_

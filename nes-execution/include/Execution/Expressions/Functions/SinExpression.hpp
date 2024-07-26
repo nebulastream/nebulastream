@@ -32,6 +32,6 @@ public:
 private:
     const ExpressionPtr subExpression;
 };
-} // namespace NES::Runtime::Execution::Expressions
+} /// namespace NES::Runtime::Execution::Expressions
 
 #endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_SINEXPRESSION_HPP_

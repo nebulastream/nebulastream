@@ -77,4 +77,4 @@ std::string UnaryOperator::toString() const
         fmt::join(inputOriginIds.begin(), inputOriginIds.end(), ", "));
 }
 
-} // namespace NES
+} /// namespace NES

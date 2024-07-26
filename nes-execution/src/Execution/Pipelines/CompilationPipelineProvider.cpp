@@ -29,4 +29,4 @@ CompilationPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pi
 [[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<CompilationPipelineProvider>
     compilationPipelineProvider("PipelineCompiler");
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

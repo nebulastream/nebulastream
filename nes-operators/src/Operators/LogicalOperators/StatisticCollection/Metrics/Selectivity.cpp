@@ -26,7 +26,7 @@ bool Selectivity::operator==(const StatisticMetric& rhs) const
 {
     if (rhs.instanceOf<Selectivity>())
     {
-        // We assume that if the field has the same name, the metric is equal
+        /// We assume that if the field has the same name, the metric is equal
         auto rhsSelectivity = dynamic_cast<const Selectivity&>(rhs);
         return field->getFieldName() == rhsSelectivity.field->getFieldName();
     }
@@ -41,4 +41,4 @@ std::string Selectivity::toString() const
 Selectivity::Selectivity(const FieldAccessExpressionNodePtr& expressionNode) : StatisticMetric(expressionNode)
 {
 }
-} // namespace NES::Statistic
+} /// namespace NES::Statistic

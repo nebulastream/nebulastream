@@ -32,4 +32,4 @@ AbstractSystemResourcesReaderPtr SystemResourcesReaderFactory::getSystemResource
     return abstractReader;
 };
 
-} // namespace NES::Monitoring
+} /// namespace NES::Monitoring

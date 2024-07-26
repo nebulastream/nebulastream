@@ -42,13 +42,13 @@ PipelineExecutionContext::PipelineExecutionContext(
 
 void PipelineExecutionContext::emitBuffer(TupleBuffer& buffer, WorkerContextRef workerContext)
 {
-    // call the function handler
+    /// call the function handler
     emitFunctionHandler(buffer, workerContext);
 }
 
 void PipelineExecutionContext::dispatchBuffer(TupleBuffer buffer)
 {
-    // call the function handler
+    /// call the function handler
     emitToQueryManagerFunctionHandler(buffer);
 }
 
@@ -102,4 +102,4 @@ bool PipelineExecutionContext::isLastChunk(const SeqNumberOriginId seqNumberOrig
     return chunkState.seenChunks == chunkState.lastChunkNumber;
 }
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

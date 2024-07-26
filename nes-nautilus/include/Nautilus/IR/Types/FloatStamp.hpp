@@ -21,7 +21,7 @@ namespace NES::Nautilus::IR::Types
 class FloatStamp : public Stamp
 {
 public:
-    // Bit width for the float
+    /// Bit width for the float
     enum class BitWidth : uint32_t
     {
         F32,
@@ -52,6 +52,6 @@ private:
     const BitWidth bitWidth;
 };
 
-} // namespace NES::Nautilus::IR::Types
+} /// namespace NES::Nautilus::IR::Types
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_FLOATSTAMP_HPP_

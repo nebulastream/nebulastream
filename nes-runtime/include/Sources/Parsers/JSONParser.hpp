@@ -51,5 +51,5 @@ private:
     std::vector<std::string> schemaKeys;
     std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
-} // namespace NES
+} /// namespace NES
 #endif /// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_

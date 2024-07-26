@@ -51,4 +51,4 @@ public:
 };
 
 [[maybe_unused]] static InvocationPluginRegistry::Add<TextInvocationPlugin> TextInvocationPlugin;
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus

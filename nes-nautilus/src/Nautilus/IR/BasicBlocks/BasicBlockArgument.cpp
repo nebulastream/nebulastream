@@ -29,4 +29,4 @@ std::string BasicBlockArgument::toString()
 {
     return identifier;
 }
-} // namespace NES::Nautilus::IR::Operations
+} /// namespace NES::Nautilus::IR::Operations

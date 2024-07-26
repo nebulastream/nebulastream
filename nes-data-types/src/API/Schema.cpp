@@ -29,7 +29,7 @@
 namespace NES
 {
 
-// TODO REMOVE THIS FUNCTION AFTER REFACTORING
+/// TODO REMOVE THIS FUNCTION AFTER REFACTORING
 bool startsWith(const std::string& fullString, std::string_view ending)
 {
     return (fullString.rfind(ending, 0) == 0);
@@ -61,7 +61,7 @@ SchemaPtr Schema::copy() const
 uint64_t Schema::getSchemaSizeInBytes() const
 {
     uint64_t size = 0;
-    // todo if we introduce a physical schema.
+    /// todo if we introduce a physical schema.
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto const& field : fields)
     {
@@ -179,13 +179,13 @@ bool Schema::equals(const SchemaPtr& schema, bool considerOrder)
 bool Schema::hasEqualTypes(const SchemaPtr& otherSchema)
 {
     auto otherFields = otherSchema->fields;
-    // Check if the number of fields is same or not
+    /// Check if the number of fields is same or not
     if (otherFields.size() != fields.size())
     {
         return false;
     }
 
-    //Iterate over all fields and check in both schemas the same index that they have is the same attribute type
+    ///Iterate over all fields and check in both schemas the same index that they have is the same attribute type
     for (uint32_t i = 0; i < fields.size(); i++)
     {
         auto thisField = fields.at(i);
@@ -288,25 +288,25 @@ uint64_t Schema::getIndex(const std::string& fieldName) const
 
 AttributeFieldPtr Schema::getField(const std::string& fieldName) const
 {
-    //Check if the field name is with fully qualified name
+    ///Check if the field name is with fully qualified name
     auto stringToMatch = fieldName;
     if (stringToMatch.find(ATTRIBUTE_NAME_SEPARATOR) == std::string::npos)
     {
-        //Add only attribute name separator
-        //caution: adding the fully qualified name may result in undesired behavior
-        //E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
-        //system should throw invalid field exception
+        ///Add only attribute name separator
+        ///caution: adding the fully qualified name may result in undesired behavior
+        ///E.g: if schema contains car$speed and truck$speed and user wants to check if attribute speed is present then
+        ///system should throw invalid field exception
         stringToMatch = ATTRIBUTE_NAME_SEPARATOR + fieldName;
     }
 
-    //Iterate over all fields and look for field which fully qualified name
+    ///Iterate over all fields and look for field which fully qualified name
     std::vector<AttributeFieldPtr> matchedFields;
     for (auto& field : fields)
     {
         auto fullyQualifiedFieldName = field->getName();
         if (stringToMatch.length() <= fullyQualifiedFieldName.length())
         {
-            //Check if the field name ends with the input field name
+            ///Check if the field name ends with the input field name
             auto startingPos = fullyQualifiedFieldName.length() - stringToMatch.length();
             auto found = fullyQualifiedFieldName.compare(startingPos, stringToMatch.length(), stringToMatch);
             if (found == 0)
@@ -315,15 +315,15 @@ AttributeFieldPtr Schema::getField(const std::string& fieldName) const
             }
         }
     }
-    //Check how many matching fields were found and raise appropriate exception
+    ///Check how many matching fields were found and raise appropriate exception
     if (matchedFields.size() == 1)
     {
         return matchedFields[0];
     }
     if (matchedFields.size() > 1)
     {
-        //        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
-        //TODO: workaround we choose the first one to join we will replace this in issue #1543
+        ///        throw InvalidFieldException("Schema: Found ambiguous field with name " + fieldName);
+        ///TODO: workaround we choose the first one to join we will replace this in issue #1543
         return matchedFields[0];
     }
     return nullptr;
@@ -357,7 +357,7 @@ void Schema::setLayoutType(Schema::MemoryLayoutType layoutType)
 std::vector<std::string> Schema::getFieldNames() const
 {
     std::vector<std::string> fieldNames;
-    //Todo: 4049: size can be corrupted if schema gets corrupted (18446741141687656808 fields)
+    ///Todo: 4049: size can be corrupted if schema gets corrupted (18446741141687656808 fields)
     for (const auto& attribute : fields)
     {
         fieldNames.emplace_back(attribute->getName());
@@ -472,4 +472,4 @@ SchemaPtr Schema::updateSourceName(const std::string& srcName) const
     return copy();
 }
 
-} // namespace NES
+} /// namespace NES

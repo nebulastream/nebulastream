@@ -64,7 +64,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(
             schema->toString(),
             csvInputLine));
     }
-    // iterate over fields of schema and cast string values to correct type
+    /// iterate over fields of schema and cast string values to correct type
     for (uint64_t j = 0; j < numberOfSchemaFields; j++)
     {
         auto field = physicalTypes[j];
@@ -73,4 +73,4 @@ bool CSVParser::writeInputTupleToTupleBuffer(
     }
     return true;
 }
-} // namespace NES
+} /// namespace NES

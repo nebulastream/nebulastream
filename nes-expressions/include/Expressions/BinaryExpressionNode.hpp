@@ -51,5 +51,5 @@ protected:
     explicit BinaryExpressionNode(BinaryExpressionNode* other);
 };
 
-} // namespace NES
+} /// namespace NES
 #endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_BINARYEXPRESSIONNODE_HPP_

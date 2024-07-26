@@ -51,7 +51,7 @@ bool StreamSlice::operator!=(const StreamSlice& rhs) const
     return !(rhs == *this);
 }
 
-// default implementation to not implementing this method for HJSlice
+/// default implementation to not implementing this method for HJSlice
 std::vector<Runtime::TupleBuffer> StreamSlice::serialize(std::shared_ptr<BufferManager>&)
 {
     return {};
@@ -63,4 +63,4 @@ std::string StreamSlice::toString()
     basicOstringstream << "(sliceStart: " << sliceStart << " sliceEnd: " << sliceEnd << ")";
     return basicOstringstream.str();
 }
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

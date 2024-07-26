@@ -44,6 +44,6 @@ private:
     const float value;
 };
 
-} // namespace NES::Nautilus
+} /// namespace NES::Nautilus
 
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_FLOAT_FLOAT_HPP_

@@ -133,10 +133,10 @@ std::vector<OperatorPtr> QueryPlan::getRootOperators() const
 
 std::vector<OperatorPtr> QueryPlan::getLeafOperators() const
 {
-    // Find all the leaf nodes in the query plan
+    /// Find all the leaf nodes in the query plan
     NES_DEBUG("QueryPlan: Get all leaf nodes in the query plan.");
     std::vector<OperatorPtr> leafOperators;
-    // Maintain a list of visited nodes as there are multiple root nodes
+    /// Maintain a list of visited nodes as there are multiple root nodes
     std::set<OperatorId> visitedOpIds;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
@@ -147,7 +147,7 @@ std::vector<OperatorPtr> QueryPlan::getLeafOperators() const
             auto visitingOp = (*itr)->as<Operator>();
             if (visitedOpIds.contains(visitingOp->getId()))
             {
-                // skip rest of the steps as the node found in already visited node list
+                /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
@@ -164,7 +164,7 @@ std::vector<OperatorPtr> QueryPlan::getLeafOperators() const
 
 std::unordered_set<OperatorPtr> QueryPlan::getAllOperators() const
 {
-    // Maintain a list of visited nodes as there are multiple root nodes
+    /// Maintain a list of visited nodes as there are multiple root nodes
     std::unordered_set<OperatorPtr> visitedOperators;
     NES_DEBUG("QueryPlan: Iterate over all root nodes to find the operator.");
     for (const auto& rootOperator : rootOperators)
@@ -175,7 +175,7 @@ std::unordered_set<OperatorPtr> QueryPlan::getAllOperators() const
             auto visitingOp = (*itr)->as<Operator>();
             if (visitedOperators.contains(visitingOp))
             {
-                // skip rest of the steps as the node found in already visited node list
+                /// skip rest of the steps as the node found in already visited node list
                 continue;
             }
             NES_DEBUG("QueryPlan: Inserting operator in collection of already visited node.");
@@ -207,7 +207,7 @@ OperatorPtr QueryPlan::getOperatorWithOperatorId(OperatorId operatorId) const
             return rootOperator;
         }
 
-        //Look up in the child operators
+        ///Look up in the child operators
         auto matchingOperator = rootOperator->getChildWithOperatorId(operatorId);
         if (matchingOperator)
         {
@@ -229,7 +229,7 @@ OperatorPtr QueryPlan::getOperatorWithStatisticId(StatisticId statisticId) const
             return rootOperator;
         }
 
-        //Look up in the child operators
+        ///Look up in the child operators
         auto matchingOperator = rootOperator->getChildWithStatisticId(statisticId);
         if (matchingOperator)
         {
@@ -253,11 +253,11 @@ void QueryPlan::setQueryId(QueryId queryId)
 
 void QueryPlan::addRootOperator(const OperatorPtr& newRootOperator)
 {
-    //Check if a root with the id already present
+    ///Check if a root with the id already present
     auto found = std::find_if(
         rootOperators.begin(), rootOperators.end(), [&](const OperatorPtr& root) { return newRootOperator->getId() == root->getId(); });
 
-    // If not present then add it
+    /// If not present then add it
     if (found == rootOperators.end())
     {
         rootOperators.push_back(newRootOperator);
@@ -287,7 +287,7 @@ void QueryPlan::removeAsRootOperator(OperatorPtr root)
 QueryPlanPtr QueryPlan::copy()
 {
     NES_INFO("QueryPlan: make copy of this query plan");
-    // 1. We start by copying the root operators of this query plan to the queue of operators to be processed
+    /// 1. We start by copying the root operators of this query plan to the queue of operators to be processed
     std::map<OperatorId, OperatorPtr> operatorIdToOperatorMap;
     std::deque<NodePtr> operatorsToProcess{rootOperators.begin(), rootOperators.end()};
     while (!operatorsToProcess.empty())
@@ -295,8 +295,8 @@ QueryPlanPtr QueryPlan::copy()
         auto operatorNode = operatorsToProcess.front()->as<Operator>();
         operatorsToProcess.pop_front();
         auto operatorId = operatorNode->getId();
-        // 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
-        // 3. We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
+        /// 2. We add each non existing operator to a map and skip adding the operator that already exists in the map.
+        /// 3. We use the already existing operator whenever available other wise we create a copy of the operator and add it to the map.
         if (operatorIdToOperatorMap[operatorId])
         {
             NES_TRACE("QueryPlan: Operator was processed previously");
@@ -308,7 +308,7 @@ QueryPlanPtr QueryPlan::copy()
             operatorIdToOperatorMap[operatorId] = operatorNode->copy();
         }
 
-        // 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
+        /// 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.
         for (const auto& parentNode : operatorNode->getParents())
         {
             auto parentOperator = parentNode->as<Operator>();
@@ -328,7 +328,7 @@ QueryPlanPtr QueryPlan::copy()
         }
 
         NES_TRACE("QueryPlan: add the child global query nodes for further processing.");
-        // 5. We push the children operators to the queue of operators to be processed.
+        /// 5. We push the children operators to the queue of operators to be processed.
         for (const auto& childrenOperator : operatorNode->getChildren())
         {
             operatorsToProcess.push_back(childrenOperator);
@@ -374,7 +374,7 @@ QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperat
 {
     std::set<OperatorPtr> operatorsBetween;
 
-    //initialize the operators to visit with upstream operators of all downstream operators
+    ///initialize the operators to visit with upstream operators of all downstream operators
     for (const auto& downStreamOperator : downstreamOperators)
     {
         auto operatorsBetweenChildAndTargetUpstream
@@ -384,7 +384,7 @@ QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperat
 
     if (!operatorsBetween.empty())
     {
-        //Remove upstream operators
+        ///Remove upstream operators
         for (const auto& upstreamOperator : upstreamOperators)
         {
             erase_if(
@@ -392,7 +392,7 @@ QueryPlan::findAllOperatorsBetween(const std::set<OperatorPtr>& downstreamOperat
                 [upstreamOperator](const auto& operatorToErase) { return operatorToErase->getId() == upstreamOperator->getId(); });
         }
 
-        //Remove downstream operators
+        ///Remove downstream operators
         for (const auto& downstreamOperator : downstreamOperators)
         {
             erase_if(
@@ -412,17 +412,17 @@ bool QueryPlan::compare(QueryPlanPtr& otherPlan)
     if (leftRootOperators.size() != rightRootOperators.size())
         return false;
 
-    // add all root-operators to stack
+    /// add all root-operators to stack
     std::stack<std::pair<OperatorPtr, OperatorPtr>> stack;
     for (size_t i = 0; i < leftRootOperators.size(); ++i)
     {
         stack.push(std::make_pair(leftRootOperators[i], rightRootOperators[i]));
     }
 
-    // iterate over stack
+    /// iterate over stack
     while (!stack.empty())
     {
-        // get last discovered left and right operator
+        /// get last discovered left and right operator
         auto [leftOperator, rightOperator] = stack.top();
         stack.pop();
 
@@ -432,7 +432,7 @@ bool QueryPlan::compare(QueryPlanPtr& otherPlan)
         if (leftChildren.size() != rightChildren.size())
             return false;
 
-        // discover children and add them to stack
+        /// discover children and add them to stack
         for (size_t j = 0; j < leftChildren.size(); ++j)
         {
             auto leftChild = leftChildren[j]->as<Operator>();
@@ -442,7 +442,7 @@ bool QueryPlan::compare(QueryPlanPtr& otherPlan)
             stack.push(std::make_pair(leftChild, rightChild));
         }
 
-        // comparison of both operators
+        /// comparison of both operators
         if (!leftOperator->equal(rightOperator))
             return false;
     }
@@ -452,13 +452,13 @@ bool QueryPlan::compare(QueryPlanPtr& otherPlan)
 std::set<OperatorPtr>
 QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourceOperator, const std::set<OperatorPtr>& targetOperators)
 {
-    //Find if downstream operator is also in the vector of target operators
+    ///Find if downstream operator is also in the vector of target operators
     auto found = std::find_if(
         targetOperators.begin(),
         targetOperators.end(),
         [&](const auto& upstreamOperator) { return upstreamOperator->getId() == sourceOperator->getId(); });
 
-    //If downstream operator is in the list of target operators then return the operator
+    ///If downstream operator is in the list of target operators then return the operator
     if (found != targetOperators.end())
     {
         return {sourceOperator};
@@ -466,14 +466,14 @@ QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourc
 
     bool foundTargetUpstreamOperator = false;
     std::set<OperatorPtr> operatorsBetween;
-    //Check further upstream operators if they are in the target operator vector
+    ///Check further upstream operators if they are in the target operator vector
     for (const auto& nextUpstreamOperatorToCheck : sourceOperator->getChildren())
     {
-        //Fetch the operators between upstream and target operators
+        ///Fetch the operators between upstream and target operators
         auto operatorsBetweenUpstreamAndTargetUpstream
             = findOperatorsBetweenSourceAndTargetOperators(nextUpstreamOperatorToCheck->as_if<Operator>(), targetOperators);
 
-        //If there are operators between upstream and target operators then mark the input down stream operator for return
+        ///If there are operators between upstream and target operators then mark the input down stream operator for return
         if (!operatorsBetweenUpstreamAndTargetUpstream.empty())
         {
             foundTargetUpstreamOperator = true;
@@ -481,7 +481,7 @@ QueryPlan::findOperatorsBetweenSourceAndTargetOperators(const OperatorPtr& sourc
         }
     }
 
-    //Add downstream operator
+    ///Add downstream operator
     if (foundTargetUpstreamOperator)
     {
         operatorsBetween.insert(sourceOperator);
@@ -499,4 +499,4 @@ void QueryPlan::setQueryState(QueryState newState)
     currentState = newState;
 }
 
-} // namespace NES
+} /// namespace NES

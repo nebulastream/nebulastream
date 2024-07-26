@@ -24,11 +24,11 @@ namespace NES::Nautilus::Interface
  */
 size_t getCapacity(uint64_t numberOfKeys)
 {
-    // this is taken from https://github.com/TimoKersten/db-engine-paradigms/blob/ae3286b279ad26ab294224d630d650bc2f2f3519/include/common/runtime/Hashmap.hpp#L193
+    /// this is taken from https://github.com/TimoKersten/db-engine-paradigms/blob/ae3286b279ad26ab294224d630d650bc2f2f3519/include/common/runtime/Hashmap.hpp#L193
     const auto loadFactor = 0.7;
-    // __builtin_clzll Returns the number of leading 0-bits in x,
-    // starting at the most significant bit position.
-    // If x is 0, the result is undefined.
+    /// __builtin_clzll Returns the number of leading 0-bits in x,
+    /// starting at the most significant bit position.
+    /// If x is 0, the result is undefined.
     size_t exp = 64 - __builtin_clzll(numberOfKeys);
     NES_ASSERT(exp < sizeof(size_t) * 8, "invalid exp");
     if (((size_t)1 << exp) < (numberOfKeys / loadFactor))
@@ -57,19 +57,19 @@ ChainedHashMap::ChainedHashMap(
     NES_ASSERT(keySize != 0, "invalid key size");
     NES_ASSERT(pageSize >= entrySize, "invalid page size");
 
-    // allocate entries
+    /// allocate entries
     entries = reinterpret_cast<Entry**>(this->allocator->allocate(capacity * sizeof(Entry*)));
-    // clear entry space.
+    /// clear entry space.
     std::memset(entries, 0, capacity * sizeof(Entry*));
 
-    // allocate initial page
+    /// allocate initial page
     auto page = reinterpret_cast<int8_t*>(this->allocator->allocate(pageSize));
     pages.emplace_back(page);
 }
 
 ChainedHashMap::Entry* ChainedHashMap::allocateNewEntry()
 {
-    // check if a new page should be allocated
+    /// check if a new page should be allocated
     if (currentSize % entriesPerPage == 0)
     {
         auto page = reinterpret_cast<int8_t*>(allocator->allocate(pageSize));
@@ -93,9 +93,9 @@ uint64_t ChainedHashMap::getCurrentSize() const
 
 void ChainedHashMap::insertPage(int8_t* page, uint64_t numberOfEntries)
 {
-    // insert page
+    /// insert page
     pages.emplace_back(page);
-    // iterate over all entries and inserts them to the hash table.
+    /// iterate over all entries and inserts them to the hash table.
     for (uint64_t i = 0; i < numberOfEntries; i++)
     {
         auto entry = reinterpret_cast<Entry*>(page + i * entrySize);
@@ -117,4 +117,4 @@ int8_t* ChainedHashMap::getPage(uint64_t pageIndex)
     return pages[pageIndex];
 }
 
-} // namespace NES::Nautilus::Interface
+} /// namespace NES::Nautilus::Interface

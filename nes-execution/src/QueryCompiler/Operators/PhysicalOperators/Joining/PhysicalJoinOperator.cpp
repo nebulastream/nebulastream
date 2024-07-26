@@ -24,4 +24,4 @@ Join::JoinOperatorHandlerPtr PhysicalJoinOperator::getJoinHandler()
     return operatorHandler;
 }
 
-} // namespace NES::QueryCompilation::PhysicalOperators
+} /// namespace NES::QueryCompilation::PhysicalOperators

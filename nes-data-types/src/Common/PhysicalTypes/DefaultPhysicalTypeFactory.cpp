@@ -134,4 +134,4 @@ PhysicalTypePtr DefaultPhysicalTypeFactory::getPhysicalType(const ArrayTypePtr& 
     return ArrayPhysicalType::create(arrayType, arrayType->length, componentType);
 }
 
-} // namespace NES
+} /// namespace NES

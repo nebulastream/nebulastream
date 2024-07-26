@@ -193,7 +193,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     }
     executablePipeline->stop(pipelineContext);
 
-    // Checking the output
+    /// Checking the output
     ASSERT_EQ(pipelineContext.buffers.size(), 4);
     for (const auto& buf : pipelineContext.buffers)
     {
@@ -205,7 +205,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
         }
     }
 
-    // Checking, if we have seen all sequence numbers
+    /// Checking, if we have seen all sequence numbers
     std::vector<SequenceNumber> seenSeqNumbers;
     std::transform(
         pipelineContext.seenSeqChunkLastChunk.begin(),
@@ -221,4 +221,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
     [](const testing::TestParamInfo<SelectionPipelineTest::ParamType>& info) { return info.param; });
 
-} // namespace NES::Runtime::Execution
+} /// namespace NES::Runtime::Execution

@@ -138,5 +138,5 @@ protected:
     virtual std::unique_ptr<GenericInvocable> getGenericInvocable(const std::string&) { return nullptr; };
 };
 
-} // namespace NES::Nautilus::Backends
+} /// namespace NES::Nautilus::Backends
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
