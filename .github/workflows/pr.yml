@@ -68,6 +68,10 @@ jobs:
       - name: guard-check
         run: |
           docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
+      - name: comment-format-check
+        run: |
+          docker run --name ${{ github.run_id }}_comment-format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-comment-format-check.sh nes_build_ubuntu
+
       - name: docker cleanup
         if: ${{ always() }}
         run: |
