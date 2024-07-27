@@ -38,7 +38,7 @@ class ExecutableDataType : public AbstractDataType {
   public:
     explicit ExecutableDataType(const nautilus::val<ValueType>& value, const nautilus::val<bool>& null)
         : AbstractDataType(null), rawValue(value) {}
-    static ExecutableDataTypePtr<ValueType> create(nautilus::val<ValueType> value, bool null = false) {
+    static ExecutableDataTypePtr<ValueType> create(nautilus::val<ValueType> value,  nautilus::val<bool> null = false) {
         return std::make_shared<ExecutableDataType<ValueType>>(value, null);
     }
 

@@ -48,9 +48,9 @@ ExecDataType ExecutableDataType<ValueType>::operator||(const ExecDataType& right
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator==(const ExecDataType& rightExp) const {
     const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
-    //const auto resultIsNull = null || rightExp->isNull();
+    const auto resultIsNull = null || rightExp->isNull();
     const auto result = rawValue == otherRawValue;
-    return ExecutableDataType<bool>::create(result, false);
+    return ExecutableDataType<bool>::create(result, resultIsNull);
 }
 
 template<typename ValueType>
