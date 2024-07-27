@@ -109,17 +109,7 @@ using Float = ExecutableDataTypePtr<float>;
 using Double = ExecutableDataTypePtr<double>;
 using Boolean = ExecutableDataTypePtr<bool>;
 
-template class ExecutableDataType<int8_t>;
-template class ExecutableDataType<int16_t>;
-template class ExecutableDataType<int32_t>;
-template class ExecutableDataType<int64_t>;
-template class ExecutableDataType<uint8_t>;
-template class ExecutableDataType<uint16_t>;
-template class ExecutableDataType<uint32_t>;
-template class ExecutableDataType<uint64_t>;
-template class ExecutableDataType<float>;
-template class ExecutableDataType<double>;
-template class ExecutableDataType<bool>;
+
 
 
 class ExecutableVariableDataType : public AbstractDataType {

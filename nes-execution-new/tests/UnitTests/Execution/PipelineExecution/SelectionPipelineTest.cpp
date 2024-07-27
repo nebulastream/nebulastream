@@ -21,6 +21,7 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
+#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -80,12 +81,12 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
     auto readF2 = std::make_shared<Expressions::ReadFieldExpression>("f1");
     auto equalsExpression = std::make_shared<Expressions::EqualsExpression>(readF1, readF2);
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
-//    scanOperator->setChild(selectionOperator);
+    scanOperator->setChild(selectionOperator);
 
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
-//    selectionOperator->setChild(emitOperator);
-    scanOperator->setChild(emitOperator);
+    selectionOperator->setChild(emitOperator);
+   // scanOperator->setChild(selectionOperator);
 
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
@@ -114,6 +115,9 @@ TEST_P(SelectionPipelineTest, selectionPipeline) {
         ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 5);
         ASSERT_EQ(resulttestBuffer[i]["f2"].read<int64_t>(), 1);
     }
+
+
+
 }
 
 /**

@@ -34,7 +34,8 @@ ExecutionResult CompiledExecutablePipelineStage::execute(TupleBuffer& inputTuple
                                                          PipelineExecutionContext& pipelineExecutionContext,
                                                          WorkerContext& workerContext) {
     // we call the compiled pipeline function with an input buffer and the execution context
-    pipelineFunction((int8_t*) &pipelineExecutionContext, (int8_t*) &workerContext, (int8_t*) std::addressof(inputTupleBuffer));
+    auto wc = (int8_t*) &workerContext;
+    pipelineFunction(wc, (int8_t*) &pipelineExecutionContext, (int8_t*) std::addressof(inputTupleBuffer));
     return ExecutionResult::Ok;
 }
 
@@ -44,7 +45,8 @@ auto CompiledExecutablePipelineStage::compilePipeline() {
     timer.start();
 
 
-    std::function<nautilus::val<uint32_t>(nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>)> compiledFunction = [&](nautilus::val<int8_t*> workerContext, nautilus::val<int8_t*> pipelineExecutionContext, nautilus::val<int8_t*> recordBufferRef) {
+    std::function<nautilus::val<uint32_t>(nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>)> compiledFunction =
+        [&](nautilus::val<int8_t*> workerContext, nautilus::val<int8_t*> pipelineExecutionContext, nautilus::val<int8_t*> recordBufferRef) {
         auto ctx = ExecutionContext(workerContext, pipelineExecutionContext);
         RecordBuffer recordBuffer(recordBufferRef);
         physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);

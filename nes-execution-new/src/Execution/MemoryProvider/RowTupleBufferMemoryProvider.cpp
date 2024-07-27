@@ -56,7 +56,7 @@ void RowTupleBufferMemoryProvider::write(nautilus::val<uint64_t>& recordIndex, n
     auto tupleSize = rowMemoryLayoutPtr->getTupleSize();
     auto recordOffset = bufferAddress + (tupleSize * recordIndex);
     auto schema = rowMemoryLayoutPtr->getSchema();
-    for (nautilus::static_val<uint64_t> i = 0; i < fieldSizes.size(); i++) {
+    for (nautilus::static_val<size_t> i = 0; i < fieldSizes.size(); i++) {
         auto fieldAddress = calculateFieldAddress(recordOffset, i);
         const auto& value = rec.read(schema->fields[i]->getName());
         store(rowMemoryLayoutPtr->getPhysicalTypes()[i], bufferAddress, fieldAddress, value);

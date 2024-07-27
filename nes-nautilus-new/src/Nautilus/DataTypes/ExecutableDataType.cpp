@@ -48,9 +48,9 @@ ExecDataType ExecutableDataType<ValueType>::operator||(const ExecDataType& right
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator==(const ExecDataType& rightExp) const {
     const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
-    const auto resultIsNull = null || rightExp->isNull();
+    //const auto resultIsNull = null || rightExp->isNull();
     const auto result = rawValue == otherRawValue;
-    return ExecutableDataType<bool>::create(result, resultIsNull);
+    return ExecutableDataType<bool>::create(result, false);
 }
 
 template<typename ValueType>
@@ -239,5 +239,20 @@ ExecDataType ExecutableVariableDataType::operator^(const ExecDataType&) const { 
 ExecDataType ExecutableVariableDataType::operator<<(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
 ExecDataType ExecutableVariableDataType::operator>>(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
 ExecDataType ExecutableVariableDataType::operator!() const { NES_NOT_IMPLEMENTED(); }
+
+
+template class ExecutableDataType<int8_t>;
+template class ExecutableDataType<int16_t>;
+template class ExecutableDataType<int32_t>;
+template class ExecutableDataType<int64_t>;
+template class ExecutableDataType<uint8_t>;
+template class ExecutableDataType<uint16_t>;
+template class ExecutableDataType<uint32_t>;
+template class ExecutableDataType<size_t>;
+template class ExecutableDataType<uint64_t>;
+template class ExecutableDataType<float>;
+template class ExecutableDataType<double>;
+template class ExecutableDataType<bool>;
+
 
 }
