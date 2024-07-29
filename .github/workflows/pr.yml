@@ -5,6 +5,9 @@ name: NES PR CI
 # In the future, we will add more automated checks to this pipeline, e.g., clang-tidy for our codebase or code coverage checks.
 
 on:
+  push:
+    branches:
+      - xx-dependencies
   pull_request:
     types:
       - ready_for_review
