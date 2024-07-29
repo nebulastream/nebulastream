@@ -121,7 +121,8 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
 INSTANTIATE_TEST_CASE_P(
     LimitPipelineTest,
     LimitPipelineTest,
-    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    ::testing::ValuesIn(
+        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<LimitPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution

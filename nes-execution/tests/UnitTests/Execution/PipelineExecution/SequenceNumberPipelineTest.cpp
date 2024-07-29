@@ -446,7 +446,8 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     SequenceNumberPipelineTest,
-    ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    ::testing::ValuesIn(
+        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<SequenceNumberPipelineTest::ParamType>& info) { return info.param; });
 
 } /// namespace NES::Runtime::Execution

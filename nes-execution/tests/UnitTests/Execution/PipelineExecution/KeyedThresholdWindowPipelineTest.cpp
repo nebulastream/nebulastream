@@ -63,10 +63,6 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup KeyedThresholdWindowPipelineTest test case.");
-        if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam()))
-        {
-            GTEST_SKIP();
-        }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
@@ -288,6 +284,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
 INSTANTIATE_TEST_CASE_P(
     testIfCompilation,
     KeyedThresholdWindowPipelineTest,
-    ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+    ::testing::ValuesIn(
+        ExecutablePipelineProviderRegistry::getPluginNames().begin(), ExecutablePipelineProviderRegistry::getPluginNames().end()),
     [](const testing::TestParamInfo<KeyedThresholdWindowPipelineTest::ParamType>& info) { return info.param; });
 } /// namespace NES::Runtime::Execution
