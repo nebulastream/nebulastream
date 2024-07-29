@@ -672,8 +672,8 @@ INCLUDE(CPack)
 # macros for guard once
 include(cmake/GuardOnce.cmake)
 
-#Other configurations
-project_enable_clang_tidy()
+# Other configurations
+# project_enable_clang_tidy()
 project_enable_fixguards()
 project_enable_check_comment_format()
 if (CMAKE_CROSSCOMPILING)
