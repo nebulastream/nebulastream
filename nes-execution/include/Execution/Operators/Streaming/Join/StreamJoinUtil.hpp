@@ -82,7 +82,7 @@ struct SlicesAndState
 
 namespace Operators
 {
-struct __attribute__((packed)) JoinPartitionIdSliceIdWindow
+struct JoinPartitionIdSliceIdWindow
 {
     uint64_t partitionId;
     uint64_t sliceIdentifierLeft;
