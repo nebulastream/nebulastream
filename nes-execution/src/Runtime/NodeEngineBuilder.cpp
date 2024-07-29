@@ -14,12 +14,8 @@
 
 #include <memory>
 #include <utility>
-#include <Compiler/LanguageCompiler.hpp>
-#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/SignalHandling.hpp>
-#include <QueryCompiler/NautilusQueryCompiler.hpp>
-#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/HardwareManager.hpp>

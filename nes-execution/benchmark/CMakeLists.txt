@@ -14,7 +14,7 @@ include(ExternalProject)
 
 add_library(nes-execution-benchmark INTERFACE)
 target_include_directories(nes-execution-benchmark INTERFACE "../tests/include/")
-target_link_libraries(nes-execution-benchmark INTERFACE nes-execution nes-common nes-compiler nes-grpc nes-data-types nes-operators nes-configurations nes-runtime)
+target_link_libraries(nes-execution-benchmark INTERFACE nes-execution nes-common nes-grpc nes-data-types nes-operators nes-configurations nes-runtime)
 
 find_package(benchmark CONFIG REQUIRED)
 if (NOT ${benchmark_FOUND})

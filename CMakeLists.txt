@@ -569,8 +569,6 @@ add_custom_target(build_all_plugins)
 add_subdirectory(nes-common)
 # Add target for all data types
 add_subdirectory(nes-data-types)
-# Add target for the compiler
-add_subdirectory(nes-compiler)
 # Add target for the runtime
 add_subdirectory(nes-runtime)
 # Add target for configurations
@@ -592,7 +590,6 @@ add_subdirectory(nes-single-node-worker)
 
 # Documentation
 add_subdirectory(cmake/docs)
-
 
 
 # Custom test commands --------------------------------------------------------
