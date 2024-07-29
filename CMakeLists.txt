@@ -188,6 +188,7 @@ if (NOT APPLE)
 endif ()
 
 include(cmake/Sanitizers.cmake)
+include(cmake/UseLibcxx.cmake)
 include(cmake/UseCCache.cmake)
 
 if (ENABLE_IWYU)
