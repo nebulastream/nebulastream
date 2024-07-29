@@ -18,11 +18,11 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
 using WatermarkTs = uint64_t;
-using OriginId = uint64_t;
 using SequenceNumber = uint64_t;
 } /// namespace NES
 
@@ -85,7 +85,7 @@ private:
     mutable std::mutex watermarkLatch;
     const uint64_t numberOfOrigins;
     /// The watermark processor maintains a local watermark processor for each origin.
-    std::map<uint64_t, std::unique_ptr<WatermarkProcessor>> localWatermarkProcessor;
+    std::map<OriginId, std::unique_ptr<WatermarkProcessor>> localWatermarkProcessor;
 };
 using MultiOriginWatermarkProcessorPtr = std::unique_ptr<MultiOriginWatermarkProcessor>;
 } /// namespace NES::Windowing
