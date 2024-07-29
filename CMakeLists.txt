@@ -101,6 +101,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
+# Use Libc++
+add_compile_options(-stdlib=libc++)
+add_link_options(-lc++)
+
 # Set NES Flags
 set(NES_SPECIFIC_FLAGS)
 if (CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS)
