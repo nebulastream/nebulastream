@@ -193,7 +193,6 @@ ExecDataType ExecutableDataType<ValueType>::operator<<(const ExecDataType& right
 //        return ExecutableDataType<ValueType>::create(rawValue << otherRawValue, resultIsNull);
 //    }
     NES_NOT_IMPLEMENTED();
-    ((void) rightExp);
 }
 
 template<typename ValueType>
@@ -248,7 +247,6 @@ template class ExecutableDataType<int64_t>;
 template class ExecutableDataType<uint8_t>;
 template class ExecutableDataType<uint16_t>;
 template class ExecutableDataType<uint32_t>;
-template class ExecutableDataType<size_t>;
 template class ExecutableDataType<uint64_t>;
 template class ExecutableDataType<float>;
 template class ExecutableDataType<double>;
