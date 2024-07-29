@@ -40,7 +40,7 @@ class AbstractDataType {
 
     [[nodiscard]] const nautilus::val<bool>& isNull() const { return null; }
 
-    // Defining operations on data types
+    // Defining operations on data types with other ExecDataTypes
     virtual ExecDataType operator&&(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
     virtual ExecDataType operator||(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
     virtual ExecDataType operator==(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };

@@ -159,6 +159,12 @@ class ExecutableVariableDataType : public AbstractDataType {
     nautilus::val<int8_t*> content;
 };
 
+/// For now, we expect the LHS to be of type ExecDataType and the RHS to be of type nautilus::val
+template<typename LHS, typename RHS>
+nautilus::val<bool> isEqual(ExecutableDataType<LHS> lhs, nautilus::val<RHS> rhs);
+nautilus::val<bool> operator==(ExecDataType lhs, nautilus::val<bool> rhs);
+nautilus::val<bool> operator==(ExecDataType lhs, bool rhs);
+
 }// namespace NES::Nautilus
 
 #endif//NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_

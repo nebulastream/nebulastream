@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -20,11 +20,8 @@ namespace NES::Runtime::Execution::Operators {
 void Selection::execute(ExecutionContext& ctx, Record& record) const {
     // evaluate expression and call child operator if expression is valid
     const auto expressionResult = expression->execute(record);
-    const auto expressionResultExecutableDataType = std::dynamic_pointer_cast<ExecutableDataType<bool>>(expressionResult);
-    if (expressionResultExecutableDataType->getRawValue()) {
-//        if (child != nullptr) {
-            child->execute(ctx, record);
-//        }
+    if (expressionResult == true) {
+        child->execute(ctx, record);
     }
 }
 
