@@ -226,7 +226,84 @@ This work is refactoring of an existing solution.
 
 # Alternatives
 
-An alternative solution can be using an xml configuration and treating each configuration option as a string, performing validation only on the semantical level directly at a specific component. For example, ClickHouse provides both xml and yaml configuration options.
+Centralized, hybrid and decentralized configuration architectures of exiting systems:
+
+## Centralized
+
+### MongoDB
+
+1.	Configuration Loading:
+	  -	When a MongoDB instance (mongod or mongos) starts up, it first loads the configuration from the specified sources. These can be a configuration file (typically YAML), command-line arguments, or environment variables.
+2.	Parsing and Validation:
+	  -	The loaded configurations are parsed and validated in a centralized manner. This means that all configurations are read and checked for correctness and validity (such as data types, range constraints, and dependencies among settings) before any operational components (like the network or storage engines) start up.
+	  -	This step ensures that only valid configurations are applied to the system components, preventing runtime failures due to misconfigurations.
+3.	Application of Settings:
+	  -	After validation, the settings are then distributed internally to the various components of the MongoDB instance.
+4.	Dynamic Reconfiguration:
+	  -	Some settings can be changed at runtime without restarting the instance. These changes are typically made via administrative commands that apply the new settings immediately to the relevant system component. Even these changes follow a centralized validation process within the instance before they are applied.
+
+### RocksDB
+
+1. Configuration Loading:
+   -	When a RocksDB instance is initialized, it first loads configuration settings from the application code where the database is embedded. Configurations are typically set up through various C++ structs such as Options, DBOptions, and ColumnFamilyOptions.
+   -	These configuration objects can be manually set in the code or loaded from an external source like a configuration file processed by the application, but RocksDB itself does not natively parse files or environment variables.
+2. Parsing and Validation:
+   -	Configuration objects like Options are filled with settings programmatically. Each setting is applied to the object properties directly in the code.
+   -	As the configuration settings are applied, RocksDB internally validates these settings. For example, write_buffer_size must be within a practical and permissible range to ensure it's operational. If any setting fails its validation checks (e.g., an excessively large buffer size or an invalid path), RocksDB will not proceed with the database initialization and will return an error.
+   -	This step ensures that only valid configurations are applied to the database engine, preventing runtime failures due to misconfigurations.
+3. Application of Settings:
+   -	Once validated, the settings contained within these configuration objects are applied to the respective components of the RocksDB instance.
+4.  Dynamic Reconfiguration:
+   -	Some options in RocksDB can be adjusted dynamically at runtime using methods like SetOptions(). This allows developers to modify certain parameters without needing to restart the database or application.
+   -	Dynamic reconfigurations are validated in a similar manner to initial configurations to ensure they are within allowable ranges and do not conflict with other operational parameters.
+
+### MySQL
+
+1. Configuration Loading:
+   - When a MySQL instance (mysqld) starts up, it first loads the configuration from specified sources. These sources typically include configuration files (my.cnf or my.ini), which are the primary method for setting configuration options. Additionally, command-line arguments can be used to override settings in the configuration files, and in some cases, environment variables might influence settings. 
+   - Configuration files can exist in multiple standard locations, and MySQL reads these files in a specific order, allowing settings in files read later to override those read earlier.
+2. Parsing and Validation:
+   - The loaded configurations are parsed in a centralized manner as MySQL starts. This process involves interpreting the settings specified in the configuration files and command-line arguments, and integrating these into the server's operational parameters.
+   - Each configuration setting is validated for correctness and applicability. This includes checking data types (ensuring string or numeric values are appropriate), range constraints (ensuring numeric values fall within acceptable limits), and dependencies among settings (e.g., buffer pool size relative to available system memory).
+3. Application of Settings:
+   - After successful validation, the settings are applied internally to the various components of the MySQL instance.
+4. Dynamic Reconfiguration:
+   - MySQL supports dynamic changes to certain settings while the server is running. These changes can be made through SQL commands, such as SET GLOBAL or SET SESSION, allowing administrators to adjust operational parameters without restarting the server.
+   - Dynamic changes are again validated 
+
+## Hybrid
+
+### ClickHouse
+
+ClickHouse uses XML files (config.xml and users.xml) for configuration, which is somewhat less common in modern DBMSs that often prefer simpler formats like YAML or JSON. XML allows for a more structured and hierarchical configuration, which can be particularly advantageous for complex setups with many nested options.
+
+1. Configuration Loading:
+   - All configuration settings for ClickHouse are defined in XML files, such as config.xml for system settings and users.xml for user and access management settings. These files act as the central repository of all configuration data.
+   - These files act as the central repository of all configuration data.
+2. Parsing and Validation:
+   - When a ClickHouse server starts, it parses the XML configuration files. This process is centralized and handled by the main server process. The XML format allows complex hierarchical configurations, suitable for defining detailed settings and policies.
+   - During the parsing process, ClickHouse validates the configuration settings. This includes checking data types, validating the format of specified values (like IP addresses and ports), and ensuring that dependent settings are correctly configured (e.g., ensuring that settings related to replication are consistent across the cluster).
+3. Application of Settings:
+   - Each component within ClickHouse accesses the configuration settings it requires from this centralized repository as needed. This approach is somewhat like a "pull" model, where each component retrieves its specific configuration parameters.
+   - The components actively query the central configuration for the parameters relevant to their operational context.
+4. Dynamic Reconfiguration:
+               •	Runtime Changes: ClickHouse supports changing some settings dynamically at runtime through SQL commands, such as ALTER SYSTEM. This allows administrators to adjust and tune system settings without restarting the server.
+               •	Consistency and Coordination: For changes that affect the whole cluster, such as cluster-wide settings in a distributed ClickHouse setup, ClickHouse manages consistency by propagating changes across all nodes and ensuring that new settings do not disrupt ongoing operations.
+
+## Decentralized
+
+### FoundationDB
+
+1. Configuration Loading:
+   - FoundationDB does not rely on a single central configuration file at startup. Instead, configurations can be specified through command-line options or set programmatically in the database itself.
+2. Parsing and Validation:
+   - Instead of a single central validation step before starting operations, FoundationDB uses a global configuration framework. This framework broadcasts updates to configuration values, which are then independently managed and applied by each machine in the cluster. This setup allows for configurations to be adjusted on-the-fly without needing to restart processes or interfere with ongoing operations.
+3. Application of Settings:
+   - Configuration changes in FoundationDB are applied almost in real-time through the global configuration key space. Each component, whether client or server, checks this key space and applies updates to its operational parameters independently. This includes settings for network operations, data storage, and other critical functions.
+   - The system uses an eventually consistent model to ensure that all components across the cluster eventually synchronize on the configuration settings without necessitating simultaneous downtime or reboots.
+4. Dynamic Reconfiguration:
+   - FoundationDB supports dynamic changes to configurations without service interruption. Changes are propagated through special transactions in the database and do not require direct file edits or command-line interventions post initial setup.
+   - This feature is particularly important in environments that require high availability and minimal downtime.
 
 # Open Questions
 
