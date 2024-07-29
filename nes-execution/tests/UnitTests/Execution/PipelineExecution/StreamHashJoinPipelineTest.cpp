@@ -51,13 +51,13 @@ public:
         OperatorHandlerPtr hashJoinOpHandler,
         PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId, /// mock pipeline id
-            DecomposedQueryPlanId(1), /// mock query id
-            bufferManager,
-            noWorkerThreads,
-            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
-            [this](TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
-            {hashJoinOpHandler}){};
+              pipelineId, /// mock pipeline id
+              DecomposedQueryPlanId(1), /// mock query id
+              bufferManager,
+              noWorkerThreads,
+              [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              [this](TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              {hashJoinOpHandler}) {};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };

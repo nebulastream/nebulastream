@@ -55,13 +55,13 @@ class NLJBuildPipelineExecutionContext : public PipelineExecutionContext
 public:
     NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID, /// mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
-            bm,
-            1,
-            [](TupleBuffer&, Runtime::WorkerContextRef) {},
-            [](TupleBuffer&) {},
-            {nljOperatorHandler})
+              INVALID_PIPELINE_ID, /// mock pipeline id
+              INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
+              bm,
+              1,
+              [](TupleBuffer&, Runtime::WorkerContextRef) {},
+              [](TupleBuffer&) {},
+              {nljOperatorHandler})
     {
     }
 };
@@ -72,19 +72,19 @@ public:
     std::vector<TupleBuffer> emittedBuffers;
     NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
-            INVALID_PIPELINE_ID, /// mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
-            bm,
-            1,
-            [](TupleBuffer&, Runtime::WorkerContextRef)
-            {
-                ///                emittedBuffers.emplace_back(std::move(buffer));
-            },
-            [](TupleBuffer&)
-            {
-                ///                emittedBuffers.emplace_back(std::move(buffer));
-            },
-            {nljOperatorHandler})
+              INVALID_PIPELINE_ID, /// mock pipeline id
+              INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
+              bm,
+              1,
+              [](TupleBuffer&, Runtime::WorkerContextRef)
+              {
+                  ///                emittedBuffers.emplace_back(std::move(buffer));
+              },
+              [](TupleBuffer&)
+              {
+                  ///                emittedBuffers.emplace_back(std::move(buffer));
+              },
+              {nljOperatorHandler})
     {
     }
 };

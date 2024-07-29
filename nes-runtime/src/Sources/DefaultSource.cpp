@@ -40,16 +40,16 @@ DefaultSource::DefaultSource(
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
     const std::string& physicalSourceName)
     : GeneratorSource(
-        std::move(schema),
-        std::move(bufferManager),
-        std::move(queryManager),
-        numberOfBufferToProduce,
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        GatheringMode::INTERVAL_MODE,
-        std::move(successors),
-        physicalSourceName)
+          std::move(schema),
+          std::move(bufferManager),
+          std::move(queryManager),
+          numberOfBufferToProduce,
+          operatorId,
+          originId,
+          numSourceLocalBuffers,
+          GatheringMode::INTERVAL_MODE,
+          std::move(successors),
+          physicalSourceName)
 {
     this->gatheringInterval = std::chrono::milliseconds(gatheringInterval);
 }

@@ -49,15 +49,15 @@ KafkaSource::KafkaSource(
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
     : DataSource(
-        schema,
-        std::move(bufferManager),
-        std::move(queryManager),
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        GatheringMode::INTERVAL_MODE,
-        physicalSourceName,
-        std::move(successors))
+          schema,
+          std::move(bufferManager),
+          std::move(queryManager),
+          operatorId,
+          originId,
+          numSourceLocalBuffers,
+          GatheringMode::INTERVAL_MODE,
+          physicalSourceName,
+          std::move(successors))
     , brokers(brokers)
     , topic(topic)
     , groupId(groupId)

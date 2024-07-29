@@ -51,16 +51,17 @@ BenchmarkSource::BenchmarkSource(
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(
-        std::move(schema),
-        std::move(bufferManager),
-        std::move(queryManager),
-        numberOfBuffersToProcess,
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        gatheringMode,
-        std::move(successors),
-        physicalSourceName)
+          std::move(schema),
+          std::move(bufferManager),
+          std::move(queryManager),
+          numberOfBuffersToProcess,
+          operatorId,
+          originId,
+
+          numSourceLocalBuffers,
+          gatheringMode,
+          std::move(successors),
+          physicalSourceName)
     , memoryArea(memoryArea)
     , memoryAreaSize(memoryAreaSize)
     , currentPositionInBytes(0)

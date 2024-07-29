@@ -57,15 +57,15 @@ public:
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
         const std::string& physicalSourceName = std::string("defaultPhysicalStreamName"))
         : DataSource(
-            std::move(schema),
-            std::move(bufferManager),
-            std::move(queryManager),
-            operatorId,
-            originId,
-            numSourceLocalBuffers,
-            gatheringMode,
-            physicalSourceName,
-            std::move(successors))
+              std::move(schema),
+              std::move(bufferManager),
+              std::move(queryManager),
+              operatorId,
+              originId,
+              numSourceLocalBuffers,
+              gatheringMode,
+              physicalSourceName,
+              std::move(successors))
     {
         this->numberOfBuffersToProduce = numberOfBufferToProduce;
     }

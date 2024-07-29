@@ -54,7 +54,7 @@ private:
     class IRConversionContext
     {
     public:
-        IRConversionContext(std::shared_ptr<ExecutionTrace> trace) : trace(trace), ir(std::make_shared<IR::IRGraph>()){};
+        IRConversionContext(std::shared_ptr<ExecutionTrace> trace) : trace(trace), ir(std::make_shared<IR::IRGraph>()) {};
         std::shared_ptr<IR::IRGraph> process();
 
     private:

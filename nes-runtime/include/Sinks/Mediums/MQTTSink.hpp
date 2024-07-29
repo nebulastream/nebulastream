@@ -65,7 +65,7 @@ public:
 
     bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
     void setup() override { connect(); };
-    void shutdown() override{};
+    void shutdown() override {};
 
     /**
      * @brief connect to a MQTT broker

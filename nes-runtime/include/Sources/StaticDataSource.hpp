@@ -105,13 +105,13 @@ public:
      */
     SourceType getType() const override;
 
-    virtual void recyclePooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
+    virtual void recyclePooledBuffer(::NES::Runtime::detail::MemorySegment*) override {};
 
     /**
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(::NES::Runtime::detail::MemorySegment*) override{};
+    virtual void recycleUnpooledBuffer(::NES::Runtime::detail::MemorySegment*) override {};
 
 private:
     /* message & late start system */

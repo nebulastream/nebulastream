@@ -43,7 +43,7 @@ PhysicalJoinBuildOperator::PhysicalJoinBuildOperator(
     : Operator(id)
     , PhysicalJoinOperator(std::move(operatorHandler))
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
-    , joinBuildSide(buildSide){};
+    , joinBuildSide(buildSide) {};
 
 std::string PhysicalJoinBuildOperator::toString() const
 {

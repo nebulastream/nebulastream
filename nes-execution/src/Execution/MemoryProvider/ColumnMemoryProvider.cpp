@@ -21,7 +21,7 @@ namespace NES::Runtime::Execution::MemoryProvider
 {
 
 ColumnMemoryProvider::ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr)
-    : columnMemoryLayoutPtr(columnMemoryLayoutPtr){};
+    : columnMemoryLayoutPtr(columnMemoryLayoutPtr) {};
 
 MemoryLayouts::MemoryLayoutPtr ColumnMemoryProvider::getMemoryLayoutPtr()
 {

@@ -58,7 +58,7 @@
 namespace NES::QueryCompilation
 {
 LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider)
-    : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)){};
+    : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)) {};
 
 LowerToExecutableQueryPlanPhasePtr
 LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider, const DataSourceProviderPtr& sourceProvider)

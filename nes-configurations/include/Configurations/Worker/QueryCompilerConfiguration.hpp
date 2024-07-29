@@ -45,8 +45,8 @@ static constexpr auto DEFAULT_HASH_TOTAL_HASH_TABLE_SIZE = 2 * 1024 * 1024;
 class QueryCompilerConfiguration : public BaseConfiguration
 {
 public:
-    QueryCompilerConfiguration() : BaseConfiguration(){};
-    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description){};
+    QueryCompilerConfiguration() : BaseConfiguration() {};
+    QueryCompilerConfiguration(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
 
     /**
      * @brief Sets the compilation strategy. We differentiate between FAST, DEBUG, and OPTIMIZED compilation.

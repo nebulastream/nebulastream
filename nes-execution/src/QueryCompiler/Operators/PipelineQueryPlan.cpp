@@ -26,7 +26,7 @@ PipelineQueryPlanPtr PipelineQueryPlan::create(SharedQueryId sharedQueryId, Deco
 }
 
 PipelineQueryPlan::PipelineQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId)
-    : sharedQueryId(sharedQueryId), decomposedQueryPlanId(decomposedQueryPlanId){};
+    : sharedQueryId(sharedQueryId), decomposedQueryPlanId(decomposedQueryPlanId) {};
 
 void PipelineQueryPlan::addPipeline(const OperatorPipelinePtr& pipeline)
 {

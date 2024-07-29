@@ -42,16 +42,16 @@ LambdaSource::LambdaSource(
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : GeneratorSource(
-        std::move(schema),
-        std::move(bufferManager),
-        std::move(queryManager),
-        numbersOfBufferToProduce,
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        gatheringMode,
-        std::move(successors),
-        physicalSourceName)
+          std::move(schema),
+          std::move(bufferManager),
+          std::move(queryManager),
+          numbersOfBufferToProduce,
+          operatorId,
+          originId,
+          numSourceLocalBuffers,
+          gatheringMode,
+          std::move(successors),
+          physicalSourceName)
     , generationFunction(std::move(generationFunction))
 {
     NES_DEBUG("Create LambdaSource with id={} func is {}", operatorId, (this->generationFunction ? "callable" : "not callable"));

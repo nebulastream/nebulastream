@@ -53,15 +53,15 @@ OPCSource::OPCSource(
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(
-        schema,
-        std::move(bufferManager),
-        std::move(queryManager),
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        gatheringMode,
-        physicalSourceName,
-        std::move(executableSuccessors))
+          schema,
+          std::move(bufferManager),
+          std::move(queryManager),
+          operatorId,
+          originId,
+          numSourceLocalBuffers,
+          gatheringMode,
+          physicalSourceName,
+          std::move(executableSuccessors))
     , connected(false)
     , url(url)
     , nodeId(nodeId)

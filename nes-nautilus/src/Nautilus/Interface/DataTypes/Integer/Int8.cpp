@@ -18,7 +18,7 @@
 namespace NES::Nautilus
 {
 
-Int8::Int8(int8_t value) : Int(&type), value(value){};
+Int8::Int8(int8_t value) : Int(&type), value(value) {};
 Nautilus::IR::Types::StampPtr Int8::getType() const
 {
     return Nautilus::IR::Types::StampFactory::createInt8Stamp();

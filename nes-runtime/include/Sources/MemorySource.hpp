@@ -86,13 +86,13 @@ public:
      */
     SourceType getType() const override;
 
-    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recyclePooledBuffer(Runtime::detail::MemorySegment*) override {};
 
     /**
      * @brief Interface method for unpooled buffer recycling
      * @param buffer the buffer to recycle
      */
-    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override{};
+    virtual void recycleUnpooledBuffer(Runtime::detail::MemorySegment*) override {};
 
 private:
     uint64_t numberOfTuplesToProduce;

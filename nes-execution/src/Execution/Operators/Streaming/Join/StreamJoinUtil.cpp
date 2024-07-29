@@ -62,7 +62,7 @@ WindowInfo::WindowInfo(uint64_t windowStart, uint64_t windowEnd) : windowStart(w
     }
 }
 
-WindowInfo::WindowInfo() : WindowInfo(0_u64, 0_u64){};
+WindowInfo::WindowInfo() : WindowInfo(0_u64, 0_u64) {};
 
 bool WindowInfo::operator<(const WindowInfo& other) const
 {

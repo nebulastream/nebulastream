@@ -31,9 +31,9 @@ namespace NES::Configurations
 class ElegantConfigurations : public BaseConfiguration
 {
 public:
-    ElegantConfigurations() : BaseConfiguration(){};
+    ElegantConfigurations() : BaseConfiguration() {};
 
-    ElegantConfigurations(const std::string& name, const std::string& description) : BaseConfiguration(name, description){};
+    ElegantConfigurations(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
 
     /**
      * @brief Accelerate java UDFs.

@@ -19,7 +19,7 @@ namespace NES::Runtime::Execution::Expressions
 {
 
 LessEqualsExpression::LessEqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
+    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {};
 
 Value<> LessEqualsExpression::execute(Record& record) const
 {

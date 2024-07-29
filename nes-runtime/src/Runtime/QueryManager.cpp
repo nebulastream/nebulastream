@@ -69,13 +69,13 @@ DynamicQueryManager::DynamicQueryManager(
     uint64_t numberOfBuffersPerEpoch,
     std::vector<uint64_t> workerToCoreMapping)
     : AbstractQueryManager(
-        std::move(queryStatusListener),
-        std::move(bufferManagers),
-        nodeEngineId,
-        numThreads,
-        std::move(hardwareManager),
-        numberOfBuffersPerEpoch,
-        std::move(workerToCoreMapping))
+          std::move(queryStatusListener),
+          std::move(bufferManagers),
+          nodeEngineId,
+          numThreads,
+          std::move(hardwareManager),
+          numberOfBuffersPerEpoch,
+          std::move(workerToCoreMapping))
     , taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY))
 {
     NES_DEBUG("QueryManger: use dynamic mode with numThreads= {}", numThreads);
@@ -92,13 +92,13 @@ MultiQueueQueryManager::MultiQueueQueryManager(
     uint64_t numberOfQueues,
     uint64_t numberOfThreadsPerQueue)
     : AbstractQueryManager(
-        std::move(queryStatusListener),
-        std::move(bufferManagers),
-        nodeEngineId,
-        numThreads,
-        std::move(hardwareManager),
-        numberOfBuffersPerEpoch,
-        std::move(workerToCoreMapping))
+          std::move(queryStatusListener),
+          std::move(bufferManagers),
+          nodeEngineId,
+          numThreads,
+          std::move(hardwareManager),
+          numberOfBuffersPerEpoch,
+          std::move(workerToCoreMapping))
     , numberOfQueues(numberOfQueues)
     , numberOfThreadsPerQueue(numberOfThreadsPerQueue)
 {

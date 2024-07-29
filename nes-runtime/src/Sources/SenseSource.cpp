@@ -37,15 +37,15 @@ SenseSource::SenseSource(
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(
-        std::move(schema),
-        std::move(bufferManager),
-        std::move(queryManager),
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        GatheringMode::INTERVAL_MODE,
-        physicalSourceName,
-        std::move(successors))
+          std::move(schema),
+          std::move(bufferManager),
+          std::move(queryManager),
+          operatorId,
+          originId,
+          numSourceLocalBuffers,
+          GatheringMode::INTERVAL_MODE,
+          physicalSourceName,
+          std::move(successors))
     , udfs(std::move(udfs))
 {
 }

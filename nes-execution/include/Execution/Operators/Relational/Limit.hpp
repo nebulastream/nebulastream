@@ -31,7 +31,7 @@ public:
     /**
      * @brief Creates the operator handler.
      */
-    explicit LimitOperatorHandler(const uint64_t limit) : limit(limit){};
+    explicit LimitOperatorHandler(const uint64_t limit) : limit(limit) {};
     void start(Runtime::Execution::PipelineExecutionContextPtr, uint32_t) { NES_DEBUG("start LimitOperatorHandler"); }
 
     void stop(Runtime::QueryTerminationType queryTerminationType, Runtime::Execution::PipelineExecutionContextPtr)
@@ -52,7 +52,7 @@ public:
      * @brief Creates a limit operator
      * @param limitRecords number of records to limit
      */
-    explicit Limit(const uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex){};
+    explicit Limit(const uint64_t operatorHandlerIndex) : operatorHandlerIndex(operatorHandlerIndex) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:

@@ -25,7 +25,7 @@
 namespace NES::Runtime
 {
 
-PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(std::move(schemaPtr)){};
+PhysicalSchema::PhysicalSchema(SchemaPtr schemaPtr) : schema(std::move(schemaPtr)) {};
 
 PhysicalSchemaPtr PhysicalSchema::createPhysicalSchema(const SchemaPtr& schema)
 {

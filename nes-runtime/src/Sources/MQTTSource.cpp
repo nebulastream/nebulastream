@@ -56,15 +56,15 @@ MQTTSource::MQTTSource(
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(
-        schema,
-        bufferManager,
-        queryManager,
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        gatheringMode,
-        physicalSourceName,
-        std::move(executableSuccessors))
+          schema,
+          bufferManager,
+          queryManager,
+          operatorId,
+          originId,
+          numSourceLocalBuffers,
+          gatheringMode,
+          physicalSourceName,
+          std::move(executableSuccessors))
     , sourceConfig(sourceConfig)
     , connected(false)
     , serverAddress(sourceConfig->getUrl()->getValue())

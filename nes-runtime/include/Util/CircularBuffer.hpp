@@ -88,7 +88,7 @@ private:
     /// reuse typenames
     friend cbT;
     using uint64_type = typename cbT::uint64_type;
-    CircularBufferIterator(uint64_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept : idx(idx), container(rv){};
+    CircularBufferIterator(uint64_type idx, std::conditional_t<isConst, const cbT, cbT>* rv) noexcept : idx(idx), container(rv) {};
     uint64_type idx;
 
     /// non-const/const representation of container
@@ -132,7 +132,7 @@ public:
      * @brief The ctor of the circ buffer, takes a size parameter.
      * @param size of the internal buffer
      */
-    explicit CircularBuffer(uint64_t size) : maxSize(size), buffer(std::make_unique<T[]>(size)){};
+    explicit CircularBuffer(uint64_t size) : maxSize(size), buffer(std::make_unique<T[]>(size)) {};
 
     /// copy and move
     CircularBuffer(const CircularBuffer& other) = delete;
@@ -208,7 +208,7 @@ public:
     }
 
     template <typename... Args>
-    void emplace(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value&& std::is_nothrow_move_assignable<T>::value)
+    void emplace(Args&&... args) noexcept(std::is_nothrow_constructible<T, Args...>::value && std::is_nothrow_move_assignable<T>::value)
     {
         if (full())
         {

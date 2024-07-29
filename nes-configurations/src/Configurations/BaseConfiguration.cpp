@@ -21,9 +21,9 @@
 namespace NES::Configurations
 {
 
-BaseConfiguration::BaseConfiguration() : BaseOption(){};
+BaseConfiguration::BaseConfiguration() : BaseOption() {};
 
-BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description){};
+BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description) {};
 
 void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config)
 {
