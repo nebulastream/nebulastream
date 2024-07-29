@@ -74,12 +74,10 @@ jobs:
 
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
+    name: ${{ matrix.osversion }} ${{ matrix.arch }}
     needs: [ pre-build-checks ]
     timeout-minutes: 40
-    runs-on:
-      group: ${{ matrix.runner_group }}
-      labels: [ arc-runner-set ]
+    runs-on: [ arc-runner-set ]
     strategy:
       fail-fast: false
       matrix:
@@ -91,13 +89,6 @@ jobs:
             build_parallelism: "16"
             test_parallelism: "4"
             runner_group: "default"
-          - osversion: ubuntu-22_04
-            arch: "X64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "16"
-            test_parallelism: "4"
-            runner_group: "gpu"
           - osversion: ubuntu-22_04
             arch: "arm64"
             require_build: "true"
