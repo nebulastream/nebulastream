@@ -1,0 +1,7 @@
+FROM luukas/nebulastream:ci
+
+USER root
+
+RUN apt update && apt install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} -y
+
+USER runner
