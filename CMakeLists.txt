@@ -219,7 +219,6 @@ if (NOT APPLE)
     if (NES_USE_LLD)
         message(STATUS "Use LLD for linking")
         add_link_options("-fuse-ld=lld")
-        add_link_options("-v")
     endif ()
 endif ()
 
