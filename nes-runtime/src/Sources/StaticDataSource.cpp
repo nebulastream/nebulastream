@@ -36,6 +36,7 @@
 #endif
 #include <fstream>
 #include <utility>
+#include <Runtime/Events.hpp>
 
 namespace NES::Experimental
 {
