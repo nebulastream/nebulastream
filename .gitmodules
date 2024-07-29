@@ -1,3 +1,3 @@
-[submodule "nes-nautilus-new/nautilus"]
-	path = nes-nautilus-new/nautilus
+[submodule "nes-nautilus/nautilus"]
+	path = nes-nautilus/nautilus
 	url = git@github.com:nebulastream/nautilus.git

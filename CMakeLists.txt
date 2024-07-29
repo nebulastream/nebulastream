@@ -637,9 +637,9 @@ add_subdirectory(nes-coordinator)
 # Add target for client
 add_subdirectory(nes-client)
 # Add targets for execution
-add_subdirectory(nes-execution-new)
+add_subdirectory(nes-execution)
 # Add targets for nautilus
-add_subdirectory(nes-nautilus-new)
+add_subdirectory(nes-nautilus)
 # Add targets nes-expressions
 add_subdirectory(nes-expressions)
 # Add targets nes-statistics
