@@ -19,7 +19,7 @@ set(LLVM_BINARY_VERSION v16_9)
 set(LLVM_VERSION 16)
 # Set the not allowed comment style as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex must match all comments that are not allowed in the codebase per line.
-set(NOT_ALLOWED_COMMENT_STYLE_REGEX "[^\/^:](\/\/)+[^\/]")
+set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
 
 # Activate self hosting, such that the compiler from the dependencies is taken
 option(NES_SELF_HOSTING "use self hosting compiler" ON)

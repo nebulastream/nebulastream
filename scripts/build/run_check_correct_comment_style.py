@@ -13,13 +13,15 @@ import re
 # We consider that a comment is not correctly formatted if it contains the not allowed comment style.
 # We check for the not allowed comment style in all files with the following endings: .c, .h, .cpp, .hpp, .cu, .cuh.
 def check_correct_comment_style(source_folder, not_allowed_comment_style_regex, file_endings=[".c", ".h", ".cpp", ".hpp", ".cu", ".cuh"]):
-    regex = re.compile(not_allowed_comment_style_regex)
+    regex = re.compile(fr"{not_allowed_comment_style_regex}", re.MULTILINE)
     file_has_error = set([])
     for root, dirs, files in os.walk(source_folder):
         for file in files:
             if file.endswith(tuple(file_endings)):
                 with open(os.path.join(root, file), "r") as f:
                     for i, line in enumerate(f):
+                        if "clang-format off" in line:
+                            continue
                         if regex.findall(line):
                             print("Error: Not allowed comment style in file: " + os.path.join(root, file) + ", line: " + str(i + 1))
                             file_has_error.add(os.path.join(root, file))
