@@ -16,6 +16,7 @@
 #define NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPEFORMAT_HPP_
 #include <Identifiers/NESStrongType.hpp>
 #include <fmt/core.h>
+#include <fmt/std.h>
 
 /**
  * Adds NESStrongType overloads for the fmt formatting library.

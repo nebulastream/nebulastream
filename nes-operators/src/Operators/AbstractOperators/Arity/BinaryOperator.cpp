@@ -17,6 +17,7 @@
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
 #include <Util/OperatorsUtil.hpp>
 #include <fmt/format.h>
+#include <fmt/ranges.h>
 
 namespace NES
 {

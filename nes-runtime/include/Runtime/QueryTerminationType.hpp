@@ -53,7 +53,7 @@ namespace fmt
 template <>
 struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string>
 {
-    auto format(const NES::Runtime::QueryTerminationType& termination_type, format_context& ctx) -> decltype(ctx.out())
+    auto format(const NES::Runtime::QueryTerminationType& termination_type, format_context& ctx) const -> decltype(ctx.out())
     {
         switch (termination_type)
         {
