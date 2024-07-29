@@ -11,7 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Configurations/BaseConfiguration.hpp>
+
+#include <Exceptions/Exception.hpp>
 #include <grpcpp/server_builder.h>
 #include <Configuration.hpp>
 #include <GrpcService.hpp>
@@ -19,15 +20,28 @@
 
 int main(const int argc, const char* argv[])
 {
-    NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
-    auto configuration = NES::Configuration::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
-    NES::GRPCServer workerService{NES::SingleNodeWorker(configuration)};
+    try
+    {
+        NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+        auto configuration = NES::Configuration::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
+        NES::GRPCServer workerService{NES::SingleNodeWorker(configuration)};
 
-    grpc::ServerBuilder builder;
-    builder.AddListeningPort(configuration.grpcAddressUri, grpc::InsecureServerCredentials());
-    builder.RegisterService(&workerService);
+        grpc::ServerBuilder builder;
+        builder.AddListeningPort(configuration.grpcAddressUri, grpc::InsecureServerCredentials());
+        builder.RegisterService(&workerService);
 
-    const auto server = builder.BuildAndStart();
-    NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration.grpcAddressUri));
-    server->Wait();
+        const auto server = builder.BuildAndStart();
+        NES_INFO("Server listening on {}", static_cast<const std::string&>(configuration.grpcAddressUri));
+        server->Wait();
+        return 0;
+    }
+    catch (const NES::Exception& e)
+    {
+        NES::tryLogCurrentException();
+        return NES::getCurrentExceptionCode();
+    }
+    catch (...)
+    {
+        return NES::ErrorCode::UnknownException;
+    }
 }
