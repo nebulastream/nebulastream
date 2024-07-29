@@ -31,6 +31,9 @@ option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
 # Enable prebuild dependencies only if NES_BUILD_DEPENDENCIES_LOCAL is OFF and CMAKE_TOOLCHAIN_FILE is not set.
 cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies" ON "NOT NES_BUILD_NATIVE; NOT CMAKE_TOOLCHAIN_FILE" OFF)
 
+# Linker
+option(NES_USE_MOLD_IF_AVAILABLE "Uses mold for linking if it is available" ON)
+
 #toggle import and usage of s2 library
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
@@ -42,7 +45,6 @@ option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the sys
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
-option(NES_USE_LLD "Use LLD" OFF)
 option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable Precompiled Headers" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
@@ -192,12 +194,12 @@ if (ENABLE_FTIME_TRACE)
     message(STATUS "Use ftime-trace")
 endif ()
 
-if (NOT APPLE)
-    if (NES_USE_LLD)
-        message(STATUS "Use LLD for linking")
-        add_link_options("-fuse-ld=lld")
-        add_link_options("-v")
-    endif ()
+find_program(MOLD mold)
+if(DEFINED MOLD AND ${NES_USE_MOLD_IF_AVAILABLE})
+    message(STATUS "Using mold linker")
+    add_link_options("-fuse-ld=mold")
+elseif (${NES_USE_MOLD_IF_AVAILABLE})
+    message(STATUS "Mold is not available falling back to default linker")
 endif ()
 
 include(cmake/Sanitizers.cmake)
