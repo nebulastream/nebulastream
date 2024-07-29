@@ -221,12 +221,6 @@ if (NOT APPLE)
         add_link_options("-fuse-ld=lld")
         add_link_options("-v")
     endif ()
-    # as per backward.h
-    find_library(LIBDW_LIBRARY dw)
-    if (NOT LIBDW_LIBRARY)
-        message(FATAL_ERROR "libdw is required on Linux. On Ubuntu, please install 'libdw-dev'")
-    endif ()
-    add_link_options("-ldw")
 endif ()
 
 include(cmake/Sanitizers.cmake)
@@ -367,13 +361,6 @@ set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 if (NES_USE_MQTT)
     add_compile_definitions(ENABLE_MQTT_BUILD)
 endif (NES_USE_MQTT)
-
-# Backward
-include(cmake/BackwardConfig.cmake)
-include_directories(${BACKWARD_INCLUDE_DIRS})
-add_compile_definitions(${BACKWARD_DEFINITIONS})
-link_directories(${BACKWARD_LIBRARIES})
-set(LIBRARIES ${LIBRARIES} ${BACKWARD_LIBRARIES})
 
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})

@@ -63,7 +63,8 @@ get_source(nes-common NES_COMMON_SOURCE_FILES)
 # Add Library
 add_library(nes-common ${NES_COMMON_SOURCE_FILES})
 
-target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES_SDP})
+find_package(cpptrace CONFIG REQUIRED)
+target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES_SDP} cpptrace::cpptrace)
 
 if (NES_USE_S2)
     target_link_libraries(nes-common PUBLIC ${LIBRARIES_S2})
