@@ -3,5 +3,15 @@ FROM luukas/nebulastream:ci
 USER root
 
 RUN apt update && apt install clang-format-${LLVM_VERSION} clang-tidy-${LLVM_VERSION} -y
+RUN    git clone https://github.com/ccache/ccache.git \
+    && cd ccache \
+    && git checkout v4.10.2 \
+    && cmake -DCMAKE_BUILD_TYPE=Release -B build -S . \
+    && cmake --build build -j \
+    && cmake --build build --target install \
+    && cd .. \
+    && rm -rf ccache
+
+
 
 USER runner
