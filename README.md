@@ -77,7 +77,7 @@ nes-worker-->nes-execution
 
 # Clang-Format, Clang-Tidy, Fix-Guards, and Check Correct Comments
 We use clang-format, clang-tidy, and fix-guards to ensure code quality and consistency.
-To run these tools, you need to use the cmake option: `-DNES_SELF_HOSTING=ON`.
+To run the clang tools, you need to use the cmake option: `-DNES_SELF_HOSTING=ON`.
 Afterward, there exist multiple new targets:
 - `format` runs clang-format 
 - `format-check` runs clang-format and checks if the code is formatted correctly but does not fix it
