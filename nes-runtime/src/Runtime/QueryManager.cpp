@@ -40,15 +40,17 @@ namespace NES::Runtime
 
 static constexpr auto DEFAULT_QUEUE_INITIAL_CAPACITY = 64 * 1024;
 
-AbstractQueryManager::AbstractQueryManager(
+QueryManager::QueryManager(
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
     std::vector<BufferManagerPtr> bufferManagers,
     WorkerId nodeEngineId,
     uint16_t numThreads,
     HardwareManagerPtr hardwareManager,
     uint64_t numberOfBuffersPerEpoch,
+
     std::vector<uint64_t> workerToCoreMapping)
-    : nodeEngineId(nodeEngineId)
+    : taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY))
+    , nodeEngineId(nodeEngineId)
     , bufferManagers(std::move(bufferManagers))
     , numThreads(numThreads)
     , hardwareManager(std::move(hardwareManager))
@@ -59,40 +61,20 @@ AbstractQueryManager::AbstractQueryManager(
     tempCounterTasksCompleted.resize(numThreads);
 
     asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>(1);
-}
-
-DynamicQueryManager::DynamicQueryManager(
-    std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
-    std::vector<BufferManagerPtr> bufferManagers,
-    WorkerId nodeEngineId,
-    uint16_t numThreads,
-    HardwareManagerPtr hardwareManager,
-    uint64_t numberOfBuffersPerEpoch,
-    std::vector<uint64_t> workerToCoreMapping)
-    : AbstractQueryManager(
-        std::move(queryStatusListener),
-        std::move(bufferManagers),
-        nodeEngineId,
-        numThreads,
-        std::move(hardwareManager),
-        numberOfBuffersPerEpoch,
-        std::move(workerToCoreMapping))
-    , taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY))
-{
     NES_DEBUG("QueryManger: use dynamic mode with numThreads= {}", numThreads);
 }
 
-uint64_t DynamicQueryManager::getNumberOfBuffersPerEpoch() const
+uint64_t QueryManager::getNumberOfBuffersPerEpoch() const
 {
     return numberOfBuffersPerEpoch;
 }
 
-uint64_t DynamicQueryManager::getNumberOfTasksInWorkerQueues() const
+uint64_t QueryManager::getNumberOfTasksInWorkerQueues() const
 {
     return taskQueue.size();
 }
 
-uint64_t AbstractQueryManager::getCurrentTaskSum()
+uint64_t QueryManager::getCurrentTaskSum()
 {
     size_t sum = 0;
     for (auto& val : tempCounterTasksCompleted)
@@ -102,17 +84,12 @@ uint64_t AbstractQueryManager::getCurrentTaskSum()
     return sum;
 }
 
-uint64_t AbstractQueryManager::getNumberOfBuffersPerEpoch() const
-{
-    return numberOfBuffersPerEpoch;
-}
-
-AbstractQueryManager::~AbstractQueryManager() NES_NOEXCEPT(false)
+QueryManager::~QueryManager() NES_NOEXCEPT(false)
 {
     destroy();
 }
 
-bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker)
+bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker)
 {
     NES_DEBUG("startThreadPool: setup thread pool for nodeEngineId= {}  with numThreads= {}", nodeEngineId, numThreads);
     ///Note: the shared_from_this prevents from starting this in the ctor because it expects one shared ptr from this
@@ -138,16 +115,7 @@ bool DynamicQueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker)
     return false;
 }
 
-void DynamicQueryManager::destroy()
-{
-    AbstractQueryManager::destroy();
-    if (queryManagerStatus.load() == QueryManagerStatus::Destroyed)
-    {
-        taskQueue = decltype(taskQueue)();
-    }
-}
-
-void AbstractQueryManager::destroy()
+void QueryManager::destroy()
 {
     /// 0. if already destroyed
     if (queryManagerStatus.load() == QueryManagerStatus::Destroyed)
@@ -184,11 +152,16 @@ void AbstractQueryManager::destroy()
             threadPool->stop();
             threadPool.reset();
         }
-        NES_DEBUG("AbstractQueryManager::resetQueryManager finished");
+        NES_DEBUG("QueryManager::resetQueryManager finished");
+    }
+
+    if (queryManagerStatus.load() == QueryManagerStatus::Destroyed)
+    {
+        taskQueue = decltype(taskQueue)();
     }
 }
 
-SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const
+SharedQueryId QueryManager::getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const
 {
     std::unique_lock lock(statisticsMutex);
     auto iterator = runningQEPs.find(decomposedQueryPlanId);
@@ -199,7 +172,7 @@ SharedQueryId AbstractQueryManager::getSharedQueryId(DecomposedQueryPlanId decom
     return INVALID_SHARED_QUERY_ID;
 }
 
-Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(DecomposedQueryPlanId id)
+Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(DecomposedQueryPlanId id)
 {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(id);
@@ -210,7 +183,7 @@ Execution::ExecutableQueryPlanStatus AbstractQueryManager::getQepStatus(Decompos
     return Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
-Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(DecomposedQueryPlanId id) const
+Execution::ExecutableQueryPlanPtr QueryManager::getQueryExecutionPlan(DecomposedQueryPlanId id) const
 {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(id);
@@ -221,7 +194,7 @@ Execution::ExecutableQueryPlanPtr AbstractQueryManager::getQueryExecutionPlan(De
     return nullptr;
 }
 
-QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(DecomposedQueryPlanId qepId)
+QueryStatisticsPtr QueryManager::getQueryStatistics(DecomposedQueryPlanId qepId)
 {
     if (queryToStatisticsMap.contains(qepId))
     {
@@ -230,7 +203,7 @@ QueryStatisticsPtr AbstractQueryManager::getQueryStatistics(DecomposedQueryPlanI
     return nullptr;
 }
 
-void AbstractQueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context)
+void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context)
 {
     Reconfigurable::reconfigure(task, context);
     switch (task.getType())
@@ -239,12 +212,12 @@ void AbstractQueryManager::reconfigure(ReconfigurationMessage& task, WorkerConte
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR("AbstractQueryManager: task type not supported");
+            NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
         }
     }
 }
 
-void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& task)
+void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task)
 {
     Reconfigurable::postReconfigurationCallback(task);
     switch (task.getType())
@@ -269,31 +242,31 @@ void AbstractQueryManager::postReconfigurationCallback(ReconfigurationMessage& t
             }
             /// we need to think if we want to remove this after a soft stop
             ///            queryToStatisticsMap.erase(qepId);
-            NES_DEBUG("AbstractQueryManager: removed running QEP  {}", qepId);
+            NES_DEBUG("QueryManager: removed running QEP  {}", qepId);
             break;
         }
         default: {
-            NES_THROW_RUNTIME_ERROR("AbstractQueryManager: task type not supported");
+            NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
         }
     }
 }
 
-WorkerId AbstractQueryManager::getNodeId() const
+WorkerId QueryManager::getNodeId() const
 {
     return nodeEngineId;
 }
 
-bool AbstractQueryManager::isThreadPoolRunning() const
+bool QueryManager::isThreadPoolRunning() const
 {
     return threadPool != nullptr;
 }
 
-uint64_t AbstractQueryManager::getNextTaskId()
+uint64_t QueryManager::getNextTaskId()
 {
     return ++taskIdCounter;
 }
 
-uint64_t AbstractQueryManager::getNumberOfWorkerThreads()
+uint64_t QueryManager::getNumberOfWorkerThreads()
 {
     return numThreads;
 }
