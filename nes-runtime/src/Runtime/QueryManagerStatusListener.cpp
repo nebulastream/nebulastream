@@ -32,8 +32,7 @@
 
 namespace NES::Runtime
 {
-void AbstractQueryManager::notifyQueryStatusChange(
-    const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus status)
+void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus status)
 {
     NES_ASSERT(qep, "Invalid query plan object");
     if (status == Execution::ExecutableQueryPlanStatus::Finished)
@@ -70,7 +69,7 @@ void AbstractQueryManager::notifyQueryStatusChange(
             qep->getSharedQueryId(), qep->getDecomposedQueryPlanId(), Execution::ExecutableQueryPlanStatus::ErrorState);
     }
 }
-void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason)
+void QueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason)
 {
     NES_DEBUG("notifySourceFailure called for query id= {}  reason= {}", failedSource->getOperatorId(), reason);
     std::vector<Execution::ExecutableQueryPlanPtr> plansToFail;
@@ -100,7 +99,7 @@ void AbstractQueryManager::notifySourceFailure(DataSourcePtr failedSource, const
     }
 }
 
-void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipelineOrSink, const std::string& errorMessage)
+void QueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipelineOrSink, const std::string& errorMessage)
 {
     DecomposedQueryPlanId planId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
     Execution::ExecutableQueryPlanPtr qepToFail;
@@ -140,7 +139,7 @@ void AbstractQueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipel
         std::move(qepToFail));
 }
 
-void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType)
+void QueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType)
 {
     std::unique_lock lock(queryMutex);
     ///THIS is now shutting down all
@@ -160,7 +159,7 @@ void AbstractQueryManager::notifySourceCompletion(DataSourcePtr source, QueryTer
     }
 }
 
-void AbstractQueryManager::notifyPipelineCompletion(
+void QueryManager::notifyPipelineCompletion(
     DecomposedQueryPlanId decomposedQueryPlanId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType)
 {
     std::unique_lock lock(queryMutex);
@@ -169,8 +168,7 @@ void AbstractQueryManager::notifyPipelineCompletion(
     qep->notifyPipelineCompletion(pipeline, terminationType);
 }
 
-void AbstractQueryManager::notifySinkCompletion(
-    DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType)
+void QueryManager::notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType)
 {
     std::unique_lock lock(queryMutex);
     auto& qep = runningQEPs[decomposedQueryPlanId];
