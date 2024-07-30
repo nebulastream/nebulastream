@@ -228,9 +228,11 @@ This work is refactoring of an existing solution.
 
 Centralized, hybrid and decentralized configuration architectures of exiting systems:
 
-## Centralized
+## Existing Solutions
 
-### MongoDB
+### Centralized
+
+#### MongoDB
 
 1.	Configuration Loading:
 	  -	When a MongoDB instance (mongod or mongos) starts up, it first loads the configuration from the specified sources. These can be a configuration file (typically YAML), command-line arguments, or environment variables.
@@ -242,7 +244,7 @@ Centralized, hybrid and decentralized configuration architectures of exiting sys
 4.	Dynamic Reconfiguration:
 	  -	Some settings can be changed at runtime without restarting the instance. These changes are typically made via administrative commands that apply the new settings immediately to the relevant system component. Even these changes follow a centralized validation process within the instance before they are applied.
 
-### RocksDB
+#### RocksDB
 
 1. Configuration Loading:
    -	When a RocksDB instance is initialized, it first loads configuration settings from the application code where the database is embedded. Configurations are typically set up through various C++ structs such as Options, DBOptions, and ColumnFamilyOptions.
@@ -257,7 +259,7 @@ Centralized, hybrid and decentralized configuration architectures of exiting sys
    -	Some options in RocksDB can be adjusted dynamically at runtime using methods like SetOptions(). This allows developers to modify certain parameters without needing to restart the database or application.
    -	Dynamic reconfigurations are validated in a similar manner to initial configurations to ensure they are within allowable ranges and do not conflict with other operational parameters.
 
-### MySQL
+#### MySQL
 
 1. Configuration Loading:
    - When a MySQL instance (mysqld) starts up, it first loads the configuration from specified sources. These sources typically include configuration files (my.cnf or my.ini), which are the primary method for setting configuration options. Additionally, command-line arguments can be used to override settings in the configuration files, and in some cases, environment variables might influence settings. 
@@ -271,9 +273,9 @@ Centralized, hybrid and decentralized configuration architectures of exiting sys
    - MySQL supports dynamic changes to certain settings while the server is running. These changes can be made through SQL commands, such as SET GLOBAL or SET SESSION, allowing administrators to adjust operational parameters without restarting the server.
    - Dynamic changes are again validated 
 
-## Hybrid
+### Hybrid
 
-### ClickHouse
+#### ClickHouse
 
 ClickHouse uses XML files (config.xml and users.xml) for configuration, which is somewhat less common in modern DBMSs that often prefer simpler formats like YAML or JSON. XML allows for a more structured and hierarchical configuration, which can be particularly advantageous for complex setups with many nested options.
 
@@ -287,12 +289,12 @@ ClickHouse uses XML files (config.xml and users.xml) for configuration, which is
    - Each component within ClickHouse accesses the configuration settings it requires from this centralized repository as needed. This approach is somewhat like a "pull" model, where each component retrieves its specific configuration parameters.
    - The components actively query the central configuration for the parameters relevant to their operational context.
 4. Dynamic Reconfiguration:
-               •	Runtime Changes: ClickHouse supports changing some settings dynamically at runtime through SQL commands, such as ALTER SYSTEM. This allows administrators to adjust and tune system settings without restarting the server.
-               •	Consistency and Coordination: For changes that affect the whole cluster, such as cluster-wide settings in a distributed ClickHouse setup, ClickHouse manages consistency by propagating changes across all nodes and ensuring that new settings do not disrupt ongoing operations.
+   - Runtime Changes: ClickHouse supports changing some settings dynamically at runtime through SQL commands, such as ALTER SYSTEM. This allows administrators to adjust and tune system settings without restarting the server.
+   - Consistency and Coordination: For changes that affect the whole cluster, such as cluster-wide settings in a distributed ClickHouse setup, ClickHouse manages consistency by propagating changes across all nodes and ensuring that new settings do not disrupt ongoing operations.
 
-## Decentralized
+### Decentralized
 
-### FoundationDB
+#### FoundationDB
 
 1. Configuration Loading:
    - FoundationDB does not rely on a single central configuration file at startup. Instead, configurations can be specified through command-line options or set programmatically in the database itself.
@@ -304,6 +306,30 @@ ClickHouse uses XML files (config.xml and users.xml) for configuration, which is
 4. Dynamic Reconfiguration:
    - FoundationDB supports dynamic changes to configurations without service interruption. Changes are propagated through special transactions in the database and do not require direct file edits or command-line interventions post initial setup.
    - This feature is particularly important in environments that require high availability and minimal downtime.
+
+## Potential Solutions
+
+### Centralized
+
+1. The coordinator stores everything and sends it to workers
+-	Disadvantage: This approach is not efficient because workers require configurations at launch, and waiting for the coordinator to send configurations can delay startup processes.
+
+2. The coordinator stores all configurations, and workers pull necessary configurations as needed.
+-	Advantage: Ensures that all workers have access to the latest configurations without storing them locally, which can simplify updates and maintenance.
+-	Disadvantage: Assumes heterogeneity—different workers might require different configurations, which could complicate management and scaling in diverse environments.
+
+Enhancement for Both: Utilize ZooKeeper to store configurations, allowing for centralized management with decentralized access.
+
+### Decentralized
+
+1. The worker stores all configurations and distributes them across different components – current implementation
+
+2. Worker stores all configurations, and components proactively pull configurations from a specialized structure.
+-	Disadvantage: Imposes additional overhead on components, distracting them from their primary tasks and possibly affecting performance.
+
+3. All components store and manage their own configurations independently.
+-	Advantage: Maximizes autonomy and responsiveness, as each component can quickly adapt configurations without dependencies.
+-	Disadvantage: Risk of configuration drift where components become out of sync, leading to potential inconsistencies and duplication of configuration data across the system.
 
 # Open Questions
 
