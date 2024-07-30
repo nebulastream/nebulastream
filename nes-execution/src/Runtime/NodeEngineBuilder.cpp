@@ -113,7 +113,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
             auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration.numberOfBuffersPerEpoch.getValue());
             std::vector<uint64_t> workerToCoreMappingVec
                 = NES::Util::splitWithStringDelimiter<uint64_t>(workerConfiguration.workerPinList.getValue(), ",");
-            queryManager = std::make_shared<DynamicQueryManager>(
+            queryManager = std::make_shared<QueryManager>(
                 std::make_shared<SimpleQueryStatusListener>(),
                 bufferManagers,
                 WorkerId(0),

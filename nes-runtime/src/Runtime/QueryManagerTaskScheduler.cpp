@@ -65,26 +65,26 @@ public:
     ExecutionResult execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext)
     {
         NES_TRACE(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread {}",
+            "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread {}",
             workerContext.getId());
         auto* task = buffer.getBuffer<ReconfigurationMessage>();
         NES_TRACE(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to wait "
+            "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to wait "
             "on thread {}",
             workerContext.getId());
         task->wait();
         NES_TRACE(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to "
+            "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint going to "
             "reconfigure on thread {}",
             workerContext.getId());
         task->getInstance()->reconfigure(*task, workerContext);
         NES_TRACE(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint post callback "
+            "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint post callback "
             "on thread {}",
             workerContext.getId());
         task->postReconfiguration();
         NES_TRACE(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint completed on "
+            "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint completed on "
             "thread {}",
             workerContext.getId());
         task->postWait();
@@ -93,9 +93,9 @@ public:
 };
 } /// namespace detail
 
-ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext& workerContext)
+ExecutionResult QueryManager::processNextTask(bool running, WorkerContext& workerContext)
 {
-    NES_TRACE("QueryManager: AbstractQueryManager::getWork wait get lock");
+    NES_TRACE("QueryManager: QueryManager::getWork wait get lock");
     Task task;
     if (running)
     {
@@ -141,7 +141,7 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
     }
 }
 
-ExecutionResult DynamicQueryManager::terminateLoop(WorkerContext& workerContext)
+ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext)
 {
     bool hitReconfiguration = false;
     Task task;
@@ -166,7 +166,7 @@ ExecutionResult DynamicQueryManager::terminateLoop(WorkerContext& workerContext)
     return ExecutionResult::Finished;
 }
 
-void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId)
+void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId)
 {
     NES_TRACE("Add Work for executable for queue={}", queueId);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline)
@@ -195,26 +195,7 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution:
     }
 }
 
-void DynamicQueryManager::updateStatistics(
-    const Task& task,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    PipelineId pipelineId,
-    WorkerContext& workerContext)
-{
-    AbstractQueryManager::updateStatistics(task, sharedQueryId, decomposedQueryPlanId, pipelineId, workerContext);
-#ifndef LIGHT_WEIGHT_STATISTICS
-    if (queryToStatisticsMap.contains(decomposedQueryPlanId))
-    {
-        auto statistics = queryToStatisticsMap.find(decomposedQueryPlanId);
-        /// with multiple queryIdAndCatalogEntryMapping this won't be correct
-        auto qSize = taskQueue.size();
-        statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
-    }
-#endif
-}
-
-void AbstractQueryManager::updateStatistics(
+void QueryManager::updateStatistics(
     const Task& task,
     SharedQueryId sharedQueryId,
     DecomposedQueryPlanId decomposedQueryPlanId,
@@ -262,6 +243,10 @@ void AbstractQueryManager::updateStatistics(
         statistics->addTimestampToLatencyValue(now, diff);
 #    endif
         statistics->incProcessedTuple(task.getNumberOfInputTuples());
+
+        // with multiple queryIdAndCatalogEntryMapping this won't be correct
+        auto qSize = taskQueue.size();
+        statistics->incQueueSizeSum(qSize > 0 ? qSize : 0);
     }
     else
     {
@@ -272,9 +257,9 @@ void AbstractQueryManager::updateStatistics(
 #endif
 }
 
-void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx)
+void QueryManager::completedWork(Task& task, WorkerContext& wtx)
 {
-    NES_TRACE("AbstractQueryManager::completedWork: Work for task={} worker ctx id={}", task.toString(), wtx.getId());
+    NES_TRACE("QueryManager::completedWork: Work for task={} worker ctx id={}", task.toString(), wtx.getId());
     if (task.isReconfiguration())
     {
         return;
@@ -288,23 +273,23 @@ void AbstractQueryManager::completedWork(Task& task, WorkerContext& wtx)
     {
         decomposedQueryPlanId = (*sink)->getParentPlanId();
         sharedQueryId = (*sink)->getSharedQueryId();
-        NES_TRACE("AbstractQueryManager::completedWork: task for sink querySubPlanId={}", decomposedQueryPlanId);
+        NES_TRACE("QueryManager::completedWork: task for sink querySubPlanId={}", decomposedQueryPlanId);
     }
     else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable))
     {
         decomposedQueryPlanId = (*executablePipeline)->getDecomposedQueryPlanId();
         sharedQueryId = (*executablePipeline)->getSharedQueryId();
         pipelineId = (*executablePipeline)->getPipelineId();
-        NES_TRACE("AbstractQueryManager::completedWork: task for exec pipeline isreconfig={}", (*executablePipeline)->isReconfiguration());
+        NES_TRACE("QueryManager::completedWork: task for exec pipeline isreconfig={}", (*executablePipeline)->isReconfiguration());
     }
     updateStatistics(task, sharedQueryId, decomposedQueryPlanId, pipelineId, wtx);
 }
 
-bool DynamicQueryManager::addReconfigurationMessage(
+bool QueryManager::addReconfigurationMessage(
     SharedQueryId sharedQueryId, DecomposedQueryPlanId queryExecutionPlanId, const ReconfigurationMessage& message, bool blocking)
 {
     NES_DEBUG(
-        "QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
+        "QueryManager: QueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
         queryExecutionPlanId,
         blocking,
         magic_enum::enum_name(message.getType()));
@@ -316,14 +301,14 @@ bool DynamicQueryManager::addReconfigurationMessage(
     return addReconfigurationMessage(sharedQueryId, queryExecutionPlanId, std::move(buffer), blocking);
 }
 
-bool DynamicQueryManager::addReconfigurationMessage(
+bool QueryManager::addReconfigurationMessage(
     SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, TupleBuffer&& buffer, bool blocking)
 {
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     {
         std::unique_lock reconfLock(reconfigurationMutex);
         NES_DEBUG(
-            "QueryManager: AbstractQueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
+            "QueryManager: QueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
             decomposedQueryPlanId,
             blocking,
             magic_enum::enum_name(task->getType()));
@@ -373,7 +358,7 @@ public:
 };
 } /// namespace detail
 
-void DynamicQueryManager::poisonWorkers()
+void QueryManager::poisonWorkers()
 {
     auto optBuffer = bufferManagers[0]->getUnpooledBuffer(1); /// there is always one buffer manager
     NES_ASSERT(optBuffer, "invalid buffer");
