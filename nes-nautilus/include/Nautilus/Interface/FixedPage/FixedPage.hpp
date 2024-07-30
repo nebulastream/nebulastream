@@ -18,7 +18,6 @@
 #include <atomic>
 #include <cstddef>
 #include <memory>
-#include <Runtime/BloomFilter.hpp>
 
 namespace NES
 {
@@ -35,12 +34,10 @@ using FixedPagePtr = std::shared_ptr<FixedPage>;
 
 /**
  * @brief class that stores the tuples on a page.
- * It also contains a bloom filter to have a quick check if a tuple is not on the page
  */
 class FixedPage
 {
 public:
-    static constexpr double BLOOM_FALSE_POSITIVE_RATE = 1e-2;
     static constexpr uint64_t PAGE_SIZE = 4096;
 
     /**
@@ -48,10 +45,9 @@ public:
      * @param dataPtr
      * @param sizeOfRecord
      * @param pageSize
-     * @param bloomFalsePosRate
      */
     explicit FixedPage(
-        uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize = PAGE_SIZE, double bloomFalsePosRate = BLOOM_FALSE_POSITIVE_RATE);
+        uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize = PAGE_SIZE);
 
     /**
      * @brief Constructor for a FixedPage from another FixedPage
@@ -80,23 +76,9 @@ public:
 
     /**
      * @brief returns a pointer to a memory location on this page where to write the record and checks if there is enough space for another record
-     * @param hash
      * @return null pointer if there is no more space left on the page, otherwise the pointer
      */
-    uint8_t* append(const uint64_t hash);
-
-    /**
-     * @brief adds the hash to the BloomFilter
-     * @param hash
-     */
-    void addHashToBloomFilter(const uint64_t hash);
-
-    /**
-     * @brief checks if the key might be in this page
-     * @param hash
-     * @return true or false
-     */
-    bool bloomFilterCheck(const uint64_t hash) const;
+    uint8_t* append();
 
     /**
      * @brief returns the number of items on this page
@@ -124,8 +106,6 @@ private:
     uint8_t* data;
     std::atomic<size_t> currentPos;
     size_t capacity;
-    std::unique_ptr<Runtime::BloomFilter> bloomFilter;
-    double bloomFalsePosRate;
 };
 
 } /// namespace NES::Nautilus::Interface

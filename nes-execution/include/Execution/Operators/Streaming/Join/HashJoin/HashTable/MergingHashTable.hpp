@@ -20,7 +20,6 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
-#include <Runtime/BloomFilter.hpp>
 #include <folly/Synchronized.h>
 
 namespace NES::Runtime::Execution::Operators
