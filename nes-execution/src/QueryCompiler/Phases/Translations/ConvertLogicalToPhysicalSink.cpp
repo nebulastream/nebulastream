@@ -21,6 +21,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -33,9 +34,10 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
     const QueryCompilation::PipelineQueryPlanPtr& pipelineQueryPlan,
     size_t numOfProducers)
 {
+    PRECONDITION(nodeEngine, "Invalid node engine");
+    PRECONDITION(pipelineQueryPlan, "Invalid query sub-plan");
+
     NES_DEBUG("Convert sink  {}", operatorId);
-    NES_ASSERT(nodeEngine, "Invalid node engine");
-    NES_ASSERT(pipelineQueryPlan, "Invalid query sub-plan");
     if (sinkDescriptor->instanceOf<PrintSinkDescriptor>())
     {
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
@@ -61,11 +63,12 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
         }
         else
         {
-            NES_ERROR("createDataSink: unsupported format");
-            throw std::invalid_argument("Unknown File format");
+            throw UnknownSinkType();
         }
     }
-    NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
-    throw std::invalid_argument("Unknown Sink Descriptor Type");
+    else
+    {
+        throw UnknownSinkType();
+    }
 }
 } /// namespace NES

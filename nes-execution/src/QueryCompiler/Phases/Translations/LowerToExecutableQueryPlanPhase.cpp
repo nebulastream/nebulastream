@@ -19,7 +19,6 @@
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
@@ -33,6 +32,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::QueryCompilation
@@ -77,6 +77,8 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
+    PRECONDITION(pipeline->isSinkPipeline() || pipeline->isOperatorPipeline(), "expected a Sink or OperatorPipeline");
+
     /// check if the particular pipeline already exist in the pipeline map.
     if (pipelineToExecutableMap.find(pipeline->getPipelineId()) != pipelineToExecutableMap.end())
     {
@@ -89,14 +91,13 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         pipelineToExecutableMap.insert({pipeline->getPipelineId(), executableSink});
         return executableSink;
     }
-    if (pipeline->isOperatorPipeline())
+    else /// if it is an OperatorPipeline
     {
         auto executablePipeline = processOperatorPipeline(
             pipeline, sources, sinks, executablePipelines, nodeEngine, pipelineQueryPlan, pipelineToExecutableMap);
         pipelineToExecutableMap.insert({pipeline->getPipelineId(), executablePipeline});
         return executablePipeline;
     }
-    throw QueryCompilationException("The pipeline was of wrong type. It should be a sink pipeline or a operator pipeline");
 }
 
 void LowerToExecutableQueryPlanPhase::processSource(
@@ -108,21 +109,13 @@ void LowerToExecutableQueryPlanPhase::processSource(
     const PipelineQueryPlanPtr& pipelineQueryPlan,
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap)
 {
-    if (!pipeline->isSourcePipeline())
-    {
-        NES_ERROR("This is not a source pipeline.");
-        NES_ERROR("{}", pipeline->getDecomposedQueryPlan()->toString());
-        throw QueryCompilationException("This is not a source pipeline.");
-    }
+    PRECONDITION(pipeline->isSourcePipeline(), "expected a SourcePipeline " + pipeline->getDecomposedQueryPlan()->toString());
 
-    ///Convert logical source descriptor to actual source descriptor
+    /// Convert logical source descriptor to actual source descriptor
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>())
-    {
-        NES_THROW_RUNTIME_ERROR("Logical source name lookup is not supported");
-    }
+    PRECONDITION(!sourceDescriptor->instanceOf<LogicalSourceDescriptor>(), "logical source name lookup is not supported");
 
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
@@ -281,8 +274,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
             return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
         }
         default: {
-            throw QueryCompilationException(
-                "PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
+            throw UnknownSourceType(physicalSourceType->getSourceTypeAsString());
         }
     }
 }

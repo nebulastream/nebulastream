@@ -14,7 +14,6 @@
 #pragma once
 
 #include <optional>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/Timer.hpp>
 
@@ -30,7 +29,6 @@ class QueryCompilationResult
 {
 public:
     static QueryCompilationResultPtr create(Runtime::Execution::ExecutableQueryPlanPtr qep, Timer<>&& timer);
-    static QueryCompilationResultPtr create(std::exception_ptr exception);
     /**
      * @brief Returns the query execution plan if hasError() == false.
      * @throws QueryCompilationException if hasError() == true.
@@ -44,23 +42,9 @@ public:
     */
     [[nodiscard]] uint64_t getCompilationTime() const;
 
-    /**
-     * @brief Indicates if the query compilation succeeded.
-     * @return true if the request has an error
-     */
-    bool hasError();
-
-    /**
-     * @brief Returns the exception
-     * @return std::exception_ptr
-     */
-    std::exception_ptr getError();
-
 private:
     explicit QueryCompilationResult(Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan, Timer<> timer);
-    explicit QueryCompilationResult(std::exception_ptr exception);
-    std::optional<Runtime::Execution::ExecutableQueryPlanPtr> executableQueryPlan;
-    std::optional<std::exception_ptr> exception;
-    std::optional<Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock>> timer;
+    Runtime::Execution::ExecutableQueryPlanPtr executableQueryPlan;
+    Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock> timer;
 };
 } /// namespace NES::QueryCompilation

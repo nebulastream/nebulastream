@@ -19,6 +19,7 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #    if defined(__linux__)
@@ -88,8 +89,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
     }
     else
     {
-        NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", sourceDescriptor->getSchema()->toString());
-        throw std::invalid_argument("Unknown Source Descriptor Type");
+        throw UnknownSourceType(sourceDescriptor->getSchema()->toString());
     }
 }
 

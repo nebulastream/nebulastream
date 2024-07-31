@@ -98,9 +98,11 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Types/ContentBasedWindowType.hpp>
+#include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
+#include <Util/Core.hpp>
 #include <Util/Execution.hpp>
 #include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
@@ -861,7 +863,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
             operatorHandlers.size() - 1, std::move(timeFunction), aggregationFunctions);
         return bucketPreAggregation;
     }
-    NES_NOT_IMPLEMENTED();
+    throw FunctionNotImplemented();
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerKeyedPreAggregationOperator(
@@ -878,7 +880,6 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto timeFunction = lowerTimeFunction(timeWindow);
     auto keys = windowDefinition->getKeys();
     PRECONDITION(!keys.empty(), "expected at least one key field for keyed pre-aggregation operator");
-
     std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyReadExpressions;
     auto df = DefaultPhysicalTypeFactory();
     std::vector<PhysicalTypePtr> keyDataTypes;
@@ -920,7 +921,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw FunctionNotImplemented();
     }
 }
 
@@ -948,7 +949,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     }
     else
     {
-        NES_NOT_IMPLEMENTED();
+        throw UnknownWatermarkStrategy();
     }
 }
 

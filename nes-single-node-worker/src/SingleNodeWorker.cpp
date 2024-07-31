@@ -22,6 +22,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -96,14 +97,16 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 
 QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
 {
-    auto compilationResult = qc->compileQuery(QueryCompilation::QueryCompilationRequest::create(std::move(plan), nodeEngine));
-
-    if (compilationResult->hasError())
+    try
     {
-        NES_THROW_RUNTIME_ERROR("Compilation Failed :)");
+        auto compilationResult = qc->compileQuery(QueryCompilation::QueryCompilationRequest::create(std::move(plan), nodeEngine));
+        return nodeEngine->registerExecutableQueryPlan(compilationResult->getExecutableQueryPlan());
     }
-
-    return nodeEngine->registerExecutableQueryPlan(compilationResult->getExecutableQueryPlan());
+    catch (Exception& e)
+    {
+        tryLogCurrentException();
+        return INVALID_QUERY_ID;
+    }
 }
 void SingleNodeWorker::startQuery(QueryId queryId)
 {

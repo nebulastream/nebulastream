@@ -13,10 +13,10 @@
 */
 
 #include <API/Schema.hpp>
-#include <Exceptions/Exception.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 #include "Common/DataTypes/DataTypeFactory.hpp"
 #include <Common/ExecutableType/Array.hpp>
