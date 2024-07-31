@@ -21,7 +21,6 @@
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Sinks/Mediums/FileSink.hpp>
 #include <Sinks/Mediums/KafkaSink.hpp>
-#include <Sinks/Mediums/MonitoringSink.hpp>
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/RawBufferSink.hpp>
@@ -199,21 +198,6 @@ DataSinkPtr createNetworkSink(
         retryTimes,
         numberOfOrigins,
         version);
-}
-
-DataSinkPtr createMonitoringSink(
-    Monitoring::MetricStorePtr metricStore,
-    Monitoring::MetricCollectorType type,
-    const SchemaPtr& schema,
-    Runtime::NodeEnginePtr nodeEngine,
-    uint32_t numOfProducers,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    uint64_t numberOfOrigins)
-{
-    SinkFormatPtr format = std::make_shared<NesFormat>(schema, nodeEngine->getBufferManager());
-    return std::make_shared<MonitoringSink>(
-        format, metricStore, type, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

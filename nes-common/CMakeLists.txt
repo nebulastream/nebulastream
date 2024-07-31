@@ -78,7 +78,6 @@ register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ 
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
 register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Sequencing Sequencing)
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/StatisticIdentifiers.hpp StatisticIdentifiers.hpp)
-register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/MetricCollectorType.hpp Util/MetricCollectorType.hpp)
 register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)

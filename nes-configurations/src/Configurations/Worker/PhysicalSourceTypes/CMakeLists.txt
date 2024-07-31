@@ -20,7 +20,6 @@ add_source_files(nes-configurations
         BinarySourceType.cpp
         DefaultSourceType.cpp
         KafkaSourceType.cpp
-        MonitoringSourceType.cpp
         MQTTSourceType.cpp
         OPCSourceType.cpp
         SenseSourceType.cpp

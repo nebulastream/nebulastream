@@ -64,11 +64,6 @@ public:
         = {LOG_LEVEL_CONFIG, LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
     /**
-     * @brief Indicates if the monitoring stack is enables.
-     */
-    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, "false", "Enable monitoring", {std::make_shared<BooleanValidation>()}};
-
-    /**
      * @brief Indicates the number of request executor threads
      */
     UIntOption requestExecutorThreads
@@ -151,7 +146,6 @@ private:
             &rpcPort,
             &restPort,
             &logLevel,
-            &enableMonitoring,
             &configPath,
             &worker,
             &workerConfigPath,

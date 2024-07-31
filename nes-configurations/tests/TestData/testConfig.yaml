@@ -1,7 +1,6 @@
 
 restIp: localhost
 rpcPort: 100
-enableMonitoring: false
 logLevel: LOG_WARNING
 
 optimizerConfig:

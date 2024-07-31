@@ -35,7 +35,6 @@ enum class SourceType : uint8_t
     DEFAULT_SOURCE,
     NETWORK_SOURCE,
     ADAPTIVE_SOURCE,
-    MONITORING_SOURCE,
     YSB_SOURCE,
     MEMORY_SOURCE,
     MQTT_SOURCE,

@@ -21,15 +21,6 @@ namespace NES
 class DataSource;
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
-class MonitoringPlan;
-using MonitoringPlanPtr = std::shared_ptr<MonitoringPlan>;
-
-class MetricGroup;
-using MetricGroupPtr = std::shared_ptr<MetricGroup>;
-
-class MetricCatalog;
-using MetricCatalogPtr = std::shared_ptr<MetricCatalog>;
-
 namespace Runtime
 {
 

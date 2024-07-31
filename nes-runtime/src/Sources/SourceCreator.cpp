@@ -22,7 +22,6 @@
 #include <Sources/KafkaSource.hpp>
 #include <Sources/LambdaSource.hpp>
 #include <Sources/MemorySource.hpp>
-#include <Sources/MonitoringSource.hpp>
 #include <Sources/SenseSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Sources/StaticDataSource.hpp>
@@ -391,31 +390,6 @@ DataSourcePtr createNetworkSource(
         version,
         uniqueNetworkSourceId,
         physicalSourceName);
-}
-
-DataSourcePtr createMonitoringSource(
-    Monitoring::MetricCollectorPtr metricCollector,
-    std::chrono::milliseconds waitTime,
-    Runtime::BufferManagerPtr bufferManager,
-    Runtime::QueryManagerPtr queryManager,
-    OperatorId operatorId,
-    OriginId originId,
-    StatisticId statisticId,
-    size_t numSourceLocalBuffers,
-    const std::string& physicalSourceName,
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-{
-    return std::make_shared<MonitoringSource>(
-        metricCollector,
-        waitTime,
-        bufferManager,
-        queryManager,
-        operatorId,
-        originId,
-        statisticId,
-        numSourceLocalBuffers,
-        physicalSourceName,
-        successors);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

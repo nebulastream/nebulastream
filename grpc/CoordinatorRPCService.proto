@@ -95,13 +95,12 @@ message RegisterWorkerRequest {
   uint32 numberOfSlots = 4;
   uint32 bandwidthInMbps = 5;
   uint32 latencyInMs = 6;
-  SerializableRegistrationMetrics registrationMetrics = 7;
-  NES.Spatial.Protobuf.Waypoint waypoint = 8;
-  NES.Spatial.Protobuf.SpatialType spatialType = 9;
-  bool tfSupported = 10;
-  bool javaUDFSupported = 11;
-  uint64 workerId = 12;
-  repeated SerializedOpenCLDeviceInfo openCLDevices = 13;
+  NES.Spatial.Protobuf.Waypoint waypoint = 7;
+  NES.Spatial.Protobuf.SpatialType spatialType = 8;
+  bool tfSupported = 9;
+  bool javaUDFSupported = 10;
+  uint64 workerId = 11;
+  repeated SerializedOpenCLDeviceInfo openCLDevices = 12;
 }
 
 message RegisterWorkerReply {
@@ -242,16 +241,6 @@ message LocationUpdateRequest {
 
 message LocationUpdateReply {
   bool success = 1;
-}
-
-message SerializableRegistrationMetrics{
-  uint64 totalMemoryBytes = 1;
-  uint32 cpuCoreNum = 2;
-  uint64 totalCPUJiffies = 3;
-  int64 cpuPeriodUS = 4;
-  int64 cpuQuotaUS = 5;
-  bool isMoving = 6;
-  bool hasBattery = 7;
 }
 
 message SendErrorsMessage{
