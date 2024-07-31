@@ -15,7 +15,6 @@ add_source_files(nes-execution
         ConvertLogicalToPhysicalSink.cpp
         NautilusOperatorLoweringPlugin.cpp
         LowerLogicalToPhysicalOperators.cpp
-        PhysicalOperatorProvider.cpp
         DefaultPhysicalOperatorProvider.cpp
         LowerToExecutableQueryPlanPhase.cpp
         DataSinkProvider.cpp
