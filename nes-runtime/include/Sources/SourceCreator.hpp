@@ -16,7 +16,6 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_
 
 #include <chrono>
-#include <Monitoring/MetricCollectors/MetricCollector.hpp>
 #include <Operators/LogicalOperators/Network/NesPartition.hpp>
 #include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -389,32 +388,6 @@ DataSourcePtr createNetworkSource(
     DecomposedQueryPlanVersion version,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
     OperatorId uniqueNetworkSourceId);
-
-/**
- * @brief function to create a monitoring source
- * @param metricCollector a pointer to a NES::Monitoring::MetricCollector
- * @param waitTime the amount of time to wait
- * @param bufferManager a pointer to the buffer manager
- * @param queryManager a pointer to the query manager
- * @param operatorId current operator id
- * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
- * @param statisticId represents the unique identifier of components that we can track statistics for
- * @param numSourceLocalBuffers the number of buffers allocated to a source
- * @param physicalSourceName the name and unique identifier of a physical source
- * @param successors the subsequent operators in the pipeline to which the data is pushed
- * @return a data source pointer
- */
-DataSourcePtr createMonitoringSource(
-    Monitoring::MetricCollectorPtr metricCollector,
-    std::chrono::milliseconds waitTime,
-    Runtime::BufferManagerPtr bufferManager,
-    Runtime::QueryManagerPtr queryManager,
-    OperatorId operatorId,
-    OriginId originId,
-    StatisticId statisticId,
-    size_t numSourceLocalBuffers,
-    const std::string& physicalSourceName,
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

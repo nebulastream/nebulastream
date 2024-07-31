@@ -429,7 +429,6 @@ TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs
         = {{"--numaAwareness", {"not_a_bool", "2", "-1"}},
-           {"--enableMonitoring", {"not_a_bool", "2", "-1"}},
            {"--enableSourceSharing", {"not_a_bool", "2", "-1"}},
            {"--enableStatisticOuput", {"not_a_bool", "2", "-1"}},
            {"--isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
@@ -516,7 +515,6 @@ TEST_F(ConfigTest, invalidBooleanYamlInputs)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidBooleanConfigs
         = {{"numaAwareness", {"not_a_bool", "2", "-1"}},
-           {"enableMonitoring", {"not_a_bool", "2", "-1"}},
            {"enableSourceSharing", {"not_a_bool", "2", "-1"}},
            {"enableStatisticOutput", {"not_a_bool", "2", "-1"}},
            {"isJavaUDFSupported", {"not_a_bool", "2", "-1"}},

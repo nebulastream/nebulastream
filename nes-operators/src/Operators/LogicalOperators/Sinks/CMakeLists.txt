@@ -16,7 +16,6 @@ add_source_files(nes-operators
         KafkaSinkDescriptor.cpp
         ZmqSinkDescriptor.cpp
         PrintSinkDescriptor.cpp
-        MonitoringSinkDescriptor.cpp
         OPCSinkDescriptor.cpp
         MQTTSinkDescriptor.cpp
         NullOutputSinkDescriptor.cpp

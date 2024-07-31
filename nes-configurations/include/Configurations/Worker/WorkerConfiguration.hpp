@@ -162,13 +162,6 @@ public:
            {std::make_shared<NumberValidation>()}};
 
     /**
-     * @brief Configures the wait time for collecting metrics in the monitoring streams.
-     * Monitoring has to be enabled for it to work.
-     */
-    UIntOption monitoringWaitTime
-        = {MONITORING_WAIT_TIME, "1000", "Sampling period of metrics (ms).", {std::make_shared<NumberValidation>()}};
-
-    /**
      * @brief Configures the buffer size of individual TupleBuffers in bytes.
      * This property has to be the same over a whole deployment.
      */
@@ -196,11 +189,6 @@ public:
      * @brief Enables support for Non-Uniform Memory Access (NUMA) systems.
      */
     BoolOption numaAwareness = {NUMA_AWARENESS_CONFIG, "false", "Enable Numa-Aware execution", {std::make_shared<BooleanValidation>()}};
-
-    /**
-     * @brief Enables the monitoring stack
-     */
-    BoolOption enableMonitoring = {ENABLE_MONITORING_CONFIG, "false", "Enable monitoring", {std::make_shared<BooleanValidation>()}};
 
     /**
      * @brief Enables source sharing
@@ -347,8 +335,6 @@ private:
             &workerPinList,
             &queuePinList,
             &numaAwareness,
-            &enableMonitoring,
-            &monitoringWaitTime,
             &queryCompiler,
             &physicalSourceTypes,
             &locationCoordinates,
