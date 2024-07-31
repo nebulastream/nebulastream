@@ -14,7 +14,6 @@
 
 #include <memory>
 #include <utility>
-#include <Compiler/LanguageCompiler.hpp>
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/SignalHandling.hpp>
@@ -47,28 +46,6 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
     this->queryManager = std::move(queryManager);
     return *this;
 }
-
-class SimpleQueryStatusListener : public AbstractQueryStatusListener
-{
-public:
-    bool canTriggerEndOfStream(QueryId, OperatorId, Runtime::QueryTerminationType) override { return true; }
-
-    bool notifySourceTermination(QueryId, OperatorId, Runtime::QueryTerminationType) override
-    {
-        NES_INFO("Source has terminated");
-        return true;
-    }
-
-    bool notifyQueryFailure(QueryId, std::string errorMsg) override
-    {
-        NES_FATAL_ERROR("Query Failure: {}", errorMsg);
-        return true;
-    }
-
-    bool notifyQueryStatusChange(QueryId, Runtime::Execution::ExecutableQueryPlanStatus) override { return true; }
-
-    bool notifyEpochTermination(uint64_t, uint64_t) override { return true; }
-};
 
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {

@@ -28,10 +28,10 @@ namespace NES::Runtime
 /// Struct to store the status change of a query. Initialized either with a status or an exception.
 struct QueryStatusChange
 {
-    QueryStatusChange(Execution::QueryStatus state) : state(state), timestamp(std::chrono::system_clock::now()){};
+    QueryStatusChange(Execution::QueryStatus state) : state(state), timestamp(std::chrono::system_clock::now()) {};
 
     QueryStatusChange(const Exception& exception)
-        : state(Execution::QueryStatus::Failed), timestamp(std::chrono::system_clock::now()), exception(exception){};
+        : state(Execution::QueryStatus::Failed), timestamp(std::chrono::system_clock::now()), exception(exception) {};
 
     [[nodiscard]] std::string toString() const;
     friend std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statusChange);

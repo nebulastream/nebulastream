@@ -22,7 +22,7 @@ int main(const int argc, const char* argv[])
 {
     try
     {
-        NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_DEBUG);
+        NES::Logger::setupLogging("singleNodeWorker.log", NES::LogLevel::LOG_ERROR);
         auto configuration = NES::Configuration::loadConfiguration<NES::Configuration::SingleNodeWorkerConfiguration>(argc, argv);
         NES::GRPCServer workerService{NES::SingleNodeWorker(configuration)};
 

@@ -40,7 +40,7 @@ function(add_integration_test)
     endforeach ()
 endfunction()
 
-add_integration_test(single-node-integration-tests-csv
+#[[add_integration_test(single-node-integration-tests-csv
         SOURCES SingleNodeIntegrationTestsCSV.cpp
         QUERIES qOneCSVSource qOneCSVSourceWithFilter qTwoCSVSourcesWithFilter)
 
@@ -55,4 +55,4 @@ add_integration_test(single-node-integration-tests-mixed-sources
         SOURCES SingleNodeIntegrationTestsMixedSources.cpp
         QUERIES qOneCSVSourceAndOneTCPSourceWithFilter
 )
-target_link_libraries(single-node-integration-tests-mixed-sources Boost::asio)
+target_link_libraries(single-node-integration-tests-mixed-sources Boost::asio)]]

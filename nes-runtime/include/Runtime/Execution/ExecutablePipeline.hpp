@@ -102,7 +102,7 @@ public:
 
 private:
     const PipelineId pipelineId;
-    const QueryId queryId;
+    QueryId queryId;
     QueryManagerPtr queryManager;
     ExecutablePipelineStagePtr executablePipelineStage;
     PipelineExecutionContextPtr pipelineContext;

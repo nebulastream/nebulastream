@@ -107,7 +107,7 @@ void SinkMedium::postReconfigurationCallback(Runtime::ReconfigurationMessage& me
         {
             shutdown();
             nodeEngine->getQueryManager()->notifySinkCompletion(
-                decomposedQueryPlanId, std::static_pointer_cast<SinkMedium>(shared_from_this()), terminationType);
+                queryId, std::static_pointer_cast<SinkMedium>(shared_from_this()), terminationType);
             NES_DEBUG("Sink [ {} ] is completed with  {}", toString(), terminationType);
         }
     }

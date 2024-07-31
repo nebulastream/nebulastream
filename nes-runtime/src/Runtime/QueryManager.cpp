@@ -125,7 +125,7 @@ void QueryManager::destroy()
 }
 
 
-Execution::QueryStatus QueryManager::getQueryStatus(QueryId queryId)
+Execution::QueryStatus QueryManager::getQueryStatus(QueryId queryId) const
 {
     std::unique_lock const lock(queryMutex);
     auto it = runningQEPs.find(queryId);

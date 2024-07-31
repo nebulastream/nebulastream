@@ -19,7 +19,9 @@
 
 namespace NES::CLI
 {
-DecomposedQueryPlanPtr loadFromFile(const std::filesystem::path& file);
+DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& file);
 DecomposedQueryPlanPtr loadFrom(std::istream& inputStream);
-}
+std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testName);
+bool checkResult(const std::filesystem::path& filePath, const std::string& testName, uint64_t testNr);
+} // namespace NES::CLI
 #endif /// NES_NEBULI_INCLUDE_NEBULI_HPP_

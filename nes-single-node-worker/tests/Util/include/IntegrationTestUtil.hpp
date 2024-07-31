@@ -39,7 +39,9 @@ public:
 
     static void startQuery(QueryId queryId, GRPCServer& uut);
 
-    static void stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut);
+    [[nodiscard]] static bool isQueryFinished(QueryId queryId, GRPCServer& uut);
+
+    static void stopQuery(QueryId queryId, Runtime::QueryTerminationType type, GRPCServer& uut);
 
     static void unregisterQuery(QueryId queryId, GRPCServer& uut);
 

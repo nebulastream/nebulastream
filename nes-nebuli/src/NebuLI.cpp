@@ -13,6 +13,7 @@
 */
 
 #include <fstream>
+#include <regex>
 #include <Catalogs/Source/PhysicalSource.hpp>
 #include <Catalogs/Source/SourceCatalog.hpp>
 #include <Catalogs/Source/SourceCatalogEntry.hpp>
@@ -33,16 +34,19 @@
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
+#include <Parser/SLTParser.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryValidation/SemanticQueryValidation.hpp>
 #include <QueryValidation/SyntacticQueryValidation.hpp>
 #include <Services/QueryParsingService.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <nlohmann/detail/input/binary_reader.hpp>
 #include <yaml-cpp/yaml.h>
 #include <NebuLI.hpp>
 
 namespace NES::CLI
 {
+
 struct SchemaField
 {
     std::string name;
@@ -235,11 +239,10 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     NES_INFO("QEP:\n {}", query->toString());
     NES_INFO("Sink Schema: {}", query->getRootOperators()[0]->getOutputSchema()->toString());
-    return DecomposedQueryPlan::create(
-        INITIAL<DecomposedQueryPlanId>, INITIAL<SharedQueryId>, INITIAL<WorkerId>, query->getRootOperators());
+    return DecomposedQueryPlan::create(INITIAL<QueryId>, INITIAL<WorkerId>, query->getRootOperators());
 }
 
-DecomposedQueryPlanPtr loadFromFile(const std::filesystem::path& filePath)
+DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& filePath)
 {
     std::ifstream file(filePath);
     if (!file)
@@ -250,6 +253,228 @@ DecomposedQueryPlanPtr loadFromFile(const std::filesystem::path& filePath)
     }
 
     return loadFrom(file);
+}
+
+std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testname)
+{
+    std::vector<DecomposedQueryPlanPtr> plans{};
+    QueryConfig config{};
+    SLTParser parser{};
+
+    auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/test/result/" + testname + ".csv";
+    parser.registerSubstitutionRule("SINK", "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));");
+    parser.registerSubstitutionRule("TESTDATA", std::string(PATH_TO_BINARY_DIR) + "/test/testdata");
+
+    if (!parser.loadFile(filePath))
+    {
+        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
+        return {};
+    }
+
+    /// We add new found sources to our config
+    parser.registerOnSourceCallback(
+        [&](const std::vector<std::string>& parameters)
+        {
+            NES::CLI::LogicalSource logicalSource;
+            logicalSource.name = parameters[1];
+            /// Read schema fields till reached last parameter
+            for (size_t i = 2; i < parameters.size() - 1; i += 2)
+            {
+                NES::CLI::SchemaField schemaField;
+                schemaField.type = *magic_enum::enum_cast<BasicType>(parameters[i]);
+                schemaField.name = parameters[i + 1];
+                logicalSource.schema.push_back(schemaField);
+            }
+
+            NES::CLI::PhysicalSource physicalSource;
+            physicalSource.logical = logicalSource.name;
+            physicalSource.config["type"] = "CSV_SOURCE";
+            physicalSource.config["filePath"] = parameters.back();
+
+            config.logical.push_back(logicalSource);
+            config.physical.push_back(physicalSource);
+        });
+
+    const auto tmpSourceDir = std::string(PATH_TO_BINARY_DIR) + "/test/";
+    parser.registerOnSourceInFileTuplesCallback(
+        [&](const std::vector<std::string>& SourceParameters, const std::vector<std::string>& tuples)
+        {
+            static uint64_t sourceIndex = 0;
+
+            NES::CLI::LogicalSource logicalSource;
+            logicalSource.name = SourceParameters[1];
+            /// Read schema fields till reached last parameter
+            for (size_t i = 2; i < SourceParameters.size() - 1; i += 2)
+            {
+                NES::CLI::SchemaField schemaField;
+                schemaField.type = *magic_enum::enum_cast<BasicType>(SourceParameters[i]);
+                schemaField.name = SourceParameters[i + 1];
+                logicalSource.schema.push_back(schemaField);
+            }
+
+            NES::CLI::PhysicalSource physicalSource;
+            physicalSource.logical = logicalSource.name;
+            physicalSource.config["type"] = "CSV_SOURCE";
+            physicalSource.config["filePath"] = tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv";
+
+            /// Write the tuples to a tmp file
+            std::ofstream sourceFile(tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
+            if (!sourceFile)
+            {
+                NES_FATAL_ERROR("Failed to open source file: {}", tmpSourceDir + testname + std::to_string(sourceIndex) + ".csv");
+                return;
+            }
+            for (const auto& tuple : tuples)
+            {
+                sourceFile << tuple << std::endl;
+            }
+
+            config.logical.push_back(logicalSource);
+            config.physical.push_back(physicalSource);
+        });
+
+    /// We create a new query plan from our config when finding a query
+    parser.registerOnQueryCallback(
+        [&](const std::string_view query)
+        {
+            config.query = query;
+            try
+            {
+                auto plan = createFullySpecifiedQueryPlan(config);
+                plans.emplace_back(plan);
+            }
+            catch (const std::exception& e)
+            {
+                NES_FATAL_ERROR("Failed to create query plan: {}", e.what());
+                exit(-1);
+            }
+        });
+    if (!parser.parse())
+    {
+        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
+        return {};
+    }
+
+    return plans;
+}
+
+bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector<std::string>& resultData)
+{
+    std::ifstream resultFile(PATH_TO_BINARY_DIR "/test/result/" + testName + ".csv");
+    if (!resultFile)
+    {
+        NES_FATAL_ERROR("Failed to open result file: {}", PATH_TO_BINARY_DIR "/test/result/" + testName + ".csv");
+        return false;
+    }
+
+    std::string line;
+    std::regex headerRegex(R"(.*\$.*:.*)");
+    std::size_t currentQuery = 0;
+    bool isCollecting = false;
+
+    while (std::getline(resultFile, line))
+    {
+        if (std::regex_match(line, headerRegex))
+        {
+            currentQuery++;
+            isCollecting = (currentQuery == queryNr);
+        }
+        else if (isCollecting)
+        {
+            if (std::regex_match(line, headerRegex))
+            {
+                break;
+            }
+            resultData.push_back(line);
+        }
+    }
+    return true;
+}
+
+bool checkResult(const std::filesystem::path& filePath, const std::string& testName, uint64_t testNr)
+{
+    SLTParser parser{};
+    if (!parser.loadFile(filePath))
+    {
+        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
+        return false;
+    }
+
+    bool same = true;
+    std::string errorMessages;
+    uint64_t queryNr = 1;
+
+    parser.registerOnQueryResultTuplesCallback(
+        [&](std::vector<std::string>&& resultLines)
+        {
+            if (queryNr == testNr)
+            {
+                std::vector<std::string> queryResult;
+                if (!getResultOfQuery(testName, queryNr, queryResult))
+                {
+                    same = false;
+                    return;
+                }
+
+                /// Remove commas from the result
+                std::for_each(queryResult.begin(), queryResult.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
+                std::for_each(resultLines.begin(), resultLines.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
+
+                /// Check for equality - tuples may be in different order
+                if (queryResult.size() != resultLines.size())
+                {
+                    errorMessages += "Result does not match for query: " + std::to_string(queryNr) + "\n";
+                    errorMessages += "Result size does not match: expected " + std::to_string(resultLines.size()) + ", got "
+                        + std::to_string(queryResult.size()) + "\n";
+                    same = false;
+                }
+
+                std::sort(queryResult.begin(), queryResult.end());
+                std::sort(resultLines.begin(), resultLines.end());
+
+                std::cout << "Query result: " << std::endl;
+                for (const auto& line : queryResult)
+                {
+                    std::cout << line << std::endl;
+                }
+                std::cout << "Expected result: " << std::endl;
+                for (const auto& line : resultLines)
+                {
+                    std::cout << line << std::endl;
+                }
+
+                if (!std::equal(queryResult.begin(), queryResult.end(), resultLines.begin()))
+                {
+                    /// Print the difference
+                    errorMessages += "Result does not match for query: " + std::to_string(queryNr) + "\n";
+                    errorMessages += "Expected:\n";
+                    for (const auto& line : resultLines)
+                    {
+                        errorMessages += line + "\n";
+                    }
+                    errorMessages += "Got:\n";
+                    for (const auto& line : queryResult)
+                    {
+                        errorMessages += line + "\n";
+                    }
+                    same = false;
+                }
+            }
+            queryNr++;
+        });
+
+    if (!parser.parse())
+    {
+        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
+        return false;
+    }
+
+    if (!same)
+    {
+        NES_FATAL_ERROR("{}", errorMessages);
+    }
+
+    return same;
 }
 
 DecomposedQueryPlanPtr loadFrom(std::istream& inputStream)
@@ -266,4 +491,4 @@ DecomposedQueryPlanPtr loadFrom(std::istream& inputStream)
         throw exception;
     }
 }
-}
+} /// namespace NES

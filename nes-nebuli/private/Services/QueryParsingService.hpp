@@ -15,7 +15,7 @@
 #define NES_NEBULI_PRIVATE_SERVICES_QUERYPARSINGSERVICE_HPP_
 
 #include <memory>
-#include <API/QueryAPI.hpp>
+//#include <API/QueryAPI.hpp>
 
 namespace NES
 {

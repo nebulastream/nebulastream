@@ -16,7 +16,7 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 namespace NES
 {
@@ -32,7 +32,7 @@ public:
 
     virtual bool notifyQueryFailure(QueryId queryId, std::string errorMsg) = 0;
 
-    virtual bool notifyQueryStatusChange(QueryId queryId, Runtime::Execution::ExecutableQueryPlanStatus newStatus) = 0;
+    virtual bool notifyQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus newStatus) = 0;
 
     virtual bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) = 0;
 };

@@ -35,13 +35,6 @@ class ReconfigurationMessage;
 namespace NES::Runtime::Execution
 {
 
-enum class ExecutableQueryPlanResult : uint8_t
-{
-    /// query was completed successfully
-    Ok,
-    /// query failed
-    Fail
-};
 
 /**
  * @brief Represents an executable plan of an particular query.
@@ -52,6 +45,14 @@ enum class ExecutableQueryPlanResult : uint8_t
 class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener
 {
 public:
+    enum class Result : uint8_t
+    {
+        /// query was completed successfully
+        Ok,
+        /// query failed
+        Fail
+    };
+
     /**
      * @brief Constructor for an executable query plan.
      * @param sharedQueryId id of the overall query
@@ -69,6 +70,7 @@ public:
         std::vector<ExecutablePipelinePtr>&& pipelines,
         QueryManagerPtr&& queryManager,
         BufferManagerPtr&& bufferManager);
+
 
     /**
      * @brief Factory to create an new executable query plan.
@@ -126,7 +128,7 @@ public:
      * @brief returns a future that will tell us if the plan was terminated with no errors or with error.
      * @return a shared future that eventually indicates how the qep terminated
      */
-    std::shared_future<ExecutableQueryPlanResult> getTerminationFuture();
+    std::shared_future<Result> getTerminationFuture();
 
     /**
      * @brief Fail the query plan and free all associated resources.
@@ -134,7 +136,7 @@ public:
      */
     bool fail();
 
-    QueryStatus getStatus();
+    QueryStatus getStatus() const;
 
     /**
      * @brief Get data sources.
@@ -156,13 +158,13 @@ public:
      * @brief Returns a reference to the query manager
      * @return QueryManagerPtr
      */
-    [[nodiscard]] QueryManagerPtr getQueryManager();
+    [[nodiscard]] QueryManagerPtr getQueryManager() const;
 
     /**
      * @brief Returns a reference to the buffer manager
      * @return BufferManagerPtr
      */
-    [[nodiscard]] BufferManagerPtr getBufferManager();
+    [[nodiscard]] BufferManagerPtr getBufferManager() const;
 
     /**
      * @brief Get the query id
@@ -214,9 +216,9 @@ private:
     /// number of producers that provide data to this qep
     std::atomic<uint32_t> numOfTerminationTokens;
     /// promise that indicates how a qep terminates
-    std::promise<ExecutableQueryPlanResult> qepTerminationStatusPromise;
+    std::promise<Result> qepTerminationStatusPromise;
     /// future that indicates how a qep terminates
-    std::future<ExecutableQueryPlanResult> qepTerminationStatusFuture;
+    std::future<Result> qepTerminationStatusFuture;
 };
 
 } /// namespace NES::Runtime::Execution

@@ -34,6 +34,7 @@ EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeF
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    child->open(executionCtx, recordBuffer);
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
 }

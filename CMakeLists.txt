@@ -57,7 +57,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_BABELFISH "Build BABELFISH Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
-option(NES_USE_CCACHE "USE CCACHE" OFF)
+option(NES_USE_CCACHE "USE CCACHE" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 #toggle GPU runtime and test
@@ -498,6 +498,7 @@ add_subdirectory(nes-window-types)
 
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
+add_subdirectory(test/utils)
 
 # Documentation
 add_subdirectory(cmake/docs)
@@ -585,5 +586,5 @@ if (CMAKE_CROSSCOMPILING)
     project_enable_emulated_tests()
 endif ()
 instrument_codebase()
-
-
+include(cmake/LLVMLit.cmake)
+project_enable_system_level_tests()

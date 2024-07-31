@@ -70,11 +70,10 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
     if (sourceOperators.empty() || sinkOperators.empty())
     {
         throw TypeInferenceException(
-            UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryPlanId(), QueryId), "Found no source or sink operators");
+            UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getQueryId(), QueryId), "Found no source or sink operators");
     }
 
-    performTypeInference(
-        UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getDecomposedQueryPlanId(), QueryId), sourceOperators, sinkOperators);
+    performTypeInference(UNSURE_CONVERSION_TODO_4761(decomposedQueryPlan->getQueryId(), QueryId), sourceOperators, sinkOperators);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
     return decomposedQueryPlan;
 }

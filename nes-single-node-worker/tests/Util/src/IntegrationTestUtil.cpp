@@ -58,13 +58,24 @@ void IntegrationTestUtil::startQuery(QueryId queryId, GRPCServer& uut)
     EXPECT_TRUE(uut.StartQuery(&context, &request, &reply).ok());
 }
 
-void IntegrationTestUtil::stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut)
+bool IntegrationTestUtil::isQueryFinished(QueryId queryId, GRPCServer& uut)
+{
+    grpc::ServerContext context;
+    QueryStatusRequest request;
+    QueryStatusReply reply;
+    request.set_queryid(queryId.getRawValue());
+    EXPECT_TRUE(uut.QueryStatus(&context, &request, &reply).ok());
+    return reply.status() == QueryStatusReply::Finished;
+}
+
+void IntegrationTestUtil::stopQuery(QueryId queryId, Runtime::QueryTerminationType type, GRPCServer& uut)
 {
     grpc::ServerContext context;
     StopQueryRequest request;
     google::protobuf::Empty reply;
     request.set_queryid(queryId.getRawValue());
-    request.set_terminationtype(type);
+    StopQueryRequest_QueryTerminationType typ{(int)type};
+    request.set_terminationtype(typ);
     EXPECT_TRUE(uut.StopQuery(&context, &request, &reply).ok());
 }
 
