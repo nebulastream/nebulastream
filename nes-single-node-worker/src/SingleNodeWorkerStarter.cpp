@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Exceptions/Exception.hpp>
+#include <ErrorHandling.hpp>
 #include <grpcpp/server_builder.h>
 #include <Configuration.hpp>
 #include <GrpcService.hpp>

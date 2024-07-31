@@ -1,0 +1,83 @@
+/*
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        https://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+*/
+
+#pragma once
+
+/***
+ * WARNING: Do not include this header directly but use:
+ * #include <ErrorHandling.hpp>
+ */
+
+/// 1XXX Configuration Errors
+EXCEPTION(InvalidConfigParameter, 1000, "invalid config parameter")
+EXCEPTION(MissingConfigParameter, 1001, "missing config parameter")
+EXCEPTION(CannotLoadConfig, 1002, "cannot load config")
+
+/// 2XXX Errors during query registration and compilation
+EXCEPTION(InvalidQuerySyntax, 2000, "invalid query syntax")
+EXCEPTION(CannotSerialize, 2001, "cannot serialize")
+EXCEPTION(CannotDeserialize, 2002, "cannot deserialize")
+EXCEPTION(CannotInferSchema, 2003, "cannot infer schema")
+/// 21XX Errors during query compilation
+EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")
+EXCEPTION(UnknownWindowType, 2101, "unknown window type")
+EXCEPTION(UnknownPhysicalType, 2102, "unknown physical type")
+EXCEPTION(UnknownJoinStrategy, 2103, "unknown join strategy")
+EXCEPTION(UnknownPluginType, 2104, "unknown plugin type")
+EXCEPTION(UnknownExpressionType, 2105, "unknown expression type")
+EXCEPTION(UnknownSinkType, 2106, "unknown sink type")
+EXCEPTION(UnknownSourceType, 2107, "unknown source type")
+EXCEPTION(UnknownSinkFormat, 2108, "unknown sink format")
+EXCEPTION(UnknownSourceFormat, 2109, "unknown source format")
+EXCEPTION(UnknownPhysicalOperator, 2110, "unknown physical operator")
+EXCEPTION(UnknownLogicalOperator, 2111, "unknown logical operator")
+EXCEPTION(UnknownUserDefinedFunctionType, 2112, "unknown user defined function type")
+EXCEPTION(UnknownTimeFunctionType, 2123, "unknown time function type")
+EXCEPTION(UnknownAggregationType, 2124, "unknown aggregation type")
+EXCEPTION(UnknownStatisticsType, 2125, "unknown statistics type")
+
+/// 3XXX Errors during query runtime
+EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
+EXCEPTION(JavaUDFExcecutionFailure, 3001, "java UDF execution failure")
+EXCEPTION(PythonUDFExcecutionFailure, 3002, "python UDF execution failure")
+EXCEPTION(CannotStartNodeEngine, 3003, "cannot start node engine")
+EXCEPTION(CannotStopNodeEngine, 3004, "cannot stop node engine")
+
+/// 4XXX Errors interpreting data stream, sources and sinks
+EXCEPTION(CannotOpenSourceFile, 4000, "cannot open source file")
+EXCEPTION(CannotFormatSourceData, 4001, "cannot format source data")
+EXCEPTION(MalformatedTuple, 4002, "malformed tuple")
+
+/// 5XXX Network errors
+EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")
+EXCEPTION(LostConnectionToCooridnator, 5001, "lost connection to coordinator")
+
+/// 6XXX API error
+EXCEPTION(BadApiRequest, 6000, "bad api request")
+
+/// 9XXX Internal errors (e.g. bugs)
+EXCEPTION(PreconditionViolated, 9000, "precondition violated")
+EXCEPTION(InvariantViolated, 9001, "invariant violated")
+EXCEPTION(FunctionNotImplemented, 9002, "function not implemented")
+EXCEPTION(UnknownWindowingStrategy, 9003, "unknown windowing strategy")
+EXCEPTION(UnknownWindowType, 9004, "unknown window type")
+EXCEPTION(UnknownPhysicalType, 9005, "unknown physical type")
+EXCEPTION(UnknownJoinStrategy, 9006, "unknown join strategy")
+EXCEPTION(UnknownPluginType, 9007, "unknown plugin type")
+EXCEPTION(DeprecatedFeatureUsed, 9008, "deprecated feature used")
+EXCEPTION(CannotAllocateBuffer, 9009, "cannot allocate buffer")
+EXCEPTION(InvalidRefCountForBuffer, 90010, "invalid reference counter for buffer")
+
+/// Special errors
+EXCEPTION(UnknownException, 9999, "unknown exception")

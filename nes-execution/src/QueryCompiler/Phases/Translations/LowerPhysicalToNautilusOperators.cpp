@@ -98,12 +98,11 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Types/ContentBasedWindowType.hpp>
-#include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
-#include <Util/Core.hpp>
 #include <Util/Execution.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
@@ -261,7 +260,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         }
         else
         {
-            NES_NOT_IMPLEMENTED();
+            throw UnknownUserDefinedFunctionType();
         }
 #ifdef ENABLE_JNI
     }
@@ -431,8 +430,9 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 switch (buildOperator->getWindowingStrategy())
                 {
                     case WindowingStrategy::LEGACY:
+                        throw DeprecatedFeatureUsed();
                     case WindowingStrategy::BUCKETING:
-                        NES_NOT_IMPLEMENTED();
+                        throw FunctionNotImplemented();
                     case WindowingStrategy::SLICING:
                         joinBuildNautilus = lowerHJSlicingVarSized(buildOperator, handlerIndex, std::move(timeFunction));
                         break;
@@ -444,7 +444,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 switch (buildOperator->getWindowingStrategy())
                 {
                     case WindowingStrategy::LEGACY:
-                        NES_NOT_IMPLEMENTED();
+                        throw DeprecatedFeatureUsed();
                     case WindowingStrategy::SLICING:
                         joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
                         break;
@@ -458,7 +458,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                 switch (buildOperator->getWindowingStrategy())
                 {
                     case WindowingStrategy::LEGACY:
-                        NES_NOT_IMPLEMENTED();
+                        throw DeprecatedFeatureUsed();
                     case WindowingStrategy::SLICING:
                         joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
                         break;
@@ -486,7 +486,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         }
     }
 
-    NES_NOT_IMPLEMENTED();
+    throw UnknownPhysicalOperator();
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
@@ -809,7 +809,7 @@ LowerPhysicalToNautilusOperators::lowerTimeFunction(const Windowing::TimeBasedWi
         return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
             timeStampField, timeWindow->getTimeCharacteristic()->getTimeUnit());
     }
-    NES_THROW_RUNTIME_ERROR("Timefunction could not be created for the following window definition: " << timeWindow->toString());
+    throw UnknownTimeFunctionType(timeWindow->toString());
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerPreAggregationOperator(
@@ -877,7 +877,8 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto timeFunction = lowerTimeFunction(timeWindow);
     auto keys = windowDefinition->getKeys();
-    NES_ASSERT(!keys.empty(), "A keyed window should have keys");
+    PRECONDITION(!keys.empty(), "expected at least one key field for keyed pre-aggregation operator");
+
     std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyReadExpressions;
     auto df = DefaultPhysicalTypeFactory();
     std::vector<PhysicalTypePtr> keyDataTypes;
@@ -1055,7 +1056,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
             }
             else
             {
-                NES_THROW_RUNTIME_ERROR("Currently complex expression in as fields are not supported");
+                throw UnknownAggregationType("complex expressions as fields are not supported");
             }
             switch (agg->getType())
             {
@@ -1079,7 +1080,7 @@ LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing:
                         physicalInputType, physicalFinalType, aggregationInputExpression, aggregationResultFieldIdentifier);
                 }
             };
-            NES_NOT_IMPLEMENTED();
+            throw UnknownAggregationType("complex expressions as fields are not supported");
         });
     return aggregationFunctions;
 }
@@ -1117,7 +1118,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation avg");
             }
         case Windowing::WindowAggregationDescriptor::Type::Count:
             switch (basicType->nativeType)
@@ -1143,7 +1144,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation count");
             }
         case Windowing::WindowAggregationDescriptor::Type::Max:
             switch (basicType->nativeType)
@@ -1169,7 +1170,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation max");
             }
         case Windowing::WindowAggregationDescriptor::Type::Min:
             switch (basicType->nativeType)
@@ -1195,7 +1196,7 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation min");
             }
         case Windowing::WindowAggregationDescriptor::Type::Sum:
             switch (basicType->nativeType)
@@ -1221,10 +1222,10 @@ std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue> LowerPhysical
                 case BasicPhysicalType::NativeType::DOUBLE:
                     return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<double_t>>();
                 default:
-                    NES_THROW_RUNTIME_ERROR("Unsupported data type");
+                    throw UnknownAggregationType("Unknown aggregation type for window aggregation sum");
             }
         default:
-            NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
+            throw UnknownAggregationType("Unknown window aggregation type");
     }
 }
 

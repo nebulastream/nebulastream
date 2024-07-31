@@ -49,7 +49,7 @@ private:
 };
 
 /**
- * This macro is used to define exceptions of <Exceptions/ExceptionDefinitions.hpp>
+ * This macro is used to define exceptions in <ExceptionDefinitions.hpp>
  * @param name The name of the exception
  * @param code The code of the exception
  * @param message The message of the exception
@@ -60,6 +60,10 @@ private:
     inline Exception name(const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
     { \
         return Exception(message, code, loc, trace); \
+    }                                  \
+    inline Exception name(std::string msg, const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
+    { \
+        return Exception(std::string(message) + " " +  msg, code, loc, trace); \
     } \
     namespace ErrorCode \
     { \
@@ -69,7 +73,32 @@ private:
     }; \
     }
 
-#include <Exceptions/ExceptionDefinitions.hpp>
+#include <ExceptionDefinitions.hpp>
+#undef EXCEPTION
+
+/**
+ * @brief A precondition is a condition that must be true at the beginning of a function.
+ * If a precondition got violated this usually means that the caller of the functions did an error.
+ * @param condition The condition that should be true
+ * @param message The message that should be printed if the condition is false
+ */
+#define PRECONDITION(condition, message) \
+    if (!(condition)) \
+    { \
+        throw PreconditionViolated(); \
+    }
+
+/**
+ * @brief An invariant is a condition that is always true at a particular point in a program.
+ * If an invariant got violated this usually means that there is a bug in the program.
+ * @param condition The condition that should be true
+ * @param message The message that should be printed if the condition is false
+ */
+#define INVARIANT(condition, message) \
+    if (!(condition)) \
+    { \
+        throw InvariantViolated(); \
+    }
 
 /**
  * @brief This function is used to log the current exception.
