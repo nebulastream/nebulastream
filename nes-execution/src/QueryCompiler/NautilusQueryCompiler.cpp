@@ -55,48 +55,40 @@ NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options, Phases::Ph
 QueryCompilation::QueryCompilationResultPtr NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request)
 {
     NES_INFO("Compile Query with Nautilus");
-    try
-    {
-        Timer timer("NautilusQueryCompiler");
-        auto queryId = request->getDecomposedQueryPlan()->getQueryId();
-        auto query = fmt::format("{}", queryId);
-        /// create new context for handling debug output
-        auto dumpContext = DumpContext::create("QueryCompilation-" + query);
-        dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
+    Timer timer("NautilusQueryCompiler");
+    auto queryId = request->getDecomposedQueryPlan()->getQueryId();
+    auto query = fmt::format("{}", queryId);
+    /// create new context for handling debug output
+    auto dumpContext = DumpContext::create("QueryCompilation-" + query);
+    dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
-        timer.start();
-        NES_DEBUG("compile query with id: {}", queryId);
-        auto logicalQueryPlan = request->getDecomposedQueryPlan();
-        dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
-        timer.snapshot("LogicalQueryPlan");
+    timer.start();
+    NES_DEBUG("compile query with id: {}", queryId);
+    auto logicalQueryPlan = request->getDecomposedQueryPlan();
+    dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
+    timer.snapshot("LogicalQueryPlan");
 
-        auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
-        dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
-        timer.snapshot("PhysicalQueryPlan");
+    auto physicalQueryPlan = lowerLogicalToPhysicalOperatorsPhase->apply(logicalQueryPlan);
+    dumpContext->dump("2. PhysicalQueryPlan", physicalQueryPlan);
+    timer.snapshot("PhysicalQueryPlan");
 
-        auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
-        dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
-        timer.snapshot("AfterPipelinedQueryPlan");
+    auto pipelinedQueryPlan = pipeliningPhase->apply(physicalQueryPlan);
+    dumpContext->dump("3. AfterPipelinedQueryPlan", pipelinedQueryPlan);
+    timer.snapshot("AfterPipelinedQueryPlan");
 
-        addScanAndEmitPhase->apply(pipelinedQueryPlan);
-        dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
-        timer.snapshot("AfterAddScanAndEmitPhase");
-        auto nodeEngine = request->getNodeEngine();
-        auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
-        pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
-        timer.snapshot("AfterToNautilusPlanPhase");
+    addScanAndEmitPhase->apply(pipelinedQueryPlan);
+    dumpContext->dump("4. AfterAddScanAndEmitPhase", pipelinedQueryPlan);
+    timer.snapshot("AfterAddScanAndEmitPhase");
+    auto nodeEngine = request->getNodeEngine();
+    auto bufferSize = nodeEngine->getQueryManager()->getBufferManager()->getBufferSize();
+    pipelinedQueryPlan = lowerPhysicalToNautilusOperatorsPhase->apply(pipelinedQueryPlan, bufferSize);
+    timer.snapshot("AfterToNautilusPlanPhase");
 
-        pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
-        timer.snapshot("AfterNautilusCompilationPhase");
+    pipelinedQueryPlan = compileNautilusPlanPhase->apply(pipelinedQueryPlan);
+    timer.snapshot("AfterNautilusCompilationPhase");
 
-        auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
-        return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
-    }
-    catch (const QueryCompilationException& exception)
-    {
-        auto currentException = std::current_exception();
-        return QueryCompilationResult::create(currentException);
-    }
+    auto executableQueryPlan = lowerToExecutableQueryPlanPhase->apply(pipelinedQueryPlan, request->getNodeEngine());
+    return QueryCompilationResult::create(executableQueryPlan, std::move(timer));
 }
 
 } /// namespace NES::QueryCompilation

@@ -22,12 +22,11 @@ namespace NES
 {
 
 /**
- * @brief This class is our central class for exceptions.
- * It is used to throw exceptions with a message, a code, a location and a stacktrace.
- * @note do NOT inherit from this class, use the EXCEPTION macro to define exceptions.
- * They should only be defined in <Exceptions/ExceptionDefinitions.hpp>
+ * This class is our central class for exceptions. It is used to throw exceptions with a message, a code, a location and a stacktrace.
+ * @note do NOT inherit from this class, use the EXCEPTION macro to define exceptions. They should only be defined in
+ * <ExceptionDefinitions.hpp>
  */
-class Exception final
+class Exception final : public std::exception
 {
 public:
     Exception(std::string message, const uint64_t code, std::source_location loc, std::string trace)
@@ -36,7 +35,7 @@ public:
     }
 
     std::string& what() noexcept { return message; }
-    [[nodiscard]] const std::string& what() const noexcept { return message; }
+    [[nodiscard]] const char* what() const noexcept override { return message.c_str(); }
     [[nodiscard]] uint64_t code() const noexcept { return errorCode; }
     [[nodiscard]] const std::source_location& where() const noexcept { return location; }
     [[nodiscard]] const std::string& stack() const noexcept { return stacktrace; }
@@ -60,10 +59,11 @@ private:
     inline Exception name(const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
     { \
         return Exception(message, code, loc, trace); \
-    }                                  \
-    inline Exception name(std::string msg, const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
+    } \
+    inline Exception name( \
+        std::string msg, const std::source_location& loc = std::source_location::current(), std::string trace = collectStacktrace()) \
     { \
-        return Exception(std::string(message) + " " +  msg, code, loc, trace); \
+        return Exception(std::string(message) + "\n" + msg, code, loc, trace); \
     } \
     namespace ErrorCode \
     { \
@@ -77,27 +77,27 @@ private:
 #undef EXCEPTION
 
 /**
- * @brief A precondition is a condition that must be true at the beginning of a function.
- * If a precondition got violated this usually means that the caller of the functions did an error.
+ * A precondition is a condition that must be true at the beginning of a function. If a precondition got violated, this usually means that
+ * the caller of the functions made an error.
  * @param condition The condition that should be true
  * @param message The message that should be printed if the condition is false
  */
 #define PRECONDITION(condition, message) \
     if (!(condition)) \
     { \
-        throw PreconditionViolated(); \
+        throw PreconditionViolated(message); \
     }
 
 /**
- * @brief An invariant is a condition that is always true at a particular point in a program.
- * If an invariant got violated this usually means that there is a bug in the program.
+ * @brief An invariant is a condition that is always true at a particular point in a program. If an invariant gets violated, this usually
+ * means that there is a bug in the program.
  * @param condition The condition that should be true
  * @param message The message that should be printed if the condition is false
  */
 #define INVARIANT(condition, message) \
     if (!(condition)) \
     { \
-        throw InvariantViolated(); \
+        throw InvariantViolated(message); \
     }
 
 /**
@@ -120,6 +120,10 @@ inline void tryLogCurrentException()
             e.where().line(),
             e.where().column(),
             e.where().function_name())
+    }
+    catch (const std::exception& e)
+    {
+        NES_ERROR("failed to process with error : {}\n", e.what())
     }
     catch (...)
     {

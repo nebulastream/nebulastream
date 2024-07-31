@@ -23,7 +23,7 @@ namespace NES::QueryCompilation
 class PhysicalOperatorProvider
 {
 public:
-    PhysicalOperatorProvider(QueryCompilerOptionsPtr options);
+    PhysicalOperatorProvider(QueryCompilerOptionsPtr options) : options(options) {};
     /**
      * @brief Replaces this node with physical operators that express the same semantics.
      * @param decomposedQueryPlan the current decomposed query plan.

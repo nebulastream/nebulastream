@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <ErrorHandling.hpp>
 #include <grpcpp/server_builder.h>
 #include <Configuration.hpp>
+#include <ErrorHandling.hpp>
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
 
