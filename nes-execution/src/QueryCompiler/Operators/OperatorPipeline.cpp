@@ -19,9 +19,9 @@
 #include <utility>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::QueryCompilation
@@ -153,10 +153,7 @@ std::vector<OperatorPipelinePtr> const& OperatorPipeline::getSuccessors() const
 
 void OperatorPipeline::prependOperator(OperatorPtr newRootOperator)
 {
-    if (!this->isOperatorPipeline() && this->hasOperators())
-    {
-        throw QueryCompilationException("Sink and Source pipelines can have more then one operator");
-    }
+    PRECONDITION(this->isOperatorPipeline() || !this->hasOperators(), "Sink and Source pipelines can have more then one operator");
     if (newRootOperator->hasProperty("LogicalOperatorId"))
     {
         operatorIds.push_back(std::any_cast<OperatorId>(newRootOperator->getProperty("LogicalOperatorId")));

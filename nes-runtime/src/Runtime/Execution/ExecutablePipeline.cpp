@@ -14,7 +14,6 @@
 
 #include <atomic>
 #include <chrono>
-#include <Exceptions/Exception.hpp>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -25,6 +24,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 using namespace std::chrono_literals;
 namespace NES::Runtime::Execution

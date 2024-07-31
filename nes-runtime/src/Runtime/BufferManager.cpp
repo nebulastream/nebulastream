@@ -16,7 +16,6 @@
 #include <iostream>
 #include <thread>
 #include <unistd.h>
-#include <Exceptions/Exception.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -25,6 +24,7 @@
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime
 {

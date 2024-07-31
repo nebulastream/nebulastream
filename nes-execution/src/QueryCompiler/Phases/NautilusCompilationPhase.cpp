@@ -16,12 +16,12 @@
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -66,7 +66,7 @@ std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerO
             return "CPPPipelineCompiler";
         };
         default: {
-            NES_THROW_RUNTIME_ERROR("No pipeline compiler implemented for this backend");
+            INVARIANT(false, "Invalid backend");
         }
     }
 }
@@ -74,7 +74,8 @@ std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerO
 OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline)
 {
     auto pipelineRoots = pipeline->getDecomposedQueryPlan()->getRootOperators();
-    NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
+    PRECONDITION(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
+
     auto rootOperator = pipelineRoots[0];
     auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
     Nautilus::CompilationOptions options;
