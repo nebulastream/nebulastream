@@ -50,9 +50,6 @@
 # Enable Numa-Aware execution
 #numaAwareness: false
 
-# Enable monitoring
-#enableMonitoring: false
-
 # Set the number of buffers per epoch
 #numberOfBuffersPerEpoch: 100
 

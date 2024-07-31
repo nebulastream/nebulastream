@@ -19,7 +19,6 @@ add_source_files(nes-runtime
         SourceCreator.cpp
         DefaultSource.cpp
         SenseSource.cpp
-        MonitoringSource.cpp
         MemorySource.cpp
         StaticDataSource.cpp
         LambdaSource.cpp

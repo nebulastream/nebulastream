@@ -238,11 +238,6 @@ message SerializableOperator{
       uint64 id = 1;
     }
 
-    message SerializableMonitoringSourceDescriptor {
-      uint64 metricCollectorType = 1;
-      uint64 waitTime = 2;
-    }
-
     message SerializableArrowSourceDescriptor {
       SerializablePhysicalSourceType physicalSourceType = 1;
       SerializableSchema sourceSchema = 2;
@@ -271,10 +266,6 @@ message SerializableOperator{
     }
 
     message SerializablePrintSinkDescriptor {
-    }
-
-    message SerializableMonitoringSinkDescriptor {
-      uint64 collectorType = 1;
     }
 
     message SerializableNullOutputSinkDescriptor {

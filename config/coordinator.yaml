@@ -42,9 +42,6 @@
 # The number of queries to be processed together
 #queryBatchSize: 1
 
-# Enable monitoring
-#enableMonitoring: false
-
 # Enable reconfiguration of running query plans. Default: false
 #enableQueryReconfiguration:
 

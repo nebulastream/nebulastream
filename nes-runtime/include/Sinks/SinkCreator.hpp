@@ -14,7 +14,6 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
-#include <Monitoring/MonitoringForwardRefs.hpp>
 #include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #ifdef ENABLE_OPC_BUILD
@@ -254,26 +253,6 @@ DataSinkPtr createNetworkSink(
     DecomposedQueryPlanVersion version,
     uint64_t numberOfOrigins = 1,
     uint8_t retryTimes = 5);
-
-/**
- * @brief create a monitoring data sink
- * @param metricStore
- * @param nodeEngine
- * @param numOfProducers
- * @param sharedQueryId
- * @param decomposedQueryPlanId
- * @param numberOfOrigins
- * @return a data sink pointer
- */
-DataSinkPtr createMonitoringSink(
-    Monitoring::MetricStorePtr metricStore,
-    Monitoring::MetricCollectorType collectorType,
-    const SchemaPtr& schema,
-    Runtime::NodeEnginePtr nodeEngine,
-    uint32_t numOfProducers,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    uint64_t numberOfOrigins = 1);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**
