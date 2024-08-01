@@ -46,9 +46,7 @@ target_compile_options(nes-runtime PUBLIC "-Wno-bitwise-instead-of-logical")
 if (NES_ENABLES_TESTS AND NOT (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"))
     # this allows to mock read calls
     target_compile_definitions(nes-runtime PRIVATE WRAP_READ_CALL)
-    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ} "-Wl,--wrap,read")
-else ()
-    target_link_libraries(nes-runtime PRIVATE ${LIBRARIES_ZMQ})
+    target_link_libraries(nes-runtime PRIVATE  "-Wl,--wrap,read")
 endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
@@ -89,7 +87,6 @@ register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runt
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Execution/PipelineExecutionContext.hpp Runtime/Execution/PipelineExecutionContext.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/ExecutionResult.hpp Runtime/ExecutionResult.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/Allocator/MemoryResource.hpp Runtime/Allocator/MemoryResource.hpp)
-register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Network/NetworkForwardRefs.hpp Network/NetworkForwardRefs.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/BufferAccessException.hpp Runtime/MemoryLayout/BufferAccessException.hpp)
 register_public_header_file(nes-runtime ${CMAKE_CURRENT_SOURCE_DIR}/include/Runtime/MemoryLayout/MemoryLayout.hpp Runtime/MemoryLayout/MemoryLayout.hpp)
 

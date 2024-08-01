@@ -118,16 +118,6 @@ message SerializableOperator{
       SerializableSchema sourceSchema = 2;
     }
 
-    message SerializableNetworkSourceDescriptor {
-      SerializableSchema sourceSchema = 1;
-      NesPartition nesPartition = 2;
-      NodeLocation nodeLocation = 3;
-      uint64 waitTime = 4;
-      uint32 retryTimes = 5;
-      uint32 version = 6;
-      uint64 uniqueId = 7;
-    }
-
     google.protobuf.Any sourceDescriptor = 1;
     uint64 sourceOriginId = 2;
   }
@@ -144,15 +134,6 @@ message SerializableOperator{
     }
 
     message SerializablePrintSinkDescriptor {
-    }
-
-    message SerializableNetworkSinkDescriptor {
-      NodeLocation nodeLocation = 1;
-      NesPartition nesPartition = 2;
-      uint64 waitTime = 3;
-      uint32 retryTimes = 4;
-      uint64 uniqueNetworkSinkDescriptorId = 5;
-      uint64 version = 6;
     }
 
     google.protobuf.Any sinkDescriptor = 1;

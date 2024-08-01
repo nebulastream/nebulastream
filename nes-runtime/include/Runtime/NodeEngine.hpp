@@ -17,7 +17,9 @@
 
 #include <unordered_map>
 #include <vector>
-#include <Network/ExchangeProtocolListener.hpp>
+#include <Exceptions/RuntimeException.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime

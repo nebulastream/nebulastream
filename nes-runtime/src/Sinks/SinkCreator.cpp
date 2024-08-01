@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Network/NetworkSink.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
@@ -110,32 +109,4 @@ DataSinkPtr createCSVPrintSink(
     return std::make_shared<PrintSink>(format, nodeEngine, activeProducers, sharedQueryId, decomposedQueryPlanId, out, numberOfOrigins);
 }
 
-DataSinkPtr createNetworkSink(
-    const SchemaPtr& schema,
-    OperatorId uniqueNetworkSinkDescriptorId,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    Network::NodeLocation const& nodeLocation,
-    Network::NesPartition nesPartition,
-    Runtime::NodeEnginePtr const& nodeEngine,
-    size_t numOfProducers,
-    std::chrono::milliseconds waitTime,
-    DecomposedQueryPlanVersion version,
-    uint64_t numberOfOrigins,
-    uint8_t retryTimes)
-{
-    return std::make_shared<Network::NetworkSink>(
-        schema,
-        uniqueNetworkSinkDescriptorId,
-        sharedQueryId,
-        decomposedQueryPlanId,
-        nodeLocation,
-        nesPartition,
-        nodeEngine,
-        numOfProducers,
-        waitTime,
-        retryTimes,
-        numberOfOrigins,
-        version);
-}
 } /// namespace NES
