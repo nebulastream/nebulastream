@@ -46,8 +46,7 @@ public:
      * @param sizeOfRecord
      * @param pageSize
      */
-    explicit FixedPage(
-        uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize = PAGE_SIZE);
+    explicit FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize = PAGE_SIZE);
 
     /**
      * @brief Constructor for a FixedPage from another FixedPage
@@ -87,7 +86,7 @@ public:
     size_t size() const;
 
     /**
-     * @brief this methods returnds the content of the page as a string
+     * @brief this methods returns the content of the page as a string
      * @return string
      */
     std::string getContentAsString(SchemaPtr schema) const;

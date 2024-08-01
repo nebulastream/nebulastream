@@ -86,10 +86,7 @@ size_t FixedPage::size() const
 }
 
 FixedPage::FixedPage(FixedPage&& otherPage)
-    : sizeOfRecord(otherPage.sizeOfRecord)
-    , data(otherPage.data)
-    , currentPos(otherPage.currentPos.load())
-    , capacity(otherPage.capacity)
+    : sizeOfRecord(otherPage.sizeOfRecord), data(otherPage.data), currentPos(otherPage.currentPos.load()), capacity(otherPage.capacity)
 {
     otherPage.sizeOfRecord = 0;
     otherPage.data = nullptr;
@@ -116,10 +113,7 @@ void FixedPage::swap(FixedPage& lhs, FixedPage& rhs) noexcept
 }
 
 FixedPage::FixedPage(FixedPage* otherPage)
-    : sizeOfRecord(otherPage->sizeOfRecord)
-    , data(otherPage->data)
-    , currentPos(otherPage->currentPos.load())
-    , capacity(otherPage->capacity)
+    : sizeOfRecord(otherPage->sizeOfRecord), data(otherPage->data), currentPos(otherPage->currentPos.load()), capacity(otherPage->capacity)
 {
 }
 } /// namespace NES::Nautilus::Interface

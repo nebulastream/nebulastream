@@ -62,7 +62,7 @@ public:
 
         for (auto& it : allItems)
         {
-            auto ptrMemRef = fixedPageRef.allocateEntry(0_u64);
+            auto ptrMemRef = fixedPageRef.allocateEntry();
             auto* ptr = ptrMemRef.getValue().value;
 
             if (ptr == nullptr)

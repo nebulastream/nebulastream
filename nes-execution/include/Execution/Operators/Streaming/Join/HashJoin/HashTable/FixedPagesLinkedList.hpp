@@ -38,18 +38,16 @@ public:
         FixedPagesAllocator& fixedPagesAllocator, size_t sizeOfRecord, size_t pageSize, size_t preAllocPageSizeCnt);
 
     /**
-     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is NOT thread safe
-     * @param hash
+     * @brief Appends an item to this list by returning a pointer to a free memory space. This call is NOT thread safe
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* appendLocal(const uint64_t hash);
+    uint8_t* appendLocal();
 
     /**
-     * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and uses a mutex
-     * @param hash
+     * @brief Appends an item to this list by returning a pointer to a free memory space. This call is thread safe and uses a mutex
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* appendConcurrentUsingLocking(const uint64_t hash);
+    uint8_t* appendConcurrentUsingLocking();
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and is lockfree
