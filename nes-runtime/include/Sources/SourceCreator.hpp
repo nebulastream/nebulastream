@@ -16,8 +16,6 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_
 
 #include <chrono>
-#include <Operators/LogicalOperators/Network/NesPartition.hpp>
-#include <Operators/LogicalOperators/Network/NodeLocation.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
@@ -133,32 +131,6 @@ DataSourcePtr createLambdaSource(
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
     uint64_t taskQueueId,
-    const std::string& physicalSourceName,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-
-/**
- * @brief function to create an empty zmq source
- * @param schema schema of data source
- * @param bufferManager pointer to the buffer manager
- * @param queryManager pointer to the query manager
- * @param host the name of the host
- * @param port the port through which to connect to the ZMQSource(ZMQSource)
- * @param operatorId current operator id
- * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
- * @param numSourceLocalBuffers the number of buffers allocated to a source
- * @param physicalSourceName the name and unique identifier of a physical source
- * @param successors the subsequent operators in the pipeline to which the data is pushed
- * @return a data source pointer
- */
-DataSourcePtr createZmqSource(
-    const SchemaPtr& schema,
-    const Runtime::BufferManagerPtr& bufferManager,
-    const Runtime::QueryManagerPtr& queryManager,
-    const std::string& host,
-    uint16_t port,
-    OperatorId operatorId,
-    OriginId originId,
-    size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
@@ -334,38 +306,6 @@ DataSourcePtr createBenchmarkSource(
     uint64_t taskQueueId,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
-
-/**
- * @brief function to create a network source
- * @param schema the schema of the source
- * @param bufferManager a pointer to the buffer manager
- * @param queryManager a pointer to the query manager
- * @param networkManager a pointer to the network manager
- * @param nesPartition the unique identifier of the network source that consumes the input buffers
- * @param sinkLocation location of the sink that writes to the network source
- * @param numSourceLocalBuffers the number of buffers allocated to a source
- * @param waitTime the amount of time the networkSource is supposed to wait for a reply
- * @param retryTimes the number of times the networkSource resends a message, if it does not receive a reply within waitTime
- * @param physicalSourceName the name and unique identifier of a physical source
- * @param version the version number of the source at its time of creation
- * @param successors the subsequent operators in the pipeline to which the data is pushed
- * @param uniqueNetworkSourceId a unique identifier of the network source which does not change over its lifetime
- * @return a data source pointer
- */
-DataSourcePtr createNetworkSource(
-    const SchemaPtr& schema,
-    const Runtime::BufferManagerPtr& bufferManager,
-    const Runtime::QueryManagerPtr& queryManager,
-    const Network::NetworkManagerPtr& networkManager,
-    Network::NesPartition nesPartition,
-    Network::NodeLocation sinkLocation,
-    size_t numSourceLocalBuffers,
-    std::chrono::milliseconds waitTime,
-    uint8_t retryTimes,
-    const std::string& physicalSourceName,
-    DecomposedQueryPlanVersion version,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-    OperatorId uniqueNetworkSourceId);
 
 #ifdef ENABLE_KAFKA_BUILD
 /**

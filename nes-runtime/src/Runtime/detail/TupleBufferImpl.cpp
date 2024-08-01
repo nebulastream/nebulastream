@@ -350,13 +350,6 @@ void BufferControlBlock::setOriginId(OriginId originId)
     this->originId = originId;
 }
 
-void zmqBufferRecyclingCallback(void*, void* hint)
-{
-    NES_VERIFY(hint != nullptr, "Hint cannot be null");
-    auto* controlBlock = reinterpret_cast<BufferControlBlock*>(hint);
-    controlBlock->release();
-}
-
 /// -----------------------------------------------------------------------------
 /// ------------------ VarLen fields support for TupleBuffer --------------------
 /// -----------------------------------------------------------------------------

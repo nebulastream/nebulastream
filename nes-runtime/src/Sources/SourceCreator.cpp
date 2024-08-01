@@ -13,7 +13,6 @@
 */
 
 #include <chrono>
-#include <Network/NetworkSource.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/BinarySource.hpp>
 #include <Sources/CSVSource.hpp>
@@ -26,7 +25,6 @@
 #include <Sources/SourceCreator.hpp>
 #include <Sources/StaticDataSource.hpp>
 #include <Sources/TCPSource.hpp>
-#include <Sources/ZmqSource.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
 #ifdef ENABLE_OPC_BUILD
@@ -242,32 +240,6 @@ DataSourcePtr createBenchmarkSource(
         successors);
 }
 
-DataSourcePtr createZmqSource(
-    const SchemaPtr& schema,
-    const Runtime::BufferManagerPtr& bufferManager,
-    const Runtime::QueryManagerPtr& queryManager,
-    const std::string& host,
-    uint16_t port,
-    OperatorId operatorId,
-    OriginId originId,
-    size_t numSourceLocalBuffers,
-    const std::string& physicalSourceName,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
-{
-    return std::make_shared<ZmqSource>(
-        schema,
-        bufferManager,
-        queryManager,
-        host,
-        port,
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        GatheringMode::INTERVAL_MODE,
-        physicalSourceName,
-        successors);
-}
-
 DataSourcePtr createBinaryFileSource(
     const SchemaPtr& schema,
     const Runtime::BufferManagerPtr& bufferManager,
@@ -329,37 +301,6 @@ DataSourcePtr createCSVFileSource(
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,
         successors);
-}
-
-DataSourcePtr createNetworkSource(
-    const SchemaPtr& schema,
-    const Runtime::BufferManagerPtr& bufferManager,
-    const Runtime::QueryManagerPtr& queryManager,
-    const Network::NetworkManagerPtr& networkManager,
-    Network::NesPartition nesPartition,
-    Network::NodeLocation sinkLocation,
-    size_t numSourceLocalBuffers,
-    std::chrono::milliseconds waitTime,
-    uint8_t retryTimes,
-    const std::string& physicalSourceName,
-    DecomposedQueryPlanVersion version,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-    OperatorId uniqueNetworkSourceId)
-{
-    return std::make_shared<Network::NetworkSource>(
-        schema,
-        bufferManager,
-        queryManager,
-        networkManager,
-        nesPartition,
-        sinkLocation,
-        numSourceLocalBuffers,
-        waitTime,
-        retryTimes,
-        successors,
-        version,
-        uniqueNetworkSourceId,
-        physicalSourceName);
 }
 
 #ifdef ENABLE_KAFKA_BUILD

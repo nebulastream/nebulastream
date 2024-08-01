@@ -157,11 +157,6 @@ using RowLayoutPtr = std::shared_ptr<RowLayout>;
 
 } /// namespace Runtime
 
-namespace Network
-{
-class NesPartition;
-}
-
 namespace QueryCompilation
 {
 class QueryCompiler;

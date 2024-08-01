@@ -15,8 +15,6 @@
 #include <memory>
 #include <stack>
 #include <utility>
-#include <Network/NetworkSink.hpp>
-#include <Network/NetworkSource.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -27,6 +25,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES::Runtime
 {
@@ -91,83 +90,6 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
 
     std::vector<AsyncTaskExecutor::AsyncTaskFuture<bool>> startFutures;
 
-    std::vector<Network::NetworkSourcePtr> netSources;
-    std::vector<Network::NetworkSinkPtr> netSinks;
-
-    /// 2a. sort net sinks and sources
-    for (const auto& sink : qep->getSinks())
-    {
-        if (auto netSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink); netSink)
-        {
-            netSinks.emplace_back(netSink);
-        }
-    }
-    std::sort(
-        netSinks.begin(),
-        netSinks.end(),
-        [](const Network::NetworkSinkPtr& lhs, const Network::NetworkSinkPtr& rhs) { return *lhs < *rhs; });
-    for (const auto& sink : qep->getSources())
-    {
-        if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(sink); netSource)
-        {
-            netSources.emplace_back(netSource);
-        }
-    }
-    std::sort(
-        netSources.begin(),
-        netSources.end(),
-        [](const Network::NetworkSourcePtr& lhs, const Network::NetworkSourcePtr& rhs) { return *lhs < *rhs; });
-
-    /// 2b. pre-start net sinks
-    for (const auto& netSink : netSinks)
-    {
-        netSink->preSetup();
-    }
-
-    /// 2b. start net sinks
-    for (const auto& sink : netSinks)
-    {
-        startFutures.emplace_back(asyncTaskExecutor->runAsync(
-            [sink]()
-            {
-                NES_DEBUG("AbstractQueryManager: start network sink  {}", sink->toString());
-                sink->setup();
-                return true;
-            }));
-    }
-
-    /// 3a. pre-start net sources
-    for (const auto& source : netSources)
-    {
-        std::stringstream s;
-        s << source;
-        std::string sourceString = s.str();
-        if (!source->bind())
-        {
-            NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
-        }
-        else
-        {
-            NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
-        }
-    }
-
-    /// 3b. start net sources
-    for (const auto& source : netSources)
-    {
-        std::stringstream s;
-        s << source;
-        std::string sourceString = s.str();
-        if (!source->start())
-        {
-            NES_WARNING("AbstractQueryManager: network source {} could not started as it is already running", sourceString);
-        }
-        else
-        {
-            NES_DEBUG("AbstractQueryManager: network source  {}  started successfully", sourceString);
-        }
-    }
-
     for (auto& future : startFutures)
     {
         NES_ASSERT(future.wait(), "Cannot start query");
@@ -176,10 +98,6 @@ bool AbstractQueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr
     /// 4. start data sinks
     for (const auto& sink : qep->getSinks())
     {
-        if (std::dynamic_pointer_cast<Network::NetworkSink>(sink))
-        {
-            continue;
-        }
         NES_DEBUG("AbstractQueryManager: start sink  {}", sink->toString());
         sink->setup();
     }
@@ -219,10 +137,6 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
     /// 5. start data sources
     for (const auto& source : qep->getSources())
     {
-        if (std::dynamic_pointer_cast<Network::NetworkSource>(source))
-        {
-            continue;
-        }
         std::stringstream s;
         s << source;
         std::string sourceString = s.str();
@@ -234,16 +148,6 @@ bool AbstractQueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& q
         else
         {
             NES_DEBUG("AbstractQueryManager: source  {}  started successfully", sourceString);
-        }
-    }
-
-    ///apply any pending reconfigurations to the sinks
-    for (const auto& sink : qep->getSinks())
-    {
-        const auto networkSink = std::dynamic_pointer_cast<Network::NetworkSink>(sink);
-        if (networkSink)
-        {
-            networkSink->applyNextSinkDescriptor();
         }
     }
 
@@ -395,11 +299,7 @@ bool AbstractQueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qe
     {
         if (type == QueryTerminationType::Graceful)
         {
-            /// graceful shutdown :: only leaf sources
-            if (!std::dynamic_pointer_cast<Network::NetworkSource>(source))
-            {
-                NES_ASSERT2_FMT(source->stop(QueryTerminationType::Graceful), "Cannot terminate source " << source->getOperatorId());
-            }
+            NES_ASSERT2_FMT(source->stop(QueryTerminationType::Graceful), "Cannot terminate source " << source->getOperatorId());
         }
         else if (type == QueryTerminationType::HardStop)
         {
@@ -455,15 +355,6 @@ bool AbstractQueryManager::addSoftEndOfStream(DataSourcePtr source)
 {
     auto sourceId = source->getOperatorId();
     auto pipelineSuccessors = source->getExecutableSuccessors();
-
-    /// send EOS to `source` itself, iff a network source
-    if (auto netSource = std::dynamic_pointer_cast<Network::NetworkSource>(source); netSource != nullptr)
-    {
-        ///add soft eaos for network source
-        auto reconfMessage = ReconfigurationMessage(
-            INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, ReconfigurationType::SoftEndOfStream, netSource);
-        addReconfigurationMessage(INVALID_SHARED_QUERY_ID, INVALID_DECOMPOSED_QUERY_PLAN_ID, reconfMessage, false);
-    }
 
     for (auto successor : pipelineSuccessors)
     {

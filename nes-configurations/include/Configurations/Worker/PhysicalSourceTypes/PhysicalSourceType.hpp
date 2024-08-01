@@ -26,14 +26,12 @@ namespace NES
 enum class SourceType : uint8_t
 {
     OPC_SOURCE,
-    ZMQ_SOURCE,
     CSV_SOURCE,
     KAFKA_SOURCE,
     TEST_SOURCE,
     BINARY_SOURCE,
     SENSE_SOURCE,
     DEFAULT_SOURCE,
-    NETWORK_SOURCE,
     ADAPTIVE_SOURCE,
     YSB_SOURCE,
     MEMORY_SOURCE,

@@ -197,12 +197,6 @@ message SerializableOperator{
       SerializableSchema sourceSchema = 2;
     }
 
-    message SerializableZMQSourceDescriptor {
-      string host = 1;
-      uint32 port = 2;
-      SerializableSchema sourceSchema = 3;
-    }
-
     message SerializableOPCSourceDescriptor {
       string url = 1;
       uint32 namespaceIndex = 2;
@@ -221,16 +215,6 @@ message SerializableOperator{
     message SerializableTCPSourceDescriptor {
       SerializablePhysicalSourceType physicalSourceType = 1;
       SerializableSchema sourceSchema = 2;
-    }
-
-    message SerializableNetworkSourceDescriptor {
-      SerializableSchema sourceSchema = 1;
-      NesPartition nesPartition = 2;
-      NodeLocation nodeLocation = 3;
-      uint64 waitTime = 4;
-      uint32 retryTimes = 5;
-      uint32 version = 6;
-      uint64 uniqueId = 7;
     }
 
     message SerializableMaterializedViewSourceDescriptor {
@@ -270,12 +254,6 @@ message SerializableOperator{
     message SerializableNullOutputSinkDescriptor {
     }
 
-    message SerializableZMQSinkDescriptor {
-      string host = 1;
-      uint32 port = 2;
-      bool isInternal = 3;
-    }
-
     message SerializableOPCSinkDescriptor {
       string url = 1;
       uint32 namespaceIndex = 2;
@@ -305,15 +283,6 @@ message SerializableOperator{
       uint64 msgDelay = 7;
       ServiceQualities qualityOfService = 8;
       bool asynchronousClient = 9;
-    }
-
-    message SerializableNetworkSinkDescriptor {
-      NodeLocation nodeLocation = 1;
-      NesPartition nesPartition = 2;
-      uint64 waitTime = 3;
-      uint32 retryTimes = 4;
-      uint64 uniqueNetworkSinkDescriptorId = 5;
-      uint64 version = 6;
     }
 
     google.protobuf.Any sinkDescriptor = 1;
