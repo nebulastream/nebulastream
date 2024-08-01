@@ -137,11 +137,7 @@ void TCPSource::open()
             continue;
         }
 
-    struct sockaddr_in servaddr;
-    servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
-    // servaddr.sin_addr.s_addr = inet_addr(sourceConfig->getSocketHost()->getValue().c_str());
-    servaddr.sin_addr.s_addr = htonl(INADDR_LOOPBACK);
-    servaddr.sin_port = htons(sourceConfig->getSocketPort()->getValue()); // htons is necessary to convert a number to network byte order
+        connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
 
         if (connection != -1)
         {
