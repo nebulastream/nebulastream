@@ -19,9 +19,9 @@
 #include <string>
 #include <utility>
 #include <vector>
-#include <errno.h> // For socket error
+#include <errno.h> /// For socket error
 #include <netdb.h>
-#include <unistd.h> // For read
+#include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -30,7 +30,7 @@
 #include <Sources/Parsers/NESBinaryParser.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <sys/socket.h> // For socket functions
+#include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES
@@ -64,13 +64,13 @@ TCPSource::TCPSource(
     , timeout(TCP_SOCKET_DEFAULT_TIMEOUT)
     , circularBuffer(getpagesize() * 2)
 {
-    //init physical types
+    /// init physical types
     std::vector<std::string> schemaKeys;
     std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
 
-    //Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
-    //Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
+    /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
+    /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
     for (const auto& field : schema->fields)
     {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
@@ -122,12 +122,13 @@ void TCPSource::open()
     auto port = std::to_string(sourceConfig->getSocketPort()->getValue());
 
     const auto errorCode = getaddrinfo(host.c_str(), port.c_str(), &hints, &result);
-    if (errorCode != 0) {
+    if (errorCode != 0)
+    {
         NES_THROW_RUNTIME_ERROR("TCPSource::open: getaddrinfo failed. Error: " << gai_strerror(errorCode));
     }
 
-    // Try each address until we successfully connect
-    while(result != nullptr)
+    /// Try each address until we successfully connect
+    while (result != nullptr)
     {
         sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
         if (sockfd == -1)
@@ -141,14 +142,15 @@ void TCPSource::open()
 
         if (connection != -1)
         {
-            break; // success
+            break; /// success
         }
 
         close();
     }
     freeaddrinfo(result);
 
-    if (result == nullptr) {
+    if (result == nullptr)
+    {
         NES_THROW_RUNTIME_ERROR("TCPSource::open: Could not connect to " << host << ":" << port);
     }
 
@@ -213,19 +215,19 @@ size_t TCPSource::parseBufferSize(SPAN_TYPE<const char> data) const
 
 bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
 {
-    // determine how many tuples fit into the buffer
+    /// determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
     NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
-    //init tuple count for buffer
+    /// init tuple count for buffer
     uint64_t tupleCount = 0;
-    //init timer for flush interval
+    /// init timer for flush interval
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
-    //init flush interval value
+    /// init flush interval value
     bool flushIntervalPassed = false;
-    //receive data until tupleBuffer capacity reached or flushIntervalPassed
+    /// receive data until tupleBuffer capacity reached or flushIntervalPassed
     while (tupleCount < tuplesThisPass && !flushIntervalPassed)
     {
-        //if circular buffer is not full obtain data from socket
+        /// if circular buffer is not full obtain data from socket
         if (!circularBuffer.full())
         {
             auto writer = circularBuffer.write();
@@ -233,7 +235,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             auto bufferSizeReceived = read(sockfd, writer.data(), writer.size());
             if (bufferSizeReceived == -1 && errno == EWOULDBLOCK)
             {
-                //if read method returned -1 an error occurred during read.
+                /// if read method returned -1 an error occurred during read.
                 NES_ERROR("TCPSource::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
                 return false;
             }
@@ -259,14 +261,14 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             auto reader = circularBuffer.read();
             auto tupleData = SPAN_TYPE<const char>{};
             NES_ASSERT(tupleData.empty(), "not empty");
-            // Every protocol returns a view into the tuple (or Buffer for Binary) memory in tupleData;
-            // switch case depends on the message receiving that was chosen when creating the source. Three choices are available:
+            /// Every protocol returns a view into the tuple (or Buffer for Binary) memory in tupleData;
+            /// switch case depends on the message receiving that was chosen when creating the source. Three choices are available:
             switch (sourceConfig->getDecideMessageSize()->getValue())
             {
-                // The user inputted a tuple separator that indicates the end of a tuple. We're going to search for that
-                // tuple seperator and assume that all data until then belongs to the current tuple
+                /// The user inputted a tuple separator that indicates the end of a tuple. We're going to search for that
+                /// tuple seperator and assume that all data until then belongs to the current tuple
                 case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR: {
-                    // search the circularBuffer until Tuple seperator is found to obtain size of tuple
+                    /// search the circularBuffer until Tuple seperator is found to obtain size of tuple
                     auto [foundSeparator, inputTupleSize]
                         = sizeUntilSearchToken(reader, this->sourceConfig->getTupleSeparator()->getValue());
 
@@ -280,7 +282,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                     reader.consume(sizeof(this->sourceConfig->getTupleSeparator()->getValue()));
                     break;
                 }
-                // The user inputted a fixed buffer size.
+                /// The user inputted a fixed buffer size.
                 case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE: {
                     auto inputTupleSize = sourceConfig->getSocketBufferSize()->getValue();
 
@@ -292,12 +294,12 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                     tupleData = reader.consume(inputTupleSize);
                     break;
                 }
-                // Before each message, the server uses a fixed number of bytes (bytesUsedForSocketBufferSizeTransfer)
-                // to indicate the size of the next tuple.
+                /// Before each message, the server uses a fixed number of bytes (bytesUsedForSocketBufferSizeTransfer)
+                /// to indicate the size of the next tuple.
                 case Configurations::TCPDecideMessageSize::BUFFER_SIZE_FROM_SOCKET: {
-                    // Tuple (or Buffer for Binary) Size preceds the actual data.
-                    // Peek BytesUserForSocketBufferSize so if the buffer contains not enough bytes the next iteration does not
-                    // loose the tuple size information.
+                    /// Tuple (or Buffer for Binary) Size preceds the actual data.
+                    /// Peek BytesUserForSocketBufferSize so if the buffer contains not enough bytes the next iteration does not
+                    /// loose the tuple size information.
                     auto bufferSizeSize = sourceConfig->getBytesUsedForSocketBufferSizeTransfer()->getValue();
                     if (reader.size() < bufferSizeSize)
                     {
@@ -313,14 +315,14 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                         break;
                     }
 
-                    // Consume the size and data iff a complete tuple (or Buffer) is available.
+                    /// Consume the size and data iff a complete tuple (or Buffer) is available.
                     reader.consume(bufferSizeSize);
                     tupleData = reader.consume(size);
                     break;
                 }
             }
 
-            //if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
+            /// if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
             if (!tupleData.empty())
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
@@ -337,9 +339,9 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                 }
             }
         }
-        // If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
-        // and writing data exceeds the user defined limit (bufferFlushIntervalMs).
-        // If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
+        /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
+        /// and writing data exceeds the user defined limit (bufferFlushIntervalMs).
+        /// If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
         if ((sourceConfig->getFlushIntervalMS()->getValue() > 0
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
                  >= sourceConfig->getFlushIntervalMS()->getValue()))
@@ -376,4 +378,4 @@ const TCPSourceTypePtr& TCPSource::getSourceConfig() const
     return sourceConfig;
 }
 
-} // namespace NES
+} /// namespace NES

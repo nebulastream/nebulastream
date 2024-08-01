@@ -33,8 +33,9 @@ using ParserPtr = std::shared_ptr<Parser>;
  */
 class TCPSource : public DataSource
 {
-  /// TODO #74: make timeout configurable via descriptor
-  constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
+    /// TODO #74: make timeout configurable via descriptor
+    constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
+
 public:
     /**
      * @brief constructor of a TCP Source
@@ -122,5 +123,5 @@ private:
     MMapCircularBuffer circularBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
-} // namespace NES
-#endif // NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
+} /// namespace NES
+#endif /// NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_

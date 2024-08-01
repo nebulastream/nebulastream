@@ -56,6 +56,10 @@ const std::string& FileSinkDescriptor::getFileName() const
 {
     return fileName;
 }
+void FileSinkDescriptor::setFileName(const std::string_view fileName)
+{
+    this->fileName = fileName;
+}
 
 std::string FileSinkDescriptor::toString() const
 {
