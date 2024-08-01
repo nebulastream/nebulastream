@@ -13,7 +13,6 @@
 */
 
 syntax = "proto3";
-import "WorkerLocation.proto";
 
 // The greeting service definition.
 service CoordinatorRPCService {
@@ -50,15 +49,6 @@ service CoordinatorRPCService {
   // get a list of a nodes parents
   rpc GetParents (GetParentsRequest) returns (GetParentsReply) {}
 
-  // queries for all field nodes within a specified radius around the supplied coordinates
-  rpc GetNodesInRange (GetNodesInRangeRequest) returns (GetNodesInRangeReply) {}
-
-  //inform the coordinator about the scheduled reconnect
-  rpc SendScheduledReconnect (SendScheduledReconnectRequest) returns (SendScheduledReconnectReply) {}
-
-  //lets a mobile device inform the coordinator about its current location
-  rpc SendLocationUpdate (LocationUpdateRequest) returns (LocationUpdateReply) {}
-
   // send a notification when a query fails to the coordinator
   rpc NotifyQueryFailure (QueryFailureNotification) returns (QueryFailureNotificationReply) {}
 
@@ -74,20 +64,6 @@ service CoordinatorRPCService {
   rpc NotifySoftStopCompleted (SoftStopCompletionMessage) returns (SoftStopCompletionReply) {}
 }
 
-message SerializedOpenCLDeviceInfo {
-  uint32 deviceId = 1;
-  string platformVendor = 2;
-  string platformName = 3;
-  string deviceName = 4;
-  bool doubleFPSupport = 5;
-  repeated uint32 maxWorkItems = 6;
-  uint32 deviceAddressBits = 7;
-  string deviceType = 8;
-  string deviceExtensions = 9;
-  uint32 availableProcessors = 10;
-  uint64 globalMemory = 11;
-}
-
 message RegisterWorkerRequest {
   string address = 1;
   uint32 grpcPort = 2;
@@ -95,12 +71,9 @@ message RegisterWorkerRequest {
   uint32 numberOfSlots = 4;
   uint32 bandwidthInMbps = 5;
   uint32 latencyInMs = 6;
-  NES.Spatial.Protobuf.Waypoint waypoint = 7;
-  NES.Spatial.Protobuf.SpatialType spatialType = 8;
   bool tfSupported = 9;
   bool javaUDFSupported = 10;
   uint64 workerId = 11;
-  repeated SerializedOpenCLDeviceInfo openCLDevices = 12;
 }
 
 message RegisterWorkerReply {
@@ -195,10 +168,6 @@ message RemoveParentReply {
   bool success = 1;
 }
 
-message GetNodesInRangeRequest {
-  NES.Spatial.Protobuf.GeoLocation geoLocation = 1;
-  double radius = 2;
-}
 
 message QueryFailureNotification{
   uint64 queryId = 1;
@@ -220,26 +189,8 @@ message EpochBarrierPropagationNotification{
 message EpochBarrierPropagationReply{
   bool success = 1;
 }
-message GetNodesInRangeReply{
-  repeated NES.Spatial.Protobuf.WorkerLocationInfo nodes = 1;
-}
-
-message SendScheduledReconnectRequest {
-  uint64 deviceId = 1;
-  repeated NES.Spatial.Protobuf.SerializableReconnectPoint addReconnects = 2;
-  repeated NES.Spatial.Protobuf.SerializableReconnectPoint removeReconnects = 3;
-}
 
 message SendScheduledReconnectReply {
-  bool success = 1;
-}
-
-message LocationUpdateRequest {
-  uint64 workerId = 1;
-  NES.Spatial.Protobuf.Waypoint waypoint = 2;
-}
-
-message LocationUpdateReply {
   bool success = 1;
 }
 
