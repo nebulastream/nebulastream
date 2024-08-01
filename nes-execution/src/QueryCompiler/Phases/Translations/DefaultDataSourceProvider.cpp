@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <utility>
 
 namespace NES::QueryCompilation
 {
@@ -29,18 +29,20 @@ DataSourceProviderPtr QueryCompilation::DefaultDataSourceProvider::create(const 
     return std::make_shared<DefaultDataSourceProvider>(compilerOptions);
 }
 
-DataSourcePtr DefaultDataSourceProvider::lower(OperatorId operatorId,
-                                               OriginId originId,
-                                               SourceDescriptorPtr sourceDescriptor,
-                                               Runtime::NodeEnginePtr nodeEngine,
-                                               std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+DataSourcePtr DefaultDataSourceProvider::lower(
+    OperatorId operatorId,
+    OriginId originId,
+    SourceDescriptorPtr sourceDescriptor,
+    Runtime::NodeEnginePtr nodeEngine,
+    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
 {
-    return ConvertLogicalToPhysicalSource::createDataSource(operatorId,
-                                                            originId,
-                                                            std::move(sourceDescriptor),
-                                                            std::move(nodeEngine),
-                                                            compilerOptions->getNumSourceLocalBuffers(),
-                                                            std::move(successors));
+    return ConvertLogicalToPhysicalSource::createDataSource(
+        operatorId,
+        originId,
+        std::move(sourceDescriptor),
+        std::move(nodeEngine),
+        compilerOptions->getNumSourceLocalBuffers(),
+        std::move(successors));
 }
 
-} // namespace NES::QueryCompilation
+} /// namespace NES::QueryCompilation

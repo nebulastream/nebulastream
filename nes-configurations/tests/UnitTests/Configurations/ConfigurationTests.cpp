@@ -20,9 +20,6 @@
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
@@ -41,12 +38,12 @@ public:
         NES_INFO("Setup Configuration test class.");
     }
 
-    static std::vector<const char*> makePosixArgs(const std::vector<std::string>& args)
+    static std::vector<std::string> makePosixArgs(const std::vector<std::string>& args)
     {
-        static const char* empty = "";
-        std::vector<const char*> argv(args.size() + 1);
+        static const auto empty = "";
+        std::vector<std::string> argv(args.size() + 1);
         argv[0] = empty;
-        std::transform(args.begin(), args.end(), argv.begin() + 1, [](const std::string& arg) { return arg.c_str(); });
+        std::ranges::transform(args.begin(), args.end(), argv.begin() + 1, [](const std::string& arg) { return arg.c_str(); });
         return argv;
     }
 
@@ -199,10 +196,6 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
     EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
     EXPECT_TRUE(!workerConfigPtr->physicalSourceTypes.empty());
     EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.size() == 2);
-    for (const auto& physicalSource : workerConfigPtr->physicalSourceTypes.getValues())
-    {
-        EXPECT_TRUE(physicalSource.getValue()->instanceOf<DefaultSourceType>() || physicalSource.getValue()->instanceOf<MQTTSourceType>());
-    }
 }
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
@@ -218,7 +211,8 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
          "--queryCompiler.compilationStrategy=FAST",
          "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
          "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-         "--physicalSources.type=DEFAULT_SOURCE",
+         "--physicalSources.type=CSV_SOURCE",
+         "--physicalSources.filePath=../tests/test_data/QnV_short.csv",
          "--physicalSources.numberOfBuffersToProduce=5",
          "--physicalSources.rowLayout=false",
          "--physicalSources.physicalSourceName=x",
@@ -297,66 +291,6 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
     EXPECT_NE(
         workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
         workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
-}
-
-TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput)
-{
-    auto commandLineParams = makeCommandLineArgs(
-        {"type=DEFAULT_SOURCE",
-         "numberOfBuffersToProduce=5",
-         "rowLayout=false",
-         "physicalSourceName=x",
-         "logicalSourceName=default",
-         "offsetMode=earliest"});
-
-    PhysicalSourceTypePtr physicalSourceType1 = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
-
-    EXPECT_EQ(
-        physicalSourceType1->as<DefaultSourceType>()->getSourceGatheringInterval()->getValue(),
-        physicalSourceType1->as<DefaultSourceType>()->getSourceGatheringInterval()->getDefaultValue());
-    EXPECT_NE(physicalSourceType1->as<DefaultSourceType>()->getNumberOfBuffersToProduce()->getValue(), 5u);
-
-    auto commandLineParams1 = makeCommandLineArgs(
-        {"type=KAFKA_SOURCE",
-         "physicalSourceName=x",
-         "logicalSourceName=default",
-         "topic=newTopic",
-         "connectionTimeout=100",
-         "brokers=testBroker",
-         "groupId=testId",
-         "offsetMode=earliest"});
-
-    PhysicalSourceTypePtr physicalSourceType2 = PhysicalSourceTypeFactory::createFromString("", commandLineParams1);
-
-    EXPECT_NE(
-        physicalSourceType2->as<KafkaSourceType>()->getBrokers()->getValue(),
-        physicalSourceType2->as<KafkaSourceType>()->getBrokers()->getDefaultValue());
-    EXPECT_EQ(
-        physicalSourceType2->as<KafkaSourceType>()->getAutoCommit()->getValue(),
-        physicalSourceType2->as<KafkaSourceType>()->getAutoCommit()->getDefaultValue());
-    EXPECT_NE(
-        physicalSourceType2->as<KafkaSourceType>()->getGroupId()->getValue(),
-        physicalSourceType2->as<KafkaSourceType>()->getGroupId()->getDefaultValue());
-    EXPECT_NE(
-        physicalSourceType2->as<KafkaSourceType>()->getTopic()->getValue(),
-        physicalSourceType2->as<KafkaSourceType>()->getTopic()->getDefaultValue());
-    EXPECT_NE(
-        physicalSourceType2->as<KafkaSourceType>()->getConnectionTimeout()->getValue(),
-        physicalSourceType2->as<KafkaSourceType>()->getConnectionTimeout()->getDefaultValue());
-}
-
-TEST_F(ConfigTest, testPhysicalSourceAndGatheringModeWorkerConsoleInput)
-{
-    /// given
-    auto commandLineParams = makeCommandLineArgs(
-        {"type=DEFAULT_SOURCE", "numberOfBuffersToProduce=5", "rowLayout=false", "physicalSourceName=x", "logicalSourceName=default"});
-    /// when
-    auto physicalSourceType1 = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
-    /// then
-    EXPECT_EQ(
-        physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getValue(),
-        physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType1->as<DefaultSourceType>()->getGatheringMode()->getValue(), GatheringMode::INTERVAL_MODE);
 }
 
 TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInput)

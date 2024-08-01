@@ -37,7 +37,6 @@ CSVSource::CSVSource(
     CSVSourceTypePtr csvSourceType,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     const std::string& physicalSourceName,
@@ -48,7 +47,6 @@ CSVSource::CSVSource(
         std::move(queryManager),
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         gatheringMode,
         physicalSourceName,
@@ -68,8 +66,8 @@ CSVSource::CSVSource(
     {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
-    const auto realCSVPath = realpath(filePath.c_str(), nullptr);
-    auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realCSVPath));
+    const auto realCSVPath = realpath(filePath.c_str(), nullptr); /// realpath: canonical absolute name of file
+    const auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realCSVPath));
     if (path == nullptr)
     {
         NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
@@ -143,7 +141,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
     input.seekg(currentPositionInFile, std::ifstream::beg);
 
     uint64_t generatedTuplesThisPass = 0;
-    //fill buffer maximally
+    ///fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0)
     {
         generatedTuplesThisPass = buffer.getCapacity();
@@ -167,7 +165,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
 
     while (tupleCount < generatedTuplesThisPass)
     {
-        //Check if EOF has reached
+        ///Check if EOF has reached
         if (auto const tg = input.tellg(); (tg >= 0 && static_cast<uint64_t>(tg) >= fileSize) || tg == -1)
         {
             NES_TRACE("CSVSource::fillBuffer: reset tellg()={} fileSize={}", input.tellg(), fileSize);
@@ -179,11 +177,11 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
 
         std::getline(input, line);
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
-        // TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
+        /// TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
         inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
         tupleCount++;
-    } //end of while
+    } ///end of while
 
     currentPositionInFile = input.tellg();
     buffer.setNumberOfTuples(tupleCount);
@@ -207,4 +205,4 @@ const CSVSourceTypePtr& CSVSource::getSourceConfig() const
 {
     return csvSourceType;
 }
-} // namespace NES
+} /// namespace NES

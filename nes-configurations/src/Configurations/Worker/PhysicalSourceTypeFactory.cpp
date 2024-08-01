@@ -69,7 +69,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string, s
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlConfig)
 {
     std::vector<PhysicalSourceTypePtr> physicalSources;
-    //Iterate over all physical sources defined in the yaml file
+    ///Iterate over all physical sources defined in the yaml file
     std::string logicalSourceName, physicalSourceName, sourceType;
     if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
         && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
@@ -147,4 +147,4 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
     }
 }
 
-} // namespace NES::Configurations
+} /// namespace NES::Configurations

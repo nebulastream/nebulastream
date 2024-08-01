@@ -23,67 +23,77 @@
 #include <Util/Logger/Logger.hpp>
 
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-#if defined(__linux__)
-#include <Runtime/HardwareManager.hpp>
-#include <numa.h>
+#    if defined(__linux__)
+#        include <numa.h>
+#        include <Runtime/HardwareManager.hpp>
+#    endif
 #endif
-#endif
-namespace NES {
+namespace NES
+{
 
-DataSourcePtr
-ConvertLogicalToPhysicalSource::createDataSource(OperatorId operatorId,
-                                                 OriginId originId,
-
-                                                 const SourceDescriptorPtr& sourceDescriptor,
-                                                 const Runtime::NodeEnginePtr& nodeEngine,
-                                                 size_t numSourceLocalBuffers,
-                                                 const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors) {
+DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
+    OperatorId operatorId,
+    OriginId originId,
+    const SourceDescriptorPtr& sourceDescriptor,
+    const Runtime::NodeEnginePtr& nodeEngine,
+    size_t numSourceLocalBuffers,
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
+{
     NES_ASSERT(nodeEngine, "invalid engine");
     auto numaNodeIndex = 0u;
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-    if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>()) {
+    if (sourceDescriptor->instanceOf<BenchmarkSourceDescriptor>())
+    {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating memory source");
         auto benchmarkSourceDescriptor = sourceDescriptor->as<BenchmarkSourceDescriptor>();
         auto sourceAffinity = benchmarkSourceDescriptor->getSourceAffinity();
-        if (sourceAffinity != std::numeric_limits<uint64_t>::max()) {
+        if (sourceAffinity != std::numeric_limits<uint64_t>::max())
+        {
             auto nodeOfCpu = numa_node_of_cpu(sourceAffinity);
             numaNodeIndex = nodeOfCpu;
-            NES_ASSERT2_FMT(0 <= numaNodeIndex && numaNodeIndex < nodeEngine->getHardwareManager()->getNumberOfNumaRegions(),
-                            "invalid numa settings");
+            NES_ASSERT2_FMT(
+                0 <= numaNodeIndex && numaNodeIndex < nodeEngine->getHardwareManager()->getNumberOfNumaRegions(), "invalid numa settings");
         }
     }
 #endif
     auto bufferManager = nodeEngine->getBufferManager();
     auto queryManager = nodeEngine->getQueryManager();
-if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
+    if (sourceDescriptor->instanceOf<CsvSourceDescriptor>())
+    {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
         const CsvSourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
-        return createCSVFileSource(csvSourceDescriptor->getSchema(),
-                                   bufferManager,
-                                   queryManager,
-                                   csvSourceDescriptor->getSourceConfig(),
-                                   operatorId,
-                                   originId,
-                                   numSourceLocalBuffers,
-                                   sourceDescriptor->getPhysicalSourceName(),
-                                   successors);
-    } else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>()) {
+        return createCSVFileSource(
+            csvSourceDescriptor->getSchema(),
+            bufferManager,
+            queryManager,
+            csvSourceDescriptor->getSourceConfig(),
+            operatorId,
+            originId,
+            numSourceLocalBuffers,
+            sourceDescriptor->getPhysicalSourceName(),
+            successors);
+    }
+    else if (sourceDescriptor->instanceOf<TCPSourceDescriptor>())
+    {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
         auto tcpSourceDescriptor = sourceDescriptor->as<TCPSourceDescriptor>();
-        return createTCPSource(tcpSourceDescriptor->getSchema(),
-                               bufferManager,
-                               queryManager,
-                               tcpSourceDescriptor->getSourceConfig(),
-                               operatorId,
-                               originId,
+        return createTCPSource(
+            tcpSourceDescriptor->getSchema(),
+            bufferManager,
+            queryManager,
+            tcpSourceDescriptor->getSourceConfig(),
+            operatorId,
+            originId,
 
-                               numSourceLocalBuffers,
-                               sourceDescriptor->getPhysicalSourceName(),
-                               successors);
-    } else {
+            numSourceLocalBuffers,
+            sourceDescriptor->getPhysicalSourceName(),
+            successors);
+    }
+    else
+    {
         NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", sourceDescriptor->getSchema()->toString());
         throw std::invalid_argument("Unknown Source Descriptor Type");
     }
 }
 
-}// namespace NES
+} /// namespace NES

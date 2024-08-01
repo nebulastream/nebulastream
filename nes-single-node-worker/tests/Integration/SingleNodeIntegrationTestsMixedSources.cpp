@@ -45,7 +45,7 @@ struct QueryTestParam
     int expectedNumTuples;
     int expectedCheckSum;
 
-    // Add this method to your QueryTestParam struct
+    /// Add this method to your QueryTestParam struct
     friend std::ostream& operator<<(std::ostream& os, const QueryTestParam& param)
     {
         return os << "QueryTestParam{queryFile: \"" << param.queryFile << "\", expectedTuples: " << param.expectedNumTuples << "}";
@@ -73,6 +73,7 @@ public:
 class SyncedMockTcpServer
 {
     using tcp = boost::asio::ip::tcp;
+
 public:
     SyncedMockTcpServer(const short port) : acceptor(io_context, tcp::endpoint(tcp::v4(), port)) { }
 
@@ -124,28 +125,28 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
-    // For every tcp source, get a free port, replace the port of one tcp source with the free port and create a server with that port.
+    /// For every tcp source, get a free port, replace the port of one tcp source with the free port and create a server with that port.
     std::vector<std::unique_ptr<SyncedMockTcpServer>> mockedTcpServers;
-    for(auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
+    for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
     {
         auto mockTcpServerPort = static_cast<uint16_t>(*detail::getPortDispatcher().getNextPort());
         replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
         mockedTcpServers.emplace_back(SyncedMockTcpServer::create(mockTcpServerPort));
     }
 
-    // Register the query and start it.
+    /// Register the query and start it.
     auto queryId = registerQueryPlan(queryPlan, uut);
     startQuery(queryId, uut);
 
-    // Start all SyncedMockTcpServers and wait until every sever sent all tuples.
-    for(const auto& server : mockedTcpServers)
+    /// Start all SyncedMockTcpServers and wait until every sever sent all tuples.
+    for (const auto& server : mockedTcpServers)
     {
         std::thread serverThread([&server]() { server->run(); });
         serverThread.join(); /// wait for serverThread to finish
     }
 
-    // Todo (#166) : stop query might be called to early, leading to no received data.
-    // Todo:(#169) : CSV triggers soft end of stream even before stopQuery is called.
+    /// Todo (#166) : stop query might be called to early, leading to no received data.
+    /// Todo:(#169) : CSV triggers soft end of stream even before stopQuery is called.
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
     stopQuery(queryId, HardStop, uut);
     unregisterQuery(queryId, uut);
@@ -171,7 +172,6 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
     removeFile(dataInputFile);
 }
 
-INSTANTIATE_TEST_CASE_P(QueryTests, SingleNodeIntegrationTest, testing::Values(
-        QueryTestParam{"query5", 1, 64, 992 /* 2*SUM(0, 1, ..., 31) */})
-    );
-} // namespace NES::Testing
+INSTANTIATE_TEST_CASE_P(
+    QueryTests, SingleNodeIntegrationTest, testing::Values(QueryTestParam{"query5", 1, 64, 992 /* 2*SUM(0, 1, ..., 31) */}));
+} /// namespace NES::Testing

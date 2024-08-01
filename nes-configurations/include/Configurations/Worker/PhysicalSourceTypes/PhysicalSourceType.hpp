@@ -23,10 +23,8 @@ namespace NES
 
 enum class SourceType : uint8_t
 {
-    // ZMQ_SOURCE,
     CSV_SOURCE,
     TCP_SOURCE,
-    INVALID
 };
 
 class PhysicalSourceType;
@@ -44,7 +42,7 @@ public:
 
     /**
      * Checks equality
-     * @param other mqttSourceType ot check equality for
+     * @param other sourceType to check equality for
      * @return true if equal, false otherwise
      */
     virtual bool equal(PhysicalSourceTypePtr const& other) = 0;
@@ -121,5 +119,5 @@ private:
     SourceType sourceType;
 };
 
-} // namespace NES
-#endif // NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
+} /// namespace NES
+#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_

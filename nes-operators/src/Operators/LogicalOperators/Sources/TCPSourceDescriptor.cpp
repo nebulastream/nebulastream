@@ -63,4 +63,4 @@ SourceDescriptorPtr TCPSourceDescriptor::copy()
     return copy;
 }
 
-} // namespace NES
+} /// namespace NES

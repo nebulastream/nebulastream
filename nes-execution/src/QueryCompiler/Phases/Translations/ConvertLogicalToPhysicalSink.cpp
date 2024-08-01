@@ -13,13 +13,10 @@
 */
 
 #include <Network/NetworkSink.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/ZmqSinkDescriptor.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -70,43 +67,13 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
                 fileSinkDescriptor->getAddTimestamp(),
                 fileSinkDescriptor->getNumberOfOrigins());
         }
-        else if (fileSinkDescriptor->getSinkFormatAsString() == "NES_FORMAT")
-        {
-            return createBinaryNESFileSink(
-                schema,
-                pipelineQueryPlan->getQueryId(),
-                pipelineQueryPlan->getQuerySubPlanId(),
-                nodeEngine,
-                numOfProducers,
-                fileSinkDescriptor->getFileName(),
-                fileSinkDescriptor->getAppend(),
-                fileSinkDescriptor->getNumberOfOrigins());
-        }
         else
         {
             NES_ERROR("createDataSink: unsupported format");
             throw std::invalid_argument("Unknown File format");
         }
     }
-    else if (sinkDescriptor->instanceOf<Network::NetworkSinkDescriptor>())
-    {
-        NES_INFO("ConvertLogicalToPhysicalSink: Creating network sink");
-        auto networkSinkDescriptor = sinkDescriptor->as<Network::NetworkSinkDescriptor>();
-        return createNetworkSink(
-            schema,
-            networkSinkDescriptor->getUniqueId(),
-            pipelineQueryPlan->getQueryId(),
-            pipelineQueryPlan->getQuerySubPlanId(),
-            networkSinkDescriptor->getNodeLocation(),
-            networkSinkDescriptor->getNesPartition(),
-            nodeEngine,
-            numOfProducers,
-            networkSinkDescriptor->getWaitTime(),
-            networkSinkDescriptor->getVersion(),
-            networkSinkDescriptor->getNumberOfOrigins(),
-            networkSinkDescriptor->getRetryTimes());
-    }
     NES_ERROR("ConvertLogicalToPhysicalSink: Unknown Sink Descriptor Type");
     throw std::invalid_argument("Unknown Sink Descriptor Type");
 }
-} // namespace NES
+} /// namespace NES

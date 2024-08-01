@@ -79,7 +79,7 @@ public:
      */
     const std::string& getFileName() const;
 
-    void setFileName(const std::string_view fileName);
+    void setFileName(std::string fileName);
 
     std::string toString() const override;
     [[nodiscard]] bool equal(SinkDescriptorPtr const& other) override;

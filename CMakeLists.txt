@@ -622,7 +622,7 @@ add_subdirectory(nes-single-node-worker)
 # Documentation
 add_subdirectory(cmake/docs)
 
-# Temporary boost-asio (remove after adding asio via VCPKG)
+# TODO: #179: Temporary boost-asio (remove after adding asio via VCPKG)
 if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
     add_subdirectory(asio)
 endif()

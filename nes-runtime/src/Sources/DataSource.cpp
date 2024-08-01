@@ -60,7 +60,6 @@ DataSource::DataSource(
     Runtime::QueryManagerPtr queryManager,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     const std::string& physicalSourceName,
@@ -74,7 +73,6 @@ DataSource::DataSource(
     , executableSuccessors(std::move(executableSuccessors))
     , operatorId(operatorId)
     , originId(originId)
-    , statisticId(statisticId)
     , schema(std::move(pSchema))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , gatheringMode(gatheringMode)
@@ -85,10 +83,10 @@ DataSource::DataSource(
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
-    // TODO #4094: enable this exception -- currently many UTs are designed to assume empty executableSuccessors
-    //    if (this->executableSuccessors.empty()) {
-    //        throw Exceptions::RuntimeException("empty executable successors");
-    //    }
+    /// TODO #4094: enable this exception -- currently many UTs are designed to assume empty executableSuccessors
+    ///    if (this->executableSuccessors.empty()) {
+    ///        throw Exceptions::RuntimeException("empty executable successors");
+    ///    }
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, localBufferManager->getBufferSize());
@@ -103,27 +101,24 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
 {
     if (addBufferMetaData)
     {
-        // set the origin id for this source
+        /// set the origin id for this source
         buffer.setOriginId(originId);
-        // set the creation timestamp
+        /// set the creation timestamp
         buffer.setCreationTimestampInMS(
             std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count());
-        // Set the sequence number of this buffer.
-        // A data source generates a monotonic increasing sequence number
+        /// Set the sequence number of this buffer.
+        /// A data source generates a monotonic increasing sequence number
         maxSequenceNumber++;
         buffer.setSequenceNumber(maxSequenceNumber);
         buffer.setChunkNumber(1);
         buffer.setLastChunk(true);
-        buffer.setStatisticId(statisticId);
         NES_DEBUG(
-            "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={} "
-            "statisticId={}",
+            "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
             buffer.getOriginId(),
             buffer.getOriginId(),
             buffer.getSequenceNumber(),
             buffer.getChunkNumber(),
-            buffer.isLastChunk(),
-            buffer.getStatisticId());
+            buffer.isLastChunk());
     }
 
     uint64_t queueId = 0;
@@ -186,8 +181,8 @@ bool DataSource::start()
             thread = std::make_shared<std::thread>(
                 [this, &prom]()
                 {
-            // Create a cpu_set_t object representing a set of CPUs. Clear it and mark
-            // only CPU i as set.
+            /// Create a cpu_set_t object representing a set of CPUs. Clear it and mark
+            /// only CPU i as set.
 #ifdef __linux__
                     if (sourceAffinity != std::numeric_limits<uint64_t>::max())
                     {
@@ -223,11 +218,11 @@ bool DataSource::start()
 
 bool DataSource::fail()
 {
-    bool isStopped = stop(Runtime::QueryTerminationType::Failure); // this will block until the thread is stopped
+    bool isStopped = stop(Runtime::QueryTerminationType::Failure); /// this will block until the thread is stopped
     NES_DEBUG("Source {} stop executed= {}", operatorId, (isStopped ? "stopped" : "cannot stop"));
     {
-        // it may happen that the source failed prior of sending its eos
-        std::unique_lock lock(startStopMutex); // do not call stop if holding this mutex
+        /// it may happen that the source failed prior of sending its eos
+        std::unique_lock lock(startStopMutex); /// do not call stop if holding this mutex
         auto self = shared_from_base<DataSource>();
         NES_DEBUG("Source {} has already injected failure? {}", operatorId, (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
         if (!this->endOfStreamSent)
@@ -257,14 +252,14 @@ bool waitForFuture(std::future<bool>&& future, std::chrono::duration<R, P>&& dea
         }
     }
 }
-} // namespace detail
+} /// namespace detail
 
 bool DataSource::stop(Runtime::QueryTerminationType graceful)
 {
     using namespace std::chrono_literals;
-    // Do not call stop from the runningRoutine!
+    /// Do not call stop from the runningRoutine!
     {
-        std::unique_lock lock(startStopMutex); // this mutex guards the thread variable
+        std::unique_lock lock(startStopMutex); /// this mutex guards the thread variable
         wasGracefullyStopped = graceful;
     }
 
@@ -277,10 +272,10 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful)
     NES_DEBUG("DataSource {}: Stop called and source is {}", operatorId, (running ? "running" : "not running"));
     bool expected = true;
 
-    // TODO add wakeUp call if source is blocking on something, e.g., tcp socket
-    // TODO in general this highlights how our source model has some issues
+    /// TODO add wakeUp call if source is blocking on something, e.g., tcp socket
+    /// TODO in general this highlights how our source model has some issues
 
-    // TODO this is also an issue in the current development of the StaticDataSource. If it is still running here, we give up to early and never join the thread.
+    /// TODO this is also an issue in the current development of the StaticDataSource. If it is still running here, we give up to early and never join the thread.
 
     try
     {
@@ -294,7 +289,7 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful)
                     detail::waitForFuture(completedPromise.get_future(), 60s), "Cannot complete future to stop source " << operatorId);
             }
             NES_DEBUG("DataSource {} was not running, future retrieved", operatorId);
-            return true; // it's ok to return true because the source is stopped
+            return true; /// it's ok to return true because the source is stopped
         }
         else
         {
@@ -320,10 +315,10 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful)
             }
         }
         catch (std::exception const& e)
-        { // it would not work if you pass by value
-            // I leave the following lines just as a reminder:
-            // here we do not need to call notifySourceFailure because it is done from the main thread
-            // the only reason to call notifySourceFailure is when the main thread was not stated
+        { /// it would not work if you pass by value
+            /// I leave the following lines just as a reminder:
+            /// here we do not need to call notifySourceFailure because it is done from the main thread
+            /// the only reason to call notifySourceFailure is when the main thread was not stated
             if (!wasStarted)
             {
                 queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
@@ -355,7 +350,7 @@ void DataSource::close()
     if (queryTerminationType != Runtime::QueryTerminationType::Graceful
         || queryManager->canTriggerEndOfStream(shared_from_base<DataSource>(), queryTerminationType))
     {
-        // inject reconfiguration task containing end of stream
+        /// inject reconfiguration task containing end of stream
         std::unique_lock lock(startStopMutex);
         NES_ASSERT2_FMT(!endOfStreamSent, "Eos was already sent for source " << toString());
         NES_DEBUG("DataSource {} : Data Source add end of stream. Gracefully={}", operatorId, queryTerminationType);
@@ -438,12 +433,12 @@ void DataSource::runningRoutineWithIngestionRate()
     uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 10;
     while (running && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0))
     {
-        //create as many tuples as requested and then sleep
+        ///create as many tuples as requested and then sleep
         auto startPeriod
             = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
         uint64_t buffersProcessedCnt = 0;
 
-        //produce buffers until limit for this second or for all periods is reached or source is topped
+        ///produce buffers until limit for this second or for all periods is reached or source is topped
         while (buffersProcessedCnt < buffersToProducePer100Ms && running
                && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0))
         {
@@ -451,7 +446,7 @@ void DataSource::runningRoutineWithIngestionRate()
 
             if (optBuf.has_value())
             {
-                // here we got a valid buffer
+                /// here we got a valid buffer
                 NES_TRACE("DataSource: add task for buffer");
                 auto& buf = optBuf.value();
                 emitWork(buf);
@@ -470,7 +465,7 @@ void DataSource::runningRoutineWithIngestionRate()
         uint64_t endPeriod
             = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
 
-        //next point in time when to start producing again
+        ///next point in time when to start producing again
         nextPeriodStartTime = uint64_t(startPeriod + (100));
         NES_TRACE(
             "DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}",
@@ -478,7 +473,7 @@ void DataSource::runningRoutineWithIngestionRate()
             endPeriod,
             nextPeriodStartTime);
 
-        //If this happens then the second was not enough to create so many tuples and the ingestion rate should be decreased
+        ///If this happens then the second was not enough to create so many tuples and the ingestion rate should be decreased
         if (nextPeriodStartTime < endPeriod)
         {
             NES_ERROR(
@@ -490,7 +485,7 @@ void DataSource::runningRoutineWithIngestionRate()
         uint64_t sleepCnt = 0;
         uint64_t curTime
             = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        //wait until the next period starts
+        ///wait until the next period starts
         while (curTime < nextPeriodStartTime)
         {
             curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
@@ -505,7 +500,7 @@ void DataSource::runningRoutineWithIngestionRate()
             endPeriod,
             nextPeriodStartTime,
             curTime);
-    } //end of while
+    } ///end of while
     NES_DEBUG("DataSource {} call close", operatorId);
     close();
     NES_DEBUG("DataSource {} end running", operatorId);
@@ -535,11 +530,11 @@ void DataSource::runningRoutineWithGatheringInterval()
     uint64_t numberOfBuffersProduced = 0;
     while (running)
     {
-        //check if already produced enough buffer
+        ///check if already produced enough buffer
         if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce)
         {
-            auto optBuf = receiveData(); // note that receiveData might block
-            //this checks we received a valid output buffer
+            auto optBuf = receiveData(); /// note that receiveData might block
+            ///this checks we received a valid output buffer
             if (optBuf.has_value())
             {
                 auto& buf = optBuf.value();
@@ -570,7 +565,8 @@ void DataSource::runningRoutineWithGatheringInterval()
                 NES_DEBUG("DataSource {}: Thread going to terminating with graceful exit.", operatorId);
             }
             if (!running)
-            { // necessary if source stops while receiveData is called due to stricter shutdown logic
+            { /// necessary if source stops while receiveData is called due to stricter shutdown logic
+                NES_DEBUG("Source is not running anymore.")
                 break;
             }
         }
@@ -592,7 +588,7 @@ void DataSource::runningRoutineWithGatheringInterval()
     NES_DEBUG("DataSource {} end running", operatorId);
 }
 
-// debugging
+/// debugging
 uint64_t DataSource::getNumberOfGeneratedTuples() const
 {
     return generatedTuples;
@@ -634,7 +630,7 @@ Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer()
 void DataSource::onEvent(Runtime::BaseEvent& event)
 {
     NES_DEBUG("DataSource::onEvent(event) called. operatorId: {}", this->operatorId);
-    // no behaviour needed, call onEvent of direct ancestor
+    /// no behaviour needed, call onEvent of direct ancestor
     DataEmitter::onEvent(event);
 }
 
@@ -644,4 +640,4 @@ void DataSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef)
     onEvent(event);
 }
 
-} // namespace NES
+} /// namespace NES

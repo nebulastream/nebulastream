@@ -138,4 +138,4 @@ DataSinkPtr createNetworkSink(
         numberOfOrigins,
         version);
 }
-} // namespace NES
+} /// namespace NES

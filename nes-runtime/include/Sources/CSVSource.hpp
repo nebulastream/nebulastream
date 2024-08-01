@@ -36,7 +36,7 @@ public:
    * @param schema of the source
    * @param bufferManager pointer to the buffer manager
    * @param queryManager pointer to the query manager
-   * @param csvSourceType points to the current source configuration object, look at mqttSourceType and CSVSourceType for info
+   * @param csvSourceType points to the current source configuration object, look at and CSVSourceType for info
    * @param operatorId current operator id
    * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
    * @param numSourceLocalBuffers number of local source buffers

@@ -10,6 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+# TODO: #179: Temporary boost-asio (remove after adding asio via VCPKG)
 if(NOT (CMAKE_SYSTEM_PROCESSOR MATCHES "arm" OR CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64"))
     add_nes_unit_test(single-node-integration-tests-csv SingleNodeIntegrationTestsCSV.cpp ../../src/GrpcService.cpp ../../src/SingleNodeWorker.cpp)
     target_include_directories(single-node-integration-tests-csv PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ ${CMAKE_CURRENT_SOURCE_DIR}/../Util/include/)

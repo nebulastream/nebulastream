@@ -44,7 +44,7 @@ struct QueryTestParam
     int expectedNumTuples;
     int expectedCheckSum;
 
-    // Add this method to your QueryTestParam struct
+    /// Add this method to your QueryTestParam struct
     friend std::ostream& operator<<(std::ostream& os, const QueryTestParam& param)
     {
         return os << "QueryTestParam{queryFile: \"" << param.queryFile << "\", expectedTuples: " << param.expectedNumTuples << "}";
@@ -124,27 +124,27 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     GRPCServer uut{SingleNodeWorker{configuration}};
 
-    // For every tcp source, get a free port, replace the port of one tcp source with the free port and create a server with that port.
+    /// For every tcp source, get a free port, replace the port of one tcp source with the free port and create a server with that port.
     std::vector<std::unique_ptr<SyncedMockTcpServer>> mockedTcpServers;
-    for(auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
+    for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
     {
         auto mockTcpServerPort = static_cast<uint16_t>(*detail::getPortDispatcher().getNextPort());
         replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
         mockedTcpServers.emplace_back(SyncedMockTcpServer::create(mockTcpServerPort));
     }
 
-    // Register the query and start it.
+    /// Register the query and start it.
     auto queryId = registerQueryPlan(queryPlan, uut);
     startQuery(queryId, uut);
 
-    // Start all SyncedMockTcpServers and wait until every sever sent all tuples.
-    for(const auto& server : mockedTcpServers)
+    /// Start all SyncedMockTcpServers and wait until every sever sent all tuples.
+    for (const auto& server : mockedTcpServers)
     {
         std::thread serverThread([&server]() { server->run(); });
         serverThread.join(); /// wait for serverThread to finish
     }
 
-    // Todo (#166) : stop query might be called to early, leading to no received data.
+    /// Todo (#166) : stop query might be called to early, leading to no received data.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
     stopQuery(queryId, HardStop, uut);
     unregisterQuery(queryId, uut);
@@ -169,10 +169,11 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     removeFile(queryResultFile);
 }
 
-INSTANTIATE_TEST_CASE_P(QueryTests,
-    SingleNodeIntegrationTest, testing::Values (
+INSTANTIATE_TEST_CASE_P(
+    QueryTests,
+    SingleNodeIntegrationTest,
+    testing::Values(
         QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
         QueryTestParam{"qOneTCPSourceWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}
-    ));
-} // namespace NES::Testing
+        QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
+} /// namespace NES::Testing

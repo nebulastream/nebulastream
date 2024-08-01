@@ -81,13 +81,13 @@ void IntegrationTestUtil::copyInputFile(const std::string_view inputFileName)
 {
     try
     {
-        const auto& from = fmt::format("{}/inputCSVFiles/{}", TEST_DATA_DIR, inputFileName);
-        const auto& to = fmt::format("./{}", inputFileName);
+        const auto from = fmt::format("{}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, inputFileName);
+        const auto to = fmt::format("./{}", inputFileName);
         copy_file(from, to, std::filesystem::copy_options::overwrite_existing);
     }
     catch (const std::filesystem::filesystem_error& e)
     {
-        std::cerr << "Error copying file: " << e.what() << std::endl;
+        NES_ERROR("Error copying file: {}", e.what());
     }
 }
 
@@ -99,22 +99,22 @@ void IntegrationTestUtil::removeFile(const std::string_view filepath)
     }
     catch (const std::filesystem::filesystem_error& e)
     {
-        std::cerr << "Error deleting file: " << e.what() << std::endl;
+        NES_ERROR("Error deleting file: {}", e.what());
     }
 }
 
 bool IntegrationTestUtil::loadFile(
     SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName, const std::string_view dataFileName)
 {
-    std::ifstream f(std::filesystem::path(TEST_DATA_DIR) / "queriesSerialized" / (queryFileName));
-    if (!f)
+    std::ifstream file(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
+    if (!file)
     {
-        NES_ERROR("Query file is not available: {}/inputCSVFiles/{}", TEST_DATA_DIR, queryFileName);
+        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
         return false;
     }
-    if (!queryPlan.ParseFromIstream(&f))
+    if (!queryPlan.ParseFromIstream(&file))
     {
-        NES_ERROR("Could not load protobuffer file: {}/inputCSVFiles/{}", TEST_DATA_DIR, queryFileName);
+        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
         return false;
     }
     copyInputFile(dataFileName);
@@ -123,21 +123,21 @@ bool IntegrationTestUtil::loadFile(
 
 bool IntegrationTestUtil::loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName)
 {
-    std::ifstream f(std::filesystem::path(TEST_DATA_DIR) / "queriesSerialized" / (queryFileName));
+    std::ifstream f(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
     if (!f)
     {
-        NES_ERROR("Query file is not available: {}/inputCSVFiles/{}", TEST_DATA_DIR, queryFileName);
+        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
         return false;
     }
     if (!queryPlan.ParseFromIstream(&f))
     {
-        NES_ERROR("Could not load protobuffer file: {}/inputCSVFiles/{}", TEST_DATA_DIR, queryFileName);
+        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
         return false;
     }
     return true;
 }
 
-void IntegrationTestUtil::replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string_view fileName)
+void IntegrationTestUtil::replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName)
 {
     EXPECT_EQ(decomposedQueryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = decomposedQueryPlan.mutable_rootoperatorids()->at(0);

@@ -43,7 +43,6 @@ TCPSource::TCPSource(
     TCPSourceTypePtr tcpSourceType,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     const std::string& physicalSourceName,
@@ -54,7 +53,6 @@ TCPSource::TCPSource(
         std::move(queryManager),
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         gatheringMode,
         physicalSourceName,
@@ -115,8 +113,8 @@ void TCPSource::open()
 
     hints.ai_family = static_cast<int>(sourceConfig->getSocketDomain()->getValue());
     hints.ai_socktype = static_cast<int>(sourceConfig->getSocketType()->getValue());
-    hints.ai_flags = 0;
-    hints.ai_protocol = 0;
+    hints.ai_flags = 0; /// use default behavior
+    hints.ai_protocol = 0; /// specifying 0 in this field indicates that socket addresses with any protocol can be returned by getaddrinfo()
 
     auto host = sourceConfig->getSocketHost()->getValue();
     auto port = std::to_string(sourceConfig->getSocketPort()->getValue());
@@ -124,6 +122,7 @@ void TCPSource::open()
     const auto errorCode = getaddrinfo(host.c_str(), port.c_str(), &hints, &result);
     if (errorCode != 0)
     {
+        /// #72: use correct error type
         NES_THROW_RUNTIME_ERROR("TCPSource::open: getaddrinfo failed. Error: " << gai_strerror(errorCode));
     }
 
@@ -145,12 +144,14 @@ void TCPSource::open()
             break; /// success
         }
 
+        /// The connection was closed, therefore we close the source.
         close();
     }
     freeaddrinfo(result);
 
     if (result == nullptr)
     {
+        /// #72: use correct error type
         NES_THROW_RUNTIME_ERROR("TCPSource::open: Could not connect to " << host << ":" << port);
     }
 

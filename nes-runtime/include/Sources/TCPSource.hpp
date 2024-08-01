@@ -18,9 +18,9 @@
 #include <cstdint>
 #include <memory>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/MMapCircularBuffer.hpp>
-#include "Runtime/RuntimeForwardRefs.hpp"
 
 namespace NES
 {

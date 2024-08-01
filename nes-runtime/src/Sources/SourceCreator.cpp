@@ -22,7 +22,6 @@
 namespace NES
 {
 
-
 DataSourcePtr createCSVFileSource(
     const SchemaPtr& schema,
     const Runtime::BufferManagerPtr& bufferManager,
@@ -30,7 +29,6 @@ DataSourcePtr createCSVFileSource(
     const CSVSourceTypePtr& csvSourceType,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -42,42 +40,10 @@ DataSourcePtr createCSVFileSource(
         csvSourceType,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,
         successors);
-}
-
-DataSourcePtr createNetworkSource(
-    const SchemaPtr& schema,
-    const Runtime::BufferManagerPtr& bufferManager,
-    const Runtime::QueryManagerPtr& queryManager,
-    const Network::NetworkManagerPtr& networkManager,
-    Network::NesPartition nesPartition,
-    Network::NodeLocation sinkLocation,
-    size_t numSourceLocalBuffers,
-    std::chrono::milliseconds waitTime,
-    uint8_t retryTimes,
-    const std::string& physicalSourceName,
-    DecomposedQueryPlanVersion version,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors,
-    OperatorId uniqueNetworkSourceId)
-{
-    return std::make_shared<Network::NetworkSource>(
-        schema,
-        bufferManager,
-        queryManager,
-        networkManager,
-        nesPartition,
-        sinkLocation,
-        numSourceLocalBuffers,
-        waitTime,
-        retryTimes,
-        successors,
-        version,
-        uniqueNetworkSourceId,
-        physicalSourceName);
 }
 
 DataSourcePtr createTCPSource(
@@ -87,7 +53,6 @@ DataSourcePtr createTCPSource(
     const TCPSourceTypePtr& tcpSourceType,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -99,10 +64,9 @@ DataSourcePtr createTCPSource(
         tcpSourceType,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,
         successors);
 }
-} // namespace NES
+} /// namespace NES

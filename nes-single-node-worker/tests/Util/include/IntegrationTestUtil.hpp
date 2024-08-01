@@ -23,6 +23,9 @@ namespace NES
 {
 class IntegrationTestUtil
 {
+    inline static const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
+    inline static const std::string INPUT_CSV_FILES = "inputCSVFiles";
+
 public:
     /**
      * Loads the output @link Schema of the SinkOperator in the @link SerializableDecomposedQueryPlan. This requieres the plan to only
@@ -71,7 +74,7 @@ public:
      * @param decomposedQueryPlan the decomposed query plan containing the csv file sink.
      * @param fileName the name that the csv file sink will write to.
      */
-    static void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string_view fileName);
+    static void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName);
 
     /**
      * @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.

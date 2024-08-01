@@ -23,34 +23,26 @@ physicalSources:
     # Set physical source name
     physicalSourceName: default_source_phy
     # Define source type, also need to specify source configurations for source type below
-    type: DEFAULT_SOURCE
-    # DefaultSource and its needed configuration params
-    configuration:
-      ###### Define only the following configurations for DefaultSource source
-      # Set number of buffers to produce, i.e. how often the default data is repeated for this source
-      numberOfBuffersToProduce: 1
-  - logicalSourceName: hello
-    # Set physical source name
-    physicalSourceName: default_physical
-    # Define source type, also need to specify source configurations for source type below
-    type: MQTT_SOURCE
+    type: CSV_SOURCE
     # DefaultSource and its needed configuration params
     configuration:
       # Set file path
       filePath: ../tests/test_data/QnV_short.csv
-      # Set url to connect to
-      url: tcp://127.0.0.1:2000
-      # Set clientId
-      clientId: testClient
-      # Set userName
-      userName: testUser
-      # Set topic to listen to
-      topic: testTopic
-      # set quality of service
-      qos: 2
-      # set cleanSession true = clean up session after client loses connection, false = keep data for client after connection loss (persistent session)
-      cleanSession: true
-      # set tupleBuffer flush interval in milliseconds
-      flushIntervalMS: -1
       # Set input data format
-      inputFormat: JSON
+      inputFormat: CSV
+  - logicalSourceName: hello
+    # Set physical source name
+    physicalSourceName: default_physical
+    # Define source type, also need to specify source configurations for source type below
+    type: TCP_SOURCE
+    # DefaultSource and its needed configuration params
+    configuration:
+      type: TCP_SOURCE
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: 12345
+      socketHost: localhost
+      inputFormat: CSV
+      socketBufferSize: 2
+      decideMessageSize: TUPLE_SEPARATOR
+      flushIntervalMS: 100

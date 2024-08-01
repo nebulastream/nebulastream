@@ -56,9 +56,9 @@ const std::string& FileSinkDescriptor::getFileName() const
 {
     return fileName;
 }
-void FileSinkDescriptor::setFileName(const std::string_view fileName)
+void FileSinkDescriptor::setFileName(const std::string fileName)
 {
-    this->fileName = fileName;
+    this->fileName = std::move(fileName);
 }
 
 std::string FileSinkDescriptor::toString() const
