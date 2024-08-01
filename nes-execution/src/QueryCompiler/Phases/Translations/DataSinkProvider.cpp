@@ -11,27 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
-#include <utility>
 
-namespace NES::QueryCompilation {
-
-DataSinkProviderPtr DataSinkProvider::create() { return std::make_shared<DataSinkProvider>(); }
-
-DataSinkPtr DataSinkProvider::lower(OperatorId sinkId,
-                                    SinkDescriptorPtr sinkDescriptor,
-                                    SchemaPtr schema,
-                                    Runtime::NodeEnginePtr nodeEngine,
-                                    const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
-                                    size_t numOfProducers)
+namespace NES::QueryCompilation
 {
-    return ConvertLogicalToPhysicalSink::createDataSink(sinkId,
-                                                        std::move(sinkDescriptor),
-                                                        std::move(schema),
-                                                        std::move(nodeEngine),
-                                                        querySubPlan,
-                                                        numOfProducers);
+
+DataSinkProviderPtr DataSinkProvider::create()
+{
+    return std::make_shared<DataSinkProvider>();
 }
 
-}// namespace NES::QueryCompilation
+DataSinkPtr DataSinkProvider::lower(
+    OperatorId sinkId,
+    SinkDescriptorPtr sinkDescriptor,
+    SchemaPtr schema,
+    Runtime::NodeEnginePtr nodeEngine,
+    const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
+    size_t numOfProducers)
+{
+    return ConvertLogicalToPhysicalSink::createDataSink(
+        sinkId, std::move(sinkDescriptor), std::move(schema), std::move(nodeEngine), querySubPlan, numOfProducers);
+}
+
+} // namespace NES::QueryCompilation

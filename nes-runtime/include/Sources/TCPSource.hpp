@@ -15,10 +15,12 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
 
+#include <cstdint>
+#include <memory>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Sources/DataSource.hpp>
-#include <Util/CircularBuffer.hpp>
 #include <Util/MMapCircularBuffer.hpp>
+#include "Runtime/RuntimeForwardRefs.hpp"
 
 namespace NES
 {
@@ -31,6 +33,8 @@ using ParserPtr = std::shared_ptr<Parser>;
  */
 class TCPSource : public DataSource
 {
+  /// TODO #74: make timeout configurable via descriptor
+  constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
 public:
     /**
      * @brief constructor of a TCP Source
@@ -114,8 +118,9 @@ private:
     uint64_t tuplesThisPass;
     TCPSourceTypePtr sourceConfig;
     int sockfd = -1;
+    timeval timeout;
     MMapCircularBuffer circularBuffer;
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
-} /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
+} // namespace NES
+#endif // NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_

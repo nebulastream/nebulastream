@@ -64,7 +64,6 @@ if (sourceDescriptor->instanceOf<CsvSourceDescriptor>()) {
                                    csvSourceDescriptor->getSourceConfig(),
                                    operatorId,
                                    originId,
-                                   statisticId,
                                    numSourceLocalBuffers,
                                    sourceDescriptor->getPhysicalSourceName(),
                                    successors);

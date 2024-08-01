@@ -12,30 +12,11 @@
     limitations under the License.
 */
 
-#include <Configurations/Worker/PhysicalSourceTypes/BenchmarkSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/DefaultSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/KafkaSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/LambdaSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MQTTSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/MonitoringSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/SenseSourceType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/StaticDataSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/BenchmarkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/DefaultSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/KafkaSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LambdaSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MQTTSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MemorySourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/MonitoringSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SenseSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptorPlugin.hpp>
-#include <Operators/LogicalOperators/Sources/StaticDataSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
@@ -281,16 +262,18 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     return executablePipeline;
 }
 
-SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema,
-                                                                            PhysicalSourceTypePtr physicalSourceType) {
+SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
+{
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
     auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
     auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG("PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-              physicalSourceType->toString(),
-              magic_enum::enum_name(sourceType));
+    NES_DEBUG(
+        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
+        physicalSourceType->toString(),
+        magic_enum::enum_name(sourceType));
 
-    switch (sourceType) {
+    switch (sourceType)
+    {
         case SourceType::CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
             return CsvSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
@@ -300,10 +283,10 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
             return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
         }
         default: {
-            throw QueryCompilationException("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString()
-                                            + " not supported");
+            throw QueryCompilationException(
+                "PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
         }
     }
 }
 
-}// namespace NES::QueryCompilation
+} // namespace NES::QueryCompilation
