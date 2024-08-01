@@ -44,6 +44,26 @@ jobs:
           gh-token: ${{ secrets.NES_CI_SECRET }}
           comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
 
+  pre-dependency-check:
+    name: "Check changes to dependencies"
+    runs-on: [ docker-builder-runner-set ]
+    container:
+      image: gcr.io/kaniko-project/executor:debug
+    permissions:
+      contents: read
+    steps:
+      - name: "image builder"
+        run: |        
+          # Write config file, change to your destination registry
+
+          export GIT_USERNAME="kaniko-bot"
+          export GIT_PASSWORD="${{ secrets.GITHUB_TOKEN }}" # works for GHEC or GHES container registry
+
+          /kaniko/executor --dockerfile="./docker/vcpkg-build.dockerfile" \
+          --context="${{ github.repositoryUrl }}#${{ github.ref }}#${{ github.sha }}" \
+          --no-push
+
+
   pre-build-checks:
     name: "Pre-Build-Checks"
     runs-on: [ arc-runner-set ]
@@ -77,7 +97,7 @@ jobs:
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
     name: ${{ matrix.osversion }} ${{ matrix.arch }}
-    needs: [ pre-build-checks ]
+    needs: [ pre-build-checks, pre-dependency-check ]
     timeout-minutes: 40
     runs-on: [ arc-runner-set ]
     strategy:
