@@ -155,12 +155,6 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     endif ()
 endif ()
 
-# BOOST
-if(NES_USE_BOOST)
-    message(STATUS "Using boost")
-    add_subdirectory(asio)
-endif()
-
 if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
     message(STATUS "ENABLE CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE")
     if (NOT NES_USE_ONE_QUEUE_PER_QUERY)
@@ -627,6 +621,11 @@ add_subdirectory(nes-single-node-worker)
 
 # Documentation
 add_subdirectory(cmake/docs)
+
+# Temporary boost-asio (remove after adding asio via VCPKG)
+if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    add_subdirectory(asio)
+endif()
 
 
 
