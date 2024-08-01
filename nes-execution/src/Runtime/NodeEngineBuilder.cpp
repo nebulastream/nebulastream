@@ -27,7 +27,6 @@
 #include <Runtime/HardwareManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
-#include <Runtime/OpenCLManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
