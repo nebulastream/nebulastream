@@ -38,7 +38,6 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     ctx.setSequenceNumber(recordBuffer.getSequenceNr());
     ctx.setChunkNumber(recordBuffer.getChunkNr());
     ctx.setLastChunk(recordBuffer.isLastChunk());
-    ctx.setCurrentStatisticId(recordBuffer.getStatisticId());
     /// call open on all child operators
     child->open(ctx, recordBuffer);
     /// iterate over records in buffer

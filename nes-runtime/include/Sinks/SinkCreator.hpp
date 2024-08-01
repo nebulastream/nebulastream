@@ -14,7 +14,6 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
-#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #ifdef ENABLE_OPC_BUILD
 #    include <open62541/client_config_default.h>

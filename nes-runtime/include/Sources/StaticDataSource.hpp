@@ -49,7 +49,6 @@ public:
      * @param queryManager pointer to the query manager
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-     * @param statisticId represents the unique identifier of components that we can track statistics for
      * @param numSourceLocalBuffers the number of buffers allocated to a source
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
@@ -62,7 +61,6 @@ public:
         ::NES::Runtime::QueryManagerPtr queryManager,
         OperatorId operatorId,
         OriginId originId,
-        StatisticId statisticId,
         size_t numSourceLocalBuffers,
         const std::string& physicalSourceName,
         std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors);

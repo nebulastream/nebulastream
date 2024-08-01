@@ -28,14 +28,9 @@ class PhysicalSlicePreAggregationOperator : public PhysicalWindowOperator, publi
 {
 public:
     PhysicalSlicePreAggregationOperator(
-        OperatorId id,
-        StatisticId statisticId,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::LogicalWindowDescriptorPtr windowDefinition);
+        OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition);
     static PhysicalOperatorPtr create(
         OperatorId id,
-        StatisticId statisticId,
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
         const Windowing::LogicalWindowDescriptorPtr& windowDefinition);

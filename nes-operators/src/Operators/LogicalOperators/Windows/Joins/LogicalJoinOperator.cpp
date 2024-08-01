@@ -198,7 +198,6 @@ OperatorPtr LogicalJoinOperator::copy()
     copy->windowStartFieldName = windowStartFieldName;
     copy->windowEndFieldName = windowEndFieldName;
     copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);

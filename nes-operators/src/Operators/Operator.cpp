@@ -23,11 +23,7 @@ namespace NES
 /**
  * @brief We initialize the input and output schemas with empty schemas.
  */
-Operator::Operator(OperatorId id) : Operator(id, INVALID_STATISTIC_ID)
-{
-}
-
-Operator::Operator(OperatorId id, StatisticId statisticId) : id(id), statisticId(statisticId)
+Operator::Operator(OperatorId id) : id(id)
 {
     NES_INFO("Creating Operator {}", id);
 }
@@ -40,16 +36,6 @@ OperatorId Operator::getId() const
 void Operator::setId(OperatorId id)
 {
     Operator::id = id;
-}
-
-StatisticId Operator::getStatisticId() const
-{
-    return statisticId;
-}
-
-void Operator::setStatisticId(StatisticId statisticId)
-{
-    Operator::statisticId = statisticId;
 }
 
 bool Operator::hasMultipleChildrenOrParents() const
@@ -217,26 +203,6 @@ NodePtr Operator::getChildWithOperatorId(OperatorId operatorId) const
     return nullptr;
 }
 
-NodePtr Operator::getChildWithStatisticId(StatisticId statisticId) const
-{
-    for (const auto& child : children)
-    {
-        /// If the child has a matching statistic id then return it
-        if (child->as<Operator>()->getStatisticId() == statisticId)
-        {
-            return child;
-        }
-
-        /// Look in all children for a matching operator in the grand children list
-        auto found = child->as<Operator>()->getChildWithStatisticId(statisticId);
-        if (found)
-        {
-            return found;
-        }
-    }
-    return nullptr;
-}
-
 void Operator::addProperty(const std::string& key, const std::any value)
 {
     properties[key] = value;
@@ -304,18 +270,11 @@ OperatorId getNextOperatorId()
     return OperatorId(id++);
 }
 
-StatisticId getNextStatisticId()
-{
-    static std::atomic<StatisticId> statisticId = INVALID_STATISTIC_ID;
-    return ++statisticId;
-}
-
 std::string Operator::toString() const
 {
     std::stringstream out;
     out << std::endl;
     out << "operatorId: " << id << "\n";
-    out << "statisticId: " << statisticId << "\n";
     out << "properties: ";
     for (const auto& item : properties)
     {

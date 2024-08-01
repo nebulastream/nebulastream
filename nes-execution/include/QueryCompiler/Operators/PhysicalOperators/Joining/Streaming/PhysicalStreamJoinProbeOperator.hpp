@@ -32,7 +32,6 @@ public:
     /**
      * @brief creates a PhysicalStreamJoinProbeOperator with a provided operatorId
      * @param id
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -43,7 +42,6 @@ public:
      */
     static PhysicalOperatorPtr create(
         OperatorId id,
-        StatisticId statisticId,
         const SchemaPtr& leftSchema,
         const SchemaPtr& rightSchema,
         const SchemaPtr& outputSchema,
@@ -56,7 +54,6 @@ public:
 
     /**
      * @brief Creates a PhysicalStreamJoinProbeOperator that retrieves a new operatorId by calling method
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -66,7 +63,6 @@ public:
      * @return PhysicalStreamJoinProbeOperator
      */
     static PhysicalOperatorPtr create(
-        StatisticId statisticId,
         const SchemaPtr& leftSchema,
         const SchemaPtr& rightSchema,
         const SchemaPtr& outputSchema,
@@ -80,7 +76,6 @@ public:
     /**
      * @brief Constructor for a PhysicalStreamJoinProbeOperator
      * @param id
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param leftSchema
      * @param rightSchema
      * @param outputSchema
@@ -88,7 +83,6 @@ public:
      */
     PhysicalStreamJoinProbeOperator(
         OperatorId id,
-        StatisticId statisticId,
         const SchemaPtr& leftSchema,
         const SchemaPtr& rightSchema,
         const SchemaPtr& outputSchema,

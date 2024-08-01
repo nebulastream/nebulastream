@@ -7,7 +7,6 @@ JNI.cpp
 base64.h
 base64.cpp
 apex_memmove.cpp
-HyperLogLog.hpp
 digestible.h
 
 # Folders

@@ -58,7 +58,7 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
         if (rootOperator->instanceOf<PhysicalOperators::PhysicalUnaryOperator>())
         {
             auto binaryRoot = rootOperator->as<PhysicalOperators::PhysicalUnaryOperator>();
-            auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getStatisticId(), binaryRoot->getInputSchema());
+            auto newScan = PhysicalOperators::PhysicalScanOperator::create(binaryRoot->getInputSchema());
             pipeline->prependOperator(newScan);
         }
         else
@@ -74,8 +74,7 @@ OperatorPipelinePtr AddScanAndEmitPhase::process(OperatorPipelinePtr pipeline)
         auto leafOperator = leaf->as<Operator>();
         if (!leafOperator->instanceOf<PhysicalOperators::AbstractEmitOperator>())
         {
-            auto emitOperator
-                = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getStatisticId(), leafOperator->getOutputSchema());
+            auto emitOperator = PhysicalOperators::PhysicalEmitOperator::create(leafOperator->getOutputSchema());
             leafOperator->addChild(emitOperator);
         }
     }

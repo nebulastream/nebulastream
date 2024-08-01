@@ -29,12 +29,6 @@ void Operator::setup(ExecutionContext& executionCtx) const
 
 void Operator::open(ExecutionContext& executionCtx, RecordBuffer& rb) const
 {
-    /** We need to set the statisticId in the emitted tuplebuffer. With our current query compiler interface, we
-     * can not access the input tuple buffer in the emit operator. Therefore, we use the ExecutionContext as a bridge
-     * between Scan (access to the input buffer) and Emit (access to the output buffer).
-     * As the statistic id is tied to a tuple buffer, we have to set it again for each tuple buffer.
-     */
-    executionCtx.setCurrentStatisticId(statisticId);
     if (hasChild())
     {
         child->open(executionCtx, rb);
@@ -61,11 +55,6 @@ void Operator::setChild(Operators::ExecuteOperatorPtr child)
         NES_THROW_RUNTIME_ERROR("This operator already has a child operator");
     }
     this->child = std::move(child);
-}
-
-void Operator::setStatisticId(StatisticId statisticId)
-{
-    this->statisticId = statisticId;
 }
 
 void Operator::terminate(ExecutionContext& executionCtx) const

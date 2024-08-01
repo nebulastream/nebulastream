@@ -45,8 +45,6 @@ class SerializableOperator_ProjectionDetails;
 class SerializableOperator_FilterDetails;
 class SerializableOperator_UnionDetails;
 class SerializableOperator_BroadcastDetails;
-class StatisticWindowDescriptorMessage;
-class SerializableOperator_SinkDetails_StatisticSinkDescriptor;
 
 /**
  * @brief The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a
@@ -340,22 +338,6 @@ public:
      * @return LogicalOpenCLOperatorPtr
      */
     static LogicalUnaryOperatorPtr deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails);
-
-    /**
-     * @brief Serializes a LogicalStatisticWindowOperator
-     * @param statisticWindowOperator
-     * @param serializedOperator
-     */
-    static void serializeStatisticWindowOperator(
-        const Statistic::LogicalStatisticWindowOperator& statisticWindowOperator, SerializableOperator& serializedOperator);
-
-    /**
-     * @brief Deserializes a LogicalStatisticWindowOperator
-     * @param statisticWindowDetails
-     * @param StatisticWindowOperator as LogicalUnaryOperator
-     */
-    static LogicalUnaryOperatorPtr
-    deserializeStatisticWindowOperator(const SerializableOperator_StatisticWindowDetails& statisticWindowDetails);
 };
 } /// namespace NES
 

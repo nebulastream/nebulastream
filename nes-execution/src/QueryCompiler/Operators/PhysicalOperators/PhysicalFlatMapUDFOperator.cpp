@@ -18,34 +18,21 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 PhysicalFlatMapUDFOperator::PhysicalFlatMapUDFOperator(
-    OperatorId id,
-    StatisticId statisticId,
-    const SchemaPtr& inputSchema,
-    const SchemaPtr& outputSchema,
-    const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
-    : Operator(id, statisticId)
-    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
-    , udfDescriptor(std::move(udfDescriptor))
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), udfDescriptor(std::move(udfDescriptor))
 {
 }
 
 PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(
-    StatisticId statisticId,
-    const SchemaPtr& inputSchema,
-    const SchemaPtr& outputSchema,
-    const Catalogs::UDF::UDFDescriptorPtr udfDescriptor)
+    const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::UDFDescriptorPtr udfDescriptor)
 {
-    return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, udfDescriptor);
+    return create(getNextOperatorId(), inputSchema, outputSchema, udfDescriptor);
 }
 
 PhysicalOperatorPtr PhysicalFlatMapUDFOperator::create(
-    OperatorId id,
-    StatisticId statisticId,
-    const SchemaPtr& inputSchema,
-    const SchemaPtr& outputSchema,
-    const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const Catalogs::UDF::UDFDescriptorPtr& udfDescriptor)
 {
-    return std::make_shared<PhysicalFlatMapUDFOperator>(id, statisticId, inputSchema, outputSchema, udfDescriptor);
+    return std::make_shared<PhysicalFlatMapUDFOperator>(id, inputSchema, outputSchema, udfDescriptor);
 }
 
 std::string PhysicalFlatMapUDFOperator::toString() const
@@ -64,7 +51,7 @@ std::string PhysicalFlatMapUDFOperator::toString() const
 
 OperatorPtr PhysicalFlatMapUDFOperator::copy()
 {
-    auto result = create(id, statisticId, inputSchema, outputSchema, udfDescriptor);
+    auto result = create(id, inputSchema, outputSchema, udfDescriptor);
     result->addAllProperties(properties);
     return result;
 }

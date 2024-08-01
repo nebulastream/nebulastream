@@ -76,17 +76,10 @@ public:
      */
     void setChild(ExecuteOperatorPtr child);
 
-    /**
-     * @brief Sets the statisticId of this operator
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
-     */
-    void setStatisticId(StatisticId statisticId);
-
     virtual ~Operator();
 
 protected:
     mutable ExecuteOperatorPtr child;
-    StatisticId statisticId;
 };
 
 } /// namespace NES::Runtime::Execution::Operators

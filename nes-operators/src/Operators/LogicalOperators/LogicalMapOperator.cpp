@@ -79,7 +79,7 @@ bool LogicalMapOperator::inferSchema()
 std::string LogicalMapOperator::toString() const
 {
     std::stringstream ss;
-    ss << "MAP(opId: " << id << ", statisticId: " << statisticId << ", predicate: " << mapExpression->toString() << ")";
+    ss << "MAP(opId: " << id << ": predicate: " << mapExpression->toString() << ")";
     return ss.str();
 }
 
@@ -92,7 +92,6 @@ OperatorPtr LogicalMapOperator::copy()
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);

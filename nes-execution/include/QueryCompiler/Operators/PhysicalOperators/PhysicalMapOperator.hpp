@@ -25,20 +25,10 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalMapOperator : public PhysicalUnaryOperator
 {
 public:
-    PhysicalMapOperator(
-        OperatorId id,
-        StatisticId statisticId,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        FieldAssignmentExpressionNodePtr mapExpression);
+    PhysicalMapOperator(OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
     static PhysicalOperatorPtr create(
-        OperatorId id,
-        StatisticId statisticId,
-        const SchemaPtr& inputSchema,
-        const SchemaPtr& outputSchema,
-        const FieldAssignmentExpressionNodePtr& mapExpression);
-    static PhysicalOperatorPtr
-    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
+        OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FieldAssignmentExpressionNodePtr& mapExpression);
+    static PhysicalOperatorPtr create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression);
     std::string toString() const override;
     OperatorPtr copy() override;
 
