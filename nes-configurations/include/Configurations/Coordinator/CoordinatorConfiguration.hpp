@@ -16,13 +16,13 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
 
 #include <string>
-#include "Configurations/BaseConfiguration.hpp"
-#include "Configurations/Coordinator/ElegantConfigurations.hpp"
-#include "Configurations/Coordinator/LogicalSourceTypeFactory.hpp"
-#include "Configurations/Coordinator/OptimizerConfiguration.hpp"
-#include "Configurations/Enums/StorageHandlerType.hpp"
-#include "Configurations/Validation/IpValidation.hpp"
-#include "Configurations/Worker/WorkerConfiguration.hpp"
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/Coordinator/ElegantConfigurations.hpp>
+#include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Configurations/Enums/StorageHandlerType.hpp>
+#include <Configurations/Validation/IpValidation.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
 
 namespace NES::Configurations
 {

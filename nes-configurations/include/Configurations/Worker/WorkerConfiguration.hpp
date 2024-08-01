@@ -16,15 +16,15 @@
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_WORKERCONFIGURATION_HPP_
 
 #include <string>
-#include "Configurations/BaseConfiguration.hpp"
-#include "Configurations/ConfigurationOption.hpp"
-#include "Configurations/Enums/EnumOptionDetails.hpp"
-#include "Configurations/Enums/QueryExecutionMode.hpp"
-#include "Configurations/Validation/NonZeroValidation.hpp"
-#include "Configurations/Worker/PhysicalSourceTypeFactory.hpp"
-#include "Configurations/Worker/QueryCompilerConfiguration.hpp"
-#include "Identifiers/Identifiers.hpp"
-#include "Identifiers/NESStrongTypeYaml.hpp"
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Enums/EnumOptionDetails.hpp>
+#include <Configurations/Enums/QueryExecutionMode.hpp>
+#include <Configurations/Validation/NonZeroValidation.hpp>
+#include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongTypeYaml.hpp>
 
 namespace NES
 {
