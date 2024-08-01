@@ -31,12 +31,6 @@ enum class ReconfigurationType : uint8_t
     HardEndOfStream,
     /// forceful stop of a query with a failure
     FailEndOfStream,
-    /// start the process of connecting to a new network source
-    ConnectToNewReceiver,
-    /// indicate successful establishment of a network connection
-    ConnectionEstablished,
-    /// Indicates that the version of the operator is updated due to reconfiguration as part of query redeployment
-    UpdateVersion,
 };
 }
 

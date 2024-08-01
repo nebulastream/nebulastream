@@ -21,14 +21,10 @@
 #include "Configurations/Enums/EnumOptionDetails.hpp"
 #include "Configurations/Enums/QueryExecutionMode.hpp"
 #include "Configurations/Validation/NonZeroValidation.hpp"
-#include "Configurations/Worker/GeoLocationFactory.hpp"
 #include "Configurations/Worker/PhysicalSourceTypeFactory.hpp"
 #include "Configurations/Worker/QueryCompilerConfiguration.hpp"
-#include "Configurations/Worker/WorkerMobilityConfiguration.hpp"
 #include "Identifiers/Identifiers.hpp"
 #include "Identifiers/NESStrongTypeYaml.hpp"
-#include "Util/Mobility/GeoLocation.hpp"
-#include "Util/Mobility/SpatialType.hpp"
 
 namespace NES
 {
@@ -214,27 +210,6 @@ public:
         = {PHYSICAL_SOURCES, "Physical sources"};
 
     /**
-     * @brief location coordinate of the node if any
-     */
-    WrapOption<NES::Spatial::DataTypes::Experimental::GeoLocation, Configurations::Spatial::Index::Experimental::GeoLocationFactory>
-        locationCoordinates = {LOCATION_COORDINATES_CONFIG, "the physical location of the worker"};
-
-    /**
-     * @brief specify if the worker is running on a mobile device, if it is a node with a known fixed loction, or if it
-     * does not have a known location.
-     */
-    EnumOption<NES::Spatial::Experimental::SpatialType> nodeSpatialType
-        = {SPATIAL_TYPE_CONFIG,
-           NES::Spatial::Experimental::SpatialType::NO_LOCATION,
-           "specifies if the worker has no known location or if it is a fixed location node or mobile node"};
-
-    /**
-     * @brief specifies the path to a yaml file containing a mobility configuration
-     */
-    Spatial::Mobility::Experimental::WorkerMobilityConfiguration mobilityConfiguration
-        = {MOBILITY_CONFIG_CONFIG, "the configuration data for the location provider class"};
-
-    /**
      * @brief Configuration yaml path.
      * @warning this is just a placeholder configuration
      */
@@ -337,9 +312,6 @@ private:
             &numaAwareness,
             &queryCompiler,
             &physicalSourceTypes,
-            &locationCoordinates,
-            &nodeSpatialType,
-            &mobilityConfiguration,
             &numberOfQueues,
             &numberOfThreadsPerQueue,
             &numberOfBuffersPerEpoch,

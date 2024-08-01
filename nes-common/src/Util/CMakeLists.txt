@@ -16,7 +16,6 @@ add_source_files(nes-common
         FileMutex.cpp
         DumpHelper.cpp
         Common.cpp
-        SpatialUtils.cpp
         StacktraceLoader.cpp
         ThreadNaming.cpp
         TimeMeasurement.cpp
@@ -24,6 +23,5 @@ add_source_files(nes-common
         TopologyLinkInformation.cpp
 )
 add_subdirectory(Logger)
-add_subdirectory(Mobility)
 add_subdirectory(Subprocess)
 add_subdirectory(yaml)

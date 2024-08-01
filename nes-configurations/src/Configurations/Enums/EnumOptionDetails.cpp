@@ -31,7 +31,6 @@
 namespace NES::Configurations
 {
 
-template class EnumOption<NES::Spatial::Experimental::SpatialType>;
 template class EnumOption<NES::QueryCompilation::QueryCompilerType>;
 template class EnumOption<NES::QueryCompilation::CompilationStrategy>;
 template class EnumOption<NES::QueryCompilation::PipeliningStrategy>;
@@ -40,7 +39,6 @@ template class EnumOption<NES::QueryCompilation::NautilusBackend>;
 template class EnumOption<NES::QueryCompilation::OutputBufferOptimizationLevel>;
 template class EnumOption<NES::QueryCompilation::WindowingStrategy>;
 template class EnumOption<NES::Runtime::QueryExecutionMode>;
-template class EnumOption<NES::Spatial::Mobility::Experimental::LocationProviderType>;
 template class EnumOption<NES::Optimizer::QueryMergerRule>;
 template class EnumOption<NES::LogLevel>;
 template class EnumOption<NES::Optimizer::MemoryLayoutPolicy>;
