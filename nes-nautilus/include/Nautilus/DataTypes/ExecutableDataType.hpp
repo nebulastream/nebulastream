@@ -49,7 +49,7 @@ class ExecutableDataType : public AbstractDataType {
     }
 
     template<typename CastedDataType>
-    nautilus::val<CastedDataType> as() const {
+    nautilus::val<CastedDataType> valueAsType() const {
         return static_cast<nautilus::val<CastedDataType>>(rawValue);
     }
 
@@ -460,6 +460,37 @@ ExecDataType operator>>(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) 
 ExecDataType operator>>(const ExecDataType& lhs, const ExecDataType& rhs);
 
 ExecDataType operator!(const ExecDataType& lhs);
+
+template<typename CastType>
+ExecDataType castTo(const ExecDataType& lhs) {
+    if (lhs->instanceOf<ExecDataUInt8>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataUInt8>()->valueAsType<uint8_t>()));
+    } else if (lhs->instanceOf<ExecDataUInt16>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataUInt16>()->valueAsType<uint16_t>()));
+    } else if (lhs->instanceOf<ExecDataUInt32>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataUInt32>()->valueAsType<uint32_t>()));
+    } else if (lhs->instanceOf<ExecDataUInt64>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataUInt64>()->valueAsType<uint64_t>()));
+    } else if (lhs->instanceOf<ExecDataInt8>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataInt8>()->valueAsType<int8_t>()));
+    } else if (lhs->instanceOf<ExecDataInt16>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataInt16>()->valueAsType<int16_t>()));
+    } else if (lhs->instanceOf<ExecDataInt32>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataInt32>()->valueAsType<int32_t>()));
+    } else if (lhs->instanceOf<ExecDataInt64>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataInt64>()->valueAsType<int64_t>()));
+    } else if (lhs->instanceOf<ExecDataFloat>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataFloat>()->valueAsType<float>()));
+    } else if (lhs->instanceOf<ExecDataDouble>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataDouble>()->valueAsType<double>()));
+    } else if (lhs->instanceOf<ExecDataBoolean>()) {
+        return ExecutableDataType<CastType>::create(static_cast<nautilus::val<CastType>>(lhs->as<ExecDataBoolean>()->valueAsType<bool>()));
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
+std::pair<ExecDataType, ExecDataType> castToSameType(const ExecDataType& lhs, const ExecDataType& rhs);
 
 }// namespace NES::Nautilus
 

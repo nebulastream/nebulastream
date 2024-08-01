@@ -83,6 +83,7 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
   protected:
     /// Defining operations on data types with other ExecDataTypes
     /// These methods should not be called directly, but rather through override operators in ExecDataTypes
+    /// We assume that the methods below are called with the same data type, e.g., both u64 or both double
     virtual ExecDataType operator&&(const ExecDataType& rightExp) const = 0;
     virtual ExecDataType operator||(const ExecDataType& rightExp) const = 0;
     virtual ExecDataType operator==(const ExecDataType& rightExp) const = 0;

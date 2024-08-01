@@ -95,7 +95,7 @@ template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator+(const ExecDataType& rightExp) const {
     if constexpr (std::is_same_v<ValueType, bool>) {
         const auto rawValueInt = static_cast<nautilus::val<int64_t>>(rawValue);
-        const auto otherRawValueInt = std::dynamic_pointer_cast<ExecutableDataType<int64_t>>(rightExp)->as<int64_t>();
+        const auto otherRawValueInt = std::dynamic_pointer_cast<ExecutableDataType<int64_t>>(rightExp)->valueAsType<int64_t>();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<int64_t>::create(rawValueInt + otherRawValueInt, resultIsNull);
     } else {
@@ -109,7 +109,7 @@ template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator-(const ExecDataType& rightExp) const {
     if constexpr (std::is_same_v<ValueType, bool>) {
         const auto rawValueInt = static_cast<nautilus::val<int64_t>>(rawValue);
-        const auto otherRawValueInt = std::dynamic_pointer_cast<ExecutableDataType<int64_t>>(rightExp)->as<int64_t>();
+        const auto otherRawValueInt = std::dynamic_pointer_cast<ExecutableDataType<int64_t>>(rightExp)->valueAsType<int64_t>();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<int64_t>::create(rawValueInt - otherRawValueInt, resultIsNull);
     } else if constexpr (std::is_same_v<ValueType, int8_t*>) {
@@ -193,13 +193,13 @@ ExecDataType ExecutableDataType<ValueType>::operator^(const ExecDataType& rightE
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator<<(const ExecDataType& rightExp) const {
-//    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
-//        NES_NOT_IMPLEMENTED();
-//    } else {
-//        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
-//        const auto resultIsNull = null || rightExp->isNull();
-//        return ExecutableDataType<ValueType>::create(rawValue << otherRawValue, resultIsNull);
-//    }
+    //    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
+    //        NES_NOT_IMPLEMENTED();
+    //    } else {
+    //        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
+    //        const auto resultIsNull = null || rightExp->isNull();
+    //        return ExecutableDataType<ValueType>::create(rawValue << otherRawValue, resultIsNull);
+    //    }
     NES_NOT_IMPLEMENTED();
 }
 
@@ -330,11 +330,17 @@ void writeExecDataTypeToMemRef(nautilus::val<int8_t*>& memRef, const ExecDataTyp
     } else if (execDataType->instanceOf<ExecutableDataType<uint8_t>>()) {
         writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint8_t>>(execDataType)->getRawValue(), uint8_t);
     } else if (execDataType->instanceOf<ExecutableDataType<uint16_t>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint16_t>>(execDataType)->getRawValue(), uint16_t);
+        writeValueToMemRef(memRef,
+                           std::dynamic_pointer_cast<ExecutableDataType<uint16_t>>(execDataType)->getRawValue(),
+                           uint16_t);
     } else if (execDataType->instanceOf<ExecutableDataType<uint32_t>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint32_t>>(execDataType)->getRawValue(), uint32_t);
+        writeValueToMemRef(memRef,
+                           std::dynamic_pointer_cast<ExecutableDataType<uint32_t>>(execDataType)->getRawValue(),
+                           uint32_t);
     } else if (execDataType->instanceOf<ExecutableDataType<uint64_t>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint64_t>>(execDataType)->getRawValue(), uint64_t);
+        writeValueToMemRef(memRef,
+                           std::dynamic_pointer_cast<ExecutableDataType<uint64_t>>(execDataType)->getRawValue(),
+                           uint64_t);
     } else if (execDataType->instanceOf<ExecutableDataType<float>>()) {
         writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<float>>(execDataType)->getRawValue(), float);
     } else if (execDataType->instanceOf<ExecutableDataType<double>>()) {
@@ -354,24 +360,161 @@ void memCopy(nautilus::val<int8_t*> dest, nautilus::val<int8_t*> src, const naut
     nautilus::invoke(std::memcpy, dest, src, size);
 }
 
-ExecDataType Nautilus::operator==(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs == rhs; }
-ExecDataType Nautilus::operator+(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs + rhs; }
-ExecDataType Nautilus::operator&&(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs && rhs; }
-ExecDataType Nautilus::operator||(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs || rhs; }
-ExecDataType Nautilus::operator!=(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs != rhs; }
-ExecDataType Nautilus::operator<(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs < rhs; }
-ExecDataType Nautilus::operator>(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs > rhs; }
-ExecDataType Nautilus::operator<=(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs <= rhs; }
-ExecDataType Nautilus::operator>=(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs >= rhs; }
-ExecDataType Nautilus::operator-(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs - rhs; }
-ExecDataType Nautilus::operator*(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs * rhs; }
-ExecDataType Nautilus::operator/(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs / rhs; }
-ExecDataType Nautilus::operator%(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs % rhs; }
-ExecDataType Nautilus::operator&(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs & rhs; }
-ExecDataType Nautilus::operator|(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs | rhs; }
-ExecDataType Nautilus::operator^(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs ^ rhs; }
-ExecDataType Nautilus::operator<<(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs << rhs; }
-ExecDataType Nautilus::operator>>(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs >> rhs; }
+ExecDataType Nautilus::operator==(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted == rhsCasted; }
+ExecDataType Nautilus::operator+(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted + rhsCasted; }
+ExecDataType Nautilus::operator&&(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted && rhsCasted; }
+ExecDataType Nautilus::operator||(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted || rhsCasted; }
+ExecDataType Nautilus::operator!=(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted != rhsCasted; }
+
+ExecDataType Nautilus::operator<(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted < rhsCasted;
+}
+
+ExecDataType Nautilus::operator>(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted > rhsCasted;
+}
+ExecDataType Nautilus::operator<=(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted <= rhsCasted;
+}
+ExecDataType Nautilus::operator>=(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted >= rhsCasted;
+}
+ExecDataType Nautilus::operator-(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted - rhsCasted;
+}
+ExecDataType Nautilus::operator*(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted * rhsCasted;
+}
+ExecDataType Nautilus::operator/(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted / rhsCasted;
+}
+ExecDataType Nautilus::operator%(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted % rhsCasted;
+}
+ExecDataType Nautilus::operator&(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted & rhsCasted;
+}
+ExecDataType Nautilus::operator|(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted | rhsCasted;
+}
+ExecDataType Nautilus::operator^(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted ^ rhsCasted;
+}
+ExecDataType Nautilus::operator<<(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted << rhsCasted;
+}
+ExecDataType Nautilus::operator>>(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted >> rhsCasted;
+}
 ExecDataType operator!(const ExecDataType& lhs) { return !*lhs; }
+
+std::pair<ExecDataType, ExecDataType> castToSameType(const ExecDataType& lhs, const ExecDataType& rhs) {
+    /// If lhs and rhs are the same type, we can call the operator directly without any conversion
+    if (typeid(*lhs) == typeid(*rhs)) {
+        return {lhs, rhs};
+    }
+
+    /// If lhs and rhs are not the same type, we need to convert one of them to the other type
+    /// We will convert the one with the smaller type to the larger type, e.g.,
+    /// double op X --> double op double
+    /// float op Integer --> float op float
+
+    /// double op X --> double op double
+    if (lhs->instanceOf<ExecDataDouble>()) {
+        const auto rhsCasted = castTo<double>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataDouble>()) {
+        const auto lhsCasted = castTo<double>(lhs);
+        return {lhsCasted, rhs};
+    }
+
+    /// float op integer --> float op float
+    if (lhs->instanceOf<ExecDataFloat>()) {
+        const auto rhsCasted = castTo<float>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataFloat>()) {
+        const auto lhsCasted = castTo<float>(lhs);
+        return {lhsCasted, rhs};
+    }
+
+    /// uint64_t op X --> uint64_t op uint64_t
+    /// (u)intX op (u)intY --> (u)intX op (u)intX (assuming X has a higher rank, e.g, 64 vs. 32 bit)
+    /// We check here from the highest rank, 64 bit, down to the lowest rank.
+    /// Additionally, we check first for unsigned and then for signed, as unsigned and signed with the same rank get casted to unsigned
+    /// For more information see https://en.cppreference.com/w/cpp/language/usual_arithmetic_conversions
+    if (lhs->instanceOf<ExecDataUInt64>()) {
+        const auto rhsCasted = castTo<uint64_t>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataUInt64>()) {
+        const auto lhsCasted = castTo<uint64_t>(lhs);
+        return {lhsCasted, rhs};
+    }
+    if (lhs->instanceOf<ExecDataInt64>()) {
+        const auto rhsCasted = castTo<int64_t>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataInt64>()) {
+        const auto lhsCasted = castTo<int64_t>(lhs);
+        return {lhsCasted, rhs};
+    }
+    if (lhs->instanceOf<ExecDataUInt32>()) {
+        const auto rhsCasted = castTo<uint32_t>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataUInt32>()) {
+        const auto lhsCasted = castTo<uint32_t>(lhs);
+        return {lhsCasted, rhs};
+    }
+    if (lhs->instanceOf<ExecDataInt32>()) {
+        const auto rhsCasted = castTo<int32_t>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataInt32>()) {
+        const auto lhsCasted = castTo<int32_t>(lhs);
+        return {lhsCasted, rhs};
+    }
+    if (lhs->instanceOf<ExecDataUInt16>()) {
+        const auto rhsCasted = castTo<uint16_t>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataUInt16>()) {
+        const auto lhsCasted = castTo<uint16_t>(lhs);
+        return {lhsCasted, rhs};
+    }
+    if (lhs->instanceOf<ExecDataInt16>()) {
+        const auto rhsCasted = castTo<int16_t>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataInt16>()) {
+        const auto lhsCasted = castTo<int16_t>(lhs);
+        return {lhsCasted, rhs};
+    }
+    if (lhs->instanceOf<ExecDataUInt8>()) {
+        const auto rhsCasted = castTo<uint8_t>(rhs);
+        return {lhs, rhsCasted};
+    }
+    if (rhs->instanceOf<ExecDataUInt8>()) {
+        const auto lhsCasted = castTo<uint8_t>(lhs);
+        return {lhsCasted, rhs};
+    }
+
+    NES_NOT_IMPLEMENTED();
+}
 
 }// namespace NES::Nautilus

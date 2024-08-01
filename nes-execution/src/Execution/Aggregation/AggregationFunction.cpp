@@ -25,57 +25,58 @@ AggregationFunction::AggregationFunction(PhysicalTypePtr inputType,
       resultFieldIdentifier(std::move(resultFieldIdentifier)) {}
 
 void AggregationFunction::storeToMemRef(Nautilus::MemRef memRef, const Nautilus::ExecDataType& execValue, const PhysicalTypePtr& physicalType) {
+    /// TODO Think about, if we can maybe use here writeExecDataTypeToMemRef() here
     if (physicalType->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
         switch (basicType->nativeType) {
             case BasicPhysicalType::NativeType::INT_8: {
                 *static_cast<nautilus::val<int8_t*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int8_t>>(execValue)->as<int8_t>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int8_t>>(execValue)->valueAsType<int8_t>();
                 break;
             };
             case BasicPhysicalType::NativeType::INT_16: {
                 *static_cast<nautilus::val<int16_t*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int16_t>>(execValue)->as<int16_t>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int16_t>>(execValue)->valueAsType<int16_t>();
                 break;
             };
             case BasicPhysicalType::NativeType::INT_32: {
                 *static_cast<nautilus::val<int32_t*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int32_t>>(execValue)->as<int32_t>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int32_t>>(execValue)->valueAsType<int32_t>();
                 break;
             };
             case BasicPhysicalType::NativeType::INT_64: {
                 *static_cast<nautilus::val<int64_t*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int64_t>>(execValue)->as<int64_t>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int64_t>>(execValue)->valueAsType<int64_t>();
                 break;
             };
             case BasicPhysicalType::NativeType::UINT_8: {
                 *static_cast<nautilus::val<uint8_t*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint8_t>>(execValue)->as<uint8_t>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint8_t>>(execValue)->valueAsType<uint8_t>();
                 break;
             };
             case BasicPhysicalType::NativeType::UINT_16: {
                 *static_cast<nautilus::val<uint16_t*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint16_t>>(execValue)->as<uint16_t>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint16_t>>(execValue)->valueAsType<uint16_t>();
                 break;
             };
             case BasicPhysicalType::NativeType::UINT_32: {
                 *static_cast<nautilus::val<uint32_t*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint32_t>>(execValue)->as<uint32_t>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint32_t>>(execValue)->valueAsType<uint32_t>();
                 break;
             };
             case BasicPhysicalType::NativeType::UINT_64: {
                 *static_cast<nautilus::val<uint64_t*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint64_t>>(execValue)->as<uint64_t>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint64_t>>(execValue)->valueAsType<uint64_t>();
                 break;
             };
             case BasicPhysicalType::NativeType::FLOAT: {
                 *static_cast<nautilus::val<float*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<float>>(execValue)->as<float>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<float>>(execValue)->valueAsType<float>();
                 break;
             };
             case BasicPhysicalType::NativeType::DOUBLE: {
                 *static_cast<nautilus::val<double*>>(memRef) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<double>>(execValue)->as<double>();
+                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<double>>(execValue)->valueAsType<double>();
                 break;
             };
             default: {
