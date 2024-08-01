@@ -30,8 +30,6 @@
 #include <Sources/Parsers/NESBinaryParser.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <arpa/inet.h>
-#include <netinet/in.h> // For sockaddr_in
 #include <sys/socket.h> // For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -63,6 +61,7 @@ TCPSource::TCPSource(
         std::move(executableSuccessors))
     , tupleSize(schema->getSchemaSizeInBytes())
     , sourceConfig(std::move(tcpSourceType))
+    , timeout(TCP_SOCKET_DEFAULT_TIMEOUT)
     , circularBuffer(getpagesize() * 2)
 {
     //init physical types
@@ -137,11 +136,12 @@ void TCPSource::open()
             continue;
         }
 
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
         connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
 
         if (connection != -1)
         {
-            break; /// success
+            break; // success
         }
 
         close();
@@ -229,13 +229,22 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
         if (!circularBuffer.full())
         {
             auto writer = circularBuffer.write();
+
             auto bufferSizeReceived = read(sockfd, writer.data(), writer.size());
-            //if read method returned -1 an error occurred during read.
-            if (bufferSizeReceived == -1)
+            if (bufferSizeReceived == -1 && errno == EWOULDBLOCK)
             {
+                //if read method returned -1 an error occurred during read.
                 NES_ERROR("TCPSource::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
                 return false;
             }
+            if (bufferSizeReceived == 0)
+            {
+                NES_TRACE(
+                    "TCPSource::fillBuffer: No data received from {}:{}.",
+                    sourceConfig->getSocketHost()->getValue(),
+                    sourceConfig->getSocketPort()->getValue());
+            }
+
             writer.consume(bufferSizeReceived);
             if (bufferSizeReceived == 0 && circularBuffer.empty())
             {
