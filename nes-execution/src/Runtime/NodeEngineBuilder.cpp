@@ -18,8 +18,6 @@
 #include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/SignalHandling.hpp>
-#include <Network/NetworkManager.hpp>
-#include <Network/PartitionManager.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>

@@ -57,24 +57,7 @@ DataSinkPtr createJSONFileSink(
     const std::string& filePath,
     bool append,
     uint64_t numberOfOrigins = 1);
-/**
- * @brief create a ZMQ test sink with a schema and CSV format output
- * @param schema of sink
- * @param bufferManager
- * @param hostname as sting
- * @param port at uint16
- * @param numberOfOrigins: number of origins of a given query
- * @return a data sink pointer
- */
-DataSinkPtr createCSVZmqSink(
-    const SchemaPtr& schema,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    uint32_t numOfProducers,
-    const std::string& host,
-    uint16_t port,
-    uint64_t numberOfOrigins = 1);
+
 /**
  * @brief create a print test sink with a schema
  * @param schema of sink

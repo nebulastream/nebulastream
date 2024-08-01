@@ -35,7 +35,6 @@ register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Op
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Plans/Query/QueryPlan.hpp Plans/Query/QueryPlan.hpp)
-register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Network/NesPartition.hpp Operators/LogicalOperators/Network/NesPartition.hpp)
 register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
 register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sinks Operators/LogicalOperators/Sinks)
 
