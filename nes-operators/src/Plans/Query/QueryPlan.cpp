@@ -218,29 +218,6 @@ OperatorPtr QueryPlan::getOperatorWithOperatorId(OperatorId operatorId) const
     return nullptr;
 }
 
-OperatorPtr QueryPlan::getOperatorWithStatisticId(StatisticId statisticId) const
-{
-    NES_DEBUG("QueryPlan: Checking if the operator with statisticId {} exists in the query plan or not", statisticId);
-    for (auto rootOperator : rootOperators)
-    {
-        if (rootOperator->getStatisticId() == statisticId)
-        {
-            NES_DEBUG("QueryPlan: Found operator {} in the query plan", rootOperator->toString());
-            return rootOperator;
-        }
-
-        ///Look up in the child operators
-        auto matchingOperator = rootOperator->getChildWithStatisticId(statisticId);
-        if (matchingOperator)
-        {
-            NES_DEBUG("QueryPlan: Found operator {} in the query plan", matchingOperator->toString());
-            return matchingOperator->as<Operator>();
-        }
-    }
-    NES_WARNING("QueryPlan: Unable to find operator with matching statisticId {}", statisticId);
-    return nullptr;
-}
-
 QueryId QueryPlan::getQueryId() const
 {
     return queryId;

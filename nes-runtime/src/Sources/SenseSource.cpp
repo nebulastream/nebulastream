@@ -33,7 +33,6 @@ SenseSource::SenseSource(
     std::string udfs,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -43,7 +42,6 @@ SenseSource::SenseSource(
         std::move(queryManager),
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,

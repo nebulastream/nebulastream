@@ -24,7 +24,6 @@
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/LogicalStatisticWindowOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -76,18 +75,6 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createProjectionOperator(const s
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createMapOperator(const FieldAssignmentExpressionNodePtr& mapExpression, OperatorId id)
 {
     return std::make_shared<LogicalMapOperator>(mapExpression, id);
-}
-
-LogicalUnaryOperatorPtr LogicalOperatorFactory::createStatisticBuildOperator(
-    const Windowing::WindowTypePtr& window,
-    const Statistic::WindowStatisticDescriptorPtr& statisticDescriptor,
-    const Statistic::StatisticMetricHash metricHash,
-    const Statistic::SendingPolicyPtr sendingPolicy,
-    const Statistic::TriggerConditionPtr triggerCondition,
-    OperatorId id)
-{
-    return std::make_shared<Statistic::LogicalStatisticWindowOperator>(
-        id, window, statisticDescriptor, metricHash, sendingPolicy, triggerCondition);
 }
 
 LogicalUnaryOperatorPtr LogicalOperatorFactory::createInferModelOperator(

@@ -70,7 +70,6 @@ OperatorPtr LogicalWindowOperator::copy()
     copy->setOutputSchema(outputSchema);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
-    copy->setStatisticId(statisticId);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);

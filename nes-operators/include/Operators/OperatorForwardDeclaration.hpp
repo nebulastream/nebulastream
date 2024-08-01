@@ -85,11 +85,5 @@ class InferModelOperatorHandler;
 using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
 } /// namespace InferModel
 
-namespace Statistic
-{
-class LogicalStatisticWindowOperator;
-using LogicalStatisticWindowOperatorPtr = std::shared_ptr<LogicalStatisticWindowOperator>;
-} /// namespace Statistic
-
 } /// namespace NES
 #endif /// NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

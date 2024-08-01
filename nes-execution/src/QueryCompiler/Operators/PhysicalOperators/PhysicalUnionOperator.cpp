@@ -16,25 +16,25 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& schema)
+PhysicalOperatorPtr PhysicalUnionOperator::create(OperatorId id, const SchemaPtr& schema)
 {
-    return create(id, statisticId, schema, schema, schema);
+    return create(id, schema, schema, schema);
 }
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(
-    OperatorId id, StatisticId statisticId, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema)
+PhysicalOperatorPtr
+PhysicalUnionOperator::create(OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema)
 {
-    return std::make_shared<PhysicalUnionOperator>(id, statisticId, leftSchema, rightSchema, outputSchema);
+    return std::make_shared<PhysicalUnionOperator>(id, leftSchema, rightSchema, outputSchema);
 }
 
-PhysicalOperatorPtr PhysicalUnionOperator::create(StatisticId statisticId, const SchemaPtr& schema)
+PhysicalOperatorPtr PhysicalUnionOperator::create(const SchemaPtr& schema)
 {
-    return create(getNextOperatorId(), statisticId, schema);
+    return create(getNextOperatorId(), schema);
 }
 
 PhysicalUnionOperator::PhysicalUnionOperator(
-    OperatorId id, StatisticId statisticId, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema)
-    : Operator(id, statisticId), PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema)
+    OperatorId id, const SchemaPtr& leftSchema, const SchemaPtr& rightSchema, const SchemaPtr& outputSchema)
+    : Operator(id), PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema)
 {
 }
 
@@ -47,7 +47,7 @@ std::string PhysicalUnionOperator::toString() const
 }
 OperatorPtr PhysicalUnionOperator::copy()
 {
-    return create(id, statisticId, leftInputSchema, rightInputSchema, outputSchema);
+    return create(id, leftInputSchema, rightInputSchema, outputSchema);
 }
 
 } /// namespace NES::QueryCompilation::PhysicalOperators

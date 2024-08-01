@@ -109,7 +109,6 @@ OperatorPtr LogicalProjectionOperator::copy()
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
     copy->setHashBasedSignature(hashBasedSignature);
     for (const auto& [key, value] : properties)
     {

@@ -54,7 +54,7 @@ bool LogicalFilterOperator::equal(NodePtr const& rhs) const
 std::string LogicalFilterOperator::toString() const
 {
     std::stringstream ss;
-    ss << "FILTER(opId: " << id << ", statisticId: " << statisticId << ", predicate: " << predicate->toString() << ")";
+    ss << "FILTER(opId: " << id << ": predicate: " << predicate->toString() << ")";
     return ss.str();
 }
 
@@ -81,7 +81,6 @@ OperatorPtr LogicalFilterOperator::copy()
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);

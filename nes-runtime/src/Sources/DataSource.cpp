@@ -60,7 +60,6 @@ DataSource::DataSource(
     Runtime::QueryManagerPtr queryManager,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     const std::string& physicalSourceName,
@@ -74,7 +73,6 @@ DataSource::DataSource(
     , executableSuccessors(std::move(executableSuccessors))
     , operatorId(operatorId)
     , originId(originId)
-    , statisticId(statisticId)
     , schema(std::move(pSchema))
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , gatheringMode(gatheringMode)
@@ -114,16 +112,13 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
         buffer.setSequenceNumber(maxSequenceNumber);
         buffer.setChunkNumber(1);
         buffer.setLastChunk(true);
-        buffer.setStatisticId(statisticId);
         NES_DEBUG(
-            "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={} "
-            "statisticId={}",
+            "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={} ",
             buffer.getOriginId(),
             buffer.getOriginId(),
             buffer.getSequenceNumber(),
             buffer.getChunkNumber(),
-            buffer.isLastChunk(),
-            buffer.getStatisticId());
+            buffer.isLastChunk());
     }
 
     uint64_t queueId = 0;

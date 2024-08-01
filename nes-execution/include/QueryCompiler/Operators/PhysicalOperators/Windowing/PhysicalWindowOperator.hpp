@@ -27,11 +27,7 @@ class PhysicalWindowOperator : public PhysicalUnaryOperator
 {
 public:
     PhysicalWindowOperator(
-        OperatorId id,
-        StatisticId statisticId,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::LogicalWindowDescriptorPtr windowDefinition);
+        OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition);
     const Windowing::LogicalWindowDescriptorPtr& getWindowDefinition() const;
 
     /**

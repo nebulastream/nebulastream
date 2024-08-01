@@ -22,7 +22,6 @@ namespace NES::QueryCompilation::PhysicalOperators
 
 PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(
     OperatorId id,
-    StatisticId statisticId,
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
@@ -34,7 +33,6 @@ PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(
 {
     return std::make_shared<PhysicalStreamJoinBuildOperator>(
         id,
-        statisticId,
         inputSchema,
         outputSchema,
         operatorHandler,
@@ -45,7 +43,6 @@ PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(
         windowingStrategy);
 }
 PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(
-    StatisticId statisticId,
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
@@ -57,7 +54,6 @@ PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(
 {
     return create(
         getNextOperatorId(),
-        statisticId,
         inputSchema,
         outputSchema,
         operatorHandler,
@@ -70,7 +66,6 @@ PhysicalOperatorPtr PhysicalStreamJoinBuildOperator::create(
 
 PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     const OperatorId id,
-    const StatisticId statisticId,
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
@@ -81,7 +76,7 @@ PhysicalStreamJoinBuildOperator::PhysicalStreamJoinBuildOperator(
     QueryCompilation::WindowingStrategy windowingStrategy)
     : Operator(id)
     , PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy)
-    , PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema)
+    , PhysicalUnaryOperator(id, inputSchema, outputSchema)
     , timeStampField(std::move(timeStampField))
     , joinFieldName(joinFieldName)
     , buildSide(buildSide)
@@ -105,7 +100,6 @@ OperatorPtr PhysicalStreamJoinBuildOperator::copy()
 {
     auto result = create(
         id,
-        statisticId,
         inputSchema,
         outputSchema,
         joinOperatorHandler,

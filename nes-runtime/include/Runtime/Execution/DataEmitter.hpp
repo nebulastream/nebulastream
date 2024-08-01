@@ -40,7 +40,7 @@ public:
     /**
      * @brief create a task using the provided buffer and submit it to a task consumer, e.g., query manager
      * @param buffer
-     * @param addBufferMetaData: If true, buffer meta data (e.g., sequence number, statistic id, origin id, ...) is added to the buffer
+     * @param addBufferMetaData: If true, buffer meta data (e.g., sequence number, origin id, ...) is added to the buffer
      */
     virtual void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) = 0;
 

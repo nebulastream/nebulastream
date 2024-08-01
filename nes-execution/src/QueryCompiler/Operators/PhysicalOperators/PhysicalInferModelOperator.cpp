@@ -19,41 +19,34 @@ namespace NES::QueryCompilation::PhysicalOperators
 
 PhysicalInferModelOperator::PhysicalInferModelOperator(
     OperatorId id,
-    StatisticId statisticId,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::string model,
     std::vector<ExpressionNodePtr> inputFields,
     std::vector<ExpressionNodePtr> outputFields)
-    : Operator(id, statisticId)
-    , PhysicalUnaryOperator(id, statisticId, inputSchema, outputSchema)
-    , model(model)
-    , inputFields(inputFields)
-    , outputFields(outputFields)
+    : Operator(id), PhysicalUnaryOperator(id, inputSchema, outputSchema), model(model), inputFields(inputFields), outputFields(outputFields)
 {
 }
 
 PhysicalOperatorPtr PhysicalInferModelOperator::create(
     OperatorId id,
-    StatisticId statisticId,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::string model,
     std::vector<ExpressionNodePtr> inputFields,
     std::vector<ExpressionNodePtr> outputFields)
 {
-    return std::make_shared<PhysicalInferModelOperator>(id, statisticId, inputSchema, outputSchema, model, inputFields, outputFields);
+    return std::make_shared<PhysicalInferModelOperator>(id, inputSchema, outputSchema, model, inputFields, outputFields);
 }
 
 PhysicalOperatorPtr PhysicalInferModelOperator::create(
-    StatisticId statisticId,
     SchemaPtr inputSchema,
     SchemaPtr outputSchema,
     std::string model,
     std::vector<ExpressionNodePtr> inputFields,
     std::vector<ExpressionNodePtr> outputFields)
 {
-    return create(getNextOperatorId(), statisticId, inputSchema, outputSchema, model, inputFields, outputFields);
+    return create(getNextOperatorId(), inputSchema, outputSchema, model, inputFields, outputFields);
 }
 
 std::string PhysicalInferModelOperator::toString() const
@@ -69,7 +62,7 @@ std::string PhysicalInferModelOperator::toString() const
 
 OperatorPtr PhysicalInferModelOperator::copy()
 {
-    auto result = create(id, statisticId, inputSchema, outputSchema, model, inputFields, outputFields);
+    auto result = create(id, inputSchema, outputSchema, model, inputFields, outputFields);
     result->addAllProperties(properties);
     return result;
 }

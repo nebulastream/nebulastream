@@ -34,11 +34,6 @@ EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeF
 
 void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
-    /// We have to do this here, as we do not want to set the statistic id of this build operator in the execution context
-    if (hasChild())
-    {
-        child->open(executionCtx, recordBuffer);
-    }
     executionCtx.setLocalOperatorState(this, std::make_unique<WatermarkState>());
     timeFunction->open(executionCtx, recordBuffer);
 }

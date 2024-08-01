@@ -25,21 +25,15 @@ class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScan
 {
 public:
     PhysicalSourceOperator(
-        OperatorId id,
-        StatisticId statisticId,
-        OriginId originId,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        SourceDescriptorPtr sourceDescriptor);
+        OperatorId id, OriginId originId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator> create(
         OperatorId id,
-        StatisticId statisticId,
         OriginId originId,
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
         const SourceDescriptorPtr& sourceDescriptor);
     static std::shared_ptr<PhysicalSourceOperator>
-    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
 
     /**
      * @brief Gets the source descriptor for this source operator

@@ -42,7 +42,6 @@ OperatorPtr LogicalOpenCLOperator::copy()
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);

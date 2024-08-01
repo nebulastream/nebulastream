@@ -20,8 +20,6 @@
 #include <vector>
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/Metrics/StatisticMetric.hpp>
-#include <Operators/LogicalOperators/StatisticCollection/WindowStatisticDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 
 namespace NES
@@ -364,22 +362,6 @@ public:
      * @return the query
      */
     static Query from(std::string const& sourceName);
-
-    /**
-     * @brief Add a synopsis build operator to the query
-     * @param window
-     * @param statisticDescriptor
-     * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
-     * @param sendingPolicy: Policy so when and how to send the data
-     * @param triggerCondition: Policy when and how to call the callback method
-     * @return The query
-     */
-    Query& buildStatistic(
-        Windowing::WindowTypePtr window,
-        Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-        Statistic::StatisticMetricHash metricHash,
-        Statistic::SendingPolicyPtr sendingPolicy,
-        Statistic::TriggerConditionPtr triggerCondition);
 
     /**
     * This looks ugly, but we can't reference to QueryPtr at this line.

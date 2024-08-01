@@ -20,7 +20,6 @@ namespace NES::QueryCompilation::PhysicalOperators
 
 PhysicalOperatorPtr PhysicalStreamJoinProbeOperator::create(
     OperatorId id,
-    StatisticId statisticId,
     const SchemaPtr& leftSchema,
     const SchemaPtr& rightSchema,
     const SchemaPtr& outputSchema,
@@ -33,7 +32,6 @@ PhysicalOperatorPtr PhysicalStreamJoinProbeOperator::create(
 {
     return std::make_shared<PhysicalStreamJoinProbeOperator>(
         id,
-        statisticId,
         leftSchema,
         rightSchema,
         outputSchema,
@@ -46,7 +44,6 @@ PhysicalOperatorPtr PhysicalStreamJoinProbeOperator::create(
 }
 
 PhysicalOperatorPtr PhysicalStreamJoinProbeOperator::create(
-    StatisticId statisticId,
     const SchemaPtr& leftSchema,
     const SchemaPtr& rightSchema,
     const SchemaPtr& outputSchema,
@@ -59,7 +56,6 @@ PhysicalOperatorPtr PhysicalStreamJoinProbeOperator::create(
 {
     return create(
         getNextOperatorId(),
-        statisticId,
         leftSchema,
         rightSchema,
         outputSchema,
@@ -73,7 +69,6 @@ PhysicalOperatorPtr PhysicalStreamJoinProbeOperator::create(
 
 PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     OperatorId id,
-    StatisticId statisticId,
     const SchemaPtr& leftSchema,
     const SchemaPtr& rightSchema,
     const SchemaPtr& outputSchema,
@@ -85,7 +80,7 @@ PhysicalStreamJoinProbeOperator::PhysicalStreamJoinProbeOperator(
     QueryCompilation::WindowingStrategy windowingStrategy)
     : Operator(id)
     , PhysicalStreamJoinOperator(operatorHandler, joinStrategy, windowingStrategy)
-    , PhysicalBinaryOperator(id, statisticId, leftSchema, rightSchema, outputSchema)
+    , PhysicalBinaryOperator(id, leftSchema, rightSchema, outputSchema)
     , joinExpression(joinExpression)
     , windowMetaData(windowStartFieldName, windowEndFieldName)
 {
@@ -107,7 +102,6 @@ OperatorPtr PhysicalStreamJoinProbeOperator::copy()
 {
     return create(
         id,
-        statisticId,
         leftInputSchema,
         rightInputSchema,
         outputSchema,

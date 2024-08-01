@@ -36,17 +36,10 @@ using OperatorProperties = std::unordered_map<std::string, std::any>;
  */
 OperatorId getNextOperatorId();
 
-/**
- * @brief Returns the next free statistic id
- * @return StatisticId
- */
-StatisticId getNextStatisticId();
-
 class Operator : public Node
 {
 public:
     explicit Operator(OperatorId id);
-    explicit Operator(OperatorId id, StatisticId statisticId);
 
     ~Operator() noexcept override = default;
 
@@ -58,24 +51,12 @@ public:
     OperatorId getId() const;
 
     /**
-     * @brief Gets the statisticId of this operator for example to pass it down to the physical operator
-     * @return StatisticId
-     */
-    StatisticId getStatisticId() const;
-
-    /**
      * NOTE: this method is only called from Logical Plan Expansion Rule
      * @brief gets the operator id.
      * Unique Identifier of the operator within a query.
      * @param operator id
      */
     void setId(OperatorId id);
-
-    /**
-     * @brief Sets the statistic id
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
-     */
-    void setStatisticId(StatisticId statisticId);
 
     /**
      * @brief Create duplicate of this operator by copying its context information and also its parent and child operator set.
@@ -127,13 +108,6 @@ public:
      * @return nullptr if not found else the operator node
      */
     NodePtr getChildWithOperatorId(OperatorId operatorId) const;
-
-    /**
-     * @brief Get the operator with statisticId id
-     * @param operatorId : the statisticId id of the operator to find
-     * @return nullptr if not found else the operator node
-     */
-    NodePtr getChildWithStatisticId(StatisticId statisticId) const;
 
     /**
      * Check if a node with the id is either a child or a grandchild of this operator
@@ -229,7 +203,6 @@ protected:
     /**
      * @brief Unique Identifier of the operator across the whole system.
      */
-    StatisticId statisticId;
 
     /*
      * @brief Map of properties of the current node

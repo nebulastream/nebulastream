@@ -43,7 +43,6 @@ namespace NES
 DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     const SourceDescriptorPtr& sourceDescriptor,
     const Runtime::NodeEnginePtr& nodeEngine,
     size_t numSourceLocalBuffers,
@@ -81,7 +80,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             zmqSourceDescriptor->getPort(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);
@@ -98,7 +96,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             defaultSourceDescriptor->getSourceGatheringIntervalCount(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);
@@ -114,7 +111,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             binarySourceDescriptor->getFilePath(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);
@@ -130,7 +126,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             csvSourceDescriptor->getSourceConfig(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);
@@ -154,7 +149,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             kafkaSourceDescriptor->getSourceConfigPtr(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             kafkaSourceDescriptor->getBatchSize(),
             sourceDescriptor->getPhysicalSourceName(),
@@ -173,7 +167,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             mqttSourceDescriptor->getSourceConfigPtr(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);
@@ -209,7 +202,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             senseSourceDescriptor->getUdfs(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);
@@ -228,7 +220,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             memorySourceDescriptor->getGatheringValue(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             memorySourceDescriptor->getGatheringMode(),
             memorySourceDescriptor->getSourceAffinity(),
@@ -248,7 +239,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             queryManager,
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);
@@ -267,7 +257,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             benchmarkSourceDescriptor->getGatheringValue(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             benchmarkSourceDescriptor->getGatheringMode(),
             benchmarkSourceDescriptor->getSourceMode(),
@@ -289,7 +278,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             std::move(lambdaSourceDescriptor->getGeneratorFunction()),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             lambdaSourceDescriptor->getGatheringMode(),
             lambdaSourceDescriptor->getSourceAffinity(),
@@ -308,7 +296,6 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
             tcpSourceDescriptor->getSourceConfig(),
             operatorId,
             originId,
-            statisticId,
             numSourceLocalBuffers,
             sourceDescriptor->getPhysicalSourceName(),
             successors);

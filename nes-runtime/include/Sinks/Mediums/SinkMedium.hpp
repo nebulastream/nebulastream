@@ -31,8 +31,7 @@ enum class SinkMediumTypes : uint8_t
     NETWORK_SINK,
     OPC_SINK,
     MQTT_SINK,
-    NULL_SINK,
-    STATISTIC_SINK
+    NULL_SINK
 };
 
 /**

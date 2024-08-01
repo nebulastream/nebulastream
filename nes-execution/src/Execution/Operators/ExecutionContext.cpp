@@ -27,7 +27,6 @@ ExecutionContext::ExecutionContext(const Value<NES::Nautilus::MemRef>& workerCon
     : workerContext(workerContext)
     , pipelineContext(pipelineContext)
     , origin(0_u64)
-    , statisticId(INVALID_STATISTIC_ID)
     , watermarkTs(0_u64)
     , currentTs(0_u64)
     , sequenceNumber(0_u64)
@@ -163,19 +162,9 @@ const Value<UInt64>& ExecutionContext::getOriginId() const
     return origin;
 }
 
-const Value<UInt64>& ExecutionContext::getCurrentStatisticId() const
-{
-    return statisticId;
-}
-
 void ExecutionContext::setOrigin(Value<UInt64> origin)
 {
     this->origin = origin;
-}
-
-void ExecutionContext::setCurrentStatisticId(Value<UInt64> statisticId)
-{
-    this->statisticId = statisticId;
 }
 
 const Value<UInt64>& ExecutionContext::getCurrentTs() const

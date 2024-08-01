@@ -154,12 +154,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
     }
 
     auto source = sourceProvider->lower(
-        sourceOperator->getId(),
-        sourceOperator->getOriginId(),
-        sourceOperator->getStatisticId(),
-        sourceDescriptor,
-        nodeEngine,
-        executableSuccessorPipelines);
+        sourceOperator->getId(), sourceOperator->getOriginId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
 
     /// Add this source as a predecessor to the pipeline execution context's of all its children.
     /// This way you can navigate upstream.
