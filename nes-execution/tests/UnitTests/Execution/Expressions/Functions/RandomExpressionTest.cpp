@@ -79,7 +79,7 @@ TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(4_u64));
+        auto resultValue = expression.eval(UInt64(4_u64));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -103,7 +103,7 @@ TEST_F(RandomExpressionTest, evaluateRandomExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 4));
+        auto resultValue = expression.eval(UInt64((uint64_t) 4));
         ASSERT_TRUE((bool) (resultValue > 0.0 && resultValue < 1.0));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -127,7 +127,7 @@ TEST_F(RandomExpressionTest, evaluateRandomExpressionFloat) {
         */
 TEST_F(RandomExpressionTest, evaluateSinExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<RandomExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

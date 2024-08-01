@@ -46,7 +46,7 @@ TEST_F(SelectionOperatorTest, qualifingRecordTest) {
     auto selectionOperator = Selection(equalsExpression);
     auto collector = std::make_shared<CollectOperator>();
     selectionOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
     auto record = Record({{"f1", Value<>(10)}, {"f2", Value<>(10)}});
     selectionOperator.execute(ctx, record);
 
@@ -66,7 +66,7 @@ TEST_F(SelectionOperatorTest, nonqualifingRecordTest) {
     auto selectionOperator = Selection(equalsExpression);
     auto collector = std::make_shared<CollectOperator>();
     selectionOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
     auto record = Record({{"f1", Value<>(10)}, {"f2", Value<>(12)}});
     selectionOperator.execute(ctx, record);
     ASSERT_EQ(collector->records.size(), 0);
@@ -80,7 +80,7 @@ TEST_F(SelectionOperatorTest, wrongSelectionTypeTest) {
     auto selectionOperator = Selection(readF1);
     auto collector = std::make_shared<CollectOperator>();
     selectionOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
     auto record = Record({{"f1", Value<>(10)}, {"f2", Value<>(12)}});
     ASSERT_ANY_THROW(selectionOperator.execute(ctx, record));
 }

@@ -68,7 +68,7 @@ class ExecutionContext final {
 
     /**
      * @brief Get worker thread id of the current execution.
-     * @return ValueId<WorkerThreadId>
+     * @return UInt32
      */
     nautilus::val<uint32_t> getWorkerThreadId();
 

@@ -24,7 +24,7 @@ namespace NES::Nautilus::Interface {
  */
 class HashFunction {
   public:
-    using HashValue = UInt64;
+    using HashValue = ExecDataUInt64Ptr;
 
     /**
      * @brief Calculates the hash of one value.

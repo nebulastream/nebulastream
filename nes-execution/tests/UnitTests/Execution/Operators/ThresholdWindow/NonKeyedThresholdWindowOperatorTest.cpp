@@ -86,7 +86,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest) {
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -138,7 +138,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -192,7 +192,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTestMinCoun
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -239,7 +239,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMinAggTest) {
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -292,7 +292,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest) {
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -345,7 +345,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithAvgAggTest) {
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -402,7 +402,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithCountAggTest) {
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -490,7 +490,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultipleAggregati
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -544,7 +544,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithFloatPredicateTes
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 
@@ -608,7 +608,7 @@ TEST_F(NonKeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggOnGenratin
     auto handler = std::make_shared<NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     thresholdWindowOperator->setup(ctx);
 

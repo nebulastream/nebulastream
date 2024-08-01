@@ -38,6 +38,11 @@ const uint8_t* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex) {
 Nautilus::ExecDataType TupleBufferMemoryProvider::load(const PhysicalTypePtr& type,
                                                        nautilus::val<int8_t*>& bufferReference,
                                                        nautilus::val<int8_t*>& fieldReference) {
+    // TODO Think about, if we can maybe use here readExecDataTypeFromMemRef() here
+    // Maybe we can have a default read and write for stateful operators that uses the same as for the tuple buffers
+    // and then if somebody wants to write something custom they can do that. If we choose the default, then it is required that
+    // we store the data in tuple buffers in the stateful operator
+
     if (type->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
         switch (basicType->nativeType) {
@@ -116,6 +121,8 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::store(const NES::PhysicalTypeP
                                                         nautilus::val<int8_t*>& bufferReference,
                                                         nautilus::val<int8_t*>& fieldReference,
                                                         Nautilus::ExecDataType value) {
+
+    /// TODO Think about, if we can maybe use here writeExecDataTypeToMemRef() here
     if (type->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
         switch (basicType->nativeType) {

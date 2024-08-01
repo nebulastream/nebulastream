@@ -30,11 +30,11 @@ EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpress
 
 UInt64 EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
     auto ts = this->timestampExpression->execute(record);
-    const auto timeMultiplier = ExecutableDataType<uint64_t>::create(unit.getMillisecondsConversionMultiplier());
-    auto tsInMs = (*ts * timeMultiplier);
-    auto tsInMsVal = tsInMs->as<uint64_t>();
+    const auto timeMultiplier = unit.getMillisecondsConversionMultiplier();
+    auto tsInMs = (ts * timeMultiplier);
+    auto tsInMsVal = tsInMs->as<ExecDataUInt64>()->getRawValue();
     ctx.setCurrentTs(tsInMsVal);
-    return ExecutableDataType<uint64_t>::create(tsInMsVal);
+    return tsInMsVal;
 }
 
 void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::RecordBuffer& buffer) {
@@ -42,7 +42,7 @@ void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::Re
 }
 
 UInt64 IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&) {
-    return ExecutableDataType<uint64_t>::create(ctx.getCurrentTs());
+    return ctx.getCurrentTs();
 }
 
 }// namespace NES::Runtime::Execution::Operators

@@ -60,12 +60,12 @@ class AppendToSliceStoreAction : public SliceMergingAction {
 
     void emitSlice(ExecutionContext& ctx,
                    ExecuteOperatorPtr& child,
-                   Value<UInt64>& windowStart,
-                   Value<UInt64>& windowEnd,
-                   Value<UInt64>& sequenceNumber,
-                   Value<UInt64>& chunkNumber,
-                   Value<Boolean>& lastChunk,
-                   Value<MemRef>& globalSlice) const override;
+                   ExecDataUInt64Ptr& windowStart,
+                   ExecDataUInt64Ptr& windowEnd,
+                   ExecDataUInt64Ptr& sequenceNumber,
+                   ExecDataUInt64Ptr& chunkNumber,
+                   ExecDataBooleanPtr& lastChunk,
+                   VoidRef& globalSlice) const override;
 
   private:
     const uint64_t operatorHandlerIndex;

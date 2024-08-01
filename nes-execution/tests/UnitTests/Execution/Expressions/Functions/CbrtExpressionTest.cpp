@@ -89,7 +89,7 @@ TEST_F(CbrtExpressionTest, evaluateCbrtExpressionFloat) {
  */
 TEST_F(CbrtExpressionTest, evaluateCbrtExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<CbrtExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)));
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)));
 }
 
 }// namespace NES::Runtime::Execution::Expressions

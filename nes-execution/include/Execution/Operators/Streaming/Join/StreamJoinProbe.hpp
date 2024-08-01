@@ -78,8 +78,8 @@ class StreamJoinProbe : public StreamJoinOperator, public Operator {
     void createJoinedRecord(Record& joinedRecord,
                             Record& leftRecord,
                             Record& rightRecord,
-                            const Value<UInt64>& windowStart,
-                            const Value<UInt64>& windowEnd) const;
+                            const ExecDataUInt64Ptr& windowStart,
+                            const ExecDataUInt64Ptr& windowEnd) const;
 
   protected:
     const uint64_t operatorHandlerIndex;

@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
@@ -34,7 +34,7 @@ namespace NES::Runtime::Execution {
 
 class ScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
   public:
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -52,8 +52,8 @@ class ScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         if (!ExecutablePipelineProviderRegistry::hasPlugin(GetParam())) {
             GTEST_SKIP();
         }
-        options.setDumpToConsole(true);
-        options.setDumpToFile(true);
+//        options.setDumpToConsole(true);
+//        options.setDumpToFile(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
         bm = std::make_shared<Runtime::BufferManager>();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
@@ -81,8 +81,8 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline) {
     schema->addField("f11", BasicType::BOOLEAN);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     scanOperator->setChild(emitOperator);

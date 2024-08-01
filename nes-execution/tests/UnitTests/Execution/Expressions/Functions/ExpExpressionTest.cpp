@@ -84,7 +84,7 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(5_u64));
+        auto resultValue = expression.eval(UInt64(5_u64));
         ASSERT_EQ(resultValue, std::exp(5));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -111,7 +111,7 @@ TEST_F(ExpExpressionTest, evaluateExpExpressionFloat) {
  */
 TEST_F(ExpExpressionTest, evaluateExpExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<ExpExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(false)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

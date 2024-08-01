@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Sort/Sort.hpp>
 #include <Execution/Operators/Relational/Sort/SortScan.hpp>
@@ -35,7 +35,7 @@ namespace NES::Runtime::Execution {
 
 class SortPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
   public:
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;

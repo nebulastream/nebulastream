@@ -48,7 +48,7 @@ class JaroTest : public Testing::BaseUnitTest {
 
 TEST_F(JaroTest, BaseJaroTest) {
     auto expression = TernaryExpressionWrapper<JaroSimilarity>();
-    auto flagValue = Value<Boolean>(false);
+    auto flagValue = Boolean(false);
     auto textValue = Value<Text>("duck");
     auto textValue0 = Value<Text>("duckdb");
     auto dist1 = expression.eval(textValue, textValue0, flagValue);
@@ -71,7 +71,7 @@ TEST_F(JaroTest, BaseJaroTest) {
 
 TEST_F(JaroTest, FailJaroTest) {
     auto expression = TernaryExpressionWrapper<JaroSimilarity>();
-    auto flagValue = Value<Boolean>(false);
+    auto flagValue = Boolean(false);
     auto textValue0 = Value<Float>((float) 17.5);
     auto textValue1 = Value<Text>("duck");
     EXPECT_ANY_THROW(expression.eval(textValue0, textValue1, flagValue));
@@ -79,7 +79,7 @@ TEST_F(JaroTest, FailJaroTest) {
 
 TEST_F(JaroTest, BaseJaroWinklerTest) {
     auto expression = TernaryExpressionWrapper<JaroSimilarity>();
-    auto flagValue = Value<Boolean>(true);
+    auto flagValue = Boolean(true);
     auto textValue = Value<Text>("duck");
     auto textValue0 = Value<Text>("duckdb");
     auto dist1 = expression.eval(textValue, textValue0, flagValue);
@@ -102,7 +102,7 @@ TEST_F(JaroTest, BaseJaroWinklerTest) {
 
 TEST_F(JaroTest, FailJaroWinklerTest) {
     auto expression = TernaryExpressionWrapper<JaroSimilarity>();
-    auto flagValue = Value<Boolean>(true);
+    auto flagValue = Boolean(true);
     auto textValue0 = Value<Float>((float) 17.5);
     auto textValue1 = Value<Text>("duck");
     EXPECT_ANY_THROW(expression.eval(textValue0, textValue1, flagValue));

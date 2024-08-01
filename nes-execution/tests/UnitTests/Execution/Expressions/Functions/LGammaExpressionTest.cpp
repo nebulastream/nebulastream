@@ -83,13 +83,13 @@ TEST_F(LGammaExpressionTest, lGammaUnsignedIntegers) {
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }// UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(2_u64));
+        auto resultValue = expression.eval(UInt64(2_u64));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
 
     {
-        auto resultValue = expression.eval(Value<UInt64>(2_u64));
+        auto resultValue = expression.eval(UInt64(2_u64));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }

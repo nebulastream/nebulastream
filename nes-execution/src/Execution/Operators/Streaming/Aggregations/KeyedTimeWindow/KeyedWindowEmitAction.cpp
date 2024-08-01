@@ -14,7 +14,6 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -41,19 +40,19 @@ KeyedWindowEmitAction::KeyedWindowEmitAction(
 
 void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                       ExecuteOperatorPtr& child,
-                                      Value<UInt64>& windowStart,
-                                      Value<UInt64>& windowEnd,
-                                      Value<UInt64>& sequenceNumber,
-                                      Value<UInt64>& chunkNumber,
-                                      Value<Boolean>& lastChunk,
-                                      Value<MemRef>& globalSlice) const {
-    ctx.setWatermarkTs(windowStart);
+                                      ExecDataUInt64Ptr& windowStart,
+                                      ExecDataUInt64Ptr& windowEnd,
+                                      ExecDataUInt64Ptr& sequenceNumber,
+                                      ExecDataUInt64Ptr& chunkNumber,
+                                      ExecDataBooleanPtr& lastChunk,
+                                      VoidRef& globalSlice) const {
+    ctx.setWatermarkTs(windowStart->getRawValue());
     ctx.setOrigin(resultOriginId.getRawValue());
-    ctx.setSequenceNumber(sequenceNumber);
-    ctx.setChunkNumber(chunkNumber);
-    ctx.setLastChunk(lastChunk);
+    ctx.setSequenceNumber(sequenceNumber->getRawValue());
+    ctx.setChunkNumber(chunkNumber->getRawValue());
+    ctx.setLastChunk(lastChunk->getRawValue());
 
-    auto globalSliceState = Nautilus::FunctionCall("getKeyedSliceState", getKeyedSliceState, globalSlice);
+    auto globalSliceState = nautilus::invoke(getKeyedSliceState, globalSlice);
     auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, keyDataTypes, keySize, valueSize);
     // create the final window content and emit it to the downstream operator
     for (const auto& globalEntry : globalHashTable) {
@@ -64,18 +63,18 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
         // load keys and write them to result record
         auto sliceKeys = globalEntry.getKeyPtr();
         for (size_t i = 0; i < resultKeyFields.size(); ++i) {
-            auto value = sliceKeys.load<UInt64>();
+            auto value = ExecutableDataType<uint64_t>::create(*static_cast<nautilus::val<uint64_t*>>(sliceKeys));
             resultWindow.write(resultKeyFields[i], value);
-            sliceKeys = sliceKeys + keyDataTypes[i]->size();
+            sliceKeys = sliceKeys + nautilus::val<uint64_t>(keyDataTypes[i]->size());
         }
         // load values and write them to result record
         auto sliceValue = globalEntry.getValuePtr();
         for (const auto& aggregationFunction : aggregationFunctions) {
             aggregationFunction->lower(sliceValue, resultWindow);
-            sliceValue = sliceValue + aggregationFunction->getSize();
+            sliceValue = sliceValue + nautilus::val<uint64_t>(aggregationFunction->getSize());
         }
         child->execute(ctx, resultWindow);
     }
-    Nautilus::FunctionCall("deleteSlice", deleteSlice, globalSlice);
+    nautilus::invoke(deleteSlice, globalSlice);
 }
 }// namespace NES::Runtime::Execution::Operators

@@ -76,22 +76,22 @@ void CountMinBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto countMinMemRef = Nautilus::FunctionCall("getCountMinRefProxy",
                                                  getCountMinRefProxy,
                                                  operatorHandlerMemRef,
-                                                 Value<UInt64>(metricHash),
+                                                 UInt64(metricHash),
                                                  ctx.getCurrentStatisticId(),
                                                  ctx.getWorkerThreadId(),
                                                  timestampVal);
 
     // 2. Updating the count min sketch for this record
     auto h3SeedsMemRef = Nautilus::FunctionCall("getH3SeedsProxy", getH3SeedsProxy, operatorHandlerMemRef);
-    for (Value<UInt64> row(0_u64); row < depth; row = row + 1_u64) {
+    for (UInt64 row(0_u64); row < depth; row = row + 1_u64) {
         // 2.1 We calculate a MemRef to the first h3Seeds of the current row
-        Value<UInt64> h3SeedsOffSet((row * sizeOfOneRowInBytes).as<UInt64>());
-        Value<MemRef> h3SeedsThisRow = (h3SeedsMemRef + h3SeedsOffSet).as<MemRef>();
+        UInt64 h3SeedsOffSet((row * sizeOfOneRowInBytes).as<UInt64>());
+        MemRef h3SeedsThisRow = (h3SeedsMemRef + h3SeedsOffSet).as<MemRef>();
 
         // 2.2. Hashing the current value
         auto valToTrack = record.read(fieldToTrackFieldName);
-        Value<UInt64> calcHash = h3HashFunction->calculateWithState(valToTrack, h3SeedsThisRow);
-        Value<UInt64> col = (calcHash % Value<UInt64>(width)).as<UInt64>();
+        UInt64 calcHash = h3HashFunction->calculateWithState(valToTrack, h3SeedsThisRow);
+        UInt64 col = (calcHash % UInt64(width)).as<UInt64>();
 
         // 2.3. Having this function call for each record for each row is not efficient. But we take care of the efficiency later
         Nautilus::FunctionCall("updateCountMinProxy", updateCountMinProxy, countMinMemRef, row, col);
@@ -117,7 +117,7 @@ void CountMinBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) con
                            ctx.getChunkNumber(),
                            ctx.getLastChunk(),
                            ctx.getOriginId(),
-                           Value<UInt64>(metricHash),
+                           UInt64(metricHash),
                            ctx.getCurrentStatisticId());
     Operator::close(ctx, recordBuffer);
 }

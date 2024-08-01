@@ -21,10 +21,9 @@ EqualsExpression::EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPt
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
 
 ExecDataType EqualsExpression::execute(Record& record) const {
-    ExecDataType leftValue = leftSubExpression->execute(record);
-    ExecDataType rightValue = rightSubExpression->execute(record);
-    auto resultValue =  *leftValue == rightValue;
-    return resultValue;
+    const auto leftValue = leftSubExpression->execute(record);
+    const auto rightValue = rightSubExpression->execute(record);
+    return leftValue == rightValue;
 }
 
 }// namespace NES::Runtime::Execution::Expressions

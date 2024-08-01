@@ -17,9 +17,9 @@
 namespace NES::Runtime::Execution::Expressions {
 
 ExecDataType AddExpression::execute(Record& record) const {
-    ExecDataType leftValue = leftSubExpression->execute(record);
-    ExecDataType rightValue = rightSubExpression->execute(record);
-    return *leftValue + rightValue;
+    const auto leftValue = leftSubExpression->execute(record);
+    const auto rightValue = rightSubExpression->execute(record);
+    return leftValue + rightValue;
 }
 AddExpression::AddExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {}

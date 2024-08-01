@@ -70,17 +70,17 @@ Value<> ArrowFieldReader<ArrowType>::getColumn(const Value<NES::Nautilus::MemRef
         return FunctionCall<>("getRawArrowColumn" + std::string(typeid(ArrowType).name()),
                               getRawArrowColumn<ArrowType>,
                               recordBatch,
-                              Value<UInt64>(fieldIndex));
+                              UInt64(fieldIndex));
     } else {
         return FunctionCall<>("getColumn" + std::string(typeid(ArrowType).name()),
                               getArrowColumn<ArrowType>,
                               recordBatch,
-                              Value<UInt64>(fieldIndex));
+                              UInt64(fieldIndex));
     }
 }
 
 template<typename ArrowType>
-Value<> ArrowFieldReader<ArrowType>::getValue(const Value<NES::Nautilus::MemRef>& column, const Value<UInt64>& index) {
+Value<> ArrowFieldReader<ArrowType>::getValue(const Value<NES::Nautilus::MemRef>& column, const UInt64& index) {
     if constexpr (HasRawValues<ArrowType>) {
         using cType = typename ArrowType::value_type;
         auto offset = column + index * sizeof(cType);

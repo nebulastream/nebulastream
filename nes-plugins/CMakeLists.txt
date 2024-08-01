@@ -23,13 +23,16 @@ if (NES_BUILD_PLUGIN_ARROW AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND NOT (CMAKE
 endif ()
 
 if (NES_BUILD_PLUGIN_CUDA AND CMAKE_SYSTEM_NAME STREQUAL "Linux" AND CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-    add_subdirectory(cuda)
+    # For now disabled, as we did not port it to the new nautilus lib yet
+    # add_subdirectory(cuda)
 endif ()
 
 if (NES_BUILD_PLUGIN_TENSORFLOW)
-    add_subdirectory(tensorflow)
+    # For now disabled, as we did not port it to the new nautilus lib yet
+    # add_subdirectory(tensorflow)
 endif ()
 
 if (NES_BUILD_PLUGIN_ONNX)
-    add_subdirectory(onnx)
+    # For now disabled, as we did not port it to the new nautilus lib yet
+    # add_subdirectory(onnx)
 endif ()

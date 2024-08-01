@@ -12,8 +12,7 @@
     limitations under the License.
 */
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Util/StdInt.hpp>
@@ -30,58 +29,58 @@ extern "C" void* insetProxy(void* state, uint64_t hash) {
     return hashMap->insertEntry(hash);
 }
 
-ChainedHashMapRef::EntryRef::EntryRef(const Value<MemRef>& ref, uint64_t keyOffset, uint64_t valueOffset)
+ChainedHashMapRef::EntryRef::EntryRef(const MemRef& ref, uint64_t keyOffset, uint64_t valueOffset)
     : ref(ref), keyOffset(keyOffset), valueOffset(valueOffset) {}
 
-Value<MemRef> ChainedHashMapRef::EntryRef::getKeyPtr() const { return (ref + keyOffset).as<MemRef>(); }
+MemRef ChainedHashMapRef::EntryRef::getKeyPtr() const { return (ref + nautilus::val<uint64_t>(keyOffset)); }
 
-Value<MemRef> ChainedHashMapRef::EntryRef::getValuePtr() const { return (ref + valueOffset).as<MemRef>(); }
+MemRef ChainedHashMapRef::EntryRef::getValuePtr() const { return (ref + nautilus::val<uint64_t>(valueOffset)); }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryRef::getNext() const {
     // This assumes that the next ptr is stored as the first element in the entry.
     // perform a load to load the next value
-    auto next = getMember(ref, ChainedHashMap::Entry, next).load<MemRef>();
+    auto next = getMemberAsPointer(ref, ChainedHashMap::Entry, next, int8_t);
     return {next, keyOffset, valueOffset};
 }
 
-Value<UInt64> ChainedHashMapRef::EntryRef::getHash() const {
+UInt64 ChainedHashMapRef::EntryRef::getHash() const {
     // load the has value from the entry
-    return getMember(ref, ChainedHashMap::Entry, hash).load<UInt64>();
+    return getMember(ref, ChainedHashMap::Entry, hash, uint64_t);
 }
 
-bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) const { return ref != 0; }
-bool ChainedHashMapRef::EntryRef::operator==(std::nullptr_t) const { return ref == 0; }
+bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) const { return ref != nautilus::val<int8_t*>(0); }
+bool ChainedHashMapRef::EntryRef::operator==(std::nullptr_t) const { return ref == nautilus::val<int8_t*>(0); }
 
-ChainedHashMapRef::ChainedHashMapRef(const Value<MemRef>& hashTableRef,
+ChainedHashMapRef::ChainedHashMapRef(const MemRef& hashTableRef,
                                      const std::vector<PhysicalTypePtr>& keyDataTypes,
                                      uint64_t keySize,
                                      uint64_t valueSize)
     : hashTableRef(hashTableRef), keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize) {}
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const Value<UInt64>& hash) {
-    auto entry = FunctionCall<>("findChainProxy", findChainProxy, hashTableRef, hash);
+ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const UInt64& hash) {
+    auto entry = invoke(findChainProxy, hashTableRef, hash);
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash) {
-    auto entry = FunctionCall<>("insertProxy", insetProxy, hashTableRef, hash);
+ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash) {
+    auto entry = invoke(insetProxy, hashTableRef, hash);
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
+ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash, const std::vector<ExecDataType>& keys) {
     // create new entry
     auto entry = insert(hash);
     // store keys
     auto keyPtr = entry.getKeyPtr();
     for (size_t i = 0; i < keys.size(); i++) {
         auto& key = keys[i];
-        keyPtr.store(key);
-        keyPtr = keyPtr + keyDataTypes[i]->size();
+        writeExecDataTypeToMemRef(keyPtr, key);
+        keyPtr = keyPtr + nautilus::val<uint64_t>(keyDataTypes[i]->size());
     }
     return entry;
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::find(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
+ChainedHashMapRef::EntryRef ChainedHashMapRef::find(const UInt64& hash, const std::vector<ExecDataType>& keys) {
     // find chain
     auto entry = findChain(hash);
     // iterate chain and search for the correct entry
@@ -93,18 +92,18 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::find(const Value<UInt64>& hash, c
     return entry;
 }
 
-ChainedHashMapRef::KeyEntryIterator ChainedHashMapRef::findAll(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
+ChainedHashMapRef::KeyEntryIterator ChainedHashMapRef::findAll(const UInt64& hash, const std::vector<ExecDataType>& keys) {
     return {*this, hash, keys, 0_u64};
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash, const std::vector<Value<>>& keys) {
+ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const UInt64& hash, const std::vector<ExecDataType>& keys) {
     return findOrCreate(hash, keys, [](const EntryRef&) {
         // nop
     });
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>& hash,
-                                                            const std::vector<Value<>>& keys,
+ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const UInt64& hash,
+                                                            const std::vector<ExecDataType>& keys,
                                                             const std::function<void(EntryRef&)>& onInsert) {
     // find entry
     auto entry = find(hash, keys);
@@ -121,27 +120,32 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const Value<UInt64>&
 void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const std::function<void(EntryRef&)>& update) {
     auto entry = findChain(otherEntry.getHash());
     for (; entry != nullptr; entry = entry.getNext()) {
-        if (MemRefUtils::memEquals(entry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize))) {
+        if (memEquals(entry.getKeyPtr(), otherEntry.getKeyPtr(), UInt64(keySize))) {
             update(entry);
             break;
         }
     }
     if (entry == nullptr) {
         auto newEntry = insert(otherEntry.getHash());
-        MemRefUtils::memCopy(newEntry.getKeyPtr(), otherEntry.getKeyPtr(), Value<UInt64>(keySize + valueSize));
+        memCopy(newEntry.getKeyPtr(), otherEntry.getKeyPtr(), UInt64(keySize + valueSize));
     }
 }
 
-Value<Boolean> ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<Value<>>& keys) {
-    Value<Boolean> equals = true;
+Boolean ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys) {
+    auto equals = ExecutableDataType<bool>::create(true);
     auto keyPtr = entry.getKeyPtr();
     for (size_t i = 0; i < keys.size(); i++) {
         auto& key = keys[i];
-        auto keyFromEntry = MemRefUtils::loadValue(keyPtr, keyDataTypes[i]);
-        equals = equals && (key == keyFromEntry);
-        keyPtr = keyPtr + keyDataTypes[i]->size();
+        const auto keyFromEntry = readExecDataTypeFromMemRef(keyPtr, keyDataTypes[i]);
+        const auto tmp = (key == keyFromEntry);
+        equals = tmp && equals;
+        keyPtr = keyPtr + nautilus::val<uint64_t>(keyDataTypes[i]->size());
     }
-    return equals;
+    if (equals) {
+        return {true};
+    } else {
+        return {false};
+    }
 }
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() {
@@ -153,28 +157,28 @@ ChainedHashMapRef::EntryIterator ChainedHashMapRef::end() {
     return {*this, currentSize};
 }
 
-Value<UInt64> ChainedHashMapRef::getCurrentSize() {
-    return getMember(this->hashTableRef, ChainedHashMap, currentSize).load<UInt64>();
+UInt64 ChainedHashMapRef::getCurrentSize() {
+    return getMember(this->hashTableRef, ChainedHashMap, currentSize, uint64_t);
 }
 
-Value<UInt64> ChainedHashMapRef::getPageSize() { return getMember(this->hashTableRef, ChainedHashMap, pageSize).load<UInt64>(); }
+UInt64 ChainedHashMapRef::getPageSize() { return getMember(this->hashTableRef, ChainedHashMap, pageSize, uint64_t); }
 
 void* getPageProxy(void* hmPtr, uint64_t pageIndex) {
     auto hashMap = (ChainedHashMap*) hmPtr;
     return hashMap->getPage(pageIndex);
 }
 
-Value<MemRef> ChainedHashMapRef::getPage(const Value<UInt64>& pageIndex) {
-    return FunctionCall("getPageProxy", getPageProxy, hashTableRef, pageIndex);
+MemRef ChainedHashMapRef::getPage(const UInt64& pageIndex) {
+    return nautilus::invoke(getPageProxy, hashTableRef, pageIndex);
 }
 
 ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef,
-                                                const Value<UInt64>& entriesPerPage,
-                                                const Value<UInt64>& currentIndex)
+                                                const UInt64& entriesPerPage,
+                                                const UInt64& currentIndex)
     : hashTableRef(hashTableRef), entriesPerPage(entriesPerPage), inPageIndex(0_u64), currentPage(hashTableRef.getPage(0_u64)),
       currentPageIndex(0_u64), currentIndex(currentIndex) {}
 
-ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef, const Value<UInt64>& currentIndex)
+ChainedHashMapRef::EntryIterator::EntryIterator(ChainedHashMapRef& hashTableRef, const UInt64& currentIndex)
     : hashTableRef(hashTableRef), entriesPerPage(0_u64), inPageIndex(0_u64),
       currentPage(/*use hash table ref as a temp mem ref that is in this case never used*/ hashTableRef.hashTableRef),
       currentPageIndex(0_u64), currentIndex(currentIndex) {}
@@ -196,21 +200,21 @@ bool ChainedHashMapRef::EntryIterator::operator==(const EntryIterator& other) co
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryIterator::operator*() {
     auto entry = currentPage + ((sizeof(ChainedHashMap::Entry) + hashTableRef.keySize + hashTableRef.valueSize) * inPageIndex);
-    return {entry.as<MemRef>(), sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + hashTableRef.keySize};
+    return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + hashTableRef.keySize};
 }
 
-Value<UInt64> ChainedHashMapRef::getEntriesPerPage() {
-    return getMember(this->hashTableRef, ChainedHashMap, entriesPerPage).load<UInt64>();
+UInt64 ChainedHashMapRef::getEntriesPerPage() {
+    return getMember(this->hashTableRef, ChainedHashMap, entriesPerPage, uint64_t);
 }
 
 ChainedHashMapRef::KeyEntryIterator::KeyEntryIterator(ChainedHashMapRef& hashTableRef,
-                                                      const Value<UInt64>& hash,
-                                                      const std::vector<Value<>>& keys,
-                                                      const Value<UInt64>& currentIndex)
+                                                      const UInt64& hash,
+                                                      const std::vector<ExecDataType>& keys,
+                                                      const UInt64& currentIndex)
     : hashTableRef(hashTableRef), currentIndex(currentIndex), keys(keys), currentEntry(hashTableRef.findChain(hash)) {}
 
 ChainedHashMapRef::KeyEntryIterator& ChainedHashMapRef::KeyEntryIterator::operator++() {
-    Value<Boolean> equals = false;
+    Boolean equals = false;
     for (; currentEntry != nullptr && !equals; currentEntry = currentEntry.getNext()) {
         currentIndex = currentIndex + 1_u64;
         equals = hashTableRef.compareKeys(currentEntry, keys);

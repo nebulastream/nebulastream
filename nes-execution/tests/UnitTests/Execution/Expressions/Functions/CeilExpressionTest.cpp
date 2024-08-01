@@ -54,7 +54,7 @@ TEST_F(CeilExpressionTest, evaluateCeilExpressionFloat) {
 */
 TEST_F(CeilExpressionTest, evaluateCeilExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<CeilExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

@@ -64,7 +64,7 @@ class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest {
         buffer.setWatermark(wts);
         buffer.setOriginId(OriginId(originId));
         buffer.setSequenceNumber(sequenceNumber);
-        auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
+        auto recordBuffer = RecordBuffer(MemRef(reinterpret_cast<int8_t*>(std::addressof(buffer))));
         context.setWatermarkTs(wts);
         context.setOrigin(originId);
         slicePreAggregation.close(context, recordBuffer);
@@ -94,11 +94,11 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate) {
     auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(reinterpret_cast<int8_t*>(workerContext.get())),
+                                MemRef((int8_t*) &pipelineContext));
     auto buffer = bufferManager->getBufferBlocking();
 
-    auto rb = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
+    auto rb = RecordBuffer(MemRef(reinterpret_cast<int8_t*>(std::addressof(buffer))));
     slicePreAggregation.setup(ctx);
     auto stateStore = handler->getThreadLocalSliceStore(workerContext->getId());
 

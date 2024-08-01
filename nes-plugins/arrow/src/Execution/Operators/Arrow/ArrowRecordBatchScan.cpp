@@ -54,7 +54,7 @@ void ArrowRecordBatchScan::open(ExecutionContext& ctx, RecordBuffer& recordBuffe
         columns.emplace_back(reader->getColumn(recordBatch));
     }
     auto numberOfRecords = FunctionCall("getBatchSize", getBatchSize, recordBatch);
-    for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64) {
+    for (UInt64 i = 0_u64; i < numberOfRecords; i = i + 1_u64) {
         Record record;
         for (auto index = 0_u64; index < readers.size(); index++) {
             auto value = readers[index]->getValue(columns[index].as<MemRef>(), i);

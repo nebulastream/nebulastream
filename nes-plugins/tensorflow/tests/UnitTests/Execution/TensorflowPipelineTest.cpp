@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Tensorflow/TensorflowInferenceOperator.hpp>
@@ -38,7 +38,7 @@ class TensorflowPipelineTest : public Testing::BaseUnitTest, public AbstractPipe
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("TensorflowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -82,7 +82,7 @@ TEST_P(TensorflowPipelineTest, thresholdWindowWithSum) {
     scanSchema->addField(f4, BasicType::BOOLEAN);
     auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     std::vector<std::string> inputFields;
@@ -109,7 +109,7 @@ TEST_P(TensorflowPipelineTest, thresholdWindowWithSum) {
     emitSchema->addField(iris1, BasicType::FLOAT32);
     emitSchema->addField(iris2, BasicType::FLOAT32);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     inferModelOperator->setChild(emitOperator);
 

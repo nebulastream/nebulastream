@@ -68,13 +68,13 @@ class AppendToSliceStoreActionTest : public Testing::BaseUnitTest {
 
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
         auto map = std::make_unique<Interface::ChainedHashMap>(8, 8, 1000, std::move(allocator));
-        Interface::ChainedHashMapRef ref(Value<MemRef>(reinterpret_cast<int8_t*>(map.get())),
+        Interface::ChainedHashMapRef ref(MemRef(reinterpret_cast<int8_t*>(map.get())),
                                          {integerType},
                                          integerType->size(),
                                          8);
 
         for (uint64_t hash = 0; const auto& [k, v] : values) {
-            std::memcpy(ref.insert(Value<UInt64>(hash), {k}).getValuePtr().getValue().value, std::addressof(v), sizeof(v));
+            std::memcpy(ref.insert(UInt64(hash), {k}).getValuePtr().getValue().value, std::addressof(v), sizeof(v));
             hash++;
         }
         return std::make_shared<KeyedSlice>(std::move(map), start, end);
@@ -88,18 +88,18 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice) {
     auto handler = std::make_shared<AppendToSliceStoreHandler<NonKeyedSlice>>(600, 200);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto context = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                    Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto context = ExecutionContext(MemRef(reinterpret_cast<int8_t*>(workerContext.get())),
+                                    MemRef(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto action = AppendToSliceStoreAction<NonKeyedSlice>(0);
     auto emitSlice = [&action, &context](auto slice) {
         ExecuteOperatorPtr child = nullptr;
-        Value<UInt64> start(slice->getStart());
-        Value<UInt64> end(slice->getEnd());
-        Value<UInt64> seq(1_u64);
-        Value<UInt64> chunk(1_u64);
-        Value<Boolean> lastChunk(true);
-        Value<MemRef> combinedSlice(reinterpret_cast<int8_t*>(slice.get()));
+        UInt64 start(slice->getStart());
+        UInt64 end(slice->getEnd());
+        UInt64 seq(1_u64);
+        UInt64 chunk(1_u64);
+        Boolean lastChunk(true);
+        MemRef combinedSlice(reinterpret_cast<int8_t*>(slice.get()));
         action.emitSlice(context, child, start, end, seq, chunk, lastChunk, combinedSlice);
     };
 
@@ -143,19 +143,19 @@ TEST_F(AppendToSliceStoreActionTest, KeyedSlice) {
     auto handler = std::make_shared<AppendToSliceStoreHandler<KeyedSlice>>(600, 200);
 
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx = ExecutionContext(MemRef(reinterpret_cast<int8_t*>(workerContext.get())),
+                                MemRef(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto action = AppendToSliceStoreAction<KeyedSlice>(0);
 
     auto emitSlice = [&action, &ctx](auto slice) {
         ExecuteOperatorPtr child = nullptr;
-        Value<UInt64> start(slice->getStart());
-        Value<UInt64> end(slice->getEnd());
-        Value<UInt64> seq(1_u64);
-        Value<UInt64> chunk(1_u64);
-        Value<Boolean> lastChunk(true);
-        Value<MemRef> combinedSlice(reinterpret_cast<int8_t*>(slice.get()));
+        UInt64 start(slice->getStart());
+        UInt64 end(slice->getEnd());
+        UInt64 seq(1_u64);
+        UInt64 chunk(1_u64);
+        Boolean lastChunk(true);
+        MemRef combinedSlice(reinterpret_cast<int8_t*>(slice.get()));
         action.emitSlice(ctx, child, start, end, seq, chunk, lastChunk, combinedSlice);
     };
 

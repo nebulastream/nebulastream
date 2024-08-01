@@ -35,12 +35,12 @@ class SliceMergingAction {
      */
     virtual void emitSlice(ExecutionContext& ctx,
                            ExecuteOperatorPtr& child,
-                           nautilus::val<uint64_t>& windowStart,
-                           nautilus::val<uint64_t>& windowEnd,
-                           nautilus::val<uint64_t>& sequenceNumber,
-                           nautilus::val<uint64_t>& chunkNumber,
-                           nautilus::val<bool>& lastChunk,
-                           nautilus::val<int8_t*>& globalSlice) const = 0;
+                           ExecDataUInt64Ptr& windowStart,
+                           ExecDataUInt64Ptr& windowEnd,
+                           ExecDataUInt64Ptr& sequenceNumber,
+                           ExecDataUInt64Ptr& chunkNumber,
+                           ExecDataBooleanPtr& lastChunk,
+                           VoidRef& globalSlice) const = 0;
 
     virtual ~SliceMergingAction() = default;
 };

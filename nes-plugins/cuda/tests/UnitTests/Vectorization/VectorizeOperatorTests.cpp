@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseUnitTest.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Vectorization/StagingHandler.hpp>
 #include <Execution/Operators/Vectorization/VectorizableOperator.hpp>
@@ -51,7 +51,7 @@ class VectorizedCollectOperator : public VectorizableOperator {
     void execute(ExecutionContext&, RecordBuffer& recordBuffer) const override {
         auto numberOfRecords = recordBuffer.getNumRecords();
         auto bufferAddress = recordBuffer.getBuffer();
-        for (Value<UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
+        for (UInt64 i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
             auto record = memoryProvider->read(projections, bufferAddress, i);
             records.push_back(record);
         }
@@ -93,23 +93,23 @@ TEST_F(VectorizeOperatorTest, vectorizeTupleBuffer__GPU) {
     auto workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     auto pipelineContext = std::make_shared<MockedPipelineExecutionContext>(handlers, true, bufferManager);
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) pipelineContext.get()));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) pipelineContext.get()));
 
     stagingHandler->start(pipelineContext, 0);
 
     std::vector<Record::RecordFieldIdentifier> projections = {"f1", "f2"};
-    auto collectMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto collectMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto collectOperator = std::make_shared<VectorizedCollectOperator>(std::move(collectMemoryProviderPtr), projections);
-    auto vectorizeMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto vectorizeMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto vectorizeOperator = Vectorize(pipelineContext->getOperatorHandlers().size() - 1, std::move(vectorizeMemoryProviderPtr));
     vectorizeOperator.setChild(collectOperator);
 
-    auto bufferRef = Value<MemRef>((int8_t*) std::addressof(buffer));
+    auto bufferRef = MemRef((int8_t*) std::addressof(buffer));
     RecordBuffer recordBuffer = RecordBuffer(bufferRef);
     auto bufferAddress = recordBuffer.getBuffer();
     auto numberOfRecords = recordBuffer.getNumRecords();
-    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
-    for (Value<UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
+    for (UInt64 i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
         auto record = memoryProviderPtr->read(projections, bufferAddress, i);
         vectorizeOperator.execute(ctx, record);
     }

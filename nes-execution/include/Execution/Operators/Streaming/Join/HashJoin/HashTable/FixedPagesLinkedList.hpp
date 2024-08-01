@@ -42,21 +42,21 @@ class FixedPagesLinkedList {
      * @param hash
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* appendLocal(const uint64_t hash);
+    int8_t* appendLocal(const uint64_t hash);
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and uses a mutex
      * @param hash
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* appendConcurrentUsingLocking(const uint64_t hash);
+    int8_t* appendConcurrentUsingLocking(const uint64_t hash);
 
     /**
      * @brief Appends an item with the hash to this list by returning a pointer to a free memory space. This call is thread safe and is lockfree
      * @param hash
      * @return Pointer to a free memory space where to write the data
      */
-    uint8_t* appendConcurrentLockFree(const uint64_t hash);
+    int8_t* appendConcurrentLockFree(const uint64_t hash);
 
     /**
      * @brief Returns all pages belonging to this list

@@ -17,7 +17,6 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/LocalBufferPool.hpp>
@@ -134,25 +133,24 @@ AppendToSliceStoreAction<Slice>::AppendToSliceStoreAction(const uint64_t operato
 
 template<class Slice>
 void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
-                                                ExecuteOperatorPtr&,
-                                                Value<UInt64>&,
-                                                Value<UInt64>& sliceEnd,
-                                                Value<UInt64>& sequenceNumber,
-                                                Value<UInt64>& chunkNumber,
-                                                Value<Boolean>& lastChunk,
-                                                Value<MemRef>& combinedSlice) const {
+                                                ExecuteOperatorPtr& child,
+                                                ExecDataUInt64Ptr&,
+                                                ExecDataUInt64Ptr& sliceEnd,
+                                                ExecDataUInt64Ptr& sequenceNumber,
+                                                ExecDataUInt64Ptr& chunkNumber,
+                                                ExecDataBooleanPtr& lastChunk,
+                                                VoidRef& combinedSlice) const {
 
     auto actionHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    FunctionCall("appendToGlobalSliceStore", appendToGlobalSliceStore<Slice>, actionHandler, combinedSlice);
-    FunctionCall("triggerSlidingWindows",
-                 triggerSlidingWindows<Slice>,
-                 actionHandler,
-                 ctx.getWorkerContext(),
-                 ctx.getPipelineContext(),
-                 sequenceNumber,
-                 chunkNumber,
-                 lastChunk,
-                 sliceEnd);
+    nautilus::invoke(appendToGlobalSliceStore<Slice>, actionHandler, combinedSlice);
+    nautilus::invoke(triggerSlidingWindows<Slice>,
+                     actionHandler,
+                     ctx.getWorkerContext(),
+                     ctx.getPipelineContext(),
+                     sequenceNumber->getRawValue(),
+                     chunkNumber->getRawValue(),
+                     lastChunk->getRawValue(),
+                     sliceEnd->getRawValue());
 }
 
 // Instantiate types

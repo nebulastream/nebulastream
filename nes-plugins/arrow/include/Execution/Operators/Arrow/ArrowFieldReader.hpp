@@ -34,8 +34,8 @@ namespace NES::Runtime::Execution::Operators {
 class AbstractArrowFieldReader {
   public:
     AbstractArrowFieldReader(const uint64_t fieldIndex, const Record::RecordFieldIdentifier& fieldName);
-    virtual Value<> getColumn(const Value<MemRef>& recordBatch) = 0;
-    virtual Value<> getValue(const Value<MemRef>& column, const Value<UInt64>& index) = 0;
+    virtual Value<> getColumn(const MemRef& recordBatch) = 0;
+    virtual Value<> getValue(const MemRef& column, const UInt64& index) = 0;
     virtual ~AbstractArrowFieldReader() = default;
 
     const uint64_t fieldIndex;
@@ -49,8 +49,8 @@ template<typename ArrowType>
 class ArrowFieldReader : public AbstractArrowFieldReader {
   public:
     ArrowFieldReader(const uint64_t fieldIndex, const Record::RecordFieldIdentifier& fieldName);
-    Value<> getColumn(const Value<MemRef>& recordBatch) override;
-    Value<> getValue(const Value<MemRef>& column, const Value<UInt64>& index) override;
+    Value<> getColumn(const MemRef& recordBatch) override;
+    Value<> getValue(const MemRef& column, const UInt64& index) override;
 };
 
 /**

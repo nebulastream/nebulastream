@@ -14,7 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <BaseUnitTest.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Vectorization/Unvectorize.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -57,14 +57,14 @@ TEST_F(UnvectorizeOperatorTest, unvectorizeTupleBuffer__GPU) {
         testBuffer.setNumberOfTuples(i + 1);
     }
 
-    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     std::vector<Record::RecordFieldIdentifier> projections = {"f1", "f2"};
     auto unvectorizeOperator = Unvectorize(std::move(memoryProviderPtr), projections);
     auto collector = std::make_shared<CollectOperator>();
     unvectorizeOperator.setChild(collector);
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
-    RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
+    RecordBuffer recordBuffer = RecordBuffer(MemRef((int8_t*) std::addressof(buffer)));
 
     unvectorizeOperator.execute(ctx, recordBuffer);
 

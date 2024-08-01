@@ -80,7 +80,7 @@ TEST_F(TanExpressionTest, evaluateTanExpressionInteger) {
     }
     //UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(0_u64));
+        auto resultValue = expression.eval(UInt64(0_u64));
         ASSERT_EQ(resultValue, (double) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -107,7 +107,7 @@ TEST_F(TanExpressionTest, evaluateTanExpressionFloat) {
  */
 TEST_F(TanExpressionTest, evaluateTanExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<TanExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

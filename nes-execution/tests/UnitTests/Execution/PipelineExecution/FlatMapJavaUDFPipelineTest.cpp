@@ -13,7 +13,7 @@
 */
 
 #include <API/Schema.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
 #include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
@@ -39,7 +39,7 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
@@ -66,12 +66,12 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
 auto initPipelineOperator(SchemaPtr schema, auto memoryLayout) {
     //auto mapOperator = std::make_shared<Operators::MapJavaUDF>(0, schema, schema);
     auto flatMapOperator = std::make_shared<Operators::FlatMapJavaUDF>(0, schema, schema);
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     scanOperator->setChild(flatMapOperator);
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     flatMapOperator->setChild(emitOperator);
 

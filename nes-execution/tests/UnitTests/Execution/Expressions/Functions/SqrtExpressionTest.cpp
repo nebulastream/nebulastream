@@ -77,7 +77,7 @@ TEST_F(SqrtExpressionTest, evaluateSqrtExpressionFloat) {
  */
 TEST_F(SqrtExpressionTest, evaluateSqrtExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<SqrtExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)));
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)));
 }
 
 }// namespace NES::Runtime::Execution::Expressions

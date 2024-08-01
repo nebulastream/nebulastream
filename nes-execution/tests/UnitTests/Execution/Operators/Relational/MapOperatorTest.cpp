@@ -48,7 +48,7 @@ TEST_F(MapOperatorTest, createNewFieldTest) {
     auto mapOperator = Map(writeF3);
     auto collector = std::make_shared<CollectOperator>();
     mapOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
     auto record = Record({{"f1", Value<>(10)}, {"f2", Value<>(12)}});
     mapOperator.execute(ctx, record);
 
@@ -69,7 +69,7 @@ TEST_F(MapOperatorTest, overrideFieldTest) {
     auto mapOperator = Map(writeF3);
     auto collector = std::make_shared<CollectOperator>();
     mapOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
     auto record = Record({{"f1", Value<>(10)}, {"f2", Value<>(12)}});
     mapOperator.execute(ctx, record);
 

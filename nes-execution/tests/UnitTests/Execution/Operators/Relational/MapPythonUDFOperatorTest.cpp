@@ -58,7 +58,7 @@ TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<Int32>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
@@ -80,7 +80,7 @@ TEST_F(MapPythonUdfOperatorTest, LongUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<Int64>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10);
@@ -102,7 +102,7 @@ TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<Double>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10.0);
@@ -124,7 +124,7 @@ TEST_F(MapPythonUdfOperatorTest, FloatUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     auto record = Record({{"id", Value<Float>(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), initialValue + 10.0);
@@ -146,8 +146,8 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
-    auto record = Record({{"id", Value<Boolean>(initialValue)}});
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
+    auto record = Record({{"id", Boolean(initialValue)}});
     map.execute(ctx, record);
     ASSERT_EQ(record.read("id"), false);
 }
@@ -198,14 +198,14 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction) {
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     auto record = Record({{"byteVariable", Value<Int8>(initialByte)},
                           {"shortVariable", Value<Int16>(initialShort)},
                           {"intVariable", Value<Int32>(initialInt)},
                           {"longVariable", Value<Int64>(initialLong)},
                           {"floatVariable", Value<Float>(initialFloat)},
                           {"doubleVariable", Value<Double>(initialDouble)},
-                          {"booleanVariable", Value<Boolean>(initialBool)}});
+                          {"booleanVariable", Boolean(initialBool)}});
     map.execute(ctx, record);
 
     EXPECT_EQ(record.read("byteVariable"), initialByte + 10);

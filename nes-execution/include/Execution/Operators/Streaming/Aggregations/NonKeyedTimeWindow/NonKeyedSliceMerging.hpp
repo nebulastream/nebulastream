@@ -45,7 +45,7 @@ class NonKeyedSliceMerging : public Operator {
      * @param endSliceTs the end timestamp
      * @return reference to the newly created slice
      */
-    Value<MemRef> combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler, Value<MemRef>& sliceMergeTask) const;
+    VoidRef combineThreadLocalSlices(MemRef& globalOperatorHandler, MemRef& sliceMergeTask) const;
 
     const uint64_t operatorHandlerIndex;
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;

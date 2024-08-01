@@ -63,7 +63,7 @@ void logicalExpressionGreaterEquals() {
 }
 
 Value<> logicalAssignTest() {
-    Value<Boolean> res = true;
+    Boolean res = true;
     Value x = Value(1);
     res = res && x == 42;
     Value y = Value(1);

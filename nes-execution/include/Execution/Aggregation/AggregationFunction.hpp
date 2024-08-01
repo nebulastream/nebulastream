@@ -76,7 +76,9 @@ class AggregationFunction {
      * @param physicalType the intended data type to which the value should be casted
      * @return value in the type of physicalType
      */
-    static Nautilus::ExecDataType loadFromMemref(Nautilus::MemRef memRef, const PhysicalTypePtr& physicalType);
+    static Nautilus::ExecDataType loadFromMemRef(Nautilus::MemRef memRef, const PhysicalTypePtr& physicalType);
+
+    static void storeToMemRef(Nautilus::MemRef memRef, const Nautilus::ExecDataType& execValue, const PhysicalTypePtr& physicalType);
 
     static Nautilus::ExecDataType createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
 

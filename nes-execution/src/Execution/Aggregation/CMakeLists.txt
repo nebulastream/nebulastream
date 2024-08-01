@@ -17,6 +17,4 @@ add_source_files(nes-execution
         AvgAggregation.cpp
         MinAggregation.cpp
         MaxAggregation.cpp
-        HyperLogLogDistinctCountApproximation.cpp
-        QuantileEstimationAggregation.cpp
         )

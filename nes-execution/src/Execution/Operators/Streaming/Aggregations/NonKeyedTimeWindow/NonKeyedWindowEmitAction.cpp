@@ -14,11 +14,10 @@
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getGlobalSliceState(void* combinedSlice);
+int8_t* getGlobalSliceState(void* combinedSlice);
 void deleteNonKeyedSlice(void* slice);
 
 NonKeyedWindowEmitAction::NonKeyedWindowEmitAction(
@@ -31,30 +30,30 @@ NonKeyedWindowEmitAction::NonKeyedWindowEmitAction(
 
 void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                          ExecuteOperatorPtr& child,
-                                         Value<UInt64>& windowStart,
-                                         Value<UInt64>& windowEnd,
-                                         Value<UInt64>& sequenceNumber,
-                                         Value<UInt64>& chunkNumber,
-                                         Value<Boolean>& lastChunk,
-                                         Value<MemRef>& globalSlice) const {
-    ctx.setWatermarkTs(windowStart);
+                                         ExecDataUInt64Ptr& windowStart,
+                                         ExecDataUInt64Ptr& windowEnd,
+                                         ExecDataUInt64Ptr& sequenceNumber,
+                                         ExecDataUInt64Ptr& chunkNumber,
+                                         ExecDataBooleanPtr& lastChunk,
+                                         VoidRef& globalSlice) const {
+    ctx.setWatermarkTs(windowStart->getRawValue());
     ctx.setOrigin(resultOriginId.getRawValue());
-    ctx.setSequenceNumber(sequenceNumber);
-    ctx.setChunkNumber(chunkNumber);
-    ctx.setLastChunk(lastChunk);
+    ctx.setSequenceNumber(sequenceNumber->getRawValue());
+    ctx.setChunkNumber(chunkNumber->getRawValue());
+    ctx.setLastChunk(lastChunk->getRawValue());
 
-    auto windowState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
+    auto windowState = nautilus::invoke(getGlobalSliceState, globalSlice);
     Record resultWindow;
     resultWindow.write(startTsFieldName, windowStart);
     resultWindow.write(endTsFieldName, windowEnd);
-    uint64_t stateOffset = 0;
+    UInt64 stateOffset = 0;
     for (const auto& function : aggregationFunctions) {
         auto valuePtr = windowState + stateOffset;
-        function->lower(valuePtr.as<MemRef>(), resultWindow);
+        function->lower(valuePtr, resultWindow);
         stateOffset = stateOffset + function->getSize();
     }
     child->execute(ctx, resultWindow);
 
-    Nautilus::FunctionCall("deleteNonKeyedSlice", deleteNonKeyedSlice, globalSlice);
+    nautilus::invoke(deleteNonKeyedSlice, globalSlice);
 }
 }// namespace NES::Runtime::Execution::Operators

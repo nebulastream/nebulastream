@@ -31,7 +31,7 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
@@ -119,7 +119,7 @@ class TPCH_Query6 {
         auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         resultSchema->addField("revenue", BasicType::FLOAT32);
         auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
-        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(resultLayout);
+        auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(resultLayout);
         auto emit = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
         aggScan->setChild(emit);
 

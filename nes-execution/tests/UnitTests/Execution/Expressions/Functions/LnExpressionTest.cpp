@@ -83,7 +83,7 @@ TEST_F(LnExpressionTest, evaluateLnExpressionFloat) {
     */
 TEST_F(LnExpressionTest, evaluateCotExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<LnExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

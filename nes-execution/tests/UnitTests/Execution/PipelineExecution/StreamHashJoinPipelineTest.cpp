@@ -18,7 +18,7 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
@@ -69,7 +69,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
     ExecutablePipelineProvider* provider;
     BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -130,9 +130,9 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
         auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
 
-        auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
-        auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);
-        auto emitMemoryProviderSink = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutJoined);
+        auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutLeft);
+        auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutRight);
+        auto emitMemoryProviderSink = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutJoined);
 
         auto scanOperatorLeft = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderLeft));
         auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));

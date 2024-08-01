@@ -19,45 +19,38 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
+//void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
+void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, uint32_t workerThreadId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrWindowVector != nullptr, "ptrPagedVector should not be null!");
     auto allWindowVec = static_cast<std::vector<HJSlice*>*>(ptrWindowVector);
     auto nljWindow = allWindowVec->operator[](index);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
 
-    NES_INFO("getHashTableRefProxy for index {} workerThreadId {} nljWindow {}", index, workerThreadId, nljWindow->toString());
-    return nljWindow->getHashTable(joinBuildSide, workerThreadId);
+    NES_INFO("getHashTableRefProxy for index {} workerThreadId {} nljWindow {}", index, WorkerThreadId(workerThreadId), nljWindow->toString());
+    return nljWindow->getHashTable(joinBuildSide, WorkerThreadId(workerThreadId));
 }
 
-void HJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill,
-                                             Value<UInt64>& curIndex,
-                                             ValueId<WorkerThreadId>& workerThreadId,
+void HJBuildBucketing::insertRecordForWindow(MemRef& allWindowsToFill,
+                                             UInt64& curIndex,
+                                             UInt32& workerThreadId,
                                              Record& record) const {
 
-    auto hashTableReference = Nautilus::FunctionCall("getHashTableRefProxy",
-                                                     getHashTableRefProxy,
-                                                     allWindowsToFill,
-                                                     curIndex,
-                                                     workerThreadId,
-                                                     Value<UInt64>(to_underlying(joinBuildSide)));
+    auto hashTableReference =
+        nautilus::invoke(getHashTableRefProxy, allWindowsToFill, curIndex, workerThreadId, UInt64(to_underlying(joinBuildSide)));
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
-                                              insertFunctionProxy,
-                                              hashTableReference,
-                                              record.read(joinFieldName).as<UInt64>());
+    auto entryMemRef = nautilus::invoke(insertFunctionProxy, hashTableReference, record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
     //write data
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
-        entryMemRef.store(record.read(fieldName));
-        entryMemRef = entryMemRef + fieldType->size();
+//        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
+        Nautilus::writeExecDataTypeToMemRef(entryMemRef, record.read(fieldName));
+        entryMemRef = entryMemRef + nautilus::val<uint64_t>(fieldType->size());
     }
 }
 

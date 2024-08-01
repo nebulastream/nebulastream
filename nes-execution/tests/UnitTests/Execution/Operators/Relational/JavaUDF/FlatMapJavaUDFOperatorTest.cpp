@@ -54,8 +54,8 @@ class FlatMapJavaUDFOperatorTest : public Testing::BaseUnitTest {
         auto collector = std::make_shared<CollectOperator>();
         map.setChild(collector);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
-        auto ctx = ExecutionContext(Value<MemRef>(buffer), Value<MemRef>((int8_t*) &pipelineContext));
-        RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
+        auto ctx = ExecutionContext(MemRef(buffer), MemRef((int8_t*) &pipelineContext));
+        RecordBuffer recordBuffer = RecordBuffer(MemRef(nullptr));
         map.setup(ctx);
         map.open(ctx, recordBuffer);
         map.execute(ctx, record);
@@ -116,7 +116,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction) {
                                {"floatVariable", Value<Float>(initialFloat)},
                                {"doubleVariable", Value<Double>(initialDouble)},
                                {"stringVariable", Value<Text>("testValue")},
-                               {"booleanVariable", Value<Boolean>(initialBool)}});
+                               {"booleanVariable", Boolean(initialBool)}});
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder()
                                  .setClassName("stream.nebula.ComplexPojoFlatMapFunction")
                                  .setInputClassName("stream.nebula.ComplexPojo")

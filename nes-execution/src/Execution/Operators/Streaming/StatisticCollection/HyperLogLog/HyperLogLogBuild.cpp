@@ -75,13 +75,13 @@ void HyperLogLogBuild::execute(ExecutionContext& ctx, Record& record) const {
     auto hllMemRef = Nautilus::FunctionCall("getHLLRefProxy",
                                             getHLLRefProxy,
                                             operatorHandlerMemRef,
-                                            Value<UInt64>(metricHash),
+                                            UInt64(metricHash),
                                             ctx.getCurrentStatisticId(),
                                             ctx.getWorkerThreadId(),
                                             timestampVal);
 
     // 2. Updating the hyperloglog sketch for this record
-    Value<UInt64> hash = murmurHash->calculate(record.read(fieldToTrackFieldName));
+    UInt64 hash = murmurHash->calculate(record.read(fieldToTrackFieldName));
     Nautilus::FunctionCall("updateHLLProxy", updateHLLProxy, hllMemRef, hash);
 }
 
@@ -97,7 +97,7 @@ void HyperLogLogBuild::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) 
                            ctx.getChunkNumber(),
                            ctx.getLastChunk(),
                            ctx.getOriginId(),
-                           Value<UInt64>(metricHash),
+                           UInt64(metricHash),
                            ctx.getCurrentStatisticId());
     Operator::close(ctx, recordBuffer);
 }

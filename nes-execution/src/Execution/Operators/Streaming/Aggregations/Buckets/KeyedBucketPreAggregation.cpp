@@ -17,9 +17,6 @@
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Util/StdInt.hpp>
@@ -27,9 +24,10 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getKeyedBucketStore(void* op, WorkerThreadId workerThreadId) {
+//void* getKeyedBucketStore(void* op, WorkerThreadId workerThreadId) {
+void* getKeyedBucketStore(void* op, uint32_t workerThreadId) {
     auto handler = static_cast<KeyedBucketPreAggregationHandler*>(op);
-    return handler->getThreadLocalBucketStore(workerThreadId);
+    return handler->getThreadLocalBucketStore(WorkerThreadId(workerThreadId));
 }
 
 void* findKeyedBucketsByTs(void* ss, uint64_t ts) {
@@ -77,13 +75,13 @@ class LocalKeyedBucketStoreState : public Operators::OperatorState {
     explicit LocalKeyedBucketStoreState(const std::vector<PhysicalTypePtr>& keyDataTypes,
                                         uint64_t keySize,
                                         uint64_t valueSize,
-                                        const Value<MemRef>& sliceStoreState)
+                                        const MemRef& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
 
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const uint64_t keySize;
     const uint64_t valueSize;
-    const Value<MemRef> sliceStoreState;
+    const MemRef sliceStoreState;
 };
 KeyedBucketPreAggregation::KeyedBucketPreAggregation(
     uint64_t operatorHandlerIndex,
@@ -105,12 +103,11 @@ KeyedBucketPreAggregation::KeyedBucketPreAggregation(
 
 void KeyedBucketPreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("setupKeyedBucketWindowHandler",
-                           setupKeyedBucketWindowHandler,
-                           globalOperatorHandler,
-                           executionCtx.getPipelineContext(),
-                           Value<UInt64>(keySize),
-                           Value<UInt64>(valueSize));
+    nautilus::invoke(setupKeyedBucketWindowHandler,
+                     globalOperatorHandler,
+                     executionCtx.getPipelineContext(),
+                     UInt64(keySize),
+                     UInt64(valueSize));
 }
 
 void KeyedBucketPreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
@@ -119,8 +116,7 @@ void KeyedBucketPreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) co
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto bucketStore =
-        Nautilus::FunctionCall("getKeyedBucketStore", getKeyedBucketStore, globalOperatorHandler, ctx.getWorkerThreadId());
+    auto bucketStore = nautilus::invoke(getKeyedBucketStore, globalOperatorHandler, ctx.getWorkerThreadId());
     // 3. store the reference to the slice store in the local operator state.
     auto state = std::make_unique<LocalKeyedBucketStoreState>(keyDataTypes, keySize, valueSize, bucketStore);
     ctx.setLocalOperatorState(this, std::move(state));
@@ -134,7 +130,7 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
     auto timestampValue = timeFunction->getTs(ctx, record);
 
     // 2. derive key values
-    std::vector<Value<>> keyValues;
+    std::vector<ExecDataType> keyValues;
     for (const auto& exp : keyExpressions) {
         keyValues.emplace_back(exp->execute(record));
     }
@@ -142,21 +138,21 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
     // 3. load the reference to the slice store and find the correct slice.
     auto state = reinterpret_cast<LocalKeyedBucketStoreState*>(ctx.getLocalState(this));
 
-    auto buckets = Nautilus::FunctionCall("findKeyedBucketsByTs", findKeyedBucketsByTs, state->sliceStoreState, timestampValue);
-    auto numberOfBuckets = Nautilus::FunctionCall("getKeyedBucketListSize", getKeyedBucketListSize, buckets);
-    for (Value<UInt64> i = 0_u64; i < numberOfBuckets; i = i + 1_u64) {
-        auto bucketState = Nautilus::FunctionCall("getKeyedBucket", getKeyedBucket, buckets, i);
+    auto buckets = nautilus::invoke(findKeyedBucketsByTs, state->sliceStoreState, timestampValue);
+    auto numberOfBuckets = nautilus::invoke(getKeyedBucketListSize, buckets);
+    for (UInt64 i = 0_u64; i < numberOfBuckets; i = i + 1_u64) {
+        auto bucketState = nautilus::invoke(getKeyedBucket, buckets, i);
         auto map = Interface::ChainedHashMapRef(bucketState, keyDataTypes, keySize, valueSize);
         // 4. calculate hash
         auto hash = hashFunction->calculate(keyValues);
 
         // 5. create entry in the slice hash map. If the entry is new set default values for aggregations.
-        auto entry = map.findOrCreate(hash, keyValues, [this](auto& entry) {
+        auto entry = map.findOrCreate(hash->getRawValue(), keyValues, [this](auto& entry) {
             // set aggregation values if a new entry was created
             auto valuePtr = entry.getValuePtr();
             for (const auto& aggFunction : aggregationFunctions) {
                 aggFunction->reset(valuePtr);
-                valuePtr = valuePtr + aggFunction->getSize();
+                valuePtr = valuePtr + nautilus::val<uint64_t>(aggFunction->getSize());
             }
         });
 
@@ -164,7 +160,7 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
         auto valuePtr = entry.getValuePtr();
         for (const auto& aggregationFunction : aggregationFunctions) {
             aggregationFunction->lift(valuePtr, record);
-            valuePtr = valuePtr + aggregationFunction->getSize();
+            valuePtr = valuePtr + nautilus::val<uint64_t>(aggregationFunction->getSize());
         }
     }
 }
@@ -173,16 +169,15 @@ void KeyedBucketPreAggregation::close(ExecutionContext& ctx, RecordBuffer&) cons
 
     // After we processed all records in the record buffer we call triggerKeyedThreadLocalWindow
     // with the current watermark ts to check if we can trigger a window.
-    Nautilus::FunctionCall("triggerKeyedBucketsProxy",
-                           triggerKeyedBucketsProxy,
-                           globalOperatorHandler,
-                           ctx.getWorkerContext(),
-                           ctx.getPipelineContext(),
-                           ctx.getOriginId(),
-                           ctx.getSequenceNumber(),
-                           ctx.getChunkNumber(),
-                           ctx.getLastChunk(),
-                           ctx.getWatermarkTs());
+    nautilus::invoke(triggerKeyedBucketsProxy,
+                     globalOperatorHandler,
+                     ctx.getWorkerContext(),
+                     ctx.getPipelineContext(),
+                     ctx.getOriginId(),
+                     ctx.getSequenceNumber(),
+                     ctx.getChunkNumber(),
+                     ctx.getLastChunk(),
+                     ctx.getWatermarkTs());
 }
 
 }// namespace NES::Runtime::Execution::Operators

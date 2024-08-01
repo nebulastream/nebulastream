@@ -81,7 +81,7 @@ TEST_F(TruncExpressionTest, evaluateTruncExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>((uint64_t) 1.5));
+        auto resultValue = expression.eval(UInt64((uint64_t) 1.5));
         ASSERT_EQ(resultValue, (float) 1.0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -108,7 +108,7 @@ TEST_F(TruncExpressionTest, evaluateTruncExpressionFloat) {
  */
 TEST_F(TruncExpressionTest, evaluateTruncExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<TruncExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(false)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

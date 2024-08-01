@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <nautilus/function.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
@@ -27,19 +28,19 @@ void allocateNewPageProxy(void* pagedVectorPtr) {
     pagedVector->appendPage();
 }
 
-void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
+int8_t* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
     auto* pagedVector = (PagedVector*) pagedVectorPtr;
     return pagedVector->getPages()[pagePos];
 }
 
 Nautilus::UInt64 PagedVectorRef::getCapacityPerPage() const {
-    return getMember(pagedVectorRef, PagedVector, capacityPerPage).load<UInt64>();
+    return getMember(pagedVectorRef, PagedVector, capacityPerPage, uint64_t);
 }
 
 Nautilus::MemRef PagedVectorRef::allocateEntry() {
     // check if we should allocate a new page
     if (getNumberOfEntries() >= getCapacityPerPage()) {
-        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef);
+        nautilus::invoke(allocateNewPageProxy, pagedVectorRef);
     }
     // gets the current page and reserve space for the new entry.
     auto page = getCurrentPage();
@@ -47,44 +48,37 @@ Nautilus::MemRef PagedVectorRef::allocateEntry() {
     setNumberOfEntries(getNumberOfEntries() + 1_u64);
     setNumberOfTotalEntries(getTotalNumberOfEntries() + 1_u64);
 
-    return entry.as<MemRef>();
+    return entry;
 }
 
-Nautilus::MemRef PagedVectorRef::getCurrentPage() { return getMember(pagedVectorRef, PagedVector, currentPage).load<MemRef>(); }
+Nautilus::MemRef PagedVectorRef::getCurrentPage() { return getMemberAsPointer(pagedVectorRef, PagedVector, currentPage, int8_t); }
 
 Nautilus::UInt64 PagedVectorRef::getNumberOfEntries() {
-    return getMember(pagedVectorRef, PagedVector, numberOfEntries).load<UInt64>();
+    return getMember(pagedVectorRef, PagedVector, numberOfEntries, uint64_t);
 }
 
 Nautilus::UInt64 PagedVectorRef::getTotalNumberOfEntries() {
-    return getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).load<UInt64>();
+    return getMember(pagedVectorRef, PagedVector, totalNumberOfEntries, uint64_t);
 }
 
 Nautilus::MemRef PagedVectorRef::getEntry(const Nautilus::UInt64& pos) {
     // Calculating on what page and at what position the entry lies
     Nautilus::UInt64 capacityPerPage = getCapacityPerPage();
-    auto pagePos = (pos / capacityPerPage).as<UInt64>();
+    auto pagePos = (pos / capacityPerPage);
     auto positionOnPage = pos - (pagePos * capacityPerPage);
 
     auto page = nautilus::invoke(getPagedVectorPageProxy, pagedVectorRef, Nautilus::UInt64(pagePos));
     auto ptrOnPage = (positionOnPage * entrySize);
     auto retPos = page + ptrOnPage;
-    return retPos.as<MemRef>();
+    return retPos;
 }
 
-void PagedVectorRef::setNumberOfEntries(const Value<>& val) {
-    getMember(pagedVectorRef, PagedVector, numberOfEntries).store(val);
+void PagedVectorRef::setNumberOfEntries(const UInt64& val) {
+    *getMemberAsPointer(pagedVectorRef, PagedVector, numberOfEntries, uint64_t) = val;
 }
 
-- get project to compile and execution tests of filter to run
-    - continue here with porting to new ExecutableDataTypes and nautilus-lib
-
-
-
-    - add null handling support
-
-void PagedVectorRef::setNumberOfTotalEntries(const Value<>& val) {
-    getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).store(val);
+void PagedVectorRef::setNumberOfTotalEntries(const UInt64& val) {
+    *getMemberAsPointer(pagedVectorRef, PagedVector, totalNumberOfEntries, uint64_t) = val;
 }
 
 PagedVectorRefIter PagedVectorRef::begin() { return at(0_u64); }

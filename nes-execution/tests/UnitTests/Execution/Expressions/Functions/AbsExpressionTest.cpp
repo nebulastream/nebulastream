@@ -77,7 +77,7 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionUnsignedInt) {
 
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(static_cast<uint64_t>(UINT32_MAX)));
+        auto resultValue = expression.eval(UInt64(static_cast<uint64_t>(UINT32_MAX)));
         ASSERT_EQ(resultValue, static_cast<uint64_t>(UINT32_MAX));
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt64>());
     }
@@ -121,7 +121,7 @@ TEST_F(AbsExpressionTest, evaluateAbsExpressionSignedInt) {
 
 TEST_F(AbsExpressionTest, evaluateAbsExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<AbsExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

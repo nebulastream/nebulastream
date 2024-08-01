@@ -20,7 +20,7 @@ NegateExpression::NegateExpression(ExpressionPtr subExpression) : subExpression(
 
 ExecDataType NegateExpression::execute(Record& record) const {
     ExecDataType leftValue = subExpression->execute(record);
-    return !(*leftValue);
+    return !leftValue;
 }
 
 }// namespace NES::Runtime::Execution::Expressions

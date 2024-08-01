@@ -52,8 +52,8 @@ TEST_F(LimitOperatorTest, TestLimit) {
 
     auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx = ExecutionContext(MemRef(reinterpret_cast<int8_t*>(wc.get())),
+                                MemRef(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto limitOperator = Limit(0);
     auto collector = std::make_shared<CollectOperator>();
@@ -80,8 +80,8 @@ TEST_F(LimitOperatorTest, TestLimitZero) {
 
     auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx = ExecutionContext(MemRef(reinterpret_cast<int8_t*>(wc.get())),
+                                MemRef(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto limitOperator = Limit(0);
     auto collector = std::make_shared<CollectOperator>();

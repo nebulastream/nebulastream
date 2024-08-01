@@ -31,7 +31,7 @@ bool Record::operator==(const Record& rhs) const {
             return false;
         }
 
-        if (*value != rhs.recordFields.at(fieldIdentifier)) {
+        if (value != rhs.recordFields.at(fieldIdentifier)) {
             return false;
         }
     }

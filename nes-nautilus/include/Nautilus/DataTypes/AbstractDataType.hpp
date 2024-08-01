@@ -24,7 +24,7 @@ namespace NES::Nautilus {
 class AbstractDataType;
 using ExecDataType = std::shared_ptr<AbstractDataType>;
 
-class AbstractDataType {
+class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
   public:
     explicit AbstractDataType(const nautilus::val<bool>& null) : null(null) {}
     virtual ~AbstractDataType() = default;
@@ -40,38 +40,70 @@ class AbstractDataType {
 
     [[nodiscard]] const nautilus::val<bool>& isNull() const { return null; }
 
-    // Defining operations on data types with other ExecDataTypes
-    virtual ExecDataType operator&&(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator||(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator==(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator!=(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator<(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator>(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator<=(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator>=(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator+(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator-(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator*(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator/(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator%(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator&(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator|(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator^(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator<<(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator>>(const ExecDataType& rightExp) const { NES_NOT_IMPLEMENTED(); };
-    virtual ExecDataType operator!() const { NES_NOT_IMPLEMENTED(); };
+    template<class DataType>
+    bool instanceOf() {
+        return dynamic_cast<DataType*>(this);
+    }
 
     template<typename>
     bool isType() {
         return false;
     };
 
-    template<typename CastedDataType>
-    nautilus::val<CastedDataType> as() const {
-        NES_NOT_IMPLEMENTED();
+    template<class DataType>
+    std::shared_ptr<DataType> as() {
+        if (instanceOf<DataType>()) {
+            return std::dynamic_pointer_cast<DataType>(this->shared_from_this());
+        }
+        throw Exceptions::RuntimeException("DataType:: we performed an invalid cast of operator to type "
+                                           + std::string(typeid(DataType).name()));
     }
 
+    friend ExecDataType operator+(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator+(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator&&(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator||(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator==(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator!=(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator<(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator>(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator<=(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator>=(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator-(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator*(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator/(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator%(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator&(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator|(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator^(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator<<(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator>>(const ExecDataType& lhs, const ExecDataType& rhs);
+    friend ExecDataType operator!(const ExecDataType& lhs);
+
   protected:
+    /// Defining operations on data types with other ExecDataTypes
+    /// These methods should not be called directly, but rather through override operators in ExecDataTypes
+    virtual ExecDataType operator&&(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator||(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator==(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator!=(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator<(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator>(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator<=(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator>=(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator+(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator-(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator*(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator/(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator%(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator&(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator|(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator^(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator<<(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator>>(const ExecDataType& rightExp) const = 0;
+    virtual ExecDataType operator!() const = 0;
+
+
     [[nodiscard]] virtual std::string toString() const = 0;
 
     nautilus::val<bool> null;

@@ -80,13 +80,13 @@ TEST_F(ArrowScanOperatorTest, DISABLED_scanArrowBufferFromCSV) {
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
 
     auto tbReader = arrow::TableBatchReader(*table.get());
     for (auto batch : tbReader) {
         auto wrapper = std::make_unique<Operators::RecordBufferWrapper>(batch.MoveValueUnsafe());
         auto tb = Runtime::TupleBuffer::wrapPtr(std::move(wrapper));
-        RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tb)));
+        RecordBuffer recordBuffer = RecordBuffer(MemRef((int8_t*) std::addressof(tb)));
         scanOperator.open(ctx, recordBuffer);
     }
 

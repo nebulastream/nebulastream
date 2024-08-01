@@ -134,7 +134,7 @@ HJOperatorHandler::HJOperatorHandler(const std::vector<OriginId>& inputOrigins,
       joinStrategy(joinStrategy), totalSizeForDataStructures(totalSizeForDataStructures),
       preAllocPageSizeCnt(preAllocPageSizeCnt), pageSize(pageSize), numPartitions(numPartitions) {}
 
-void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) {
+int8_t* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key) {
     NES_ASSERT2_FMT(ptrLocalHashTable != nullptr, "ptrLocalHashTable should not be null");
     LocalHashTable* localHashTable = static_cast<LocalHashTable*>(ptrLocalHashTable);
     return localHashTable->insert(key);

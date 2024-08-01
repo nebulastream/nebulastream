@@ -14,7 +14,7 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 namespace NES::Nautilus::Interface {
 
@@ -32,50 +32,50 @@ class PagedVectorRef {
      * @param pagedVectorRef memref to the list
      * @param entrySize size of entries.
      */
-    PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize);
+    PagedVectorRef(const MemRef& pagedVectorRef, uint64_t entrySize);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
-     * @return Value<MemRef>
+     * @return MemRef
      */
-    Value<MemRef> allocateEntry();
+    MemRef allocateEntry();
 
     /**
      * @brief Returns the reference to the start of the record at the pos
      * @param pos
-     * @return Value<MemRef>
+     * @return MemRef
      */
-    Value<MemRef> getEntry(const Value<UInt64>& pos);
+    MemRef getEntry(const nautilus::val<uint64_t>& pos);
 
     /**
      * @brief Returns the number of entries in the current page.
-     * @return Value<UInt64>
+     * @return nautilus::val<uint64_t>
      */
-    Value<UInt64> getNumberOfEntries();
+    nautilus::val<uint64_t> getNumberOfEntries();
 
     /**
      * @brief Modifies the number of entries in the current page.
      * @param entries
      */
-    void setNumberOfEntries(const Value<>& entries);
+    void setNumberOfEntries(const nautilus::val<uint64_t>& entries);
 
     /**
      * @brief Modifies the number of total entries
      * @param totalEntries
      */
-    void setNumberOfTotalEntries(const Value<>& totalEntries);
+    void setNumberOfTotalEntries(const nautilus::val<uint64_t>& totalEntries);
 
     /**
      * @brief Returns the total number of entries for this list.
-     * @return Value<UInt64>
+     * @return nautilus::val<uint64_t>
      */
-    Value<UInt64> getTotalNumberOfEntries();
+    nautilus::val<uint64_t> getTotalNumberOfEntries();
 
     /**
      * @brief Returns the maximum number of records per page
-     * @return Value<UInt64>
+     * @return nautilus::val<uint64_t>
      */
-    Value<UInt64> getCapacityPerPage() const;
+    nautilus::val<uint64_t> getCapacityPerPage() const;
 
     /**
      * @brief Returns an iterator that points to the begin of this listRef
@@ -88,7 +88,7 @@ class PagedVectorRef {
      * @param pos
      * @return ListRefIter
      */
-    PagedVectorRefIter at(Value<UInt64> pos);
+    PagedVectorRefIter at(nautilus::val<uint64_t> pos);
 
     /**
      * @brief Returns an iterator that points to the end of this ListRef
@@ -104,8 +104,8 @@ class PagedVectorRef {
     bool operator==(const PagedVectorRef& other) const;
 
   private:
-    Value<MemRef> getCurrentPage();
-    Value<MemRef> pagedVectorRef;
+    MemRef getCurrentPage();
+    MemRef pagedVectorRef;
     uint64_t entrySize;
 };
 
@@ -134,9 +134,9 @@ class PagedVectorRefIter {
 
     /**
      * @brief Dereference operator that points to a given entry in the ListRef
-     * @return Value<MemRef>
+     * @return MemRef
      */
-    Value<MemRef> operator*();
+    MemRef operator*();
 
     /**
      * @brief Pre-increment operator that first increments and then returns the reference
@@ -169,9 +169,9 @@ class PagedVectorRefIter {
      * @brief Sets the position with the newValue
      * @param newValue
      */
-    void setPos(Value<UInt64> newValue);
+    void setPos(nautilus::val<uint64_t> newValue);
 
-    Value<UInt64> pos;
+    nautilus::val<uint64_t> pos;
     PagedVectorRef pagedVectorRef;
 };
 

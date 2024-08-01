@@ -138,7 +138,7 @@ TEST_F(LessThanExpressionTest, UnsignedIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(42_u64));
+        auto resultValue = expression.eval(UInt64(42_u64), UInt64(42_u64));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -164,7 +164,7 @@ TEST_F(LessThanExpressionTest, UnsignedIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<UInt64>(42_u64), Value<UInt64>(4_u64));
+        auto resultValue = expression.eval(UInt64(42_u64), UInt64(4_u64));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
@@ -190,7 +190,7 @@ TEST_F(LessThanExpressionTest, UnsignedIntegers) {
     }
     // Int64
     {
-        auto resultValue = expression.eval(Value<UInt64>(2_u64), Value<UInt64>(4_u64));
+        auto resultValue = expression.eval(UInt64(2_u64), UInt64(4_u64));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }

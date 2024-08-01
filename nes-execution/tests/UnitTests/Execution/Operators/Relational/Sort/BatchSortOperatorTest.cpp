@@ -82,7 +82,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest) {
     auto sortOperator = BatchSort(0, {nType, nType}, {"f1", "f2"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(reinterpret_cast<int8_t*>(&pipelineContext)));
     sortOperator.setup(ctx);
 
     for (auto& record : records) {
@@ -121,7 +121,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest) {
     auto sortOperator = BatchSort(0, {nType, nType}, {"f1", "f2"}, {"f2"});
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(reinterpret_cast<int8_t*>(&pipelineContext)));
     sortOperator.setup(ctx);
 
     for (auto& record : records) {
@@ -159,7 +159,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest) {
     auto sortOperator = BatchSort(0, {integerType, integerType}, {"f1", "f2"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     sortOperator.setup(ctx);
 
     for (auto record : records) {

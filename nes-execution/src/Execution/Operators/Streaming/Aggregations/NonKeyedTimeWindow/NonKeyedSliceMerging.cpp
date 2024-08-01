@@ -18,8 +18,6 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -32,7 +30,7 @@ void* createGlobalState(void* op, void* sliceMergeTaskPtr) {
     return globalState.release();
 }
 
-void* getGlobalSliceState(void* gs) {
+int8_t* getGlobalSliceState(void* gs) {
     auto globalSlice = static_cast<NonKeyedSlice*>(gs);
     return globalSlice->getState()->ptr;
 }
@@ -47,12 +45,12 @@ void setupSliceMergingHandler(void* ss, void* ctx, uint64_t size) {
     auto pipelineExecutionContext = static_cast<PipelineExecutionContext*>(ctx);
     handler->setup(*pipelineExecutionContext, size);
 }
-void* getDefaultMergingState(void* ss) {
+int8_t* getDefaultMergingState(void* ss) {
     auto handler = static_cast<NonKeyedSliceMergingHandler*>(ss);
     return handler->getDefaultState()->ptr;
 }
 
-void* getNonKeyedSliceState(void* smt, uint64_t index) {
+int8_t* getNonKeyedSliceState(void* smt, uint64_t index) {
     auto task = static_cast<SliceMergeTask<NonKeyedSlice>*>(smt);
     return task->slices[index].get()->getState()->ptr;
 }
@@ -76,19 +74,18 @@ NonKeyedSliceMerging::NonKeyedSliceMerging(
 
 void NonKeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Value<UInt64> entrySize = 0_u64;
+    UInt64 entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
-    Nautilus::FunctionCall("setupSliceMergingHandler",
-                           setupSliceMergingHandler,
+    nautilus::invoke(setupSliceMergingHandler,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
                            entrySize);
-    auto defaultState = Nautilus::FunctionCall("getDefaultMergingState", getDefaultMergingState, globalOperatorHandler);
+    auto defaultState = nautilus::invoke(getDefaultMergingState, globalOperatorHandler);
     for (auto& function : aggregationFunctions) {
         function->reset(defaultState);
-        defaultState = defaultState + function->getSize();
+        defaultState = defaultState + nautilus::val<uint64_t>(function->getSize());
     }
     if (this->child != nullptr)
         this->child->setup(executionCtx);
@@ -102,31 +99,31 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    auto startSliceTs = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, startSlice).load<UInt64>();
-    auto endSliceTs = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, endSlice).load<UInt64>();
-    auto sequenceNumber = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, sequenceNumber).load<UInt64>();
-    auto chunkNumber = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, chunkNumber).load<UInt64>();
-    auto lastChunk = getMember(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, lastChunk).load<Boolean>();
+    auto startSliceTs = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, startSlice, uint64_t);
+    auto endSliceTs = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, endSlice, uint64_t);
+    auto sequenceNumber = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, sequenceNumber, uint64_t);
+    auto chunkNumber = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, chunkNumber, uint64_t);
+    auto lastChunk = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, lastChunk, bool);
     // 2. load the thread local slice store according to the worker id.
     auto combinedSlice = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask);
-    FunctionCall("freeNonKeyedSliceMergeTask", freeNonKeyedSliceMergeTask, sliceMergeTask);
+    nautilus::invoke(freeNonKeyedSliceMergeTask, sliceMergeTask);
 
     // 3. emit the combined slice via an action
     sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk, combinedSlice);
 }
 
-Value<MemRef> NonKeyedSliceMerging::combineThreadLocalSlices(Value<MemRef>& globalOperatorHandler,
-                                                             Value<MemRef>& sliceMergeTask) const {
-    auto globalSlice = Nautilus::FunctionCall("createGlobalState", createGlobalState, globalOperatorHandler, sliceMergeTask);
-    auto globalSliceState = Nautilus::FunctionCall("getGlobalSliceState", getGlobalSliceState, globalSlice);
-    auto numberOfSlices = Nautilus::FunctionCall("getNonKeyedNumberOfSlices", getNonKeyedNumberOfSlices, sliceMergeTask);
-    for (Value<UInt64> i = 0_u64; i < numberOfSlices; i = i + 1_u64) {
-        auto srcSliceState = Nautilus::FunctionCall("getNonKeyedSliceState", getNonKeyedSliceState, sliceMergeTask, i);
-        uint64_t stateOffset = 0;
+VoidRef NonKeyedSliceMerging::combineThreadLocalSlices(MemRef& globalOperatorHandler,
+                                                             MemRef& sliceMergeTask) const {
+    auto globalSlice = nautilus::invoke(createGlobalState, globalOperatorHandler, sliceMergeTask);
+    auto globalSliceState = nautilus::invoke(getGlobalSliceState, globalSlice);
+    auto numberOfSlices = nautilus::invoke(getNonKeyedNumberOfSlices, sliceMergeTask);
+    for (UInt64 i = 0_u64; i < numberOfSlices; i = i + 1_u64) {
+        auto srcSliceState = nautilus::invoke(getNonKeyedSliceState, sliceMergeTask, i);
+        UInt64 stateOffset = 0;
         for (const auto& function : aggregationFunctions) {
             auto globalValuePtr = globalSliceState + stateOffset;
             auto partitionValuePtr = srcSliceState + stateOffset;
-            function->combine(globalValuePtr.as<MemRef>(), partitionValuePtr.as<MemRef>());
+            function->combine(globalValuePtr, partitionValuePtr);
             stateOffset = stateOffset + function->getSize();
         }
     }

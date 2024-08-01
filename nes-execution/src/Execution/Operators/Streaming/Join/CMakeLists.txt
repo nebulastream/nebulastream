@@ -10,17 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-#add_subdirectory(NestedLoopJoin)
-#add_subdirectory(HashJoin)
+add_subdirectory(NestedLoopJoin)
+add_subdirectory(HashJoin)
 
 add_source_files(nes-execution
-#        StreamJoinOperatorHandler.cpp
-#        StreamJoinBuild.cpp
-#        StreamJoinProbe.cpp
-#        StreamJoinBuildBucketing.cpp
-#        StreamSlice.cpp
-#        StreamJoinUtil.cpp
-#        StreamJoinOperatorHandlerSlicing.cpp
-#        StreamJoinOperatorHandlerBucketing.cpp
+        StreamJoinOperatorHandler.cpp
+        StreamJoinBuild.cpp
+        StreamJoinProbe.cpp
+        StreamJoinBuildBucketing.cpp
+        StreamSlice.cpp
+        StreamJoinUtil.cpp
+        StreamJoinOperatorHandlerSlicing.cpp
+        StreamJoinOperatorHandlerBucketing.cpp
         StreamJoinOperator.cpp
         )

@@ -27,7 +27,7 @@ void Unvectorize::execute(ExecutionContext& ctx, RecordBuffer& recordBuffer) con
     if (hasChild()) {
         auto numberOfRecords = recordBuffer.getNumRecords();
         auto bufferAddress = recordBuffer.getBuffer();
-        for (Value<UInt64> i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
+        for (UInt64 i = (uint64_t) 0; i < numberOfRecords; i = i + (uint64_t) 1) {
             auto record = memoryProvider->read(projections, bufferAddress, i);
             child->execute(ctx, record);
         }

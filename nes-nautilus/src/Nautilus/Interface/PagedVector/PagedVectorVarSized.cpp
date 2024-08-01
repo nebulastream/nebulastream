@@ -91,10 +91,15 @@ void PagedVectorVarSized::appendVarSizedDataPage() {
     }
 }
 
-uint64_t PagedVectorVarSized::storeText(const char* text, uint32_t length) {
+uint64_t PagedVectorVarSized::storeText(const int8_t* text, uint32_t length) {
     NES_ASSERT2_FMT(length > 0, "Length of text has to be larger than 0!");
-    // create a new entry for the varSizedDataEntryMap
+    // create a new entry for the varSizedDataEntryMap, we add the sizeof(uin32_t) to the length, as we store it also before the content of the var sized data
     VarSizedDataEntryMapValue textMapValue(currVarSizedDataEntry, length, varSizedDataPages.size() - 1);
+
+
+    // We first store the length of the varSizedData as the first 4 bytes
+    std::memcpy(currVarSizedDataEntry, &length, sizeof(uint32_t));
+    currVarSizedDataEntry += sizeof(uint32_t);
 
     // store the text in the varSizedDataPages
     while (length > 0) {
@@ -115,7 +120,7 @@ uint64_t PagedVectorVarSized::storeText(const char* text, uint32_t length) {
     return varSizedDataEntryMapCounter;
 }
 
-TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey) {
+int8_t* PagedVectorVarSized::loadText(uint64_t textEntryMapKey) {
     auto textMapValue = varSizedDataEntryMap.at(textEntryMapKey);
     auto textPtr = textMapValue.entryPtr;
     auto textLength = textMapValue.entryLength;
@@ -126,8 +131,7 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey) {
     auto buffer = bufferManager->getUnpooledBuffer(bufferSize);
 
     if (buffer.has_value()) {
-        auto textValue = TextValue::create(buffer.value(), textLength);
-        auto destPtr = textValue->str();
+        auto destPtr = buffer.value().getBuffer<int8_t>();
 
         // load the text from the varSizedDataPages into the buffer
         while (textLength > 0) {
@@ -144,7 +148,7 @@ TextValue* PagedVectorVarSized::loadText(uint64_t textEntryMapKey) {
                 destPtr += remainingSpace;
             }
         }
-        return textValue;
+        return buffer.value().getBuffer<int8_t>();
     } else {
         NES_THROW_RUNTIME_ERROR("No unpooled TupleBuffer available!");
     }

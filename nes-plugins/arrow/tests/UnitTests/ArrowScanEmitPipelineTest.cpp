@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Arrow/ArrowRecordBatchScan.hpp>
 #include <Execution/Operators/Arrow/RecordBufferWrapper.hpp>
 #include <Execution/Operators/Emit.hpp>
@@ -39,7 +39,7 @@ namespace NES::Runtime::Execution {
 
 class ArrowScanEmitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest {
   public:
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
@@ -87,7 +87,7 @@ TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
                       ->addField("field_double", BasicType::FLOAT64)
                       ->addField("field_string", DataTypeFactory::createText());
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::ArrowRecordBatchScan>(schema);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     scanOperator->setChild(emitOperator);

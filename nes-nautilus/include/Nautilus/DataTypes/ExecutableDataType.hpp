@@ -14,6 +14,7 @@
 
 #ifndef NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
 #define NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
+#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -32,16 +33,32 @@ class ExecutableDataType;
 template<typename ValueType>
 using ExecutableDataTypePtr = std::shared_ptr<ExecutableDataType<ValueType>>;
 
-
 template<typename ValueType>
 class ExecutableDataType : public AbstractDataType {
   public:
     explicit ExecutableDataType(const nautilus::val<ValueType>& value, const nautilus::val<bool>& null)
         : AbstractDataType(null), rawValue(value) {}
-    static ExecutableDataTypePtr<ValueType> create(nautilus::val<ValueType> value,  nautilus::val<bool> null = false) {
+
+    static ExecDataType create(nautilus::val<ValueType> value, nautilus::val<bool> null = false) {
         return std::make_shared<ExecutableDataType<ValueType>>(value, null);
     }
 
+    template<typename CastedDataType>
+    bool isType() {
+        return std::is_same_v<ValueType, CastedDataType>;
+    }
+
+    template<typename CastedDataType>
+    nautilus::val<CastedDataType> as() const {
+        return static_cast<nautilus::val<CastedDataType>>(rawValue);
+    }
+
+    /// We should get rid of this call here
+    const nautilus::val<ValueType>& getRawValue() const { return rawValue; }
+
+    ~ExecutableDataType() override = default;
+
+  protected:
     // Implementing operations on data types
     ExecDataType operator&&(const ExecDataType& rightExp) const override;
     ExecDataType operator||(const ExecDataType& rightExp) const override;
@@ -64,22 +81,6 @@ class ExecutableDataType : public AbstractDataType {
     ExecDataType operator!() const override;
     nautilus::val<ValueType> operator()() const { return rawValue; }
 
-
-    template<typename CastedDataType>
-    bool isType() {
-        return std::is_same_v<ValueType, CastedDataType>;
-    }
-
-    template<typename CastedDataType>
-    nautilus::val<CastedDataType> as() const {
-        return static_cast<nautilus::val<CastedDataType>>(rawValue);
-    }
-
-    const nautilus::val<ValueType>& getRawValue() const { return rawValue; }
-
-    ~ExecutableDataType() override = default;
-
-  protected:
     [[nodiscard]] std::string toString() const override {
         std::ostringstream oss;
         oss << "NOT IMPLEMENTED YET!";
@@ -90,40 +91,102 @@ class ExecutableDataType : public AbstractDataType {
     nautilus::val<ValueType> rawValue;
 };
 
+// TODO define here the C++ data types and the nautilus data types. this way, we can use the c++ data types in the proxy functions
+// TODO e.g.
+// TODO using ExecVoidRef = nautilus::val<void*>;
+// TODO using VoidRef = void*;
 
-// Alias for Identifier Values. Otherwise, user need to type Value<Identifier<WorkerId>>
-//template<NESIdentifier IdentifierType>
-//using ValueId = ExecutableDataType<IdentifierImpl<IdentifierType>>;
 
-// Define common data types and their pointers
+/// Define common nautilus data types, we might move this definition some place else
+using VoidRef = nautilus::val<void*>;
 using MemRef = nautilus::val<int8_t*>;
-using Int8 = ExecutableDataTypePtr<int8_t>;
-using Int16 = ExecutableDataTypePtr<int16_t>;
-using Int32 = ExecutableDataTypePtr<int32_t>;
-using Int64 = ExecutableDataTypePtr<int64_t>;
-using UInt8 = ExecutableDataTypePtr<uint8_t>;
-using UInt16 = ExecutableDataTypePtr<uint16_t>;
-using UInt32 = ExecutableDataTypePtr<uint32_t>;
-using UInt64 = ExecutableDataTypePtr<uint64_t>;
-using Float = ExecutableDataTypePtr<float>;
-using Double = ExecutableDataTypePtr<double>;
-using Boolean = ExecutableDataTypePtr<bool>;
+using Int8 = nautilus::val<int8_t>;
+using Int16 = nautilus::val<int16_t>;
+using Int32 = nautilus::val<int32_t>;
+using Int64 = nautilus::val<int64_t>;
+using UInt8 = nautilus::val<uint8_t>;
+using UInt16 = nautilus::val<uint16_t>;
+using UInt32 = nautilus::val<uint32_t>;
+using UInt64 = nautilus::val<uint64_t>;
+using Float = nautilus::val<float>;
+using Double = nautilus::val<double>;
+using Boolean = nautilus::val<bool>;
 
 
+using ExecDataInt8 = ExecutableDataType<int8_t>;
+using ExecDataInt16 = ExecutableDataType<int16_t>;
+using ExecDataInt32 = ExecutableDataType<int32_t>;
+using ExecDataInt64 = ExecutableDataType<int64_t>;
+using ExecDataUInt8 = ExecutableDataType<uint8_t>;
+using ExecDataUInt16 = ExecutableDataType<uint16_t>;
+using ExecDataUInt32 = ExecutableDataType<uint32_t>;
+using ExecDataUInt64 = ExecutableDataType<uint64_t>;
+using ExecDataFloat = ExecutableDataType<float>;
+using ExecDataDouble = ExecutableDataType<double>;
+using ExecDataBoolean = ExecutableDataType<bool>;
+
+using ExecDataInt8Ptr = ExecutableDataTypePtr<int8_t>;
+using ExecDataInt16Ptr = ExecutableDataTypePtr<int16_t>;
+using ExecDataInt32Ptr = ExecutableDataTypePtr<int32_t>;
+using ExecDataInt64Ptr = ExecutableDataTypePtr<int64_t>;
+using ExecDataUInt8Ptr = ExecutableDataTypePtr<uint8_t>;
+using ExecDataUInt16Ptr = ExecutableDataTypePtr<uint16_t>;
+using ExecDataUInt32Ptr = ExecutableDataTypePtr<uint32_t>;
+using ExecDataUInt64Ptr = ExecutableDataTypePtr<uint64_t>;
+using ExecDataFloatPtr = ExecutableDataTypePtr<float>;
+using ExecDataDoublePtr = ExecutableDataTypePtr<double>;
+using ExecDataBooleanPtr = ExecutableDataTypePtr<bool>;
+
+/**
+ * @brief Get member returns the MemRef to a specific class member as an offset to a objectReference.
+ * @note This assumes the offsetof works for the classType.
+ * @param objectReference reference to the object that contains the member.
+ * @param classType type of a class or struct
+ * @param member a member that is part of the classType
+ */
+#define getMember(objectReference, classType, member, dataType) \
+    (static_cast<nautilus::val<dataType>>(*static_cast<nautilus::val<dataType*>>(objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member))))))
+#define getMemberAsExecDataType(objectReference, classType, member, dataType) \
+    (std::dynamic_pointer_cast<ExecutableDataType<dataType>>(ExecutableDataType<dataType>::create(*static_cast<nautilus::val<dataType*>>(objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member)))))))
+#define getMemberAsPointer(objectReference, classType, member, dataType) \
+    (static_cast<nautilus::val<dataType*>>(objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member)))))
+
+#define writeValueToMemRef(memRef, value, dataType) \
+    (*static_cast<nautilus::val<dataType*>>(memRef) = value)
+#define readValueFromMemRef(memRef, dataType) \
+    (static_cast<nautilus::val<dataType>>(*static_cast<nautilus::val<dataType*>>(memRef)))
+
+// Might move these methods into a MemRefUtils or something like that
+ExecDataType readExecDataTypeFromMemRef(MemRef& memRef, const PhysicalTypePtr& type);
+void writeExecDataTypeToMemRef(MemRef& memRef, const ExecDataType& execDataType);
+nautilus::val<bool> memEquals(MemRef ptr1, MemRef ptr2, const nautilus::val<uint64_t>& size);
+void memCopy(MemRef dest, MemRef src, const nautilus::val<uint64_t>& size);
 
 
+/// We assume that the first 4 bytes of a int8_t* to any var sized data contains the length of the var sized data
 class ExecutableVariableDataType : public AbstractDataType {
   public:
-    ExecutableVariableDataType(const nautilus::val<int8_t*>& content,
+    ExecutableVariableDataType(const MemRef& content,
                                const nautilus::val<uint32_t>& size,
                                const nautilus::val<bool>& null)
         : AbstractDataType(null), size(size), content(content) {}
 
-    static ExecDataType create(nautilus::val<int8_t*> content, const nautilus::val<uint32_t>& size, bool null = false) {
+    static ExecDataType create(MemRef content, const nautilus::val<uint32_t>& size, bool null = false) {
         return std::make_shared<ExecutableVariableDataType>(content, size, null);
     }
 
+    static ExecDataType create(MemRef pointerToVarSized, bool null = false) {
+        const auto varSized = readValueFromMemRef(pointerToVarSized, uint32_t);
+        const auto pointerToContent = pointerToVarSized + nautilus::val<uint32_t>(sizeof(uint32_t));
+        return create(pointerToContent, varSized, null);
+    }
+
     ~ExecutableVariableDataType() override = default;
+
+    [[nodiscard]] nautilus::val<uint32_t> getSize() const { return size; }
+    [[nodiscard]] MemRef getContent() const { return content; }
+
+  protected:
     ExecDataType operator&&(const ExecDataType&) const override;
     ExecDataType operator||(const ExecDataType&) const override;
     ExecDataType operator==(const ExecDataType&) const override;
@@ -144,10 +207,6 @@ class ExecutableVariableDataType : public AbstractDataType {
     ExecDataType operator>>(const ExecDataType&) const override;
     ExecDataType operator!() const override;
 
-    [[nodiscard]] nautilus::val<uint32_t> getSize() const { return size; }
-    [[nodiscard]] nautilus::val<int8_t*> getContent() const { return content; }
-
-  protected:
     [[nodiscard]] std::string toString() const override {
         std::ostringstream oss;
         oss << "NOT IMPLEMENTED YET!";
@@ -156,14 +215,251 @@ class ExecutableVariableDataType : public AbstractDataType {
     }
 
     nautilus::val<uint32_t> size;
-    nautilus::val<int8_t*> content;
+    MemRef content;
 };
 
-/// For now, we expect the LHS to be of type ExecDataType and the RHS to be of type nautilus::val
-template<typename LHS, typename RHS>
-nautilus::val<bool> isEqual(ExecutableDataType<LHS> lhs, nautilus::val<RHS> rhs);
-nautilus::val<bool> operator==(ExecDataType lhs, nautilus::val<bool> rhs);
-nautilus::val<bool> operator==(ExecDataType lhs, bool rhs);
+/// Later, we will refactor this and maybe move this
+template<typename T>
+concept IntegerTypes = std::same_as<T, int8_t> || std::same_as<T, int16_t> || std::same_as<T, int32_t> || std::same_as<T, uint8_t>
+    || std::same_as<T, uint16_t> || std::same_as<T, uint32_t> || std::same_as<T, uint64_t> || std::same_as<T, double>
+    || std::same_as<T, float>;
+
+template<typename T>
+concept DoubleTypes = std::same_as<T, int8_t> || std::same_as<T, int16_t> || std::same_as<T, int32_t> || std::same_as<T, uint8_t>
+    || std::same_as<T, uint16_t> || std::same_as<T, uint32_t> || std::same_as<T, uint64_t> || std::same_as<T, double>
+    || std::same_as<T, float>;
+
+template<typename T>
+concept FixedDataTypes = IntegerTypes<T> || DoubleTypes<T> || std::same_as<T, bool>;
+
+// TODO Define the operators for the ExecDataType
+// TODO IMHO should the below operators adapted to:
+// TODO ExecDataType op ExecDataType --> ExecDataType
+// TODO ExecDataType op nautilus::val<> --> ExecDataType (as we would loose the null information from the ExecDataType)
+// TODO nautilus::val<> op nautilus::val<> --> nautilus::val<>
+// TODO nautilus::val<> op fixed_data_type --> nautilus::val<>
+// TODO question is what to do if we have different types on the left and right side...
+
+// TODO we should also move them to a cpp file and then declare all possible combinations, as this reduces the compilation time
+template<FixedDataTypes RHS>
+ExecDataType operator+(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs + nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator+(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs + ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator+(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator&&(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs && nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator&&(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs && ExecutableDataType<RHS>::create(rhs);
+}
+ExecDataType operator&&(const ExecDataType& lhs, const ExecDataType& rhs);
+
+
+template<FixedDataTypes RHS>
+ExecDataType operator||(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs || nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator||(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs || ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator||(const ExecDataType& lhs, const ExecDataType& rhs);
+
+
+template<FixedDataTypes RHS>
+ExecDataType operator==(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs == nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator==(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs == ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator==(const ExecDataType& lhs, const ExecDataType& rhs);
+
+
+template<FixedDataTypes RHS>
+ExecDataType operator!=(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs != nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator!=(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return *lhs != ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator!=(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator<(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs < nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator<(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs < ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator<(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator>(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs > nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator>(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return *lhs > ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator>(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator<=(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs <= nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator<=(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return *lhs <= ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator<=(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator>=(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs >= nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator>=(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return *lhs >= ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator>=(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator-(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs - nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator-(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return *lhs - ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator-(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator*(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs * nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator*(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs * ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator*(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator/(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs / nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator/(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs / ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator/(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator%(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs % nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator%(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs % ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator%(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator&(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs & nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator&(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs & ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator&(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator|(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs | nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator|(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs | ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator|(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator^(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs ^ nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator^(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs ^ ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator^(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator<<(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs << nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator<<(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs << ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator<<(const ExecDataType& lhs, const ExecDataType& rhs);
+
+template<FixedDataTypes RHS>
+ExecDataType operator>>(const ExecDataType& lhs, const RHS& rhs) {
+    return lhs >> nautilus::val<RHS>(rhs);
+}
+
+template<FixedDataTypes RHS>
+ExecDataType operator>>(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
+    return lhs >> ExecutableDataType<RHS>::create(rhs);
+}
+
+ExecDataType operator>>(const ExecDataType& lhs, const ExecDataType& rhs);
+
+ExecDataType operator!(const ExecDataType& lhs);
 
 }// namespace NES::Nautilus
 

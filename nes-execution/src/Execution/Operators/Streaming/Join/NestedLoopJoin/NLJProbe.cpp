@@ -20,7 +20,6 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -77,52 +76,42 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // Getting all needed info from the recordBuffer
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto nljWindowTriggerTaskRef = recordBuffer.getBuffer();
-    const Value<UInt64> sliceIdLeft =
-        Nautilus::FunctionCall("getSliceIdNLJProxy",
-                               getSliceIdNLJProxy,
-                               nljWindowTriggerTaskRef,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    const Value<UInt64> sliceIdRight =
-        Nautilus::FunctionCall("getSliceIdNLJProxy",
-                               getSliceIdNLJProxy,
-                               nljWindowTriggerTaskRef,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
-    const auto windowStart = Nautilus::FunctionCall("getNLJWindowStartProxy", getNLJWindowStartProxy, nljWindowTriggerTaskRef);
-    const auto windowEnd = Nautilus::FunctionCall("getNLJWindowEndProxy", getNLJWindowEndProxy, nljWindowTriggerTaskRef);
+    const UInt64 sliceIdLeft = nautilus::invoke(getSliceIdNLJProxy,
+                                                nljWindowTriggerTaskRef,
+                                                UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+    const UInt64 sliceIdRight = nautilus::invoke(getSliceIdNLJProxy,
+                                                 nljWindowTriggerTaskRef,
+                                                 UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+    const auto windowStart = nautilus::invoke(getNLJWindowStartProxy, nljWindowTriggerTaskRef);
+    const auto windowEnd = nautilus::invoke(getNLJWindowEndProxy, nljWindowTriggerTaskRef);
 
     // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const ValueId<WorkerThreadId> workerThreadIdForPages = WorkerThreadId(0);
+    const UInt32 workerThreadIdForPages = 0;
 
     // Getting the left and right paged vector
-    const auto sliceRefLeft =
-        Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdLeft);
-    const auto sliceRefRight =
-        Nautilus::FunctionCall("getNLJSliceRefFromIdProxy", getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdRight);
-    const auto leftPagedVectorRef =
-        Nautilus::FunctionCall("getNLJPagedVectorProxy",
-                               getNLJPagedVectorProxy,
-                               sliceRefLeft,
-                               workerThreadIdForPages,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    const auto rightPagedVectorRef =
-        Nautilus::FunctionCall("getNLJPagedVectorProxy",
-                               getNLJPagedVectorProxy,
-                               sliceRefRight,
-                               workerThreadIdForPages,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+    const auto sliceRefLeft = nautilus::invoke(getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdLeft);
+    const auto sliceRefRight = nautilus::invoke(getNLJSliceRefFromIdProxy, operatorHandlerMemRef, sliceIdRight);
+    const auto leftPagedVectorRef = nautilus::invoke(getNLJPagedVectorProxy,
+                                                     sliceRefLeft,
+                                                     workerThreadIdForPages,
+                                                     UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+    const auto rightPagedVectorRef = nautilus::invoke(getNLJPagedVectorProxy,
+                                                      sliceRefRight,
+                                                      workerThreadIdForPages,
+                                                      UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
     Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
 
     const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
     const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
-    for (Value<UInt64> leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
-        for (Value<UInt64> rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
+    for (UInt64 leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
+        for (UInt64 rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
             auto leftRecord = leftPagedVector.readRecord(leftCnt);
             auto rightRecord = rightPagedVector.readRecord(rightCnt);
             Record joinedRecord;
-            createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-            if (joinExpression->execute(joinedRecord).as<Boolean>()) {
+            createJoinedRecord(joinedRecord, leftRecord, rightRecord, ExecDataUInt64::create(windowStart)->as<ExecDataUInt64>(), ExecDataUInt64::create(windowEnd)->as<ExecDataUInt64>());
+            if (joinExpression->execute(joinedRecord)->as<ExecDataBoolean>()->getRawValue()) {
                 // Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }

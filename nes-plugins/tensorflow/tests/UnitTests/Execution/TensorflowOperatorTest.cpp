@@ -85,7 +85,7 @@ TEST_F(TensorflowOperatorTest, testInferModelForBoolInput) {
         std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     inferModelOperator->setup(ctx);
 
@@ -150,7 +150,7 @@ TEST_F(TensorflowOperatorTest, testInferModelForFloatInput) {
         std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     inferModelOperator->setup(ctx);
 
@@ -250,7 +250,7 @@ TEST_F(TensorflowOperatorTest, testInferModelForIntInput) {
         std::make_shared<TensorflowInferenceOperatorHandler>(std::filesystem::path(TEST_DATA_DIRECTORY) / "iris_95acc.tflite");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     inferModelOperator->setup(ctx);
 

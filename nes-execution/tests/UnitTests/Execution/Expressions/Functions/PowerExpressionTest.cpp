@@ -89,7 +89,7 @@ TEST_F(PowerExpressionTest, evaluatePowerExpressionFloat) {
  */
 TEST_F(PowerExpressionTest, evaluatePowerExpressionOnWrongType) {
     auto expression = BinaryExpressionWrapper<PowerExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true), Boolean(false)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

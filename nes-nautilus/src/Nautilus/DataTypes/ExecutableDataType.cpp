@@ -16,6 +16,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <utility>
 
 namespace NES::Nautilus {
 
@@ -49,7 +50,7 @@ ExecDataType ExecutableDataType<ValueType>::operator||(const ExecDataType& right
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator==(const ExecDataType& rightExp) const {
-    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
     const auto resultIsNull = null || rightExp->isNull();
     const auto result = rawValue == otherRawValue;
     return ExecutableDataType<bool>::create(result, resultIsNull);
@@ -57,35 +58,35 @@ ExecDataType ExecutableDataType<ValueType>::operator==(const ExecDataType& right
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator!=(const ExecDataType& rightExp) const {
-    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
     const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue != otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator<(const ExecDataType& rightExp) const {
-    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
     const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue < otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator>(const ExecDataType& rightExp) const {
-    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
     const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue > otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator<=(const ExecDataType& rightExp) const {
-    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
     const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue <= otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator>=(const ExecDataType& rightExp) const {
-    const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+    const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
     const auto resultIsNull = null || rightExp->isNull();
     return ExecutableDataType<bool>::create(rawValue >= otherRawValue, resultIsNull);
 }
@@ -98,7 +99,7 @@ ExecDataType ExecutableDataType<ValueType>::operator+(const ExecDataType& rightE
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<int64_t>::create(rawValueInt + otherRawValueInt, resultIsNull);
     } else {
-        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<ValueType>::create(rawValue + otherRawValue, resultIsNull);
     }
@@ -114,7 +115,7 @@ ExecDataType ExecutableDataType<ValueType>::operator-(const ExecDataType& rightE
     } else if constexpr (std::is_same_v<ValueType, int8_t*>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<ValueType>::create(rawValue - otherRawValue, resultIsNull);
     }
@@ -125,7 +126,7 @@ ExecDataType ExecutableDataType<ValueType>::operator*(const ExecDataType& rightE
     if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<ValueType>::create(rawValue * otherRawValue, resultIsNull);
     }
@@ -136,7 +137,7 @@ ExecDataType ExecutableDataType<ValueType>::operator/(const ExecDataType& rightE
     if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<ValueType>::create(rawValue / otherRawValue, resultIsNull);
     }
@@ -148,7 +149,7 @@ ExecDataType ExecutableDataType<ValueType>::operator%(const ExecDataType& rightE
                   || std::is_same_v<ValueType, double>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<ValueType>::create(rawValue % otherRawValue, resultIsNull);
     }
@@ -160,7 +161,7 @@ ExecDataType ExecutableDataType<ValueType>::operator&(const ExecDataType& rightE
                   || std::is_same_v<ValueType, double>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<ValueType>::create(rawValue & otherRawValue, resultIsNull);
     }
@@ -172,7 +173,7 @@ ExecDataType ExecutableDataType<ValueType>::operator|(const ExecDataType& rightE
                   || std::is_same_v<ValueType, double>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<ValueType>::create(rawValue | otherRawValue, resultIsNull);
     }
@@ -184,7 +185,7 @@ ExecDataType ExecutableDataType<ValueType>::operator^(const ExecDataType& rightE
                   || std::is_same_v<ValueType, double>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
         const auto resultIsNull = null || rightExp->isNull();
         return ExecutableDataType<ValueType>::create(rawValue ^ otherRawValue, resultIsNull);
     }
@@ -192,13 +193,13 @@ ExecDataType ExecutableDataType<ValueType>::operator^(const ExecDataType& rightE
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator<<(const ExecDataType& rightExp) const {
-    //    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
-    //        NES_NOT_IMPLEMENTED();
-    //    } else {
-    //        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->rawValue;
-    //        const auto resultIsNull = null || rightExp->isNull();
-    //        return ExecutableDataType<ValueType>::create(rawValue << otherRawValue, resultIsNull);
-    //    }
+//    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
+//        NES_NOT_IMPLEMENTED();
+//    } else {
+//        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
+//        const auto resultIsNull = null || rightExp->isNull();
+//        return ExecutableDataType<ValueType>::create(rawValue << otherRawValue, resultIsNull);
+//    }
     NES_NOT_IMPLEMENTED();
 }
 
@@ -258,17 +259,119 @@ template class ExecutableDataType<float>;
 template class ExecutableDataType<double>;
 template class ExecutableDataType<bool>;
 
-template<typename LHS, typename RHS>
-nautilus::val<bool> isEqual(ExecutableDataType<LHS> lhs, nautilus::val<RHS> rhs) {
-    const auto lhsRawValue = lhs.getRawValue();
-    return lhsRawValue == rhs;
-}
-nautilus::val<bool> operator==(ExecDataType lhs, nautilus::val<bool> rhs) {
-    const auto lhsAsBool = std::dynamic_pointer_cast<ExecutableDataType<bool>>(lhs);
-    return isEqual<bool, bool>(*lhsAsBool, rhs);
-}
-nautilus::val<bool> operator==(ExecDataType lhs, bool rhs) {
-    return operator==(lhs, nautilus::val<bool>(rhs));
+ExecDataType readExecDataTypeFromMemRef(nautilus::val<int8_t*>& memRef, const PhysicalTypePtr& type) {
+    if (type->isBasicType()) {
+        auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
+        switch (basicType->nativeType) {
+            case BasicPhysicalType::NativeType::BOOLEAN: {
+                return Nautilus::ExecutableDataType<bool>::create(
+                    static_cast<nautilus::val<bool>>(*static_cast<nautilus::val<bool*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::INT_8: {
+                return Nautilus::ExecutableDataType<int8_t>::create(
+                    static_cast<nautilus::val<int8_t>>(*static_cast<nautilus::val<int8_t*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::INT_16: {
+                return Nautilus::ExecutableDataType<int16_t>::create(
+                    static_cast<nautilus::val<int16_t>>(*static_cast<nautilus::val<int16_t*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::INT_32: {
+                return Nautilus::ExecutableDataType<int32_t>::create(
+                    static_cast<nautilus::val<int32_t>>(*static_cast<nautilus::val<int32_t*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::INT_64: {
+                return Nautilus::ExecutableDataType<int64_t>::create(
+                    static_cast<nautilus::val<int64_t>>(*static_cast<nautilus::val<int64_t*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::UINT_8: {
+                return Nautilus::ExecutableDataType<uint8_t>::create(
+                    static_cast<nautilus::val<uint8_t>>(*static_cast<nautilus::val<uint8_t*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::UINT_16: {
+                return Nautilus::ExecutableDataType<uint16_t>::create(
+                    static_cast<nautilus::val<uint16_t>>(*static_cast<nautilus::val<uint16_t*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::UINT_32: {
+                return Nautilus::ExecutableDataType<uint32_t>::create(
+                    static_cast<nautilus::val<uint32_t>>(*static_cast<nautilus::val<uint32_t*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::UINT_64: {
+                return Nautilus::ExecutableDataType<uint64_t>::create(
+                    static_cast<nautilus::val<uint64_t>>(*static_cast<nautilus::val<uint64_t*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::FLOAT: {
+                return Nautilus::ExecutableDataType<float>::create(
+                    static_cast<nautilus::val<float>>(*static_cast<nautilus::val<float*>>(memRef)));
+            };
+            case BasicPhysicalType::NativeType::DOUBLE: {
+                return Nautilus::ExecutableDataType<double>::create(
+                    static_cast<nautilus::val<double>>(*static_cast<nautilus::val<double*>>(memRef)));
+            };
+            default: {
+                NES_ERROR("Physical Type: {} is currently not supported", type->toString());
+                NES_NOT_IMPLEMENTED();
+            };
+        }
+    } else {
+        NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
+        NES_NOT_IMPLEMENTED();
+    }
 }
 
-} /// namespace NES::Nautilus
+void writeExecDataTypeToMemRef(nautilus::val<int8_t*>& memRef, const ExecDataType& execDataType) {
+    if (execDataType->instanceOf<ExecutableDataType<int8_t>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<int8_t>>(execDataType)->getRawValue(), int8_t);
+    } else if (execDataType->instanceOf<ExecutableDataType<int16_t>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<int16_t>>(execDataType)->getRawValue(), int16_t);
+    } else if (execDataType->instanceOf<ExecutableDataType<int32_t>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<int32_t>>(execDataType)->getRawValue(), int32_t);
+    } else if (execDataType->instanceOf<ExecutableDataType<int64_t>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<int64_t>>(execDataType)->getRawValue(), int64_t);
+    } else if (execDataType->instanceOf<ExecutableDataType<uint8_t>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint8_t>>(execDataType)->getRawValue(), uint8_t);
+    } else if (execDataType->instanceOf<ExecutableDataType<uint16_t>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint16_t>>(execDataType)->getRawValue(), uint16_t);
+    } else if (execDataType->instanceOf<ExecutableDataType<uint32_t>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint32_t>>(execDataType)->getRawValue(), uint32_t);
+    } else if (execDataType->instanceOf<ExecutableDataType<uint64_t>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint64_t>>(execDataType)->getRawValue(), uint64_t);
+    } else if (execDataType->instanceOf<ExecutableDataType<float>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<float>>(execDataType)->getRawValue(), float);
+    } else if (execDataType->instanceOf<ExecutableDataType<double>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<double>>(execDataType)->getRawValue(), double);
+    } else if (execDataType->instanceOf<ExecutableDataType<bool>>()) {
+        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<bool>>(execDataType)->getRawValue(), bool);
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
+nautilus::val<bool> memEquals(nautilus::val<int8_t*> ptr1, nautilus::val<int8_t*> ptr2, const nautilus::val<uint64_t>& size) {
+    return nautilus::invoke(std::memcmp, ptr1, ptr2, size) == nautilus::val<int>(0);
+}
+
+void memCopy(nautilus::val<int8_t*> dest, nautilus::val<int8_t*> src, const nautilus::val<uint64_t>& size) {
+    nautilus::invoke(std::memcpy, dest, src, size);
+}
+
+ExecDataType Nautilus::operator==(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs == rhs; }
+ExecDataType Nautilus::operator+(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs + rhs; }
+ExecDataType Nautilus::operator&&(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs && rhs; }
+ExecDataType Nautilus::operator||(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs || rhs; }
+ExecDataType Nautilus::operator!=(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs != rhs; }
+ExecDataType Nautilus::operator<(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs < rhs; }
+ExecDataType Nautilus::operator>(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs > rhs; }
+ExecDataType Nautilus::operator<=(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs <= rhs; }
+ExecDataType Nautilus::operator>=(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs >= rhs; }
+ExecDataType Nautilus::operator-(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs - rhs; }
+ExecDataType Nautilus::operator*(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs * rhs; }
+ExecDataType Nautilus::operator/(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs / rhs; }
+ExecDataType Nautilus::operator%(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs % rhs; }
+ExecDataType Nautilus::operator&(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs & rhs; }
+ExecDataType Nautilus::operator|(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs | rhs; }
+ExecDataType Nautilus::operator^(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs ^ rhs; }
+ExecDataType Nautilus::operator<<(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs << rhs; }
+ExecDataType Nautilus::operator>>(const ExecDataType& lhs, const ExecDataType& rhs) { return *lhs >> rhs; }
+ExecDataType operator!(const ExecDataType& lhs) { return !*lhs; }
+
+}// namespace NES::Nautilus

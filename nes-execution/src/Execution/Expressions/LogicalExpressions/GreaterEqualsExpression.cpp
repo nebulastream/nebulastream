@@ -21,9 +21,9 @@ GreaterEqualsExpression::GreaterEqualsExpression(ExpressionPtr leftSubExpression
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
 
 ExecDataType GreaterEqualsExpression::execute(Record& record) const {
-    ExecDataType leftValue = leftSubExpression->execute(record);
-    ExecDataType rightValue = rightSubExpression->execute(record);
-    return *leftValue >= rightValue;
+    const auto leftValue = leftSubExpression->execute(record);
+    const auto rightValue = rightSubExpression->execute(record);
+    return leftValue >= rightValue;
 }
 
 }// namespace NES::Runtime::Execution::Expressions

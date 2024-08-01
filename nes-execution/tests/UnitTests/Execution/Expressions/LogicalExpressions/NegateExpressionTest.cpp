@@ -36,22 +36,22 @@ TEST_F(NegateExpressionTest, baseBoolCases) {
     auto expression = BinaryExpressionWrapper<OrExpression>();
 
     {
-        auto resultValue = expression.eval(Value<Boolean>(true), Value<Boolean>(true));
+        auto resultValue = expression.eval(Boolean(true), Boolean(true));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
     {
-        auto resultValue = expression.eval(Value<Boolean>(true), Value<Boolean>(false));
+        auto resultValue = expression.eval(Boolean(true), Boolean(false));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
     {
-        auto resultValue = expression.eval(Value<Boolean>(false), Value<Boolean>(true));
+        auto resultValue = expression.eval(Boolean(false), Boolean(true));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
     {
-        auto resultValue = expression.eval(Value<Boolean>(false), Value<Boolean>(false));
+        auto resultValue = expression.eval(Boolean(false), Boolean(false));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }

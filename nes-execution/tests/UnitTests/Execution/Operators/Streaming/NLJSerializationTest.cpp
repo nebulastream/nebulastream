@@ -153,12 +153,12 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
 
         NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
-        auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
-                                                 Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
+        auto executionContext = ExecutionContext(Nautilus::MemRef((int8_t*) workerContext.get()),
+                                                 Nautilus::MemRef((int8_t*) (&pipelineContext)));
 
         nljBuildLeft->setup(executionContext);
         nljBuildRight->setup(executionContext);
-        RecordBuffer recordBuffer(Value<MemRef>((int8_t*) nullptr));
+        RecordBuffer recordBuffer(MemRef((int8_t*) nullptr));
         nljBuildLeft->open(executionContext, recordBuffer);
         nljBuildRight->open(executionContext, recordBuffer);
 
@@ -202,9 +202,9 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
         auto thirdSchemaField = schema->get(2)->getName();
 
         for (auto i = 0_u64; i < numberOfRecords; ++i) {
-            retVector.emplace_back(Record({{firstSchemaField, Value<UInt64>(i)},
-                                           {secondSchemaField, Value<UInt64>(distribution(generator))},
-                                           {thirdSchemaField, Value<UInt64>(i)}}));
+            retVector.emplace_back(Record({{firstSchemaField, UInt64(i)},
+                                           {secondSchemaField, UInt64(distribution(generator))},
+                                           {thirdSchemaField, UInt64(i)}}));
         }
 
         return retVector;
@@ -241,10 +241,10 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
                 std::dynamic_pointer_cast<NLJSlice>(recreatedOperatorHandler->getSliceBySliceIdentifier(sliceIdentifier).value());
 
             // getting left paged vector to compare
-            auto expectedLeftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>(
+            auto expectedLeftPagedVectorRef = Nautilus::MemRef(
                 static_cast<int8_t*>(expectedNLJSlice->getPagedVectorRefLeft(INITIAL<WorkerThreadId>)));
 
-            auto recreatedLeftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>(
+            auto recreatedLeftPagedVectorRef = Nautilus::MemRef(
                 static_cast<int8_t*>(recreatedNLJSlice->getPagedVectorRefLeft(INITIAL<WorkerThreadId>)));
 
             NES_DEBUG("Checking left tuples one by one");
@@ -256,9 +256,9 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
 
             NES_DEBUG("Checking right tuples one by one");
             // getting right paged vector to compare
-            auto expectedRightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>(
+            auto expectedRightPagedVectorRef = Nautilus::MemRef(
                 static_cast<int8_t*>(expectedNLJSlice->getPagedVectorRefRight(INITIAL<WorkerThreadId>)));
-            auto recreatedRightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>(
+            auto recreatedRightPagedVectorRef = Nautilus::MemRef(
                 static_cast<int8_t*>(recreatedNLJSlice->getPagedVectorRefRight(INITIAL<WorkerThreadId>)));
             // compare records inside right paged vector
             checkRecordsInBuild(expectedRightPagedVectorRef,
@@ -275,8 +275,8 @@ class NLJSliceSerializationTest : public Testing::BaseUnitTest {
      * @param numberOfTuples to check
      * @param schema of tuples
      */
-    void checkRecordsInBuild(Value<MemRef>& expectedPagedVectorRef,
-                             Value<MemRef>& recreatedPagedVectorRef,
+    void checkRecordsInBuild(MemRef& expectedPagedVectorRef,
+                             MemRef& recreatedPagedVectorRef,
                              uint64_t numberOfTuples,
                              SchemaPtr& schema) {
 

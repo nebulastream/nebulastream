@@ -83,7 +83,7 @@ TEST_F(BitcounterExpressionTest, divUIntegers) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(31_u64));
+        auto resultValue = expression.eval(UInt64(31_u64));
         ASSERT_EQ(resultValue, 5_u32);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<UInt32>());
     }
@@ -94,7 +94,7 @@ TEST_F(BitcounterExpressionTest, divUIntegers) {
 */
 TEST_F(BitcounterExpressionTest, evaluateBitCounterExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<BitcounterExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

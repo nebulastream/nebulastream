@@ -106,7 +106,7 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeYOLOV8) {
     // needed for Text Allocation
     auto worker_context = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, buffer_manager, 10);
 
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) worker_context.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef((int8_t*) worker_context.get()), MemRef((int8_t*) &pipelineContext));
 
     inferModelOperator->setup(ctx);
 
@@ -157,7 +157,7 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntimeBase64Encoding) {
     // needed for Text Allocation
     auto worker_context = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, buffer_manager, 10);
 
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) worker_context.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef((int8_t*) worker_context.get()), MemRef((int8_t*) &pipelineContext));
 
     inferModelOperator->setup(ctx);
 
@@ -238,7 +238,7 @@ TEST_F(ONNXInferenceOperatorTest, testInferModelForONNXRuntime) {
     auto handler = std::make_shared<ONNXInferenceOperatorHandler>(std::string(TEST_DATA_DIRECTORY) + "iris_95acc.onnx");
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
 
     inferModelOperator->setup(ctx);
 

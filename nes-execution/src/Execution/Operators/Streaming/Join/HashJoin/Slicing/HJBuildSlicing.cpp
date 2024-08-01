@@ -22,7 +22,6 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Common.hpp>
@@ -36,14 +35,14 @@ namespace NES::Runtime::Execution::Operators {
  */
 class LocalJoinState : public Operators::OperatorState {
   public:
-    LocalJoinState(Value<MemRef>& operatorHandler, Value<MemRef>& hashTableReference, Value<MemRef>& sliceReference)
+    LocalJoinState(MemRef& operatorHandler, MemRef& hashTableReference, MemRef& sliceReference)
         : joinOperatorHandler(operatorHandler), hashTableReference(hashTableReference), sliceReference(sliceReference),
           sliceStart(0_u64), sliceEnd(0_u64){};
-    Value<MemRef> joinOperatorHandler;
-    Value<MemRef> hashTableReference;
-    Value<MemRef> sliceReference;
-    Value<UInt64> sliceStart;
-    Value<UInt64> sliceEnd;
+    MemRef joinOperatorHandler;
+    MemRef hashTableReference;
+    MemRef sliceReference;
+    UInt64 sliceStart;
+    UInt64 sliceEnd;
 };
 
 void* getHJSliceProxy(void* ptrOpHandler, uint64_t timeStamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
@@ -66,7 +65,7 @@ uint64_t getSliceEndProxy(void* ptrHashSlice) {
     return hashSlice->getSliceEnd();
 }
 
-void* getLocalHashTableProxy(void* ptrHashSlice, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
+void* getLocalHashTableProxy(void* ptrHashSlice, uint32_t workerThreadId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrHashSlice != nullptr, "hash window handler context should not be null");
     auto* hashSlice = static_cast<HJSlice*>(ptrHashSlice);
     auto joinBuildSide = magic_enum::enum_cast<QueryCompilation::JoinBuildSideType>(joinBuildSideInt).value();
@@ -74,7 +73,7 @@ void* getLocalHashTableProxy(void* ptrHashSlice, WorkerThreadId workerThreadId, 
               hashSlice->getSliceIdentifier(),
               magic_enum::enum_name(joinBuildSide),
               workerThreadId);
-    auto ptr = hashSlice->getHashTable(joinBuildSide, workerThreadId);
+    auto ptr = hashSlice->getHashTable(joinBuildSide, WorkerThreadId(workerThreadId));
     auto localHashTablePointer = static_cast<void*>(ptr);
     return localHashTablePointer;
 }
@@ -98,48 +97,43 @@ HJBuildSlicing::HJBuildSlicing(const uint64_t operatorHandlerIndex,
 void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
-    Value<UInt64> tsValue = timeFunction->getTs(ctx, record);
+    UInt64 tsValue = timeFunction->getTs(ctx, record);
 
     //check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
         //we need a new slice
         joinState->sliceReference =
-            Nautilus::FunctionCall("getHJSliceProxy",
-                                   getHJSliceProxy,
-                                   operatorHandlerMemRef,
-                                   Value<UInt64>(tsValue),
-                                   Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                                   Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+            nautilus::invoke(getHJSliceProxy,
+                             operatorHandlerMemRef,
+                             UInt64(tsValue),
+                             UInt64(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                             UInt64(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 
-        joinState->hashTableReference = Nautilus::FunctionCall("getLocalHashTableProxy",
-                                                               getLocalHashTableProxy,
-                                                               joinState->sliceReference,
-                                                               ctx.getWorkerThreadId(),
-                                                               Value<UInt64>(to_underlying(joinBuildSide)));
+        joinState->hashTableReference = nautilus::invoke(getLocalHashTableProxy,
+                                                         joinState->sliceReference,
+                                                         ctx.getWorkerThreadId(),
+                                                         UInt64(to_underlying(joinBuildSide)));
 
-        joinState->sliceStart = Nautilus::FunctionCall("getSliceStartProxy", getSliceStartProxy, joinState->sliceReference);
-        joinState->sliceEnd = Nautilus::FunctionCall("getSliceEndProxy", getSliceEndProxy, joinState->sliceReference);
+        joinState->sliceStart = nautilus::invoke(getSliceStartProxy, joinState->sliceReference);
+        joinState->sliceEnd = nautilus::invoke(getSliceEndProxy, joinState->sliceReference);
 
-        NES_DEBUG("reinit join state with start={} end={} for ts={} for isLeftSide={}",
-                  joinState->sliceStart->toString(),
-                  joinState->sliceEnd->toString(),
-                  tsValue->toString(),
-                  to_underlying(joinBuildSide));
+        //        NES_DEBUG("reinit join state with start={} end={} for ts={} for isLeftSide={}",
+        //                  joinState->sliceStart->toString(),
+        //                  joinState->sliceEnd->toString(),
+        //                  tsValue->toString(),
+        //                  to_underlying(joinBuildSide));
     }
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = Nautilus::FunctionCall("insertFunctionProxy",
-                                              insertFunctionProxy,
-                                              joinState->hashTableReference,
-                                              record.read(joinFieldName).as<UInt64>());
+    auto entryMemRef = nautilus::invoke(insertFunctionProxy, joinState->hashTableReference, record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
     //write data
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
-        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
-        entryMemRef.store(record.read(fieldName));
-        entryMemRef = entryMemRef + fieldType->size();
+//        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
+        writeExecDataTypeToMemRef(entryMemRef, record.read(fieldName));
+        entryMemRef = entryMemRef + UInt64(fieldType->size());
     }
 }
 
@@ -149,8 +143,8 @@ void HJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) con
     // We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
     Operator::open(ctx, recordBuffer);
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Value<MemRef> dummyRef1 = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRef);
-    Value<MemRef> dummyRef2 = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRef);
+    MemRef dummyRef1 = nautilus::invoke(getDefaultMemRef);
+    MemRef dummyRef2 = nautilus::invoke(getDefaultMemRef);
     auto joinState = std::make_unique<LocalJoinState>(operatorHandlerMemRef, dummyRef1, dummyRef2);
     ctx.setLocalOperatorState(this, std::move(joinState));
 }

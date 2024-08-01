@@ -11,7 +11,7 @@
 # limitations under the License.
 
 # We disable the below operators, as they are not ported to the new nautilus API yet.
-#add_subdirectory(Aggregations)
+add_subdirectory(Aggregations)
 add_subdirectory(Join)
 #add_subdirectory(StatisticCollection)
 

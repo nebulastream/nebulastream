@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Operators {
 void Selection::execute(ExecutionContext& ctx, Record& record) const {
     // evaluate expression and call child operator if expression is valid
     const auto expressionResult = expression->execute(record);
-    if (expressionResult == true) {
+    if (expressionResult->as<ExecDataBoolean>()->getRawValue()) {
         child->execute(ctx, record);
     }
 }

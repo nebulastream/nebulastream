@@ -59,13 +59,13 @@ class KeyedSliceMergingTest : public Testing::BaseUnitTest {
 
         auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
         auto map = std::make_unique<Interface::ChainedHashMap>(8, 8, 1000, std::move(allocator));
-        Interface::ChainedHashMapRef ref(Value<MemRef>(reinterpret_cast<int8_t*>(map.get())),
+        Interface::ChainedHashMapRef ref(MemRef(reinterpret_cast<int8_t*>(map.get())),
                                          {integerType},
                                          integerType->size(),
                                          8);
 
         for (uint64_t hash = 0; const auto& [k, v] : values) {
-            std::memcpy(ref.insert(Value<UInt64>(hash), {k}).getValuePtr().getValue().value, std::addressof(v), sizeof(v));
+            std::memcpy(ref.insert(UInt64(hash), {k}).getValuePtr().getValue().value, std::addressof(v), sizeof(v));
             hash++;
         }
         return std::make_shared<KeyedSlice>(std::move(map), start, end);
@@ -76,18 +76,18 @@ class ChainedHashmapVerifier {
   public:
     void verify(ExecutionContext&,
                 ExecuteOperatorPtr&,
-                Value<UInt64>&,
-                Value<UInt64>&,
-                Value<UInt64>&,
-                Value<UInt64>&,
-                Value<Boolean>&,
-                Value<MemRef>& globalSlice) {
+                UInt64&,
+                UInt64&,
+                UInt64&,
+                UInt64&,
+                Boolean&,
+                MemRef& globalSlice) {
 
         auto integer = DataTypeFactory::createInt64();
         PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
         auto* slice = reinterpret_cast<KeyedSlice*>(globalSlice.getValue().value);
 
-        Interface::ChainedHashMapRef ref(Value<MemRef>(reinterpret_cast<int8_t*>(slice->getState().get())),
+        Interface::ChainedHashMapRef ref(MemRef(reinterpret_cast<int8_t*>(slice->getState().get())),
                                          {integerType},
                                          integerType->size(),
                                          8);
@@ -114,14 +114,14 @@ class MockedSliceMergingAction final : public SliceMergingAction {
   public:
     MOCK_METHOD(void,
                 emitSlice,
-                (ExecutionContext & ctx,
+                (ExecutionContext& ctx,
                  ExecuteOperatorPtr& child,
-                 Value<UInt64>& windowStart,
-                 Value<UInt64>& windowEnd,
-                 Value<UInt64>& sequenceNumber,
-                 Value<UInt64>& chunkNumber,
-                 Value<Boolean>& lastChunk,
-                 Value<MemRef>& globalSlice),
+                 ExecDataUInt64& windowStart,
+                 ExecDataUInt64& windowEnd,
+                 ExecDataUInt64& sequenceNumber,
+                 ExecDataUInt64& chunkNumber,
+                 ExecDataBoolean& lastChunk,
+                 VoidRef& globalSlice),
                 (const, override));
 };
 
@@ -138,11 +138,11 @@ TEST_F(KeyedSliceMergingTest, aggregate) {
     EXPECT_CALL(*sliceMergingAction,
                 emitSlice(_,
                           _,
-                          Eq(Value<UInt64>(0_u64)),
-                          Eq(Value<UInt64>(400_u64)),
-                          Eq(Value<UInt64>(1_u64)),
-                          Eq(Value<UInt64>(1_u64)),
-                          Eq(Value<Boolean>(true)),
+                          Eq(UInt64(0_u64)),
+                          Eq(UInt64(400_u64)),
+                          Eq(UInt64(1_u64)),
+                          Eq(UInt64(1_u64)),
+                          Eq(Boolean(true)),
                           _))
         .Times(1)
         .WillOnce(Invoke(&expectedResult, &ChainedHashmapVerifier::verify));
@@ -158,8 +158,8 @@ TEST_F(KeyedSliceMergingTest, aggregate) {
     auto handler = std::make_shared<KeyedSliceMergingHandler>();
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto ctx = ExecutionContext(MemRef(reinterpret_cast<int8_t*>(workerContext.get())),
+                                MemRef(reinterpret_cast<int8_t*>(&pipelineContext)));
 
     auto sliceMergeTaskBuffer = bufferManager->getUnpooledBuffer(sizeof(SliceMergeTask<KeyedSlice>));
     ASSERT_TRUE(sliceMergeTaskBuffer.has_value());
@@ -176,7 +176,7 @@ TEST_F(KeyedSliceMergingTest, aggregate) {
                                                                            createSlice(300, 400, {{1, 3}, {2, 6}}),
                                                                        });
 
-    auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(sliceMergeTaskBuffer))));
+    auto recordBuffer = RecordBuffer(MemRef(reinterpret_cast<int8_t*>(std::addressof(sliceMergeTaskBuffer))));
 
     merging.setup(ctx);
     merging.open(ctx, recordBuffer);

@@ -29,28 +29,28 @@ Nautilus::MemRef FixedPageRef::allocateEntry(const Nautilus::UInt64& hash) {
 
     Nautilus::MemRef entry(nullptr);
     if (currentPos < getCapacity()) {
-        //TODO replace FunctionCall with Nautilus alternative, see #4176
-        FunctionCall("addHashToBloomFilterProxy", addHashToBloomFilterProxy, fixedPageRef, hash);
+        //TODO replace nautilus::invoke with Nautilus alternative, see #4176
+        nautilus::invoke(addHashToBloomFilterProxy, fixedPageRef, hash);
 
         auto ptr = getDataPtr() + currentPos * getSizeOfRecord();
         setCurrentPos(currentPos + 1);
-        entry = ptr.as<MemRef>();
+        entry = ptr;
     }
 
     return entry;
 }
 
-Nautilus::UInt64 FixedPageRef::getSizeOfRecord() { return getMember(fixedPageRef, FixedPage, sizeOfRecord).load<UInt64>(); }
+Nautilus::UInt64 FixedPageRef::getSizeOfRecord() { return getMember(fixedPageRef, FixedPage, sizeOfRecord, uint64_t); }
 
-Nautilus::MemRef FixedPageRef::getDataPtr() { return getMember(fixedPageRef, FixedPage, data).load<MemRef>(); }
+Nautilus::MemRef FixedPageRef::getDataPtr() { return getMemberAsPointer(fixedPageRef, FixedPage, data, int8_t); }
 
-Nautilus::UInt64 FixedPageRef::getCurrentPos() { return getMember(fixedPageRef, FixedPage, currentPos).load<UInt64>(); }
+Nautilus::UInt64 FixedPageRef::getCurrentPos() { return getMember(fixedPageRef, FixedPage, currentPos, uint64_t); }
 
-Nautilus::UInt64 FixedPageRef::getCapacity() { return getMember(fixedPageRef, FixedPage, capacity).load<UInt64>(); }
+Nautilus::UInt64 FixedPageRef::getCapacity() { return getMember(fixedPageRef, FixedPage, capacity, uint64_t); }
 
-void FixedPageRef::setCurrentPos(const Value<>& pos) { getMember(fixedPageRef, FixedPage, currentPos).store(pos); }
+void FixedPageRef::setCurrentPos(const UInt64& pos) { *getMemberAsPointer(fixedPageRef, FixedPage, currentPos, uint64_t) = pos; }
 
-FixedPageRefIter FixedPageRef::begin() { return at(0_u64); }
+FixedPageRefIter FixedPageRef::begin() { return at(0); }
 
 FixedPageRefIter FixedPageRef::at(const Nautilus::UInt64& pos) {
     FixedPageRefIter fixedPageRefIter(*this);
