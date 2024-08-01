@@ -79,24 +79,6 @@ public:
     static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
 
     /**
-     * @brief Adds a synopsis build operator to this query
-     * @param window
-     * @param statisticDescriptor: Descriptor for the synopsis
-     * @param metricHash: The hash of the metric, this operator is collecting, e.g., `cardinality` over field `f1`
-     * @param sendingPolicy: Policy so when and how to send the data
-     * @param triggerCondition: Policy when and how to call the callback method
-     * @param queryPlan the queryPlan the synopsis is added to
-     * @return the updated queryPlanPtr
-     */
-    static QueryPlanPtr addStatisticBuildOperator(
-        Windowing::WindowTypePtr window,
-        Statistic::WindowStatisticDescriptorPtr statisticDescriptor,
-        Statistic::StatisticMetricHash metricHash,
-        Statistic::SendingPolicyPtr sendingPolicy,
-        Statistic::TriggerConditionPtr triggerCondition,
-        QueryPlanPtr queryPlan);
-
-    /**
      * @brief: Map java udf according to the java method given in the descriptor.
      * @param descriptor as java udf descriptor
      * @param queryPlan the queryPlan the map is added to

@@ -33,7 +33,6 @@ DataSourceProviderPtr QueryCompilation::SourceSharingDataSourceProvider::create(
 DataSourcePtr SourceSharingDataSourceProvider::lower(
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     SourceDescriptorPtr sourceDescriptor,
     Runtime::NodeEnginePtr nodeEngine,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -43,7 +42,6 @@ DataSourcePtr SourceSharingDataSourceProvider::lower(
         return ConvertLogicalToPhysicalSource::createDataSource(
             operatorId,
             originId,
-            statisticId,
             std::move(sourceDescriptor),
             std::move(nodeEngine),
             compilerOptions->getNumSourceLocalBuffers(),
@@ -65,7 +63,6 @@ DataSourcePtr SourceSharingDataSourceProvider::lower(
         auto source = ConvertLogicalToPhysicalSource::createDataSource(
             operatorId,
             originId,
-            statisticId,
             std::move(sourceDescriptor),
             std::move(nodeEngine),
             compilerOptions->getNumSourceLocalBuffers(),

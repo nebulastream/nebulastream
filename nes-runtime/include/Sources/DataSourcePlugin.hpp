@@ -44,7 +44,6 @@ public:
     virtual std::optional<DataSourcePtr> createDataSource(
         OperatorId sourceId,
         OriginId originId,
-        StatisticId statisticId,
         const SourceDescriptorPtr& sourceDescriptor,
         const Runtime::NodeEnginePtr& nodeEngine,
         size_t numSourceLocalBuffers,

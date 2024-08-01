@@ -48,7 +48,6 @@ StaticDataSource::StaticDataSource(
     ::NES::Runtime::QueryManagerPtr queryManager,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     std::vector<::NES::Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -59,7 +58,6 @@ StaticDataSource::StaticDataSource(
         0, /// todo  <-- dumb
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE, /// todo: this is a placeholder. gathering mode is unnecessary for static data.
         std::move(successors),

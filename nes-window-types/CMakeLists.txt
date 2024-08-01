@@ -12,11 +12,11 @@
 
 # Set Sources and Headers
 add_subdirectory(src)
-get_source(nes-window-types NES_STATISTICS_SOURCE_FILES)
+get_source(nes-window-types NES_WINDOW_SOURCE_FILES)
 
 
 # Add Library
-add_library(nes-window-types SHARED ${NES_STATISTICS_SOURCE_FILES})
+add_library(nes-window-types SHARED ${NES_WINDOW_SOURCE_FILES})
 target_link_libraries(nes-window-types PUBLIC nes-expressions)
 target_include_directories(nes-window-types PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
@@ -26,7 +26,7 @@ register_public_header_dir(nes-window-types ${CMAKE_CURRENT_SOURCE_DIR}/include/
 register_public_header_dir(nes-window-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Types/ Types/)
 
 
-#Add the nes statistics and headers to cpack
+#Add the nes window types and headers to cpack
 install(TARGETS nes-window-types
         EXPORT NebulaStreamTargets
         COMPONENT nesLibrary

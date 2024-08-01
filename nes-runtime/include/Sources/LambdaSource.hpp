@@ -39,7 +39,6 @@ public:
      * @param generationFunction function with which the data is created
      * @param operatorId the id of the source
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-     * @param statisticId represents the unique identifier of components that we can track statistics for
      * @param numSourceLocalBuffers numSourceLocalBuffers the number of buffers allocated to a source
      * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
      * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
@@ -56,7 +55,6 @@ public:
         std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
         OperatorId operatorId,
         OriginId originId,
-        StatisticId statisticId,
         size_t numSourceLocalBuffers,
         GatheringMode gatheringMode,
         uint64_t sourceAffinity,

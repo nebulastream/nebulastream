@@ -48,7 +48,6 @@ DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
     const Runtime::QueryManagerPtr& queryManager,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -61,7 +60,6 @@ DataSourcePtr createDefaultDataSourceWithSchemaForOneBuffer(
         /*frequency*/ 1000,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         successors,
         physicalSourceName);
@@ -75,7 +73,6 @@ DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
     uint64_t gatheringInterval,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -88,7 +85,6 @@ DataSourcePtr createDefaultDataSourceWithSchemaForVarBuffers(
         gatheringInterval,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         successors,
         physicalSourceName);
@@ -99,7 +95,6 @@ DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(
     const Runtime::QueryManagerPtr& queryManager,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -112,7 +107,6 @@ DataSourcePtr createDefaultSourceWithoutSchemaForOneBuffer(
         /*frequency*/ 1000,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         successors,
         physicalSourceName);
@@ -127,7 +121,6 @@ DataSourcePtr createLambdaSource(
     std::function<void(NES::Runtime::TupleBuffer& buffer, uint64_t numberOfTuplesToProduce)>&& generationFunction,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
@@ -144,7 +137,6 @@ DataSourcePtr createLambdaSource(
         std::move(generationFunction),
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         gatheringMode,
         sourceAffinity,
@@ -163,7 +155,6 @@ DataSourcePtr createMemorySource(
     uint64_t gatheringValue,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     uint64_t sourceAffinity,
@@ -181,7 +172,6 @@ DataSourcePtr createMemorySource(
         gatheringValue,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         gatheringMode,
         sourceAffinity,
@@ -198,7 +188,6 @@ DataSourcePtr Experimental::createStaticDataSource(
     const Runtime::QueryManagerPtr& queryManager,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -211,7 +200,6 @@ DataSourcePtr Experimental::createStaticDataSource(
         queryManager,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         physicalSourceName,
         successors);
@@ -227,7 +215,6 @@ DataSourcePtr createBenchmarkSource(
     uint64_t gatheringValue,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     GatheringMode gatheringMode,
     SourceMode sourceMode,
@@ -246,7 +233,6 @@ DataSourcePtr createBenchmarkSource(
         gatheringValue,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         gatheringMode,
         sourceMode,
@@ -264,7 +250,6 @@ DataSourcePtr createZmqSource(
     uint16_t port,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -277,7 +262,6 @@ DataSourcePtr createZmqSource(
         port,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,
@@ -291,7 +275,6 @@ DataSourcePtr createBinaryFileSource(
     const std::string& pathToFile,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -303,7 +286,6 @@ DataSourcePtr createBinaryFileSource(
         pathToFile,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,
@@ -317,22 +299,12 @@ DataSourcePtr createSenseSource(
     const std::string& udfs,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
 {
     return std::make_shared<SenseSource>(
-        schema,
-        bufferManager,
-        queryManager,
-        udfs,
-        operatorId,
-        originId,
-        statisticId,
-        numSourceLocalBuffers,
-        physicalSourceName,
-        successors);
+        schema, bufferManager, queryManager, udfs, operatorId, originId, numSourceLocalBuffers, physicalSourceName, successors);
 }
 
 DataSourcePtr createCSVFileSource(
@@ -342,7 +314,6 @@ DataSourcePtr createCSVFileSource(
     const CSVSourceTypePtr& csvSourceType,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -354,7 +325,6 @@ DataSourcePtr createCSVFileSource(
         csvSourceType,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,
@@ -407,7 +377,6 @@ const DataSourcePtr createKafkaSource(
     const KafkaSourceTypePtr& kafkaSourceType,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     uint64_t batchSize,
     const std::string& physicalSourceName,
@@ -426,7 +395,6 @@ const DataSourcePtr createKafkaSource(
         offsetMode,
         kafkaSourceType,
         originId,
-        statisticId,
         operatorId,
         numSourceLocalBuffers,
         batchSize,
@@ -445,7 +413,6 @@ const DataSourcePtr createOPCSource(
     std::string password,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -460,7 +427,6 @@ const DataSourcePtr createOPCSource(
         user,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,
@@ -475,7 +441,6 @@ DataSourcePtr createMQTTSource(
     const MQTTSourceTypePtr& mqttSourceType,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -487,7 +452,6 @@ DataSourcePtr createMQTTSource(
         mqttSourceType,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,
@@ -502,7 +466,6 @@ DataSourcePtr createTCPSource(
     const TCPSourceTypePtr& tcpSourceType,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     const std::string& physicalSourceName,
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
@@ -514,7 +477,6 @@ DataSourcePtr createTCPSource(
         tcpSourceType,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         physicalSourceName,

@@ -60,7 +60,6 @@ OperatorPtr WatermarkAssignerLogicalOperator::copy()
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
     for (const auto& pair : properties)
     {
         copy->addProperty(pair.first, pair.second);

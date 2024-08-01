@@ -19,27 +19,21 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalProjectOperator::PhysicalProjectOperator(
-    OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions)
-    : Operator(id, statisticId)
-    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
-    , expressions(std::move(expressions))
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions)
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), expressions(std::move(expressions))
 {
 }
 
 PhysicalOperatorPtr PhysicalProjectOperator::create(
-    OperatorId id,
-    StatisticId statisticId,
-    const SchemaPtr& inputSchema,
-    const SchemaPtr& outputSchema,
-    const std::vector<ExpressionNodePtr>& expressions)
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const std::vector<ExpressionNodePtr>& expressions)
 {
-    return std::make_shared<PhysicalProjectOperator>(id, statisticId, inputSchema, outputSchema, expressions);
+    return std::make_shared<PhysicalProjectOperator>(id, inputSchema, outputSchema, expressions);
 }
 
-PhysicalOperatorPtr PhysicalProjectOperator::create(
-    StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions)
+PhysicalOperatorPtr
+PhysicalProjectOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::vector<ExpressionNodePtr> expressions)
 {
-    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(expressions));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(expressions));
 }
 
 std::vector<ExpressionNodePtr> PhysicalProjectOperator::getExpressions()
@@ -58,7 +52,7 @@ std::string PhysicalProjectOperator::toString() const
 
 OperatorPtr PhysicalProjectOperator::copy()
 {
-    auto result = create(id, statisticId, inputSchema, outputSchema, getExpressions());
+    auto result = create(id, inputSchema, outputSchema, getExpressions());
     result->addAllProperties(properties);
     return result;
 }

@@ -16,7 +16,7 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalOperator::PhysicalOperator(OperatorId id, StatisticId statisticId) : Operator(id, statisticId)
+PhysicalOperator::PhysicalOperator(OperatorId id) : Operator(id)
 {
 }
 

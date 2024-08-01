@@ -31,20 +31,15 @@ public:
     /**
      * @brief constructor of the physical operator of threshold window
      * @param id of the operator
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
      * @param inputSchema input schema for the operator
      * @param outputSchema output schema for the operator
      * @param operatorHandler pointer to the operator handler of the threshold window (of type ThresholdWindowOperatorHandler)
      */
     PhysicalThresholdWindowOperator(
-        OperatorId id,
-        StatisticId statisticId,
-        SchemaPtr inputSchema,
-        SchemaPtr outputSchema,
-        Windowing::LogicalWindowDescriptorPtr windowDefinition);
+        OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition);
 
     static std::shared_ptr<PhysicalThresholdWindowOperator>
-    create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition);
 
     Windowing::LogicalWindowDescriptorPtr getWindowDefinition();
 

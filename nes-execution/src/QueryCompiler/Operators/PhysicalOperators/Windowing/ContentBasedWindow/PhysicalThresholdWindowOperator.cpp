@@ -21,21 +21,17 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalThresholdWindowOperator::PhysicalThresholdWindowOperator(
-    OperatorId id,
-    StatisticId statisticId,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    Windowing::LogicalWindowDescriptorPtr windowDefinition)
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition)
     : Operator(id)
-    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
+    , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
     , windowDefinition(std::move(windowDefinition))
 {
 }
 
 std::shared_ptr<PhysicalThresholdWindowOperator> PhysicalThresholdWindowOperator::create(
-    StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition)
+    SchemaPtr inputSchema, SchemaPtr outputSchema, Windowing::LogicalWindowDescriptorPtr windowDefinition)
 {
-    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), statisticId, inputSchema, outputSchema, windowDefinition);
+    return std::make_shared<PhysicalThresholdWindowOperator>(getNextOperatorId(), inputSchema, outputSchema, windowDefinition);
 }
 
 Windowing::LogicalWindowDescriptorPtr PhysicalThresholdWindowOperator::getWindowDefinition()
@@ -54,7 +50,7 @@ std::string PhysicalThresholdWindowOperator::toString() const
 
 OperatorPtr PhysicalThresholdWindowOperator::copy()
 {
-    return create(statisticId, inputSchema, outputSchema, windowDefinition);
+    return create(inputSchema, outputSchema, windowDefinition);
 }
 
 } ///namespace NES::QueryCompilation::PhysicalOperators

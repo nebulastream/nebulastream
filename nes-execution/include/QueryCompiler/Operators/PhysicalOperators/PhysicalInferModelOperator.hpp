@@ -28,7 +28,6 @@ class PhysicalInferModelOperator : public PhysicalUnaryOperator
 public:
     PhysicalInferModelOperator(
         OperatorId id,
-        StatisticId statisticId,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,
@@ -37,7 +36,6 @@ public:
 
     static PhysicalOperatorPtr create(
         OperatorId id,
-        StatisticId statisticId,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,
@@ -45,7 +43,6 @@ public:
         std::vector<ExpressionNodePtr> outputFields);
 
     static PhysicalOperatorPtr create(
-        StatisticId statisticId,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
         std::string model,

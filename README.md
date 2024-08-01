@@ -36,7 +36,6 @@ The codebase is structured in the following components:
 | [nes-runtime](nes-runtime)               | This component contains all runtime components for the network stack and the memory managment                                                             |
 | [nes-coordinator](nes-coordinator)       | This component contains the coordinator and the executable.                                                                                               |
 | [nes-worker](nes-worker)                 | This component contains the worker and the executable.                                                                                                    |
-| [nes-statistics](nes-statistics)         | This component contains the statistic collection framework.                                                                                               |
 | [nes-window-types](nes-window-types)     | This component contains functionalities to define windows.                                                                                                |
 | [nes-expressions](nes-expressions)       | This component contains functionalities for our expressions.                                                                                              |
 
@@ -52,10 +51,7 @@ nes-window-types-->nes-expressions
 nes-operators-->nes-window-types
 nes-client-->nes-operators
 nes-catalogs-->nes-operators
-nes-statistics-->nes-operators
-nes-optimizer-->nes-statistics
 nes-optimizer-->nes-catalogs
-nes-runtime-->nes-statistics
 nes-coordinator-->nes-optimizer 
 nes-coordinator-->nes-worker 
 nes-coordinator-->nes-client

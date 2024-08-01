@@ -17,17 +17,17 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(OperatorId id, const SchemaPtr& inputSchema)
 {
-    return std::make_shared<PhysicalDemultiplexOperator>(id, statisticId, inputSchema);
+    return std::make_shared<PhysicalDemultiplexOperator>(id, inputSchema);
 }
-PhysicalOperatorPtr PhysicalDemultiplexOperator::create(StatisticId statisticId, SchemaPtr inputSchema)
+PhysicalOperatorPtr PhysicalDemultiplexOperator::create(SchemaPtr inputSchema)
 {
-    return create(getNextOperatorId(), statisticId, std::move(inputSchema));
+    return create(getNextOperatorId(), std::move(inputSchema));
 }
 
-PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& inputSchema)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, inputSchema, inputSchema)
+PhysicalDemultiplexOperator::PhysicalDemultiplexOperator(OperatorId id, const SchemaPtr& inputSchema)
+    : Operator(id), PhysicalUnaryOperator(id, inputSchema, inputSchema)
 {
 }
 
@@ -42,7 +42,7 @@ std::string PhysicalDemultiplexOperator::toString() const
 
 OperatorPtr PhysicalDemultiplexOperator::copy()
 {
-    return create(id, statisticId, inputSchema);
+    return create(id, inputSchema);
 }
 
 } /// namespace NES::QueryCompilation::PhysicalOperators

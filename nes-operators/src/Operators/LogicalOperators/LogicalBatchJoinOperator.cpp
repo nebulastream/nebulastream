@@ -149,7 +149,6 @@ OperatorPtr LogicalBatchJoinOperator::copy()
     copy->setOutputSchema(outputSchema);
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
-    copy->setStatisticId(statisticId);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);

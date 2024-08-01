@@ -179,13 +179,6 @@ public:
     OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
 
     /**
-     * @brief Gets the operator node for the statistic id. This method traverses all operators in the query plan.
-     * @param statisticId: represents the unique identifier of components that we can track statistics for
-     * @return Operator with the statistic id
-     */
-    OperatorPtr getOperatorWithStatisticId(StatisticId statisticId) const;
-
-    /**
      * Set the query Id for the plan
      * @param queryId
      */

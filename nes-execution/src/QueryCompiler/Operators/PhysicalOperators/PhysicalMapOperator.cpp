@@ -20,10 +20,8 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalMapOperator::PhysicalMapOperator(
-    OperatorId id, StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression)
-    : Operator(id, statisticId)
-    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
-    , mapExpression(std::move(mapExpression))
+    OperatorId id, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression)
+    : Operator(id), PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema)), mapExpression(std::move(mapExpression))
 {
 }
 
@@ -33,19 +31,15 @@ FieldAssignmentExpressionNodePtr PhysicalMapOperator::getMapExpression()
 }
 
 PhysicalOperatorPtr PhysicalMapOperator::create(
-    OperatorId id,
-    StatisticId statisticId,
-    const SchemaPtr& inputSchema,
-    const SchemaPtr& outputSchema,
-    const FieldAssignmentExpressionNodePtr& mapExpression)
+    OperatorId id, const SchemaPtr& inputSchema, const SchemaPtr& outputSchema, const FieldAssignmentExpressionNodePtr& mapExpression)
 {
-    return std::make_shared<PhysicalMapOperator>(id, statisticId, inputSchema, outputSchema, mapExpression);
+    return std::make_shared<PhysicalMapOperator>(id, inputSchema, outputSchema, mapExpression);
 }
 
-PhysicalOperatorPtr PhysicalMapOperator::create(
-    StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression)
+PhysicalOperatorPtr
+PhysicalMapOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, FieldAssignmentExpressionNodePtr mapExpression)
 {
-    return create(getNextOperatorId(), statisticId, std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
+    return create(getNextOperatorId(), std::move(inputSchema), std::move(outputSchema), std::move(mapExpression));
 }
 
 std::string PhysicalMapOperator::toString() const
@@ -64,7 +58,7 @@ std::string PhysicalMapOperator::toString() const
 
 OperatorPtr PhysicalMapOperator::copy()
 {
-    auto result = create(id, statisticId, inputSchema, outputSchema, getMapExpression());
+    auto result = create(id, inputSchema, outputSchema, getMapExpression());
     result->addAllProperties(properties);
     return result;
 }

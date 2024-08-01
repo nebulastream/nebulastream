@@ -36,7 +36,6 @@ DefaultSource::DefaultSource(
     uint64_t gatheringInterval,
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     size_t numSourceLocalBuffers,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors,
     const std::string& physicalSourceName)
@@ -47,7 +46,6 @@ DefaultSource::DefaultSource(
         numberOfBufferToProduce,
         operatorId,
         originId,
-        statisticId,
         numSourceLocalBuffers,
         GatheringMode::INTERVAL_MODE,
         std::move(successors),

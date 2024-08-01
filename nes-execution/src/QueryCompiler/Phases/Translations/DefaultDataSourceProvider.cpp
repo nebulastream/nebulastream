@@ -33,7 +33,6 @@ DataSourceProviderPtr QueryCompilation::DefaultDataSourceProvider::create(const 
 DataSourcePtr DefaultDataSourceProvider::lower(
     OperatorId operatorId,
     OriginId originId,
-    StatisticId statisticId,
     SourceDescriptorPtr sourceDescriptor,
     Runtime::NodeEnginePtr nodeEngine,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
@@ -41,7 +40,7 @@ DataSourcePtr DefaultDataSourceProvider::lower(
     for (const auto& plugin : SourcePluginRegistry::getPlugins())
     {
         auto dataSource = plugin->createDataSource(
-            operatorId, originId, statisticId, sourceDescriptor, nodeEngine, compilerOptions->getNumSourceLocalBuffers(), successors);
+            operatorId, originId, sourceDescriptor, nodeEngine, compilerOptions->getNumSourceLocalBuffers(), successors);
         if (dataSource.has_value())
         {
             return dataSource.value();
@@ -51,7 +50,6 @@ DataSourcePtr DefaultDataSourceProvider::lower(
     return ConvertLogicalToPhysicalSource::createDataSource(
         operatorId,
         originId,
-        statisticId,
         std::move(sourceDescriptor),
         std::move(nodeEngine),
         compilerOptions->getNumSourceLocalBuffers(),

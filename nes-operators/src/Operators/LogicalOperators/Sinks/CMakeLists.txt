@@ -20,5 +20,4 @@ add_source_files(nes-operators
         MQTTSinkDescriptor.cpp
         NullOutputSinkDescriptor.cpp
         SinkDescriptor.cpp
-        StatisticSinkDescriptor.cpp
         )

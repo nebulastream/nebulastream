@@ -37,8 +37,6 @@ using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique i
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
 
-/// Unique identifier across the system so that we can track statistic over the item, for more information take a look at the StatisticKey class
-using StatisticId = uint64_t;
 using DecomposedQueryPlanVersion = uint16_t;
 using WatermarkTs = uint64_t;
 using SequenceNumber = uint64_t;
@@ -61,7 +59,6 @@ static constexpr OriginId INITIAL_ORIGIN_ID = INITIAL<OriginId>;
 
 static constexpr PipelineId INVALID_PIPELINE_ID = INVALID<PipelineId>;
 static constexpr PipelineId INITIAL_PIPELINE_ID = INITIAL<PipelineId>;
-static constexpr StatisticId INVALID_STATISTIC_ID = 0;
 static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
 static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
 

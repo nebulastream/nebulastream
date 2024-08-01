@@ -50,18 +50,6 @@ void NES__Runtime__TupleBuffer__setOriginId(void* thisPtr, uint64_t value)
     thisPtr_->setOriginId(OriginId(value));
 };
 
-uint64_t NES__Runtime__TupleBuffer__getStatisticId(void* thisPtr)
-{
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
-    return thisPtr_->getStatisticId();
-};
-
-void NES__Runtime__TupleBuffer__setStatisticId(void* thisPtr, uint64_t value)
-{
-    auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;
-    thisPtr_->setStatisticId(value);
-};
-
 uint64_t NES__Runtime__TupleBuffer__getWatermark(void* thisPtr)
 {
     auto* thisPtr_ = (NES::Runtime::TupleBuffer*)thisPtr;

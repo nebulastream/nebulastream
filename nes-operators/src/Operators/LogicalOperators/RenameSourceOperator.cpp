@@ -79,7 +79,6 @@ OperatorPtr RenameSourceOperator::copy()
     copy->setZ3Signature(z3Signature);
     copy->setOperatorState(operatorState);
     copy->setHashBasedSignature(hashBasedSignature);
-    copy->setStatisticId(statisticId);
     for (const auto& [key, value] : properties)
     {
         copy->addProperty(key, value);

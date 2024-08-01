@@ -51,7 +51,7 @@ bool SinkLogicalOperator::equal(NodePtr const& rhs) const
 std::string SinkLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SINK(opId: " << id << ", statisticId: " << statisticId << ": {" << sinkDescriptor->toString() << "})";
+    ss << "SINK(opId: " << id << ": {" << sinkDescriptor->toString() << "})";
     return ss.str();
 }
 
@@ -65,7 +65,6 @@ OperatorPtr SinkLogicalOperator::copy()
     copy->setZ3Signature(z3Signature);
     copy->setHashBasedSignature(hashBasedSignature);
     copy->setOperatorState(operatorState);
-    copy->setStatisticId(statisticId);
     for (const auto& pair : properties)
     {
         copy->addProperty(pair.first, pair.second);

@@ -135,10 +135,8 @@ void* getDefaultMemRefVarSized()
     return nullptr;
 }
 
-void HJBuildSlicingVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
+void HJBuildSlicingVarSized::open(ExecutionContext& ctx, RecordBuffer&) const
 {
-    /// We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
-    Operator::open(ctx, recordBuffer);
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<MemRef> dummyRef1 = FunctionCall("getDefaultMemRef", getDefaultMemRefVarSized);
     Value<MemRef> dummyRef2 = FunctionCall("getDefaultMemRef", getDefaultMemRefVarSized);

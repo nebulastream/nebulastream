@@ -13,7 +13,6 @@
 */
 
 #include <Network/NetworkSink.hpp>
-#include <Operators/LogicalOperators/Sinks/StatisticSinkDescriptor.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
@@ -24,7 +23,6 @@
 #include <Sinks/Mediums/NullOutputSink.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/RawBufferSink.hpp>
-#include <Sinks/Mediums/StatisticSink.hpp>
 #include <Sinks/Mediums/ZmqSink.hpp>
 #include <Sinks/SinkCreator.hpp>
 

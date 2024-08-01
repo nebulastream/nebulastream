@@ -26,7 +26,7 @@ namespace NES::QueryCompilation::PhysicalOperators
 class PhysicalBinaryOperator : public PhysicalOperator, public BinaryOperator
 {
 protected:
-    PhysicalBinaryOperator(OperatorId id, StatisticId statisticId, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema);
+    PhysicalBinaryOperator(OperatorId id, SchemaPtr leftSchema, SchemaPtr rightSchema, SchemaPtr outputSchema);
 
 public:
     /**

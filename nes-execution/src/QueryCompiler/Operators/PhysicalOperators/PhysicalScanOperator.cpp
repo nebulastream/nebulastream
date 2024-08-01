@@ -18,18 +18,18 @@
 namespace NES::QueryCompilation::PhysicalOperators
 {
 
-PhysicalScanOperator::PhysicalScanOperator(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema)
-    : Operator(id, statisticId), PhysicalUnaryOperator(id, statisticId, outputSchema, outputSchema)
+PhysicalScanOperator::PhysicalScanOperator(OperatorId id, const SchemaPtr& outputSchema)
+    : Operator(id), PhysicalUnaryOperator(id, outputSchema, outputSchema)
 {
 }
 
-PhysicalOperatorPtr PhysicalScanOperator::create(StatisticId statisticId, SchemaPtr outputSchema)
+PhysicalOperatorPtr PhysicalScanOperator::create(SchemaPtr outputSchema)
 {
-    return create(getNextOperatorId(), statisticId, std::move(outputSchema));
+    return create(getNextOperatorId(), std::move(outputSchema));
 }
-PhysicalOperatorPtr PhysicalScanOperator::create(OperatorId id, StatisticId statisticId, const SchemaPtr& outputSchema)
+PhysicalOperatorPtr PhysicalScanOperator::create(OperatorId id, const SchemaPtr& outputSchema)
 {
-    return std::make_shared<PhysicalScanOperator>(id, statisticId, outputSchema);
+    return std::make_shared<PhysicalScanOperator>(id, outputSchema);
 }
 
 std::string PhysicalScanOperator::toString() const
@@ -43,7 +43,7 @@ std::string PhysicalScanOperator::toString() const
 
 OperatorPtr PhysicalScanOperator::copy()
 {
-    auto result = create(id, statisticId, outputSchema);
+    auto result = create(id, outputSchema);
     result->addAllProperties(properties);
     return result;
 }

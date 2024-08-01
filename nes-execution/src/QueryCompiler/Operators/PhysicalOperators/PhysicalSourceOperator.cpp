@@ -20,14 +20,9 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalSourceOperator::PhysicalSourceOperator(
-    OperatorId id,
-    StatisticId statisticId,
-    OriginId originId,
-    SchemaPtr inputSchema,
-    SchemaPtr outputSchema,
-    SourceDescriptorPtr sourceDescriptor)
-    : Operator(id, statisticId)
-    , PhysicalUnaryOperator(id, statisticId, std::move(inputSchema), std::move(outputSchema))
+    OperatorId id, OriginId originId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor)
+    : Operator(id)
+    , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
     , sourceDescriptor(std::move(sourceDescriptor))
     , originId(originId)
 {
@@ -35,20 +30,18 @@ PhysicalSourceOperator::PhysicalSourceOperator(
 
 std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(
     OperatorId id,
-    StatisticId statisticId,
     OriginId originId,
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
     const SourceDescriptorPtr& sourceDescriptor)
 {
-    return std::make_shared<PhysicalSourceOperator>(id, statisticId, originId, inputSchema, outputSchema, sourceDescriptor);
+    return std::make_shared<PhysicalSourceOperator>(id, originId, inputSchema, outputSchema, sourceDescriptor);
 }
 
 std::shared_ptr<PhysicalSourceOperator>
-PhysicalSourceOperator::create(StatisticId statisticId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor)
+PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor)
 {
-    return create(
-        getNextOperatorId(), statisticId, INVALID_ORIGIN_ID, std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
+    return create(getNextOperatorId(), INVALID_ORIGIN_ID, std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
 }
 
 OriginId PhysicalSourceOperator::getOriginId()
@@ -83,7 +76,7 @@ std::string PhysicalSourceOperator::toString() const
 
 OperatorPtr PhysicalSourceOperator::copy()
 {
-    auto result = create(id, statisticId, originId, inputSchema, outputSchema, sourceDescriptor);
+    auto result = create(id, originId, inputSchema, outputSchema, sourceDescriptor);
     result->addAllProperties(properties);
     return result;
 }
