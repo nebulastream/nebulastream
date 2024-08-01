@@ -203,19 +203,6 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
     {
         EXPECT_TRUE(physicalSource.getValue()->instanceOf<DefaultSourceType>() || physicalSource.getValue()->instanceOf<MQTTSourceType>());
     }
-    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
-}
-
-TEST_F(ConfigTest, testWorkerYAMLFileFixedLocationNode)
-{
-    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    auto yamlPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "fixedLocationNode.yaml";
-    std::ofstream outFile(yamlPath);
-    outFile << "fieldNodeLocationCoordinates: \"23.88,-3.4\"" << std::endl << "nodeSpatialType: FIXED_LOCATION" << std::endl;
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(yamlPath);
-
-    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), NES::Spatial::DataTypes::Experimental::GeoLocation(23.88, -3.4));
-    EXPECT_EQ(workerConfigPtr->nodeSpatialType.getValue(), NES::Spatial::Experimental::SpatialType::FIXED_LOCATION);
 }
 
 TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
@@ -235,8 +222,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
          "--physicalSources.numberOfBuffersToProduce=5",
          "--physicalSources.rowLayout=false",
          "--physicalSources.physicalSourceName=x",
-         "--physicalSources.logicalSourceName=default",
-         "--fieldNodeLocationCoordinates=23.88,-3.4"});
+         "--physicalSources.logicalSourceName=default"});
     /// when
     workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     /// then
@@ -264,7 +250,6 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
     EXPECT_NE(
         workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
         workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
@@ -312,7 +297,6 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
     EXPECT_NE(
         workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
         workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->locationCoordinates.getValue(), workerConfigPtr->locationCoordinates.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testSourceEmptyParamsConsoleInput)

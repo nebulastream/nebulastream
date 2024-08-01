@@ -15,7 +15,6 @@
 #include <filesystem>
 #include <iostream>
 #include <utility>
-#include <Exceptions/TaskExecutionException.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
