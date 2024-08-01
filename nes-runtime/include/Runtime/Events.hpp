@@ -16,10 +16,6 @@
 
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-namespace NES::Network
-{
-class ExchangeProtocol;
-}
 namespace NES::Runtime
 {
 /// this enum defines the event that can occur in the system runtime

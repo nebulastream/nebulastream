@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <Network/NetworkSink.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>

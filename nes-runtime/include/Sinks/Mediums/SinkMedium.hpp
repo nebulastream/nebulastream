@@ -26,7 +26,6 @@ enum class SinkMediumTypes : uint8_t
 {
     PRINT_SINK,
     FILE_SINK,
-    NETWORK_SINK,
 };
 
 /**

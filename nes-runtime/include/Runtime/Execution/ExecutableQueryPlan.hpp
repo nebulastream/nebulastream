@@ -32,11 +32,6 @@ namespace NES::Runtime
 {
 class ReconfigurationMessage;
 }
-namespace NES::Network
-{
-class NetworkSink;
-}
-
 namespace NES::Runtime::Execution
 {
 
@@ -56,8 +51,6 @@ enum class ExecutableQueryPlanResult : uint8_t
  */
 class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener
 {
-    friend class NES::Network::NetworkSink;
-
 public:
     /**
      * @brief Constructor for an executable query plan.

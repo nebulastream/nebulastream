@@ -25,8 +25,6 @@
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Network/NetworkSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
@@ -932,32 +930,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         SchemaSerializationUtil::serializeSchema(tcpSourceDescriptor->getSchema(), tcpSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(tcpSerializedSourceDescriptor);
     }
-    else if (sourceDescriptor.instanceOf<const Network::NetworkSourceDescriptor>())
-    {
-        /// serialize network source descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
-                  "SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor");
-        auto networkSourceDescriptor = sourceDescriptor.as<const Network::NetworkSourceDescriptor>();
-        auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
-        const auto nodeLocation = networkSourceDescriptor->getNodeLocation();
-        const auto nesPartition = networkSourceDescriptor->getNesPartition();
-        /// serialize source schema
-        SchemaSerializationUtil::serializeSchema(
-            networkSourceDescriptor->getSchema(), networkSerializedSourceDescriptor.mutable_sourceschema());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_operatorid(nesPartition.getOperatorId().getRawValue());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_partitionid(nesPartition.getPartitionId().getRawValue());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_queryid(nesPartition.getQueryId().getRawValue());
-        networkSerializedSourceDescriptor.mutable_nespartition()->set_subpartitionid(nesPartition.getSubpartitionId().getRawValue());
-        networkSerializedSourceDescriptor.mutable_nodelocation()->set_port(nodeLocation.getPort());
-        networkSerializedSourceDescriptor.mutable_nodelocation()->set_hostname(nodeLocation.getHostname());
-        networkSerializedSourceDescriptor.mutable_nodelocation()->set_nodeid(nodeLocation.getNodeId().getRawValue());
-        auto s = std::chrono::duration_cast<std::chrono::milliseconds>(networkSourceDescriptor->getWaitTime());
-        networkSerializedSourceDescriptor.set_waittime(s.count());
-        networkSerializedSourceDescriptor.set_version(networkSourceDescriptor->getVersion());
-        networkSerializedSourceDescriptor.set_uniqueid(networkSourceDescriptor->getUniqueId().getRawValue());
-        networkSerializedSourceDescriptor.set_retrytimes(networkSourceDescriptor->getRetryTimes());
-        sourceDetails.mutable_sourcedescriptor()->PackFrom(networkSerializedSourceDescriptor);
-    }
     else if (sourceDescriptor.instanceOf<const CsvSourceDescriptor>())
     {
         /// serialize csv source descriptor
@@ -1040,34 +1012,6 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const
         auto ret = TCPSourceDescriptor::create(schema, sourceConfig);
         return ret;
     }
-    else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor>())
-    {
-        /// de-serialize zmq source descriptor
-        NES_DEBUG("OperatorSerializationUtil:: de-serialized SourceDescriptor as NetworkSourceDescriptor");
-        auto networkSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableNetworkSourceDescriptor();
-        serializedSourceDescriptor.UnpackTo(&networkSerializedSourceDescriptor);
-        /// de-serialize source schema
-        auto schema = SchemaSerializationUtil::deserializeSchema(networkSerializedSourceDescriptor.sourceschema());
-        Network::NesPartition nesPartition{
-            SharedQueryId(networkSerializedSourceDescriptor.nespartition().queryid()),
-            OperatorId(networkSerializedSourceDescriptor.nespartition().operatorid()),
-            PartitionId(networkSerializedSourceDescriptor.nespartition().partitionid()),
-            SubpartitionId(networkSerializedSourceDescriptor.nespartition().subpartitionid())};
-        NES::Network::NodeLocation nodeLocation(
-            WorkerId(networkSerializedSourceDescriptor.nodelocation().nodeid()),
-            networkSerializedSourceDescriptor.nodelocation().hostname(),
-            networkSerializedSourceDescriptor.nodelocation().port());
-        auto waitTime = std::chrono::milliseconds(networkSerializedSourceDescriptor.waittime());
-        auto ret = Network::NetworkSourceDescriptor::create(
-            schema,
-            nesPartition,
-            nodeLocation,
-            waitTime,
-            networkSerializedSourceDescriptor.retrytimes(),
-            networkSerializedSourceDescriptor.version(),
-            OperatorId(networkSerializedSourceDescriptor.uniqueid()));
-        return ret;
-    }
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>())
     {
         /// de-serialize csv source descriptor
@@ -1131,36 +1075,6 @@ void OperatorSerializationUtil::serializeSinkDescriptor(
         sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
         sinkDetails.set_numberoforiginids(numberOfOrigins);
     }
-    else if (sinkDescriptor.instanceOf<const Network::NetworkSinkDescriptor>())
-    {
-        /// serialize zmq sink descriptor
-        NES_TRACE("OperatorSerializationUtil:: serialized SinkDescriptor as "
-                  "SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor");
-        auto networkSinkDescriptor = sinkDescriptor.as<const Network::NetworkSinkDescriptor>();
-        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();
-        ///set details of NesPartition
-        auto* serializedNesPartition = serializedSinkDescriptor.mutable_nespartition();
-        auto nesPartition = networkSinkDescriptor->getNesPartition();
-        serializedNesPartition->set_queryid(nesPartition.getQueryId().getRawValue());
-        serializedNesPartition->set_operatorid(nesPartition.getOperatorId().getRawValue());
-        serializedNesPartition->set_partitionid(nesPartition.getPartitionId().getRawValue());
-        serializedNesPartition->set_subpartitionid(nesPartition.getSubpartitionId().getRawValue());
-        ///set details of NodeLocation
-        auto* serializedNodeLocation = serializedSinkDescriptor.mutable_nodelocation();
-        auto nodeLocation = networkSinkDescriptor->getNodeLocation();
-        serializedNodeLocation->set_nodeid(nodeLocation.getNodeId().getRawValue());
-        serializedNodeLocation->set_hostname(nodeLocation.getHostname());
-        serializedNodeLocation->set_port(nodeLocation.getPort());
-        /// set reconnection details
-        auto s = std::chrono::duration_cast<std::chrono::milliseconds>(networkSinkDescriptor->getWaitTime());
-        serializedSinkDescriptor.set_waittime(s.count());
-        serializedSinkDescriptor.set_retrytimes(networkSinkDescriptor->getRetryTimes());
-        serializedSinkDescriptor.set_version(networkSinkDescriptor->getVersion());
-        serializedSinkDescriptor.set_uniquenetworksinkdescriptorid(networkSinkDescriptor->getUniqueId().getRawValue());
-        ///pack to output
-        sinkDetails.mutable_sinkdescriptor()->PackFrom(serializedSinkDescriptor);
-        sinkDetails.set_numberoforiginids(numberOfOrigins);
-    }
     else if (sinkDescriptor.instanceOf<const FileSinkDescriptor>())
     {
         /// serialize file sink descriptor. The file sink has different types which have to be set correctly
@@ -1215,31 +1129,6 @@ SinkDescriptorPtr OperatorSerializationUtil::deserializeSinkDescriptor(const Ser
         /// de-serialize print sink descriptor
         NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as PrintSinkDescriptor");
         return PrintSinkDescriptor::create(deserializedNumberOfOrigins);
-    }
-    else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor>())
-    {
-        /// de-serialize zmq sink descriptor
-        NES_TRACE("OperatorSerializationUtil:: de-serialized SinkDescriptor as NetworkSinkDescriptor");
-        auto serializedSinkDescriptor = SerializableOperator_SinkDetails_SerializableNetworkSinkDescriptor();
-        deserializedSinkDescriptor.UnpackTo(&serializedSinkDescriptor);
-        Network::NesPartition nesPartition{
-            SharedQueryId(serializedSinkDescriptor.nespartition().queryid()),
-            OperatorId(serializedSinkDescriptor.nespartition().operatorid()),
-            PartitionId(serializedSinkDescriptor.nespartition().partitionid()),
-            SubpartitionId(serializedSinkDescriptor.nespartition().subpartitionid())};
-        Network::NodeLocation nodeLocation{
-            WorkerId(serializedSinkDescriptor.nodelocation().nodeid()),
-            serializedSinkDescriptor.nodelocation().hostname(),
-            serializedSinkDescriptor.nodelocation().port()};
-        auto waitTime = std::chrono::milliseconds(serializedSinkDescriptor.waittime());
-        return Network::NetworkSinkDescriptor::create(
-            nodeLocation,
-            nesPartition,
-            waitTime,
-            serializedSinkDescriptor.retrytimes(),
-            serializedSinkDescriptor.version(),
-            deserializedNumberOfOrigins,
-            OperatorId(serializedSinkDescriptor.uniquenetworksinkdescriptorid()));
     }
     else if (deserializedSinkDescriptor.Is<SerializableOperator_SinkDetails_SerializableFileSinkDescriptor>())
     {

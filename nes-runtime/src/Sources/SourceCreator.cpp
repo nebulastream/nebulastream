@@ -13,7 +13,6 @@
 */
 
 #include <chrono>
-#include <Network/NetworkSource.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/SourceCreator.hpp>

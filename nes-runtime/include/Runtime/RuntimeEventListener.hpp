@@ -17,11 +17,6 @@
 #include <memory>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
-namespace NES::Network
-{
-class ExchangeProtocol;
-}
-
 namespace NES::Runtime
 {
 class BaseEvent;
@@ -30,8 +25,6 @@ class BaseEvent;
  */
 class RuntimeEventListener : public NES::detail::virtual_enable_shared_from_this<RuntimeEventListener, false>
 {
-    friend class NES::Network::ExchangeProtocol;
-
 protected:
     /**
      * @brief API method called upon receiving an event
