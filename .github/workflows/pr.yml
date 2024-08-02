@@ -33,8 +33,13 @@ jobs:
       - uses: AutoModality/action-clean@v1
       - name: Checkout
         uses: actions/checkout@v4
+        if: ${{ !env.ACT && github.event_name == 'pull_request' }}
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+          fetch-depth: '0'
       - name: Contextual QA Checklists
-        if: github.event_name == 'pull_request'
+        if: ${{ !env.ACT && github.event_name == 'pull_request' }}
         uses: wyozi/contextual-qa-checklist-action@1.3.2
         with:
           gh-token: ${{ secrets.NES_CI_SECRET }}
@@ -52,6 +57,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
+        if: ${{ !env.ACT }}
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
