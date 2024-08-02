@@ -89,7 +89,6 @@ jobs:
           docker rm -f ${{ github.run_id }}_preamble-check
           docker rm -f ${{ github.run_id }}_format-check
           docker rm -f ${{ github.run_id }}_guard-check
-          docker rm -f ${{ github.run_id }}_comment-format-check
 
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
@@ -222,3 +221,8 @@ jobs:
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh $docker_image_name ${{ matrix.runner_group }}
         shell: bash
+      - name: docker cleanup
+        if: ${{ always() }}
+        run: |
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test
