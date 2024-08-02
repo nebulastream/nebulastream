@@ -133,6 +133,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
+        if: ${{ !env.ACT }}
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
