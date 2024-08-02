@@ -89,6 +89,7 @@ jobs:
           docker rm -f ${{ github.run_id }}_preamble-check
           docker rm -f ${{ github.run_id }}_format-check
           docker rm -f ${{ github.run_id }}_guard-check
+          docker rm -f ${{ github.run_id }}_comment-format-check
 
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
