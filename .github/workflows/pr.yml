@@ -197,15 +197,25 @@ jobs:
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "build_dir=$build_dir"
+          if [ "$ACT" ]; then
+            docker_image_name="nes_build_ubuntu:latest"
+          else
+            docker_image_name="nes_build_${{ matrix.osversion }}"
+          fi
           mkdir -p $build_dir
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh $docker_image_name ${{ matrix.runner_group }}
       - name: Run tests
         run: |
           GPU_RUNNER_PARAMS=""
           if [ "${{ matrix.runner_group }}" == "gpu" ]; then
             GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
           fi
+          if [ "$ACT" ]; then
+            docker_image_name="nes_build_ubuntu:latest"
+          else
+            docker_image_name="nes_build_${{ matrix.osversion }}"
+          fi
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+          docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh $docker_image_name ${{ matrix.runner_group }}
         shell: bash
