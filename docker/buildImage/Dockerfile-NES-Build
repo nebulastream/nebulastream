@@ -48,4 +48,14 @@ ENV ACTUAL_TRIPLE='cat /debian-triple'
 
 ADD ./entrypoint-nes-build.sh /entrypoint.sh
 
+ADD ./entrypoint-nes-build-preamble-check.sh /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh
+ADD ./entrypoint-nes-build-format-check.sh /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh
+ADD ./entrypoint-nes-build-guard-check.sh /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh
+ADD ./entrypoint-nes-build-comment-format-check.sh /nebulastream/docker/buildImage/entrypoint-nes-build-comment-format-check.sh
+
+
 ENTRYPOINT ["/entrypoint.sh"]
+ENTRYPOINT ["/nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh"]
+ENTRYPOINT ["/nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh"]
+ENTRYPOINT ["/nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh"]
+ENTRYPOINT ["/nebulastream/docker/buildImage/entrypoint-nes-build-comment-format-check.sh"]
