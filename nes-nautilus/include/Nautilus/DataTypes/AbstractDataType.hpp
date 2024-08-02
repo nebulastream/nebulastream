@@ -45,11 +45,6 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
         return dynamic_cast<DataType*>(this);
     }
 
-    template<typename>
-    bool isType() {
-        return false;
-    };
-
     template<class DataType>
     std::shared_ptr<DataType> as() {
         if (instanceOf<DataType>()) {

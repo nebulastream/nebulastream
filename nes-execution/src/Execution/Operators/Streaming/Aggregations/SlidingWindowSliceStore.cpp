@@ -16,6 +16,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <set>
 #include <vector>
 namespace NES::Runtime::Execution::Operators {
@@ -124,6 +125,7 @@ void SlidingWindowSliceStore<SliceType>::removeSlices(uint64_t ts) {
         maxWindowEndTs = 0;
     }
     while (!slices.empty() && slices.front()->getEnd() <= maxWindowEndTs) {
+        NES_DEBUG("Removing slice with start {} and end {}", slices.front()->getStart(), slices.front()->getEnd());
         slices.pop_front();
     }
 }

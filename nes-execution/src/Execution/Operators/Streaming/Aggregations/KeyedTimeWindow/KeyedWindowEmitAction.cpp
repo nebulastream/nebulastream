@@ -52,6 +52,8 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
     ctx.setChunkNumber(chunkNumber->getRawValue());
     ctx.setLastChunk(lastChunk->getRawValue());
 
+    NES_INFO("Emitting tuples...");
+
     auto globalSliceState = nautilus::invoke(getKeyedSliceState, globalSlice);
     auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, keyDataTypes, keySize, valueSize);
     // create the final window content and emit it to the downstream operator
@@ -63,7 +65,7 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
         // load keys and write them to result record
         auto sliceKeys = globalEntry.getKeyPtr();
         for (size_t i = 0; i < resultKeyFields.size(); ++i) {
-            auto value = ExecutableDataType<uint64_t>::create(*static_cast<nautilus::val<uint64_t*>>(sliceKeys));
+            const auto value = Nautilus::readExecDataTypeFromMemRef(sliceKeys, keyDataTypes[i]);
             resultWindow.write(resultKeyFields[i], value);
             sliceKeys = sliceKeys + nautilus::val<uint64_t>(keyDataTypes[i]->size());
         }

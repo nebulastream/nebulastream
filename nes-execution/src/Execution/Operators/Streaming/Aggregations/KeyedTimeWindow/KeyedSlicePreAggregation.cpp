@@ -126,6 +126,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 2. derive key values
     std::vector<ExecDataType> keyValues;
+    keyValues.reserve(keyExpressions.size());
     for (const auto& exp : keyExpressions) {
         keyValues.emplace_back(exp->execute(record));
     }

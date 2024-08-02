@@ -34,35 +34,31 @@
 //#include <Execution/Operators/Relational/Project.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
-//#include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
+#include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregationHandler.hpp>
-//#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMerging.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregation.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
-//#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
-//#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMerging.hpp>
-//#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
-//#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
-//#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
-//#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
+#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMerging.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregation.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
-//#include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJBuildBucketing.hpp>
-//#include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
-//#include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
-//#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
-//#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
-//#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
-//#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
-//#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
-//#include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
-//#include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
-//#include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogBuild.hpp>
-//#include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJBuildBucketing.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 //#include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 //#include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
@@ -182,23 +178,23 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 //        auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
 //        parentOperator->setChild(limit);
 //        return limit;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>()) {
-//        auto map = lowerMap(pipeline, operatorNode);
-//        parentOperator->setChild(map);
-//        return map;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapUDFOperator>()) {
-//        // for creating the handler that the nautilus udf operator needs to execute the udf
-//        const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalMapUDFOperator>();
-//        const auto udfDescriptor = udfOperator->getUDFDescriptor();
-//        const auto methodName = udfDescriptor->getMethodName();
-//        const auto udfInputSchema = udfDescriptor->getInputSchema();
-//        const auto udfOutputSchema = udfDescriptor->getOutputSchema();
-//
-//        // for converting the Physical UDF Operator to the Nautilus Operator
-//        const auto operatorInputSchema = udfOperator->getInputSchema();
-//        const auto operatorOutputSchema = udfOperator->getOutputSchema();
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>()) {
+        auto map = lowerMap(pipeline, operatorNode);
+        parentOperator->setChild(map);
+        return map;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapUDFOperator>()) {
+        // for creating the handler that the nautilus udf operator needs to execute the udf
+        const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalMapUDFOperator>();
+        const auto udfDescriptor = udfOperator->getUDFDescriptor();
+        const auto methodName = udfDescriptor->getMethodName();
+        const auto udfInputSchema = udfDescriptor->getInputSchema();
+        const auto udfOutputSchema = udfDescriptor->getOutputSchema();
 
-//        if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
+        // for converting the Physical UDF Operator to the Nautilus Operator
+        const auto operatorInputSchema = udfOperator->getInputSchema();
+        const auto operatorOutputSchema = udfOperator->getOutputSchema();
+
+        if (udfDescriptor->instanceOf<Catalogs::UDF::JavaUDFDescriptor>()) {
 #ifdef ENABLE_JNI
             // creating the java udf handler
             const auto javaUDFDescriptor = udfDescriptor->as<Catalogs::UDF::JavaUDFDescriptor>(udfDescriptor);
@@ -313,18 +309,18 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 //        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
 //        parentOperator->setChild(thresholdWindow);
 //        return thresholdWindow;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()) {
-//        auto preAggregationOperator = lowerPreAggregationOperator(pipeline, operatorNode, operatorHandlers);
-//        parentOperator->setChild(preAggregationOperator);
-//        return preAggregationOperator;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()) {
-//        return lowerSliceMergingOperator(pipeline, operatorNode, operatorHandlers);
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>()) {
-//        return lowerWindowSinkOperator(pipeline, operatorNode, operatorHandlers);
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()) {
-//        auto watermarkOperator = lowerWatermarkAssignmentOperator(pipeline, operatorNode, operatorHandlers);
-//        parentOperator->setChild(watermarkOperator);
-//        return watermarkOperator;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()) {
+        auto preAggregationOperator = lowerPreAggregationOperator(pipeline, operatorNode, operatorHandlers);
+        parentOperator->setChild(preAggregationOperator);
+        return preAggregationOperator;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>()) {
+        return lowerSliceMergingOperator(pipeline, operatorNode, operatorHandlers);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>()) {
+        return lowerWindowSinkOperator(pipeline, operatorNode, operatorHandlers);
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>()) {
+        auto watermarkOperator = lowerWatermarkAssignmentOperator(pipeline, operatorNode, operatorHandlers);
+        parentOperator->setChild(watermarkOperator);
+        return watermarkOperator;
 //    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
 //        auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
 //        auto projection =
@@ -332,123 +328,113 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 //                                                                     projectOperator->getOutputSchema()->getFieldNames());
 //        parentOperator->setChild(projection);
 //        return projection;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>()) {
-//        auto probeOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinProbeOperator>();
-//        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
-//        operatorHandlers.push_back(probeOperator->getJoinOperatorHandler());
-//        auto handlerIndex = operatorHandlers.size() - 1;
-//
-//        auto keys = probeOperator->getJoinExpression();
-//        auto joinExpression = expressionProvider->lowerExpression(keys);
-//
-//        Runtime::Execution::Operators::OperatorPtr joinProbeNautilus;
-//        switch (probeOperator->getJoinStrategy()) {
-//            case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-//                joinProbeNautilus =
-//                    std::make_shared<Runtime::Execution::Operators::HJProbeVarSized>(handlerIndex,
-//                                                                                     probeOperator->getJoinSchema(),
-//                                                                                     joinExpression,
-//                                                                                     probeOperator->getWindowMetaData(),
-//                                                                                     probeOperator->getLeftInputSchema(),
-//                                                                                     probeOperator->getRightInputSchema(),
-//                                                                                     probeOperator->getJoinStrategy(),
-//                                                                                     probeOperator->getWindowingStrategy());
-//                break;
-//            case StreamJoinStrategy::HASH_JOIN_LOCAL:
-//            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
-//            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
-//                joinProbeNautilus =
-//                    std::make_shared<Runtime::Execution::Operators::HJProbe>(handlerIndex,
-//                                                                             probeOperator->getJoinSchema(),
-//                                                                             joinExpression,
-//                                                                             probeOperator->getWindowMetaData(),
-//                                                                             probeOperator->getJoinStrategy(),
-//                                                                             probeOperator->getWindowingStrategy());
-//                break;
-//            case StreamJoinStrategy::NESTED_LOOP_JOIN:
-//                const auto leftSchema = probeOperator->getLeftInputSchema();
-//                const auto rightSchema = probeOperator->getRightInputSchema();
-//                joinProbeNautilus =
-//                    std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
-//                                                                              probeOperator->getJoinSchema(),
-//                                                                              joinExpression,
-//                                                                              probeOperator->getWindowMetaData(),
-//                                                                              leftSchema,
-//                                                                              rightSchema,
-//                                                                              probeOperator->getJoinStrategy(),
-//                                                                              probeOperator->getWindowingStrategy());
-//                break;
-//        }
-//        pipeline.setRootOperator(joinProbeNautilus);
-//        return joinProbeNautilus;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()) {
-//        using namespace Runtime::Execution;
-//
-//        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinBuildOperator>();
-//        auto buildOperatorHandler = buildOperator->getJoinOperatorHandler();
-//
-//        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
-//        operatorHandlers.push_back(buildOperator->getJoinOperatorHandler());
-//        auto handlerIndex = operatorHandlers.size() - 1;
-//        auto windowSize = buildOperatorHandler->getWindowSize();
-//        auto windowSlide = buildOperatorHandler->getWindowSlide();
-//
-//        auto timeFunction = buildOperator->getTimeStampField().toTimeFunction();
-//
-//        Operators::ExecutableOperatorPtr joinBuildNautilus;
-//        switch (buildOperator->getJoinStrategy()) {
-//            case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-//                switch (buildOperator->getWindowingStrategy()) {
-//                    case WindowingStrategy::LEGACY:
-//                    case WindowingStrategy::BUCKETING: NES_NOT_IMPLEMENTED();
-//                    case WindowingStrategy::SLICING:
-//                        joinBuildNautilus = lowerHJSlicingVarSized(buildOperator, handlerIndex, std::move(timeFunction));
-//                        break;
-//                }
-//                break;
-//            case StreamJoinStrategy::HASH_JOIN_LOCAL:
-//            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
-//            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE: {
-//                switch (buildOperator->getWindowingStrategy()) {
-//                    case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
-//                    case WindowingStrategy::SLICING:
-//                        joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
-//                        break;
-//                    case WindowingStrategy::BUCKETING:
-//                        joinBuildNautilus =
-//                            lowerHJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
-//                        break;
-//                }
-//                break;
-//            };
-//            case StreamJoinStrategy::NESTED_LOOP_JOIN: {
-//                switch (buildOperator->getWindowingStrategy()) {
-//                    case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
-//                    case WindowingStrategy::SLICING:
-//                        joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
-//                        break;
-//                    case WindowingStrategy::BUCKETING:
-//                        joinBuildNautilus =
-//                            lowerNLJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
-//                        break;
-//                }
-//                break;
-//            };
-//        }
-//
-//        parentOperator->setChild(joinBuildNautilus);
-//        return joinBuildNautilus;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalCountMinBuildOperator>()) {
-//        const auto physicalCountMinBuild = operatorNode->as<const PhysicalOperators::PhysicalCountMinBuildOperator>();
-//        auto countMinBuildOperator = lowerCountMinBuildOperator(*physicalCountMinBuild, operatorHandlers, bufferSize);
-//        parentOperator->setChild(countMinBuildOperator);
-//        return countMinBuildOperator;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHyperLogLogBuildOperator>()) {
-//        const auto physicalHyperLogLog = operatorNode->as<const PhysicalOperators::PhysicalHyperLogLogBuildOperator>();
-//        auto hyperLogLogBuildOperator = lowerHyperLogLogBuildOperator(*physicalHyperLogLog, operatorHandlers, bufferSize);
-//        parentOperator->setChild(hyperLogLogBuildOperator);
-//        return hyperLogLogBuildOperator;
-//    }
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>()) {
+        auto probeOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinProbeOperator>();
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(probeOperator->getJoinOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+
+        auto keys = probeOperator->getJoinExpression();
+        auto joinExpression = expressionProvider->lowerExpression(keys);
+
+        Runtime::Execution::Operators::OperatorPtr joinProbeNautilus;
+        switch (probeOperator->getJoinStrategy()) {
+            case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
+                joinProbeNautilus =
+                    std::make_shared<Runtime::Execution::Operators::HJProbeVarSized>(handlerIndex,
+                                                                                     probeOperator->getJoinSchema(),
+                                                                                     joinExpression,
+                                                                                     probeOperator->getWindowMetaData(),
+                                                                                     probeOperator->getLeftInputSchema(),
+                                                                                     probeOperator->getRightInputSchema(),
+                                                                                     probeOperator->getJoinStrategy(),
+                                                                                     probeOperator->getWindowingStrategy());
+                break;
+            case StreamJoinStrategy::HASH_JOIN_LOCAL:
+            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
+            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
+                joinProbeNautilus =
+                    std::make_shared<Runtime::Execution::Operators::HJProbe>(handlerIndex,
+                                                                             probeOperator->getJoinSchema(),
+                                                                             joinExpression,
+                                                                             probeOperator->getWindowMetaData(),
+                                                                             probeOperator->getJoinStrategy(),
+                                                                             probeOperator->getWindowingStrategy());
+                break;
+            case StreamJoinStrategy::NESTED_LOOP_JOIN:
+                const auto leftSchema = probeOperator->getLeftInputSchema();
+                const auto rightSchema = probeOperator->getRightInputSchema();
+                joinProbeNautilus =
+                    std::make_shared<Runtime::Execution::Operators::NLJProbe>(handlerIndex,
+                                                                              probeOperator->getJoinSchema(),
+                                                                              joinExpression,
+                                                                              probeOperator->getWindowMetaData(),
+                                                                              leftSchema,
+                                                                              rightSchema,
+                                                                              probeOperator->getJoinStrategy(),
+                                                                              probeOperator->getWindowingStrategy());
+                break;
+        }
+        pipeline.setRootOperator(joinProbeNautilus);
+        return joinProbeNautilus;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>()) {
+        using namespace Runtime::Execution;
+
+        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinBuildOperator>();
+        auto buildOperatorHandler = buildOperator->getJoinOperatorHandler();
+
+        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
+        operatorHandlers.push_back(buildOperator->getJoinOperatorHandler());
+        auto handlerIndex = operatorHandlers.size() - 1;
+        auto windowSize = buildOperatorHandler->getWindowSize();
+        auto windowSlide = buildOperatorHandler->getWindowSlide();
+
+        auto timeFunction = buildOperator->getTimeStampField().toTimeFunction();
+
+        Operators::ExecutableOperatorPtr joinBuildNautilus;
+        switch (buildOperator->getJoinStrategy()) {
+            case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
+                switch (buildOperator->getWindowingStrategy()) {
+                    case WindowingStrategy::LEGACY:
+                    case WindowingStrategy::BUCKETING: NES_NOT_IMPLEMENTED();
+                    case WindowingStrategy::SLICING:
+                        joinBuildNautilus = lowerHJSlicingVarSized(buildOperator, handlerIndex, std::move(timeFunction));
+                        break;
+                }
+                break;
+            case StreamJoinStrategy::HASH_JOIN_LOCAL:
+            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
+            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE: {
+                switch (buildOperator->getWindowingStrategy()) {
+                    case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
+                    case WindowingStrategy::SLICING:
+                        joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
+                        break;
+                    case WindowingStrategy::BUCKETING:
+                        joinBuildNautilus =
+                            lowerHJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
+                        break;
+                }
+                break;
+            };
+            case StreamJoinStrategy::NESTED_LOOP_JOIN: {
+                switch (buildOperator->getWindowingStrategy()) {
+                    case WindowingStrategy::LEGACY: NES_NOT_IMPLEMENTED();
+                    case WindowingStrategy::SLICING:
+                        joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
+                        break;
+                    case WindowingStrategy::BUCKETING:
+                        joinBuildNautilus =
+                            lowerNLJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
+                        break;
+                }
+                break;
+            };
+        }
+
+        parentOperator->setChild(joinBuildNautilus);
+        return joinBuildNautilus;
+    }
 
     // Check if a plugin is registered that handles this physical operator
     for (auto& plugin : NautilusOperatorLoweringPluginRegistry::getPlugins()) {
@@ -462,547 +448,459 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     NES_NOT_IMPLEMENTED();
 }
 
-//Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(
-//    const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-//    uint64_t bufferSize) {
-//    using namespace Runtime::Execution::Operators;
-//
-//    // 1. Getting all the necessary variables for the operator and its handler
-//    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-//    const auto fieldToTrackFieldName = physicalCountMinBuild.getNameOfFieldToTrack();
-//    const auto numberOfBitsInKey = 8
-//        * defaultPhysicalTypeFactory
-//              .getPhysicalType(physicalCountMinBuild.getInputSchema()->getField(fieldToTrackFieldName)->getDataType())
-//              ->size();
-//    const auto width = physicalCountMinBuild.getWidth();
-//    const auto depth = physicalCountMinBuild.getDepth();
-//    const auto metricHash = physicalCountMinBuild.getMetricHash();
-//    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
-//    const auto inputOriginIds = physicalCountMinBuild.getInputOriginIds();
-//    const auto sendingPolicy = physicalCountMinBuild.getSendingPolicy();
-//    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
-//    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalCountMinBuild.getOutputSchema(),
-//                                                                                     bufferSize,
-//                                                                                     Statistic::StatisticSynopsisType::COUNT_MIN,
-//                                                                                     sinkDataCodec);
-//
-//    // 2. Getting the windowSize, windowSlide, and timestampFieldName.
-//    const auto windowType = physicalCountMinBuild.getWindowType()->as<Windowing::TimeBasedWindowType>();
-//    NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-//               "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
-//    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
-//
-//    // 3. Create operator handler
-//    auto countMinBuildOperatorHandler = CountMinOperatorHandler::create(windowSize,
-//                                                                        windowSlide,
-//                                                                        sendingPolicy,
-//                                                                        width,
-//                                                                        depth,
-//                                                                        statisticFormat,
-//                                                                        inputOriginIds,
-//                                                                        numberOfBitsInKey);
-//    operatorHandlers.push_back(countMinBuildOperatorHandler);
-//    auto handlerIndex = operatorHandlers.size() - 1;
-//
-//    // 4. Creating the operator
-//    return std::make_shared<CountMinBuild>(handlerIndex,
-//                                           fieldToTrackFieldName,
-//                                           numberOfBitsInKey,
-//                                           width,
-//                                           depth,
-//                                           metricHash,
-//                                           std::move(timeFunction));
-//}
+Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
+    std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
+    uint64_t operatorHandlerIndex,
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
+    return std::make_shared<Runtime::Execution::Operators::NLJBuildSlicing>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy());
+}
+Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJBucketing(
+    std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
+    uint64_t operatorHandlerIndex,
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+    uint64_t windowSize,
+    uint64_t windowSlide) {
+    return std::make_shared<Runtime::Execution::Operators::NLJBuildBucketing>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy(),
+        windowSize,
+        windowSlide);
+}
 
-//Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(
-//    const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-//    uint64_t bufferSize) {
-//    using namespace Runtime::Execution::Operators;
-//
-//    // 1. Getting all the necessary variables for the operator and its handler
-//    const auto fieldToTrackFieldName = physicalHLLBuildOperator.getNameOfFieldToTrack();
-//    const auto width = physicalHLLBuildOperator.getWidth();
-//    const auto metricHash = physicalHLLBuildOperator.getMetricHash();
-//    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalHLLBuildOperator.getOutputSchema(), bufferSize);
-//    const auto inputOriginIds = physicalHLLBuildOperator.getInputOriginIds();
-//    const auto sendingPolicy = physicalHLLBuildOperator.getSendingPolicy();
-//    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
-//    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalHLLBuildOperator.getOutputSchema(),
-//                                                                                     bufferSize,
-//                                                                                     Statistic::StatisticSynopsisType::HLL,
-//                                                                                     sinkDataCodec);
-//
-//    // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
-//    const auto windowType = physicalHLLBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
-//    NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-//               "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
-//    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
-//
-//    // 3. Create operator handler
-//    auto hyperLogLogBuildOperatorHandler =
-//        HyperLogLogOperatorHandler::create(windowSize, windowSlide, sendingPolicy, statisticFormat, width, inputOriginIds);
-//    operatorHandlers.push_back(hyperLogLogBuildOperatorHandler);
-//    auto handlerIndex = operatorHandlers.size() - 1;
-//
-//    // 4. Creating the operator
-//    return std::make_shared<HyperLogLogBuild>(handlerIndex, fieldToTrackFieldName, metricHash, std::move(timeFunction));
-//}
+Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJSlicing(
+    const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& buildOperator,
+    uint64_t operatorHandlerIndex,
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
+    return std::make_shared<Runtime::Execution::Operators::HJBuildSlicing>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy());
+}
 
-//Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
-//    std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
-//    uint64_t operatorHandlerIndex,
-//    Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
-//    return std::make_shared<Runtime::Execution::Operators::NLJBuildSlicing>(
-//        operatorHandlerIndex,
-//        buildOperator->getInputSchema(),
-//        buildOperator->getJoinFieldName(),
-//        buildOperator->getBuildSide(),
-//        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-//        std::move(timeFunction),
-//        buildOperator->getJoinStrategy());
-//}
-//Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJBucketing(
-//    std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator> buildOperator,
-//    uint64_t operatorHandlerIndex,
-//    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-//    uint64_t windowSize,
-//    uint64_t windowSlide) {
-//    return std::make_shared<Runtime::Execution::Operators::NLJBuildBucketing>(
-//        operatorHandlerIndex,
-//        buildOperator->getInputSchema(),
-//        buildOperator->getJoinFieldName(),
-//        buildOperator->getBuildSide(),
-//        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-//        std::move(timeFunction),
-//        buildOperator->getJoinStrategy(),
-//        windowSize,
-//        windowSlide);
-//}
-//
-//Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJSlicing(
-//    const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& buildOperator,
-//    uint64_t operatorHandlerIndex,
-//    Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
-//    return std::make_shared<Runtime::Execution::Operators::HJBuildSlicing>(
-//        operatorHandlerIndex,
-//        buildOperator->getInputSchema(),
-//        buildOperator->getJoinFieldName(),
-//        buildOperator->getBuildSide(),
-//        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-//        std::move(timeFunction),
-//        buildOperator->getJoinStrategy());
-//}
-//
-//Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJSlicingVarSized(
-//    const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& buildOperator,
-//    uint64_t operatorHandlerIndex,
-//    Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
-//    return std::make_shared<Runtime::Execution::Operators::HJBuildSlicingVarSized>(
-//        operatorHandlerIndex,
-//        buildOperator->getInputSchema(),
-//        buildOperator->getJoinFieldName(),
-//        buildOperator->getBuildSide(),
-//        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-//        std::move(timeFunction),
-//        buildOperator->getJoinStrategy());
-//}
-//
-//Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJBucketing(
-//    const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& buildOperator,
-//    uint64_t operatorHandlerIndex,
-//    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
-//    uint64_t windowSize,
-//    uint64_t windowSlide) {
-//    return std::make_shared<Runtime::Execution::Operators::HJBuildBucketing>(
-//        operatorHandlerIndex,
-//        buildOperator->getInputSchema(),
-//        buildOperator->getJoinFieldName(),
-//        buildOperator->getBuildSide(),
-//        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
-//        std::move(timeFunction),
-//        buildOperator->getJoinStrategy(),
-//        windowSize,
-//        windowSlide);
-//}
+Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJSlicingVarSized(
+    const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& buildOperator,
+    uint64_t operatorHandlerIndex,
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction) {
+    return std::make_shared<Runtime::Execution::Operators::HJBuildSlicingVarSized>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy());
+}
 
-//std::shared_ptr<Runtime::Execution::Operators::Operator>
-//LowerPhysicalToNautilusOperators::lowerWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-//                                                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//                                                          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//    auto sinkOperator = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
-//    if (sinkOperator->getWindowDefinition()->isKeyed()) {
-//        return lowerKeyedWindowSinkOperator(pipeline, physicalOperator, operatorHandlers);
-//    } else {
-//        return lowerNonKeyedWindowSinkOperator(pipeline, physicalOperator, operatorHandlers);
-//    }
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerKeyedWindowSinkOperator(
-//    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-//    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//    auto physicalSWS = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
-//
-//    auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
-//    auto aggregationFunctions = lowerAggregations(aggregations);
-//    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
-//    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
-//    auto startTs = physicalSWS->getOutputSchema()->get(0)->getName();
-//    auto endTs = physicalSWS->getOutputSchema()->get(1)->getName();
-//    auto windowType = physicalSWS->getWindowDefinition()->getWindowType();
-//    auto keys = physicalSWS->getWindowDefinition()->getKeys();
-//    std::vector<std::string> resultKeyFields;
-//    std::vector<PhysicalTypePtr> resultKeyDataTypes;
-//    for (const auto& key : keys) {
-//        resultKeyFields.emplace_back(key->getFieldName());
-//        resultKeyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
-//    }
-//    uint64_t keySize = 0;
-//    uint64_t valueSize = 0;
-//    for (auto& keyType : resultKeyDataTypes) {
-//        keySize = keySize + keyType->size();
-//    }
-//    for (auto& function : aggregationFunctions) {
-//        valueSize = valueSize + function->getSize();
-//    }
-//
-//    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction =
-//        std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(aggregationFunctions,
-//                                                                               startTs,
-//                                                                               endTs,
-//                                                                               keySize,
-//                                                                               valueSize,
-//                                                                               resultKeyFields,
-//                                                                               resultKeyDataTypes,
-//                                                                               physicalSWS->getWindowDefinition()->getOriginId());
-//    auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
-//    operatorHandlers.emplace_back(handler);
-//    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
-//                                                                                                   aggregationFunctions,
-//                                                                                                   std::move(sliceMergingAction),
-//                                                                                                   resultKeyDataTypes,
-//                                                                                                   keySize,
-//                                                                                                   valueSize);
-//
-//    pipeline.setRootOperator(sliceMergingOperator);
-//    return sliceMergingOperator;
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerNonKeyedWindowSinkOperator(
-//    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-//    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//    auto physicalSWS = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
-//
-//    auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
-//    auto aggregationFunctions = lowerAggregations(aggregations);
-//    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
-//    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
-//    auto startTs = physicalSWS->getOutputSchema()->get(0)->getName();
-//    auto endTs = physicalSWS->getOutputSchema()->get(1)->getName();
-//    auto windowType = physicalSWS->getWindowDefinition()->getWindowType();
-//    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction =
-//        std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
-//            aggregationFunctions,
-//            startTs,
-//            endTs,
-//            physicalSWS->getWindowDefinition()->getOriginId());
-//
-//    auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
-//    operatorHandlers.emplace_back(handler);
-//    auto nonKeyedSliceMergingOperator =
-//        std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(operatorHandlers.size() - 1,
-//                                                                              aggregationFunctions,
-//                                                                              std::move(sliceMergingAction));
-//
-//    pipeline.setRootOperator(nonKeyedSliceMergingOperator);
-//    return nonKeyedSliceMergingOperator;
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerSliceMergingOperator(
-//    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-//    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//
-//    auto sliceMerging = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
-//    if (sliceMerging->getWindowDefinition()->isKeyed()) {
-//        return lowerKeyedSliceMergingOperator(pipeline, physicalOperator, operatorHandlers);
-//    } else {
-//        return lowerNonKeyedSliceMergingOperator(pipeline, physicalOperator, operatorHandlers);
-//    }
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerNonKeyedSliceMergingOperator(
-//    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-//    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//    auto physicalGSMO = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
-//    auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
-//    operatorHandlers.emplace_back(handler);
-//    auto sliceMergingOperatorHandlerIndex = operatorHandlers.size() - 1;
-//    auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
-//    auto aggregationFunctions = lowerAggregations(aggregations);
-//    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
-//    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
-//
-//    // TODO refactor operator selection
-//    auto windowType = physicalGSMO->getWindowDefinition()->getWindowType();
-//    auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
-//    auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
-//    auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
-//
-//    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-//    if (isTumblingWindow || options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
-//        sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
-//            aggregationFunctions,
-//            startTs,
-//            endTs,
-//            physicalGSMO->getWindowDefinition()->getOriginId());
-//    } else {
-//        const auto timeBasedWindowType =
-//            physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
-//        const auto& [windowSize, windowSlide, _] = Util::getWindowingParameters(*timeBasedWindowType);
-//        auto actionHandler =
-//            std::make_shared<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
-//        operatorHandlers.emplace_back(actionHandler);
-//        sliceMergingAction =
-//            std::make_unique<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreAction>(operatorHandlers.size() - 1);
-//    }
-//    auto nonKeyedSliceMergingOperator =
-//        std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(sliceMergingOperatorHandlerIndex,
-//                                                                              aggregationFunctions,
-//                                                                              std::move(sliceMergingAction));
-//
-//    pipeline.setRootOperator(nonKeyedSliceMergingOperator);
-//    return nonKeyedSliceMergingOperator;
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerKeyedSliceMergingOperator(
-//    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-//    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//    auto physicalGSMO = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
-//
-//    auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
-//
-//    operatorHandlers.emplace_back(handler);
-//    auto sliceMergingOperatorHandlerIndex = operatorHandlers.size() - 1;
-//    auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
-//    auto aggregationFunctions = lowerAggregations(aggregations);
-//    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
-//    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
-//    auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
-//    auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
-//    auto keys = physicalGSMO->getWindowDefinition()->getKeys();
-//
-//    std::vector<std::string> resultKeyFields;
-//    std::vector<PhysicalTypePtr> resultKeyDataTypes;
-//    for (const auto& key : keys) {
-//        resultKeyFields.emplace_back(key->getFieldName());
-//        resultKeyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
-//    }
-//    uint64_t keySize = 0;
-//    uint64_t valueSize = 0;
-//    for (auto& keyType : resultKeyDataTypes) {
-//        keySize = keySize + keyType->size();
-//    }
-//    for (auto& function : aggregationFunctions) {
-//        valueSize = valueSize + function->getSize();
-//    }
-//    auto windowType = physicalGSMO->getWindowDefinition()->getWindowType();
-//    auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
-//
-//    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-//    if (isTumblingWindow || options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
-//        sliceMergingAction = std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(
-//            aggregationFunctions,
-//            startTs,
-//            endTs,
-//            keySize,
-//            valueSize,
-//            resultKeyFields,
-//            resultKeyDataTypes,
-//            physicalGSMO->getWindowDefinition()->getOriginId());
-//    } else {
-//        const auto windowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
-//        const auto& [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
-//        auto actionHandler =
-//            std::make_shared<Runtime::Execution::Operators::KeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
-//        operatorHandlers.emplace_back(actionHandler);
-//        sliceMergingAction =
-//            std::make_unique<Runtime::Execution::Operators::KeyedAppendToSliceStoreAction>(operatorHandlers.size() - 1);
-//    }
-//
-//    auto sliceMergingOperator =
-//        std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(sliceMergingOperatorHandlerIndex,
-//                                                                           aggregationFunctions,
-//                                                                           std::move(sliceMergingAction),
-//                                                                           resultKeyDataTypes,
-//                                                                           keySize,
-//                                                                           valueSize);
-//    pipeline.setRootOperator(sliceMergingOperator);
-//    return sliceMergingOperator;
-//}
-//
-//std::unique_ptr<Runtime::Execution::Operators::TimeFunction>
-//LowerPhysicalToNautilusOperators::lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeWindow) {
-//    // Depending on the window type we create a different time function.
-//    // If the window type is ingestion time or we use the special record creation ts field, create an ingestion time function.
-//    // TODO remove record creation ts if it is not needed anymore
-//    if (timeWindow->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime
-//        || timeWindow->getTimeCharacteristic()->getField()->getName()
-//            == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
-//        return std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
-//    } else if (timeWindow->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
-//        // For event time fields, we look up the reference field name and create an expression to read the field.
-//        auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
-//        auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
-//        return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
-//            timeStampField,
-//            timeWindow->getTimeCharacteristic()->getTimeUnit());
-//    }
-//    NES_THROW_RUNTIME_ERROR("Timefunction could not be created for the following window definition: " << timeWindow->toString());
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerPreAggregationOperator(
-//    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-//    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//
-//    auto physicalPreAggregation = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
-//    if (physicalPreAggregation->getWindowDefinition()->isKeyed()) {
-//        return lowerKeyedPreAggregationOperator(pipeline, physicalPreAggregation, operatorHandlers);
-//    } else {
-//        return lowerNonKeyedPreAggregationOperator(pipeline, physicalPreAggregation, operatorHandlers);
-//    }
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-//LowerPhysicalToNautilusOperators::lowerNonKeyedPreAggregationOperator(
-//    Runtime::Execution::PhysicalOperatorPipeline&,
-//    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//    auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
-//    auto windowDefinition = physicalGTLPAO->getWindowDefinition();
-//    auto aggregations = physicalGTLPAO->getWindowDefinition()->getWindowAggregation();
-//    auto aggregationFunctions = lowerAggregations(aggregations);
-//    auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
-//    auto timeFunction = lowerTimeFunction(timeWindow);
-//
-//    if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
-//
-//        auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
-//            timeWindow->getSize().getTime(),
-//            timeWindow->getSlide().getTime(),
-//            windowDefinition->getInputOriginIds());
-//
-//        operatorHandlers.emplace_back(handler);
-//        auto slicePreAggregation =
-//            std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(operatorHandlers.size() - 1,
-//                                                                                         std::move(timeFunction),
-//                                                                                         aggregationFunctions);
-//        return slicePreAggregation;
-//    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
-//        auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
-//
-//        auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
-//            timeBasedWindowType->getSize().getTime(),
-//            timeBasedWindowType->getSlide().getTime(),
-//            windowDefinition->getInputOriginIds());
-//        operatorHandlers.emplace_back(handler);
-//        auto bucketPreAggregation =
-//            std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregation>(operatorHandlers.size() - 1,
-//                                                                                          std::move(timeFunction),
-//                                                                                          aggregationFunctions);
-//        return bucketPreAggregation;
-//    }
-//    NES_NOT_IMPLEMENTED();
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-//LowerPhysicalToNautilusOperators::lowerKeyedPreAggregationOperator(
-//    Runtime::Execution::PhysicalOperatorPipeline&,
-//    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-//    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-//    auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
-//
-//    auto windowDefinition = physicalGTLPAO->getWindowDefinition();
-//    auto aggregations = windowDefinition->getWindowAggregation();
-//    auto aggregationFunctions = lowerAggregations(aggregations);
-//    auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
-//    auto timeFunction = lowerTimeFunction(timeWindow);
-//    auto keys = windowDefinition->getKeys();
-//    NES_ASSERT(!keys.empty(), "A keyed window should have keys");
-//    std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyReadExpressions;
-//    auto df = DefaultPhysicalTypeFactory();
-//    std::vector<PhysicalTypePtr> keyDataTypes;
-//    for (const auto& key : keys) {
-//        keyReadExpressions.emplace_back(expressionProvider->lowerExpression(key));
-//        keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
-//    }
-//
-//    if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
-//
-//        auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
-//            timeWindow->getSize().getTime(),
-//            timeWindow->getSlide().getTime(),
-//            windowDefinition->getInputOriginIds());
-//
-//        operatorHandlers.emplace_back(handler);
-//        auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
-//            operatorHandlers.size() - 1,
-//            std::move(timeFunction),
-//            keyReadExpressions,
-//            keyDataTypes,
-//            aggregationFunctions,
-//            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-//        return sliceMergingOperator;
-//    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
-//
-//        auto handler = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
-//            timeWindow->getSize().getTime(),
-//            timeWindow->getSlide().getTime(),
-//            windowDefinition->getInputOriginIds());
-//
-//        operatorHandlers.emplace_back(handler);
-//        auto bucketPreAggregation = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregation>(
-//            operatorHandlers.size() - 1,
-//            std::move(timeFunction),
-//            keyReadExpressions,
-//            keyDataTypes,
-//            aggregationFunctions,
-//            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-//        return bucketPreAggregation;
-//    } else {
-//        NES_NOT_IMPLEMENTED();
-//    }
-//}
-//
-//std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-//LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline&,
-//                                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
-//                                                                   std::vector<Runtime::Execution::OperatorHandlerPtr>&) {
-//    auto wao = operatorPtr->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
-//
-//    //Add either event time or ingestion time watermark strategy
-//    if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
-//        auto eventTimeWatermarkStrategy =
-//            wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
-//        auto fieldExpression = expressionProvider->lowerExpression(eventTimeWatermarkStrategy->getOnField());
-//        auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(
-//            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(fieldExpression,
-//                                                                               eventTimeWatermarkStrategy->getTimeUnit()));
-//        return watermarkAssignmentOperator;
-//    } else if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
-//        auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::IngestionTimeWatermarkAssignment>(
-//            std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>());
-//        return watermarkAssignmentOperator;
-//    } else {
-//        NES_NOT_IMPLEMENTED();
-//    }
-//}
+Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHJBucketing(
+    const std::shared_ptr<PhysicalOperators::PhysicalStreamJoinBuildOperator>& buildOperator,
+    uint64_t operatorHandlerIndex,
+    Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
+    uint64_t windowSize,
+    uint64_t windowSlide) {
+    return std::make_shared<Runtime::Execution::Operators::HJBuildBucketing>(
+        operatorHandlerIndex,
+        buildOperator->getInputSchema(),
+        buildOperator->getJoinFieldName(),
+        buildOperator->getBuildSide(),
+        buildOperator->getInputSchema()->getSchemaSizeInBytes(),
+        std::move(timeFunction),
+        buildOperator->getJoinStrategy(),
+        windowSize,
+        windowSlide);
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator>
+LowerPhysicalToNautilusOperators::lowerWindowSinkOperator(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+                                                          const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+                                                          std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto sinkOperator = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
+    if (sinkOperator->getWindowDefinition()->isKeyed()) {
+        return lowerKeyedWindowSinkOperator(pipeline, physicalOperator, operatorHandlers);
+    } else {
+        return lowerNonKeyedWindowSinkOperator(pipeline, physicalOperator, operatorHandlers);
+    }
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerKeyedWindowSinkOperator(
+    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto physicalSWS = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
+
+    auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
+    auto aggregationFunctions = lowerAggregations(aggregations);
+    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
+    auto startTs = physicalSWS->getOutputSchema()->get(0)->getName();
+    auto endTs = physicalSWS->getOutputSchema()->get(1)->getName();
+    auto windowType = physicalSWS->getWindowDefinition()->getWindowType();
+    auto keys = physicalSWS->getWindowDefinition()->getKeys();
+    std::vector<std::string> resultKeyFields;
+    std::vector<PhysicalTypePtr> resultKeyDataTypes;
+    for (const auto& key : keys) {
+        resultKeyFields.emplace_back(key->getFieldName());
+        resultKeyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
+    }
+    uint64_t keySize = 0;
+    uint64_t valueSize = 0;
+    for (auto& keyType : resultKeyDataTypes) {
+        keySize = keySize + keyType->size();
+    }
+    for (auto& function : aggregationFunctions) {
+        valueSize = valueSize + function->getSize();
+    }
+
+    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction =
+        std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(aggregationFunctions,
+                                                                               startTs,
+                                                                               endTs,
+                                                                               keySize,
+                                                                               valueSize,
+                                                                               resultKeyFields,
+                                                                               resultKeyDataTypes,
+                                                                               physicalSWS->getWindowDefinition()->getOriginId());
+    auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
+    operatorHandlers.emplace_back(handler);
+    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(operatorHandlers.size() - 1,
+                                                                                                   aggregationFunctions,
+                                                                                                   std::move(sliceMergingAction),
+                                                                                                   resultKeyDataTypes,
+                                                                                                   keySize,
+                                                                                                   valueSize);
+
+    pipeline.setRootOperator(sliceMergingOperator);
+    return sliceMergingOperator;
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerNonKeyedWindowSinkOperator(
+    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto physicalSWS = physicalOperator->as<PhysicalOperators::PhysicalWindowSinkOperator>();
+
+    auto aggregations = physicalSWS->getWindowDefinition()->getWindowAggregation();
+    auto aggregationFunctions = lowerAggregations(aggregations);
+    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
+    auto startTs = physicalSWS->getOutputSchema()->get(0)->getName();
+    auto endTs = physicalSWS->getOutputSchema()->get(1)->getName();
+    auto windowType = physicalSWS->getWindowDefinition()->getWindowType();
+    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction =
+        std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
+            aggregationFunctions,
+            startTs,
+            endTs,
+            physicalSWS->getWindowDefinition()->getOriginId());
+
+    auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
+    operatorHandlers.emplace_back(handler);
+    auto nonKeyedSliceMergingOperator =
+        std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(operatorHandlers.size() - 1,
+                                                                              aggregationFunctions,
+                                                                              std::move(sliceMergingAction));
+
+    pipeline.setRootOperator(nonKeyedSliceMergingOperator);
+    return nonKeyedSliceMergingOperator;
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerSliceMergingOperator(
+    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+
+    auto sliceMerging = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
+    if (sliceMerging->getWindowDefinition()->isKeyed()) {
+        return lowerKeyedSliceMergingOperator(pipeline, physicalOperator, operatorHandlers);
+    } else {
+        return lowerNonKeyedSliceMergingOperator(pipeline, physicalOperator, operatorHandlers);
+    }
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerNonKeyedSliceMergingOperator(
+    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto physicalGSMO = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
+    auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMergingHandler>();
+    operatorHandlers.emplace_back(handler);
+    auto sliceMergingOperatorHandlerIndex = operatorHandlers.size() - 1;
+    auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
+    auto aggregationFunctions = lowerAggregations(aggregations);
+    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
+
+    // TODO refactor operator selection
+    auto windowType = physicalGSMO->getWindowDefinition()->getWindowType();
+    auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
+    auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
+    auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
+
+    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
+    if (isTumblingWindow || options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
+        sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
+            aggregationFunctions,
+            startTs,
+            endTs,
+            physicalGSMO->getWindowDefinition()->getOriginId());
+    } else {
+        const auto timeBasedWindowType =
+            physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        const auto& [windowSize, windowSlide, _] = Util::getWindowingParameters(*timeBasedWindowType);
+        auto actionHandler =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
+        operatorHandlers.emplace_back(actionHandler);
+        sliceMergingAction =
+            std::make_unique<Runtime::Execution::Operators::NonKeyedAppendToSliceStoreAction>(operatorHandlers.size() - 1);
+    }
+    auto nonKeyedSliceMergingOperator =
+        std::make_shared<Runtime::Execution::Operators::NonKeyedSliceMerging>(sliceMergingOperatorHandlerIndex,
+                                                                              aggregationFunctions,
+                                                                              std::move(sliceMergingAction));
+
+    pipeline.setRootOperator(nonKeyedSliceMergingOperator);
+    return nonKeyedSliceMergingOperator;
+}
+
+std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilusOperators::lowerKeyedSliceMergingOperator(
+    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto physicalGSMO = physicalOperator->as<PhysicalOperators::PhysicalSliceMergingOperator>();
+
+    auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSliceMergingHandler>();
+
+    operatorHandlers.emplace_back(handler);
+    auto sliceMergingOperatorHandlerIndex = operatorHandlers.size() - 1;
+    auto aggregations = physicalGSMO->getWindowDefinition()->getWindowAggregation();
+    auto aggregationFunctions = lowerAggregations(aggregations);
+    // We assume that the first field of the output schema is the window start ts, and the second field is the window end ts.
+    // TODO this information should be stored in the logical window descriptor otherwise this assumption may fail in the future.
+    auto startTs = physicalGSMO->getOutputSchema()->get(0)->getName();
+    auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
+    auto keys = physicalGSMO->getWindowDefinition()->getKeys();
+
+    std::vector<std::string> resultKeyFields;
+    std::vector<PhysicalTypePtr> resultKeyDataTypes;
+    for (const auto& key : keys) {
+        resultKeyFields.emplace_back(key->getFieldName());
+        resultKeyDataTypes.emplace_back(DefaultPhysicalTypeFactory().getPhysicalType(key->getStamp()));
+    }
+    uint64_t keySize = 0;
+    uint64_t valueSize = 0;
+    for (auto& keyType : resultKeyDataTypes) {
+        keySize = keySize + keyType->size();
+    }
+    for (auto& function : aggregationFunctions) {
+        valueSize = valueSize + function->getSize();
+    }
+    auto windowType = physicalGSMO->getWindowDefinition()->getWindowType();
+    auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
+
+    std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
+    if (isTumblingWindow || options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
+        sliceMergingAction = std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(
+            aggregationFunctions,
+            startTs,
+            endTs,
+            keySize,
+            valueSize,
+            resultKeyFields,
+            resultKeyDataTypes,
+            physicalGSMO->getWindowDefinition()->getOriginId());
+    } else {
+        const auto windowType = physicalGSMO->getWindowDefinition()->getWindowType()->as<Windowing::TimeBasedWindowType>();
+        const auto& [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
+        auto actionHandler =
+            std::make_shared<Runtime::Execution::Operators::KeyedAppendToSliceStoreHandler>(windowSize, windowSlide);
+        operatorHandlers.emplace_back(actionHandler);
+        sliceMergingAction =
+            std::make_unique<Runtime::Execution::Operators::KeyedAppendToSliceStoreAction>(operatorHandlers.size() - 1);
+    }
+
+    auto sliceMergingOperator =
+        std::make_shared<Runtime::Execution::Operators::KeyedSliceMerging>(sliceMergingOperatorHandlerIndex,
+                                                                           aggregationFunctions,
+                                                                           std::move(sliceMergingAction),
+                                                                           resultKeyDataTypes,
+                                                                           keySize,
+                                                                           valueSize);
+    pipeline.setRootOperator(sliceMergingOperator);
+    return sliceMergingOperator;
+}
+
+std::unique_ptr<Runtime::Execution::Operators::TimeFunction>
+LowerPhysicalToNautilusOperators::lowerTimeFunction(const Windowing::TimeBasedWindowTypePtr& timeWindow) {
+    // Depending on the window type we create a different time function.
+    // If the window type is ingestion time or we use the special record creation ts field, create an ingestion time function.
+    // TODO remove record creation ts if it is not needed anymore
+    if (timeWindow->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::IngestionTime
+        || timeWindow->getTimeCharacteristic()->getField()->getName()
+            == Windowing::TimeCharacteristic::RECORD_CREATION_TS_FIELD_NAME) {
+        return std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>();
+    } else if (timeWindow->getTimeCharacteristic()->getType() == Windowing::TimeCharacteristic::Type::EventTime) {
+        // For event time fields, we look up the reference field name and create an expression to read the field.
+        auto timeCharacteristicField = timeWindow->getTimeCharacteristic()->getField()->getName();
+        auto timeStampField = std::make_shared<Runtime::Execution::Expressions::ReadFieldExpression>(timeCharacteristicField);
+        return std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(
+            timeStampField,
+            timeWindow->getTimeCharacteristic()->getTimeUnit());
+    }
+    NES_THROW_RUNTIME_ERROR("Timefunction could not be created for the following window definition: " << timeWindow->toString());
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerPreAggregationOperator(
+    Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+
+    auto physicalPreAggregation = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
+    if (physicalPreAggregation->getWindowDefinition()->isKeyed()) {
+        return lowerKeyedPreAggregationOperator(pipeline, physicalPreAggregation, operatorHandlers);
+    } else {
+        return lowerNonKeyedPreAggregationOperator(pipeline, physicalPreAggregation, operatorHandlers);
+    }
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerNonKeyedPreAggregationOperator(
+    Runtime::Execution::PhysicalOperatorPipeline&,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
+    auto windowDefinition = physicalGTLPAO->getWindowDefinition();
+    auto aggregations = physicalGTLPAO->getWindowDefinition()->getWindowAggregation();
+    auto aggregationFunctions = lowerAggregations(aggregations);
+    auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+    auto timeFunction = lowerTimeFunction(timeWindow);
+
+    if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
+
+        auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
+            timeWindow->getSize().getTime(),
+            timeWindow->getSlide().getTime(),
+            windowDefinition->getInputOriginIds());
+
+        operatorHandlers.emplace_back(handler);
+        auto slicePreAggregation =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(operatorHandlers.size() - 1,
+                                                                                         std::move(timeFunction),
+                                                                                         aggregationFunctions);
+        return slicePreAggregation;
+    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
+        auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+
+        auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
+            timeBasedWindowType->getSize().getTime(),
+            timeBasedWindowType->getSlide().getTime(),
+            windowDefinition->getInputOriginIds());
+        operatorHandlers.emplace_back(handler);
+        auto bucketPreAggregation =
+            std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregation>(operatorHandlers.size() - 1,
+                                                                                          std::move(timeFunction),
+                                                                                          aggregationFunctions);
+        return bucketPreAggregation;
+    }
+    NES_NOT_IMPLEMENTED();
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerKeyedPreAggregationOperator(
+    Runtime::Execution::PhysicalOperatorPipeline&,
+    const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+    auto physicalGTLPAO = physicalOperator->as<PhysicalOperators::PhysicalSlicePreAggregationOperator>();
+
+    auto windowDefinition = physicalGTLPAO->getWindowDefinition();
+    auto aggregations = windowDefinition->getWindowAggregation();
+    auto aggregationFunctions = lowerAggregations(aggregations);
+    auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
+    auto timeFunction = lowerTimeFunction(timeWindow);
+    auto keys = windowDefinition->getKeys();
+    NES_ASSERT(!keys.empty(), "A keyed window should have keys");
+    std::vector<Runtime::Execution::Expressions::ExpressionPtr> keyReadExpressions;
+    auto df = DefaultPhysicalTypeFactory();
+    std::vector<PhysicalTypePtr> keyDataTypes;
+    for (const auto& key : keys) {
+        keyReadExpressions.emplace_back(expressionProvider->lowerExpression(key));
+        keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
+    }
+
+    if (options->getWindowingStrategy() == WindowingStrategy::SLICING) {
+
+        auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+            timeWindow->getSize().getTime(),
+            timeWindow->getSlide().getTime(),
+            windowDefinition->getInputOriginIds());
+
+        operatorHandlers.emplace_back(handler);
+        auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
+            operatorHandlers.size() - 1,
+            std::move(timeFunction),
+            keyReadExpressions,
+            keyDataTypes,
+            aggregationFunctions,
+            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        return sliceMergingOperator;
+    } else if (options->getWindowingStrategy() == WindowingStrategy::BUCKETING) {
+
+        auto handler = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
+            timeWindow->getSize().getTime(),
+            timeWindow->getSlide().getTime(),
+            windowDefinition->getInputOriginIds());
+
+        operatorHandlers.emplace_back(handler);
+        auto bucketPreAggregation = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregation>(
+            operatorHandlers.size() - 1,
+            std::move(timeFunction),
+            keyReadExpressions,
+            keyDataTypes,
+            aggregationFunctions,
+            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+        return bucketPreAggregation;
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(Runtime::Execution::PhysicalOperatorPipeline&,
+                                                                   const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+                                                                   std::vector<Runtime::Execution::OperatorHandlerPtr>&) {
+    auto wao = operatorPtr->as<PhysicalOperators::PhysicalWatermarkAssignmentOperator>();
+
+    //Add either event time or ingestion time watermark strategy
+    if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::EventTimeWatermarkStrategyDescriptor>()) {
+        auto eventTimeWatermarkStrategy =
+            wao->getWatermarkStrategyDescriptor()->as<Windowing::EventTimeWatermarkStrategyDescriptor>();
+        auto fieldExpression = expressionProvider->lowerExpression(eventTimeWatermarkStrategy->getOnField());
+        auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::EventTimeWatermarkAssignment>(
+            std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(fieldExpression,
+                                                                               eventTimeWatermarkStrategy->getTimeUnit()));
+        return watermarkAssignmentOperator;
+    } else if (wao->getWatermarkStrategyDescriptor()->instanceOf<Windowing::IngestionTimeWatermarkStrategyDescriptor>()) {
+        auto watermarkAssignmentOperator = std::make_shared<Runtime::Execution::Operators::IngestionTimeWatermarkAssignment>(
+            std::make_unique<Runtime::Execution::Operators::IngestionTimeFunction>());
+        return watermarkAssignmentOperator;
+    } else {
+        NES_NOT_IMPLEMENTED();
+    }
+}
 
 std::shared_ptr<Runtime::Execution::Operators::Operator>
 LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperatorPipeline&,
@@ -1047,19 +945,19 @@ LowerPhysicalToNautilusOperators::lowerFilter(Runtime::Execution::PhysicalOperat
 //    operatorHandlers.push_back(handler);
 //    return std::make_shared<Runtime::Execution::Operators::Limit>(operatorHandlers.size() - 1);
 //}
-//
-//std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-//LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorPipeline&,
-//                                           const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
-//    auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapOperator>();
-//    auto assignmentField = mapOperator->getMapExpression()->getField();
-//    auto assignmentExpression = mapOperator->getMapExpression()->getAssignment();
-//    auto expression = expressionProvider->lowerExpression(assignmentExpression);
-//    auto writeField =
-//        std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(assignmentField->getFieldName(), expression);
-//    return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
-//}
-//
+
+std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorPipeline&,
+                                           const PhysicalOperators::PhysicalOperatorPtr& operatorPtr) {
+    auto mapOperator = operatorPtr->as<PhysicalOperators::PhysicalMapOperator>();
+    auto assignmentField = mapOperator->getMapExpression()->getField();
+    auto assignmentExpression = mapOperator->getMapExpression()->getAssignment();
+    auto expression = expressionProvider->lowerExpression(assignmentExpression);
+    auto writeField =
+        std::make_shared<Runtime::Execution::Expressions::WriteFieldExpression>(assignmentField->getFieldName(), expression);
+    return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
+}
+
 //std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 //LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
 //                                                       const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
@@ -1089,202 +987,202 @@ LowerPhysicalToNautilusOperators::lowerFilter(Runtime::Execution::PhysicalOperat
 //                                                                                    aggregationFunctions,
 //                                                                                    handlerIndex);
 //}
-//
-//std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
-//LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationDescriptorPtr>& aggs) {
-//    NES_INFO("Lower Window Aggregations to Nautilus Operator");
-//    std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
-//    std::transform(aggs.cbegin(),
-//                   aggs.cend(),
-//                   std::back_inserter(aggregationFunctions),
-//                   [&](const Windowing::WindowAggregationDescriptorPtr& agg)
-//                       -> std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction> {
-//                       DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
-//
-//                       // lower the data types
-//                       auto physicalInputType = physicalTypeFactory.getPhysicalType(agg->getInputStamp());
-//                       auto physicalFinalType = physicalTypeFactory.getPhysicalType(agg->getFinalAggregateStamp());
-//
-//                       auto aggregationInputExpression = expressionProvider->lowerExpression(agg->on());
-//                       std::string aggregationResultFieldIdentifier;
-//                       if (auto fieldAccessExpression = agg->as()->as_if<FieldAccessExpressionNode>()) {
-//                           aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
-//                       } else {
-//                           NES_THROW_RUNTIME_ERROR("Currently complex expression in as fields are not supported");
-//                       }
-//                       switch (agg->getType()) {
-//                           case Windowing::WindowAggregationDescriptor::Type::Avg:
-//                               return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
-//                                   physicalInputType,
-//                                   physicalFinalType,
-//                                   aggregationInputExpression,
-//                                   aggregationResultFieldIdentifier);
-//                           case Windowing::WindowAggregationDescriptor::Type::Count:
-//                               return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(
-//                                   physicalInputType,
-//                                   physicalFinalType,
-//                                   aggregationInputExpression,
-//                                   aggregationResultFieldIdentifier);
-//                           case Windowing::WindowAggregationDescriptor::Type::Max:
-//                               return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
-//                                   physicalInputType,
-//                                   physicalFinalType,
-//                                   aggregationInputExpression,
-//                                   aggregationResultFieldIdentifier);
-//                           case Windowing::WindowAggregationDescriptor::Type::Min:
-//                               return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(
-//                                   physicalInputType,
-//                                   physicalFinalType,
-//                                   aggregationInputExpression,
-//                                   aggregationResultFieldIdentifier);
-//                           case Windowing::WindowAggregationDescriptor::Type::Median:
-//                               // TODO 3331: add median aggregation function
-//                               break;
-//                           case Windowing::WindowAggregationDescriptor::Type::Sum: {
-//                               return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(
-//                                   physicalInputType,
-//                                   physicalFinalType,
-//                                   aggregationInputExpression,
-//                                   aggregationResultFieldIdentifier);
-//                           }
-//                       };
-//                       NES_NOT_IMPLEMENTED();
-//                   });
-//    return aggregationFunctions;
-//}
-//
-//std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
-//LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
-//    Windowing::WindowAggregationDescriptor::Type aggregationType,
-//    DataTypePtr inputType) {
-//    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
-//    auto physicalType = physicalTypeFactory.getPhysicalType(std::move(inputType));
-//    auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
-//    // TODO 3468: Check if we can make this ugly nested switch case better
-//    switch (aggregationType) {
-//        case Windowing::WindowAggregationDescriptor::Type::Avg:
-//            switch (basicType->nativeType) {
-//                case BasicPhysicalType::NativeType::INT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int8_t>>();
-//                case BasicPhysicalType::NativeType::INT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int16_t>>();
-//                case BasicPhysicalType::NativeType::INT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int32_t>>();
-//                case BasicPhysicalType::NativeType::INT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int64_t>>();
-//                case BasicPhysicalType::NativeType::UINT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint8_t>>();
-//                case BasicPhysicalType::NativeType::UINT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint16_t>>();
-//                case BasicPhysicalType::NativeType::UINT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint32_t>>();
-//                case BasicPhysicalType::NativeType::UINT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint64_t>>();
-//                case BasicPhysicalType::NativeType::FLOAT:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<float_t>>();
-//                case BasicPhysicalType::NativeType::DOUBLE:
-//                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<double_t>>();
-//                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
-//            }
-//        case Windowing::WindowAggregationDescriptor::Type::Count:
-//            switch (basicType->nativeType) {
-//                case BasicPhysicalType::NativeType::INT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int8_t>>();
-//                case BasicPhysicalType::NativeType::INT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int16_t>>();
-//                case BasicPhysicalType::NativeType::INT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int32_t>>();
-//                case BasicPhysicalType::NativeType::INT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int64_t>>();
-//                case BasicPhysicalType::NativeType::UINT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint8_t>>();
-//                case BasicPhysicalType::NativeType::UINT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint16_t>>();
-//                case BasicPhysicalType::NativeType::UINT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint32_t>>();
-//                case BasicPhysicalType::NativeType::UINT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint64_t>>();
-//                case BasicPhysicalType::NativeType::FLOAT:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<float_t>>();
-//                case BasicPhysicalType::NativeType::DOUBLE:
-//                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<double_t>>();
-//                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
-//            }
-//        case Windowing::WindowAggregationDescriptor::Type::Max:
-//            switch (basicType->nativeType) {
-//                case BasicPhysicalType::NativeType::INT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int8_t>>();
-//                case BasicPhysicalType::NativeType::INT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int16_t>>();
-//                case BasicPhysicalType::NativeType::INT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int32_t>>();
-//                case BasicPhysicalType::NativeType::INT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int64_t>>();
-//                case BasicPhysicalType::NativeType::UINT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint8_t>>();
-//                case BasicPhysicalType::NativeType::UINT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint16_t>>();
-//                case BasicPhysicalType::NativeType::UINT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint32_t>>();
-//                case BasicPhysicalType::NativeType::UINT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint64_t>>();
-//                case BasicPhysicalType::NativeType::FLOAT:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<float_t>>();
-//                case BasicPhysicalType::NativeType::DOUBLE:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<double_t>>();
-//                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
-//            }
-//        case Windowing::WindowAggregationDescriptor::Type::Min:
-//            switch (basicType->nativeType) {
-//                case BasicPhysicalType::NativeType::INT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int8_t>>();
-//                case BasicPhysicalType::NativeType::INT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int16_t>>();
-//                case BasicPhysicalType::NativeType::INT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int32_t>>();
-//                case BasicPhysicalType::NativeType::INT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int64_t>>();
-//                case BasicPhysicalType::NativeType::UINT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint8_t>>();
-//                case BasicPhysicalType::NativeType::UINT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint16_t>>();
-//                case BasicPhysicalType::NativeType::UINT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint32_t>>();
-//                case BasicPhysicalType::NativeType::UINT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint64_t>>();
-//                case BasicPhysicalType::NativeType::FLOAT:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<float_t>>();
-//                case BasicPhysicalType::NativeType::DOUBLE:
-//                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<double_t>>();
-//                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
-//            }
-//        case Windowing::WindowAggregationDescriptor::Type::Sum:
-//            switch (basicType->nativeType) {
-//                case BasicPhysicalType::NativeType::INT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int8_t>>();
-//                case BasicPhysicalType::NativeType::INT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int16_t>>();
-//                case BasicPhysicalType::NativeType::INT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int32_t>>();
-//                case BasicPhysicalType::NativeType::INT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int64_t>>();
-//                case BasicPhysicalType::NativeType::UINT_8:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint8_t>>();
-//                case BasicPhysicalType::NativeType::UINT_16:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint16_t>>();
-//                case BasicPhysicalType::NativeType::UINT_32:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint32_t>>();
-//                case BasicPhysicalType::NativeType::UINT_64:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint64_t>>();
-//                case BasicPhysicalType::NativeType::FLOAT:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<float_t>>();
-//                case BasicPhysicalType::NativeType::DOUBLE:
-//                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<double_t>>();
-//                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
-//            }
-//        default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
-//    }
-//}
+
+std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
+LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationDescriptorPtr>& aggs) {
+    NES_INFO("Lower Window Aggregations to Nautilus Operator");
+    std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>> aggregationFunctions;
+    std::transform(aggs.cbegin(),
+                   aggs.cend(),
+                   std::back_inserter(aggregationFunctions),
+                   [&](const Windowing::WindowAggregationDescriptorPtr& agg)
+                       -> std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction> {
+                       DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+
+                       // lower the data types
+                       auto physicalInputType = physicalTypeFactory.getPhysicalType(agg->getInputStamp());
+                       auto physicalFinalType = physicalTypeFactory.getPhysicalType(agg->getFinalAggregateStamp());
+
+                       auto aggregationInputExpression = expressionProvider->lowerExpression(agg->on());
+                       std::string aggregationResultFieldIdentifier;
+                       if (auto fieldAccessExpression = agg->as()->as_if<FieldAccessExpressionNode>()) {
+                           aggregationResultFieldIdentifier = fieldAccessExpression->getFieldName();
+                       } else {
+                           NES_THROW_RUNTIME_ERROR("Currently complex expression in as fields are not supported");
+                       }
+                       switch (agg->getType()) {
+                           case Windowing::WindowAggregationDescriptor::Type::Avg:
+                               return std::make_shared<Runtime::Execution::Aggregation::AvgAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           case Windowing::WindowAggregationDescriptor::Type::Count:
+                               return std::make_shared<Runtime::Execution::Aggregation::CountAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           case Windowing::WindowAggregationDescriptor::Type::Max:
+                               return std::make_shared<Runtime::Execution::Aggregation::MaxAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           case Windowing::WindowAggregationDescriptor::Type::Min:
+                               return std::make_shared<Runtime::Execution::Aggregation::MinAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           case Windowing::WindowAggregationDescriptor::Type::Median:
+                               // TODO 3331: add median aggregation function
+                               break;
+                           case Windowing::WindowAggregationDescriptor::Type::Sum: {
+                               return std::make_shared<Runtime::Execution::Aggregation::SumAggregationFunction>(
+                                   physicalInputType,
+                                   physicalFinalType,
+                                   aggregationInputExpression,
+                                   aggregationResultFieldIdentifier);
+                           }
+                       };
+                       NES_NOT_IMPLEMENTED();
+                   });
+    return aggregationFunctions;
+}
+
+std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>
+LowerPhysicalToNautilusOperators::getAggregationValueForThresholdWindow(
+    Windowing::WindowAggregationDescriptor::Type aggregationType,
+    DataTypePtr inputType) {
+    DefaultPhysicalTypeFactory physicalTypeFactory = DefaultPhysicalTypeFactory();
+    auto physicalType = physicalTypeFactory.getPhysicalType(std::move(inputType));
+    auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
+    // TODO 3468: Check if we can make this ugly nested switch case better
+    switch (aggregationType) {
+        case Windowing::WindowAggregationDescriptor::Type::Avg:
+            switch (basicType->nativeType) {
+                case BasicPhysicalType::NativeType::INT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int8_t>>();
+                case BasicPhysicalType::NativeType::INT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int16_t>>();
+                case BasicPhysicalType::NativeType::INT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int32_t>>();
+                case BasicPhysicalType::NativeType::INT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<int64_t>>();
+                case BasicPhysicalType::NativeType::UINT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint8_t>>();
+                case BasicPhysicalType::NativeType::UINT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint16_t>>();
+                case BasicPhysicalType::NativeType::UINT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint32_t>>();
+                case BasicPhysicalType::NativeType::UINT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<uint64_t>>();
+                case BasicPhysicalType::NativeType::FLOAT:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<float_t>>();
+                case BasicPhysicalType::NativeType::DOUBLE:
+                    return std::make_unique<Runtime::Execution::Aggregation::AvgAggregationValue<double_t>>();
+                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
+            }
+        case Windowing::WindowAggregationDescriptor::Type::Count:
+            switch (basicType->nativeType) {
+                case BasicPhysicalType::NativeType::INT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int8_t>>();
+                case BasicPhysicalType::NativeType::INT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int16_t>>();
+                case BasicPhysicalType::NativeType::INT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int32_t>>();
+                case BasicPhysicalType::NativeType::INT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<int64_t>>();
+                case BasicPhysicalType::NativeType::UINT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint8_t>>();
+                case BasicPhysicalType::NativeType::UINT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint16_t>>();
+                case BasicPhysicalType::NativeType::UINT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint32_t>>();
+                case BasicPhysicalType::NativeType::UINT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<uint64_t>>();
+                case BasicPhysicalType::NativeType::FLOAT:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<float_t>>();
+                case BasicPhysicalType::NativeType::DOUBLE:
+                    return std::make_unique<Runtime::Execution::Aggregation::CountAggregationValue<double_t>>();
+                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
+            }
+        case Windowing::WindowAggregationDescriptor::Type::Max:
+            switch (basicType->nativeType) {
+                case BasicPhysicalType::NativeType::INT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int8_t>>();
+                case BasicPhysicalType::NativeType::INT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int16_t>>();
+                case BasicPhysicalType::NativeType::INT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int32_t>>();
+                case BasicPhysicalType::NativeType::INT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<int64_t>>();
+                case BasicPhysicalType::NativeType::UINT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint8_t>>();
+                case BasicPhysicalType::NativeType::UINT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint16_t>>();
+                case BasicPhysicalType::NativeType::UINT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint32_t>>();
+                case BasicPhysicalType::NativeType::UINT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<uint64_t>>();
+                case BasicPhysicalType::NativeType::FLOAT:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<float_t>>();
+                case BasicPhysicalType::NativeType::DOUBLE:
+                    return std::make_unique<Runtime::Execution::Aggregation::MaxAggregationValue<double_t>>();
+                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
+            }
+        case Windowing::WindowAggregationDescriptor::Type::Min:
+            switch (basicType->nativeType) {
+                case BasicPhysicalType::NativeType::INT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int8_t>>();
+                case BasicPhysicalType::NativeType::INT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int16_t>>();
+                case BasicPhysicalType::NativeType::INT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int32_t>>();
+                case BasicPhysicalType::NativeType::INT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<int64_t>>();
+                case BasicPhysicalType::NativeType::UINT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint8_t>>();
+                case BasicPhysicalType::NativeType::UINT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint16_t>>();
+                case BasicPhysicalType::NativeType::UINT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint32_t>>();
+                case BasicPhysicalType::NativeType::UINT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<uint64_t>>();
+                case BasicPhysicalType::NativeType::FLOAT:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<float_t>>();
+                case BasicPhysicalType::NativeType::DOUBLE:
+                    return std::make_unique<Runtime::Execution::Aggregation::MinAggregationValue<double_t>>();
+                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
+            }
+        case Windowing::WindowAggregationDescriptor::Type::Sum:
+            switch (basicType->nativeType) {
+                case BasicPhysicalType::NativeType::INT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int8_t>>();
+                case BasicPhysicalType::NativeType::INT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int16_t>>();
+                case BasicPhysicalType::NativeType::INT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int32_t>>();
+                case BasicPhysicalType::NativeType::INT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<int64_t>>();
+                case BasicPhysicalType::NativeType::UINT_8:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint8_t>>();
+                case BasicPhysicalType::NativeType::UINT_16:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint16_t>>();
+                case BasicPhysicalType::NativeType::UINT_32:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint32_t>>();
+                case BasicPhysicalType::NativeType::UINT_64:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<uint64_t>>();
+                case BasicPhysicalType::NativeType::FLOAT:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<float_t>>();
+                case BasicPhysicalType::NativeType::DOUBLE:
+                    return std::make_unique<Runtime::Execution::Aggregation::SumAggregationValue<double_t>>();
+                default: NES_THROW_RUNTIME_ERROR("Unsupported data type");
+            }
+        default: NES_THROW_RUNTIME_ERROR("Unsupported aggregation type");
+    }
+}
 
 LowerPhysicalToNautilusOperators::~LowerPhysicalToNautilusOperators() = default;
 

@@ -133,13 +133,11 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
 
     // Create expected buffer
     auto expectedBuffer = executionEngine->getBufferManager()->getBufferBlocking();
-    auto expectedtestBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(expectedBuffer, sinkSchema);
-    createExpectedBuffer(expectedtestBuffer);
-    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> expectedBuffers = {expectedtestBuffer};
+    auto expectedTestBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(expectedBuffer, sinkSchema);
+    createExpectedBuffer(expectedTestBuffer);
+    std::vector<Runtime::MemoryLayouts::TestTupleBuffer> expectedBuffers = {expectedTestBuffer};
     auto resultBuffers = testSink->getResultBuffers();
 
-    auto startTs = 0;
-    auto endTs = 10;
     for (auto i = 0_u64; i < testSink->getNumberOfResultBuffers(); ++i) {
         auto resultBuffer = testSink->getResultBuffer(i);
         NES_INFO("Buffer: {}", NES::Runtime::Execution::Util::printTupleBufferAsCSV(resultBuffer.getBuffer(), sinkSchema));
@@ -151,7 +149,7 @@ TEST_P(KeyedSlidingWindowQueryExecutionTest, testKeyedSlidingWindow) {
     EXPECT_EQ(testSink->getNumberOfResultBuffers(), 0U);
 }
 
-INSTANTIATE_TEST_CASE_P(testNonKeyedSlidingWindow,
+INSTANTIATE_TEST_CASE_P(testKeyedSlidingWindow,
                         KeyedSlidingWindowQueryExecutionTest,
                         ::testing::Values(QueryCompilation::WindowingStrategy::SLICING,
                                           QueryCompilation::WindowingStrategy::BUCKETING),

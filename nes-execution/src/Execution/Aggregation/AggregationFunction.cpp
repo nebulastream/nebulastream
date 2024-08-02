@@ -97,55 +97,7 @@ void AggregationFunction::storeToMemRef(Nautilus::MemRef memRef, const Nautilus:
 
 Nautilus::ExecDataType AggregationFunction::loadFromMemRef(Nautilus::MemRef memRef, const PhysicalTypePtr& physicalType) {
     if (physicalType->isBasicType()) {
-        auto basicType = std::static_pointer_cast<BasicPhysicalType>(physicalType);
-        switch (basicType->nativeType) {
-            case BasicPhysicalType::NativeType::INT_8: {
-                return Nautilus::ExecutableDataType<int8_t>::create(
-                    static_cast<nautilus::val<int8_t>>(*static_cast<nautilus::val<int8_t*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::INT_16: {
-                return Nautilus::ExecutableDataType<int16_t>::create(
-                    static_cast<nautilus::val<int16_t>>(*static_cast<nautilus::val<int16_t*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::INT_32: {
-                return Nautilus::ExecutableDataType<int32_t>::create(
-                    static_cast<nautilus::val<int32_t>>(*static_cast<nautilus::val<int32_t*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::INT_64: {
-                return Nautilus::ExecutableDataType<int64_t>::create(
-                    static_cast<nautilus::val<int64_t>>(*static_cast<nautilus::val<int64_t*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::UINT_8: {
-                return Nautilus::ExecutableDataType<uint8_t>::create(
-                    static_cast<nautilus::val<uint8_t>>(*static_cast<nautilus::val<uint8_t*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::UINT_16: {
-                return Nautilus::ExecutableDataType<uint16_t>::create(
-                    static_cast<nautilus::val<uint16_t>>(*static_cast<nautilus::val<uint16_t*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::UINT_32: {
-                return Nautilus::ExecutableDataType<uint32_t>::create(
-                    static_cast<nautilus::val<uint32_t>>(*static_cast<nautilus::val<uint32_t*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::UINT_64: {
-                return Nautilus::ExecutableDataType<uint64_t>::create(
-                    static_cast<nautilus::val<uint64_t>>(*static_cast<nautilus::val<uint64_t*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::FLOAT: {
-                return Nautilus::ExecutableDataType<float>::create(
-                    static_cast<nautilus::val<float>>(*static_cast<nautilus::val<float*>>(memRef)));
-            };
-            case BasicPhysicalType::NativeType::DOUBLE: {
-                return Nautilus::ExecutableDataType<double>::create(
-                    static_cast<nautilus::val<double>>(*static_cast<nautilus::val<double*>>(memRef)));
-            };
-            default: {
-                std::stringstream type;
-                type << physicalType;
-                NES_ERROR("Aggregation Function::load: Physical Type: {} is currently not supported", type.str());
-                NES_NOT_IMPLEMENTED();
-            };
-        }
+        return Nautilus::readExecDataTypeFromMemRef(memRef, physicalType);
     } else {
         std::stringstream typeAsString;
         typeAsString << physicalType;

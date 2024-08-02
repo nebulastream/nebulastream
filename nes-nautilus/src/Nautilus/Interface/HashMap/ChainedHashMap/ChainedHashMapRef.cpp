@@ -48,8 +48,8 @@ UInt64 ChainedHashMapRef::EntryRef::getHash() const {
     return getMember(ref, ChainedHashMap::Entry, hash, uint64_t);
 }
 
-bool ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) const { return ref != nautilus::val<int8_t*>(0); }
-bool ChainedHashMapRef::EntryRef::operator==(std::nullptr_t) const { return ref == nautilus::val<int8_t*>(0); }
+nautilus::val<bool> ChainedHashMapRef::EntryRef::operator!=(std::nullptr_t) const { return ref != nullptr; }
+nautilus::val<bool> ChainedHashMapRef::EntryRef::operator==(std::nullptr_t) const { return ref == nullptr; }
 
 ChainedHashMapRef::ChainedHashMapRef(const MemRef& hashTableRef,
                                      const std::vector<PhysicalTypePtr>& keyDataTypes,

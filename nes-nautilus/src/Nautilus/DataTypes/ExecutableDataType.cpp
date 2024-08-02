@@ -16,6 +16,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
+#include <nautilus/std/cstring.h>
 #include <utility>
 
 namespace NES::Nautilus {
@@ -205,16 +206,16 @@ ExecDataType ExecutableDataType<ValueType>::operator<<(const ExecDataType& right
 
 template<typename ValueType>
 ExecDataType ExecutableDataType<ValueType>::operator>>(const ExecDataType& rightExp) const {
-    //    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float> || std::is_same_v<ValueType, double>) {
-    //        NES_NOT_IMPLEMENTED();
-    //    } else {
-    //        const auto otherRawValue = std::dynamic_pointer_cast<ExecutableDataType<ValueType>>(rightExp)->as<ValueType>;
-    //        const auto resultIsNull = null || rightExp->isNull();
-    //        auto ret = rawValue >> otherRawValue;
-    //        return ExecutableDataType<ValueType>::create(ret, resultIsNull);
-    //    }
-    NES_NOT_IMPLEMENTED();
-    ((void) rightExp);
+    if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*> || std::is_same_v<ValueType, float>
+                  || std::is_same_v<ValueType, double> || std::is_same_v<ValueType, uint8_t> || std::is_same_v<ValueType, int8_t>
+                  || std::is_same_v<ValueType, uint16_t> || std::is_same_v<ValueType, int16_t>) {
+        NES_NOT_IMPLEMENTED();
+    } else {
+        const auto otherRawValue = rightExp->as<ExecutableDataType<ValueType>>()->getRawValue();
+        const auto resultIsNull = null || rightExp->isNull();
+        auto ret = rawValue >> otherRawValue;
+        return ExecutableDataType<ValueType>::create(ret, resultIsNull);
+    }
 }
 
 template<typename ValueType>
@@ -319,52 +320,61 @@ ExecDataType readExecDataTypeFromMemRef(nautilus::val<int8_t*>& memRef, const Ph
 }
 
 void writeExecDataTypeToMemRef(nautilus::val<int8_t*>& memRef, const ExecDataType& execDataType) {
-    if (execDataType->instanceOf<ExecutableDataType<int8_t>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<int8_t>>(execDataType)->getRawValue(), int8_t);
-    } else if (execDataType->instanceOf<ExecutableDataType<int16_t>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<int16_t>>(execDataType)->getRawValue(), int16_t);
-    } else if (execDataType->instanceOf<ExecutableDataType<int32_t>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<int32_t>>(execDataType)->getRawValue(), int32_t);
-    } else if (execDataType->instanceOf<ExecutableDataType<int64_t>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<int64_t>>(execDataType)->getRawValue(), int64_t);
-    } else if (execDataType->instanceOf<ExecutableDataType<uint8_t>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<uint8_t>>(execDataType)->getRawValue(), uint8_t);
-    } else if (execDataType->instanceOf<ExecutableDataType<uint16_t>>()) {
-        writeValueToMemRef(memRef,
-                           std::dynamic_pointer_cast<ExecutableDataType<uint16_t>>(execDataType)->getRawValue(),
-                           uint16_t);
-    } else if (execDataType->instanceOf<ExecutableDataType<uint32_t>>()) {
-        writeValueToMemRef(memRef,
-                           std::dynamic_pointer_cast<ExecutableDataType<uint32_t>>(execDataType)->getRawValue(),
-                           uint32_t);
-    } else if (execDataType->instanceOf<ExecutableDataType<uint64_t>>()) {
-        writeValueToMemRef(memRef,
-                           std::dynamic_pointer_cast<ExecutableDataType<uint64_t>>(execDataType)->getRawValue(),
-                           uint64_t);
-    } else if (execDataType->instanceOf<ExecutableDataType<float>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<float>>(execDataType)->getRawValue(), float);
-    } else if (execDataType->instanceOf<ExecutableDataType<double>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<double>>(execDataType)->getRawValue(), double);
-    } else if (execDataType->instanceOf<ExecutableDataType<bool>>()) {
-        writeValueToMemRef(memRef, std::dynamic_pointer_cast<ExecutableDataType<bool>>(execDataType)->getRawValue(), bool);
+    if (execDataType->instanceOf<ExecDataInt8>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataInt8>()->getRawValue(), int8_t);
+    } else if (execDataType->instanceOf<ExecDataInt16>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataInt16>()->getRawValue(), int16_t);
+    } else if (execDataType->instanceOf<ExecDataInt32>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataInt32>()->getRawValue(), int32_t);
+    } else if (execDataType->instanceOf<ExecDataInt64>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataInt64>()->getRawValue(), int64_t);
+    } else if (execDataType->instanceOf<ExecDataUInt8>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt8>()->getRawValue(), uint8_t);
+    } else if (execDataType->instanceOf<ExecDataUInt16>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt16>()->getRawValue(), uint16_t);
+    } else if (execDataType->instanceOf<ExecDataUInt32>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt32>()->getRawValue(), uint32_t);
+    } else if (execDataType->instanceOf<ExecDataUInt64>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt64>()->getRawValue(), uint64_t);
+    } else if (execDataType->instanceOf<ExecDataFloat>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataFloat>()->getRawValue(), float);
+    } else if (execDataType->instanceOf<ExecDataDouble>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataDouble>()->getRawValue(), double);
+    } else if (execDataType->instanceOf<ExecDataBoolean>()) {
+        writeValueToMemRef(memRef, execDataType->as<ExecDataBoolean>()->getRawValue(), bool);
     } else {
         NES_NOT_IMPLEMENTED();
     }
 }
 
 nautilus::val<bool> memEquals(nautilus::val<int8_t*> ptr1, nautilus::val<int8_t*> ptr2, const nautilus::val<uint64_t>& size) {
-    return nautilus::invoke(std::memcmp, ptr1, ptr2, size) == nautilus::val<int>(0);
+    return nautilus::memcmp(ptr1, ptr2, size) == nautilus::val<int>(0);
 }
 
 void memCopy(nautilus::val<int8_t*> dest, nautilus::val<int8_t*> src, const nautilus::val<uint64_t>& size) {
-    nautilus::invoke(std::memcpy, dest, src, size);
+    nautilus::memcpy(dest, src, size);
 }
 
-ExecDataType Nautilus::operator==(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted == rhsCasted; }
-ExecDataType Nautilus::operator+(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted + rhsCasted; }
-ExecDataType Nautilus::operator&&(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted && rhsCasted; }
-ExecDataType Nautilus::operator||(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted || rhsCasted; }
-ExecDataType Nautilus::operator!=(const ExecDataType& lhs, const ExecDataType& rhs) { const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs); return *lhsCasted != rhsCasted; }
+ExecDataType Nautilus::operator==(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted == rhsCasted;
+}
+ExecDataType Nautilus::operator+(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted + rhsCasted;
+}
+ExecDataType Nautilus::operator&&(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted && rhsCasted;
+}
+ExecDataType Nautilus::operator||(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted || rhsCasted;
+}
+ExecDataType Nautilus::operator!=(const ExecDataType& lhs, const ExecDataType& rhs) {
+    const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+    return *lhsCasted != rhsCasted;
+}
 
 ExecDataType Nautilus::operator<(const ExecDataType& lhs, const ExecDataType& rhs) {
     const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
@@ -413,10 +423,30 @@ ExecDataType Nautilus::operator^(const ExecDataType& lhs, const ExecDataType& rh
 }
 ExecDataType Nautilus::operator<<(const ExecDataType& lhs, const ExecDataType& rhs) {
     const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+
+    /// We can assume that the lhsCasted and rhsCasted are the same type here
+    /// For some reason anything below a int gets casted to a int, therefore we need to cast it here to a int32_t
+    if (lhsCasted->instanceOf<ExecDataUInt8>() || lhsCasted->instanceOf<ExecDataInt8>() || lhsCasted->instanceOf<ExecDataUInt16>()
+        || lhsCasted->instanceOf<ExecDataInt16>()) {
+        const auto lhsCastedInt = castTo<int32_t>(lhsCasted);
+        const auto rhsCastedInt = castTo<int32_t>(rhsCasted);
+        return *lhsCastedInt << rhsCastedInt;
+    }
     return *lhsCasted << rhsCasted;
 }
+
 ExecDataType Nautilus::operator>>(const ExecDataType& lhs, const ExecDataType& rhs) {
     const auto [lhsCasted, rhsCasted] = castToSameType(lhs, rhs);
+
+    /// We can assume that the lhsCasted and rhsCasted are the same type here
+    /// For some reason anything below a int gets casted to a int, therefore we need to cast it here to a int32_t
+    if (lhsCasted->instanceOf<ExecDataUInt8>() || lhsCasted->instanceOf<ExecDataInt8>() || lhsCasted->instanceOf<ExecDataUInt16>()
+        || lhsCasted->instanceOf<ExecDataInt16>()) {
+        const auto lhsCastedInt = castTo<int32_t>(lhsCasted);
+        const auto rhsCastedInt = castTo<int32_t>(rhsCasted);
+        return *lhsCastedInt >> rhsCastedInt;
+    }
+
     return *lhsCasted >> rhsCasted;
 }
 ExecDataType operator!(const ExecDataType& lhs) { return !*lhs; }

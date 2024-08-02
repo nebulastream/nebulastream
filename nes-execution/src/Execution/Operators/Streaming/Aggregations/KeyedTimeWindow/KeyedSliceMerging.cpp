@@ -83,7 +83,11 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     if (this->child != nullptr)
+    {
         this->child->open(ctx, buffer);
+    }
+
+    NES_INFO("Received buffer...");
 
     // 1. get the operator handler and extract the slice information that should be combined.
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -111,7 +115,7 @@ void KeyedSliceMerging::combineThreadLocalSlices(Interface::ChainedHashMapRef& g
                                                  MemRef& sliceMergeTask) const {
     // combine all thread local partitions into the global slice hash map
     auto numberOfSlices = nautilus::invoke(getKeyedNumberOfSlicesFromTask, sliceMergeTask);
-//    NES_DEBUG("combine {} slices", numberOfSlices->toString());
+    NES_DEBUG("combining slices");
 
     for (UInt64 i = 0_u64; i < numberOfSlices; i = i + 1_u64) {
         auto partitionState = nautilus::invoke(getKeyedSliceStateFromTask, sliceMergeTask, i);
@@ -124,6 +128,8 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
                                        Interface::ChainedHashMapRef& threadLocalSliceHashMap) const {
     // inserts all entries from the thread local hash map into the global hash map.
     // 1. iterate over all entries in thread local hash map.
+
+    NES_INFO("Merging hashtable!");
     for (const auto& threadLocalEntry : threadLocalSliceHashMap) {
         // 2. insert entry or update existing one with same key.
         globalSliceHashMap.insertEntryOrUpdate(threadLocalEntry, [&](auto& globalEntry) {

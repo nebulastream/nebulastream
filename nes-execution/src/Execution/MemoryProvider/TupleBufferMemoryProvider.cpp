@@ -44,60 +44,7 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::load(const PhysicalTypePtr& ty
     // we store the data in tuple buffers in the stateful operator
 
     if (type->isBasicType()) {
-        auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
-        switch (basicType->nativeType) {
-            case BasicPhysicalType::NativeType::BOOLEAN: {
-                return Nautilus::ExecutableDataType<bool>::create(
-                    static_cast<nautilus::val<bool>>(*static_cast<nautilus::val<bool*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::INT_8: {
-                return Nautilus::ExecutableDataType<int8_t>::create(
-                    static_cast<nautilus::val<int8_t>>(*static_cast<nautilus::val<int8_t*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::INT_16: {
-                return Nautilus::ExecutableDataType<int16_t>::create(
-                    static_cast<nautilus::val<int16_t>>(*static_cast<nautilus::val<int16_t*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::INT_32: {
-                return Nautilus::ExecutableDataType<int32_t>::create(
-                    static_cast<nautilus::val<int32_t>>(*static_cast<nautilus::val<int32_t*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::INT_64: {
-                return Nautilus::ExecutableDataType<int64_t>::create(
-                    static_cast<nautilus::val<int64_t>>(*static_cast<nautilus::val<int64_t*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::UINT_8: {
-                return Nautilus::ExecutableDataType<uint8_t>::create(
-                    static_cast<nautilus::val<uint8_t>>(*static_cast<nautilus::val<uint8_t*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::UINT_16: {
-                return Nautilus::ExecutableDataType<uint16_t>::create(
-                    static_cast<nautilus::val<uint16_t>>(*static_cast<nautilus::val<uint16_t*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::UINT_32: {
-                return Nautilus::ExecutableDataType<uint32_t>::create(
-                    static_cast<nautilus::val<uint32_t>>(*static_cast<nautilus::val<uint32_t*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::UINT_64: {
-                return Nautilus::ExecutableDataType<uint64_t>::create(
-                    static_cast<nautilus::val<uint64_t>>(*static_cast<nautilus::val<uint64_t*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::FLOAT: {
-                return Nautilus::ExecutableDataType<float>::create(
-                    static_cast<nautilus::val<float>>(*static_cast<nautilus::val<float*>>(fieldReference)));
-            };
-            case BasicPhysicalType::NativeType::DOUBLE: {
-                return Nautilus::ExecutableDataType<double>::create(
-                    static_cast<nautilus::val<double>>(*static_cast<nautilus::val<double*>>(fieldReference)));
-            };
-            default: {
-                NES_ERROR("Physical Type: {} is currently not supported", type->toString());
-                NES_NOT_IMPLEMENTED();
-            };
-        }
-    } else if (type->isArrayType()) {
-        NES_ERROR("Physical Type: array type {} is currently not supported", type->toString());
-        NES_NOT_IMPLEMENTED();
+        return Nautilus::readExecDataTypeFromMemRef(fieldReference, type);
     } else if (type->isTextType()) {
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         nautilus::val<uint32_t> childIndex = *fieldReferenceCastedU32;
@@ -122,70 +69,9 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::store(const NES::PhysicalTypeP
                                                         nautilus::val<int8_t*>& fieldReference,
                                                         Nautilus::ExecDataType value) {
 
-    /// TODO Think about, if we can maybe use here writeExecDataTypeToMemRef() here
+
     if (type->isBasicType()) {
-        auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
-        switch (basicType->nativeType) {
-            case BasicPhysicalType::NativeType::BOOLEAN: {
-                *static_cast<nautilus::val<bool*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<bool>>(value)->valueAsType<bool>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::INT_8: {
-                *static_cast<nautilus::val<int8_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int8_t>>(value)->valueAsType<int8_t>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::INT_16: {
-                *static_cast<nautilus::val<int16_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int16_t>>(value)->valueAsType<int16_t>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::INT_32: {
-                *static_cast<nautilus::val<int32_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int32_t>>(value)->valueAsType<int32_t>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::INT_64: {
-                *static_cast<nautilus::val<int64_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<int64_t>>(value)->valueAsType<int64_t>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::UINT_8: {
-                *static_cast<nautilus::val<uint8_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint8_t>>(value)->valueAsType<uint8_t>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::UINT_16: {
-                *static_cast<nautilus::val<uint16_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint16_t>>(value)->valueAsType<uint16_t>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::UINT_32: {
-                *static_cast<nautilus::val<uint32_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint32_t>>(value)->valueAsType<uint32_t>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::UINT_64: {
-                *static_cast<nautilus::val<uint64_t*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<uint64_t>>(value)->valueAsType<uint64_t>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::FLOAT: {
-                *static_cast<nautilus::val<float*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<float>>(value)->valueAsType<float>();
-                break;
-            };
-            case BasicPhysicalType::NativeType::DOUBLE: {
-                *static_cast<nautilus::val<double*>>(fieldReference) =
-                    std::dynamic_pointer_cast<Nautilus::ExecutableDataType<double>>(value)->valueAsType<double>();
-                break;
-            };
-            default: {
-                NES_ERROR("Physical Type: {} is currently not supported", type->toString());
-                NES_NOT_IMPLEMENTED();
-            };
-        }
+        Nautilus::writeExecDataTypeToMemRef(fieldReference, value);
         return value;
     } else if (type->isTextType()) {
         auto textValue = std::dynamic_pointer_cast<Nautilus::ExecutableVariableDataType>(value);

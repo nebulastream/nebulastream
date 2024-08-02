@@ -38,14 +38,14 @@ class MurMur3HashFunction : public HashFunction {
      * @param value
      * @return HashValue
      */
-    HashValue calculate(HashValue& hash, ExecDataType& value) override;
+    HashValue calculate(const HashValue& hash, const ExecDataType& value) override;
 
     /**
      * @brief Calculates the hash of value and xor-es it with hash (passes the value over to calculate(hash, value) after hash init())
      * @param value
      * @return HashValue
      */
-    HashValue calculate(ExecDataType& value);
+    HashValue calculate(const HashValue& value);
 
     /**
      * @brief Do not use this method for MurMur3Hash, we require this only until issue #3648 has been fixed TODO

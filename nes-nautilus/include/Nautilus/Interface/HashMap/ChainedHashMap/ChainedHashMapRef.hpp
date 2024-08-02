@@ -66,13 +66,13 @@ class ChainedHashMapRef {
          * @brief Returns true if the next entry is not null.
          * @return bool
          */
-        bool operator!=(std::nullptr_t rhs) const;
+        nautilus::val<bool> operator!=(std::nullptr_t rhs) const;
 
         /**
          * @brief Returns true if the next entry is null.
          * @return bool
          */
-        bool operator==(std::nullptr_t rhs) const;
+        nautilus::val<bool> operator==(std::nullptr_t rhs) const;
 
       private:
         mutable MemRef ref;

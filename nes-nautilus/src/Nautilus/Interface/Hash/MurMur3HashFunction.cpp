@@ -23,8 +23,8 @@ HashFunction::HashValue MurMur3HashFunction::init() { return ExecutableDataType<
  * @param x
  * @return
  */
-ExecDataType hashExecDataType(ExecDataType& x) {
-    x = x ^ (x >> 33U);
+ExecDataType hashExecDataType(const ExecDataType& input) {
+    auto x = (input >> 33U);
     x = x * (UINT64_C(0xff51afd7ed558ccd));
     x = x ^ (x >> 33U);
     x = x * (UINT64_C(0xc4ceb9fe1a85ec53));
@@ -93,14 +93,14 @@ uint64_t hashBytes(const int8_t* data, uint64_t length) {
     return h;
 }
 
-HashFunction::HashValue MurMur3HashFunction::calculate(HashValue& hash, ExecDataType& value) {
+HashFunction::HashValue MurMur3HashFunction::calculate(const HashValue& hash, const ExecDataType& value) {
     if (value->instanceOf<ExecutableVariableDataType>()) {
-        const auto varSizedContent = std::dynamic_pointer_cast<ExecutableVariableDataType>(value);
+        const auto varSizedContent = value->as<ExecutableVariableDataType>();
         const auto result = hash ^ invoke(hashBytes, varSizedContent->getContent(), varSizedContent->getSize());
-        return std::dynamic_pointer_cast<ExecutableDataType<uint64_t>>(result);
+        return result->as<ExecDataUInt64>();
     } else {
-        const auto result = hashExecDataType(value) ^ hash;
-        return std::dynamic_pointer_cast<ExecutableDataType<uint64_t>>(result);
+        const auto result = hash ^ hashExecDataType(value);
+        return result->as<ExecDataUInt64>();
     };
 
     NES_NOT_IMPLEMENTED();

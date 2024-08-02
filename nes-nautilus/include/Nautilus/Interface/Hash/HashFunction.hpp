@@ -61,7 +61,7 @@ class HashFunction {
      * @param value
      * @return HashValue
      */
-    virtual HashValue calculate(HashValue& hash, ExecDataType& value) = 0;
+    virtual HashValue calculate(const HashValue& hash, const ExecDataType& value) = 0;
 
     /**
      * @brief This is only necessary as long as TODO #3648 is not merged
