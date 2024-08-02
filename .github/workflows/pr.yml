@@ -64,7 +64,6 @@ jobs:
       - name: Build Docker for CleanUp
         id: builddocker_prebuild
         working-directory: ${{ github.workspace }}/docker
-        if : ${{ !env.ACT }}
         run: |
           if [ "$ACT" ]; then
             bash scripts/build_docker_image_non_executable_image.sh nes_build_ubuntu
@@ -141,14 +140,23 @@ jobs:
         id: builddocker_cleanup
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+        run: |
+          if [ "$ACT" ]; then
+            bash scripts/build_docker_image_non_executable_image.sh nes_build_ubuntu
+          else
+            bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+          fi
       - name: "Perform cleanup, if necessary"
         run: |
           os_version_arch="${{ matrix.osversion }}_${{ matrix.arch }}"
           cache_dir="/data/nes-ci/tmp/nes-ccache_$os_version_arch"
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker_image_name="nes_build_${{ matrix.osversion }}"
+          if [ ACT ]; then
+            docker_image_name="nes_build_ubuntu:latest"
+          else
+            docker_image_name="nes_build_${{ matrix.osversion }}"
+          fi
           github_workspace=${{ github.workspace }}
           file="/data/nes-ci/tmp/last_checked_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}.txt"
           
@@ -157,7 +165,7 @@ jobs:
           if [ $perform_cleanup -eq 1 ]; then
             echo "Performing cleanup!"
             # Running the script in the docker container, as otherwise, we will have permission issues
-            docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
+            docker run --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh docker_image_name 
             docker rm ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build
             echo "Cleanup done!"
           else
@@ -168,7 +176,12 @@ jobs:
         id: builddocker
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+        run:
+            if [ "$ACT" ]; then
+                bash scripts/build_docker_image_non_executable_image.sh nes_build_ubuntu
+            else
+                bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+            fi
       - name: Build Nebulastream
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
