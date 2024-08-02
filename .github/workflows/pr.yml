@@ -179,12 +179,12 @@ jobs:
         id: builddocker
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker
-        run:
-            if [ "$ACT" ]; then
-                bash scripts/build_docker_image_non_executable_image.sh nes_build_ubuntu
-            else
-                bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
-            fi
+        run: |
+          if [ "$ACT" ]; then
+            bash scripts/build_docker_image_non_executable_image.sh nes_build_ubuntu
+          else
+            bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+          fi
       - name: Build Nebulastream
         #TODO cleanup the docker container after the build
         #The container name "/1_ubuntu-22_04_default_arm64_build" is already in use by container
@@ -225,5 +225,5 @@ jobs:
       - name: docker cleanup
         if: ${{ always() }}
         run: |
-          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_build
-          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_test
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build
+          docker rm -f ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_test
