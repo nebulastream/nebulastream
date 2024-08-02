@@ -175,6 +175,7 @@ jobs:
           fi
 
       - name: Build Docker
+        #TODO fix [NES PR CI/ubuntu-22_04 arm64 default-3]: /var/run/act/workflow/builddocker: line 3: syntax error: unexpected end of file
         id: builddocker
         continue-on-error: true
         working-directory: ${{ github.workspace }}/docker
@@ -185,6 +186,8 @@ jobs:
                 bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
             fi
       - name: Build Nebulastream
+        #TODO cleanup the docker container after the build
+        #The container name "/1_ubuntu-22_04_default_arm64_build" is already in use by container
         # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
         run: |
           GPU_RUNNER_PARAMS=""
