@@ -144,8 +144,8 @@ sub-features.
 A feature usually evolves from a prototype, which is usually created during the design document process. If a design 
 document is accepted, the design document's owner will be the feature's owner. The owner creates the relevant 
 documentation documenting the feature's current state and works on integrating the prototype into the system. The public
-status of the feature will be maintained in the feature list (**not sure what this is yet**) starting in the 
-`Under Development` status. The owner creates an *EPIC* (**up for discussion**) and a GitHub label for the feature. 
+status of the feature will be maintained in the feature list within the README starting in the 
+`Under Development` status. The owner creates an `EPIC` umbrella issue and a GitHub label for the feature. 
 Issues targeting the feature will be tagged with the label. We use [Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/)
 to tag commits targeting a specific feature. Plugins like [Conventional Commit](https://plugins.jetbrains.com/plugin/13389-conventional-commit)
 can be configured to limit the number of scopes for commit types. The available scopes for the `feat` type are limited
