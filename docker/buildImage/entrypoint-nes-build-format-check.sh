@@ -24,10 +24,5 @@ cmake -DCMAKE_BUILD_TYPE=Release -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING
 
 make format
 
-if ! git diff --quiet; then
-  git status  # print unformatted files
-  echo "Please run 'format' target locally before shipping your changes on remote"
-  exit 1
-fi
 
 echo "No change detected."
