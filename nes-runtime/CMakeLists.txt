@@ -33,24 +33,6 @@ if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
     target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
 endif ()
 
-# Library containing Kafka client
-if (NES_USE_KAFKA)
-    # TODO #3351 The commands should be moved into a separate CMake config file.
-    if (NOT APPLE)
-        find_package(cppkafka REQUIRED)
-        target_link_libraries(nes-runtime PRIVATE cppkafka::cppkafka )
-    else ()
-        message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
-    endif ()
-endif ()
-
-# Library containing MQTT client
-if (NES_USE_MQTT)
-    message("VCPKG_TARGET_TRIPLET: ${VCPKG_TARGET_TRIPLET}")
-    find_package(PahoMqttCpp CONFIG REQUIRED)
-    target_link_libraries(nes-runtime PRIVATE PahoMqttCpp::paho-mqttpp3-static)
-endif (NES_USE_MQTT)
-
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-runtime REUSE_FROM nes-common)

@@ -1,0 +1,21 @@
+query: |
+  Query::from("tcp_source")
+    .filter(Attribute("id") < 16)
+    .sink(FileSinkDescriptor::create("[GENERATED_IN_TEST]", "CSV_FORMAT", "APPEND"));
+logical:
+  - name: tcp_source
+    schema:
+      - name: id
+        type: UINT64
+physical:
+  - logical: tcp_source
+    config:
+      type: TCP_SOURCE
+      socketDomain: AF_INET
+      socketType: SOCK_STREAM
+      socketPort: -1 # Generated in test to avoid port conflicts.
+      socketHost: localhost
+      inputFormat: CSV
+      socketBufferSize: 2
+      decideMessageSize: TUPLE_SEPARATOR
+      flushIntervalMS: 100

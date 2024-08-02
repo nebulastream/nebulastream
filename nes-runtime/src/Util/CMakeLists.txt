@@ -16,9 +16,3 @@ add_source_files(nes-runtime
         Core.cpp
         TestTupleBuffer.cpp
 )
-
-if (NES_USE_MQTT)
-    add_source_files(nes-runtime
-            MQTTClientWrapper.cpp
-    )
-endif ()

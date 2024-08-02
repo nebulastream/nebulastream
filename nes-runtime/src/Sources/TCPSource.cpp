@@ -20,6 +20,7 @@
 #include <utility>
 #include <vector>
 #include <errno.h> /// For socket error
+#include <netdb.h>
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -29,8 +30,6 @@
 #include <Sources/Parsers/NESBinaryParser.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <arpa/inet.h>
-#include <netinet/in.h> /// For sockaddr_in
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -60,15 +59,16 @@ TCPSource::TCPSource(
         std::move(executableSuccessors))
     , tupleSize(schema->getSchemaSizeInBytes())
     , sourceConfig(std::move(tcpSourceType))
+    , timeout(TCP_SOCKET_DEFAULT_TIMEOUT)
     , circularBuffer(getpagesize() * 2)
 {
-    ///init physical types
+    /// init physical types
     std::vector<std::string> schemaKeys;
     std::string fieldName;
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
 
-    ///Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
-    ///Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
+    /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
+    /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
     for (const auto& field : schema->fields)
     {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
@@ -106,36 +106,56 @@ std::string TCPSource::toString() const
 void TCPSource::open()
 {
     DataSource::open();
-    NES_TRACE("TCPSource::connected: Trying to create socket.");
-    if (sockfd < 0)
-    {
-        sockfd = socket(sourceConfig->getSocketDomain()->getValue(), sourceConfig->getSocketType()->getValue(), 0);
-        NES_TRACE("Socket created with  {}", sockfd);
-    }
-    if (sockfd < 0)
-    {
-        NES_ERROR("TCPSource::connected: Failed to create socket. Error: {}", strerror(errno));
-        connection = -1;
-        return;
-    }
-    NES_TRACE("Created socket");
+    NES_TRACE("TCPSource::open: Trying to create socket and connect.");
 
-    struct sockaddr_in servaddr;
-    servaddr.sin_family = sourceConfig->getSocketDomain()->getValue();
-    servaddr.sin_addr.s_addr = inet_addr(sourceConfig->getSocketHost()->getValue().c_str());
-    servaddr.sin_port = htons(sourceConfig->getSocketPort()->getValue()); /// htons is necessary to convert a number to network byte order
+    addrinfo hints;
+    addrinfo* result;
 
-    if (connection < 0)
+    hints.ai_family = static_cast<int>(sourceConfig->getSocketDomain()->getValue());
+    hints.ai_socktype = static_cast<int>(sourceConfig->getSocketType()->getValue());
+    hints.ai_flags = 0; /// use default behavior
+    hints.ai_protocol = 0; /// specifying 0 in this field indicates that socket addresses with any protocol can be returned by getaddrinfo()
+
+    auto host = sourceConfig->getSocketHost()->getValue();
+    auto port = std::to_string(sourceConfig->getSocketPort()->getValue());
+
+    const auto errorCode = getaddrinfo(host.c_str(), port.c_str(), &hints, &result);
+    if (errorCode != 0)
     {
-        NES_TRACE("Try connecting to server: {}:{}", sourceConfig->getSocketHost()->getValue(), sourceConfig->getSocketPort()->getValue());
-        connection = connect(sockfd, (struct sockaddr*)&servaddr, sizeof(servaddr));
+        /// #72: use correct error type
+        NES_THROW_RUNTIME_ERROR("TCPSource::open: getaddrinfo failed. Error: " << gai_strerror(errorCode));
     }
-    if (connection < 0)
+
+    /// Try each address until we successfully connect
+    while (result != nullptr)
     {
-        connection = -1;
-        NES_THROW_RUNTIME_ERROR("TCPSource::connected: Connection with server failed. Error: " << strerror(errno));
+        sockfd = socket(result->ai_family, result->ai_socktype, result->ai_protocol);
+        if (sockfd == -1)
+        {
+            result = result->ai_next;
+            continue;
+        }
+
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+        connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
+
+        if (connection != -1)
+        {
+            break; /// success
+        }
+
+        /// The connection was closed, therefore we close the source.
+        close();
     }
-    NES_TRACE("TCPSource::connected: Connected to server.");
+    freeaddrinfo(result);
+
+    if (result == nullptr)
+    {
+        /// #72: use correct error type
+        NES_THROW_RUNTIME_ERROR("TCPSource::open: Could not connect to " << host << ":" << port);
+    }
+
+    NES_TRACE("TCPSource::open: Connected to server.");
 }
 
 std::optional<Runtime::TupleBuffer> TCPSource::receiveData()
@@ -199,26 +219,35 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
     /// determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
     NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
-    ///init tuple count for buffer
+    /// init tuple count for buffer
     uint64_t tupleCount = 0;
-    ///init timer for flush interval
+    /// init timer for flush interval
     auto flushIntervalTimerStart = std::chrono::system_clock::now();
-    ///init flush interval value
+    /// init flush interval value
     bool flushIntervalPassed = false;
-    ///receive data until tupleBuffer capacity reached or flushIntervalPassed
+    /// receive data until tupleBuffer capacity reached or flushIntervalPassed
     while (tupleCount < tuplesThisPass && !flushIntervalPassed)
     {
-        ///if circular buffer is not full obtain data from socket
+        /// if circular buffer is not full obtain data from socket
         if (!circularBuffer.full())
         {
             auto writer = circularBuffer.write();
+
             auto bufferSizeReceived = read(sockfd, writer.data(), writer.size());
-            ///if read method returned -1 an error occurred during read.
-            if (bufferSizeReceived == -1)
+            if (bufferSizeReceived == -1 && errno == EWOULDBLOCK)
             {
+                /// if read method returned -1 an error occurred during read.
                 NES_ERROR("TCPSource::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
                 return false;
             }
+            if (bufferSizeReceived == 0)
+            {
+                NES_TRACE(
+                    "TCPSource::fillBuffer: No data received from {}:{}.",
+                    sourceConfig->getSocketHost()->getValue(),
+                    sourceConfig->getSocketPort()->getValue());
+            }
+
             writer.consume(bufferSizeReceived);
             if (bufferSizeReceived == 0 && circularBuffer.empty())
             {
@@ -294,7 +323,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                 }
             }
 
-            ///if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
+            /// if we were able to obtain a complete tuple from the circular buffer, we are going to forward it ot the appropriate parser
             if (!tupleData.empty())
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
