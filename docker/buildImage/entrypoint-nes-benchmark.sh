@@ -25,7 +25,7 @@ then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
 
-    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_CCACHE=1 -DNES_USE_OPC=0 -DNES_USE_MQTT=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_BENCHMARKS=1 -DNES_LOGGING_LEVEL=FATAL_ERROR ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DNES_SELF_HOSTING=1 -DNES_USE_CCACHE=1 -DNES_USE_ADAPTIVE=0 -DNES_BUILD_BENCHMARKS=1 -DNES_LOGGING_LEVEL=FATAL_ERROR ..
     make -j`nproc --ignore=2`
 
     cd ./nes-benchmark 

@@ -73,7 +73,7 @@ std::optional<Runtime::TupleBuffer> NetworkSource::receiveData()
 
 SourceType NetworkSource::getType() const
 {
-    return SourceType::NETWORK_SOURCE;
+    return SourceType::TCP_SOURCE; /// will be removed with the NetworkSource
 }
 
 std::string NetworkSource::toString() const

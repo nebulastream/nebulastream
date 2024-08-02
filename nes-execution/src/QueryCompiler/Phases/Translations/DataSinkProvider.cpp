@@ -14,7 +14,6 @@
 #include <utility>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
-#include <Sinks/DataSinkPlugin.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -32,14 +31,6 @@ DataSinkPtr DataSinkProvider::lower(
     const QueryCompilation::PipelineQueryPlanPtr& querySubPlan,
     size_t numOfProducers)
 {
-    for (const auto& plugin : SinkPluginRegistry::getPlugins())
-    {
-        auto dataSink = plugin->createDataSink(sinkId, sinkDescriptor, schema, nodeEngine, querySubPlan, numOfProducers);
-        if (dataSink.has_value())
-        {
-            return dataSink.value();
-        }
-    }
     return ConvertLogicalToPhysicalSink::createDataSink(
         sinkId, std::move(sinkDescriptor), std::move(schema), std::move(nodeEngine), querySubPlan, numOfProducers);
 }

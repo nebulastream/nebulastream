@@ -71,7 +71,7 @@ public:
 
     /**
      * Checks equality
-     * @param other mqttSourceType ot check equality for
+     * @param other sourceType to check equality for
      * @return true if equal, false otherwise
      */
     bool equal(PhysicalSourceTypePtr const& other) override;

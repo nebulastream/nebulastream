@@ -11,18 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-configurations
-        ArrowSourceType.cpp
         PhysicalSourceType.cpp
-        MemorySourceType.cpp
-        LambdaSourceType.cpp
-        BenchmarkSourceType.cpp
         CSVSourceType.cpp
-        BinarySourceType.cpp
-        DefaultSourceType.cpp
-        KafkaSourceType.cpp
-        MQTTSourceType.cpp
-        OPCSourceType.cpp
-        SenseSourceType.cpp
-        StaticDataSourceType.cpp
         TCPSourceType.cpp
 )

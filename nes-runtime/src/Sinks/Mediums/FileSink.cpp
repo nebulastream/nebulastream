@@ -134,7 +134,7 @@ bool FileSink::writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerConte
     }
 
     auto fBuffer = sinkFormat->getFormattedBuffer(inputBuffer);
-    NES_DEBUG("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
+    NES_TRACE("Writing tuples to file sink; filePath={}, fBuffer={}", filePath, fBuffer);
     outputFile.write(fBuffer.c_str(), fBuffer.size());
     outputFile.flush();
     return true;

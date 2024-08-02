@@ -58,7 +58,6 @@ option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(NES_USE_CCACHE "USE CCACHE" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
-option(NES_USE_KAFKA "Build with Kafka support" OFF)
 option(NES_USE_OPENCL "Build with OpenCL support" OFF)
 
 #toggle GPU runtime and test
@@ -371,10 +370,6 @@ if (NOT ${CPPZMQ_FOUND})
 endif ()
 set(LIBRARIES ${LIBRARIES} cppzmq cppzmq-static)
 
-if (NES_USE_MQTT)
-    add_compile_definitions(ENABLE_MQTT_BUILD)
-endif (NES_USE_MQTT)
-
 # Backward
 include(cmake/BackwardConfig.cmake)
 include_directories(${BACKWARD_INCLUDE_DIRS})
@@ -407,15 +402,6 @@ if (NES_USE_S2)
     add_compile_definitions(S2DEF)
 else ()
     message(STATUS "s2 is disabled")
-endif ()
-
-if (NES_USE_KAFKA)
-    if (NOT APPLE)
-        add_compile_definitions(ENABLE_KAFKA_BUILD)
-        message(STATUS "Enabled ENABLE_KAFKA_BUILD flag")
-    else ()
-        message(WARNING "ENABLE_KAFKA_BUILD Not supported on OSX")
-    endif ()
 endif ()
 
 if (NES_USE_GPU)
@@ -635,6 +621,11 @@ add_subdirectory(nes-single-node-worker)
 
 # Documentation
 add_subdirectory(cmake/docs)
+
+# TODO: #179: Temporary boost-asio (remove after adding asio via VCPKG)
+if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
+    add_subdirectory(asio)
+endif()
 
 
 

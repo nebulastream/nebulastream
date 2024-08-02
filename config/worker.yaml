@@ -75,9 +75,6 @@
 
 # A Physical Stream may be associated with multiple Instances of a logicalStreamName, a physicalStreamName and a SourceType
 # If no Physical Stream Config is given, the worker will be created without a physical stream
-# Available source Types: DefaultSource, CSVSource, MQTTSource, SenseSource, OPCSource (ToDo: Make source available),
-#                         ZMQSource (ToDo: Make source available), KafkaSource (ToDo: Make source available),
-#                         BinarySource (ToDo: Make source available))
 #physicalSources:
   # Set logical stream name where this stream is added to
   #- logicalSourceName: default_source_log

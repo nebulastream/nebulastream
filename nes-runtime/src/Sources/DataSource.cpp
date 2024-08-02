@@ -113,7 +113,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
         buffer.setChunkNumber(1);
         buffer.setLastChunk(true);
         NES_DEBUG(
-            "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={} ",
+            "Setting the buffer metadata for source {} with originId={} sequenceNumber={} chunkNumber={} lastChunk={}",
             buffer.getOriginId(),
             buffer.getOriginId(),
             buffer.getSequenceNumber(),
@@ -124,7 +124,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
     uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors)
     {
-        ///find the queue to which this sources pushes
+        /// find the queue to which this sources pushes
         if (!sourceSharing)
         {
             queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
@@ -534,10 +534,6 @@ void DataSource::runningRoutineWithGatheringInterval()
         if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce)
         {
             auto optBuf = receiveData(); /// note that receiveData might block
-            if (!running)
-            { /// necessary if source stops while receiveData is called due to stricter shutdown logic
-                break;
-            }
             ///this checks we received a valid output buffer
             if (optBuf.has_value())
             {
@@ -568,6 +564,11 @@ void DataSource::runningRoutineWithGatheringInterval()
                 running = false;
                 NES_DEBUG("DataSource {}: Thread going to terminating with graceful exit.", operatorId);
             }
+            if (!running)
+            { /// necessary if source stops while receiveData is called due to stricter shutdown logic
+                NES_DEBUG("Source is not running anymore.")
+                break;
+            }
         }
         else
         {
@@ -580,12 +581,6 @@ void DataSource::runningRoutineWithGatheringInterval()
             running = false;
         }
         NES_TRACE("DataSource {} : Data Source finished processing iteration {}", operatorId, numberOfBuffersProduced);
-
-        /// this checks if the interval is zero or a ZMQ_Source, we don't create a watermark-only buffer
-        if (getType() != SourceType::ZMQ_SOURCE && gatheringInterval.count() > 0)
-        {
-            std::this_thread::sleep_for(gatheringInterval);
-        }
     }
     NES_DEBUG("DataSource {} call close", operatorId);
     close();

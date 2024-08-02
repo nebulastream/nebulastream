@@ -15,34 +15,16 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_PHYSICALSOURCETYPE_HPP_
 
-#include <map>
 #include <memory>
 #include <string>
-#include <Configurations/ConfigurationsNames.hpp>
 
 namespace NES
 {
 
 enum class SourceType : uint8_t
 {
-    OPC_SOURCE,
-    ZMQ_SOURCE,
     CSV_SOURCE,
-    KAFKA_SOURCE,
-    TEST_SOURCE,
-    BINARY_SOURCE,
-    SENSE_SOURCE,
-    DEFAULT_SOURCE,
-    NETWORK_SOURCE,
-    ADAPTIVE_SOURCE,
-    YSB_SOURCE,
-    MEMORY_SOURCE,
-    MQTT_SOURCE,
-    LAMBDA_SOURCE,
-    BENCHMARK_SOURCE,
-    STATIC_DATA_SOURCE,
     TCP_SOURCE,
-    ARROW_SOURCE
 };
 
 class PhysicalSourceType;
@@ -60,7 +42,7 @@ public:
 
     /**
      * Checks equality
-     * @param other mqttSourceType ot check equality for
+     * @param other sourceType to check equality for
      * @return true if equal, false otherwise
      */
     virtual bool equal(PhysicalSourceTypePtr const& other) = 0;

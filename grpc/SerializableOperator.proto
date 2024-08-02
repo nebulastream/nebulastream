@@ -58,20 +58,6 @@ message SerializablePhysicalSourceType{
   }
 
   /**
-  The serializable wrapper for the sense source config object
-  */
-  message SerializableSenseSourceType{
-    string udsf = 1;
-  }
-
-  /**
-  The serializable wrapper for the binary source config object
-  */
-  message SerializableBinarySourceType{
-    string filePath = 1;
-  }
-
-  /**
   The serializable wrapper for the csv source config object
   */
   message SerializableCSVSourceType{
@@ -85,65 +71,19 @@ message SerializablePhysicalSourceType{
   }
 
   /**
-  The serializable wrapper for the mqtt source config object
+  The serializable wrapper for the tcp source config object
   */
-  message SerializableMQTTSourceType{
-    string url = 1;
-    string clientId = 2;
-    string userName = 3;
-    string topic = 4;
-    uint32 qos = 5;
-    bool cleanSession = 6;
-    float flushIntervalMS = 7;
-    InputFormat inputFormat = 8;
-  }
-
-    /**
-    The serializable wrapper for the mqtt source config object
-    */
-    message SerializableTCPSourceType{
-      string socketHost = 1;
-      uint32 socketPort = 2;
-      uint32 socketDomain = 3;
-      uint32 socketType = 4;
-      float flushIntervalMS = 6;
-      InputFormat inputFormat = 7;
-      TCPDecideMessageSize tcpDecideMessageSize = 8;
-      string tupleSeparator = 9;
-      uint32 socketBufferSize = 10;
-      uint32 bytesUsedForSocketBufferSizeTransfer = 11;
-
-    }
-
-  /**
-  The serializable wrapper for the kafka source config object
-  */
-  message SerializableKafkaSourceType{
-    string brokers = 1;
-    uint32 autoCommit = 2;
-    string groupId = 3;
-    string topic = 4;
-    uint32 connectionTimeout = 5;
-  }
-
-  /**
-  The serializable wrapper for the opc source config object
-  */
-  message SerializableOPCSourceType{
-    uint32 namespaceIndex = 1;
-    string nodeIdentifier = 2;
-    string userName = 3;
-    string password = 4;
-  }
-
-  /**
-  The serializable wrapper for the csv source config object
-  */
-  message SerializableArrowSourceType{
-    string filePath = 1;
-    uint32 numberOfBuffersToProduce = 2;
-    uint32 numberOfTuplesToProducePerBuffer = 3;
-    uint32 sourceGatheringInterval = 4;
+  message SerializableTCPSourceType{
+    string socketHost = 1;
+    uint32 socketPort = 2;
+    uint32 socketDomain = 3;
+    uint32 socketType = 4;
+    float flushIntervalMS = 6;
+    InputFormat inputFormat = 7;
+    TCPDecideMessageSize tcpDecideMessageSize = 8;
+    string tupleSeparator = 9;
+    uint32 socketBufferSize = 10;
+    uint32 bytesUsedForSocketBufferSizeTransfer = 11;
   }
 
   string sourceType = 1;
@@ -161,61 +101,16 @@ message SerializableOperator{
   Source Details contains properties for the source operator, such as the source descriptor
    */
   message SourceDetails {
-    message SerializableBinarySourceDescriptor {
-      string filePath = 1;
-      SerializableSchema sourceSchema = 2;
-    }
 
     message SerializableCsvSourceDescriptor {
       SerializablePhysicalSourceType physicalSourceType = 1;
       SerializableSchema sourceSchema = 2;
     }
 
-    message SerializableDefaultSourceDescriptor {
-      uint64 numberOfBuffersToProduce = 1;
-      uint64 sourceGatheringInterval = 2;
-      SerializableSchema sourceSchema = 3;
-    }
-
-    message SerializableKafkaSourceDescriptor {
-      string brokers = 1;
-      string topic = 2;
-      string groupId = 3;
-      bool autoCommit = 4;
-      uint64 kafkaConnectTimeout = 5;
-      SerializableSchema sourceSchema = 6;
-    }
-
     message SerializableLogicalSourceDescriptor {
       string logicalSourceName = 1;
       string physicalSourceName = 2;
       optional SerializableSchema sourceSchema = 3;
-    }
-
-    message SerializableSenseSourceDescriptor {
-      string udfs = 1;
-      SerializableSchema sourceSchema = 2;
-    }
-
-    message SerializableZMQSourceDescriptor {
-      string host = 1;
-      uint32 port = 2;
-      SerializableSchema sourceSchema = 3;
-    }
-
-    message SerializableOPCSourceDescriptor {
-      string url = 1;
-      uint32 namespaceIndex = 2;
-      string identifier = 3;
-      uint32 identifierType = 4;
-      string user = 5;
-      string password = 6;
-      SerializableSchema sourceSchema = 7;
-    }
-
-    message SerializableMQTTSourceDescriptor {
-      SerializablePhysicalSourceType physicalSourceType = 1;
-      SerializableSchema sourceSchema = 2;
     }
 
     message SerializableTCPSourceDescriptor {
@@ -233,16 +128,6 @@ message SerializableOperator{
       uint64 uniqueId = 7;
     }
 
-    message SerializableMaterializedViewSourceDescriptor {
-      uint64 id = 1;
-    }
-
-    message SerializableArrowSourceDescriptor {
-      SerializablePhysicalSourceType physicalSourceType = 1;
-      SerializableSchema sourceSchema = 2;
-    }
-
-
     google.protobuf.Any sourceDescriptor = 1;
     uint64 sourceOriginId = 2;
   }
@@ -258,53 +143,7 @@ message SerializableOperator{
       bool addTimestamp = 4;
     }
 
-    message SerializableKafkaSinkDescriptor {
-      string topic = 1;
-      string brokers = 2;
-      uint64 kafkaConnectTimeout = 5;
-    }
-
     message SerializablePrintSinkDescriptor {
-    }
-
-    message SerializableNullOutputSinkDescriptor {
-    }
-
-    message SerializableZMQSinkDescriptor {
-      string host = 1;
-      uint32 port = 2;
-      bool isInternal = 3;
-    }
-
-    message SerializableOPCSinkDescriptor {
-      string url = 1;
-      uint32 namespaceIndex = 2;
-      string identifier = 3;
-      uint32 identifierType = 4;
-      string user = 5;
-      string password = 6;
-    }
-
-    message SerializableMQTTSinkDescriptor {
-      enum TimeUnits{
-        nanoseconds = 0;
-        milliseconds = 1;
-        seconds = 2;
-      };
-      enum ServiceQualities{
-        atMostOnce = 0;
-        atLeastOnce = 1;
-        exactlyOnce = 2;
-      };
-      string address = 1;
-      string clientId = 2;
-      string topic = 3;
-      string user = 4;
-      uint64 maxBufferedMessages = 5;
-      TimeUnits timeUnit = 6;
-      uint64 msgDelay = 7;
-      ServiceQualities qualityOfService = 8;
-      bool asynchronousClient = 9;
     }
 
     message SerializableNetworkSinkDescriptor {

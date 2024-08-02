@@ -24,14 +24,9 @@ namespace NES
 
 enum class SinkMediumTypes : uint8_t
 {
-    ZMQ_SINK,
     PRINT_SINK,
-    KAFKA_SINK,
     FILE_SINK,
     NETWORK_SINK,
-    OPC_SINK,
-    MQTT_SINK,
-    NULL_SINK
 };
 
 /**

@@ -13,11 +13,6 @@
 add_source_files(nes-operators
         FileSinkDescriptor.cpp
         SinkLogicalOperator.cpp
-        KafkaSinkDescriptor.cpp
-        ZmqSinkDescriptor.cpp
         PrintSinkDescriptor.cpp
-        OPCSinkDescriptor.cpp
-        MQTTSinkDescriptor.cpp
-        NullOutputSinkDescriptor.cpp
         SinkDescriptor.cpp
         )

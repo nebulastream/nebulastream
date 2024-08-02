@@ -19,7 +19,6 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
@@ -67,7 +66,8 @@ CSVSource::CSVSource(
     {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
-    auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realpath(filePath.c_str(), nullptr)));
+    const auto realCSVPath = realpath(filePath.c_str(), nullptr); /// realpath: canonical absolute name of file
+    const auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realCSVPath));
     if (path == nullptr)
     {
         NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
