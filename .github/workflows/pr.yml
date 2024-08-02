@@ -154,7 +154,7 @@ jobs:
           cache_dir="/data/nes-ci/tmp/nes-ccache_$os_version_arch"
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          if [ ACT ]; then
+          if [ "$ACT" ]; then
             docker_image_name="nes_build_ubuntu:latest"
           else
             docker_image_name="nes_build_${{ matrix.osversion }}"
