@@ -64,19 +64,25 @@ jobs:
       - name: Build Docker for CleanUp
         id: builddocker_prebuild
         working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+        if : ${{ !env.ACT }}
+        run: |
+          if [ "$ACT" ]; then
+            bash scripts/build_docker_image_non_executable_image.sh nes_build_ubuntu
+          else
+            bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
+          fi
       - name: preamble-check
         run: |
-          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu
+          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu:latest
       - name: format-check
         run: |
-          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nes_build_ubuntu
+          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nes_build_ubuntu:latest
       - name: guard-check
         run: |
-          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
+          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu:latest
       - name: comment-format-check
         run: |
-          docker run --name ${{ github.run_id }}_comment-format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-comment-format-check.sh nes_build_ubuntu
+          docker run --name ${{ github.run_id }}_comment-format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-comment-format-check.sh nes_build_ubuntu:latest
 
       - name: docker cleanup
         if: ${{ always() }}
