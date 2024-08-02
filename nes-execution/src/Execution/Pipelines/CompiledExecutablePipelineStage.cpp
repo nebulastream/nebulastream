@@ -17,9 +17,8 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
-#include <nautilus/val_ptr.hpp>
 #include <nautilus/val.hpp>
-
+#include <nautilus/val_ptr.hpp>
 
 namespace NES::Runtime::Execution {
 
@@ -44,16 +43,16 @@ auto CompiledExecutablePipelineStage::compilePipeline() {
     Timer timer("CompilationBasedPipelineExecutionEngine " + options.getOptionOrDefault<std::string>("engine_backend", ""));
     timer.start();
 
-
     std::function<nautilus::val<uint32_t>(nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>)> compiledFunction =
-        [&](nautilus::val<int8_t*> workerContext, nautilus::val<int8_t*> pipelineExecutionContext, nautilus::val<int8_t*> recordBufferRef) {
-        auto ctx = ExecutionContext(workerContext, pipelineExecutionContext);
-        RecordBuffer recordBuffer(recordBufferRef);
-        physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
-        physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
-        return 0;
-    };
-
+        [&](nautilus::val<int8_t*> workerContext,
+            nautilus::val<int8_t*> pipelineExecutionContext,
+            nautilus::val<int8_t*> recordBufferRef) {
+            auto ctx = ExecutionContext(workerContext, pipelineExecutionContext);
+            RecordBuffer recordBuffer(recordBufferRef);
+            physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);
+            physicalOperatorPipeline->getRootOperator()->close(ctx, recordBuffer);
+            return 0;
+        };
 
     engine = std::make_shared<engine::NautilusEngine>(options);
     auto executable = engine->registerFunction(compiledFunction);
@@ -66,7 +65,6 @@ auto CompiledExecutablePipelineStage::compilePipeline() {
 
 uint32_t CompiledExecutablePipelineStage::setup(PipelineExecutionContext& pipelineExecutionContext) {
     NautilusExecutablePipelineStage::setup(pipelineExecutionContext);
-    // TODO enable async compilation #3357
     pipelineFunction = this->compilePipeline();
     return 0;
 }

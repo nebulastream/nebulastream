@@ -31,7 +31,7 @@ struct SliceMergeTask {
     uint64_t startSlice;
     uint64_t endSlice;
     std::vector<std::shared_ptr<SliceType>> slices;
-    ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}", startSlice, endSlice, sequenceNumber, chunkNumber, lastChunk); }
+    ~SliceMergeTask() { NES_DEBUG("~SliceMergeTask {}-{}-{}-{}-{}", startSlice, endSlice, sequenceNumber, chunkNumber, lastChunk); }
 };
 
 }// namespace NES::Runtime::Execution::Operators

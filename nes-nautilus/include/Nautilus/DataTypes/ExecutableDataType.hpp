@@ -53,6 +53,8 @@ class ExecutableDataType : public AbstractDataType {
         return static_cast<nautilus::val<CastedDataType>>(rawValue);
     }
 
+    nautilus::val<ValueType> operator()() const { return rawValue; }
+
     /// We should get rid of this call here
     const nautilus::val<ValueType>& getRawValue() const { return rawValue; }
 
@@ -79,14 +81,16 @@ class ExecutableDataType : public AbstractDataType {
     ExecDataType operator<<(const ExecDataType& rightExp) const override;
     ExecDataType operator>>(const ExecDataType& rightExp) const override;
     ExecDataType operator!() const override;
-    nautilus::val<ValueType> operator()() const { return rawValue; }
 
     [[nodiscard]] std::string toString() const override {
-        std::ostringstream oss;
-        oss << "NOT IMPLEMENTED YET!";
-        //        oss << " rawValue: " << rawValue << " null: " << null;
-        return oss.str();
+        if (null) {
+            return "NULL";
+        } else {
+            return rawValue.toString();
+        }
     }
+
+    nautilus::val<bool> isBool() const override { return rawValue == true; }
 
     nautilus::val<ValueType> rawValue;
 };
@@ -212,6 +216,10 @@ class ExecutableVariableDataType : public AbstractDataType {
         oss << "NOT IMPLEMENTED YET!";
         //        oss << " rawValue: " << rawValue << " null: " << null;
         return oss.str();
+    }
+
+    nautilus::val<bool> isBool() const override {
+        return size > 0 && content != nullptr;
     }
 
     nautilus::val<uint32_t> size;

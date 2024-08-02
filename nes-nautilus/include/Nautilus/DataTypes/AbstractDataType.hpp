@@ -28,6 +28,7 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
   public:
     explicit AbstractDataType(const nautilus::val<bool>& null) : null(null) {}
     virtual ~AbstractDataType() = default;
+
     friend std::ostream& operator<<(std::ostream& os, const AbstractDataType& type) {
         os << type.toString();
         return os;
@@ -36,6 +37,11 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
     AbstractDataType& operator=(const AbstractDataType& other) {
         null = other.null;
         return *this;
+    }
+
+
+    operator bool() const {
+        return !null && isBool();
     }
 
     [[nodiscard]] const nautilus::val<bool>& isNull() const { return null; }
@@ -101,6 +107,7 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
 
 
     [[nodiscard]] virtual std::string toString() const = 0;
+    virtual nautilus::val<bool> isBool() const = 0;
 
     nautilus::val<bool> null;
 };

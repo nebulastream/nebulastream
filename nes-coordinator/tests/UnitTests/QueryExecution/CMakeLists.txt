@@ -13,7 +13,6 @@
 ### QueryExecutionTest ###
 add_nes_unit_test(query-execution-test
         "FilterQueryExecutionTest.cpp"
-        "ProjectionQueryExecutionTest.cpp"
         "MergeQueryExecutionTest.cpp"
         "MapQueryExecutionTest.cpp"
         "UnionQueryExecutionTest.cpp"

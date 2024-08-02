@@ -75,6 +75,7 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
             aggregationFunction->lower(sliceValue, resultWindow);
             sliceValue = sliceValue + nautilus::val<uint64_t>(aggregationFunction->getSize());
         }
+        NES_INFO("Emitting window {}", resultWindow.toString());
         child->execute(ctx, resultWindow);
     }
     nautilus::invoke(deleteSlice, globalSlice);

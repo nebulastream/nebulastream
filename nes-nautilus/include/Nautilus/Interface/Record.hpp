@@ -32,6 +32,8 @@ class Record {
     uint64_t numberOfFields() const;
     bool hasField(const RecordFieldIdentifier& fieldName);
     std::vector<RecordFieldIdentifier> getAllFields();
+
+    // Get rid of this toString and override the << and the formatter
     std::string toString();
     bool operator==(const Record& rhs) const;
     bool operator!=(const Record& rhs) const;

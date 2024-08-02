@@ -31,7 +31,6 @@
 //#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 //#include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
-//#include <Execution/Operators/Relational/Project.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>

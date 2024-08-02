@@ -75,6 +75,13 @@ void Emit::emitRecordBuffer(ExecutionContext& ctx,
     recordBuffer.setChunkNr(ctx.getNextChunkNr());
     recordBuffer.setLastChunk(lastChunk);
     recordBuffer.setCreationTs(ctx.getCurrentTs());
+
+    NES_INFO("Emitting recordBuffer {}-{}-{} with {} tuples",
+             recordBuffer.getSequenceNr().toString(),
+             recordBuffer.getChunkNr().toString(),
+             recordBuffer.isLastChunk().toString(),
+             recordBuffer.getNumRecords().toString());
+
     ctx.emitBuffer(recordBuffer);
 
     if (lastChunk == true) {

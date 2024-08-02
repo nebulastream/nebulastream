@@ -24,9 +24,14 @@ extern "C" void* findChainProxy(void* state, uint64_t hash) {
     return hashMap->findChain(hash);
 }
 
-extern "C" void* insetProxy(void* state, uint64_t hash) {
+extern "C" void* insertProxy(void* state, uint64_t hash) {
     auto hashMap = (ChainedHashMap*) state;
     return hashMap->insertEntry(hash);
+}
+
+extern "C" void* getNextProxy(void* entry) {
+    auto entryPtr = (ChainedHashMap::Entry*) entry;
+    return entryPtr->next;
 }
 
 ChainedHashMapRef::EntryRef::EntryRef(const MemRef& ref, uint64_t keyOffset, uint64_t valueOffset)
@@ -39,7 +44,7 @@ MemRef ChainedHashMapRef::EntryRef::getValuePtr() const { return (ref + nautilus
 ChainedHashMapRef::EntryRef ChainedHashMapRef::EntryRef::getNext() const {
     // This assumes that the next ptr is stored as the first element in the entry.
     // perform a load to load the next value
-    auto next = getMemberAsPointer(ref, ChainedHashMap::Entry, next, int8_t);
+    auto next = nautilus::invoke(getNextProxy, ref);
     return {next, keyOffset, valueOffset};
 }
 
@@ -63,7 +68,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const UInt64& hash) {
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash) {
-    auto entry = invoke(insetProxy, hashTableRef, hash);
+    auto entry = invoke(insertProxy, hashTableRef, hash);
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 
@@ -111,6 +116,14 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const UInt64& hash,
     if (entry == nullptr) {
         // create new entry
         entry = insert(hash, keys);
+
+        std::stringstream ss;
+        ss << (*keys[0]);
+        for (size_t i = 1; i < keys.size(); i++) {
+            ss << ", " << (*keys[i]);
+        }
+        NES_INFO("Created new entry for keys: {}", ss.str());
+
         // call on insert lambda function to insert default values
         onInsert(entry);
     }
@@ -141,7 +154,11 @@ Boolean ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<ExecDa
         equals = tmp && equals;
         keyPtr = keyPtr + nautilus::val<uint64_t>(keyDataTypes[i]->size());
     }
-    if (equals) {
+
+//    We need to do one of the following but this is quite ugly
+//    if ((*equals->as<ExecDataBoolean>())()) {
+//    if (*equals) {
+    if (equals->as<ExecDataBoolean>()->getRawValue()) {
         return {true};
     } else {
         return {false};

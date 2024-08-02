@@ -59,9 +59,14 @@ for (auto& [fieldIdentifier, value] : recordFields) {
 }
 
 std::string Record::toString() {
+
     // Figure out later why this does not seem to work.
 //    return fmt::format("{}", fmt::join(recordFields, ", "));
-    NES_NOT_IMPLEMENTED();
+    std::ostringstream oss;
+    for (const auto& [fieldIdentifier, value] : recordFields) {
+        oss << fieldIdentifier << ": " << (*value) << ", ";
+    }
+    return oss.str();
 }
 
 uint64_t Record::numberOfFields() const { return recordFields.size(); }
