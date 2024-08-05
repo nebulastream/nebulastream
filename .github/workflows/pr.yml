@@ -27,7 +27,7 @@ on:
 
 jobs:
   validateTrigger:
-    if: ${{ !github.event.pull_request.draft}}
+    if: ${{ !github.event.pull_request.draft && !env.ACT }}
     runs-on: [ self-hosted, linux, X64, Build ]
     steps:
       - uses: AutoModality/action-clean@v1
@@ -37,7 +37,7 @@ jobs:
           sparse-checkout: |
             CHECKLIST.yml
       - name: Contextual QA Checklists
-        if: ${{ github.event_name == 'pull_request' && !env.ACT}}
+        if: ${{ github.event_name == 'pull_request' && !env.ACT }}
         uses: wyozi/contextual-qa-checklist-action@1.3.2
         with:
           gh-token: ${{ secrets.NES_CI_SECRET }}
@@ -54,7 +54,7 @@ jobs:
           ssh-key: ${{ secrets.CI_SECRET }}
           ssh-strict: 'false'
       - name: Cancel Previous Runs
-        if: ${{!env.ACT}}
+        if: ${{ !env.ACT }}
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
@@ -64,10 +64,10 @@ jobs:
         run: bash scripts/build_docker_image_non_executable_image.sh nes_build_ubuntu
       - name: preamble-check
         run: |
-          docker run --rm -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu
+          docker run --rm --name preamble-check-${{ github.run_id }} -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu
       - name: format-check
         run: |
-          docker run --rm -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nes_build_ubuntu
+          docker run --rm --name format-check-${{ github.run_id }} -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nes_build_ubuntu
           if ! git diff --quiet; then
             git status  # print unformatted files
             echo "Please run 'format' target locally before shipping your changes on remote"
@@ -75,7 +75,7 @@ jobs:
           fi
       - name: guard-check
         run: |
-          docker run --rm -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
+          docker run --rm --name guard-check-${{ github.run_id }} -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
           if ! git diff --quiet; then
             git status  # print files with non-conforming include guards
             echo "Please run 'fix-guards' target locally before shipping your changes on remote"
@@ -83,7 +83,7 @@ jobs:
           fi
       - name: comment-format-check
         run: |
-          docker run --rm -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-comment-format-check.sh nes_build_ubuntu
+          docker run --rm --name comment-format-check-${{ github.run_id }} -v $GITHUB_WORKSPACE:/nebulastream --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-comment-format-check.sh nes_build_ubuntu
 
   build-linux:
     if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
@@ -131,7 +131,7 @@ jobs:
           ssh-strict: 'false'
           fetch-depth: '0'
       - name: Cancel Previous Runs
-        if: ${{!env.ACT}}
+        if: ${{ !env.ACT }}
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
@@ -149,9 +149,7 @@ jobs:
           docker_image_name="nes_build_${{ matrix.osversion }}"
           github_workspace=${{ github.workspace }}
           
-          # Running the script in the docker container, as otherwise, we will have permission issues
-          docker run --rm -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
-
+          docker run --rm --name cleanup-${{ github.run_id }} -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
 
       - name: Build Docker
         id: builddocker
@@ -172,7 +170,7 @@ jobs:
           build_dir="./nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
           echo "build_dir=$build_dir"
           mkdir -p $build_dir
-          docker run --rm -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+          docker run --rm --name build-${{ github.run_id }} -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
       - name: Run tests
         run: |
           GPU_RUNNER_PARAMS=""
@@ -181,5 +179,5 @@ jobs:
           fi
           RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
           build_dir="${HOME}/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker run --rm -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
+          docker run --rm --name test-${{ github.run_id }} -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
         shell: bash
