@@ -1,0 +1,83 @@
+name: NES PR CI
+on:
+  push:
+    branches:
+      - xx-dependencies
+jobs:
+  validateTrigger:
+    runs-on: [ vcpkg ]
+    steps:
+      - uses: actions/checkout@v4
+        if: github.event_name == 'pull_request'
+        with:
+          sparse-checkout: |
+            CHECKLIST.md
+          sparse-checkout-cone-mode: false
+          ssh-key: ${{ secrets.CI_SECRET }}
+          ssh-strict: 'false'
+      - name: Contextual QA Checklists
+        if: github.event_name == 'pull_request'
+        uses: wyozi/contextual-qa-checklist-action@1.3.2
+        with:
+          gh-token: ${{ secrets.NES_CI_SECRET }}
+          comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
+
+  pre-dependency-check:
+    name: "Check changes to dependencies"
+    runs-on: [ vcpkg ]
+    needs: validateTrigger
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            docker/dependency/Base.dockerfile
+      - name: Login to Docker Hub
+        if: ${{ !env.act }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build and push
+        if: ${{ !env.act }}
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-development-base:${{ github.ref_name }}
+          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.ref_name }},mode=max
+          cache-from: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.ref_name }}
+          context: .
+          file: docker/dependency/Base.dockerfile
+
+  build-linux:
+    name: ${{ matrix.osversion }} ${{ matrix.arch }}
+    needs: [ pre-dependency-check ]
+    container:
+      image: nebulastream/nes-development-base:${{ github.ref_name }}
+      env:
+        VCPKG_ROOT: /vcpkg
+      volumes:
+        - vcpkg_cache:/vcpkg
+    timeout-minutes: 40
+    runs-on: [ vcpkg ]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - osversion: ubuntu-24_04
+            arch: "X64"
+            require_build: "true"
+            require_test: "true"
+            build_parallelism: "16"
+            test_parallelism: "4"
+            runner_group: "default"
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure NebulaStream
+        run: cmake -B build -S . -DNES_USE_CCACHE=ON -DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=OFF
+      - name: Build NebulaStream
+        run: cmake --build build -j
+      - name: Run Tests
+        run: cmake --build build --target test -j
+
