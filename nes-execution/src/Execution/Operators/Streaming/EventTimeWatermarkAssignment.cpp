@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::Operators {
 
 class WatermarkState : public OperatorState {
   public:
-    explicit WatermarkState() {}
+    explicit WatermarkState() = default;
     UInt64 currentWatermark = 0;
 };
 

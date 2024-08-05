@@ -64,7 +64,7 @@ std::string Record::toString() {
 //    return fmt::format("{}", fmt::join(recordFields, ", "));
     std::ostringstream oss;
     for (const auto& [fieldIdentifier, value] : recordFields) {
-        oss << fieldIdentifier << ": " << (*value) << ", ";
+        oss << fieldIdentifier << ": " << value << ", ";
     }
     return oss.str();
 }

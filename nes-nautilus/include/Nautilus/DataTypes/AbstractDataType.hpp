@@ -29,8 +29,8 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
     explicit AbstractDataType(const nautilus::val<bool>& null) : null(null) {}
     virtual ~AbstractDataType() = default;
 
-    friend std::ostream& operator<<(std::ostream& os, const AbstractDataType& type) {
-        os << type.toString();
+    friend std::ostream& operator<<(std::ostream& os, const ExecDataType& type) {
+        os << type->toString();
         return os;
     }
 

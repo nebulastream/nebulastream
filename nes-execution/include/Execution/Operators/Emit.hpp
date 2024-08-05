@@ -35,8 +35,8 @@ class Emit : public ExecutableOperator {
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void emitRecordBuffer(ExecutionContext& ctx,
                           RecordBuffer& recordBuffer,
-                          const nautilus::val<uint64_t>& numRecords,
-                          const nautilus::val<bool>& lastChunk) const;
+                          const UInt64& numRecords,
+                          const Boolean& lastChunk) const;
 
   private:
     uint64_t maxRecordsPerBuffer;

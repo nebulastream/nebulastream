@@ -137,10 +137,6 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
             auto key = threadLocalEntry.getKeyPtr();
             auto threadLocalValue = threadLocalEntry.getValuePtr();
             MemRef globalValue = globalEntry.getValuePtr();
-//            NES_TRACE("merge key {} th {} gb {}",
-//                      key.load<UInt64>()->toString(),
-//                      threadLocalValue.load<UInt64>()->toString(),
-//                      globalValue.load<UInt64>()->toString())
             // 2c. apply aggregation functions and combine the values
             for (const auto& function : aggregationFunctions) {
                 function->combine(globalValue, threadLocalValue);

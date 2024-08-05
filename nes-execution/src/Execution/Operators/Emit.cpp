@@ -84,7 +84,7 @@ void Emit::emitRecordBuffer(ExecutionContext& ctx,
 
     ctx.emitBuffer(recordBuffer);
 
-    if (lastChunk == true) {
+    if (lastChunk == Boolean(true)) {
         ctx.removeSequenceState();
     }
 }
