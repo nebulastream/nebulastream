@@ -89,3 +89,8 @@ jobs:
         with:
           name: junit-${{ matrix.arch }}.xml
           path: /junit.xml
+
+  run_code_coverage:
+    name: "Run Code Coverage"
+    uses: ./.github/workflows/code_coverage.yml
+    secrets: inherit

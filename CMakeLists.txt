@@ -28,7 +28,6 @@ option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the sys
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Compute test coverage" ON)
-option(NES_CODE_COVERAGE "Enable Code Coverage" OFF)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
@@ -88,11 +87,6 @@ if (NES_ENABLE_CXA_THROW_HOOK)
     set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_ENABLE_CXA_THROW_HOOK=1")
 endif ()
 
-# this is an experimental feature; do not rely on it yet
-#if(NES_COMPUTE_COVERAGE)
-#    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
-#endif
-
 # enables tracing of stack traces if operator / expression nodes are created
 if (NES_TRACE_NODE_CREATION)
     add_compile_definitions(NES_TRACE_NODE_CREATION)
@@ -112,6 +106,11 @@ set(NES_WARNINGS "-Wall -Wconstant-conversion -Wbitwise-instead-of-logical -Wext
 set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug -fdebug-default-version=4 -g ${NES_SPECIFIC_FLAGS}")
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
+
+# Enabling test coverage
+if (NES_COMPUTE_COVERAGE)
+    add_code_coverage()
+endif ()
 
 # setup rpath for linker
 set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")
@@ -312,12 +311,6 @@ if (NES_ENABLES_TESTS)
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
-    if (NES_CODE_COVERAGE)
-        set(CODE_COVERAGE ON)
-        include(cmake/CodeCoverage.cmake)
-        enable_extra_test_features()
-        message(STATUS "Tests are enabled with code coverage")
-    endif ()
 else ()
     message(STATUS "Tests are disabled")
 endif ()
