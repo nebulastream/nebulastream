@@ -61,6 +61,60 @@ jobs:
           context: .
           file: docker/dependency/Dependency.dockerfile
 
+
+  pre-build-checks:
+    if: github.event_name != 'pull_request'
+    needs: [ pre-dependency-check ]
+    runs-on: [ vcpkg ]
+    container:
+      image: nebulastream/nes-development-dependency:${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure CMake
+        run: cmake -B build -S .
+      - name: preamble-check
+        run: python3 scripts/build/check_license.py . .no-license-check || exit 1
+      - name: format-check
+        run: |
+          make format
+          if ! git diff --quiet; then
+            git status  # print unformatted files
+            echo "Please run 'format' target locally before shipping your changes on remote"
+            exit 1
+          fi
+      - name: guard-check
+        run: |
+          make fix-guards
+          if ! git diff --quiet; then
+            git status  # print files with non-conforming include guards
+            echo "Please run 'fix-guards' target locally before shipping your changes on remote"
+            exit 1
+          fi
+      - name: comment-format-check
+        run: |
+          make check-comment-format
+          if [ $? -ne 0 ]; then
+            echo "Please run 'check-comment-format' target locally before shipping your changes on remote"
+            exit 1
+          fi
+
+  pre-build-checks-per-commit:
+    if: github.event_name == 'pull_request'
+    needs: [ pre-dependency-check ]
+    runs-on: [ vcpkg ]
+    container:
+      image: nebulastream/nes-development-dependency:${{ github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: '0'
+      - name: Format Checks
+        run: |
+          for commit in $(git rev-list ${{ github.base_ref }}..${{ github.head_ref }}); do
+            git checkout $commit
+            git ls-files '*.hpp' '*.cpp' | xargs clang-format-18 -i
+          done
+
   build-linux:
     name: ${{ matrix.osversion }} ${{ matrix.arch }}
     needs: [ pre-dependency-check ]
