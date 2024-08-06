@@ -1,0 +1,17 @@
+set(VCPKG_TARGET_ARCHITECTURE arm64)
+set(VCPKG_CRT_LINKAGE dynamic)
+set(VCPKG_LIBRARY_LINKAGE static)
+set(VCPKG_CMAKE_SYSTEM_NAME Linux)
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/linux-clang.cmake)
+set(VCPKG_CXX_FLAGS -fsanitize=undefined)
+set(VCPKG_C_FLAGS -fsanitize=undefined)
+
+if (PORT STREQUAL boost-context)
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DCMAKE_SYSTEM_PROCESSOR="aarch64")
+endif ()
+
+if (PORT STREQUAL llvm)
+    set(VCPKG_CXX_FLAGS "")
+    set(VCPKG_C_FLAGS "")
+    set(VCPKG_CMAKE_CONFIGURE_OPTIONS -DLLVM_USE_SANITIZER="Undefined")
+endif()
