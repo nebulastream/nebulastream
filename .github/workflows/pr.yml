@@ -92,10 +92,10 @@ jobs:
 
   run_code_coverage:
     if: ${{ ! failure() && ! cancelled() }}
-    needs: [ get-dev-images ]
+    needs: [ docker-development-images , detect-dependency-changes ]
     name: "Run Code Coverage"
     uses: ./.github/workflows/code_coverage.yml
-    # Using the tag from the get-dev-images job
+    # Using the tag from the detect-dependency-changes job
     with:
-      tag: ${{ needs.get-dev-images.outputs.image-tag }}
+      tag: ${{ needs.detect-dependency-changes.outputs.tag }}
     secrets: inherit
