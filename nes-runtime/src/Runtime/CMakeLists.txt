@@ -19,7 +19,6 @@ add_source_files(nes-runtime
         TupleBuffer.cpp
         WorkerContext.cpp
         LocalBufferPool.cpp
-        HardwareManager.cpp
         NesThread.cpp
         BloomFilter.cpp
         TaggedPointer.cpp

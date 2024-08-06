@@ -16,7 +16,6 @@
 #include <numeric>
 #include <string>
 #include <Runtime/AsyncTaskExecutor.hpp>
-#include <Runtime/HardwareManager.hpp>
 #include <Util/ThreadNaming.hpp>
 
 namespace NES::Runtime

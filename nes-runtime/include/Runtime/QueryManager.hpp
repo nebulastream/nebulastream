@@ -88,7 +88,6 @@ public:
         std::vector<BufferManagerPtr> bufferManagers,
         WorkerId nodeEngineId,
         uint16_t numThreads,
-        HardwareManagerPtr hardwareManager,
         uint64_t numberOfBuffersPerEpoch,
         std::vector<uint64_t> workerToCoreMapping = {});
 
@@ -405,8 +404,6 @@ protected:
     std::vector<BufferManagerPtr> bufferManagers;
 
     uint16_t numThreads;
-
-    HardwareManagerPtr hardwareManager;
 
     /// worker threads running compute tasks
     ThreadPoolPtr threadPool{nullptr};
