@@ -226,3 +226,8 @@ jobs:
         run: cmake --build build -j -- -k 0
       - name: Run Tests
         run: ctest --test-dir build -j --output-on-failure
+
+  run_code_coverage:
+    name: "Run Code Coverage"
+    uses: ./.github/workflows/code_coverage.yml
+    secrets: inherit

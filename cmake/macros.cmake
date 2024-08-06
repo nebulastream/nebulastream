@@ -34,6 +34,12 @@ macro(add_source_files)
     add_source(${TARGET_NAME} "${SOURCE_FILES}")
 endmacro()
 
+macro(add_code_coverage)
+    message(STATUS "Adding necessary flags for code coverage")
+    add_compile_options(-fprofile-instr-generate -fcoverage-mapping)
+    add_link_options(-fprofile-instr-generate -fcoverage-mapping)
+endmacro(add_code_coverage)
+
 macro(get_header_nes HEADER_FILES)
     file(GLOB_RECURSE ${HEADER_FILES} "include/*.h" "include/*.hpp")
 endmacro()
