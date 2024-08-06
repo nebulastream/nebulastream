@@ -22,9 +22,12 @@ jobs:
           gh-token: ${{ secrets.NES_CI_SECRET }}
           comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
 
-  pre-dependency-check:
-    name: "Check changes to dependencies"
-    runs-on: [ vcpkg ]
+  docker-development-images-pre:
+    name: "Build Development Images"
+    runs-on: [ vcpkg, "${{ matrix.platform }}" ]
+    strategy:
+      matrix:
+        platform: [ x64, arm64 ]
     needs: validateTrigger
     steps:
       - uses: actions/checkout@v4
@@ -45,19 +48,21 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development-base:${{ github.ref_name }}
-          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.ref_name }},mode=max
-          cache-from: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.ref_name }}
+          tags: nebulastream/nes-development-base:${{ github.ref_name }}-${{matrix.platform}}
+          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.ref_name }}-${{matrix.platform}},mode=max
+          cache-from: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.ref_name }}-${{matrix.platform}}
           context: .
           file: docker/dependency/Base.dockerfile
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development-dependency:${{ github.ref_name }}
-          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.ref_name }},mode=max
-          cache-from: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.ref_name }}
-          build-args: TAG=${{ github.ref_name }}
+          tags: nebulastream/nes-development-dependency:${{ github.ref_name }}-${{matrix.platform}}
+          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.ref_name }}-${{matrix.platform}},mode=max
+          cache-from: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.ref_name }}-${{matrix.platform}}
+          build-args: |
+            TAG=${{ github.ref_name }}-${{matrix.platform}}
+            ARCH=${{matrix.platform}}
           context: .
           file: docker/dependency/Dependency.dockerfile
       - name: Build and push
@@ -65,17 +70,48 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development:${{ github.ref_name }}
-          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ github.ref_name }},mode=max
-          cache-from: type=registry,ref=nebulastream/nes-development-cache:${{ github.ref_name }}
-          build-args: TAG=${{ github.ref_name }}
+          tags: nebulastream/nes-development:${{ github.ref_name }}-${{matrix.platform}}
+          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ github.ref_name }}-${{matrix.platform}},mode=max
+          cache-from: type=registry,ref=nebulastream/nes-development-cache:${{ github.ref_name }}-${{matrix.platform}}
+          build-args: TAG=${{ github.ref_name }}-${{matrix.platform}}
           context: .
           file: docker/dependency/Development.dockerfile
+
+  docker-development-images:
+    needs: docker-development-images-pre
+    runs-on: [ vcpkg ]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          sparse-checkout: |
+            docker/dependency
+            vcpkg
+      - name: Login to Docker Hub
+        if: ${{ !env.act }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Combine Manifests
+        run: |
+          docker buildx imagetools create -t nebulastream/nes-development-base:${{ github.ref_name }} \
+            nebulastream/nes-development-base:${{ github.ref_name }}-x64 \
+            nebulastream/nes-development-base:${{ github.ref_name }}-arm64
+
+          docker buildx imagetools create -t nebulastream/nes-development-dependency:${{ github.ref_name }} \
+            nebulastream/nes-development-dependency:${{ github.ref_name }}-x64 \
+            nebulastream/nes-development-dependency:${{ github.ref_name }}-arm64
+
+          docker buildx imagetools create -t nebulastream/nes-development:${{ github.ref_name }} \
+            nebulastream/nes-development:${{ github.ref_name }}-x64 \
+            nebulastream/nes-development:${{ github.ref_name }}-arm64
 
 
   pre-build-checks:
     if: github.event_name != 'pull_request'
-    needs: [ pre-dependency-check ]
+    needs: [ docker-development-images ]
     runs-on: [ vcpkg ]
     container:
       image: nebulastream/nes-development-dependency:${{ github.ref_name }}
@@ -111,7 +147,7 @@ jobs:
 
   pre-build-checks-per-commit:
     if: github.event_name == 'pull_request'
-    needs: [ pre-dependency-check ]
+    needs: [ docker-development-images ]
     runs-on: [ vcpkg ]
     container:
       image: nebulastream/nes-development-dependency:${{ github.ref_name }}
@@ -127,23 +163,16 @@ jobs:
           done
 
   build-linux:
-    name: ${{ matrix.osversion }} ${{ matrix.arch }}
-    needs: [ pre-dependency-check ]
+    name: "Build ${{matrix.platform}}"
+    needs: [ docker-development-images ]
     container:
       image: nebulastream/nes-development-dependency:${{ github.ref_name }}
     timeout-minutes: 40
-    runs-on: [ vcpkg ]
+    runs-on: [ vcpkg, "${{matrix.platform}}" ]
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - osversion: ubuntu-24_04
-            arch: "X64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "16"
-            test_parallelism: "4"
-            runner_group: "default"
+        arch: [ x64, arm64 ]
     steps:
       - uses: actions/checkout@v4
       - name: Configure NebulaStream
