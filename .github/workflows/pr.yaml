@@ -60,6 +60,17 @@ jobs:
           build-args: TAG=${{ github.ref_name }}
           context: .
           file: docker/dependency/Dependency.dockerfile
+      - name: Build and push
+        if: ${{ !env.act }}
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-development:${{ github.ref_name }}
+          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ github.ref_name }},mode=max
+          cache-from: type=registry,ref=nebulastream/nes-development-cache:${{ github.ref_name }}
+          build-args: TAG=${{ github.ref_name }}
+          context: .
+          file: docker/dependency/Development.dockerfile
 
 
   pre-build-checks:
