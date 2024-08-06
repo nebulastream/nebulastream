@@ -1,0 +1,82 @@
+name: NES Code Coverage
+
+# Write here the documentation of this workflow file
+
+on:
+    # Dear Reviewer, if you can read this message it means that I have forgotten to remove the trigger on push. Please let me know during your review.
+#  push:
+#    branches:
+#      - 99-testcoverage-in-ci
+
+  # We are using this yaml in other workflows (e.g. nightly or pr), so we need to allow this workflow to be triggered by a workflow call.
+  workflow_call:
+
+jobs:
+  build-code-coverage:
+    if: ${{ ! failure() && ! cancelled() }}
+    container:
+      # Figure out how we can get the tag from the previous job, if this workflow is triggered by another workflow call
+      # Otherwise, we will use nebulastream/nes-development:latest
+      #image: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}
+      image: nebulastream/nes-development:latest
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ x64, arm64 ]
+    steps:
+      - if: ${{ !env.ACT }}
+        uses: AutoModality/action-clean@v1
+      - if: ${{ !env.ACT }}
+        uses: actions/checkout@v4
+        with:
+          ssh-key: ${{ secrets.CI_SECRET }}
+      - if: ${{ !env.ACT }}
+        name: Cancel Previous Runs
+        uses: styfle/cancel-workflow-action@0.12.1
+        with:
+          access_token: ${{ secrets.NES_CI_SECRET }}
+      - name: Configure NebulaStream with Code Coverage enabled
+        run: cmake -DNES_COMPUTE_COVERAGE=ON -B build
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests with Code Coverage
+        run: ctest --test-dir build -j --output-on-failure
+      - name: Combine llcov files
+        run: cmake --build build --target llvm_cov_export_lcov
+      - name: Copy lcov file
+        run: mkdir -p coverage && cp build/default_coverage.lcov coverage/default_coverage.lcov
+
+#      # Now we do the same for the provided base branch
+#      - name: Checkout Base Branch
+#        uses: actions/checkout@v4
+#        with:
+#          ref: ${{ github.event.pull_request.base.ref }}
+#          ssh-key: ${{ secrets.CI_SECRET }}
+#      - name: Configure NebulaStream with Code Coverage enabled
+#        run: cmake -DNES_COMPUTE_COVERAGE=ON -B build
+#      - name: Build NebulaStream
+#        run: cmake --build build -j -- -k 0
+#      - name: Run Tests with Code Coverage
+#        run: ctest --test-dir build -j --output-on-failure
+#      - name: Combine llcov files
+#        run: cmake --build build --target llvm_cov_export_lcov
+#      - name: Copy lcov file
+#        run: mkdir -p coverage && cp build/default_coverage.lcov coverage/base_branch_coverage.lcov
+
+      # Comparing the code coverage from the current branch with the base branch
+      - name: Generate Code Coverage report
+        id: code-coverage
+        uses: barecheck/code-coverage-action@v1
+        with:
+          barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
+          lcov-file: coverage/default_coverage.lcov
+#          base-lcov-file: coverage/base_branch_coverage.lcov
+          send-summary-comment: true
+          show-annotations: "error"

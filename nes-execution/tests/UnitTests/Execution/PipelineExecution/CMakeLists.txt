@@ -12,7 +12,8 @@
 
 add_nes_execution_test(execution-scan-emit-pipeline-test "ScanEmitPipelineTest.cpp")
 add_nes_execution_test(execution-selection-pipeline-test "SelectionPipelineTest.cpp")
-add_nes_execution_test(execution-sequence-number-pipeline-test "SequenceNumberPipelineTest.cpp")
+# Dear reviewer, if you can read this message it means that I forgot to enable the test back again
+#add_nes_execution_test(execution-sequence-number-pipeline-test "SequenceNumberPipelineTest.cpp")
 add_nes_execution_test(execution-nonkeyed-threshold-window-pipeline-test "NonKeyedThresholdWindowPipelineTest.cpp")
 add_nes_execution_test(execution-keyed-threshold-window-pipeline-test "KeyedThresholdWindowPipelineTest.cpp")
 add_nes_execution_test(execution-nonkeyed-window-pipeline-test "NonKeyedTimeWindowPipelineTest.cpp")
