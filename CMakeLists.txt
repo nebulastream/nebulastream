@@ -34,7 +34,7 @@ option(CMAKE_NES_TRACE_NODE_CREATION "Debug flag such that we track the creation
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
-option(NES_ENABLES_TESTS "Compute test coverage" ON)
+option(NES_ENABLES_TESTS "Enable tests" ON)
 option(NES_ENABLE_PRECOMPILED_HEADERS "Enable Precompiled Headers" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
@@ -403,7 +403,7 @@ set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
 set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
 set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
 set(PATH_TO_BINARY_DIR ${CMAKE_BINARY_DIR})
-message("PATH_TO_DEB_SOURCE_CODE Dir: ${PATH_TO_DEB_SOURCE_CODE}")
+message(INFO "PATH_TO_DEB_SOURCE_CODE Dir: ${PATH_TO_DEB_SOURCE_CODE}")
 
 # Print definition values.
 message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
