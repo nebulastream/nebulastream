@@ -38,7 +38,7 @@ jobs:
   detect-dependency-changes:
     # This job detects changes to files relevant for our dependency management
     # If no changes are detected the docker image build jobs are skipped
-    # This Job also determines the development image tag used for building and testing
+    # This job also determines the development image tag used for building and testing
     # If no changes are detected we can use the `latest` tag which refers to the last
     # development image based on the main branch
     # If changes are detected we use a branch-specific tag
@@ -137,7 +137,7 @@ jobs:
           file: docker/dependency/Development.dockerfile
 
   docker-development-images:
-    # This Job merges platform specific images into a single multi-platform image
+    # This job merges platform specific images into a single multi-platform image
     name: "Merge images for different platforms into a single Multi-Platform image"
     needs: [ docker-development-images-pre, detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.change == 'true'

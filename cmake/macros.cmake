@@ -180,7 +180,7 @@ function(cached_fetch_and_extract url dest)
     #
     # This is so that copying only happens when `dest` does not exist, to speed up reconfiguration,
     # since copying the NES deps and clang has takes roughly 2.5s while reconfiguration takes ~15s.
-    message(STATUS "Fetching ${dest} from cache ${CMAKE_DEPS_CACHE_DIR} or form url ${url}")
+    message(STATUS "Fetching ${dest} from cache ${CMAKE_DEPS_CACHE_DIR} or from url ${url}")
     string(REGEX REPLACE "/" "_"  filename ${url})  # url to filename
     string(REPLACE ":" "_"  filename ${filename})  # filename to filename
     string(REPLACE ".com" "_"  filename ${filename})  # filename to filename
