@@ -15,34 +15,38 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(LLVM_VERSION 18.1.6)
-set(LLVM_MAJOR_VERSION 18)
+SET(LLVM_MAJOR_VERSION 18)
+set(CLANG_FORMAT_MAJOR_VERSION ${LLVM_MAJOR_VERSION})
 
 # Enable native mtune/march for optimizations
-option(NES_BUILD_NATIVE "Override mtune/march to load native support (might improve performance significantly)" OFF)
+option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 
 #toggle import and usage of s2 library
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
-option(NES_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
-option(NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
+option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
+option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
+option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
+option(CMAKE_NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
 option(NES_ENABLES_TESTS "Enable tests" ON)
-option(NES_ENABLE_PRECOMPILED_HEADERS "Enable precompiled headers (might improve compilation time)" OFF)
+option(NES_ENABLE_PRECOMPILED_HEADERS "Enable Precompiled Headers" OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execution engine (Nautilus)." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for the MLIR backend." OFF)
+option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
-option(NES_ENABLE_LLVM_LIT "Create targets for llvm lit system testing (intended for CI testing)" OFF)
-option(NES_LOG_WITH_STACKTRACE "Log exceptions with stacktrace" OFF)
+option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+
+#toggle GPU runtime and test
+option(NES_USE_GPU "Build with GPU acceleration" OFF)
 
 option(NES_BUILD_JOIN_MULTITHREADED "Build join multithreaded test" OFF)
 
 set(NES_TEST_PARALLELISM 1 CACHE STRING "Set test parallelism")
 set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
-if (NES_LOG_WITH_STACKTRACE)
-    add_compile_definitions(NES_LOG_WITH_STACKTRACE)
-endif()
+
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
 endif ()
@@ -88,7 +92,7 @@ if (NES_ENABLE_CXA_THROW_HOOK)
 endif ()
 
 # enables tracing of stack traces if operator / expression nodes are created
-if (NES_TRACE_NODE_CREATION)
+if (CMAKE_NES_TRACE_NODE_CREATION)
     add_compile_definitions(NES_TRACE_NODE_CREATION)
     message(STATUS "Trace node creation")
 endif ()
@@ -136,6 +140,16 @@ if (ENABLE_IWYU)
     else ()
         message(WARNING "IWYU is enabled but not found! You will not get any suggestions")
     endif ()
+endif ()
+
+if (NES_BUILD_BENCHMARKS)
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNES_BENCHMARKS_FLAG_MODE=1")
+    message(STATUS "Build with all flags on, only use for benchmarking")
+    if (NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT=1")
+        message(STATUS "Use latency measurement")
+    endif ()
+    #-fno-omit-frame-pointer
 endif ()
 
 # Native/Generic march support
@@ -240,6 +254,18 @@ set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
 
+if (NES_USE_GPU)
+    find_package(CUDAToolkit REQUIRED)
+    enable_language(CUDA)
+    if (NOT ${CUDAToolkit_FOUND})
+        message(FATAL_ERROR "Unable to find CUDAToolkit_FOUND")
+    endif ()
+    set(CMAKE_CUDA_STANDARD 17)
+    set(LIBRARIES_CUDA CUDA::cudart CUDA::nvrtc)
+    set(LIBRARIES ${LIBRARIES} ${LIBRARIES_CUDA})
+    message("CUDA dependencies OK")
+endif (NES_USE_GPU)
+
 if (NES_ENABLES_TESTS)
     find_package(GTest CONFIG REQUIRED)
     if (NOT ${GTest_FOUND})
@@ -249,7 +275,7 @@ if (NES_ENABLES_TESTS)
 endif ()
 
 # PAPI
-if (NES_USE_PAPI_PROFILER)
+if (CMAKE_USE_PAPI_PROFILER)
     find_path(PAPI_PREFIX
             NAMES include/papi.h
     )
@@ -336,20 +362,27 @@ add_subdirectory(nes-memory)
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
 
-add_tests_if_enabled(tests)
-
 # Custom test commands --------------------------------------------------------
 # Define test suffixes for filtering
-# We always want to exclude the local system test targets
-set(SYSTEM_TEST_REGEX "^(STGRP_|ST_)")
+set(GPU_TEST_SUFFIX "__GPU$$")
+set(ALL_SUFFIXES "${GPU_TEST_SUFFIX}") # use pipe (|) to add more suffixes, e.g., ${GPU_TEST_SUFFIX}|${DPU_TEST_SUFFIX}"
 
 # The test_default target runs tests without any special suffix
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
 set(NES_TEST_REPEAT_UNTIL_FAIL 3)
 set(NES_TEST_TIMEOUT 300)
-add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${SYSTEM_TEST_REGEX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E "${ALL_SUFFIXES}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+
+# The test_gpu target runs tests with ${GPU_TEST_SUFFIX}
+if (NES_USE_GPU)
+    message(STATUS "Adding test_gpu target with parallelism=${NES_TEST_PARALLELISM}")
+    set(NES_TEST_REPEAT_UNTIL_FAIL 3)
+    set(NES_TEST_TIMEOUT 300)
+    add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R "${GPU_TEST_SUFFIX}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+endif ()
 
 #Other configurations
 project_enable_format()
+instrument_codebase()
 include(cmake/SystemTests.cmake)
 project_enable_system_level_tests()
