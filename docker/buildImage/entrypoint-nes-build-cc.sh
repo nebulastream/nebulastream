@@ -38,7 +38,7 @@ then
     mkdir -p /nebulastream/build
     cd /nebulastream/build
     python3 /nebulastream/scripts/build/check_license.py /nebulastream /nebulastream/.no-license-check || exit 1
-    cmake -DCMAKE_BUILD_TYPE=Release -DNES_CODE_COVERAGE=ON -DBoost_NO_SYSTEM_PATHS=TRUE -DNES_SELF_HOSTING=1 -DNES_TEST_PARALLELISM=$NesTestParallelism  ..
+    cmake -DCMAKE_BUILD_TYPE=Release -DNES_CODE_COVERAGE=ON  -DNES_SELF_HOSTING=1 -DNES_TEST_PARALLELISM=$NesTestParallelism  ..
     make -j$NesBuildParallelism
 
     # Check if build was successful
