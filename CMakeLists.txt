@@ -532,12 +532,6 @@ add_subdirectory(nes-single-node-worker)
 # Documentation
 add_subdirectory(cmake/docs)
 
-# TODO: #179: Temporary boost-asio (remove after adding asio via VCPKG)
-if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-    add_subdirectory(asio)
-endif()
-
-
 # Custom test commands --------------------------------------------------------
 # Define test suffixes for filtering
 set(GPU_TEST_SUFFIX "__GPU$$")
