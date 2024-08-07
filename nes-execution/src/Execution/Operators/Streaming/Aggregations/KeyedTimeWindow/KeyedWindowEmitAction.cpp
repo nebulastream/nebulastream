@@ -73,7 +73,7 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
         resultWindow.write(endTsFieldName, windowEnd);
         // load keys and write them to result record
         auto sliceKeys = globalEntry.getKeyPtr();
-        for (size_t i = 0; i < resultKeyFields.size(); ++i) {
+        for (nautilus::static_val<uint64_t> i = 0; i < resultKeyFields.size(); ++i) {
             const auto value = Nautilus::readExecDataTypeFromMemRef(sliceKeys, keyDataTypes[i]);
             resultWindow.write(resultKeyFields[i], value);
             sliceKeys = sliceKeys + nautilus::val<uint64_t>(keyDataTypes[i]->size());
@@ -85,7 +85,7 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
             sliceValue = sliceValue + nautilus::val<uint64_t>(aggregationFunction->getSize());
         }
         // If we get rid of the .toString(), we receive another error
-        NES_INFO("Emitting window: {}", resultWindow.toString());
+        // NES_INFO("Emitting window: {}", resultWindow.toString());
 //        std::cout << "Emitting window: " << std::endl;
         child->execute(ctx, resultWindow);
     }
