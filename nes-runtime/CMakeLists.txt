@@ -56,21 +56,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     target_link_libraries(nes-runtime PRIVATE nes-compiler)
 endif ()
 
-if (NES_USE_OPENCL)
-    find_package(OpenCL REQUIRED)
-    if (${OpenCL_FOUND})
-        MESSAGE(STATUS "Found OpenCL ${OpenCL_VERSION_STRING}")
-        MESSAGE(STATUS "OpenCL libraries: ${OpenCL_LIBRARIES}")
-        MESSAGE(STATUS "OpenCL includes: ${OpenCL_INCLUDE_DIRS}")
-        target_link_libraries(nes-runtime PRIVATE ${OpenCL_LIBRARIES})
-        target_include_directories(nes-runtime PRIVATE ${OpenCL_INCLUDE_DIRS})
-        target_compile_definitions(nes-runtime PRIVATE ENABLE_OPENCL)
-    else ()
-        message(FATAL_ERROR "Could not find OpenCL")
-    endif ()
-endif (NES_USE_OPENCL)
-
-
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)
