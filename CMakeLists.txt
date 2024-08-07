@@ -395,21 +395,6 @@ else ()
     message(FATAL_ERROR "Cannot find llvm. LLVM ${LLVM_VERSION} is required. Use self-hosted=1 or install it manually.")
 endif ()
 
-find_package(Clang)
-if (Clang_FOUND)
-    get_property(CLANG_FORMAT_EXECUTABLE TARGET clang-format PROPERTY LOCATION)
-    get_property(CLANG_TIDY_EXECUTABLE TARGET clang-tidy PROPERTY LOCATION)
-    get_property(CLANG_APPLY_REPLACEMENTS_EXECUTABLE TARGET clang-apply-replacements PROPERTY LOCATION)
-    get_property(CLANG_EXECUTABLE TARGET clang PROPERTY LOCATION)
-    set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/lib/clang/${LLVM_VERSION_MAJOR}/include/)
-    message(STATUS "CLANG_FORMAT_EXECUTABLE ${CLANG_FORMAT_EXECUTABLE}")
-    message(STATUS "CLANG_TIDY_EXECUTABLE ${CLANG_TIDY_EXECUTABLE}")
-    message(STATUS "CLANG_APPLY_REPLACEMENTS_EXECUTABLE ${CLANG_APPLY_REPLACEMENTS_EXECUTABLE}")
-    message(STATUS "CLANG_EXECUTABLE ${CLANG_EXECUTABLE}")
-else ()
-    message(FATAL_ERROR "Cannot find clang.")
-endif ()
-
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     find_package(JNI)
     if (JNI_FOUND)
@@ -510,8 +495,6 @@ add_custom_target(build_all_plugins)
 add_subdirectory(nes-common)
 # Add target for all data types
 add_subdirectory(nes-data-types)
-# Add target for the compiler
-add_subdirectory(nes-compiler)
 # Add target for the runtime
 add_subdirectory(nes-runtime)
 # Add target for configurations
@@ -540,7 +523,6 @@ if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
 endif()
 
 
-
 # Custom test commands --------------------------------------------------------
 # Define test suffixes for filtering
 set(GPU_TEST_SUFFIX "__GPU$$")
@@ -560,8 +542,6 @@ if (NES_USE_GPU)
     add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R "${GPU_TEST_SUFFIX}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
 endif ()
 
-message(STATUS "INSTALL NES CLANG ${CLANG_EXECUTABLE}")
-install(PROGRAMS ${CLANG_EXECUTABLE} TYPE BIN COMPONENT nesLibrary RENAME nes-clang)
 install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
 
 include(CMakePackageConfigHelpers)
