@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.6.172](https://github.com/nebulastream/nebulastream/tree/v0.6.172) (2024-08-07)
+
+[Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.171...v0.6.172)
+
+**Implemented enhancements:**
+
+- \[TASK\] Replace REGEX for arrival time from CSVFormat [\#5043](https://github.com/nebulastream/nebulastream/issues/5043)
+
+### Bug Fixes 🐛
+
+- \[BUG\] Average aggregation truncates results to integer [\#3602](https://github.com/nebulastream/nebulastream/issues/3602)
+- \[BUG\] Pre-build checks conflicting with each other [\#3219](https://github.com/nebulastream/nebulastream/issues/3219)
+
+### Miscellaneous Issues ✌️
+
+- Implement Serialization for IJ [\#4928](https://github.com/nebulastream/nebulastream/issues/4928)
+- Implement Logical Operator for IJ [\#4927](https://github.com/nebulastream/nebulastream/issues/4927)
+- Implement Physical Operator for IJ [\#4926](https://github.com/nebulastream/nebulastream/issues/4926)
+
 ## [v0.6.171](https://github.com/nebulastream/nebulastream/tree/v0.6.171) (2024-07-18)
 
 [Full Changelog](https://github.com/nebulastream/nebulastream/compare/v0.6.170...v0.6.171)
