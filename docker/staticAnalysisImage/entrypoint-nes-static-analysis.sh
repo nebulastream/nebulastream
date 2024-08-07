@@ -28,7 +28,7 @@ echo "Required Build Failed=$RequireBuild"
 if [ $# -eq 0 ]; then
 
   # Create compile_commands.json
-  cmake -B /build_dir -DCMAKE_BUILD_TYPE=Release  -DNES_TEST_PARALLELISM=$NesTestParallelism -DNES_USE_OPENCL=1 -DCMAKE_EXPORT_COMPILE_COMMANDS=1 /nebulastream
+  cmake -B /build_dir -DCMAKE_BUILD_TYPE=Release  -DNES_TEST_PARALLELISM=$NesTestParallelism -DCMAKE_EXPORT_COMPILE_COMMANDS=1 /nebulastream
 
   # Translate project to infer format
   infer/bin/infer capture --compilation-database /build_dir/compile_commands.json --jobs $NesBuildParallelism --keep-going -o /build_dir/infer-out

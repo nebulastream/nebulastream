@@ -40,7 +40,7 @@ fi
 
 export JAVA_HOME="$JAVA_HOME"
 
-cmake --fresh -B "$build_dir/" -DJAVA_HOME="$JAVA_HOME" -DCMAKE_BUILD_TYPE=Release  -DNES_USE_CCACHE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_USE_ADAPTIVE=0  -DNES_USE_OPENCL=1 .
+cmake --fresh -B "$build_dir/" -DJAVA_HOME="$JAVA_HOME" -DCMAKE_BUILD_TYPE=Release  -DNES_USE_CCACHE=1 -DNES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE=1 -DNES_USE_ADAPTIVE=0  .
 cmake --build "$build_dir/" -j8
 # Check if build was successful
 errorCode=$?

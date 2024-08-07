@@ -40,7 +40,7 @@ if [ $# -eq 1 ]; then
   ccache --set-config=cache_dir=/cache_dir/
   ccache -M 10G
   ccache -s
-  cmake --fresh -B /build_dir -DCMAKE_BUILD_TYPE=Release -DNES_USE_CCACHE=1 -DNES_TEST_PARALLELISM=$NesTestParallelism  -DNES_USE_OPENCL=1 ${EXTRA_CMAKE_FLAG} /nebulastream/
+  cmake --fresh -B /build_dir -DCMAKE_BUILD_TYPE=Release -DNES_USE_CCACHE=1 -DNES_TEST_PARALLELISM=$NesTestParallelism  ${EXTRA_CMAKE_FLAG} /nebulastream/
   cmake --build /build_dir -j$NesBuildParallelism
   # Check if build was successful
   errorCode=$?
