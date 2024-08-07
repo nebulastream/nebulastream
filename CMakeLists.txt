@@ -333,14 +333,6 @@ set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
-# CPR
-find_package(cpr REQUIRED)
-if (cpr_FOUND)
-    find_package(CURL REQUIRED)
-    message(STATUS "Found CURL : ${CURL_LIBRARIES}")
-    message(STATUS "Found cpr: ${cpr_CONFIG} (found version ${cpr_VERSION})")
-endif ()
-
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
 
@@ -505,7 +497,7 @@ endif ()
 # Add tests with command
 include(cmake/NebulaStreamTest.cmake)
 if (NES_ENABLES_TESTS)
-    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES} cpr::cpr ${CURL_LIBRARIES})
+    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES} ${CURL_LIBRARIES})
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")
