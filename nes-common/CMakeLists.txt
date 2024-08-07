@@ -65,10 +65,6 @@ add_library(nes-common ${NES_COMMON_SOURCE_FILES})
 
 target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES_SDP})
 
-if (NES_USE_S2)
-    target_link_libraries(nes-common PUBLIC ${LIBRARIES_S2})
-endif ()
-
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
