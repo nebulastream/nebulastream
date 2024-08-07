@@ -40,7 +40,7 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer) {
     return ss.str();
 }
 
-std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema) {
+std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema, const std::string& lineSuffix) {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
     auto* buffer = tbuffer.getBuffer<char>();
@@ -73,6 +73,7 @@ std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const Sche
             }
             offset += fieldSize;
         }
+        ss << lineSuffix;
         ss << std::endl;
     }
     return ss.str();

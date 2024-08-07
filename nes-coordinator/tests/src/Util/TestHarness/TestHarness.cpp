@@ -22,6 +22,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/MemorySourceType.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Services/RequestHandlerService.hpp>
@@ -30,6 +31,7 @@
 #include <filesystem>
 #include <type_traits>
 #include <utility>
+
 namespace NES {
 
 TestHarness::TestHarness(Query queryWithoutSink,
@@ -290,12 +292,14 @@ TestHarness::runQuery(uint64_t numberOfRecordsToExpect, const std::string& place
     }
 
     queryPlan = queryCatalog->getCopyOfExecutedQueryPlan(queryId);
+    executionPlan = nesCoordinator->getGlobalExecutionPlan();
     NES_DEBUG("TestHarness: ExecutedQueryPlan: {}", queryPlan->toString());
 
     for (const auto& worker : testHarnessWorkerConfigurations) {
         worker->getNesWorker()->stop(false);
     }
     nesCoordinator->stopCoordinator(false);
+    NES_DEBUG("TestHarness: GlobalExecutionPlan: {}", nesCoordinator->getGlobalExecutionPlan()->getAsString());
 
     return *this;
 }
@@ -438,6 +442,8 @@ TopologyPtr TestHarness::getTopology() {
 };
 
 const QueryPlanPtr& TestHarness::getQueryPlan() const { return queryPlan; }
+
+const Optimizer::GlobalExecutionPlanPtr& TestHarness::getExecutionPlan() const { return executionPlan; }
 
 std::string TestHarness::getNextPhysicalSourceName() {
     physicalSourceCount++;

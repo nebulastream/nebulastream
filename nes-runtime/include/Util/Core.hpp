@@ -74,9 +74,10 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
  * @brief create CSV lines from the tuples
  * @param tbuffer the tuple buffer
  * @param schema how to read the tuples from the buffer
+ * @param lineSuffix a string that will be appended at the end of each line
  * @return a full string stream as string
  */
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
+std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema, const std::string& lineSuffix = "");
 
 /**
 * @brief Returns the physical types of all fields of the schema

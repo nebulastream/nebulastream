@@ -302,6 +302,7 @@ std::set<DeploymentContextPtr> QueryPlacementAmendmentPhase::execute(const Share
     for (const auto& [decomposedQueryPlanId, deploymentContext] : deploymentContexts) {
         computedDeploymentContexts.emplace(deploymentContext);
     }
+    NES_INFO("GlobalExecutionPlan:{}", globalExecutionPlan->getAsString());
     return computedDeploymentContexts;
 }
 

@@ -14,6 +14,7 @@
 
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Util/Common.hpp>
@@ -25,17 +26,16 @@
 
 namespace NES {
 
-CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager)
-    : SinkFormat(std::move(schema), std::move(bufferManager)) {}
+CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager) : CsvFormat(schema, bufferManager, false) {}
 
 CsvFormat::CsvFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp)
-    : SinkFormat(std::move(schema), std::move(bufferManager), addTimestamp) {}
+    : SinkFormat(schema, bufferManager, addTimestamp) {}
 
 std::string CsvFormat::getFormattedSchema() {
     std::string out = Util::toCSVString(schema);
     if (addTimestamp) {
         out = Util::trimWhiteSpaces(out);
-        out.append(",timestamp\n");
+        out.append(",arr_timestamp\n");
     }
     return out;
 }
@@ -44,11 +44,7 @@ std::string CsvFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer) {
     std::string bufferContent;
     if (addTimestamp) {
         auto timestamp = duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        schema->removeField(AttributeField::create("timestamp", DataTypeFactory::createType(BasicType::UINT64)));
-        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
-        std::string repReg = "," + std::to_string(timestamp) + "\n";
-        bufferContent = std::regex_replace(bufferContent, std::regex(R"(\n)"), repReg);
-        schema->addField("timestamp", BasicType::UINT64);
+        bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema, "," + std::to_string(timestamp));
     } else {
         bufferContent = Util::printTupleBufferAsCSV(inputBuffer, schema);
     }

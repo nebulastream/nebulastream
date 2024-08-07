@@ -52,7 +52,7 @@
 #include <StatisticCollection/StatisticRegistry/StatisticRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Mobility/SpatialType.hpp>
-
+#include <Util/TestUtils.hpp>
 #include <gtest/gtest.h>
 #include <z3++.h>
 
@@ -203,7 +203,8 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
     template<typename T>
     static void verifyChildrenOfType(const std::vector<DecomposedQueryPlanPtr>& querySubPlans,
                                      uint64_t expectedSubPlanSize = 1,
-                                     uint64_t expectedRootOperators = 1) {
+                                     uint64_t expectedRootOperators = 1,
+                                     uint64_t typeOccurences = 0) {
         ASSERT_EQ(querySubPlans.size(), expectedSubPlanSize);
         for (auto& querySubPlan : querySubPlans) {
             std::vector<OperatorPtr> actualRootOperators = querySubPlan->getRootOperators();
@@ -211,8 +212,16 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
             OperatorPtr actualRootOperator = actualRootOperators[0];
             ASSERT_TRUE(actualRootOperator->instanceOf<SinkLogicalOperator>());
             auto children = actualRootOperator->getChildren();
+            uint64_t typeCnt = 0;
             for (const auto& child : children) {
-                ASSERT_TRUE(child->instanceOf<T>());
+                if (child->instanceOf<T>()) {
+                    typeCnt++;
+                }
+            }
+            if (typeOccurences > 0) {
+                ASSERT_EQ(typeCnt, typeOccurences);
+            } else {
+                ASSERT_EQ(typeCnt, children.size());
             }
         }
     }
@@ -226,7 +235,7 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
         std::vector<SourceLogicalOperatorPtr> sourceOperators = querySubPlan->getSourceOperators();
         ASSERT_EQ(sourceOperators.size(), expectedSourceOperatorSize);
         for (const auto& sourceOperator : sourceOperators) {
-            EXPECT_TRUE(sourceOperator->instanceOf<SourceLogicalOperator>());
+            ASSERT_TRUE(sourceOperator->instanceOf<SourceLogicalOperator>());
             auto sourceDescriptor = sourceOperator->as_if<SourceLogicalOperator>()->getSourceDescriptor();
             ASSERT_TRUE(sourceDescriptor->instanceOf<T>());
         }
@@ -235,8 +244,9 @@ class DistributedMatrixJoinPlacementTest : public Testing::BaseUnitTest {
 
 TEST_F(DistributedMatrixJoinPlacementTest, testMatrixJoin) {
     // create flat topology with 1 coordinator and 4 sources
-    const std::vector<WorkerId>& sourceNodes = {WorkerId(2), WorkerId(3), WorkerId(4), WorkerId(5)};
-    auto topology = setupTopology(2, 3, 4);
+    const std::vector<WorkerId>& sourceNodes = {WorkerId(4), WorkerId(5), WorkerId(6), WorkerId(7)};
+    auto topology = setupTopology(3, 2, 2);
+    NES_INFO("Topology:\n", topology->toString());
     auto sourceCatalog = setupJoinSourceCatalog(sourceNodes);
     auto statisticProbeHandler = Statistic::StatisticProbeHandler::create(Statistic::StatisticRegistry::create(),
                                                                           Statistic::DefaultStatisticProbeGenerator::create(),
@@ -256,20 +266,19 @@ TEST_F(DistributedMatrixJoinPlacementTest, testMatrixJoin) {
     auto outputTuple = runPlacement(query, topology, sourceCatalog, optimizerConfig, statisticProbeHandler);
     auto queryId = std::get<0>(outputTuple);
     auto executionPlan = std::get<1>(outputTuple);
+    EXPECT_EQ(4, NES::countOccurrences("Join", executionPlan->getAsString()));
+
     auto executionNodes = executionPlan->getLockedExecutionNodesHostingSharedQueryId(queryId);
-    EXPECT_EQ(executionNodes.size(), 5);// topology contains 1 coordinator, 4 workers
+    EXPECT_EQ(executionNodes.size(), 7);// topology contains 1 coordinator, 2 intermediate workers, 4 sources
 
     for (const auto& executionNode : executionNodes) {
         std::vector<DecomposedQueryPlanPtr> querySubPlans = executionNode->operator*()->getAllDecomposedQueryPlans(queryId);
         if (executionNode->operator*()->getId() == WorkerId(1)) {
             // coordinator should have 1 sink, 8 network sources
-            verifyChildrenOfType<LogicalJoinOperator>(querySubPlans, 1, 1);
-            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 2 * sourceNodes.size());
-        } else {
-            // 2x replication factor, therefore each source should have 2 network sources
-            verifyChildrenOfType<WatermarkAssignerLogicalOperator>(querySubPlans, 1, 2);
-            verifySourceOperators<LogicalSourceDescriptor>(querySubPlans, 1, 1);
+            verifyChildrenOfType<LogicalJoinOperator>(querySubPlans, 1, 1, 2);
+            verifyChildrenOfType<SourceLogicalOperator>(querySubPlans, 1, 1, 2);
+            verifySourceOperators<NES::Network::NetworkSourceDescriptor>(querySubPlans, 1, 6);
         }
     }
-    // std::this_thread::sleep_for(std::chrono::milliseconds(4000));
+    //std::this_thread::sleep_for(std::chrono::milliseconds(4000));
 }

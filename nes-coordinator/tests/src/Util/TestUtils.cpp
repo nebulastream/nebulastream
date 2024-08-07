@@ -131,6 +131,8 @@ namespace TestUtils {
 
 [[nodiscard]] std::string enableNemoJoin() { return "--optimizer.distributedJoinOptimizationMode=NEMO"; }
 
+[[nodiscard]] std::string enableMatrixJoin() { return "--optimizer.distributedJoinOptimizationMode=MATRIX"; }
+
 [[nodiscard]] std::string enableSlicingWindowing(bool prefix) {
     return configOption(QUERY_COMPILER_CONFIG + "." + QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG, std::string{"SLICING"}, prefix);
 }
@@ -714,6 +716,23 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffe
 }
 
 /**
+     * @brief This method is used for stop a query
+     * @param queryId: Id of the query
+     * @return if stopped
+     */
+[[nodiscard]] nlohmann::json getExecutionPlan(QueryId queryId, const std::string& restPort) {
+    std::string url = BASE_URL + restPort + "/v1/nes/query/execution-plan";
+    nlohmann::json jsonReturn;
+    auto future = cpr::GetAsync(cpr::Url{url}, cpr::Parameters{{"queryId", queryId.toString()}});
+    future.wait();
+    auto response = future.get();
+    nlohmann::json result = nlohmann::json::parse(response.text);
+    NES_DEBUG("executionPlan={}", result.dump());
+
+    return result;
+}
+
+/**
      * @brief This method is used for executing a query
      * @param query string
      * @return if stopped
@@ -732,6 +751,11 @@ bool buffersContainSameTuples(std::vector<Runtime::MemoryLayouts::TestTupleBuffe
     return result;
 }
 
+/**
+     * @brief This method is used for adding statistics to a source
+     * @param query string
+     * @return if stopped
+     */
 [[nodiscard]] nlohmann::json addSourceStatistics(const string& queryString, const std::string& restPort) {
     nlohmann::json json_return;
 

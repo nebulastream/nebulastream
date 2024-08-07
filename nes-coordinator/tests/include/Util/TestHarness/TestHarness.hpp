@@ -320,6 +320,7 @@ class TestHarness {
 
     TopologyPtr getTopology();
     const QueryPlanPtr& getQueryPlan() const;
+    const Optimizer::GlobalExecutionPlanPtr& getExecutionPlan() const;
 
     Runtime::BufferManagerPtr getBufferManager() const;
 
@@ -348,6 +349,7 @@ class TestHarness {
     std::filesystem::path filePath;
     std::string appendMode = "OVERWRITE";
     QueryPlanPtr queryPlan;
+    Optimizer::GlobalExecutionPlanPtr executionPlan;
     QueryId queryId = INVALID_QUERY_ID;
     Runtime::BufferManagerPtr bufferManager;
 };

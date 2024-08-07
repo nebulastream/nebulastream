@@ -332,6 +332,12 @@ template<typename T>
 [[nodiscard]] std::string enableNemoJoin();
 
 /**
+ * @brief Creates the command line argument for enabling matrix join
+ * @return Command line argument
+ */
+[[nodiscard]] std::string enableMatrixJoin();
+
+/**
  * @brief Creates the command line argument for setting the threshold of the distributed window child
  * @param val
  * @return Command line argument
@@ -675,6 +681,13 @@ checkIfOutputFileIsNotEmtpy(uint64_t minNumberOfLines, const string& outputFileP
  * @return if stopped
  */
 [[nodiscard]] bool stopQueryViaRest(QueryId queryId, const std::string& restPort = "8081");
+
+/**
+ * @brief This method is used for getting the execution plan via REST
+ * @param rest port string
+ * @return the execution plan
+ */
+[[nodiscard]] nlohmann::json getExecutionPlan(QueryId queryId, const std::string& restPort);
 
 /**
  * @brief This method is used for executing a query

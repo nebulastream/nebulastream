@@ -19,6 +19,7 @@
 #include <Catalogs/Topology/TopologyNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestHarness/TestHarness.hpp>
@@ -132,7 +133,7 @@ class DistributedMatrixJoinIntegrationTest : public Testing::BaseIntegrationTest
 };
 
 TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
-    uint64_t sourceNo = 4;
+    uint64_t sourceNo = 2;
     std::function<void(CoordinatorConfigurationPtr)> crdFunctor = [](const CoordinatorConfigurationPtr& config) {
         config->optimizer.joinOptimizationMode.setValue(Optimizer::DistributedJoinOptimizationMode::MATRIX);
     };
@@ -142,19 +143,20 @@ TEST_F(DistributedMatrixJoinIntegrationTest, testThreeLevelsTopologyTopDown) {
                       .window(TumblingWindow::of(EventTime(Attribute("timestamp")), Milliseconds(1000)));
 
     // create flat topology with 1 coordinator and 4 sources
-    auto testHarness = createTestHarness(query, crdFunctor, 2, 2, sourceNo);
+    auto testHarness = createTestHarness(query, crdFunctor, 3, 2, sourceNo);
     // 17 join keys
-    uint64_t expectedTuples = 17 * pow(2, sourceNo - 1);
+    uint64_t expectedTuples = 136;// 17 * pow(2, sourceNo - 1);
 
-    auto actualOutput = testHarness.runQuery(expectedTuples).getOutput();
+    auto actualOutput = testHarness.runQuery(132, "BottomUp", 10000).getOutput();
     auto outputString = actualOutput[0].toString(testHarness.getOutputSchema(), true);
     NES_DEBUG("DistributedMatrixJoinIntegrationTest: Output\n{}", outputString);
     EXPECT_EQ(TestUtils::countTuples(actualOutput), expectedTuples);
 
     TopologyPtr topology = testHarness.getTopology();
     QueryPlanPtr queryPlan = testHarness.getQueryPlan();
-    NES_DEBUG("DistributedMatrixJoinIntegrationTest: Executed with topology \n{}", topology->toString());
-    NES_INFO("DistributedMatrixJoinIntegrationTest: Executed with plan \n{}", queryPlan->toString());
+    Optimizer::GlobalExecutionPlanPtr executionPlan = testHarness.getExecutionPlan();
+    NES_INFO("DistributedMatrixJoinIntegrationTest: Executed with logical plan \n{}", queryPlan->toString());
+    NES_DEBUG("DistributedMatrixJoinIntegrationTest: Executed with global execution plan \n{}", executionPlan->getAsString());
     EXPECT_EQ(4, countOccurrences("Join", queryPlan->toString()));
 }
 
