@@ -1,184 +1,226 @@
 name: NES PR CI
-
-# The following pipeline is meant to run for every PR. It will not call any other workflow / pipeline.
-# It will also check for the format and the guard checks. If these steps are successful, it will try to build the PR and run the tests.
-# In the future, we will add more automated checks to this pipeline, e.g., clang-tidy for our codebase or code coverage checks.
-
 on:
   pull_request:
-    types:
-      - ready_for_review
-      - synchronize
-      - opened
-      - reopened
     branches:
-      - main
-      - 'feature/**'
+      - "main"
+      - "feature/**"
     paths-ignore:
-      - nes-common/include/Version/version.hpp
       - README.md
       - CODE_OF_CONDUCT.md
       - CHANGELOG.md
       - 'docs/**'
-
-  # We are using this yaml in the nightly workflow, so we need to allow this workflow to be triggered by a workflow call.
-  workflow_call:
-
+    # The ready_for_review event is used when a draft pr is changed into a non-draft version. If we did
+    # not use the ready_for_review the ci would not be triggered and appear to have passed.
+    types: [ ready_for_review, synchronize, opened, reopened ]
 
 jobs:
   validateTrigger:
+    # This ensures we won't run the CI if it is in draft mode.
     if: ${{ !github.event.pull_request.draft }}
-    runs-on: [ self-hosted, linux, X64, Build ]
+    runs-on: [ self-hosted, linux, Build ]
     steps:
-      - uses: AutoModality/action-clean@v1
-      - name: Checkout
-        uses: actions/checkout@v4
+      - uses: actions/checkout@v4
       - name: Contextual QA Checklists
-        if: github.event_name == 'pull_request'
         uses: wyozi/contextual-qa-checklist-action@1.3.2
         with:
           gh-token: ${{ secrets.NES_CI_SECRET }}
           comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
-
-  pre-build-checks:
-    name: "Pre-Build-Checks"
-    runs-on: [ self-hosted, linux, X64, Build ]
-    needs: [ validateTrigger ]
-    steps:
-      - uses: AutoModality/action-clean@v1
-      - uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
       - name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
-      - name: Build Docker for CleanUp
-        id: builddocker_prebuild
-        working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_ubuntu
-      - name: preamble-check
-        run: |
-          docker run --name ${{ github.run_id }}_preamble-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-preamble-check.sh nes_build_ubuntu
-      - name: format-check
-        run: |
-          docker run --name ${{ github.run_id }}_format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-format-check.sh nes_build_ubuntu
-      - name: guard-check
-        run: |
-          docker run --name ${{ github.run_id }}_guard-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-guard-check.sh nes_build_ubuntu
-      - name: comment-format-check
-        run: |
-          docker run --name ${{ github.run_id }}_comment-format-check -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-comment-format-check.sh nes_build_ubuntu
 
-      - name: docker cleanup
-        if: ${{ always() }}
+  detect-dependency-changes:
+    # This job detects changes to files relevant for our dependency management
+    # If no changes are detected the docker image build jobs are skipped
+    # This Job also determines the development image tag used for building and testing
+    # If no changes are detected we can use the `latest` tag which refers to the last
+    # development image based on the main branch
+    # If changes are detected we use a branch-specific tag
+    name: Detect changes to dependencies
+    outputs:
+      change: ${{steps.changed-files.outputs.any_modified}}
+      tag: ${{ steps.image-tag.outputs.tag }}
+    runs-on: [ self-hosted, linux, Build ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Looking for changed dependency files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          files: |
+            vcpkg/**
+            docker/dependency/**
+      - name: Choose Image Tag for CI
+        id: image-tag
+        env:
+          ANY_MODIFIED: ${{ steps.changed-files.outputs.any_modified }}
+          ALL_MODIFIED: ${{ steps.changed-files.outputs.all_modified_files }}
         run: |
-          docker rm -f ${{ github.run_id }}_preamble-check
-          docker rm -f ${{ github.run_id }}_format-check
-          docker rm -f ${{ github.run_id }}_guard-check
+          for file in ${ALL_MODIFIED}; do
+            echo "$file was modified"
+          done
+          if [[ "$ANY_MODIFIED" == "true" ]]
+          then
+            echo "tag=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_OUTPUT"
+          else
+            echo "tag=latest" >> "$GITHUB_OUTPUT"
+          fi
 
-  build-linux:
-    if: "!contains(github.event.head_commit.message, 'GIT-CI:')"
-    name: ${{ matrix.osversion }} ${{ matrix.arch }} ${{ matrix.runner_group }}
-    needs: [ pre-build-checks ]
-    timeout-minutes: 40
-    runs-on:
-      group: ${{ matrix.runner_group }}
-      labels: [ self-hosted, linux, '${{ matrix.arch }}', Build]
+  docker-development-images-pre:
+    # We run the docker image build on separate machines and combine them into a single
+    # multi-platform docker image in the docker-development-images job.
+    # The Docker build uses a cache based on previous branch-specific images or the
+    # main branch
+    # This job builds a Base image which contains the llvm based toolchain and a recent
+    # CMake version
+    # The Dependency Image contains a pre-built sdk based on the vcpkg manifest
+    # The Development Image contains the dependencies and additional tooling like clang-format.
+    name: "Build Development Images"
+    needs: [ validateTrigger, detect-dependency-changes ]
+    if: needs.detect-dependency-changes.outputs.change == 'true'
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.platform }}" ]
     strategy:
       fail-fast: false
       matrix:
-        # Currently, we only test and support with ubuntu-22_04. If we add more OS versions, we need to add the corresponding docker files.
-        # Additionally, we would have to change all docker build commands to build from the correct Dockerfile.
-        include:
-          - osversion: ubuntu-22_04
-            arch: "X64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "16"
-            test_parallelism: "4"
-            runner_group: "default"
-          - osversion: ubuntu-22_04
-            arch: "X64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "16"
-            test_parallelism: "4"
-            runner_group: "gpu"
-          - osversion: ubuntu-22_04
-            arch: "arm64"
-            require_build: "true"
-            require_test: "true"
-            build_parallelism: "32" # As we have over 200 cores on the arm server, this should be fine.
-            test_parallelism: "8"   # As we have over 200 cores on the arm server, this should be fine.
-            runner_group: "default"
+        platform: [ x64, arm64 ]
     steps:
-      - uses: AutoModality/action-clean@v1
       - uses: actions/checkout@v4
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-          fetch-depth: '0'
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.1
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Build Base Image
+        uses: docker/build-push-action@v6
         with:
-          access_token: ${{ secrets.NES_CI_SECRET }}
-      - name: Build Docker for CleanUp
-        id: builddocker_cleanup
-        continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
-      - name: "Perform cleanup, if necessary"
+          push: true
+          tags: nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
+          cache-from: |
+            type=registry,ref=nebulastream/nes-development-base-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+            type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.platform}}
+          context: .
+          file: docker/dependency/Base.dockerfile
+      - name: Build Dependency Image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-development-dependency:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
+          cache-from: |
+            type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.platform}}
+          build-args: |
+            TAG=${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+            ARCH=${{matrix.platform}}
+          context: .
+          file: docker/dependency/Dependency.dockerfile
+      - name: Build Development Image
+        uses: docker/build-push-action@v6
+        with:
+          push: true
+          tags: nebulastream/nes-development:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
+          cache-from: |
+            type=registry,ref=nebulastream/nes-development-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.platform}}
+          build-args: TAG=${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+          context: .
+          file: docker/dependency/Development.dockerfile
+
+  docker-development-images:
+    # This Job merges platform specific images into a single multi-platform image
+    name: "Merge images for different platforms into a single Multi-Platform image"
+    needs: [ docker-development-images-pre, detect-dependency-changes ]
+    if: needs.detect-dependency-changes.outputs.change == 'true'
+    runs-on: [ self-hosted, linux, Build ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Login to Docker Hub
+        if: ${{ !env.act }}
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+      - name: Combine Manifests
         run: |
-          os_version_arch="${{ matrix.osversion }}_${{ matrix.arch }}"
-          cache_dir="/data/nes-ci/tmp/nes-ccache_$os_version_arch"
-          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker_image_name="nes_build_${{ matrix.osversion }}"
-          github_workspace=${{ github.workspace }}
-          file="/data/nes-ci/tmp/last_checked_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}.txt"
-          
-          # We check, if we have to perform some cleanup. 
-          perform_cleanup=$(bash $github_workspace/scripts/build/check_cleanup.sh $file)
-          if [ $perform_cleanup -eq 1 ]; then
-            echo "Performing cleanup!"
-            # Running the script in the docker container, as otherwise, we will have permission issues
-            docker run --rm --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build -v $GITHUB_WORKSPACE:/nebulastream -v $cache_dir:/cache_dir -v $build_dir:/build_dir  --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-ccache-build-cleanup.sh nes_build_${{ matrix.osversion }}
-            docker rm ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build
-            echo "Cleanup done!"
-          else
-            echo "We will not perform any cleanup!"
+          docker buildx imagetools create -t nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }} \
+            nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }}-x64 \
+            nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }}-arm64
+
+          docker buildx imagetools create -t nebulastream/nes-development-dependency:${{ github.event.pull_request.head.ref }} \
+            nebulastream/nes-development-dependency:${{ github.event.pull_request.head.ref }}-x64 \
+            nebulastream/nes-development-dependency:${{ github.event.pull_request.head.ref }}-arm64
+
+          docker buildx imagetools create -t nebulastream/nes-development:${{ github.event.pull_request.head.ref }} \
+            nebulastream/nes-development:${{ github.event.pull_request.head.ref }}-x64 \
+            nebulastream/nes-development:${{ github.event.pull_request.head.ref }}-arm64
+
+
+  pre-build-checks:
+    needs: [ docker-development-images, detect-dependency-changes ]
+    if: ${{ ! failure() && ! cancelled() }}
+    runs-on: [ self-hosted, linux, Build ]
+    container:
+      image: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}
+      options: --user root
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure CMake
+        run: cmake -B build
+      - name: preamble-check
+        run: python3 scripts/build/check_license.py . .no-license-check || exit 1
+      - name: format-check
+        run: |
+          cmake --build build --target format
+          if ! git diff --quiet; then
+            git status  # print unformatted files
+            echo "Please build 'format' target locally before shipping your changes on remote"
+            exit 1
+          fi
+      - name: guard-check
+        run: |
+          cmake --build build --target fix-guards
+          if ! git diff --quiet; then
+            git status  # print files with non-conforming include guards
+            echo "Please build 'fix-guards' target locally before shipping your changes on remote"
+            exit 1
+          fi
+      - name: comment-format-check
+        run: |
+          cmake --build build --target check-comment-format
+          if [ $? -ne 0 ]; then
+            echo "Please build 'check-comment-format' target locally before shipping your changes on remote"
+            exit 1
           fi
 
-      - name: Build Docker
-        id: builddocker
-        continue-on-error: true
-        working-directory: ${{ github.workspace }}/docker
-        run: bash scripts/build_docker_image_non_executable_image.sh nes_build_${{ matrix.osversion }}
-      - name: Build Nebulastream
-        # we build with ccache to this end, we reuse the cache_dir and the build_dir across multiple invocation of the ci.
-        run: |
-          GPU_RUNNER_PARAMS=""
-          if [ "${{ matrix.runner_group }}" == "gpu" ]; then
-            GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/nvidia:/usr/lib/nvidia:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/nvidia:${LD_LIBRARY_PATH}"
-          fi
-          cache_dir="/data/nes-ci/tmp/nes-ccache_${{ matrix.osversion }}_${{ matrix.arch }}"
-          echo "cache_dir=$cache_dir"
-          mkdir -p $cache_dir
-          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          echo "build_dir=$build_dir"
-          mkdir -p $build_dir
-          docker run --rm --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_build -v $GITHUB_WORKSPACE:/nebulastream  -v $cache_dir:/cache_dir -v $build_dir:/build_dir -eRequireBuild=${{ matrix.require_build }} -eNesTestParallelism=${{ matrix.test_parallelism }} -eNesBuildParallelism=${{ matrix.build_parallelism }} --privileged --cap-add SYS_NICE $GPU_RUNNER_PARAMS --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
-      - name: Run tests
-        run: |
-          GPU_RUNNER_PARAMS=""
-          if [ "${{ matrix.runner_group }}" == "gpu" ]; then
-            GPU_RUNNER_PARAMS="-v /usr/local/cuda:/usr/local/cuda:ro -v /usr/lib/x86_64-linux-gnu:/usr/lib/x86_64-linux-gnu:ro -e PATH=/usr/local/cuda/bin:${PATH} -e LD_LIBRARY_PATH=/usr/local/cuda/lib64:/usr/lib/x86_64-linux-gnu:${LD_LIBRARY_PATH}"
-          fi
-          RUNNER=$(basename $(dirname $(dirname $(dirname $(pwd)))))
-          build_dir="/data/nes-ci/tmp/nes-build_$RUNNER_${RUNNER_NAME}_${{ matrix.osversion }}_${{ matrix.arch }}"
-          docker run --rm --name ${{ github.run_id }}_${{ matrix.osversion }}_${{ matrix.runner_group }}_${{ matrix.arch }}_test -v $GITHUB_WORKSPACE:/nebulastream  -v $build_dir:/build_dir -eRequireTest=${{ matrix.require_test }} --privileged --cap-add SYS_NICE ${GPU_RUNNER_PARAMS} --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-run-tests.sh nes_build_${{ matrix.osversion }} ${{ matrix.runner_group }}
-        shell: bash
+  build-linux:
+    name: "Build ${{matrix.platform}}"
+    if: ${{ ! failure() && ! cancelled() }}
+    needs: [ docker-development-images , detect-dependency-changes ]
+    container:
+      image: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}
+      volumes:
+        - ccache:/ccache
+      env:
+        CCACHE_DIR: /ccache
+      options: --user root
+    timeout-minutes: 40
+    runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
+    strategy:
+      fail-fast: false
+      matrix:
+        platform: [ x64, arm64 ]
+    steps:
+      - uses: actions/checkout@v4
+      - name: Configure NebulaStream
+        run: cmake -GNinja -B build -DNES_USE_CCACHE=ON
+      - name: Build NebulaStream
+        run: cmake --build build -j -- -k 0
+      - name: Run Tests
+        run: ctest --test-dir build -j --output-on-failure
