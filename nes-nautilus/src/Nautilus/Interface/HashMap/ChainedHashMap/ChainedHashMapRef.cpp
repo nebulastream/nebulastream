@@ -77,7 +77,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash, const 
     auto entry = insert(hash);
     // store keys
     auto keyPtr = entry.getKeyPtr();
-    for (size_t i = 0; i < keys.size(); i++) {
+    for (nautilus::static_val<uint64_t> i = 0; i < keys.size(); ++i) {
         auto& key = keys[i];
         writeExecDataTypeToMemRef(keyPtr, key);
         keyPtr = keyPtr + nautilus::val<uint64_t>(keyDataTypes[i]->size());
@@ -89,10 +89,11 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::find(const UInt64& hash, const st
     // find chain
     auto entry = findChain(hash);
     // iterate chain and search for the correct entry
-    for (; entry != nullptr; entry = entry.getNext()) {
+    while(entry != nullptr) {
         if (compareKeys(entry, keys)) {
             break;
         }
+        entry = entry.getNext();
     }
     return entry;
 }
@@ -119,7 +120,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const UInt64& hash,
 
         std::stringstream ss;
         ss << (*keys[0]);
-        for (size_t i = 1; i < keys.size(); i++) {
+        for (nautilus::static_val<uint64_t> i = 1; i < keys.size(); i++) {
             ss << ", " << (*keys[i]);
         }
         NES_INFO("Created new entry for keys: {}", ss.str());
@@ -147,7 +148,7 @@ void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const st
 Boolean ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys) {
     auto equals = ExecutableDataType<bool>::create(true);
     auto keyPtr = entry.getKeyPtr();
-    for (size_t i = 0; i < keys.size(); i++) {
+    for (nautilus::static_val<uint64_t> i = 0; i < keys.size(); i++) {
         auto& key = keys[i];
         const auto keyFromEntry = readExecDataTypeFromMemRef(keyPtr, keyDataTypes[i]);
         const auto tmp = (key == keyFromEntry);
@@ -155,14 +156,15 @@ Boolean ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<ExecDa
         keyPtr = keyPtr + nautilus::val<uint64_t>(keyDataTypes[i]->size());
     }
 
+    return equals->as<ExecDataBoolean>()->getRawValue();
 //    We need to do one of the following but this is quite ugly
 //    if ((*equals->as<ExecDataBoolean>())()) {
 //    if (*equals) {
-    if (equals->as<ExecDataBoolean>()->getRawValue()) {
-        return {true};
-    } else {
-        return {false};
-    }
+//    if (equals->as<ExecDataBoolean>()->getRawValue()) {
+//        return {true};
+//    } else {
+//        return {false};
+//    }
 }
 
 ChainedHashMapRef::EntryIterator ChainedHashMapRef::begin() {
@@ -180,7 +182,7 @@ UInt64 ChainedHashMapRef::getCurrentSize() {
 
 UInt64 ChainedHashMapRef::getPageSize() { return getMember(this->hashTableRef, ChainedHashMap, pageSize, uint64_t); }
 
-void* getPageProxy(void* hmPtr, uint64_t pageIndex) {
+int8_t* getPageProxy(void* hmPtr, uint64_t pageIndex) {
     auto hashMap = (ChainedHashMap*) hmPtr;
     return hashMap->getPage(pageIndex);
 }

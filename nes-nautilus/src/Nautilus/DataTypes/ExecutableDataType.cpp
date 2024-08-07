@@ -347,8 +347,18 @@ void writeExecDataTypeToMemRef(nautilus::val<int8_t*>& memRef, const ExecDataTyp
     }
 }
 
-nautilus::val<bool> memEquals(nautilus::val<int8_t*> ptr1, nautilus::val<int8_t*> ptr2, const nautilus::val<uint64_t>& size) {
-    return nautilus::memcmp(ptr1, ptr2, size) == nautilus::val<int>(0);
+Boolean memEquals(nautilus::val<int8_t*> ptr1, nautilus::val<int8_t*> ptr2, const nautilus::val<uint64_t>& size) {
+//    return nautilus::memcmp(ptr1, ptr2, size) == nautilus::val<uint64_t>(0);
+
+    for (UInt64 i(0); i < size; ++i) {
+        auto tmp1 = static_cast<nautilus::val<int8_t>>(*(ptr1 + i));
+        auto tmp2 = static_cast<nautilus::val<int8_t>>(*(ptr2 + i));
+        if (tmp1 != tmp2) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
 void memCopy(nautilus::val<int8_t*> dest, nautilus::val<int8_t*> src, const nautilus::val<uint64_t>& size) {

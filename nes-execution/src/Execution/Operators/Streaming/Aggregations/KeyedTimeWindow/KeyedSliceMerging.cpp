@@ -20,6 +20,7 @@
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <nautilus/val.hpp>
 #include <Util/StdInt.hpp>
 #include <utility>
 
@@ -87,7 +88,10 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
         this->child->open(ctx, buffer);
     }
 
-    NES_INFO("Received buffer...");
+//    ((void) buffer);
+//    ((void) ctx);
+
+//    NES_INFO("Received buffer...");
 
     // 1. get the operator handler and extract the slice information that should be combined.
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -107,7 +111,7 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     combineThreadLocalSlices(globalHashTable, sliceMergeTask);
     nautilus::invoke(freeKeyedSliceMergeTask, sliceMergeTask);
 
-    // 4. emit global slice when we have a tumbling window.
+//     4. emit global slice when we have a tumbling window.
     sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk, globalSlice);
 }
 

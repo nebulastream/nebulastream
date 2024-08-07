@@ -163,7 +163,7 @@ using ExecDataBooleanPtr = ExecutableDataTypePtr<bool>;
 // Might move these methods into a MemRefUtils or something like that
 ExecDataType readExecDataTypeFromMemRef(MemRef& memRef, const PhysicalTypePtr& type);
 void writeExecDataTypeToMemRef(MemRef& memRef, const ExecDataType& execDataType);
-nautilus::val<bool> memEquals(MemRef ptr1, MemRef ptr2, const nautilus::val<uint64_t>& size);
+Boolean memEquals(MemRef ptr1, MemRef ptr2, const nautilus::val<uint64_t>& size);
 void memCopy(MemRef dest, MemRef src, const nautilus::val<uint64_t>& size);
 
 

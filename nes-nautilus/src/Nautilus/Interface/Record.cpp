@@ -51,7 +51,7 @@ void Record::write(const Record::RecordFieldIdentifier& recordFieldIdentifier, c
 std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
     std::vector<Record::RecordFieldIdentifier> fieldIdentifierVec;
     fieldIdentifierVec.reserve(recordFields.size());
-for (auto& [fieldIdentifier, value] : recordFields) {
+    for (auto& [fieldIdentifier, value] : recordFields) {
         fieldIdentifierVec.emplace_back(fieldIdentifier);
     }
 
@@ -61,16 +61,16 @@ for (auto& [fieldIdentifier, value] : recordFields) {
 std::string Record::toString() {
 
     // Figure out later why this does not seem to work.
-//    return fmt::format("{}", fmt::join(recordFields, ", "));
-    std::ostringstream oss;
-    for (const auto& [fieldIdentifier, value] : recordFields) {
-        oss << fieldIdentifier << ": " << value << ", ";
-    }
-    return oss.str();
+    //    return fmt::format("{}", fmt::join(recordFields, ", "));
+//    std::ostringstream oss;
+//    for (const auto& [fieldIdentifier, value] : recordFields) {
+//        oss << fieldIdentifier << ": " << value << ", ";
+//    }
+//    return oss.str();
+    return "NOT IMPLEMENTED";
 }
 
 uint64_t Record::numberOfFields() const { return recordFields.size(); }
 bool Record::hasField(const Record::RecordFieldIdentifier& fieldName) { return recordFields.contains(fieldName); }
-
 
 }// namespace NES::Nautilus

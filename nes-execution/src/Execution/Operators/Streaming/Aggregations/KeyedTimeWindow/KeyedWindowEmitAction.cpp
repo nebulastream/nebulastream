@@ -52,6 +52,15 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
     ctx.setChunkNumber(chunkNumber->getRawValue());
     ctx.setLastChunk(lastChunk->getRawValue());
 
+    ((void) windowEnd);
+    ((void) globalSlice);
+    ((void) child);
+    ((void) ctx);
+    ((void) windowStart);
+    ((void) sequenceNumber);
+    ((void) chunkNumber);
+    ((void) lastChunk);
+
     NES_INFO("Emitting tuples...");
 
     auto globalSliceState = nautilus::invoke(getKeyedSliceState, globalSlice);
