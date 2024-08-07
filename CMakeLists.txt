@@ -31,7 +31,6 @@ option(NES_BUILD_DEPENDENCIES_LOCAL "Build all dependencies locally" OFF)
 cmake_dependent_option(NES_USE_PREBUILD_DEPENDENCIES "Use pre-build dependencies" ON "NOT NES_BUILD_NATIVE; NOT CMAKE_TOOLCHAIN_FILE" OFF)
 
 #toggle import and usage of s2 library
-option(NES_USE_S2 "Toggle use of s2 library" OFF)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
@@ -390,19 +389,6 @@ endif ()
 
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
-
-# s2 Library
-if (NES_USE_S2)
-    message(STATUS "s2 is enabled")
-    find_package(s2 REQUIRED)
-    if (NOT s2_FOUND)
-        message(FATAL_ERROR "Unable to find s2 library")
-    endif ()
-    set(LIBRARIES_S2 s2::s2)
-    add_compile_definitions(S2DEF)
-else ()
-    message(STATUS "s2 is disabled")
-endif ()
 
 if (NES_USE_GPU)
     find_package(CUDAToolkit REQUIRED)
