@@ -404,21 +404,6 @@ else ()
     message(FATAL_ERROR "Cannot find llvm. LLVM ${LLVM_VERSION} is required. Use self-hosted=1 or install it manually.")
 endif ()
 
-find_package(Clang)
-if (Clang_FOUND)
-    get_property(CLANG_FORMAT_EXECUTABLE TARGET clang-format PROPERTY LOCATION)
-    get_property(CLANG_TIDY_EXECUTABLE TARGET clang-tidy PROPERTY LOCATION)
-    get_property(CLANG_APPLY_REPLACEMENTS_EXECUTABLE TARGET clang-apply-replacements PROPERTY LOCATION)
-    get_property(CLANG_EXECUTABLE TARGET clang PROPERTY LOCATION)
-    set(CLANG_INCLUDE_DIR ${LLVM_BINARY_DIR}/lib/clang/${LLVM_VERSION_MAJOR}/include/)
-    message(STATUS "CLANG_FORMAT_EXECUTABLE ${CLANG_FORMAT_EXECUTABLE}")
-    message(STATUS "CLANG_TIDY_EXECUTABLE ${CLANG_TIDY_EXECUTABLE}")
-    message(STATUS "CLANG_APPLY_REPLACEMENTS_EXECUTABLE ${CLANG_APPLY_REPLACEMENTS_EXECUTABLE}")
-    message(STATUS "CLANG_EXECUTABLE ${CLANG_EXECUTABLE}")
-else ()
-    message(FATAL_ERROR "Cannot find clang.")
-endif ()
-
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     find_package(JNI)
     if (JNI_FOUND)
@@ -519,8 +504,6 @@ add_custom_target(build_all_plugins)
 add_subdirectory(nes-common)
 # Add target for all data types
 add_subdirectory(nes-data-types)
-# Add target for the compiler
-add_subdirectory(nes-compiler)
 # Add target for the runtime
 add_subdirectory(nes-runtime)
 # Add target for configurations
@@ -547,7 +530,6 @@ add_subdirectory(cmake/docs)
 if(NOT CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
     add_subdirectory(asio)
 endif()
-
 
 
 # Custom test commands --------------------------------------------------------
