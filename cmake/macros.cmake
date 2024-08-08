@@ -152,60 +152,6 @@ macro(project_enable_emulated_tests)
     endif ()
 endmacro(project_enable_emulated_tests)
 
-macro(project_enable_release)
-    if (NOT IS_GIT_DIRECTORY)
-        message(AUTHOR_WARNING " -- Disabled release target as git not configured.")
-    elseif (${${PROJECT_NAME}_BRANCH_NAME} STREQUAL "master")
-        add_custom_target(release COMMAND echo "Releasing Patch Version of NebulaStream")
-        add_custom_command(TARGET release
-                COMMAND echo "GIT-CI: Updating NES version"
-                COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
-                COMMAND echo "Push new tag to the repository"
-                COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/release/PushTag.cmake
-                COMMAND echo "Performing post tag release steps"
-                COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
-                COMMAND echo "Tag release completed"
-        )
-
-        add_custom_target(minor_release COMMAND echo "Releasing Minor Version of NebulaStream")
-        add_custom_command(TARGET minor_release
-                COMMAND echo "GIT-CI: Updating NES version"
-                COMMAND ${CMAKE_COMMAND} -DMINOR_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
-                COMMAND echo "Push new tag to the repository"
-                COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/release/PushTag.cmake
-                COMMAND echo "Performing post tag release steps"
-                COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
-                COMMAND echo "Tag release completed"
-        )
-
-        add_custom_target(major_release COMMAND echo "Releasing Major Version of NebulaStream")
-        add_custom_command(TARGET major_release
-                COMMAND echo "GIT-CI: Updating NES version"
-                COMMAND ${CMAKE_COMMAND} -DMAJOR_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
-                COMMAND echo "Push new tag to the repository"
-                COMMAND ${CMAKE_COMMAND} -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/release/PushTag.cmake
-                COMMAND echo "Performing post tag release steps"
-                COMMAND ${CMAKE_COMMAND} -DPOST_RELEASE=1 -DGIT_EXECUTABLE=${GIT_EXECUTABLE} -P ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/UpdateVersion.cmake
-                COMMAND echo "Tag release completed"
-        )
-    else ()
-        message(INFO " -- Disabled release target as currently not on master branch.")
-    endif ()
-endmacro(project_enable_release)
-
-macro(project_enable_version)
-    if (NOT IS_GIT_DIRECTORY)
-        message(AUTHOR_WARNING " -- Disabled version target as git not configured.")
-    else ()
-        add_custom_target(version COMMAND echo "version: ${${PROJECT_NAME}_VERSION}")
-        add_custom_command(TARGET version COMMAND cp -f ${CMAKE_CURRENT_SOURCE_DIR}/cmake/semver/version.hpp.in ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp
-                COMMAND sed -i 's/@NES_VERSION_MAJOR@/${${PROJECT_NAME}_VERSION_MAJOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp
-                COMMAND sed -i 's/@NES_VERSION_MINOR@/${${PROJECT_NAME}_VERSION_MINOR}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp
-                COMMAND sed -i 's/@NES_VERSION_PATCH@/${${PROJECT_NAME}_VERSION_PATCH}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp
-                COMMAND sed -i 's/@NES_VERSION_POST_FIX@/${${PROJECT_NAME}_NES_VERSION_POST_FIX}/g' ${CMAKE_CURRENT_SOURCE_DIR}/nes-common/include/Version/version.hpp)
-    endif ()
-endmacro(project_enable_version)
-
 macro(get_nes_log_level_value NES_LOGGING_VALUE)
     message(STATUS "Provided log level is: ${NES_LOG_LEVEL}")
     if (${NES_LOG_LEVEL} STREQUAL "TRACE")
