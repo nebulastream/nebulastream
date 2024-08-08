@@ -336,22 +336,6 @@ endif ()
 set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
 
 
-# LibZMQ
-message(STATUS "Libzmq")
-find_package(ZeroMQ CONFIG REQUIRED)
-if (NOT ${ZeroMQ_FOUND})
-    message(FATAL_ERROR "Unable to find libzmq")
-endif ()
-set(LIBRARIES_ZMQ ${LIBRARIES_ZMQ} libzmq libzmq-static)
-
-# CppZMQ
-message(STATUS "cppzmq")
-find_package(cppzmq CONFIG REQUIRED)
-if (NOT ${CPPZMQ_FOUND})
-    message(FATAL_ERROR "Unable to find cppzmq")
-endif ()
-set(LIBRARIES ${LIBRARIES} cppzmq cppzmq-static)
-
 # Backward
 include(cmake/BackwardConfig.cmake)
 include_directories(${BACKWARD_INCLUDE_DIRS})
