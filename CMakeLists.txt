@@ -437,6 +437,7 @@ add_subdirectory(nes-window-types)
 add_subdirectory(nes-memory)
 
 add_subdirectory(nes-single-node-worker)
+add_subdirectory(nes-nebuli)
 
 # Documentation
 add_subdirectory(cmake/docs)
