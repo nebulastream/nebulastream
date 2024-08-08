@@ -28,10 +28,6 @@
 #include <Util/ThreadBarrier.hpp>
 #include <Util/ThreadNaming.hpp>
 
-#ifdef __linux__
-#    include <Runtime/HardwareManager.hpp>
-#endif
-
 #ifdef ENABLE_PAPI_PROFILER
 #    include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
@@ -44,7 +40,6 @@ ThreadPool::ThreadPool(
     uint32_t numThreads,
     std::vector<BufferManagerPtr> bufferManagers,
     uint64_t numberOfBuffersPerWorker,
-    HardwareManagerPtr hardwareManager,
     std::vector<uint64_t> workerPinningPositionList)
     : nodeId(nodeId)
     , numThreads(numThreads)
@@ -52,7 +47,6 @@ ThreadPool::ThreadPool(
     , bufferManagers(bufferManagers)
     , numberOfBuffersPerWorker(numberOfBuffersPerWorker)
     , workerPinningPositionList(workerPinningPositionList)
-    , hardwareManager(hardwareManager)
 {
 }
 

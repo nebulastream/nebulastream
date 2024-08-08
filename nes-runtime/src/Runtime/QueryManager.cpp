@@ -27,7 +27,6 @@
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/HardwareManager.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -44,7 +43,6 @@ QueryManager::QueryManager(
     std::vector<BufferManagerPtr> bufferManagers,
     WorkerId nodeEngineId,
     uint16_t numThreads,
-    HardwareManagerPtr hardwareManager,
     uint64_t numberOfBuffersPerEpoch,
 
     std::vector<uint64_t> workerToCoreMapping)
@@ -52,7 +50,6 @@ QueryManager::QueryManager(
     , nodeEngineId(nodeEngineId)
     , bufferManagers(std::move(bufferManagers))
     , numThreads(numThreads)
-    , hardwareManager(std::move(hardwareManager))
     , workerToCoreMapping(std::move(workerToCoreMapping))
     , queryStatusListener(std::move(queryStatusListener))
     , numberOfBuffersPerEpoch(numberOfBuffersPerEpoch)
@@ -100,13 +97,7 @@ bool QueryManager::startThreadPool(uint64_t numberOfBuffersPerWorker)
 #endif
 
         threadPool = std::make_shared<ThreadPool>(
-            nodeEngineId,
-            inherited0::shared_from_this(),
-            numThreads,
-            bufferManagers,
-            numberOfBuffersPerWorker,
-            hardwareManager,
-            workerToCoreMapping);
+            nodeEngineId, inherited0::shared_from_this(), numThreads, bufferManagers, numberOfBuffersPerWorker, workerToCoreMapping);
         return threadPool->start();
     }
 

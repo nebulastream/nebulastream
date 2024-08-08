@@ -23,7 +23,6 @@
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #    if defined(__linux__)
 #        include <numa.h>
-#        include <Runtime/HardwareManager.hpp>
 #    endif
 #endif
 namespace NES

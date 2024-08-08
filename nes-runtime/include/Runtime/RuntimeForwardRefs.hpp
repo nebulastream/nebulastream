@@ -80,9 +80,6 @@ using PhysicalSchemaPtr = std::shared_ptr<PhysicalSchema>;
 
 class TupleBuffer;
 
-class HardwareManager;
-using HardwareManagerPtr = std::shared_ptr<HardwareManager>;
-
 class OpenCLManager;
 using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
 

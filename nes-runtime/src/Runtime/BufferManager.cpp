@@ -16,7 +16,6 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/HardwareManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
