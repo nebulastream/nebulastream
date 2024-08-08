@@ -36,7 +36,7 @@ using namespace ::testing;
 
 struct QueryTestParam
 {
-    std::string queryFile;
+    std::filesystem::path queryFile;
     int numSources;
     int expectedNumTuples;
     int expectedCheckSum;
@@ -104,17 +104,16 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
         uint64_t id;
     };
 
-    const auto& [queryName, numSources, expectedNumTuples, expectedCheckSum] = GetParam();
-    const std::string queryInputFile = fmt::format("{}.bin", queryName);
-    const std::string queryResultFile = fmt::format("{}.csv", queryName);
+    const auto& [queryFile, numSources, expectedNumTuples, expectedCheckSum] = GetParam();
+    const std::string queryResultFile = fmt::format("{}.csv", queryFile.filename());
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
     SerializableDecomposedQueryPlan queryPlan;
-    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
+    if (!IntegrationTestUtil::loadFile(queryPlan, queryFile))
     {
         GTEST_SKIP();
     }
-    IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryName));
+    IntegrationTestUtil::replaceFileSinkPath(queryPlan, queryResultFile);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
@@ -170,7 +169,7 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
-        QueryTestParam{"qOneTCPSourceWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
+        QueryTestParam{QUERY_qOneTCPSource, 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
+        QueryTestParam{QUERY_qOneTCPSourceWithFilter, 1, 16, 120 /* SUM(0, 1, ..., 31) */},
+        QueryTestParam{QUERY_qTwoTCPSourcesWithFilter, 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
 } /// namespace NES::Testing

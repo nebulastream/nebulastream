@@ -37,7 +37,7 @@ using namespace ::testing;
 
 struct QueryTestParam
 {
-    std::string queryFile;
+    std::filesystem::path queryFile;
     int numSources;
     int expectedNumTuples;
     int expectedCheckSum;
@@ -105,18 +105,17 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
         uint64_t id;
     };
 
-    const auto& [queryName, numSources, expectedNumTuples, expectedCheckSum] = GetParam();
-    const std::string queryInputFile = fmt::format("{}.bin", queryName);
-    const std::string queryResultFile = fmt::format("{}.csv", queryName);
+    const auto& [queryFile, numSources, expectedNumTuples, expectedCheckSum] = GetParam();
+    const std::string queryResultFile = fmt::format("{}.csv", queryFile.filename());
     IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
     SerializableDecomposedQueryPlan queryPlan;
     const auto querySpecificDataFileName = fmt::format("{}_{}", queryName, dataInputFile);
-    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile, dataInputFile, querySpecificDataFileName))
+    if (!IntegrationTestUtil::loadFile(queryPlan, queryFile, dataInputFile, querySpecificDataFileName))
     {
         GTEST_SKIP();
     }
-    IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryName));
+    IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryFile));
     IntegrationTestUtil::replaceInputFileInCSVSources(queryPlan, querySpecificDataFileName);
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
@@ -172,5 +171,7 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
 }
 
 INSTANTIATE_TEST_CASE_P(
-    QueryTests, SingleNodeIntegrationTest, testing::Values(QueryTestParam{"query5", 1, 64, 992 /* 2*SUM(0, 1, ..., 31) */}));
+    QueryTests,
+    SingleNodeIntegrationTest,
+    testing::Values(QueryTestParam{QUERY_qOneCSVSourceAndOneTCPSourceWithFilter, 1, 64, 992 /* 2*SUM(0, 1, ..., 31) */}));
 } /// namespace NES::Testing
