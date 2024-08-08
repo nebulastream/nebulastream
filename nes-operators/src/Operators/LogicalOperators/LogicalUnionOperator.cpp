@@ -17,7 +17,7 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 
 namespace NES
 {

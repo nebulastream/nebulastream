@@ -23,7 +23,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Util/Common.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
