@@ -58,15 +58,14 @@ QueryCompilation::QueryCompilationResultPtr NautilusQueryCompiler::compileQuery(
     try
     {
         Timer timer("NautilusQueryCompiler");
-        auto queryId = request->getDecomposedQueryPlan()->getSharedQueryId();
-        auto subPlanId = request->getDecomposedQueryPlan()->getDecomposedQueryPlanId();
-        auto query = fmt::format("{}-{}", queryId, subPlanId);
+        auto queryId = request->getDecomposedQueryPlan()->getQueryId();
+        auto query = fmt::format("{}", queryId);
         /// create new context for handling debug output
         auto dumpContext = DumpContext::create("QueryCompilation-" + query);
         dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
         timer.start();
-        NES_DEBUG("compile query with id: {} subPlanId: {}", queryId, subPlanId);
+        NES_DEBUG("compile query with id: {}", queryId);
         auto logicalQueryPlan = request->getDecomposedQueryPlan();
         dumpContext->dump("1. LogicalQueryPlan", logicalQueryPlan);
         timer.snapshot("LogicalQueryPlan");

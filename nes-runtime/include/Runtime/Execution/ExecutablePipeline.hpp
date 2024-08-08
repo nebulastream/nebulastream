@@ -51,44 +51,19 @@ class ExecutablePipeline : public Reconfigurable, public Runtime::RuntimeEventLi
     };
 
 public:
-    /**
-     * @brief Constructor for an executable pipeline.
-     * @param pipelineId The Id of this pipeline
-     * @param querySubPlanId the id of the query sub plan
-     * @param queryManager reference to the queryManager
-     * @param pipelineContext the pipeline context
-     * @param executablePipelineStage the executable pipeline stage
-     * @param numOfProducingPipelines number of producing pipelines
-     * @param successorPipelines a vector of successor pipelines
-     * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
-     * @return ExecutablePipelinePtr
-     */
     explicit ExecutablePipeline(
         PipelineId pipelineId,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
+        QueryId queryId,
         QueryManagerPtr queryManager,
         PipelineExecutionContextPtr pipelineExecutionContext,
         ExecutablePipelineStagePtr executablePipelineStage,
         uint32_t numOfProducingPipelines,
         std::vector<SuccessorExecutablePipeline> successorPipelines,
-        bool reconfiguration);
+        bool reconfiguration = false);
 
-    /**
-     * @brief Factory method to create a new executable pipeline.
-     * @param pipelineId The Id of this pipeline
-     * @param decomposedQueryPlanId the id of the query sub plan
-     * @param pipelineContext the pipeline context
-     * @param executablePipelineStage the executable pipeline stage
-     * @param numOfProducingPipelines number of producing pipelines
-     * @param successorPipelines a vector of successor pipelines
-     * @param reconfiguration indicates if this is a reconfiguration task. Default = false.
-     * @return ExecutablePipelinePtr
-     */
     static ExecutablePipelinePtr create(
         PipelineId pipelineId,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
+        QueryId queryId,
         const QueryManagerPtr& queryManager,
         const PipelineExecutionContextPtr& pipelineExecutionContext,
         const ExecutablePipelineStagePtr& executablePipelineStage,
@@ -96,106 +71,38 @@ public:
         const std::vector<SuccessorExecutablePipeline>& successorPipelines,
         bool reconfiguration = false);
 
-    /**
-     * @brief Execute a pipeline stage
-     * @param inputBuffer: the input buffer on which to execute the pipeline stage
-     * @param workerContext: the worker context
-     * @return true if no error occurred
-     */
+    /// Execute a pipeline stage
     ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
 
-    /**
-   * @brief Initialises a pipeline stage
-   * @return boolean if successful
-   */
-    bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
+    [[nodiscard]] bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
+    [[nodiscard]] bool start();
+    [[nodiscard]] bool stop(QueryTerminationType terminationType);
+    [[nodiscard]] bool fail();
 
-    /**
-     * @brief Starts a pipeline stage and passes statemanager and local state counter further to the operator handler
-     * @param stateManager pointer to the current state manager
-     * @return Success if pipeline stage started 
-     */
-    bool start();
+    [[nodiscard]] bool isRunning() const;
 
-    /**
-     * @brief Stops pipeline stage
-     * @param terminationType indicates the termination type see @QueryTerminationType
-     * @return  Success if pipeline stage stopped
-     */
-    bool stop(QueryTerminationType terminationType);
+    [[nodiscard]] PipelineId getPipelineId() const;
+    [[nodiscard]] QueryId getQueryId() const;
 
-    /**
-     * @brief Fails pipeline stage
-     * @return true if successful
-     */
-    bool fail();
+    /// returns true if the pipeline contains a function pointer for a reconfiguration task
+    [[nodiscard]] bool isReconfiguration() const;
 
-    /**
-    * @brief Get id of pipeline stage
-    * @return pipeline id
-    */
-    PipelineId getPipelineId() const;
-
-    /**
-     * @brief Get query sub plan id.
-     * @return QuerySubPlanId.
-     */
-    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
-
-    /**
-     * @brief Checks if this pipeline is running
-     * @return true if pipeline is running.
-     */
-    bool isRunning() const;
-
-    /**
-    * @return returns true if the pipeline contains a function pointer for a reconfiguration task
-    */
-    bool isReconfiguration() const;
-
-    /**
-     * @brief reconfigure callback called upon a reconfiguration
-     * @param task the reconfig descriptor
-     * @param context the worker context
-     */
+    /// Reconfigure callback called upon a reconfiguration
     void reconfigure(ReconfigurationMessage& task, WorkerContext& context) override;
 
-    /**
-     * @brief final reconfigure callback called upon a reconfiguration
-     * @param task the reconfig descriptor
-     */
+    /// final reconfigure callback called upon a reconfiguration
     void postReconfigurationCallback(ReconfigurationMessage& task) override;
 
-    /**
-     * @brief Get query plan id.
-     * @return QueryId.
-     */
-    SharedQueryId getSharedQueryId() const;
-
-    /**
-     * @brief Gets the successor pipelines
-     * @return SuccessorPipelines
-     */
     const std::vector<SuccessorExecutablePipeline>& getSuccessors() const;
 
-    /**
-     * @brief API method called upon receiving an event (from downstream)
-     * @param event
-     */
     void onEvent(Runtime::BaseEvent& event) override;
-
-    /**
-     * @brief API method called upon receiving an event (from downstream)
-     * @param event
-     */
     void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef);
 
     PipelineExecutionContextPtr getContext() { return pipelineContext; };
 
 private:
     const PipelineId pipelineId;
-    const SharedQueryId sharedQueryId;
-    const DecomposedQueryPlanId decomposedQueryPlanId;
+    const QueryId queryId;
     QueryManagerPtr queryManager;
     ExecutablePipelineStagePtr executablePipelineStage;
     PipelineExecutionContextPtr pipelineContext;

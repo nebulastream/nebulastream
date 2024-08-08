@@ -37,7 +37,7 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     BufferManagerPtr bufferManager)
     : PipelineExecutionContext(
         INVALID_PIPELINE_ID, /// mock pipeline id
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
+        INVALID_QUERY_ID, /// mock query id
         bufferManager,
         1,
         [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef)

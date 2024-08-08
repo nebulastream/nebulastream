@@ -44,7 +44,6 @@ QueryManager::QueryManager(
     WorkerId nodeEngineId,
     uint16_t numThreads,
     uint64_t numberOfBuffersPerEpoch,
-
     std::vector<uint64_t> workerToCoreMapping)
     : taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY))
     , nodeEngineId(nodeEngineId)
@@ -151,21 +150,21 @@ void QueryManager::destroy()
     }
 }
 
-SharedQueryId QueryManager::getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const
+QueryId QueryManager::getQueryId(QueryId queryId) const
 {
     std::unique_lock lock(statisticsMutex);
-    auto iterator = runningQEPs.find(decomposedQueryPlanId);
+    auto iterator = runningQEPs.find(queryId);
     if (iterator != runningQEPs.end())
     {
-        return iterator->second->getSharedQueryId();
+        return iterator->second->getQueryId();
     }
-    return INVALID_SHARED_QUERY_ID;
+    return INVALID_QUERY_ID;
 }
 
-Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(DecomposedQueryPlanId id)
+Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(QueryId queryId)
 {
     std::unique_lock lock(queryMutex);
-    auto it = runningQEPs.find(id);
+    auto it = runningQEPs.find(queryId);
     if (it != runningQEPs.end())
     {
         return it->second->getStatus();
@@ -173,10 +172,10 @@ Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(DecomposedQueryP
     return Execution::ExecutableQueryPlanStatus::Invalid;
 }
 
-Execution::ExecutableQueryPlanPtr QueryManager::getQueryExecutionPlan(DecomposedQueryPlanId id) const
+Execution::ExecutableQueryPlanPtr QueryManager::getQueryExecutionPlan(QueryId queryId) const
 {
     std::unique_lock lock(queryMutex);
-    auto it = runningQEPs.find(id);
+    auto it = runningQEPs.find(queryId);
     if (it != runningQEPs.end())
     {
         return it->second;
@@ -184,11 +183,11 @@ Execution::ExecutableQueryPlanPtr QueryManager::getQueryExecutionPlan(Decomposed
     return nullptr;
 }
 
-QueryStatisticsPtr QueryManager::getQueryStatistics(DecomposedQueryPlanId qepId)
+QueryStatisticsPtr QueryManager::getQueryStatistics(QueryId queryId)
 {
-    if (queryToStatisticsMap.contains(qepId))
+    if (queryToStatisticsMap.contains(queryId))
     {
-        return queryToStatisticsMap.find(qepId);
+        return queryToStatisticsMap.find(queryId);
     }
     return nullptr;
 }
@@ -213,26 +212,26 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task)
     switch (task.getType())
     {
         case ReconfigurationType::Destroy: {
-            auto qepId = task.getParentPlanId();
-            auto status = getQepStatus(qepId);
+            auto queryId = task.getQueryId();
+            auto status = getQepStatus(queryId);
             if (status == Execution::ExecutableQueryPlanStatus::Invalid)
             {
-                NES_WARNING("Query {} was already removed or never deployed", qepId);
+                NES_WARNING("Query {} was already removed or never deployed", queryId);
                 return;
             }
             NES_ASSERT(
                 status == Execution::ExecutableQueryPlanStatus::Stopped || status == Execution::ExecutableQueryPlanStatus::Finished
                     || status == Execution::ExecutableQueryPlanStatus::ErrorState,
-                "query plan " << qepId << " is not in valid state " << int(status));
+                "query plan " << queryId << " is not in valid state " << int(status));
             std::unique_lock lock(queryMutex);
-            if (auto it = runningQEPs.find(qepId); it != runningQEPs.end())
+            if (auto it = runningQEPs.find(queryId); it != runningQEPs.end())
             { /// note that this will release all shared pointers stored in a QEP object
                 it->second->destroy();
                 runningQEPs.erase(it);
             }
             /// we need to think if we want to remove this after a soft stop
             ///            queryToStatisticsMap.erase(qepId);
-            NES_DEBUG("QueryManager: removed running QEP  {}", qepId);
+            NES_DEBUG("QueryManager: removed running QEP  {}", queryId);
             break;
         }
         default: {
