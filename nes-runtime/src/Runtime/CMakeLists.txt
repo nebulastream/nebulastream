@@ -20,7 +20,6 @@ add_source_files(nes-runtime
         WorkerContext.cpp
         LocalBufferPool.cpp
         NesThread.cpp
-        BloomFilter.cpp
         TaggedPointer.cpp
 )
 

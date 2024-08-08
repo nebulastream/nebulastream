@@ -23,22 +23,13 @@ FixedPageRef::FixedPageRef(const Value<MemRef>& fixedPageRef) : fixedPageRef(fix
 {
 }
 
-void addHashToBloomFilterProxy(void* fixedPagePtr, uint64_t hash)
-{
-    auto* fixedPage = (FixedPage*)fixedPagePtr;
-    fixedPage->addHashToBloomFilter(hash);
-}
-
-Value<MemRef> FixedPageRef::allocateEntry(const Value<UInt64>& hash)
+Value<MemRef> FixedPageRef::allocateEntry()
 {
     auto currentPos = getCurrentPos();
 
     Value<MemRef> entry(nullptr);
     if (currentPos < getCapacity())
     {
-        ///TODO replace FunctionCall with Nautilus alternative, see #4176
-        FunctionCall("addHashToBloomFilterProxy", addHashToBloomFilterProxy, fixedPageRef, hash);
-
         auto ptr = getDataPtr() + currentPos * getSizeOfRecord();
         setCurrentPos(currentPos + 1);
         entry = ptr.as<MemRef>();

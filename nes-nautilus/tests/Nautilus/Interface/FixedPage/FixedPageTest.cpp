@@ -62,7 +62,7 @@ public:
 
         for (auto& it : allItems)
         {
-            auto ptrMemRef = fixedPageRef.allocateEntry(0_u64);
+            auto ptrMemRef = fixedPageRef.allocateEntry();
             auto* ptr = ptrMemRef.getValue().value;
 
             if (ptr == nullptr)
@@ -247,35 +247,6 @@ TEST_F(FixedPageTest, storeAndRetrieveTooManyValuesForOnePageNonDefaultPageSizeA
         });
 
     createFixedPageAndRunTests(pageSize, sizeOfRecord, allItems, numItemsOnPage);
-}
-
-TEST_F(FixedPageTest, bloomFilterCheckTest)
-{
-    const auto sizeOfRecord = sizeof(uint64_t);
-    const auto pageSize = FixedPage::PAGE_SIZE;
-    const auto numItems = pageSize / sizeOfRecord;
-    auto dataPtr = reinterpret_cast<uint8_t*>(allocator->allocate(pageSize));
-    FixedPage fixedPage(dataPtr, sizeOfRecord, pageSize);
-
-    for (uint64_t i = 0; i < numItems; ++i)
-    {
-        uint64_t hash = Util::murmurHash(i);
-        if (fixedPage.append(hash) == nullptr)
-        {
-            NES_ERROR("Could not insert tuple and thus the hash {} for {} in the FixedPage and consequently, the BloomFilter!", hash, i);
-            ASSERT_TRUE(false);
-        }
-    }
-
-    for (uint64_t i = 0; i < numItems; ++i)
-    {
-        uint64_t hash = Util::murmurHash(i);
-        if (!fixedPage.bloomFilterCheck(hash))
-        {
-            NES_ERROR("Could not find hash {} for {} in bloom filter!", hash, i);
-            ASSERT_TRUE(false);
-        }
-    }
 }
 
 } /// namespace NES::Nautilus::Interface

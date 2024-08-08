@@ -180,11 +180,6 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
             ///for every right page
             for (Value<UInt64> rightPageNo((uint64_t)0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1)
             {
-                ///TODO: introduce Bloomfilter here #3909
-                ///                if (!rhsPage->bloomFilterCheck(lhsKeyPtr, sizeOfLeftKey)) {
-                ///                    continue;
-                ///                }
-
                 ///for every key in right page
                 auto rightPageRef = Nautilus::FunctionCall(
                     "getPageFromBucketAtPosProxyForHashJoin",
