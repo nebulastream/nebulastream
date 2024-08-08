@@ -66,7 +66,7 @@ const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
-const std::string NUM_WORKER_THREADS_CONFIG = "numWorkerThreads";
+const std::string NUMBER_OF_WORKER_THREADS_CONFIG = "numberOfWorkerThreads";
 const std::string OPTIMIZER_CONFIG = "optimizer";
 const std::string WORKER_CONFIG = "worker";
 const std::string WORKER_CONFIG_PATH = "workerConfigPath";
