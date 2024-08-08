@@ -18,17 +18,6 @@ file(COPY testData DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 add_compile_definitions(TEST_DATA_DIRECTORY="${CMAKE_CURRENT_BINARY_DIR}/testData/")
 message(STATUS "Test Data Directory: ${TEST_DATA_DIRECTORY}/testData")
 
-
-include(FetchContent)
-FetchContent_Declare(tpch-dbgen
-        GIT_REPOSITORY https://github.com/nebulastream/tpch-dbgen.git
-        GIT_TAG master
-        )
-
-FetchContent_MakeAvailable(tpch-dbgen)
-# The tpch-dbgen target causes warnings on recent compilers. Thus we disable the warning for this target.
-target_compile_options(tpch-dbgen PUBLIC "-Wno-deprecated-non-prototype")
-
 function(add_nes_execution_test)
     add_nes_test(${ARGN})
     set(TARGET_NAME ${ARGV0})
