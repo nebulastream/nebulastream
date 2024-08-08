@@ -57,13 +57,6 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-message(STATUS "Execution benchmarks status: ${NES_BUILD_BENCHMARKS}")
-if (NES_BUILD_BENCHMARKS)
-    # Add tests with command
-    add_subdirectory(benchmark)
-    message(STATUS "Execution benchmarks are enabled")
-endif ()
-
 #Add the nes common and headers to cpack
 install(TARGETS nes-execution
         EXPORT NebulaStreamTargets
