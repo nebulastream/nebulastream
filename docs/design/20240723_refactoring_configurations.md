@@ -2,27 +2,35 @@
 
 The current implementation of configuration in NES is very ambiguous. In general, we define the following problems:
 
-P1: Existing configurations include partially implemented/non-implemented features. For instance, enableMonitoring, nodeSpatialType, numberOfBuffersPerEpoch, etc.
+**P1:** Existing configurations include partially implemented/non-implemented features. For instance, enableMonitoring, nodeSpatialType, numberOfBuffersPerEpoch, etc.
 
-P2: Different methods to create different configurations. For instance, to create a physicalSource configuration (a WrapOption type), we use PhysicalSourceFactoryPlugin and PhysicalSourceTypeFactory. To create locationCoordinates (also a WrapOption), we only use GeoLocationFactory.
+**P2:** Cumbersome architecture that supports ambiguous methods (e.g. setValue() and overloaded "=" operator, equals() and overloaded == operator), ambiguous classes (e.g. ConfigurationOption partially repeats functionality of TypedBaseOption) and an outdated file (ConfigurationsNames.hpp) that should contain all possible system configurations, however some are missing. 
 
-P3: Different places to define new configuration names. Specifically, most config names are defined in ConfigurationNames.hpp. However, some names are defined in WorkerConfigurationKeys.hpp and WorkerPropertyKeys.hpp.
+**P3:** Existing architecture of configurations include the following hierarchy:
 
-P4: Most of the configurations are not tested.
+flowchart TD
+A[BaseOption ] --> B
+A --> C
+B[TypedOption<T>] -->  E[ScalarOption<T>]
+B[TypedOption<T>] -->  F[EnumOption<T>]
+B[TypedOption<T>] -->  G[WrapOption<T, Factory>]
+C[SequenceOption<T>]
 
-P5: Unstructured module. The module's structure includes subdirectories: worker, coordinator, enums and validation on the same level. Logically, these subdirectories should not be on the same granularity as they are semantically different. What is worse is that enums are not the only complex type of configuration. We have WrapOption configurations, where each type requires a factory, but they are split between worker and coordinator subdirectories.
+This hierarchy implements the parsing functionality that is not intuitive. This results in developers interpreting it differently (e.g. WrapOption requires a factory to create a composite type, that resulted in PhysicalSourceFactoryPluging and PhysicalSourceTypeFactory)
+
+**P4:** Most of the configurations are not tested.
+
+**P5:** Unstructured module. The module's structure includes subdirectories: worker, coordinator, enums and validation on the same level. Logically, these subdirectories should not be on the same granularity as they are semantically different. What is worse is that enums are not the only complex type of configuration. We have WrapOption configurations, where each type requires a factory, but they are split between worker and coordinator subdirectories.
 
 # Goals
 
-G1: Remove irrelevant configurations.
+**G1:** Remove irrelevant configurations (P1).
 
-G2: Create documentation on a common way to create a configuration option of a non-primitive type.
+**G2:** Introduce intuitive configuration architecture (P2 and P5).
 
-G3: Move all configuration names to ConfigurationNames.hpp.
+**G3:** Support intuitive creation of new configuration options (P3).
 
-G4: Make sure all the configuration options that are left are tested.
-
-G5: Create a new module structure. 
+**G4:** Make sure all the configuration options that are left are tested (P4).
 
 # Non-Goals
 
@@ -126,39 +134,85 @@ The rest of the files without a specific type are related to the overall configu
 
 The "+" and "-" are related to both hpp and cpp files.
 
-## Create documentation on a common way of how to create complex configurations.
+## Create a lightweight architecture of handling and storing configuration options.
 
-We propose the following subsection in the documentation of configuration:
+Our proposed solution implements decentralized configuration architecture similar to (ClickHouse)[https://clickhouse.com/docs/en/operations/configuration-files]. A worker stores all configurations, and components proactively pull configurations from a specialized structure that is created after validation of individual configuration options.
+To this end, we propose:
+1) a singleton ConfigurationManager class that reads, validates and stores all the configurations at the startup.
 
-"To use WrapOption in a configuration class, follow these steps:
+```
+class ConfigurationManager {
+	public:
+   		static ConfigurationManager& getInstance();
+   		
+   		/// loadConfigurations calls loadYaml first to fill configValues and then rewrites some of them with the command line input
+   		void loadConfigurations(int argc, char* argv[]);
+   		
+   		template <typename T>
+    	T getValue(const std::string& key, const T& defaulValue) const;
+    	
+	private:
+		/// parsing can be done using YAML::LoadFile from the yaml-cpp library
+		loadYaml(const std::string& filename);
+		std::unordered_map<std::string, std::string> configValues;
+```
 
-1. Define a Factory Class:
+Having one file that is responsible for reading, validating and storing configuration options is intuitive (P2, P5) in contrast to having approx. 40 classes. Additionally, with physical sources being registered as plugins, there is no need in complex types of configuration options. Therefore, there is no need in a complicated hierarchy of configuration types (P3). Moreover, this approach can be nicely adapted to the query-based runtime reconfigurations, as it stores all options centrally.
 
-class XFactory {
+2) Use individual components classes to store configuration.
+
+```
+class NetworkConfig {
 public:
-    static X createFromString(std::string, std::map<std::string, std::string>& commandLineParams); {
-        // Logic to create X from string with custom validation
+    void loadCOnfig() {
+        auto& configManager = ConfigurationManager::getInstance();
+        hostName = configManager.getValue<std::string>("hostName", "localhost");
+        dataPort = configManager.getValue<uint64_t>("dataPort", 3001);
+        
+        /// and getters
     }
-
-    static X createFromYaml(Yaml::Node& yamlConfig) {
-        // Logic to create X from YAML node with custom validation
-    }
+private:
+    std::string hostName;
+    uint64_t dataPort;
 };
 
-2. Define a WrapOption in the configuration file:
+class QueryManagerConfig {
+public:
+    void loadConfig() {
+        auto& configManager = ConfigurationManager::getInstance();
+        numberOfBuffersPerWorker = configManager.getValue<uint64_t>("numberOfBuffersPerWorker", 128);
+        numberOfBuffersInSourceLocalBufferPool = configManager.getValue<uint64_t>("numberOfBuffersInSourceLocalBufferPool", 64);
+        
+        /// and getters
+    }
+private:
+    uint64_t numberOfBuffersPerWorker;
+    uint64_t numberOfBuffersInSourceLocalBufferPool;
+};
+```
 
-WrapOption<X, XFactory> xOption = {X, "Description of XOptions's configuration.");
+This approach makes intuitive creation of new configuration options (P3), as they logically distributed on per-component basis. Additionally, these classes can include further semantic-based validation. 
 
-A WrapOption can also be combined with a SequenceOption to create a composite configuration of a complex type:
+Each component can then load the necessary configurations.
 
-SequenceOption<WrapOption<X, XFactory>> XOptions = {X, "Description of XOptions's configuration."); 
+```
+class NetworkComponent {
+public:
+NetworkComponent(const NetworkConfig& config) : config(config) {}
 
-3. Write tests for valid and invalid values of created configuration in ConfigTest."
+    void initialize() {
+        uint64_t hostName = config.getHostName();
+        uint64_t dataPort = config.getDataPort();
+        
+        /// Spawn a ZQM server with a given hostName and port
+    }
 
-## Move all configuration names to ConfigurationNames.hpp.
+private:
+NetworkConfig config;
+};
+```
 
-In ConfigurationNames.hpp, we adjust the names of configurations that are left, and remove the note.
-We remove WorkerConfigurationKeys.hpp because it includes TENSOR_FLOW, JAVA_UDF, MOBILITY, SPATIAL_TYPE, and OPENCL_DEVICES, which are not relevant to the stable worker but are relevant for partially implemented features. We also remove WorkerPropertyKeys.hpp because SLOTS, LOCATION, and MAINTENANCE are irrelevant for the current milestone. DATA_PORT and GRPC_PORT can be moved to ConfigurationNames.hpp, and the ADDRESS is never used.
+This implementation can be simplified by removing the intermediate component configuration classes. However,  having these classes allows us to keep track of existing configuration options and avoid duplicates in the future.
 
 ## Make sure all the configuration options that are left are tested.
 
@@ -171,168 +225,165 @@ We remove WorkerConfigurationKeys.hpp because it includes TENSOR_FLOW, JAVA_UDF,
 - Valid configuration tests check for every option a valid value and an empty value (a default value should be assigned).
 - Invalid configuration tests check for every option a value of a wrong type, a semantically incorrect value (out of range), or an incorrect value that is specific for the type (in case applicable) (e.g., impossible number of buffers per global buffer pool).
 
-## Create a new module structure. 
-
-Current module structure:
-
-- nes-configurations:
-	- include
-		- Configurations:
-			- Coordinator
-			- Enums
-			- Validation
-			- Worker
-			*Other Configuration files related to existing configuration types and names*
-	- src
-	- tests
-
-The proposed structure of the module includes:
-
-- nes-configurations:
-	- include
-		- Core
-			- BaseOption.hpp
-			- BaseConfiguration.hpp
-			- ConfigurationNames.hpp
-		- ConfigurationTypes 
-			- Worker: // Will be extended to contain Coordinator
-                		- WorkerConfiguration.hpp 
-                		- QueryCompilerConfiguration.hpp
-		- OptionTypes
-			- ScalarOption.hpp 
-			- TypedBaseOption.hpp
-            		- SequenceOption.hpp
-            		- WrapOptions: // Potentially, all factories can be placed here
-				- WrapOption.hpp 
-			- Enums:
-            			- CompilationStrategy.hpp
-            			- DumpMode.hpp
-            			- NautilusBackend.hpp
-            			- OutputBufferOptimizationLevel.hpp
-            			- PipeliningStrategy.hpp
-            			- QueryCompilerType.hpp
-            			- WindowingStrategy.hpp
-				- EnumOption.hpp // General enum option
-				
-		- Validation
-			// All validation classes
-			
-	- src
-	- tests
-
-# Minimal Viable Prototype
-
-This work is refactoring of an existing solution.
 
 # Alternatives
 
-Centralized, hybrid and decentralized configuration architectures of exiting systems:
-
 ## Existing Solutions
+
+As part of existing solutions, we investigated MongoDB, RockDB, ClickHouse, MySQL, and FoundationDB. Below is a description of how these systems handle configurations classified by centralized, hybrid, and decentralized solutions.
 
 ### Centralized
 
-#### MongoDB
-
-1.	Configuration Loading:
-	  -	When a MongoDB instance (mongod or mongos) starts up, it first loads the configuration from the specified sources. These can be a configuration file (typically YAML), command-line arguments, or environment variables.
-2.	Parsing and Validation:
-	  -	The loaded configurations are parsed and validated in a centralized manner. This means that all configurations are read and checked for correctness and validity (such as data types, range constraints, and dependencies among settings) before any operational components (like the network or storage engines) start up.
-	  -	This step ensures that only valid configurations are applied to the system components, preventing runtime failures due to misconfigurations.
-3.	Application of Settings:
-	  -	After validation, the settings are then distributed internally to the various components of the MongoDB instance.
-4.	Dynamic Reconfiguration:
-	  -	Some settings can be changed at runtime without restarting the instance. These changes are typically made via administrative commands that apply the new settings immediately to the relevant system component. Even these changes follow a centralized validation process within the instance before they are applied.
-
-#### RocksDB
+**MongoDB**
+In terms of a single MongoDB instance, the configuration loading, parsing, and validation process are centralized within that instance before settings are applied to their respective components like storage, network, and others.
 
 1. Configuration Loading:
-   -	When a RocksDB instance is initialized, it first loads configuration settings from the application code where the database is embedded. Configurations are typically set up through various C++ structs such as Options, DBOptions, and ColumnFamilyOptions.
-   -	These configuration objects can be manually set in the code or loaded from an external source like a configuration file processed by the application, but RocksDB itself does not natively parse files or environment variables.
+- When a MongoDB instance (mongod or mongos) starts up, it first loads the configuration from the specified sources. These can be a configuration file (typically YAML), command-line arguments, or environment variables.
 2. Parsing and Validation:
-   -	Configuration objects like Options are filled with settings programmatically. Each setting is applied to the object properties directly in the code.
-   -	As the configuration settings are applied, RocksDB internally validates these settings. For example, write_buffer_size must be within a practical and permissible range to ensure it's operational. If any setting fails its validation checks (e.g., an excessively large buffer size or an invalid path), RocksDB will not proceed with the database initialization and will return an error.
-   -	This step ensures that only valid configurations are applied to the database engine, preventing runtime failures due to misconfigurations.
+- The loaded configurations are parsed and validated in a centralized manner. This means that all configurations are read and checked for correctness and validity (such as data types, range constraints, and dependencies among settings) before any operational components (like the network or storage engines) start up.
+- This step ensures that only valid configurations are applied to the system components, preventing runtime failures due to misconfigurations.
 3. Application of Settings:
-   -	Once validated, the settings contained within these configuration objects are applied to the respective components of the RocksDB instance.
-4.  Dynamic Reconfiguration:
-   -	Some options in RocksDB can be adjusted dynamically at runtime using methods like SetOptions(). This allows developers to modify certain parameters without needing to restart the database or application.
-   -	Dynamic reconfigurations are validated in a similar manner to initial configurations to ensure they are within allowable ranges and do not conflict with other operational parameters.
-
-#### MySQL
-
-1. Configuration Loading:
-   - When a MySQL instance (mysqld) starts up, it first loads the configuration from specified sources. These sources typically include configuration files (my.cnf or my.ini), which are the primary method for setting configuration options. Additionally, command-line arguments can be used to override settings in the configuration files, and in some cases, environment variables might influence settings. 
-   - Configuration files can exist in multiple standard locations, and MySQL reads these files in a specific order, allowing settings in files read later to override those read earlier.
-2. Parsing and Validation:
-   - The loaded configurations are parsed in a centralized manner as MySQL starts. This process involves interpreting the settings specified in the configuration files and command-line arguments, and integrating these into the server's operational parameters.
-   - Each configuration setting is validated for correctness and applicability. This includes checking data types (ensuring string or numeric values are appropriate), range constraints (ensuring numeric values fall within acceptable limits), and dependencies among settings (e.g., buffer pool size relative to available system memory).
-3. Application of Settings:
-   - After successful validation, the settings are applied internally to the various components of the MySQL instance.
+- After validation, the settings are then distributed internally to the various components of the MongoDB instance:
 4. Dynamic Reconfiguration:
-   - MySQL supports dynamic changes to certain settings while the server is running. These changes can be made through SQL commands, such as SET GLOBAL or SET SESSION, allowing administrators to adjust operational parameters without restarting the server.
-   - Dynamic changes are again validated 
+- Some settings can be changed at runtime without restarting the instance. These changes are typically made via administrative commands that apply the new settings immediately to the relevant system component. Even these changes follow a centralized validation process within the instance before they are applied.
+
+**RockDB**
+
+1. Configuration Loading:
+- When a RocksDB instance is initialized, it first loads configuration settings from the application code where the database is embedded. Configurations are typically set up through various C++ structs such as Options, DBOptions, and ColumnFamilyOptions.
+- These configuration objects can be manually set in the code or loaded from an external source like a configuration file processed by the application, but RocksDB itself does not natively parse files or environment variables.
+2. Parsing and Validation:
+- Configuration objects like Options are filled with settings programmatically. Each setting is applied to the object properties directly in the code.
+- As the configuration settings are applied, RocksDB internally validates these settings. For example, write_buffer_size must be within a practical and permissible range to ensure it's operational.
+3. Application of Settings:
+- Once validated, the settings contained within these configuration objects are applied to the respective components of the RocksDB instance.
+4. Dynamic Reconfiguration:
+- Some options in RocksDB can be adjusted dynamically at runtime using methods like SetOptions(). This allows developers to modify certain parameters without needing to restart the database or application.
+- Dynamic reconfigurations are validated in a similar manner to initial configurations to ensure they are within allowable ranges and do not conflict with other operational parameters.
+
+
+**MYSQL**
+1. Configuration Loading:
+- When a MySQL instance (mysqld) starts up, it first loads the configuration from specified sources. These sources typically include configuration files (my.cnf or my.ini), which are the primary method for setting configuration options. Additionally, command-line arguments can be used to override settings in the configuration files, and in some cases, environment variables might influence settings.
+- Configuration files can exist in multiple standard locations, and MySQL reads these files in a specific order, allowing settings in files read later to override those read earlier.
+2. Parsing and Validation:
+- The loaded configurations are parsed in a centralized manner as MySQL starts. This process involves interpreting the settings specified in the configuration files and command-line arguments, and integrating these into the server's operational parameters.
+- Each configuration setting is validated for correctness and applicability. This includes checking data types (ensuring string or numeric values are appropriate), range constraints (ensuring numeric values fall within acceptable limits), and dependencies among settings (e.g., buffer pool size relative to available system memory).
+3. Application of Settings:
+- After successful validation, the settings are applied internally to the various components of the MySQL instance.
+4. Dynamic Reconfiguration:
+- MySQL supports dynamic changes to certain settings while the server is running. These changes can be made through SQL commands, such as SET GLOBAL or SET SESSION, allowing administrators to adjust operational parameters without restarting the server.
+- Dynamic changes are validated in the same thorough manner as at startup, ensuring that adjustments do not compromise the stability or security of the server.
 
 ### Hybrid
 
-#### ClickHouse
+**ClickHouse**
 
 ClickHouse uses XML files (config.xml and users.xml) for configuration, which is somewhat less common in modern DBMSs that often prefer simpler formats like YAML or JSON. XML allows for a more structured and hierarchical configuration, which can be particularly advantageous for complex setups with many nested options.
 
 1. Configuration Loading:
-   - All configuration settings for ClickHouse are defined in XML files, such as config.xml for system settings and users.xml for user and access management settings. These files act as the central repository of all configuration data.
-   - These files act as the central repository of all configuration data.
+- All configuration settings for ClickHouse are defined in XML files, such as config.xml for system settings and users.xml for user and access management settings. The configurations are stored in objects that can be accessed globally within the ClickHouse server process.
+- Each component within ClickHouse—whether it's the server itself, various storage engines, or network interfaces—accesses the configuration settings it requires from this centralized data structure as needed. This approach is somewhat like a "pull" model, where each component retrieves its specific configuration parameters.
+- The components do not receive configurations passively; instead, they actively query the central configuration for the parameters relevant to their operational context.
 2. Parsing and Validation:
-   - When a ClickHouse server starts, it parses the XML configuration files. This process is centralized and handled by the main server process. The XML format allows complex hierarchical configurations, suitable for defining detailed settings and policies.
-   - During the parsing process, ClickHouse validates the configuration settings. This includes checking data types, validating the format of specified values (like IP addresses and ports), and ensuring that dependent settings are correctly configured (e.g., ensuring that settings related to replication are consistent across the cluster).
+- At startup, ClickHouse parses these XML files, loading settings into memory. During this initial load, some level of validation and parsing converts XML data into internal data structures that are more efficiently accessed by the server components.
 3. Application of Settings:
-   - Each component within ClickHouse accesses the configuration settings it requires from this centralized repository as needed. This approach is somewhat like a "pull" model, where each component retrieves its specific configuration parameters.
-   - The components actively query the central configuration for the parameters relevant to their operational context.
+- Server Configuration: Settings related to server operation, such as port numbers, memory limits, and path configurations, are applied to the server. This step configures how the server behaves in terms of network communication, data storage, and process management.
+- Database and Table Settings: ClickHouse allows setting configurations at the database and table levels, influencing how data is stored, compressed, and accessed.
+- User Profiles and Permissions: Configurations related to user profiles, access rights, and resource quotas are set up based on users.xml, defining how users interact with ClickHouse and what operations they are allowed to perform.
 4. Dynamic Reconfiguration:
-   - Runtime Changes: ClickHouse supports changing some settings dynamically at runtime through SQL commands, such as ALTER SYSTEM. This allows administrators to adjust and tune system settings without restarting the server.
-   - Consistency and Coordination: For changes that affect the whole cluster, such as cluster-wide settings in a distributed ClickHouse setup, ClickHouse manages consistency by propagating changes across all nodes and ensuring that new settings do not disrupt ongoing operations.
+- For runtime modifications, certain settings can be dynamically changed through system management interfaces, such as SQL queries that adjust operational parameters. These changes are then reflected back into the central configuration state.
+- Consistency and Coordination: For changes that affect the whole cluster, such as cluster-wide settings in a distributed ClickHouse setup, ClickHouse manages consistency by propagating changes across all nodes and ensuring that new settings do not disrupt ongoing operations.
 
 ### Decentralized
 
-#### FoundationDB
+**FoundationDB**
+
+In terms of a single FoundationDB instance, the configuration process is decentralized and is designed to efficiently handle runtime changes across all client and server components.
 
 1. Configuration Loading:
-   - FoundationDB does not rely on a single central configuration file at startup. Instead, configurations can be specified through command-line options or set programmatically in the database itself.
+- FoundationDB does not rely on a single central configuration file at startup. Instead, configurations can be specified through command-line options or set programmatically in the database itself.
 2. Parsing and Validation:
-   - Instead of a single central validation step before starting operations, FoundationDB uses a global configuration framework. This framework broadcasts updates to configuration values, which are then independently managed and applied by each machine in the cluster. This setup allows for configurations to be adjusted on-the-fly without needing to restart processes or interfere with ongoing operations.
-3. Application of Settings:
-   - Configuration changes in FoundationDB are applied almost in real-time through the global configuration key space. Each component, whether client or server, checks this key space and applies updates to its operational parameters independently. This includes settings for network operations, data storage, and other critical functions.
-   - The system uses an eventually consistent model to ensure that all components across the cluster eventually synchronize on the configuration settings without necessitating simultaneous downtime or reboots.
+- Instead of a single central validation step before starting operations, FoundationDB uses a global configuration framework. This framework broadcasts updates to configuration values, which are then independently managed and applied by each machine in the cluster. This setup allows for configurations to be adjusted on-the-fly without needing to restart processes or interfere with ongoing operations.
+3.	Application of Settings:
+- Configuration changes in FoundationDB are applied almost in real-time through the global configuration key space. Each component, whether client or server, checks this key space and applies updates to its operational parameters independently. This includes settings for network operations, data storage, and other critical functions.
+- The system uses an eventually consistent model to ensure that all components across the cluster eventually synchronize on the configuration settings without necessitating simultaneous downtime or reboots.
 4. Dynamic Reconfiguration:
-   - FoundationDB supports dynamic changes to configurations without service interruption. Changes are propagated through special transactions in the database and do not require direct file edits or command-line interventions post initial setup.
-   - This feature is particularly important in environments that require high availability and minimal downtime.
+- FoundationDB supports dynamic changes to configurations without service interruption. Changes are propagated through special transactions in the database and do not require direct file edits or command-line interventions post-initial setup.
 
 ## Potential Solutions
 
-### Centralized
+Overall, there are two ways how systems interpret centralized vs. decentralized: coordinator and workers level, and a worker and it's components level. We will discuss all of these options further.
 
-1. The coordinator stores everything and sends it to workers
--	Disadvantage: This approach is not efficient because workers require configurations at launch, and waiting for the coordinator to send configurations can delay startup processes.
+### Centralized (Coordinator-Worker)
 
-2. The coordinator stores all configurations, and workers pull necessary configurations as needed.
--	Advantage: Ensures that all workers have access to the latest configurations without storing them locally, which can simplify updates and maintenance.
--	Disadvantage: Assumes heterogeneity—different workers might require different configurations, which could complicate management and scaling in diverse environments.
+**SA1.** The coordinator stores all the configurations and propagates them to workers
+- **Disadvantage:** This approach can be inefficient as the coordinator can become a bottleneck in the case of thousands/millions of potential devices.
+- **Disadvantage:** Assumes homogeneity of workers — in case different workers will require different configurations it will require providing a worker id for specific configurations. However that is not known before the worker launch.
 
-Enhancement for Both: Utilize ZooKeeper to store configurations, allowing for centralized management with decentralized access.
+**SA2.** The coordinator stores all the configurations, and workers pull necessary configurations as needed.
+- **Advantage:** Ensures that all workers have access to the latest configurations without storing them locally, which can simplify updates and maintenance.
+- **Disadvantage:** Assumes homogeneity of workers — in case different workers will require different configurations it will require providing a worker id for specific configurations. However that is not known before the worker launch.
 
-### Decentralized
+_Enhancement for Both:_ Utilize ZooKeeper to store configurations, allowing for centralized management with decentralized access.
 
-1. The worker stores all configurations and distributes them across different components – current implementation
+### Decentralized (Coordinator-Worker)
 
-2. Worker stores all configurations, and components proactively pull configurations from a specialized structure.
--	Disadvantage: Imposes additional overhead on components, distracting them from their primary tasks and possibly affecting performance.
+#### Centralized (Worker-Components)
 
-3. All components store and manage their own configurations independently.
--	Advantage: Maximizes autonomy and responsiveness, as each component can quickly adapt configurations without dependencies.
--	Disadvantage: Risk of configuration drift where components become out of sync, leading to potential inconsistencies and duplication of configuration data across the system.
+**SB1.** The worker stores all configurations, perform per-type validation and distributes them across different components (current implementation)
+- **Advantage:** No redundant configurations
+- **Advantage:** No redundant type-based (Int, Bool, String, Array, etc.) validations
+- **Disadvantage:** No support for runtime reconfigurations. However, it could be implemented via query API
+- **Disadvantage:** No semantic-based validation (for example, numberOfBuffersInSourceLocalBufferPool cannot be larger than available memory)
+
+**SB2.** The worker stores all configurations, perform per-component validation and distributes them across different components
+- **Advantage:** Semantic based validation
+- **Advantage:** No redundant type-based validations
+- **Disadvantage:** No support for runtime reconfigurations. However, it could be implemented via query API
+- **Disadvantage:** Duplicates in configurations options, as some configurations participate in multiple components (e.g. numberOfBuffersPerEpoch in fault-tolerance participates in the network stack, final sinks, query optimizer)
+
+#### Hybrid (Worker-Components)
+
+**SC1.**  Worker stores all configurations, and components proactively pull configurations from a specialized structure that is created after validation of individual configuration options.
+- **Advantage:** No redundant configurations
+- **Advantage:** No redundant type-based validations
+- **Advantage:** Support of runtime reconfigurations
+- **Disadvantage:** Imposes additional overhead on components, distracting them from their primary tasks and possibly affecting performance.
+- **Disadvantage:** No semantic-based validation
+
+#### Decentralized (Worker-Components)
+
+**SD1.** All components store and manage their own configurations independently.
+- **Advantage:** Maximizes autonomy and responsiveness, as each component can quickly adapt configurations without dependencies.
+- **Advantage:** Semantic-based validation
+- **Disadvantage:** Risk of configuration drift where components become out of sync, leading to potential inconsistencies and duplication of configuration data across the system.
+- **Disadvantage:** Potential redundant copies of configurations
+- **Disadvantage:** Redundant typed-based validators. Could be potentially avoided if implemented in Util.
+- **Disadvantage:** No support for runtime reconfigurations. Potential difficulties implementing it without pushing extra burdain on the user to be aware of existing system subcomponents.
 
 # Open Questions
 
+Do we want to keep component related classes with configs or load configurations directly from the components themselves?
+
 # (Optional) Sources and Further Reading
 
-# (Optional) Appendix
+(MongoDB Configuration Options) [https://www.mongodb.com/docs/manual/reference/configuration-options/]
+
+(Runtime Configurations MongoDB) [https://www.mongodb.com/docs/manual/reference/configuration-options/]
+
+(How to Create, Use, and Customize MongoDB Configuration Files) [https://hevodata.com/learn/mongodb-configuration-files/]
+
+(RocksDB Configuration Options) [https://github.com/facebook/rocksdb/wiki/RocksDB-Tuning-Guide]
+
+(ClickHouse Configuration Files) [https://clickhouse.com/docs/en/operations/configuration-files/]
+
+(MySQL Server System Variables) [https://dev.mysql.com/doc/refman/8.0/en/server-system-variables.html]
+
+(MySQL Option Files) [https://dev.mysql.com/doc/refman/8.0/en/option-files.html]
+
+(FoundationDB Configurations) [https://apple.github.io/foundationdb/configuration.html]
+
+(Overview of DuckDB Configurations) [https://duckdb.org/docs/configuration/overview]
+
+
