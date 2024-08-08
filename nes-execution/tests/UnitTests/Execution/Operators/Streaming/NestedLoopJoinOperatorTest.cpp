@@ -37,7 +37,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Common.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>

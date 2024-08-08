@@ -16,7 +16,6 @@
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Sources/Util/MMapCircularBuffer.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <magic_enum.hpp>
 #include <Common/ExecutableType/Array.hpp>
