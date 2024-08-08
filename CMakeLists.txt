@@ -614,8 +614,6 @@ project_enable_check_comment_format()
 if (CMAKE_CROSSCOMPILING)
     project_enable_emulated_tests()
 endif ()
-project_enable_release()
-project_enable_version()
 instrument_codebase()
 
 
