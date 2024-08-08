@@ -21,7 +21,3 @@ endif ()
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_FLOUNDER)
     add_subdirectory(Flounder)
 endif ()
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
-    add_subdirectory(CPP)
-endif ()

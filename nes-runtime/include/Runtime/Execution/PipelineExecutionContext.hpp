@@ -161,7 +161,6 @@ private:
     /// Emit function handlers to react on an emitted tuple buffer
     std::function<void(Memory::TupleBuffer&, WorkerContext&)> emitFunctionHandler;
     std::function<void(Memory::TupleBuffer&)> emitToQueryManagerFunctionHandler;
-
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
     folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;

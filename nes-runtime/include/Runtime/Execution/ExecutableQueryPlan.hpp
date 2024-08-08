@@ -23,6 +23,7 @@
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
@@ -135,7 +136,7 @@ public:
      */
     bool fail();
 
-    [[nodiscard]] QueryStatus getStatus() const;
+    QueryStatus getStatus() const;
 
     /**
      * @brief Get data sources.

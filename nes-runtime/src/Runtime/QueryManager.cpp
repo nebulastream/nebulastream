@@ -26,7 +26,6 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-
 namespace NES::Runtime
 {
 
@@ -123,6 +122,7 @@ void QueryManager::destroy()
         taskQueue = decltype(taskQueue)();
     }
 }
+
 
 Execution::QueryStatus QueryManager::getQueryStatus(QueryId queryId) const
 {
