@@ -29,7 +29,7 @@ uint8_t* GlobalHashTableLocking::insert(uint64_t key) const
 {
     auto hashedKey = NES::Util::murmurHash(key);
     NES_TRACE("into key={} bucket={}", key, getBucketPos(hashedKey));
-    return buckets[getBucketPos(hashedKey)]->appendConcurrentUsingLocking(hashedKey);
+    return buckets[getBucketPos(hashedKey)]->appendConcurrentUsingLocking();
 }
 
 } /// namespace NES::Runtime::Execution::Operators

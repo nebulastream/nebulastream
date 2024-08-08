@@ -39,10 +39,9 @@ public:
 
     /**
      * @brief Allocates an new entry and returns a reference to it
-     * @param hash
      * @return Value<MemRef>
      */
-    Value<MemRef> allocateEntry(const Value<UInt64>& hash);
+    Value<MemRef> allocateEntry();
 
     /**
      * @brief Getter for sizeOfRecord
