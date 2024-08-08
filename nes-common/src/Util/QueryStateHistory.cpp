@@ -13,8 +13,8 @@
 */
 
 #include <Util/QueryStateHistory.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <nlohmann/json.hpp>
+#include <magic_enum.hpp>
 
 namespace NES
 {
