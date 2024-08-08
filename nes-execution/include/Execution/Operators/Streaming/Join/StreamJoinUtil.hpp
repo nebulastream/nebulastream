@@ -27,7 +27,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <sys/mman.h>
 
 namespace NES

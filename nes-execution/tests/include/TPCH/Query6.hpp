@@ -43,7 +43,6 @@
 #include <TPCH/PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 

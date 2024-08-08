@@ -45,7 +45,6 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <TPCH/PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
-#include <Util/TestTupleBuffer.hpp>
 namespace NES::Runtime::Execution
 {
 using namespace Expressions;
