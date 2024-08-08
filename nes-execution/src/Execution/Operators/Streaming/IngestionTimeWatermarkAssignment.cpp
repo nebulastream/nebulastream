@@ -34,6 +34,7 @@ IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionP
 
 void IngestionTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const
 {
+    Operator::open(executionCtx, recordBuffer);
     timeFunction->open(executionCtx, recordBuffer);
     auto emptyRecord = Record();
     Value<> tsField = timeFunction->getTs(executionCtx, emptyRecord);
