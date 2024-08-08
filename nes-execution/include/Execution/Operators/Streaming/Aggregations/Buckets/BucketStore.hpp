@@ -39,7 +39,7 @@ class BucketStore
 {
 public:
     using SliceTypePtr = std::unique_ptr<SliceType>;
-    explicit BucketStore(uint64_t windowSize, uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide){};
+    explicit BucketStore(uint64_t windowSize, uint64_t windowSlide) : windowSize(windowSize), windowSlide(windowSlide) {};
     virtual ~BucketStore() = default;
 
     /**

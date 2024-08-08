@@ -18,7 +18,7 @@
 namespace NES
 {
 ConstantValueExpressionNode::ConstantValueExpressionNode(ValueTypePtr const& constantValue)
-    : ExpressionNode(constantValue->dataType), constantValue(constantValue){};
+    : ExpressionNode(constantValue->dataType), constantValue(constantValue) {};
 
 ConstantValueExpressionNode::ConstantValueExpressionNode(const ConstantValueExpressionNode* other)
     : ExpressionNode(other->constantValue->dataType), constantValue(other->constantValue)

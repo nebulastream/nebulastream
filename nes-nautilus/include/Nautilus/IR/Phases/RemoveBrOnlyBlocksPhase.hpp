@@ -50,7 +50,7 @@ private:
          * 
          * @param ir: IRGraph to which the remove br-only-blocks phase will be applied.
          */
-        RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        RemoveBrOnlyBlocksPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir) {};
 
         /**
          * @brief Actually applies the remove br-only-blocks phase to the IR.

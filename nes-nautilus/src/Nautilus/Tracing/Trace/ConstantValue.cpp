@@ -17,7 +17,7 @@
 
 namespace NES::Nautilus::Tracing
 {
-ConstantValue::ConstantValue(const AnyPtr& anyPtr) : value(anyPtr){};
+ConstantValue::ConstantValue(const AnyPtr& anyPtr) : value(anyPtr) {};
 
 std::ostream& operator<<(std::ostream& os, const ConstantValue& valueRef)
 {

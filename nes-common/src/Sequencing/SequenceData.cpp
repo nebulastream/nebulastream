@@ -21,7 +21,7 @@ SequenceData::SequenceData(SequenceNumber sequenceNumber, ChunkNumber chunkNumbe
 {
 }
 
-SequenceData::SequenceData() : sequenceNumber(INVALID_SEQ_NUMBER), chunkNumber(INVALID_CHUNK_NUMBER), lastChunk(false){};
+SequenceData::SequenceData() : sequenceNumber(INVALID_SEQ_NUMBER), chunkNumber(INVALID_CHUNK_NUMBER), lastChunk(false) {};
 
 [[nodiscard]] std::string SequenceData::toString() const
 {

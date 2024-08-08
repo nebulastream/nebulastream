@@ -42,7 +42,7 @@ public:
             , sliceReference(sliceReference)
             , pagedVectorVarSizedRef(std::move(pagedVectorVarSizedRef))
             , sliceStart(0_u64)
-            , sliceEnd(0_u64){};
+            , sliceEnd(0_u64) {};
         Value<MemRef> joinOperatorHandler;
         Value<MemRef> sliceReference;
         Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef;

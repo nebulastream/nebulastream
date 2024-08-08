@@ -32,7 +32,7 @@ public:
         , pagedVectorVarSizedRef(pagedVectorVarSizedRef)
         , sliceReference(sliceReference)
         , sliceStart(0_u64)
-        , sliceEnd(0_u64){};
+        , sliceEnd(0_u64) {};
     Value<MemRef> joinOperatorHandler;
     Value<MemRef> pagedVectorVarSizedRef;
     Value<MemRef> sliceReference;

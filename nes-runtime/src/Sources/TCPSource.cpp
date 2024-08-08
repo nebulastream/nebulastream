@@ -48,15 +48,15 @@ TCPSource::TCPSource(
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(
-        schema,
-        std::move(bufferManager),
-        std::move(queryManager),
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        gatheringMode,
-        physicalSourceName,
-        std::move(executableSuccessors))
+          schema,
+          std::move(bufferManager),
+          std::move(queryManager),
+          operatorId,
+          originId,
+          numSourceLocalBuffers,
+          gatheringMode,
+          physicalSourceName,
+          std::move(executableSuccessors))
     , tupleSize(schema->getSchemaSizeInBytes())
     , sourceConfig(std::move(tcpSourceType))
     , timeout(TCP_SOCKET_DEFAULT_TIMEOUT)

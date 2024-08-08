@@ -35,7 +35,7 @@ bool startsWith(const std::string& fullString, std::string_view ending)
     return (fullString.rfind(ending, 0) == 0);
 }
 
-Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType){};
+Schema::Schema(MemoryLayoutType layoutType) : layoutType(layoutType) {};
 
 SchemaPtr Schema::create(MemoryLayoutType layoutType)
 {

@@ -19,7 +19,7 @@ namespace NES::Runtime::Execution::Expressions
 {
 
 GreaterThanExpression::GreaterThanExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
-    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
+    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)) {};
 
 Value<> GreaterThanExpression::execute(Record& record) const
 {

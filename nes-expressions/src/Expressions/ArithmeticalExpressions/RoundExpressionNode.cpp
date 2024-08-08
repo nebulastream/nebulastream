@@ -23,7 +23,7 @@
 namespace NES
 {
 
-RoundExpressionNode::RoundExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+RoundExpressionNode::RoundExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)) {};
 
 RoundExpressionNode::RoundExpressionNode(RoundExpressionNode* other) : ArithmeticalUnaryExpressionNode(other)
 {

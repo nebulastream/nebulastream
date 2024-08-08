@@ -21,7 +21,7 @@
 namespace NES
 {
 
-ExpExpressionNode::ExpExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+ExpExpressionNode::ExpExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)) {};
 
 ExpExpressionNode::ExpExpressionNode(ExpExpressionNode* other) : ArithmeticalUnaryExpressionNode(other)
 {

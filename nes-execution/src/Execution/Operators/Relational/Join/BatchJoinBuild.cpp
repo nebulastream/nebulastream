@@ -42,7 +42,7 @@ void setupJoinBuildHandler(void* ss, void* ctx, uint64_t entrySize, uint64_t key
 class LocalJoinBuildState : public Operators::OperatorState
 {
 public:
-    explicit LocalJoinBuildState(Interface::PagedVectorRef pagedVector) : pagedVector(std::move(pagedVector)){};
+    explicit LocalJoinBuildState(Interface::PagedVectorRef pagedVector) : pagedVector(std::move(pagedVector)) {};
 
     Interface::PagedVectorRef pagedVector;
 };

@@ -21,7 +21,7 @@
 namespace NES
 {
 
-FloorExpressionNode::FloorExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+FloorExpressionNode::FloorExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)) {};
 
 FloorExpressionNode::FloorExpressionNode(FloorExpressionNode* other) : ArithmeticalUnaryExpressionNode(other)
 {

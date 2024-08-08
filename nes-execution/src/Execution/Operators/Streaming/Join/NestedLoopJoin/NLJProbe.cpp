@@ -156,7 +156,7 @@ NLJProbe::NLJProbe(
     QueryCompilation::WindowingStrategy windowingStrategy,
     bool withDeletion)
     : StreamJoinProbe(
-        operatorHandlerIndex, joinSchema, std::move(joinExpression), windowMetaData, joinStrategy, windowingStrategy, withDeletion)
+          operatorHandlerIndex, joinSchema, std::move(joinExpression), windowMetaData, joinStrategy, windowingStrategy, withDeletion)
     , leftSchema(leftSchema)
     , rightSchema(rightSchema)
 {
