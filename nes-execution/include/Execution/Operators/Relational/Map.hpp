@@ -30,7 +30,7 @@ public:
      * @brief Creates a map operator with a map expression.
      * @param mapExpression map expression.
      */
-    Map(Runtime::Execution::Expressions::ExpressionPtr mapExpression) : mapExpression(mapExpression){};
+    Map(Runtime::Execution::Expressions::ExpressionPtr mapExpression) : mapExpression(mapExpression) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:

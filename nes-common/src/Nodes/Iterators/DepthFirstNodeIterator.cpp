@@ -20,7 +20,7 @@
 namespace NES
 {
 
-DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start) : start(std::move(start)){};
+DepthFirstNodeIterator::DepthFirstNodeIterator(NodePtr start) : start(std::move(start)) {};
 
 DepthFirstNodeIterator::iterator DepthFirstNodeIterator::begin()
 {

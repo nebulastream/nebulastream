@@ -112,7 +112,7 @@ protected:
 class Query6Runner : public BenchmarkRunner
 {
 public:
-    Query6Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query6Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler) {};
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override
     {
         auto& lineitems = tables[TPCHTable::LineItem];
@@ -144,7 +144,7 @@ public:
 class Query1Runner : public BenchmarkRunner
 {
 public:
-    Query1Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query1Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler) {};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override
     {
@@ -170,7 +170,7 @@ public:
 class Query3Runner : public BenchmarkRunner
 {
 public:
-    Query3Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler){};
+    Query3Runner(TPCH_Scale_Factor targetScaleFactor, std::string compiler) : BenchmarkRunner(targetScaleFactor, compiler) {};
 
     void runQuery(Timer<>& compileTimeTimer, Timer<>& executionTimeTimer) override
     {

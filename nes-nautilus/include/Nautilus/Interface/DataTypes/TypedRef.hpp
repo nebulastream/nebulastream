@@ -37,14 +37,14 @@ public:
         typedPtr->~T();
     }
     static const inline auto type = TypeIdentifier::create<TypedRef<T>>();
-    TypedRef() : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>(Value<MemRef>(std::make_unique<MemRef>(nullptr)))){};
-    TypedRef(T* t) : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>((int8_t*)t)){};
+    TypedRef() : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>(Value<MemRef>(std::make_unique<MemRef>(nullptr)))) {};
+    TypedRef(T* t) : BaseTypedRef(&type), value(std::make_shared<Value<MemRef>>((int8_t*)t)) {};
 
     /// copy constructor
-    TypedRef(const TypedRef<T>& t) : BaseTypedRef(&type), value(t.value){};
+    TypedRef(const TypedRef<T>& t) : BaseTypedRef(&type), value(t.value) {};
 
     /// move constructor
-    TypedRef(const TypedRef<T>&& other) : BaseTypedRef(&type), value(std::move(other.value)){};
+    TypedRef(const TypedRef<T>&& other) : BaseTypedRef(&type), value(std::move(other.value)) {};
 
     /// copy assignment
     TypedRef<T>& operator=(const TypedRef<T>& other) { return *this = TypedRef<T>(other); };

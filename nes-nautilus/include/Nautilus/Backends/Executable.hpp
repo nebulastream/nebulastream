@@ -53,8 +53,8 @@ public:
     {
     public:
         using FunctionType = R(Args...);
-        explicit Invocable(void* fptr) : function(reinterpret_cast<FunctionType*>(fptr)){};
-        explicit Invocable(std::unique_ptr<GenericInvocable> generic) : function(std::move(generic)){};
+        explicit Invocable(void* fptr) : function(reinterpret_cast<FunctionType*>(fptr)) {};
+        explicit Invocable(std::unique_ptr<GenericInvocable> generic) : function(std::move(generic)) {};
 
         /**
          * @brief Invoke the function with a set of arguments

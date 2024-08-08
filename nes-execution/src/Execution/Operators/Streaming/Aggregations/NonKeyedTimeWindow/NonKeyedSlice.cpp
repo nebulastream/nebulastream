@@ -28,7 +28,7 @@ uint32_t alignBufferSize(uint32_t bufferSize, uint32_t withAlignment)
 }
 
 State::State(uint64_t stateSize)
-    : stateSize(stateSize), ptr(std::aligned_alloc(STATE_ALIGNMENT, alignBufferSize(stateSize, STATE_ALIGNMENT))){};
+    : stateSize(stateSize), ptr(std::aligned_alloc(STATE_ALIGNMENT, alignBufferSize(stateSize, STATE_ALIGNMENT))) {};
 
 State::~State()
 {

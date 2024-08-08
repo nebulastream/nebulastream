@@ -18,7 +18,7 @@
 namespace NES::Nautilus
 {
 
-Int32::Int32(int32_t value) : Int(&type), value(value){};
+Int32::Int32(int32_t value) : Int(&type), value(value) {};
 Nautilus::IR::Types::StampPtr Int32::getType() const
 {
     return Nautilus::IR::Types::StampFactory::createInt32Stamp();

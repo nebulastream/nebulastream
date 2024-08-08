@@ -145,7 +145,7 @@ StreamJoinBuildBucketing::StreamJoinBuildBucketing(
     uint64_t windowSize,
     uint64_t windowSlide)
     : StreamJoinBuild(
-        operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy, windowingStrategy)
+          operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy, windowingStrategy)
     , windowSize(windowSize)
     , windowSlide(windowSlide)
 {

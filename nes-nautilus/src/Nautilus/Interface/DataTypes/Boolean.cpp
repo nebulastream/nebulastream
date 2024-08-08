@@ -17,7 +17,7 @@
 namespace NES::Nautilus
 {
 
-Boolean::Boolean(bool value) : TraceableType(&type), value(value){};
+Boolean::Boolean(bool value) : TraceableType(&type), value(value) {};
 
 std::shared_ptr<Any> Boolean::copy()
 {

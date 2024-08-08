@@ -73,7 +73,7 @@ void* getIteratorFromCollection(void*, void* collection)
 }
 
 FlatMapJavaUDF::FlatMapJavaUDF(uint64_t operatorHandlerIndex, NES::SchemaPtr operatorInputSchema, NES::SchemaPtr operatorOutputSchema)
-    : AbstractJavaUDFOperator(operatorHandlerIndex, std::move(operatorInputSchema), std::move(operatorOutputSchema)){};
+    : AbstractJavaUDFOperator(operatorHandlerIndex, std::move(operatorInputSchema), std::move(operatorOutputSchema)) {};
 
 void FlatMapJavaUDF::execute(ExecutionContext& ctx, Record& record) const
 {

@@ -73,21 +73,11 @@ concept NESIdentifier = requires(T t) {
     requires(sizeof(t) == sizeof(typename T::Underlying));
     requires(!std::is_convertible_v<T, typename T::Underlying>);
     requires(std::is_trivially_destructible_v<T>);
-    {
-        t < t
-    };
-    {
-        t > t
-    };
-    {
-        t == t
-    };
-    {
-        t != t
-    };
-    {
-        std::hash<T>()(t)
-    };
+    { t < t };
+    { t > t };
+    { t == t };
+    { t != t };
+    { std::hash<T>()(t) };
 };
 
 template <NESIdentifier Ident>
