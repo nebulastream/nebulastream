@@ -23,8 +23,6 @@ TagRecorder::TagRecorder(TagAddress startAddress) : startAddress(startAddress)
 {
 }
 
-/// check if gnu backtrace is available.
-#if defined(BACKWARD_HAS_BACKTRACE)
 TagVector TagRecorder::createBaseTag()
 {
     void* tagBuffer[MAX_TAG_SIZE];
@@ -36,12 +34,6 @@ TagVector TagRecorder::createBaseTag()
     }
     return {addresses};
 }
-#else
-TagVector TagRecorder::createBaseTag()
-{
-    NES_NOT_IMPLEMENTED();
-}
-#endif
 
 TagAddress TagRecorder::getBaseAddress(TagVector& tag1, TagVector& tag2)
 {
