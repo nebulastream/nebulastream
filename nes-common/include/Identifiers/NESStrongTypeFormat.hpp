@@ -20,7 +20,7 @@
 
 /**
  * Adds NESStrongType overloads for the fmt formatting library.
- * This allows direct formatting of Identifiers like `fmt::format("{}-{}", SharedQueryId, DecomposedQueryId)`
+ * This allows direct formatting of Identifiers like `fmt::format("Query: {}", QueryId)`
  */
 namespace fmt
 {

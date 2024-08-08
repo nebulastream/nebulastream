@@ -27,7 +27,6 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-
 namespace NES::Runtime
 {
 
@@ -125,7 +124,8 @@ void QueryManager::destroy()
     }
 }
 
-Execution::QueryStatus QueryManager::getQueryStatus(QueryId queryId) const
+
+Execution::QueryStatus QueryManager::getQueryStatus(QueryId queryId)
 {
     std::unique_lock const lock(queryMutex);
     auto it = runningQEPs.find(queryId);

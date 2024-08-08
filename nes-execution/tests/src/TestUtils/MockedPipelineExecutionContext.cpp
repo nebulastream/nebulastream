@@ -36,39 +36,39 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     bool logSeenSeqChunk,
     BufferManagerPtr bufferManager)
     : PipelineExecutionContext(
-          INVALID_PIPELINE_ID, /// mock pipeline id
-          INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
-          bufferManager,
-          1,
-          [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef)
-          {
-              if (logSeenSeqChunk)
-              {
-                  SequenceData seqChunkLastChunk = {buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
-                  const auto it = std::find(seenSeqChunkLastChunk.begin(), seenSeqChunkLastChunk.end(), seqChunkLastChunk);
-                  if (it != seenSeqChunkLastChunk.end())
-                  {
-                      NES_ERROR("Already seen triplet of {}", seqChunkLastChunk.toString());
-                  }
-                  seenSeqChunkLastChunk.insert(seqChunkLastChunk);
-              }
-              buffers.emplace_back(std::move(buffer));
-          },
-          [this, logSeenSeqChunk](TupleBuffer& buffer)
-          {
-              if (logSeenSeqChunk)
-              {
-                  SequenceData seqChunkLastChunk = {buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
-                  const auto it = std::find(seenSeqChunkLastChunk.begin(), seenSeqChunkLastChunk.end(), seqChunkLastChunk);
-                  if (it != seenSeqChunkLastChunk.end())
-                  {
-                      NES_ERROR("Already seen triplet of {}", seqChunkLastChunk.toString());
-                  }
-                  seenSeqChunkLastChunk.insert(seqChunkLastChunk);
-              }
-              buffers.emplace_back(std::move(buffer));
-          },
-          std::move(handler)) {
+        INVALID_PIPELINE_ID, /// mock pipeline id
+        INVALID_QUERY_ID, /// mock query id
+        bufferManager,
+        1,
+        [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef)
+        {
+            if (logSeenSeqChunk)
+            {
+                SequenceData seqChunkLastChunk = {buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
+                const auto it = std::find(seenSeqChunkLastChunk.begin(), seenSeqChunkLastChunk.end(), seqChunkLastChunk);
+                if (it != seenSeqChunkLastChunk.end())
+                {
+                    NES_ERROR("Already seen triplet of {}", seqChunkLastChunk.toString());
+                }
+                seenSeqChunkLastChunk.insert(seqChunkLastChunk);
+            }
+            buffers.emplace_back(std::move(buffer));
+        },
+        [this, logSeenSeqChunk](TupleBuffer& buffer)
+        {
+            if (logSeenSeqChunk)
+            {
+                SequenceData seqChunkLastChunk = {buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()};
+                const auto it = std::find(seenSeqChunkLastChunk.begin(), seenSeqChunkLastChunk.end(), seqChunkLastChunk);
+                if (it != seenSeqChunkLastChunk.end())
+                {
+                    NES_ERROR("Already seen triplet of {}", seqChunkLastChunk.toString());
+                }
+                seenSeqChunkLastChunk.insert(seqChunkLastChunk);
+            }
+            buffers.emplace_back(std::move(buffer));
+        },
+        std::move(handler)){
         /// nop
     };
 

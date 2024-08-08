@@ -25,31 +25,20 @@ namespace NES
 {
 
 ///                      data type, struct name, invalid value, initial value
-using SubpartitionId = NESStrongType<uint64_t, struct SubpartitionId_, 0, 1>;
-using PartitionId = NESStrongType<uint64_t, struct PartitionId_, 0, 1>;
 using OperatorId = NESStrongType<uint64_t, struct OperatorId_, 0, 1>;
 using OriginId = NESStrongType<uint64_t, struct OriginId_, 0, 1>;
 using PipelineId = NESStrongType<uint64_t, struct PipelineId_, 0, 1>;
 using QueryId = NESStrongType<uint64_t, struct QueryId_, 0, 1>;
-using SharedQueryId = NESStrongType<uint64_t, struct SharedQueryId_, 0, 1>;
-using DecomposedQueryPlanId = NESStrongType<uint64_t, struct DecomposedQueryPlanId_, 0, 1>;
 using WorkerId = NESStrongType<uint64_t, struct WorkerId_, 0, 1>; /// a unique identifier of the worker node or topology node
 using WorkerThreadId = NESStrongType<uint32_t, struct WorkerThreadId_, UINT32_MAX, 0>;
 using RequestId = NESStrongType<uint64_t, struct RequestId_, 0, 1>;
 
-using DecomposedQueryPlanVersion = uint16_t;
 using WatermarkTs = uint64_t;
 using SequenceNumber = uint64_t;
 using ChunkNumber = uint64_t;
 
 static constexpr QueryId INVALID_QUERY_ID = INVALID<QueryId>;
 static constexpr QueryId INITIAL_QUERY_ID = INITIAL<QueryId>;
-
-static constexpr DecomposedQueryPlanId INVALID_DECOMPOSED_QUERY_PLAN_ID = INVALID<DecomposedQueryPlanId>;
-static constexpr DecomposedQueryPlanId INITIAL_DECOMPOSED_QUERY_PLAN_ID = INITIAL<DecomposedQueryPlanId>;
-
-static constexpr SharedQueryId INVALID_SHARED_QUERY_ID = INVALID<SharedQueryId>;
-static constexpr SharedQueryId INITIAL_SHARED_QUERY_ID = INITIAL<SharedQueryId>;
 
 static constexpr OperatorId INVALID_OPERATOR_ID = INVALID<OperatorId>;
 static constexpr OperatorId INITIAL_OPERATOR_ID = INITIAL<OperatorId>;
@@ -62,7 +51,6 @@ static constexpr PipelineId INITIAL_PIPELINE_ID = INITIAL<PipelineId>;
 static constexpr WorkerId INVALID_WORKER_NODE_ID = INVALID<WorkerId>;
 static constexpr WorkerId INITIAL_WORKER_NODE_ID = INITIAL<WorkerId>;
 
-static constexpr DecomposedQueryPlanVersion INVALID_DECOMPOSED_QUERY_PLAN_VERSION = 0;
 static constexpr RequestId INVALID_REQUEST_ID = INVALID<RequestId>;
 static constexpr ChunkNumber INVALID_CHUNK_NUMBER = 0;
 static constexpr SequenceNumber INVALID_SEQ_NUMBER = 0;

@@ -78,7 +78,7 @@ public:
      */
     explicit PipelineExecutionContext(
         PipelineId pipelineId,
-        DecomposedQueryPlanId queryId,
+        QueryId queryId,
         Runtime::BufferManagerPtr bufferProvider,
         size_t numberOfWorkerThreads,
         std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
@@ -100,11 +100,7 @@ public:
     */
     void dispatchBuffer(TupleBuffer tupleBuffer);
 
-    /**
-     * @brief Retrieve all registered operator handlers.
-     * @return  std::vector<OperatorHandlerPtr>
-     */
-    std::vector<OperatorHandlerPtr> getOperatorHandlers();
+    [[nodiscard]] std::vector<OperatorHandlerPtr> getOperatorHandlers();
 
     /**
      * @brief Retrieves a Operator Handler at a specific index and cast its to an OperatorHandlerType.
@@ -132,24 +128,12 @@ public:
 
     PipelineId getPipelineID() { return this->pipelineId; }
 
-    /**
-     * @brief Returns the number of worker threads
-     * @return uint64_t
-     */
-    uint64_t getNumberOfWorkerThreads() const;
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const;
 
-    /**
-     * @brief Returns the current buffer manager.
-     * @return Runtime::BufferManagerPtr
-     */
-    Runtime::BufferManagerPtr getBufferManager() const;
+    [[nodiscard]] Runtime::BufferManagerPtr getBufferManager() const;
 
-    /**
-     * @brief Returns the next chunk number belonging to a sequence number for emitting a buffer
-     * @param seqNumberOriginId
-     * @return uint64_t
-     */
-    uint64_t getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId);
+    /// Returns the next chunk number belonging to a sequence number for emitting a buffer
+    [[nodiscard]] uint64_t getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId);
 
     /**
      * @brief Checks if this PipelineExecutionContext has seen all chunks for a given sequence number.
@@ -168,28 +152,13 @@ public:
     void removeSequenceState(const SeqNumberOriginId seqNumberOriginId);
 
 private:
-    /**
-     * @brief Id of the pipeline
-     */
     PipelineId pipelineId;
-    /**
-     * @brief Id of the local qep that owns the pipeline
-     */
-    DecomposedQueryPlanId queryId;
+    QueryId queryId;
 
-    /**
-     * @brief The emit function handler to react on an emitted tuple buffer.
-     */
+    /// Emit function handlers to react on an emitted tuple buffer
     std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
-
-    /**
-    * @brief The emit function handler to react on an emitted tuple buffer.
-    */
     std::function<void(TupleBuffer&)> emitToQueryManagerFunctionHandler;
 
-    /**
-     * @brief List of registered operator handlers.
-     */
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
     folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;

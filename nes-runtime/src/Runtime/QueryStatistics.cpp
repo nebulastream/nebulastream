@@ -165,11 +165,10 @@ folly::Synchronized<std::map<uint64_t, std::vector<uint64_t>>>& QueryStatistics:
     return tsToLatencyMap;
 }
 
-std::string QueryStatistics::getQueryStatisticsAsString()
+std::string QueryStatistics::getQueryStatisticsAsString() const
 {
     std::stringstream ss;
     ss << "queryId=" << queryId.load();
-    ss << " subPlanId=" << subQueryId.load();
     ss << " processedTasks=" << processedTasks.load();
     ss << " processedTuple=" << processedTuple.load();
     ss << " processedBuffers=" << processedBuffers.load();
@@ -193,13 +192,9 @@ void QueryStatistics::clear()
     availableFixedBufferSum = 0;
 }
 
-SharedQueryId QueryStatistics::getQueryId() const
+QueryId QueryStatistics::getQueryId() const
 {
     return queryId.load();
-}
-DecomposedQueryPlanId QueryStatistics::getSubQueryId() const
-{
-    return subQueryId.load();
 }
 
 QueryStatistics::QueryStatistics(const QueryStatistics& other)
@@ -213,7 +208,6 @@ QueryStatistics::QueryStatistics(const QueryStatistics& other)
     availableGlobalBufferSum = other.availableGlobalBufferSum.load();
     availableFixedBufferSum = other.availableFixedBufferSum.load();
     queryId = other.queryId.load();
-    subQueryId = other.subQueryId.load();
     tsToLatencyMap = other.tsToLatencyMap;
 }
 

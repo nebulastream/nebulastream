@@ -35,15 +35,15 @@ namespace detail
 class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecutionContext
 {
 public:
-    explicit ReconfigurationPipelineExecutionContext(DecomposedQueryPlanId queryExecutionPlanId, QueryManagerPtr queryManager)
+    explicit ReconfigurationPipelineExecutionContext(QueryId queryId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
-              INVALID_PIPELINE_ID, /// this is a dummy pipelineID
-              queryExecutionPlanId,
-              queryManager->getBufferManager(),
-              queryManager->getNumberOfWorkerThreads(),
-              [](TupleBuffer&, NES::Runtime::WorkerContext&) {},
-              [](TupleBuffer&) {},
-              std::vector<Execution::OperatorHandlerPtr>())
+            INVALID_PIPELINE_ID, /// this is a dummy pipelineID
+            queryId,
+            queryManager->getBufferManager(),
+            queryManager->getNumberOfWorkerThreads(),
+            [](TupleBuffer&, NES::Runtime::WorkerContext&) {},
+            [](TupleBuffer&) {},
+            std::vector<Execution::OperatorHandlerPtr>())
     {
         /// nop
     }
@@ -192,19 +192,13 @@ void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::Succes
     }
 }
 
-void QueryManager::updateStatistics(
-    const Task& task,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    PipelineId pipelineId,
-    WorkerContext& workerContext)
+void QueryManager::updateStatistics(const Task& task, QueryId queryId, PipelineId pipelineId, WorkerContext& workerContext)
 {
     tempCounterTasksCompleted[workerContext.getId() % tempCounterTasksCompleted.size()].fetch_add(1);
 #ifndef LIGHT_WEIGHT_STATISTICS
-    if (queryToStatisticsMap.contains(decomposedQueryPlanId))
+    if (queryToStatisticsMap.contains(queryId))
     {
-        auto statistics = queryToStatisticsMap.find(decomposedQueryPlanId);
-
+        auto statistics = queryToStatisticsMap.find(queryId);
         auto now
             = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::high_resolution_clock::now().time_since_epoch()).count();
 
@@ -249,7 +243,7 @@ void QueryManager::updateStatistics(
     {
         using namespace std::string_literals;
 
-        NES_ERROR("queryToStatisticsMap not set for {} this should only happen for testing", sharedQueryId);
+        NES_ERROR("queryToStatisticsMap not set for {} this should only happen for testing", queryId);
     }
 #endif
 }
@@ -262,32 +256,28 @@ void QueryManager::completedWork(Task& task, WorkerContext& wtx)
         return;
     }
 
-    DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
-    SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID;
+    QueryId queryId = INVALID_QUERY_ID;
     PipelineId pipelineId = INVALID_PIPELINE_ID;
     auto executable = task.getExecutable();
     if (auto* sink = std::get_if<DataSinkPtr>(&executable))
     {
-        decomposedQueryPlanId = (*sink)->getParentPlanId();
-        sharedQueryId = (*sink)->getSharedQueryId();
-        NES_TRACE("QueryManager::completedWork: task for sink querySubPlanId={}", decomposedQueryPlanId);
+        queryId = (*sink)->getQueryId();
+        NES_TRACE("QueryManager::completedWork: task for sink querySubPlanId={}", queryId);
     }
     else if (auto* executablePipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable))
     {
-        decomposedQueryPlanId = (*executablePipeline)->getDecomposedQueryPlanId();
-        sharedQueryId = (*executablePipeline)->getSharedQueryId();
+        queryId = (*executablePipeline)->getQueryId();
         pipelineId = (*executablePipeline)->getPipelineId();
         NES_TRACE("QueryManager::completedWork: task for exec pipeline isreconfig={}", (*executablePipeline)->isReconfiguration());
     }
-    updateStatistics(task, sharedQueryId, decomposedQueryPlanId, pipelineId, wtx);
+    updateStatistics(task, queryId, pipelineId, wtx);
 }
 
-bool QueryManager::addReconfigurationMessage(
-    SharedQueryId sharedQueryId, DecomposedQueryPlanId queryExecutionPlanId, const ReconfigurationMessage& message, bool blocking)
+bool QueryManager::addReconfigurationMessage(QueryId queryId, const ReconfigurationMessage& message, bool blocking)
 {
     NES_DEBUG(
         "QueryManager: QueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
-        queryExecutionPlanId,
+        queryId,
         blocking,
         magic_enum::enum_name(message.getType()));
     NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
@@ -295,28 +285,25 @@ bool QueryManager::addReconfigurationMessage(
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
     new (buffer.getBuffer()) ReconfigurationMessage(message, threadPool->getNumberOfThreads(), blocking); /// memcpy using copy ctor
-    return addReconfigurationMessage(sharedQueryId, queryExecutionPlanId, std::move(buffer), blocking);
+    return addReconfigurationMessage(queryId, std::move(buffer), blocking);
 }
 
-bool QueryManager::addReconfigurationMessage(
-    SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, TupleBuffer&& buffer, bool blocking)
+bool QueryManager::addReconfigurationMessage(QueryId queryId, TupleBuffer&& buffer, bool blocking)
 {
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     {
         std::unique_lock reconfLock(reconfigurationMutex);
         NES_DEBUG(
             "QueryManager: QueryManager::addReconfigurationMessage begins on plan {} blocking={} type {}",
-            decomposedQueryPlanId,
+            queryId,
             blocking,
             magic_enum::enum_name(task->getType()));
         NES_ASSERT2_FMT(threadPool->isRunning(), "thread pool not running");
-        auto pipelineContext
-            = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(decomposedQueryPlanId, inherited0::shared_from_this());
+        auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(queryId, inherited0::shared_from_this());
         auto reconfigurationExecutable = std::make_shared<detail::ReconfigurationEntryPointPipelineStage>();
         auto pipeline = Execution::ExecutablePipeline::create(
             INVALID_PIPELINE_ID,
-            sharedQueryId,
-            decomposedQueryPlanId,
+            queryId,
             inherited0::shared_from_this(),
             pipelineContext,
             reconfigurationExecutable,
@@ -361,12 +348,11 @@ void QueryManager::poisonWorkers()
     NES_ASSERT(optBuffer, "invalid buffer");
     auto buffer = optBuffer.value();
 
-    auto pipelineContext = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, inherited0::shared_from_this());
+    auto pipelineContext
+        = std::make_shared<detail::ReconfigurationPipelineExecutionContext>(INVALID_QUERY_ID, inherited0::shared_from_this());
     auto pipeline = Execution::ExecutablePipeline::create(
         INVALID_PIPELINE_ID,
-        INVALID_SHARED_QUERY_ID, /// any query plan
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, /// any sub query plan
+        INVALID_QUERY_ID, /// any query plan
         inherited0::shared_from_this(),
         pipelineContext,
         std::make_shared<detail::PoisonPillEntryPointPipelineStage>(),

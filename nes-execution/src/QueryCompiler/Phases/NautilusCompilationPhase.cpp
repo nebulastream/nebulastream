@@ -38,7 +38,7 @@ std::shared_ptr<NautilusCompilationPhase> NautilusCompilationPhase::create(const
 
 PipelineQueryPlanPtr NautilusCompilationPhase::apply(PipelineQueryPlanPtr queryPlan)
 {
-    NES_DEBUG("Generate code for query plan {} - {}", queryPlan->getQueryId(), queryPlan->getQuerySubPlanId());
+    NES_DEBUG("Generate code for query plan {}", queryPlan->getQueryId());
     for (const auto& pipeline : queryPlan->getPipelines())
     {
         if (pipeline->isOperatorPipeline())
@@ -80,8 +80,8 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     Nautilus::CompilationOptions options;
     auto identifier = fmt::format(
         "NautilusCompilation-{}-{}-{}",
-        pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
-        pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
+        pipeline->getDecomposedQueryPlan()->getQueryId(),
+        pipeline->getDecomposedQueryPlan()->getQueryId(),
         pipeline->getPipelineId());
     options.setIdentifier(identifier);
 

@@ -21,6 +21,7 @@
 #include <string>
 
 #include <iostream>
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES
@@ -40,8 +41,8 @@ public:
         SinkFormatPtr format,
         Runtime::NodeEnginePtr nodeEngine,
         uint32_t numOfProducers,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
+        QueryId queryId,
+
         std::ostream& pOutputStream = std::cout,
         uint64_t numberOfOrigins = 1);
 

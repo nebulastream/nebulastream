@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -22,28 +23,17 @@
 namespace NES
 {
 
-SinkMedium::SinkMedium(
-    SinkFormatPtr sinkFormat,
-    Runtime::NodeEnginePtr nodeEngine,
-    uint32_t numOfProducers,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId)
-    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, sharedQueryId, decomposedQueryPlanId, 1)
+SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, Runtime::NodeEnginePtr nodeEngine, uint32_t numOfProducers, QueryId QueryId)
+    : SinkMedium(sinkFormat, nodeEngine, numOfProducers, QueryId, 1)
 {
 }
 
 SinkMedium::SinkMedium(
-    SinkFormatPtr sinkFormat,
-    Runtime::NodeEnginePtr nodeEngine,
-    uint32_t numOfProducers,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
-    uint64_t numberOfOrigins)
+    SinkFormatPtr sinkFormat, Runtime::NodeEnginePtr nodeEngine, uint32_t numOfProducers, QueryId queryId, uint64_t numberOfOrigins)
     : sinkFormat(std::move(sinkFormat))
     , nodeEngine(std::move(nodeEngine))
     , activeProducers(numOfProducers)
-    , sharedQueryId(sharedQueryId)
-    , decomposedQueryPlanId(decomposedQueryPlanId)
+    , queryId(queryId)
     , numberOfOrigins(numberOfOrigins)
 {
     schemaWritten = false;
@@ -78,14 +68,9 @@ std::string SinkMedium::getSinkFormat()
     return sinkFormat->toString();
 }
 
-DecomposedQueryPlanId SinkMedium::getParentPlanId() const
+QueryId SinkMedium::getQueryId() const
 {
-    return decomposedQueryPlanId;
-}
-
-SharedQueryId SinkMedium::getSharedQueryId() const
-{
-    return sharedQueryId;
+    return queryId;
 }
 
 void SinkMedium::reconfigure(Runtime::ReconfigurationMessage& message, Runtime::WorkerContext& context)

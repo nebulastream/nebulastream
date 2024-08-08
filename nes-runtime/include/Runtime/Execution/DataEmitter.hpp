@@ -40,25 +40,11 @@ public:
 
     virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
 
-    /**
-     * @brief
-     */
     virtual void onEndOfStream(Runtime::QueryTerminationType) { }
 
-    /**
-     * @brief
-     */
     virtual void onEvent(Runtime::BaseEvent&) override { }
 
-    virtual DecomposedQueryPlanVersion getVersion() const
-    {
-        NES_WARNING("Trying to get version of a data emitter that does not carry version information, returning 0");
-        return 0;
-    };
-
-    /**
-     * @brief start a previously scheduled new version for this data emitter
-     */
+    /// Start a previously scheduled new version for this data emitter
     virtual bool startNewVersion() { return false; };
 };
 } /// namespace NES

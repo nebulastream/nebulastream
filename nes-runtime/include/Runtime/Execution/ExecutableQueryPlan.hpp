@@ -20,7 +20,7 @@
 #include <map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
@@ -63,8 +63,7 @@ public:
      * @param bufferManager shared pointer to the buffer manager
      */
     explicit ExecutableQueryPlan(
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
+        QueryId queryId,
         std::vector<DataSourcePtr>&& sources,
         std::vector<DataSinkPtr>&& sinks,
         std::vector<ExecutablePipelinePtr>&& pipelines,
@@ -73,8 +72,7 @@ public:
 
     /**
      * @brief Factory to create an new executable query plan.
-     * @param sharedQueryId id of the overall query
-     * @param decomposedQueryPlanId id of the sub query plan
+     * @param queryId id of query
      * @param sources vector of data sources
      * @param sinks vector of data sinks
      * @param pipelines vector of pipelines
@@ -82,8 +80,7 @@ public:
      * @param bufferManager shared pointer to the buffer manager
      */
     static ExecutableQueryPlanPtr create(
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
+        QueryId queryId,
         std::vector<DataSourcePtr> sources,
         std::vector<DataSinkPtr> sinks,
         std::vector<ExecutablePipelinePtr> pipelines,
@@ -137,47 +134,41 @@ public:
      */
     bool fail();
 
-    ExecutableQueryPlanStatus getStatus();
+    QueryStatus getStatus();
 
     /**
      * @brief Get data sources.
      */
-    const std::vector<DataSourcePtr>& getSources() const;
+    [[nodiscard]] const std::vector<DataSourcePtr>& getSources() const;
 
     /**
      * @brief Get data sinks.
      */
-    const std::vector<DataSinkPtr>& getSinks() const;
+    [[nodiscard]] const std::vector<DataSinkPtr>& getSinks() const;
 
     /**
      * @brief Get pipelines.
      * @return
      */
-    const std::vector<ExecutablePipelinePtr>& getPipelines() const;
+    [[nodiscard]] const std::vector<ExecutablePipelinePtr>& getPipelines() const;
 
     /**
      * @brief Returns a reference to the query manager
      * @return QueryManagerPtr
      */
-    QueryManagerPtr getQueryManager();
+    [[nodiscard]] QueryManagerPtr getQueryManager();
 
     /**
      * @brief Returns a reference to the buffer manager
      * @return BufferManagerPtr
      */
-    BufferManagerPtr getBufferManager();
+    [[nodiscard]] BufferManagerPtr getBufferManager();
 
     /**
      * @brief Get the query id
      * @return the query id
      */
-    SharedQueryId getSharedQueryId() const;
-
-    /**
-     * @brief Get the query execution plan id
-     * @return the query execution plan id
-     */
-    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
+    [[nodiscard]] QueryId getQueryId() const;
 
     /**
      * @brief final reconfigure callback called upon a reconfiguration
@@ -213,14 +204,13 @@ private:
     }
 
 private:
-    const SharedQueryId sharedQueryId;
-    const DecomposedQueryPlanId decomposedQueryPlanId;
+    const QueryId queryId;
     std::vector<DataSourcePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;
     BufferManagerPtr bufferManager;
-    std::atomic<ExecutableQueryPlanStatus> qepStatus;
+    std::atomic<QueryStatus> queryStatus;
     /// number of producers that provide data to this qep
     std::atomic<uint32_t> numOfTerminationTokens;
     /// promise that indicates how a qep terminates

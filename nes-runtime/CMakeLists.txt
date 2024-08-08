@@ -49,10 +49,6 @@ if (NES_ENABLES_TESTS AND NOT (CMAKE_HOST_SYSTEM_NAME STREQUAL "Darwin"))
     target_link_libraries(nes-runtime PRIVATE  "-Wl,--wrap,read")
 endif ()
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
-    message(STATUS "Enable cpp compiler backend")
-    target_link_libraries(nes-runtime PRIVATE nes-compiler)
-endif ()
 
 if (NES_ENABLES_TESTS)
     # Add tests with command

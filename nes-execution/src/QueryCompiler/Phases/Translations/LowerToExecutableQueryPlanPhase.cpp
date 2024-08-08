@@ -62,7 +62,6 @@ LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQuery
 
     return std::make_shared<Runtime::Execution::ExecutableQueryPlan>(
         pipelineQueryPlan->getQueryId(),
-        pipelineQueryPlan->getQuerySubPlanId(),
         std::move(sources),
         std::move(sinks),
         std::move(executablePipelines),
@@ -226,7 +225,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
     auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
         pipeline->getPipelineId(),
-        pipelineQueryPlan->getQuerySubPlanId(),
+        pipelineQueryPlan->getQueryId(),
         queryManager->getBufferManager(),
         queryManager->getNumberOfWorkerThreads(),
         emitToSuccessorFunctionHandler,
@@ -236,7 +235,6 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     auto executablePipeline = Runtime::Execution::ExecutablePipeline::create(
         pipeline->getPipelineId(),
         pipelineQueryPlan->getQueryId(),
-        pipelineQueryPlan->getQuerySubPlanId(),
         queryManager,
         executionContext,
         executableOperator->getExecutablePipelineStage(),

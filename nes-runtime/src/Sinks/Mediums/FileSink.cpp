@@ -37,12 +37,10 @@ FileSink::FileSink(
     uint32_t numOfProducers,
     const std::string& filePath,
     bool append,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
+    QueryId queryId,
+
     uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins)
-    , filePath(filePath)
-    , append(append)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, numberOfOrigins), filePath(filePath), append(append)
 {
 }
 

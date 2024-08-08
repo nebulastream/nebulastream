@@ -41,13 +41,7 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
         NES_DEBUG("ConvertLogicalToPhysicalSink: Creating print sink {}", schema->toString());
         const PrintSinkDescriptorPtr printSinkDescriptor = sinkDescriptor->as<PrintSinkDescriptor>();
         return createCsvPrintSink(
-            schema,
-            pipelineQueryPlan->getQueryId(),
-            pipelineQueryPlan->getQuerySubPlanId(),
-            nodeEngine,
-            numOfProducers,
-            std::cout,
-            printSinkDescriptor->getNumberOfOrigins());
+            schema, pipelineQueryPlan->getQueryId(), nodeEngine, numOfProducers, std::cout, printSinkDescriptor->getNumberOfOrigins());
     }
     if (sinkDescriptor->instanceOf<FileSinkDescriptor>())
     {
@@ -58,7 +52,6 @@ DataSinkPtr ConvertLogicalToPhysicalSink::createDataSink(
             return createCSVFileSink(
                 schema,
                 pipelineQueryPlan->getQueryId(),
-                pipelineQueryPlan->getQuerySubPlanId(),
                 nodeEngine,
                 numOfProducers,
                 fileSinkDescriptor->getFileName(),

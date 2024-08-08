@@ -35,40 +35,17 @@ struct BufferSorter : public std::greater<TupleBuffer>
 class BufferStorage : public AbstractBufferStorage
 {
 public:
-    /**
-     * @brief Constructor, which creates a buffer storage
-     */
     BufferStorage() = default;
 
-    /**
-     * @brief Inserts a tuple buffer for a given nes partition
-     * @param nesPartition destination
-     * @param bufferPtr pointer to the buffer that will be stored
-     */
     void insertBuffer(NES::Runtime::TupleBuffer bufferPtr) override;
 
-    /**
-     * @brief Deletes all tuple buffers which watermark timestamp is smaller than the given timestamp
-     * @param NesPartition destination
-     * @param timestamp max timestamp of current epoch
-     */
+    /// Deletes all tuple buffers which watermark timestamp is smaller than the given timestamp
     void trimBuffer(uint64_t timestamp) override;
 
-    /**
-     * @brief Returns current storage size
-     * @return Current storage size
-     */
-    size_t getStorageSize() const override;
+    [[nodiscard]] size_t getStorageSize() const override;
 
-    /**
-     * @brief Returns top element of the queue
-     * @return buffer storage unit
-     */
-    std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue() const;
+    [[nodiscard]] std::optional<NES::Runtime::TupleBuffer> getTopElementFromQueue() const;
 
-    /**
-     * @brief Removes the top element from the queue
-     */
     void removeTopElementFromQueue();
 
 private:

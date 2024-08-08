@@ -44,6 +44,8 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
             qep->getQueryId(),
             ReconfigurationMessage(qep->getQueryId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
             false);
+
+        queryStatusListener->notifyQueryStatusChange(qep->getQueryId(), Execution::ExecutableQueryPlanStatus::Finished);
     }
     else if (status == Execution::QueryStatus::Failed)
     {
@@ -51,6 +53,8 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
             qep->getQueryId(),
             ReconfigurationMessage(qep->getQueryId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
             false);
+
+        queryStatusListener->notifyQueryStatusChange(qep->getQueryId(), Execution::ExecutableQueryPlanStatus::ErrorState);
     }
     queryStatusListener->notifyQueryStatusChange(qep->getQueryId(), status);
 }
