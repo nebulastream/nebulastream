@@ -15,8 +15,8 @@
 #include <sstream>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/Exceptions/InvalidOperatorStateException.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <fmt/core.h>
+#include <magic_enum.hpp>
 
 namespace NES::Exceptions
 {

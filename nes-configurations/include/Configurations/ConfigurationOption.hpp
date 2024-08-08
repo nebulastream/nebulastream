@@ -21,10 +21,10 @@
 #include <string>
 #include <typeinfo>
 #include <utility>
+#include <magic_enum.hpp>
 #include "Configurations/ConfigurationsNames.hpp"
 #include "Util/GatheringMode.hpp"
 #include "Util/Logger/Logger.hpp"
-#include "Util/magicenum/magic_enum.hpp"
 #include "Util/yaml/Yaml.hpp"
 
 namespace NES::Configurations

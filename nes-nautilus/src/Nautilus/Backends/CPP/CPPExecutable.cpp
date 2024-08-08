@@ -14,7 +14,7 @@
 
 #include <utility>
 #include <Nautilus/Backends/CPP/CPPExecutable.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 namespace NES::Nautilus::Backends::CPP
 {
 

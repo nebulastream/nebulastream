@@ -22,7 +22,7 @@
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <TPCH/Table.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 extern "C" {
 #include <tpch_dbgen.h>
 }
