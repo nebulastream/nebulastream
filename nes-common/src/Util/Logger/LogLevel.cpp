@@ -13,7 +13,7 @@
 */
 
 #include <Util/Logger/LogLevel.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 
 namespace NES
 {

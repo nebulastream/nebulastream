@@ -15,7 +15,7 @@
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

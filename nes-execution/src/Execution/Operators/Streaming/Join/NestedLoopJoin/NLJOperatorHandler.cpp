@@ -15,7 +15,7 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

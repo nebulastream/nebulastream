@@ -13,7 +13,6 @@ cmake-build.*
 build
 yaml
 jitify
-magicenum
 .idea
 gen
 .cache
