@@ -31,14 +31,14 @@ using namespace ::testing;
 
 struct QueryTestParam
 {
-    std::string queryFile;
+    std::filesystem::path queryInputFile;
     int expectedNumTuples;
     int expectedCheckSum;
 
     /// Add this method to your QueryTestParam struct
     friend std::ostream& operator<<(std::ostream& os, const QueryTestParam& param)
     {
-        return os << "QueryTestParam{queryFile: \"" << param.queryFile << "\", expectedTuples: " << param.expectedNumTuples << "}";
+        return os << "QueryTestParam{queryFile: \"" << param.queryInputFile << "\", expectedTuples: " << param.expectedNumTuples << "}";
     }
 };
 
@@ -72,12 +72,11 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     };
 
     const auto& [queryname, expectedNumTuples, expectedCheckSum] = GetParam();
-    const std::string queryInputFile = fmt::format("{}.bin", queryname);
-    const std::string queryResultFile = fmt::format("{}.csv", queryname);
+    const std::string queryResultFile = fmt::format("{}.csv", queryname.filename());
     removeFile(queryResultFile); /// remove outputFile if exists
 
     SerializableDecomposedQueryPlan queryPlan;
-    if (!loadFile(queryPlan, queryInputFile, dataInputFile))
+    if (!loadFile(queryPlan, queryname, dataInputFile))
     {
         GTEST_SKIP();
     }
@@ -117,7 +116,7 @@ INSTANTIATE_TEST_CASE_P(
     QueryTests,
     SingleNodeIntegrationTest,
     testing::Values(
-        QueryTestParam{"qOneCSVSource", 32, 496 /* SUM(0, 1, ..., 31) */},
-        QueryTestParam{"qOneCSVSourceWithFilter", 16, 120 /* SUM(0, 1, ..., 15) */},
-        QueryTestParam{"qTwoCSVSourcesWithFilter", 32, 240 /* 2*SUM(0, 1, ..., 15) */}));
+        QueryTestParam{QUERY_qOneCSVSource, 32, 496 /* SUM(0, 1, ..., 31) */},
+        QueryTestParam{QUERY_qOneCSVSourceWithFilter, 16, 120 /* SUM(0, 1, ..., 15) */},
+        QueryTestParam{QUERY_qTwoCSVSourcesWithFilter, 32, 240 /* 2*SUM(0, 1, ..., 15) */}));
 } /// namespace NES::Testing
