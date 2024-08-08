@@ -16,7 +16,7 @@
 #include <Nautilus/Backends/BCInterpreter/BCInterpreter.hpp>
 #include <Nautilus/Util/Dyncall.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Nautilus::Backends::BC
 {

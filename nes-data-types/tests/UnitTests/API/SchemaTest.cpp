@@ -16,9 +16,9 @@
 #include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <fmt/core.h>
 #include <BaseUnitTest.hpp>
+#include <magic_enum.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
