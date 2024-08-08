@@ -16,12 +16,12 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_DETAIL_TUPLEBUFFERIMPL_HPP_
 
 #include <atomic>
+#include <chrono>
 #include <functional>
 #include <sstream>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TaggedPointer.hpp>
-
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #    include <deque>
 #    include <mutex>
@@ -36,6 +36,9 @@ class LocalBufferPool;
 class TupleBuffer;
 class FixedSizeBufferPool;
 class BufferRecycler;
+
+static constexpr auto GET_BUFFER_TIMEOUT = std::chrono::milliseconds(1000);
+
 
 /**
  * @brief Computes aligned buffer size based on original buffer size and alignment

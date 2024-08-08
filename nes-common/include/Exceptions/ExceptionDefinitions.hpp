@@ -62,6 +62,8 @@ EXCEPTION(UnknownPhysicalType, 9004, "unknown physical type")
 EXCEPTION(UnknownJoinStrategy, 9005, "unknown join strategy")
 EXCEPTION(UnknownPluginType, 9006, "unknown plugin type")
 EXCEPTION(DeprecatedFeatureUsed, 9007, "deprecated feature used")
+EXCEPTION(CannotAllocateBuffer, 9008, "cannot allocate buffer")
+EXCEPTION(InvalidRefCountForBuffer, 9009, "invalid reference counter for buffer")
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")

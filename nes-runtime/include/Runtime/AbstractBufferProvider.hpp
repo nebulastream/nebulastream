@@ -81,7 +81,7 @@ public:
      * @param timeout_ms the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
-    virtual std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms) = 0;
+    virtual std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) = 0;
 
     /**
      * @brief Returns an unpooled buffer of size bufferSize wrapped in an optional or an invalid option if an error

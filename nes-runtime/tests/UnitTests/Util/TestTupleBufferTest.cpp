@@ -13,6 +13,7 @@
 */
 
 #include <API/Schema.hpp>
+#include <Exceptions/Exception.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -65,6 +66,58 @@ public:
             = std::make_unique<TestTupleBuffer>(TestTupleBuffer::createTestTupleBuffer(tupleBufferVarSizedData, varSizedDataSchema));
     }
 };
+
+TEST_P(TestTupleBufferTest, throwErrorIfEmpty)
+{
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 2);
+    auto tupleBuffer1 = bufferManager->getBufferBlocking();
+    auto tupleBuffer2 = bufferManager->getBufferBlocking();
+    try
+    {
+        auto tupleBuffer3 = bufferManager->getBufferBlocking();
+    }
+    catch (const Exception& e)
+    {
+        if (e.code() == ErrorCode::CannotAllocateBuffer)
+        {
+            tryLogCurrentException();
+            SUCCEED();
+            return;
+        }
+    }
+    FAIL();
+}
+
+TEST_P(TestTupleBufferTest, throwErrorIfEmptyAfterSequenceOfPulls)
+{
+    BufferManagerPtr bufferManager = std::make_shared<BufferManager>(4096, 3);
+    auto tupleBuffer1 = bufferManager->getBufferBlocking();
+    auto tupleBuffer2 = bufferManager->getBufferBlocking();
+    auto tupleBuffer3 = bufferManager->getBufferBlocking();
+
+    tupleBuffer1.release();
+    tupleBuffer2.release();
+    tupleBuffer3.release();
+
+    tupleBuffer1 = bufferManager->getBufferBlocking();
+    tupleBuffer2 = bufferManager->getBufferBlocking();
+    tupleBuffer3 = bufferManager->getBufferBlocking();
+
+    try
+    {
+        auto tupleBuffer4 = bufferManager->getBufferBlocking();
+    }
+    catch (const Exception& e)
+    {
+        if (e.code() == ErrorCode::CannotAllocateBuffer)
+        {
+            tryLogCurrentException();
+            SUCCEED();
+            return;
+        }
+    }
+    FAIL();
+}
 
 TEST_P(TestTupleBufferTest, readWritetestBufferTest)
 {

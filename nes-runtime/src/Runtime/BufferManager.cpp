@@ -13,6 +13,10 @@
 */
 
 #include <cstring>
+#include <iostream>
+#include <thread>
+#include <unistd.h>
+#include <Exceptions/Exception.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
@@ -20,12 +24,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
-#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-#    include <folly/MPMCQueue.h>
-#endif
-#include <iostream>
-#include <thread>
-#include <unistd.h>
+#include <folly/MPMCQueue.h>
 
 namespace NES::Runtime
 {
@@ -179,33 +178,18 @@ TupleBuffer BufferManager::getBufferBlocking()
     auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
     if (buffer.has_value())
     {
-        NES_TRACE("All global Buffers are exhausted");
-        availableBuffersCvar.wait(lock);
+        return buffer.value();
     }
-    auto* memSegment = availableBuffers.front();
-    availableBuffers.pop_front();
-#else
-    detail::MemorySegment* memSegment = nullptr;
-    availableBuffers.blockingRead(memSegment);
-    numOfAvailableBuffers.fetch_sub(1);
-#endif
-    if (memSegment->controlBlock->prepare())
+    else
     {
-        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
+        auto exp = CannotAllocateBuffer();
+        exp.what() += "Global buffer pool could not allocate buffer before timeout";
+        throw exp;
     }
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
 {
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    std::unique_lock lock(availableBuffersMutex);
-    if (availableBuffers.empty())
-    {
-        return std::nullopt;
-    }
-    auto* memSegment = availableBuffers.front();
-    availableBuffers.pop_front();
-#else
     detail::MemorySegment* memSegment = nullptr;
     if (!availableBuffers.read(memSegment))
     {
@@ -219,7 +203,7 @@ std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
     NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter");
 }
 
-std::optional<TupleBuffer> BufferManager::getBufferTimeout(std::chrono::milliseconds timeout_ms)
+std::optional<TupleBuffer> BufferManager::getBufferWithTimeout(std::chrono::milliseconds timeout_ms)
 {
     detail::MemorySegment* memSegment;
     auto deadline = std::chrono::steady_clock::now() + timeout_ms;
