@@ -15,6 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
 #define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
 
+#include <Identifiers/Identifiers.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 
 #include <cstdint>
@@ -36,8 +37,7 @@ public:
      * @param numOfProducers ?
      * @param filePath Name of the file to which the stream is written.
      * @param append True, if the stream should be appended to an existing file. If false, an existing file is first removed.
-     * @param sharedQueryId ?
-     * @param decomposedQueryPlanId ?
+     * @param queryId queryId
      * @param numberOfOrigins number of origins of a given query
      */
     explicit FileSink(
@@ -46,8 +46,7 @@ public:
         uint32_t numOfProducers,
         const std::string& filePath,
         bool append,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
+        QueryId queryId,
         uint64_t numberOfOrigins = 1);
 
     /**

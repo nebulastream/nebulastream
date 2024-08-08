@@ -20,24 +20,19 @@
 #include <Runtime/QueryTerminationType.hpp>
 namespace NES
 {
+
 class AbstractQueryStatusListener
 {
 public:
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
-    virtual bool canTriggerEndOfStream(
-        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OperatorId sourceId, Runtime::QueryTerminationType)
-        = 0;
+    virtual bool canTriggerEndOfStream(QueryId queryId, OperatorId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifySourceTermination(
-        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OperatorId sourceId, Runtime::QueryTerminationType)
-        = 0;
+    virtual bool notifySourceTermination(QueryId queryId, OperatorId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) = 0;
+    virtual bool notifyQueryFailure(QueryId queryId, std::string errorMsg) = 0;
 
-    virtual bool notifyQueryStatusChange(
-        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus newStatus)
-        = 0;
+    virtual bool notifyQueryStatusChange(QueryId queryId, Runtime::Execution::ExecutableQueryPlanStatus newStatus) = 0;
 
     virtual bool notifyEpochTermination(uint64_t timestamp, uint64_t querySubPlanId) = 0;
 };

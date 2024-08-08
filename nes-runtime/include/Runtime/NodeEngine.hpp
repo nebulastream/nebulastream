@@ -53,7 +53,7 @@ public:
 
     /**
      * @brief unregisters a stopped query
-     * @param sharedQueryId unregister query
+     * @param QueryId unregister query
      * @throws QueryUnregistrationException if the query could not be unregistered
      * @return true if succeeded, else false
      */

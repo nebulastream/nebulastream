@@ -25,12 +25,10 @@ PrintSink::PrintSink(
     SinkFormatPtr format,
     Runtime::NodeEnginePtr nodeEngine,
     uint32_t numOfProducers,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
+    QueryId queryId,
     std::ostream& pOutputStream,
     uint64_t numberOfOrigins)
-    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, sharedQueryId, decomposedQueryPlanId, numberOfOrigins)
-    , outputStream(pOutputStream)
+    : SinkMedium(std::move(format), std::move(nodeEngine), numOfProducers, queryId, numberOfOrigins), outputStream(pOutputStream)
 {
 }
 

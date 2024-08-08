@@ -30,68 +30,21 @@ namespace NES::QueryCompilation
 class PipelineQueryPlan
 {
 public:
-    /**
-     * @brief Creates a new pipelined query plan
-     * @param sharedQueryId
-     * @param decomposedQueryPlanId
-     * @return PipelineQueryPlanPtr
-     */
-    static PipelineQueryPlanPtr create(
-        SharedQueryId sharedQueryId = INVALID_SHARED_QUERY_ID,
-        DecomposedQueryPlanId decomposedQueryPlanId = INVALID_DECOMPOSED_QUERY_PLAN_ID);
+    static PipelineQueryPlanPtr create(QueryId queryId = INVALID_QUERY_ID);
 
-    /**
-     * @brief Add a pipeline to the query plan
-     * @param pipeline
-     */
     void addPipeline(const OperatorPipelinePtr& pipeline);
-
-    /**
-     * @brief Gets a list of source pipelines, which only contain a single physical source operator
-     * @return std::vector<OperatorPipelinePtr>
-     */
-    [[nodiscard]] std::vector<OperatorPipelinePtr> getSourcePipelines() const;
-
-    /**
-     * @brief Gets a list of sink pipelines, which only contain a single physical sink operator
-     * @return std::vector<OperatorPipelinePtr>
-     */
-    [[nodiscard]] std::vector<OperatorPipelinePtr> getSinkPipelines() const;
-
-    /**
-     * @brief Gets a list of all pipelines.
-     * @return std::vector<OperatorPipelinePtr>
-     */
-    [[nodiscard]] std::vector<OperatorPipelinePtr> const& getPipelines() const;
-
-    /**
-     * @brief Remove a particular pipeline from the query plan
-     * @param pipeline
-     */
     void removePipeline(const OperatorPipelinePtr& pipeline);
 
-    /**
-     * @brief Gets the query id
-     * @return QueryId
-     */
-    [[nodiscard]] SharedQueryId getQueryId() const;
+    [[nodiscard]] std::vector<OperatorPipelinePtr> getSourcePipelines() const;
+    [[nodiscard]] std::vector<OperatorPipelinePtr> getSinkPipelines() const;
+    [[nodiscard]] std::vector<OperatorPipelinePtr> const& getPipelines() const;
 
-    /**
-     * @brief Gets the query sub plan id
-     * @return QuerySubPlanId
-     */
-    [[nodiscard]] DecomposedQueryPlanId getQuerySubPlanId() const;
-
-    /**
-     * @brief Creates a string representation of this PipelineQuery
-     * @return std::string
-     */
-    std::string toString() const;
+    [[nodiscard]] QueryId getQueryId() const;
+    [[nodiscard]] std::string toString() const;
 
 private:
-    PipelineQueryPlan(SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId);
-    const SharedQueryId sharedQueryId;
-    const DecomposedQueryPlanId decomposedQueryPlanId;
+    PipelineQueryPlan(QueryId queryId);
+    const QueryId queryId;
     std::vector<OperatorPipelinePtr> pipelines;
 };
 } /// namespace NES::QueryCompilation

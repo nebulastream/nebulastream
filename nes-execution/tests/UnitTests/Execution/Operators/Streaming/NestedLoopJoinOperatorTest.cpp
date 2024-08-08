@@ -56,7 +56,7 @@ public:
     NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
             INVALID_PIPELINE_ID, /// mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
+            INVALID_QUERY_ID, /// mock query id
             bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef) {},
@@ -73,7 +73,7 @@ public:
     NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
         : PipelineExecutionContext(
             INVALID_PIPELINE_ID, /// mock pipeline id
-            INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
+            INVALID_QUERY_ID, /// mock query id
             bm,
             1,
             [](TupleBuffer&, Runtime::WorkerContextRef)

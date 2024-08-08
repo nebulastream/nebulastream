@@ -137,7 +137,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
     auto hashJoinOperatorTest = buildHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
         INVALID_PIPELINE_ID, /// mock pipeline id
-        INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id
+        INVALID_QUERY_ID, /// mock query id
         nullptr,
         buildHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef)
@@ -286,7 +286,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
     auto hashJoinOperatorTest = hashJoinProbeHelper.hashJoinOperatorTest;
     auto pipelineContext = PipelineExecutionContext(
         INVALID_PIPELINE_ID, /// mock pipeline id
-        DecomposedQueryPlanId(1), /// mock query id
+        QueryId(1), /// mock query id
         hashJoinProbeHelper.bufferManager,
         hashJoinProbeHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef)

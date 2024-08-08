@@ -48,187 +48,53 @@ using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 class DecomposedQueryPlan
 {
 public:
-    /**
-     * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-     * @param decomposedQueryPlanId: the decomposed query plan id
-     * @param sharedQueryId: the shared query plan
-     * @param workerId: the worker id
-     * @return instance of Decomposed query plan
-     */
-    static DecomposedQueryPlanPtr create(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId);
+    /// Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
+    static DecomposedQueryPlanPtr create(QueryId queryId, WorkerId workerId);
 
-    /**
-     * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-     * @param decomposedQueryPlanId: the decomposed query plan id
-     * @param sharedQueryId: the shared query id
-     * @param workerId: the worker id
-     * @param rootOperators: the root operators
-     * @return instance of Decomposed query plan
-     */
-    static DecomposedQueryPlanPtr create(
-        DecomposedQueryPlanId decomposedQueryPlanId,
-        SharedQueryId sharedQueryId,
-        WorkerId workerId,
-        std::vector<OperatorPtr> rootOperators);
+    /// Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
+    static DecomposedQueryPlanPtr create(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators);
 
-    /**
-     * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-     * @param decomposedQueryPlanId: the decomposed query plan id
-     * @param sharedQueryId: the shared query id
-     * @param workerId: the worker id
-     */
-    explicit DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId);
+    /// Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
+    explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId);
 
-    /**
-     * @brief Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
-     * @param decomposedQueryPlanId: the decomposed query plan id
-     * @param sharedQueryId: the shared query id
-     * @param workerId: the worker id
-     * @param rootOperators: the root operators
-     */
-    explicit DecomposedQueryPlan(
-        DecomposedQueryPlanId decomposedQueryPlanId,
-        SharedQueryId sharedQueryId,
-        WorkerId workerId,
-        std::vector<OperatorPtr> rootOperators);
+    /// Create an instance of decomposed query plan with initial state in MARKED_FOR_DEPLOYMENT
+    explicit DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators);
 
-    /**
-     * @brief Add the operator as new root operator
-     * @param newRootOperator : new root operator
-     */
+
+    /// Remove the operator with given id as the root
+    bool removeAsRootOperator(OperatorId rootOperatorId);
     void addRootOperator(OperatorPtr newRootOperator);
 
-    /**
-     * @brief Remove the operator with given id as the root
-     * @param rootOperatorId : the operator id
-     * @return true if success else false
-     */
-    bool removeAsRootOperator(OperatorId rootOperatorId);
-
-    /**
-     * replaces a particular root operator with a new one.
-     * @param root
-     * @return true if operator was replaced.
-     */
+    /// Replaces a particular root operator with a new one
     bool replaceRootOperator(const OperatorPtr& oldRoot, const OperatorPtr& newRoot);
 
-    /**
-     * @brief Appends an operator to the query plan and make the new operator as root.
-     * @param operatorNode : new operator
-     */
+    /// Appends an operator to the query plan and make the new operator as root
     void appendOperatorAsNewRoot(const OperatorPtr& operatorNode);
 
-    /**
-     * @brief Get all root operators
-     * @return vector of root operators
-     */
-    std::vector<OperatorPtr> getRootOperators() const;
+    [[nodiscard]] bool hasOperatorWithId(OperatorId operatorId) const;
+    [[nodiscard]] OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
 
-    /**
-     * @brief Get all the leaf operators in the query plan (leaf operator is the one without any child)
-     * @note: in certain stages the source operators might not be Leaf operators
-     * @return returns a vector of leaf operators
-     */
-    std::vector<OperatorPtr> getLeafOperators() const;
+    [[nodiscard]] std::vector<OperatorPtr> getRootOperators() const;
+    [[nodiscard]] std::vector<OperatorPtr> getLeafOperators() const;
 
-    /**
-     * @brief Return the id of the decomposed query plan
-     * @return decomposed query plan id
-     */
-    DecomposedQueryPlanId getDecomposedQueryPlanId() const;
+    [[nodiscard]] std::vector<SourceLogicalOperatorPtr> getSourceOperators() const;
+    [[nodiscard]] std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
 
-    /**
-     * @brief Get the new decomposed query plan id
-     * @param newDecomposedQueryPlanId: the new decomposed query plan id
-     */
-    void setDecomposedQueryPlanId(DecomposedQueryPlanId newDecomposedQueryPlanId);
+    [[nodiscard]] std::unordered_set<OperatorPtr> getAllOperators() const;
 
-    /**
-     * @brief Get the shared query id
-     * @return shared query id
-     */
-    SharedQueryId getSharedQueryId() const;
+    void setQueryId(QueryId queryId);
+    [[nodiscard]] QueryId getQueryId() const;
 
-    /**
-     * @brief Get state of the query plan
-     * @return query state
-     */
-    QueryState getState() const;
+    void setState(QueryState state);
+    [[nodiscard]] QueryState getState() const;
 
-    /**
-     * @brief Set state of the query plan
-     * @param newState : new decomposed query plan state
-     */
-    void setState(QueryState newState);
+    [[nodiscard]] WorkerId getWorkerId() const;
 
-    /**
-     * @brief Get version of the query plan
-     * @return current version
-     */
-    DecomposedQueryPlanVersion getVersion() const;
+    [[nodiscard]] DecomposedQueryPlanPtr copy() const;
+    [[nodiscard]] std::string toString() const;
 
-    /**
-     * @brief Get the worker id
-     * @return worker id
-     */
-    WorkerId getWorkerId() const;
-
-    /**
-     * @brief Set new version for the query sub plan
-     * @param newVersion: new version of the query sub plan
-     */
-    void setVersion(DecomposedQueryPlanVersion newVersion);
-
-    /**
-     * @brief Get operator with input id
-     * @param operatorId: the id of the operator
-     * @return the shared pointer to the operator node
-     */
-    OperatorPtr getOperatorWithOperatorId(OperatorId operatorId) const;
-
-    /**
-     * @brief Check if the decomposed query plan contains an operator with input id
-     * @param operatorId : the operator id
-     * @return true if exists else false
-     */
-    bool hasOperatorWithId(OperatorId operatorId) const;
-
-    /**
-     * @brief Get all source operators
-     * @return vector of logical source operators
-     */
-    std::vector<SourceLogicalOperatorPtr> getSourceOperators() const;
-
-    /**
-     * @brief Get all sink operators
-     * @return vector of logical sink operators
-     */
-    std::vector<SinkLogicalOperatorPtr> getSinkOperators() const;
-
-    /**
-     * @brief Get all operators in the query plan
-     * @return vector of operators
-     */
-    std::unordered_set<OperatorPtr> getAllOperators() const;
-
-    /**
-     * @brief Create copy of the decomposed query plan
-     * @return copy
-     */
-    DecomposedQueryPlanPtr copy();
-
-    /**
-     * @brief String representation of the decomposed query plan
-     * @return string
-     */
-    std::string toString() const;
-
-    /**
-     * @brief Get all the operators of a specific type
-     * @return returns a vector of operators
-     */
     template <class T>
-    std::vector<std::shared_ptr<T>> getOperatorByType()
+    [[nodiscard]] std::vector<std::shared_ptr<T>> getOperatorByType()
     {
         /// Find all the nodes in the query plan
         std::vector<std::shared_ptr<T>> operators;
@@ -256,9 +122,7 @@ public:
     }
 
 private:
-    SharedQueryId sharedQueryId;
-    DecomposedQueryPlanId decomposedQueryPlanId;
-    DecomposedQueryPlanVersion decomposedQueryPlanVersion;
+    QueryId queryId;
     WorkerId workerId;
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
     std::vector<OperatorPtr> rootOperators;

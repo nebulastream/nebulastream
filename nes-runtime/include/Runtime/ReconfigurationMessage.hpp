@@ -29,10 +29,7 @@ namespace NES::Runtime
 class Reconfigurable;
 using ReconfigurablePtr = std::shared_ptr<Reconfigurable>;
 
-/**
- * @brief this class contains the description of the reconfiguration that
- * must be carried out
- */
+/// This class contains the description of the reconfiguration that must be carried out
 class ReconfigurationMessage
 {
     using ThreadBarrierPtr = std::unique_ptr<ThreadBarrier>;
@@ -40,23 +37,18 @@ class ReconfigurationMessage
 public:
     /**
      * @brief create a reconfiguration task that will be used to kickstart the reconfiguration process
-     * @param parentPlanId the owning plan id
+     * @param queryId query id
      * @param type what kind of reconfiguration we want
      * @param instance the target of the reconfiguration
      * @param userdata extra information to use in this reconfiguration
      */
     explicit ReconfigurationMessage(
-        const SharedQueryId sharedQueryId,
-        const DecomposedQueryPlanId parentPlanId,
-        ReconfigurationType type,
-        ReconfigurablePtr instance = nullptr,
-        std::any&& userdata = nullptr)
+        const QueryId queryId, ReconfigurationType type, ReconfigurablePtr instance = nullptr, std::any&& userdata = nullptr)
         : type(type)
         , instance(std::move(instance))
         , syncBarrier(nullptr)
         , postSyncBarrier(nullptr)
-        , sharedQueryId(sharedQueryId)
-        , parentPlanId(parentPlanId)
+        , queryId(queryId)
         , userdata(std::move(userdata))
     {
         refCnt.store(0);
@@ -72,19 +64,13 @@ public:
      * @param blocking whether the reconfiguration must block for completion
      */
     explicit ReconfigurationMessage(
-        const SharedQueryId sharedQueryId,
-        const DecomposedQueryPlanId parentPlanId,
+        const QueryId queryId,
         ReconfigurationType type,
         uint64_t numThreads,
         ReconfigurablePtr instance,
         std::any&& userdata = nullptr,
         bool blocking = false)
-        : type(type)
-        , instance(std::move(instance))
-        , postSyncBarrier(nullptr)
-        , sharedQueryId(sharedQueryId)
-        , parentPlanId(parentPlanId)
-        , userdata(std::move(userdata))
+        : type(type), instance(std::move(instance)), postSyncBarrier(nullptr), queryId(queryId), userdata(std::move(userdata))
     {
         NES_ASSERT(this->instance, "invalid instance");
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
@@ -114,64 +100,32 @@ public:
         }
     }
 
-    /**
-     * @brief copy constructor
-     * @param that
-     */
     ReconfigurationMessage(const ReconfigurationMessage& that)
         : type(that.type)
         , instance(that.instance)
         , syncBarrier(nullptr)
         , postSyncBarrier(nullptr)
-        , sharedQueryId(that.sharedQueryId)
-        , parentPlanId(that.parentPlanId)
+        , queryId(that.queryId)
         , userdata(that.userdata)
     {
         /// nop
     }
 
-    /**
-     * @brief Destructor that calls destroy()
-     */
     ~ReconfigurationMessage() { destroy(); }
 
-    /**
-     * @brief get the reconfiguration type
-     * @return the reconfiguration type
-     */
     [[nodiscard]] ReconfigurationType getType() const { return type; }
+    [[nodiscard]] QueryId getQueryId() const { return queryId; }
 
-    /**
-     * @brief get the target plan id
-     * @return the query id
-     */
-    [[nodiscard]] SharedQueryId getQueryId() const { return sharedQueryId; }
-
-    /**
-     * @brief get the target plan id
-     * @return the plan id
-     */
-    [[nodiscard]] DecomposedQueryPlanId getParentPlanId() const { return parentPlanId; }
-
-    /**
-     * @brief get the target instance to reconfigura
-     * @return the target instance
-     */
+    /// Get the target instance to reconfiguration
     [[nodiscard]] ReconfigurablePtr getInstance() const { return instance; };
 
-    /**
-     * @brief issue a synchronization barrier for all threads
-     */
+    /// Issue a synchronization barrier for all threads
     void wait();
 
-    /**
-     * @brief callback executed after the reconfiguration is carried out
-     */
+    /// Callback executed after the reconfiguration is carried out
     void postReconfiguration();
 
-    /**
-     * @brief issue a synchronization barrier for all threads
-     */
+    /// Issue a synchronization barrier for all threads
     void postWait();
 
     /**
@@ -187,9 +141,7 @@ public:
     }
 
 private:
-    /**
-     * @brief resouce cleanup method
-     */
+    /// resource cleanup
     void destroy();
 
     /// type of the reconfiguration
@@ -204,14 +156,9 @@ private:
     /// last thread barrier
     ThreadBarrierPtr postSyncBarrier;
 
-    /// ref counter
     std::atomic<uint32_t> refCnt{};
 
-    /// owning plan id
-    const SharedQueryId sharedQueryId;
-
-    /// owning plan id
-    const DecomposedQueryPlanId parentPlanId;
+    const QueryId queryId;
 
     /// custom data
     std::any userdata;
