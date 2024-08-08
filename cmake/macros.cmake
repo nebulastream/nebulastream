@@ -79,20 +79,54 @@ macro(get_nes_folders output_var)
     set(${output_var} "${NES_FOLDER_NAMES_COMMA_SEPARATED}")
 endmacro(get_nes_folders)
 
-macro(project_enable_clang_format)
-    get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
-    if (NOT NES_SELF_HOSTING)
-        message(WARNING "Not using self-hosting compiler, thus 'format' is disabled")
-    elseif (CLANG_FORMAT_EXECUTABLE)
-        message(STATUS "clang-format found, whole source formatting enabled through 'format' target.")
-        add_custom_target(format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} --fix USES_TERMINAL)
-        add_custom_target(format-check COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} USES_TERMINAL)
-    else ()
-        message(FATAL_ERROR "clang-format is not installed.")
+# Looks for the configured clang format version and enabled the format target if available.
+function(project_enable_clang_format)
+    find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${CLANG_FORMAT_MAJOR_VERSION} clang-format)
+    if (NOT CLANG_FORMAT_EXECUTABLE)
+        message(WARNING "Clang-Format not found. Disabling format target")
+        return()
     endif ()
 
+    execute_process(
+            COMMAND ${CLANG_FORMAT_EXECUTABLE} --version
+            OUTPUT_VARIABLE CLANG_FORMAT_VERSION
+    )
+
+    string(REGEX MATCH "^.* version ([0-9]+)\\.([0-9]+)\\.([0-9]+)" CLANG_FORMAT_MAJOR_MINOR_PATCH "${CLANG_FORMAT_VERSION}")
+
+    if (NOT CMAKE_MATCH_1 STREQUAL ${CLANG_FORMAT_MAJOR_VERSION})
+        message(WARNING "Incompatible clang-format version requires ${CLANG_FORMAT_MAJOR_VERSION}, got \"${CMAKE_MATCH_1}\". Disabling format target")
+        return()
     endif ()
-endmacro(project_enable_clang_tidy)
+
+    message(STATUS "Enabling format targets using ${CLANG_FORMAT_EXECUTABLE}")
+    get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
+    add_custom_target(format COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} --fix USES_TERMINAL)
+    add_custom_target(format-check COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} USES_TERMINAL)
+endfunction(project_enable_clang_format)
+
+function(project_enable_fixguards)
+    find_program(GUARD2ONCE_EXECUTABLE guard2once)
+    find_program(ONCE2GUARD_EXECUTABLE once2guard)
+
+    if (NOT GUARD2ONCE_EXECUTABLE)
+        message(WARNING "guard2once is not installed on the system. Install with pipx install guardonce. Disabling fix-guards target")
+        return()
+    endif ()
+
+    if (NOT ONCE2GUARD_EXECUTABLE)
+        message(WARNING "once2guard is not installed on the system. Install with pipx install guardonce. Disabling fix-guards target")
+        return()
+    endif ()
+
+    # converts to `#pragma once` and then back to include guard, so that guarding variable is derived from file path
+    add_custom_target(fix-guards
+            COMMAND guard2once -r -e="nes-common/include/Version/version.hpp" nes-*/
+            COMMAND once2guard -r -e="nes-commom/include/Version/version.hpp" -p 'path | append _ | upper' -s '\#endif /// %\\n' nes-*/
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    )
+    message(STATUS "guardonce utility to fix include guards is available via the 'fix-guards' target")
+endfunction(project_enable_fixguards)
 
 macro(project_enable_check_comment_format)
     get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
