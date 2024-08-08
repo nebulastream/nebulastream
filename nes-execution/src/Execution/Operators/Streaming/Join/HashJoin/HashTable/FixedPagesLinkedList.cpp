@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <thread>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
