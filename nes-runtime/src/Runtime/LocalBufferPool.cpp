@@ -23,13 +23,9 @@ namespace NES::Runtime
 LocalBufferPool::LocalBufferPool(
     const BufferManagerPtr& bufferManager, std::deque<detail::MemorySegment*>&& buffers, size_t numberOfReservedBuffers)
     : bufferManager(bufferManager)
-    ,
-#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    exclusiveBuffers(numberOfReservedBuffers)
+    , exclusiveBuffers(numberOfReservedBuffers)
     , exclusiveBufferCount(numberOfReservedBuffers)
-    ,
-#endif
-    numberOfReservedBuffers(numberOfReservedBuffers)
+    , numberOfReservedBuffers(numberOfReservedBuffers)
 {
     NES_ASSERT2_FMT(this->bufferManager, "Invalid buffer manager");
     while (!buffers.empty())
@@ -39,11 +35,8 @@ LocalBufferPool::LocalBufferPool(
         NES_VERIFY(memSegment, "null memory segment");
         memSegment->controlBlock->resetBufferRecycler(this);
         NES_ASSERT2_FMT(memSegment->isAvailable(), "Buffer not available");
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-        exclusiveBuffers.emplace_back(memSegment);
-#else
+
         exclusiveBuffers.write(memSegment);
-#endif
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
         allSegments.emplace_back(memSegment);
 #endif
@@ -84,17 +77,7 @@ void LocalBufferPool::destroy()
         "one or more buffers were not returned to the pool: " << exclusiveBufferCount << " but expected " << numberOfReservedBuffers);
 
     NES_DEBUG("buffers before={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    while (!exclusiveBuffers.empty())
-    {
-        /// return exclusive buffers to the global pool
-        detail::MemorySegment* memSegment = exclusiveBuffers.front();
-        exclusiveBuffers.pop_front();
-        memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
-        bufferManager->recyclePooledBuffer(memSegment);
-    }
-    NES_DEBUG("buffers after={} size of local buffers={}", bufferManager->getAvailableBuffers(), exclusiveBuffers.size());
-#else
+
     detail::MemorySegment* memSegment = nullptr;
     while (exclusiveBuffers.read(memSegment))
     {
@@ -108,37 +91,12 @@ void LocalBufferPool::destroy()
 
 size_t LocalBufferPool::getAvailableBuffers() const
 {
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    std::unique_lock lock(mutex);
-    return exclusiveBuffers.size();
-#else
     auto qSize = exclusiveBuffers.size();
     return qSize > 0 ? qSize : 0;
-#endif
 }
 
 TupleBuffer LocalBufferPool::getBufferBlocking()
 {
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    {
-        /// try to get an exclusive buffer
-        std::unique_lock lock(mutex);
-        if (!exclusiveBuffers.empty())
-        {
-            detail::MemorySegment* memSegment = exclusiveBuffers.front();
-            NES_VERIFY(memSegment, "null memory segment");
-            exclusiveBuffers.pop_front();
-            if (memSegment->controlBlock->prepare())
-            {
-                return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-            }
-            NES_THROW_RUNTIME_ERROR(
-                "[BufferManager] got buffer with invalid reference counter " << memSegment->controlBlock->getReferenceCount());
-        }
-    }
-    /// TODO potential problem here: what if we are blocked here but one exclusive buffer is returned to the pool?
-    return bufferManager->getBufferBlocking();
-#else
     detail::MemorySegment* memSegment;
     if (exclusiveBuffers.read(memSegment))
     {
@@ -159,17 +117,6 @@ TupleBuffer LocalBufferPool::getBufferBlocking()
 
 void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
 {
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    std::unique_lock lock(mutex);
-    NES_VERIFY(memSegment, "null memory segment");
-    if (!memSegment->isAvailable())
-    {
-        NES_THROW_RUNTIME_ERROR(
-            "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
-    }
-    /// add back an exclusive buffer to the local pool
-    exclusiveBuffers.emplace_back(memSegment);
-#else
     NES_VERIFY(memSegment, "null memory segment");
     if (!memSegment->isAvailable())
     {
@@ -178,7 +125,6 @@ void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
     }
     exclusiveBuffers.write(memSegment);
     exclusiveBufferCount.fetch_add(1);
-#endif
 }
 
 void LocalBufferPool::recycleUnpooledBuffer(detail::MemorySegment*)

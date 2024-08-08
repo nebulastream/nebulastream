@@ -27,10 +27,7 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-#    include <folly/MPMCQueue.h>
-#    include <folly/concurrency/UnboundedQueue.h>
-#endif
+#include <folly/MPMCQueue.h>
 
 namespace NES::Runtime
 {
@@ -205,12 +202,9 @@ public:
 
 private:
     std::vector<detail::MemorySegment> allBuffers;
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    std::deque<detail::MemorySegment*> availableBuffers;
-#else
+
     folly::MPMCQueue<detail::MemorySegment*> availableBuffers;
     std::atomic<size_t> numOfAvailableBuffers;
-#endif
     std::vector<UnpooledBufferHolder> unpooledBuffers;
 
     mutable std::recursive_mutex availableBuffersMutex;

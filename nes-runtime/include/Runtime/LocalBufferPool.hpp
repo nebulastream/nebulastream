@@ -21,10 +21,7 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#ifdef NES_USE_LATCH_FREE_BUFFER_MANAGER
-#    include <folly/MPMCQueue.h>
-#    include <folly/concurrency/UnboundedQueue.h>
-#endif
+#include <folly/MPMCQueue.h>
 
 namespace NES::Runtime
 {
@@ -90,12 +87,9 @@ public:
 
 private:
     std::shared_ptr<BufferManager> bufferManager;
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    std::deque<detail::MemorySegment*> exclusiveBuffers;
-#else
+
     folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
     std::atomic<uint32_t> exclusiveBufferCount;
-#endif
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
     std::vector<detail::MemorySegment*> allSegments;
 #endif
