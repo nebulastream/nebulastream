@@ -22,7 +22,6 @@
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/HardwareManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -115,7 +114,6 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
                 bufferManagers,
                 WorkerId(0),
                 numOfThreads,
-                nullptr,
                 numberOfBuffersPerEpoch,
                 workerToCoreMappingVec);
         }
