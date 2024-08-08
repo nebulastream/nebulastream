@@ -16,18 +16,21 @@ include(GNUInstallDirs)
 
 # Add nes-worker library
 get_source(nes-single-node-worker NES_WORKER_SOURCE_FILES)
-add_executable(single-node-worker ${NES_WORKER_SOURCE_FILES})
+add_library(nes-single-node-worker-lib ${NES_WORKER_SOURCE_FILES})
 
-target_include_directories(single-node-worker PRIVATE
+target_include_directories(nes-single-node-worker-lib PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-target_link_libraries(single-node-worker
-        PRIVATE
+target_link_libraries(nes-single-node-worker-lib
+        PUBLIC
         nes-grpc
         nes-runtime
         nes-execution
 )
+
+add_executable(single-node src/SingleNodeWorkerStarter.cpp)
+target_link_libraries(single-node PRIVATE nes-single-node-worker-lib)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
@@ -38,7 +41,7 @@ else ()
 endif ()
 
 #Add the nes lib and headers to cpack
-install(TARGETS single-node-worker
+install(TARGETS nes-single-node-worker-lib
         EXPORT NebulaStreamTargets
         LIBRARY
         COMPONENT nesLibrary)
