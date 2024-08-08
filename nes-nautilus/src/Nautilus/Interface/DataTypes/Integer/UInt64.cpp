@@ -18,7 +18,7 @@
 namespace NES::Nautilus
 {
 
-UInt64::UInt64(uint64_t value) : Int(&type), value(value){};
+UInt64::UInt64(uint64_t value) : Int(&type), value(value) {};
 Nautilus::IR::Types::StampPtr UInt64::getType() const
 {
     return Nautilus::IR::Types::StampFactory::createUInt64Stamp();

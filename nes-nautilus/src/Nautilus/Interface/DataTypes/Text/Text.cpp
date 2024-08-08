@@ -30,7 +30,7 @@ Value<Text> transformReturnValues(TextValue* value)
     return Value<Text>(std::make_unique<Text>(textRef));
 }
 
-Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference){};
+Text::Text(TypedRef<NES::Nautilus::TextValue> rawReference) : Any(&type), rawReference(rawReference) {};
 
 bool textEquals(const TextValue* leftText, const TextValue* rightText)
 {

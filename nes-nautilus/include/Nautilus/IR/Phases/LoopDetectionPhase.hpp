@@ -53,7 +53,7 @@ private:
          * 
          * @param ir: IRGraph to which LoopDetectionPhaseContext will be applied.
          */
-        LoopDetectionPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        LoopDetectionPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir) {};
         /**
          * @brief Actually applies the LoopDetectionPhaseContext to the IR.
          */

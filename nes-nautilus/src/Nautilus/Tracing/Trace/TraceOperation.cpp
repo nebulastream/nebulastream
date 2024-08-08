@@ -19,11 +19,12 @@
 namespace NES::Nautilus::Tracing
 {
 
-TraceOperation::TraceOperation(OpCode op) : op(op), result(), input(){};
+TraceOperation::TraceOperation(OpCode op) : op(op), result(), input() {};
 
-TraceOperation::TraceOperation(OpCode op, const std::vector<InputVariant>& input) : op(op), result(None()), input(input){};
+TraceOperation::TraceOperation(OpCode op, const std::vector<InputVariant>& input) : op(op), result(None()), input(input) {};
 
-TraceOperation::TraceOperation(OpCode op, ValueRef result, const std::vector<InputVariant>& input) : op(op), result(result), input(input){};
+TraceOperation::TraceOperation(OpCode op, ValueRef result, const std::vector<InputVariant>& input)
+    : op(op), result(result), input(input) {};
 
 TraceOperation::TraceOperation(const TraceOperation&& other)
 {

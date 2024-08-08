@@ -63,7 +63,7 @@ private:
          * 
          * @param ir: IRGraph to which StructuredControlFlowPhase will be applied.
          */
-        StructuredControlFlowPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        StructuredControlFlowPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir) {};
         /**
          * @brief Actually applies the StructuredControlFlowPhase to the IR.
          */

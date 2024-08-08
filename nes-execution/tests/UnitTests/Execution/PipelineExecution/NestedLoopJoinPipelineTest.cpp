@@ -53,13 +53,13 @@ public:
         OperatorHandlerPtr nljOpHandler,
         PipelineId pipelineId)
         : PipelineExecutionContext(
-            pipelineId, /// mock pipeline id
-            QueryId(1), /// mock query id
-            bufferManager,
-            noWorkerThreads,
-            [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
-            [this](TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
-            {nljOpHandler}){};
+              pipelineId, /// mock pipeline id
+              QueryId(1), /// mock query id
+              bufferManager,
+              noWorkerThreads,
+              [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              [this](TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              {nljOpHandler}) {};
 
     std::vector<Runtime::TupleBuffer> emittedBuffers;
 };

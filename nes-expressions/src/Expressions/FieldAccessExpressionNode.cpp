@@ -20,10 +20,10 @@
 namespace NES
 {
 FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)
-    : ExpressionNode(std::move(stamp)), fieldName(std::move(fieldName)){};
+    : ExpressionNode(std::move(stamp)), fieldName(std::move(fieldName)) {};
 
 FieldAccessExpressionNode::FieldAccessExpressionNode(FieldAccessExpressionNode* other)
-    : ExpressionNode(other), fieldName(other->getFieldName()){};
+    : ExpressionNode(other), fieldName(other->getFieldName()) {};
 
 ExpressionNodePtr FieldAccessExpressionNode::create(DataTypePtr stamp, std::string fieldName)
 {

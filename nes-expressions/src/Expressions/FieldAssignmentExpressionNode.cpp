@@ -22,9 +22,9 @@
 
 namespace NES
 {
-FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};
+FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)) {};
 
-FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other) : BinaryExpressionNode(other){};
+FieldAssignmentExpressionNode::FieldAssignmentExpressionNode(FieldAssignmentExpressionNode* other) : BinaryExpressionNode(other) {};
 
 FieldAssignmentExpressionNodePtr
 FieldAssignmentExpressionNode::create(const FieldAccessExpressionNodePtr& fieldAccess, const ExpressionNodePtr& expressionNodePtr)

@@ -23,7 +23,7 @@
 namespace NES
 {
 
-SqrtExpressionNode::SqrtExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+SqrtExpressionNode::SqrtExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)) {};
 
 SqrtExpressionNode::SqrtExpressionNode(SqrtExpressionNode* other) : ArithmeticalUnaryExpressionNode(other)
 {

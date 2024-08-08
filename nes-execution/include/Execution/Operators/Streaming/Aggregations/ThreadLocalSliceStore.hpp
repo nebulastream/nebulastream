@@ -38,7 +38,7 @@ class ThreadLocalSliceStore
 {
 public:
     using SliceTypePtr = std::unique_ptr<SliceType>;
-    explicit ThreadLocalSliceStore(uint64_t windowSize, uint64_t windowSlide) : windowAssigner(windowSize, windowSlide){};
+    explicit ThreadLocalSliceStore(uint64_t windowSize, uint64_t windowSlide) : windowAssigner(windowSize, windowSlide) {};
     virtual ~ThreadLocalSliceStore() = default;
 
     /**

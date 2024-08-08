@@ -30,7 +30,7 @@ using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 class QueryStatistics
 {
 public:
-    QueryStatistics(QueryId queryId) : queryId(queryId){};
+    QueryStatistics(QueryId queryId) : queryId(queryId) {};
     QueryStatistics(const QueryStatistics& other);
 
     void setProcessedTasks(uint64_t processedTasks);

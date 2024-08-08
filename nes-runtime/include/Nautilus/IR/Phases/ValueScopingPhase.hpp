@@ -58,7 +58,7 @@ private:
          * 
          * @param ir: IRGraph to which ValueScopingPhaseContext will be applied.
          */
-        ValueScopingPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir){};
+        ValueScopingPhaseContext(std::shared_ptr<IR::IRGraph> ir) : ir(ir) {};
         /**
          * @brief Actually applies the ValueScopingPhaseContext to the IR.
          */

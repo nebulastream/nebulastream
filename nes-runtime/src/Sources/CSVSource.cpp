@@ -42,15 +42,15 @@ CSVSource::CSVSource(
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(
-        schema,
-        std::move(bufferManager),
-        std::move(queryManager),
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        gatheringMode,
-        physicalSourceName,
-        std::move(successors))
+          schema,
+          std::move(bufferManager),
+          std::move(queryManager),
+          operatorId,
+          originId,
+          numSourceLocalBuffers,
+          gatheringMode,
+          physicalSourceName,
+          std::move(successors))
     , fileEnded(false)
     , csvSourceType(csvSourceType)
     , filePath(csvSourceType->getFilePath()->getValue())

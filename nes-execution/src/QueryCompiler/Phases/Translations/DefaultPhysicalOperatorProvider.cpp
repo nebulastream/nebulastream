@@ -74,7 +74,7 @@ namespace NES::QueryCompilation
 {
 
 DefaultPhysicalOperatorProvider::DefaultPhysicalOperatorProvider(QueryCompilerOptionsPtr options)
-    : PhysicalOperatorProvider(std::move(options)){};
+    : PhysicalOperatorProvider(std::move(options)) {};
 
 PhysicalOperatorProviderPtr DefaultPhysicalOperatorProvider::create(const QueryCompilerOptionsPtr& options)
 {

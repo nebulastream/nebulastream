@@ -19,7 +19,7 @@
 namespace NES
 {
 
-BreadthFirstNodeIterator::BreadthFirstNodeIterator(NodePtr start) : start(std::move(start)){};
+BreadthFirstNodeIterator::BreadthFirstNodeIterator(NodePtr start) : start(std::move(start)) {};
 
 BreadthFirstNodeIterator::iterator BreadthFirstNodeIterator::begin()
 {

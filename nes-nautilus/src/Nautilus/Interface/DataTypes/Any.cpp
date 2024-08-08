@@ -17,7 +17,7 @@
 namespace NES::Nautilus
 {
 
-Any::Any(const TypeIdentifier* identifier) : Typed(identifier){};
+Any::Any(const TypeIdentifier* identifier) : Typed(identifier) {};
 
 Nautilus::IR::Types::StampPtr Any::getType() const
 {

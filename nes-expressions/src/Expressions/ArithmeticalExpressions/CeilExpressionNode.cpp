@@ -19,7 +19,7 @@
 namespace NES
 {
 
-CeilExpressionNode::CeilExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)){};
+CeilExpressionNode::CeilExpressionNode(DataTypePtr stamp) : ArithmeticalUnaryExpressionNode(std::move(stamp)) {};
 
 CeilExpressionNode::CeilExpressionNode(CeilExpressionNode* other) : ArithmeticalUnaryExpressionNode(other)
 {
