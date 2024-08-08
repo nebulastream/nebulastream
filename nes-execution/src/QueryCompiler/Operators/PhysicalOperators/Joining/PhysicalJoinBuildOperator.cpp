@@ -14,7 +14,7 @@
 #include <sstream>
 #include <utility>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
-#include <Util/magicenum/magic_enum.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

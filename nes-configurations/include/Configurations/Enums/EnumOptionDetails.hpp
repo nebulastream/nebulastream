@@ -14,11 +14,10 @@
 #ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_
 #define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_
 
+#include <magic_enum.hpp>
 #include "Configurations/Enums/EnumOption.hpp"
-#include "Util/magicenum/magic_enum.hpp"
 #include "Util/yaml/Yaml.hpp"
 
-using namespace magic_enum::ostream_operators;
 namespace NES::Configurations
 {
 
