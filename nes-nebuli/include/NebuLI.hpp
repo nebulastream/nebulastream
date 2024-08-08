@@ -12,19 +12,14 @@
     limitations under the License.
 */
 
-#include <Exceptions/RequestExecutionException.hpp>
+#ifndef NES_NEBULI_INCLUDE_NEBULI_HPP_
+#define NES_NEBULI_INCLUDE_NEBULI_HPP_
 
-namespace NES::Exceptions
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+
+namespace NES::CLI
 {
-RequestExecutionException::RequestExecutionException(const std::string& message) : std::runtime_error(message), queryId(INVALID_QUERY_ID)
-{
+DecomposedQueryPlanPtr loadFromFile(const std::filesystem::path& file);
+DecomposedQueryPlanPtr loadFrom(std::istream& inputStream);
 }
-RequestExecutionException::RequestExecutionException(QueryId queryId, const std::string& message)
-    : std::runtime_error(message), queryId(queryId)
-{
-}
-QueryId RequestExecutionException::getQueryId() const
-{
-    return queryId;
-}
-} /// namespace NES::Exceptions
+#endif /// NES_NEBULI_INCLUDE_NEBULI_HPP_

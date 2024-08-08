@@ -68,4 +68,13 @@ EXCEPTION(InvalidRefCountForBuffer, 9009, "invalid reference counter for buffer"
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")
 
+/// NebuLI
+EXCEPTION(CouldNotReadQueryDescription, 8000, "Could not read query description")
+EXCEPTION(CouldNotParseQueryDescription, 8001, "Could not parse query description")
+EXCEPTION(InvalidQuery, 8002, "Query is invalid")
+EXCEPTION(LogicalSourceNotFoundInQueryDescription, 8003, "Logical source was not found in the query description")
+EXCEPTION(PhysicalSourceNotFoundInQueryDescription, 8004, "Physical source was not found in the query description")
+EXCEPTION(OperatorNotFound, 8005, "Operator not found")
+
+
 #endif /// NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTIONDEFINITIONS_HPP_

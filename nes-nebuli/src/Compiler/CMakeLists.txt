@@ -10,10 +10,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-common
-        SignalHandling.cpp
-        RuntimeException.cpp
-        NotImplementedException.cpp
-        InvalidArgumentException.cpp
-        InvalidFieldException.cpp
+add_source_files(nes-compiler
+        JITCompiler.cpp
+        JITCompilerBuilder.cpp
+        DynamicObject.cpp
+        CompilationRequest.cpp
+        CompilationResult.cpp
+        CompilerFlags.cpp
+        SourceCode.cpp
+        File.cpp
+        CompilationCache.cpp
 )
+
+add_subdirectory(CPPCompiler)
+add_subdirectory(Exceptions)
+add_subdirectory(Util)

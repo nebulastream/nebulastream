@@ -10,10 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-common
-        SignalHandling.cpp
-        RuntimeException.cpp
-        NotImplementedException.cpp
-        InvalidArgumentException.cpp
-        InvalidFieldException.cpp
-)
+add_subdirectory(Catalogs)
+add_subdirectory(Compiler)
+add_subdirectory(Optimizer)
+add_subdirectory(QueryValidation)
+add_subdirectory(Services)

@@ -10,10 +10,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-common
-        SignalHandling.cpp
-        RuntimeException.cpp
-        NotImplementedException.cpp
-        InvalidArgumentException.cpp
-        InvalidFieldException.cpp
+add_source_files(nes-coordinator
+        SemanticQueryValidation.cpp
+        SyntacticQueryValidation.cpp
 )
