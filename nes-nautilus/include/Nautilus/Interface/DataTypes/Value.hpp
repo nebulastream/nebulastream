@@ -125,7 +125,7 @@ public:
     {
     public:
         ValueIndexReference(Value<> index, Value<ValueType>& inputValue)
-            : index(std::make_unique<Value<>>(index)), inputValue(inputValue){};
+            : index(std::make_unique<Value<>>(index)), inputValue(inputValue) {};
         operator const Value<>() const;
         ValueIndexReference& operator=(const Value<>&);
 
@@ -202,12 +202,12 @@ public:
         Tracing::TraceUtil::traceConstOperation(this->value, this->ref);
     };
 
-    Value(ValueType&& value) : value(std::make_shared<ValueType>(value)), ref(createNextValueReference(value.getType())){};
+    Value(ValueType&& value) : value(std::make_shared<ValueType>(value)), ref(createNextValueReference(value.getType())) {};
 
     /**
      * @brief copy constructor
      */
-    Value(std::shared_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(createNextValueReference(value->getType())){};
+    Value(std::shared_ptr<ValueType> wrappedValue) : value(std::move(wrappedValue)), ref(createNextValueReference(value->getType())) {};
 
     /**
      * @brief copy constructor
@@ -218,7 +218,7 @@ public:
     /**
      * @brief copy constructor
      */
-    Value(std::shared_ptr<ValueType> wrappedValue, Nautilus::Tracing::ValueRef& ref) : value(std::move(wrappedValue)), ref(ref){};
+    Value(std::shared_ptr<ValueType> wrappedValue, Nautilus::Tracing::ValueRef& ref) : value(std::move(wrappedValue)), ref(ref) {};
 
     /**
      * @brief copy constructor

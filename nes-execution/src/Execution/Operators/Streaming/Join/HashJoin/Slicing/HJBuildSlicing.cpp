@@ -43,7 +43,7 @@ public:
         , hashTableReference(hashTableReference)
         , sliceReference(sliceReference)
         , sliceStart(0_u64)
-        , sliceEnd(0_u64){};
+        , sliceEnd(0_u64) {};
     Value<MemRef> joinOperatorHandler;
     Value<MemRef> hashTableReference;
     Value<MemRef> sliceReference;

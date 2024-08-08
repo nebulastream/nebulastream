@@ -33,7 +33,7 @@ class MapPythonUDF : public ExecutableOperator
 {
 public:
     MapPythonUDF(uint64_t operatorHandlerIndex, SchemaPtr inputSchema, SchemaPtr outputSchema)
-        : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema){};
+        : operatorHandlerIndex(operatorHandlerIndex), inputSchema(inputSchema), outputSchema(outputSchema) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
     void terminate(ExecutionContext& ctx) const override;
 

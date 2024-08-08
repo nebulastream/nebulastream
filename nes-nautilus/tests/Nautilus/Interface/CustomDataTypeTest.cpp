@@ -55,7 +55,7 @@ class CustomType : public Any
 {
 public:
     static const inline auto type = TypeIdentifier::create<CustomType>();
-    CustomType(Value<> x, Value<> y) : Any(&type), x(x), y(y){};
+    CustomType(Value<> x, Value<> y) : Any(&type), x(x), y(y) {};
 
     auto add(const CustomType& other) const { return create<CustomType>(x + other.x, y + other.y); }
 

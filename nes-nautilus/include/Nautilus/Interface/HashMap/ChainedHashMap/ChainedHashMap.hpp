@@ -58,7 +58,7 @@ public:
         Entry* next;
         hash_t hash;
         /// payload data follows this header
-        explicit Entry(hash_t hash) : next(nullptr), hash(hash){};
+        explicit Entry(hash_t hash) : next(nullptr), hash(hash) {};
     };
 
     /**

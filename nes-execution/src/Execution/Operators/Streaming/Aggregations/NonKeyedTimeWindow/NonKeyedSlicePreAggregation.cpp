@@ -69,7 +69,7 @@ void* getDefaultState(void* ss)
 class LocalGlobalPreAggregationState : public Operators::OperatorState
 {
 public:
-    explicit LocalGlobalPreAggregationState(const Value<MemRef>& sliceStoreState) : sliceStoreState(sliceStoreState){};
+    explicit LocalGlobalPreAggregationState(const Value<MemRef>& sliceStoreState) : sliceStoreState(sliceStoreState) {};
     const Value<MemRef> sliceStoreState;
 };
 

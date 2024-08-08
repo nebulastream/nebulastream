@@ -17,7 +17,7 @@
 namespace NES::Runtime::Execution::Expressions
 {
 
-NegateExpression::NegateExpression(ExpressionPtr subExpression) : subExpression(std::move(subExpression)){};
+NegateExpression::NegateExpression(ExpressionPtr subExpression) : subExpression(std::move(subExpression)) {};
 
 Value<> NegateExpression::execute(Record& record) const
 {

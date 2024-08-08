@@ -19,7 +19,7 @@
 namespace NES::Nautilus::Tracing
 {
 
-Block::Block(uint32_t blockId) : blockId(blockId), type(Type::Default){};
+Block::Block(uint32_t blockId) : blockId(blockId), type(Type::Default) {};
 
 bool Block::isLocalValueRef(ValueRef& ref)
 {

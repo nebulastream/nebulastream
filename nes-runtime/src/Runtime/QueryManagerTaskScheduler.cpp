@@ -37,13 +37,13 @@ class ReconfigurationPipelineExecutionContext : public Execution::PipelineExecut
 public:
     explicit ReconfigurationPipelineExecutionContext(QueryId queryId, QueryManagerPtr queryManager)
         : Execution::PipelineExecutionContext(
-            INVALID_PIPELINE_ID, /// this is a dummy pipelineID
-            queryId,
-            queryManager->getBufferManager(),
-            queryManager->getNumberOfWorkerThreads(),
-            [](TupleBuffer&, NES::Runtime::WorkerContext&) {},
-            [](TupleBuffer&) {},
-            std::vector<Execution::OperatorHandlerPtr>())
+              INVALID_PIPELINE_ID, /// this is a dummy pipelineID
+              queryId,
+              queryManager->getBufferManager(),
+              queryManager->getNumberOfWorkerThreads(),
+              [](TupleBuffer&, NES::Runtime::WorkerContext&) {},
+              [](TupleBuffer&) {},
+              std::vector<Execution::OperatorHandlerPtr>())
     {
         /// nop
     }

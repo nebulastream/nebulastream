@@ -45,7 +45,7 @@ PhysicalJoinSinkOperator::PhysicalJoinSinkOperator(
     Join::JoinOperatorHandlerPtr joinOperatorHandler)
     : Operator(id)
     , PhysicalJoinOperator(std::move(joinOperatorHandler))
-    , PhysicalBinaryOperator(id, std::move(leftInputSchema), std::move(rightInputSchema), std::move(outputSchema)){};
+    , PhysicalBinaryOperator(id, std::move(leftInputSchema), std::move(rightInputSchema), std::move(outputSchema)) {};
 
 std::string PhysicalJoinSinkOperator::toString() const
 {

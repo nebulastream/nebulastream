@@ -23,10 +23,10 @@
 namespace NES
 {
 FieldRenameExpressionNode::FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName)
-    : ExpressionNode(originalField->getStamp()), originalField(originalField), newFieldName(std::move(newFieldName)){};
+    : ExpressionNode(originalField->getStamp()), originalField(originalField), newFieldName(std::move(newFieldName)) {};
 
 FieldRenameExpressionNode::FieldRenameExpressionNode(const FieldRenameExpressionNodePtr other)
-    : FieldRenameExpressionNode(other->getOriginalField(), other->getNewFieldName()){};
+    : FieldRenameExpressionNode(other->getOriginalField(), other->getNewFieldName()) {};
 
 ExpressionNodePtr FieldRenameExpressionNode::create(FieldAccessExpressionNodePtr originalField, std::string newFieldName)
 {

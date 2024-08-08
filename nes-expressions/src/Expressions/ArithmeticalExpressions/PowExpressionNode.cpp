@@ -20,7 +20,7 @@
 namespace NES
 {
 
-PowExpressionNode::PowExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
+PowExpressionNode::PowExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)) {};
 
 PowExpressionNode::PowExpressionNode(PowExpressionNode* other) : ArithmeticalBinaryExpressionNode(other)
 {

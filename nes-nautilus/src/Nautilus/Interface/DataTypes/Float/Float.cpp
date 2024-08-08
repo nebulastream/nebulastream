@@ -16,7 +16,7 @@
 namespace NES::Nautilus
 {
 
-Float::Float(float value) : TraceableType(&type), value(value){};
+Float::Float(float value) : TraceableType(&type), value(value) {};
 Nautilus::IR::Types::StampPtr Float::getType() const
 {
     return Nautilus::IR::Types::StampFactory::createFloatStamp();

@@ -36,7 +36,7 @@ void* getProbeHashMapProxy(void* op)
 class LocalJoinProbeState : public Operators::OperatorState
 {
 public:
-    explicit LocalJoinProbeState(Interface::ChainedHashMapRef hashMap) : hashMap(std::move(hashMap)){};
+    explicit LocalJoinProbeState(Interface::ChainedHashMapRef hashMap) : hashMap(std::move(hashMap)) {};
 
     Interface::ChainedHashMapRef hashMap;
 };

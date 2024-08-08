@@ -20,13 +20,13 @@
 namespace NES::Nautilus::Tracing
 {
 
-ValueRef::ValueRef() : blockId(), operationId(){};
+ValueRef::ValueRef() : blockId(), operationId() {};
 
 ValueRef::ValueRef(uint32_t blockId, uint32_t operationId, NES::Nautilus::IR::Types::StampPtr type)
-    : blockId(blockId), operationId(operationId), type(std::move(type)){};
+    : blockId(blockId), operationId(operationId), type(std::move(type)) {};
 
-ValueRef::ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId), type(other.type){};
-ValueRef::ValueRef(const ValueRef&& other) : blockId(other.blockId), operationId(other.operationId), type(std::move(other.type)){};
+ValueRef::ValueRef(const ValueRef& other) : blockId(other.blockId), operationId(other.operationId), type(other.type) {};
+ValueRef::ValueRef(const ValueRef&& other) : blockId(other.blockId), operationId(other.operationId), type(std::move(other.type)) {};
 
 ValueRef& ValueRef::operator=(const ValueRef& other)
 {

@@ -27,7 +27,7 @@ struct SchemaFieldDetail
 {
 public:
     SchemaFieldDetail(std::string fieldName, std::string fieldType, std::string variableLengthInBytes = "0")
-        : fieldName(std::move(fieldName)), fieldType(std::move(fieldType)), variableLengthInBytes(std::move(variableLengthInBytes)){};
+        : fieldName(std::move(fieldName)), fieldType(std::move(fieldType)), variableLengthInBytes(std::move(variableLengthInBytes)) {};
     std::string fieldName;
     std::string fieldType;
     std::string variableLengthInBytes;

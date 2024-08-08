@@ -73,7 +73,7 @@ private:
      * @param recordSize
      */
     RowLayoutField(std::shared_ptr<RowLayout> layout, uint8_t* basePointer, FIELD_SIZE fieldIndex, FIELD_SIZE recordSize)
-        : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), layout(std::move(layout)){};
+        : fieldIndex(fieldIndex), recordSize(recordSize), basePointer(basePointer), layout(std::move(layout)) {};
 
     const FIELD_SIZE fieldIndex;
     const FIELD_SIZE recordSize;

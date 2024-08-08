@@ -19,7 +19,7 @@
 namespace NES
 {
 
-SubExpressionNode::SubExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
+SubExpressionNode::SubExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)) {};
 
 SubExpressionNode::SubExpressionNode(SubExpressionNode* other) : ArithmeticalBinaryExpressionNode(other)
 {
