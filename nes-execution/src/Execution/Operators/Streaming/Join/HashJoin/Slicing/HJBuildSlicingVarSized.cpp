@@ -135,8 +135,9 @@ void* getDefaultMemRefVarSized()
     return nullptr;
 }
 
-void HJBuildSlicingVarSized::open(ExecutionContext& ctx, RecordBuffer&) const
+void HJBuildSlicingVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
+    Operator::open(ctx, recordBuffer);
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<MemRef> dummyRef1 = FunctionCall("getDefaultMemRef", getDefaultMemRefVarSized);
     Value<MemRef> dummyRef2 = FunctionCall("getDefaultMemRef", getDefaultMemRefVarSized);

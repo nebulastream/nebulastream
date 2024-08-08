@@ -87,8 +87,9 @@ void* getDefaultMemRefProxy()
     return nullptr;
 }
 
-void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer&) const
+void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
+    Operator::open(ctx, recordBuffer);
     auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<MemRef> allWindowsToFill = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRefProxy);
     ctx.setLocalOperatorState(this, std::make_unique<LocalStateBucketing>(allWindowsToFill));

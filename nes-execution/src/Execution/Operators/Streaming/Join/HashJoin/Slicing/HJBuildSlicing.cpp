@@ -159,8 +159,9 @@ void* getDefaultMemRef()
     return nullptr;
 }
 
-void HJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const
+void HJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
 {
+    Operator::open(ctx, recordBuffer);
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     Value<MemRef> dummyRef1 = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRef);
     Value<MemRef> dummyRef2 = Nautilus::FunctionCall("getDefaultMemRef", getDefaultMemRef);
