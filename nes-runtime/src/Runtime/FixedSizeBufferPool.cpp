@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/Exception.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -53,7 +54,6 @@ BufferManagerType FixedSizeBufferPool::getBufferManagerType() const
 void FixedSizeBufferPool::destroy()
 {
     NES_DEBUG("Destroying LocalBufferPool");
-    ///    std::unique_lock lock(mutex);
     bool expected = false;
     if (!isDestroyed.compare_exchange_strong(expected, true))
     {
@@ -75,28 +75,8 @@ size_t FixedSizeBufferPool::getAvailableBuffers() const
     return qSize > 0 ? qSize : 0;
 }
 
-std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::milliseconds timeout)
+std::optional<TupleBuffer> FixedSizeBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
 {
-#ifndef NES_USE_LATCH_FREE_BUFFER_MANAGER
-    std::unique_lock lock(mutex);
-    auto pred = [this]()
-    {
-        return !exclusiveBuffers.empty(); /// false if waiting must be continued
-    };
-    if (!cvar.wait_for(lock, timeout, std::move(pred)))
-    {
-        return std::nullopt;
-    }
-    detail::MemorySegment* memSegment = exclusiveBuffers.front();
-    exclusiveBuffers.pop_front();
-    lock.unlock();
-    if (memSegment->controlBlock->prepare())
-    {
-        return TupleBuffer(memSegment->controlBlock, memSegment->ptr, memSegment->size);
-    }
-    NES_THROW_RUNTIME_ERROR(
-        "[FixedSizeBufferPool] got buffer with invalid reference counter: " << memSegment->controlBlock->getReferenceCount());
-#else
     auto now = std::chrono::steady_clock::now();
     detail::MemorySegment* memSegment;
     if (exclusiveBuffers.tryReadUntil(now + timeout, memSegment))
@@ -105,8 +85,7 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::mi
         {
             return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
         }
-        NES_THROW_RUNTIME_ERROR(
-            "[BufferManager] got buffer with invalid reference counter " << memSegment->controlBlock->getReferenceCount());
+        throw InvalidRefCountForBuffer();
     }
     return std::nullopt;
 }
@@ -114,13 +93,17 @@ std::optional<TupleBuffer> FixedSizeBufferPool::getBufferTimeout(std::chrono::mi
 TupleBuffer FixedSizeBufferPool::getBufferBlocking()
 {
     detail::MemorySegment* memSegment;
-    exclusiveBuffers.blockingRead(memSegment);
-    if (memSegment->controlBlock->prepare())
+    auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
+    if (buffer.has_value())
     {
-        return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
+        return buffer.value();
     }
-    NES_THROW_RUNTIME_ERROR("[BufferManager] got buffer with invalid reference counter " << memSegment->controlBlock->getReferenceCount());
-#endif
+    else
+    {
+        auto exp = CannotAllocateBuffer();
+        exp.what() += "FixedSizeBufferPool could not allocate buffer before timeout";
+        throw exp;
+    }
 }
 
 void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
@@ -139,6 +122,7 @@ void FixedSizeBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
             NES_THROW_RUNTIME_ERROR(
                 "Recycling buffer callback invoked on used memory segment refcnt=" << memSegment->controlBlock->getReferenceCount());
         }
+
         /// add back an exclusive buffer to the local pool
         exclusiveBuffers.write(memSegment);
     }
@@ -159,16 +143,13 @@ size_t FixedSizeBufferPool::getNumOfPooledBuffers() const
 size_t FixedSizeBufferPool::getNumOfUnpooledBuffers() const
 {
     NES_ASSERT2_FMT(false, "This is not supported currently");
-    return 0;
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getBufferNoBlocking()
 {
     NES_ASSERT2_FMT(false, "This is not supported currently");
-    return std::optional<TupleBuffer>();
 }
 std::optional<TupleBuffer> FixedSizeBufferPool::getUnpooledBuffer(size_t)
 {
     NES_ASSERT2_FMT(false, "This is not supported currently");
-    return std::optional<TupleBuffer>();
 }
 } /// namespace NES::Runtime

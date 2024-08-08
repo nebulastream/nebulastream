@@ -63,7 +63,7 @@ public:
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
     std::optional<TupleBuffer> getBufferNoBlocking() override;
-    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout_ms) override;
+    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) override;
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
     /**
      * @brief provide number of available exclusive buffers

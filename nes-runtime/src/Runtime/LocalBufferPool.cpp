@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Exceptions/Exception.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -85,7 +86,6 @@ void LocalBufferPool::destroy()
         memSegment->controlBlock->resetBufferRecycler(bufferManager.get());
         bufferManager->recyclePooledBuffer(memSegment);
     }
-#endif
     bufferManager.reset();
 }
 
@@ -98,21 +98,18 @@ size_t LocalBufferPool::getAvailableBuffers() const
 TupleBuffer LocalBufferPool::getBufferBlocking()
 {
     detail::MemorySegment* memSegment;
-    if (exclusiveBuffers.read(memSegment))
+    auto buffer = getBufferWithTimeout(GET_BUFFER_TIMEOUT);
+    if (buffer.has_value())
     {
-        if (memSegment->controlBlock->prepare())
-        {
-            exclusiveBufferCount.fetch_sub(1);
-            return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
-        }
-        else
-        {
-            NES_THROW_RUNTIME_ERROR(
-                "[BufferManager] got buffer with invalid reference counter " << memSegment->controlBlock->getReferenceCount());
-        }
+        NES_TRACE("get buffer from local pool");
+        return buffer.value();
     }
-    return bufferManager->getBufferBlocking();
-#endif
+    else
+    {
+        /// if no buffer remains in the local pool, draw from the global pool
+        NES_TRACE("get buffer from global pool");
+        return bufferManager->getBufferBlocking();
+    }
 }
 
 void LocalBufferPool::recyclePooledBuffer(detail::MemorySegment* memSegment)
@@ -149,12 +146,21 @@ size_t LocalBufferPool::getNumOfUnpooledBuffers() const
 std::optional<TupleBuffer> LocalBufferPool::getBufferNoBlocking()
 {
     NES_ASSERT2_FMT(false, "This is not supported currently");
-    return std::optional<TupleBuffer>();
 }
-std::optional<TupleBuffer> LocalBufferPool::getBufferTimeout(std::chrono::milliseconds)
+std::optional<TupleBuffer> LocalBufferPool::getBufferWithTimeout(std::chrono::milliseconds timeout)
 {
-    NES_ASSERT2_FMT(false, "This is not supported currently");
-    return std::optional<TupleBuffer>();
+    auto now = std::chrono::steady_clock::now();
+    detail::MemorySegment* memSegment;
+    if (exclusiveBuffers.tryReadUntil(now + timeout, memSegment))
+    {
+        if (memSegment->controlBlock->prepare())
+        {
+            exclusiveBufferCount.fetch_sub(1);
+            return TupleBuffer(memSegment->controlBlock.get(), memSegment->ptr, memSegment->size);
+        }
+        throw InvalidRefCountForBuffer();
+    }
+    return std::nullopt;
 }
 
 std::optional<TupleBuffer> LocalBufferPool::getUnpooledBuffer(size_t size)

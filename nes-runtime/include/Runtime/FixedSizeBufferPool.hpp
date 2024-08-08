@@ -71,7 +71,7 @@ public:
      * @param timeout_ms the amount of time to wait for a new buffer to be retuned
      * @return a new buffer
      */
-    std::optional<TupleBuffer> getBufferTimeout(std::chrono::milliseconds timeout) override;
+    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout) override;
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
