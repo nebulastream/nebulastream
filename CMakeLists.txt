@@ -15,6 +15,7 @@ include(CMakeDependentOption)
 
 set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(LLVM_VERSION 18.1.6)
+set(CLANG_FORMAT_MAJOR_VERSION 18)
 # Set the not allowed comment style as voted in https://github.com/nebulastream/nebulastream-public/discussions/18
 # The regex must match all comments that are not allowed in the codebase per line.
 set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
@@ -614,9 +615,6 @@ set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CP
 set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")
 set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
 INCLUDE(CPack)
-
-# macros for guard once
-include(cmake/GuardOnce.cmake)
 
 #Other configurations
 project_enable_clang_format()
