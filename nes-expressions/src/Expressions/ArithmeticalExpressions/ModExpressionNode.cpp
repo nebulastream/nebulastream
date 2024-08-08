@@ -21,7 +21,7 @@
 namespace NES
 {
 
-ModExpressionNode::ModExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)){};
+ModExpressionNode::ModExpressionNode(DataTypePtr stamp) : ArithmeticalBinaryExpressionNode(std::move(stamp)) {};
 
 ModExpressionNode::ModExpressionNode(ModExpressionNode* other) : ArithmeticalBinaryExpressionNode(other)
 {

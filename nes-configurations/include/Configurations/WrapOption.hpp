@@ -21,12 +21,8 @@ namespace NES::Configurations
 
 template <class Type, class Factory>
 concept IsFactory = requires(std::string identifier, std::map<std::string, std::string>& inputParams, Yaml::Node node) {
-    {
-        Factory::createFromString(identifier, inputParams)
-    };
-    {
-        Factory::createFromYaml(node)
-    };
+    { Factory::createFromString(identifier, inputParams) };
+    { Factory::createFromYaml(node) };
 };
 
 /**

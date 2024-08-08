@@ -257,7 +257,7 @@ public:
  */
 struct OpCode
 {
-    OpCode(ByteCode op, short reg1, short reg2, short output) : op(op), reg1(reg1), reg2(reg2), output(output){};
+    OpCode(ByteCode op, short reg1, short reg2, short output) : op(op), reg1(reg1), reg2(reg2), output(output) {};
     ByteCode op;
     short reg1;
     short reg2;

@@ -20,7 +20,7 @@
 namespace NES::Runtime::Execution::MemoryProvider
 {
 
-RowMemoryProvider::RowMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr) : rowMemoryLayoutPtr(rowMemoryLayoutPtr){};
+RowMemoryProvider::RowMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr) : rowMemoryLayoutPtr(rowMemoryLayoutPtr) {};
 
 MemoryLayouts::MemoryLayoutPtr RowMemoryProvider::getMemoryLayoutPtr()
 {

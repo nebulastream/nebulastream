@@ -41,7 +41,7 @@ void setupHandler(void* ss, void* ctx, uint64_t keySize, uint64_t valueSize)
 class LocalKeyedStoreState : public Operators::OperatorState
 {
 public:
-    explicit LocalKeyedStoreState(Interface::ChainedHashMapRef hm) : hm(std::move(hm)){};
+    explicit LocalKeyedStoreState(Interface::ChainedHashMapRef hm) : hm(std::move(hm)) {};
 
     const Interface::ChainedHashMapRef hm;
 };

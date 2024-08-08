@@ -19,7 +19,7 @@
 
 namespace NES::QueryCompilation
 {
-PipelineQueryPlanIterator::PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)){};
+PipelineQueryPlanIterator::PipelineQueryPlanIterator(PipelineQueryPlanPtr queryPlan) : queryPlan(std::move(queryPlan)) {};
 
 PipelineQueryPlanIterator::iterator PipelineQueryPlanIterator::begin()
 {

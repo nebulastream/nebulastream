@@ -67,7 +67,7 @@ class LocalKeyedSliceStoreState : public Operators::OperatorState
 public:
     explicit LocalKeyedSliceStoreState(
         const std::vector<PhysicalTypePtr>& keyDataTypes, uint64_t keySize, uint64_t valueSize, const Value<MemRef>& sliceStoreState)
-        : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
+        : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState) {};
 
     auto findSliceStateByTs(Value<UInt64>& timestampValue)
     {

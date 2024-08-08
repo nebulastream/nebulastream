@@ -50,7 +50,7 @@ public:
         Value<UInt32> currentIndex;
     };
 
-    explicit List(const TypeIdentifier* childType) : Any(childType){};
+    explicit List(const TypeIdentifier* childType) : Any(childType) {};
 
     /**
      * @brief Return the length of the list.

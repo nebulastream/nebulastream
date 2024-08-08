@@ -19,7 +19,7 @@
 
 namespace NES
 {
-WhenExpressionNode::WhenExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)){};
+WhenExpressionNode::WhenExpressionNode(DataTypePtr stamp) : BinaryExpressionNode(std::move(stamp)) {};
 
 WhenExpressionNode::WhenExpressionNode(WhenExpressionNode* other) : BinaryExpressionNode(other)
 {
