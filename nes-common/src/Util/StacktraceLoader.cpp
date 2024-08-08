@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
-#include <Util/Backward/backward.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
+#include <cpptrace/cpptrace.hpp>
 #define CALLSTACK_MAX_SIZE 32
 
 namespace NES
@@ -24,16 +24,9 @@ namespace NES
  */
 std::string collectAndPrintStacktrace()
 {
-    backward::StackTrace stackTrace;
-    backward::Printer printer;
-    stackTrace.load_here(CALLSTACK_MAX_SIZE);
-    printer.object = true;
-    printer.color_mode = backward::ColorMode::always;
-    std::stringbuf buffer;
-    std::ostream os(&buffer);
-    printer.print(stackTrace, os);
-    NES_ERROR("Stacktrace:\n {}", buffer.str());
-    return buffer.str();
+    auto stack = cpptrace::generate_trace(1).to_string();
+    NES_ERROR("Stacktrace:\n{}", stack);
+    return stack;
 }
 /**
  * @brief This method only collects the call stacks
@@ -43,15 +36,7 @@ std::string collectAndPrintStacktrace()
  */
 std::string collectStacktrace()
 {
-    backward::StackTrace stackTrace;
-    backward::Printer printer;
-    stackTrace.load_here(CALLSTACK_MAX_SIZE);
-    printer.object = true;
-    printer.color_mode = backward::ColorMode::always;
-    std::stringbuf buffer;
-    std::ostream os(&buffer);
-    printer.print(stackTrace, os);
-    return buffer.str();
+    return cpptrace::generate_trace(1).to_string();
 }
 
 } /// namespace NES
