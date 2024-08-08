@@ -15,7 +15,6 @@
 #include <memory>
 #include <Exceptions/RuntimeException.hpp>
 #include <Exceptions/SignalHandling.hpp>
-#include <Util/Backward/backward.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
 
