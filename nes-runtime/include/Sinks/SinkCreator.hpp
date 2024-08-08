@@ -30,8 +30,8 @@ namespace NES
 
 DataSinkPtr createCSVFileSink(
     const SchemaPtr& schema,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
+    QueryId queryId,
+
     const Runtime::NodeEnginePtr& nodeEngine,
     uint32_t activeProducers,
     const std::string& filePath,
@@ -50,8 +50,8 @@ DataSinkPtr createCSVFileSink(
  */
 DataSinkPtr createJSONFileSink(
     const SchemaPtr& schema,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
+    QueryId queryId,
+
     const Runtime::NodeEnginePtr& nodeEngine,
     uint32_t numOfProducers,
     const std::string& filePath,
@@ -68,8 +68,7 @@ DataSinkPtr createJSONFileSink(
  */
 DataSinkPtr createCsvPrintSink(
     const SchemaPtr& schema,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
+    QueryId queryId,
     const Runtime::NodeEnginePtr& nodeEngine,
     uint32_t activeProducers,
     std::ostream& out,
@@ -86,8 +85,7 @@ DataSinkPtr createCsvPrintSink(
  */
 DataSinkPtr createCSVPrintSink(
     const SchemaPtr& schema,
-    SharedQueryId sharedQueryId,
-    DecomposedQueryPlanId decomposedQueryPlanId,
+    QueryId queryId,
     const Runtime::NodeEnginePtr& nodeEngine,
     uint32_t activeProducers,
     std::ostream& out,

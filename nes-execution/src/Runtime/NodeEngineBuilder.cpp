@@ -51,21 +51,22 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
 class SimpleQueryStatusListener : public AbstractQueryStatusListener
 {
 public:
-    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
-    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override
+    bool canTriggerEndOfStream(QueryId, OperatorId, Runtime::QueryTerminationType) override { return true; }
+
+    bool notifySourceTermination(QueryId, OperatorId, Runtime::QueryTerminationType) override
     {
         NES_INFO("Source has terminated");
         return true;
     }
-    bool notifyQueryFailure(SharedQueryId, DecomposedQueryPlanId, std::string errorMsg) override
+
+    bool notifyQueryFailure(QueryId, std::string errorMsg) override
     {
         NES_FATAL_ERROR("Query Failure: {}", errorMsg);
         return true;
     }
-    bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override
-    {
-        return true;
-    }
+
+    bool notifyQueryStatusChange(QueryId, Runtime::Execution::ExecutableQueryPlanStatus) override { return true; }
+
     bool notifyEpochTermination(uint64_t, uint64_t) override { return true; }
 };
 

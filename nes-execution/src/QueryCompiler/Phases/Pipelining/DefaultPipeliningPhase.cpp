@@ -41,9 +41,9 @@ PipeliningPhasePtr DefaultPipeliningPhase::create(const OperatorFusionPolicyPtr&
 PipelineQueryPlanPtr DefaultPipeliningPhase::apply(DecomposedQueryPlanPtr decomposedQueryPlan)
 {
     /// splits the query plan of physical operators in pipelines
-    NES_DEBUG("Pipeline: query id: {} - {}", decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId());
+    NES_DEBUG("Pipeline: query id: {}", decomposedQueryPlan->getQueryId());
     std::map<OperatorPtr, OperatorPipelinePtr> pipelineOperatorMap;
-    auto pipelinePlan = PipelineQueryPlan::create(decomposedQueryPlan->getSharedQueryId(), decomposedQueryPlan->getDecomposedQueryPlanId());
+    auto pipelinePlan = PipelineQueryPlan::create(decomposedQueryPlan->getQueryId());
     for (const auto& sinkOperators : decomposedQueryPlan->getRootOperators())
     {
         /// create a new pipeline for each sink

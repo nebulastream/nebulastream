@@ -138,18 +138,18 @@ public:
     void reconfigure(ReconfigurationMessage&, WorkerContext& context) override;
 
     /**
-     * @brief retrieve the execution status of a given local query sub plan id.
-     * @param id : the query sub plan id
+     * @brief retrieve the execution status of a given query
+     * @param id : the query plan id
      * @return status of the query sub plan
      */
-    Execution::ExecutableQueryPlanStatus getQepStatus(DecomposedQueryPlanId id);
+    [[nodiscard]] Execution::ExecutableQueryPlanStatus getQepStatus(QueryId id);
 
     /**
      * @brief Provides the QEP object for an id
      * @param id the plan to lookup
      * @return the QEP or null, if not found
      */
-    Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(DecomposedQueryPlanId id) const;
+    [[nodiscard]] Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QueryId id) const;
 
     [[nodiscard]] bool canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType);
 
@@ -192,35 +192,30 @@ public:
      * @param qep of the particular query
      * @return
      */
-    QueryStatisticsPtr getQueryStatistics(DecomposedQueryPlanId qepId);
+    [[nodiscard]] QueryStatisticsPtr getQueryStatistics(QueryId queryId);
 
     /**
      * Get the id of the current node
      * @return node id
      */
-    WorkerId getNodeId() const;
+    [[nodiscard]] WorkerId getNodeId() const;
 
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param sharedQueryId: the local QEP to reconfigure
-     * @param queryExecutionPlanId: the local sub QEP to reconfigure
+     * @param queryId: queryId
      * @param reconfigurationDescriptor: what to do
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId queryExecutionPlanId,
-        const ReconfigurationMessage& reconfigurationMessage,
-        bool blocking = false);
+    bool addReconfigurationMessage(QueryId queryId, const ReconfigurationMessage& reconfigurationMessage, bool blocking = false);
 
     /**
      * method to get the first buffer manger
      * @return first buffer manager
      */
-    BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
+    [[nodiscard]] BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
 
 private:
     /**
@@ -228,13 +223,12 @@ private:
      * @return true if the reconfiguration task was added correctly on the worker queue
      * N.B.: this does not not mean that the reconfiguration took place but it means that it
      * was scheduled to be executed!
-     * @param sharedQueryId: the local QEP to reconfigure
+     * @param queryId: the local QEP to reconfigure
      * @param queryExecutionPlanId: the local szb QEP to reconfigure
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(
-        SharedQueryId sharedQueryId, DecomposedQueryPlanId queryExecutionPlanId, TupleBuffer&& buffer, bool blocking = false);
+    bool addReconfigurationMessage(QueryId queryId, TupleBuffer&& buffer, bool blocking = false);
 
 public:
     /**
@@ -248,7 +242,7 @@ public:
      * @brief Returns the numberOfBuffersPerEpoch
      * @return numberOfBuffersPerEpoch
      */
-    uint64_t getNumberOfBuffersPerEpoch() const;
+    [[nodiscard]] uint64_t getNumberOfBuffersPerEpoch() const;
 
     /**
      * @brief This method informs the QueryManager that a source has failed
@@ -266,10 +260,10 @@ public:
 
     /**
      * @brief get the shared query id mapped to the decomposed query plan id
-     * @param decomposedQueryPlanId: the decomposed query plan id
+     * @param queryId: the decomposed query plan id
      * @return shared query id
      */
-    SharedQueryId getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const;
+    [[nodiscard]] QueryId getQueryId(QueryId queryId) const;
 
     /**
      * @brief introduces end of stream to all QEPs connected to this source
@@ -288,19 +282,19 @@ public:
      * @brief get number of tasks in the queue
      * @return task count
      */
-    uint64_t getNumberOfTasksInWorkerQueues() const;
+    [[nodiscard]] uint64_t getNumberOfTasksInWorkerQueues() const;
 
     /**
      * Return the current occupation of the task queue
      * @return number of tasks in the queue
      */
-    uint64_t getCurrentTaskSum();
+    [[nodiscard]] uint64_t getCurrentTaskSum();
 
     /**
      * Returns the current number of worker threads
      * @return thread cnt
      */
-    uint64_t getNumberOfWorkerThreads();
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads();
 
     /**
      * @brief Notifies that a source operator is done with its execution
@@ -311,20 +305,19 @@ public:
 
     /**
      * @brief Notifies that a pipeline is done with its execution
-     * @param decomposedQueryPlanId the plan the pipeline belongs to
+     * @param queryId the plan the pipeline belongs to
      * @param pipeline the terminated pipeline
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifyPipelineCompletion(
-        DecomposedQueryPlanId decomposedQueryPlanId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
+    void notifyPipelineCompletion(QueryId queryId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType);
 
     /**
      * @brief Notifies that a sink operator is done with its execution
-     * @param decomposedQueryPlanId the plan the sink belongs to
+     * @param queryId the plan the sink belongs to
      * @param sink the terminated sink
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType);
+    void notifySinkCompletion(QueryId queryId, DataSinkPtr sink, QueryTerminationType terminationType);
 
 private:
     friend class ThreadPool;
@@ -353,17 +346,10 @@ protected:
     /**
      * @brief Method to update the statistics
      * @param task
-     * @param sharedQueryId
-     * @param decomposedQueryPlanId
-     * @param pipelineId
+     * @param queryId
      * @param workerContext
      */
-    void updateStatistics(
-        const Task& task,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
-        PipelineId pipelineId,
-        WorkerContext& workerContext);
+    void updateStatistics(const Task& task, QueryId queryId, PipelineId pipelineId, WorkerContext& workerContext);
 
     /**
      * @brief Executes cleaning up logic on the task queue
@@ -411,11 +397,11 @@ protected:
     /// worker thread for async maintenance task, e.g., fail queryIdAndCatalogEntryMapping
     AsyncTaskExecutorPtr asyncTaskExecutor;
 
-    std::unordered_map<DecomposedQueryPlanId, Execution::ExecutableQueryPlanPtr> runningQEPs;
+    std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> runningQEPs;
 
     ///TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
-    cuckoohash_map<DecomposedQueryPlanId, QueryStatisticsPtr> queryToStatisticsMap;
+    cuckoohash_map<QueryId, QueryStatisticsPtr> queryToStatisticsMap;
 
     mutable std::mutex reconfigurationMutex;
 

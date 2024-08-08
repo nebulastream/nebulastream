@@ -17,7 +17,6 @@
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <Plans/Utils/PlanIdGenerator.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
@@ -57,8 +56,8 @@ void DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(
 
     ///Serialize the sub query plan and query plan id
     NES_TRACE("QueryPlanSerializationUtil: serializing the Query sub plan id and query id");
-    serializableDecomposedQueryPlan->set_decomposedqueryplanid(decomposedQueryPlan->getDecomposedQueryPlanId().getRawValue());
-    serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan->getSharedQueryId().getRawValue());
+    serializableDecomposedQueryPlan->set_decomposedqueryplanid(decomposedQueryPlan->getQueryId().getRawValue());
+    serializableDecomposedQueryPlan->set_sharedqueryplanid(decomposedQueryPlan->getQueryId().getRawValue());
     serializableDecomposedQueryPlan->set_state(serializeQueryState(decomposedQueryPlan->getState()));
 }
 
@@ -94,10 +93,9 @@ DecomposedQueryPlanPtr DecomposedQueryPlanSerializationUtil::deserializeDecompos
     }
 
     ///set properties of the query plan
-    DecomposedQueryPlanId decomposableQueryPlanId = DecomposedQueryPlanId(serializableDecomposedQueryPlan->decomposedqueryplanid());
-    SharedQueryId sharedQueryId = SharedQueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
+    QueryId queryId = QueryId(serializableDecomposedQueryPlan->sharedqueryplanid());
 
-    auto decomposedQueryPlan = DecomposedQueryPlan::create(decomposableQueryPlanId, sharedQueryId, INVALID_WORKER_NODE_ID, rootOperators);
+    auto decomposedQueryPlan = DecomposedQueryPlan::create(queryId, INVALID_WORKER_NODE_ID, rootOperators);
     if (serializableDecomposedQueryPlan->has_state())
     {
         auto state = deserializeQueryState(serializableDecomposedQueryPlan->state());

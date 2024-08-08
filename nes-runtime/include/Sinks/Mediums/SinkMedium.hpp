@@ -38,12 +38,7 @@ public:
     /**
      * @brief public constructor for data sink
      */
-    explicit SinkMedium(
-        SinkFormatPtr sinkFormat,
-        Runtime::NodeEnginePtr nodeEngine,
-        uint32_t numOfProducers,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId);
+    explicit SinkMedium(SinkFormatPtr sinkFormat, Runtime::NodeEnginePtr nodeEngine, uint32_t numOfProducers, QueryId QueryId);
 
     /**
      * @brief public constructor for data sink
@@ -52,8 +47,8 @@ public:
         SinkFormatPtr sinkFormat,
         Runtime::NodeEnginePtr nodeEngine,
         uint32_t numOfProducers,
-        SharedQueryId sharedQueryId,
-        DecomposedQueryPlanId decomposedQueryPlanId,
+        QueryId queryId,
+
         uint64_t numberOfOrigins);
 
     /**
@@ -76,16 +71,10 @@ public:
     virtual bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContext& workerContext) = 0;
 
     /**
-     * @brief get the id of the owning plan
-     * @return sharedQueryId
+     * @brief get the id of query
+     * @return QueryId
      */
-    SharedQueryId getSharedQueryId() const;
-
-    /**
-     * @brief get the suzbplan id of the owning plan
-     * @return QuerySubPlanId
-     */
-    DecomposedQueryPlanId getParentPlanId() const;
+    QueryId getQueryId() const;
 
     /**
      * @brief debug function for testing to get number of written buffers
@@ -149,8 +138,7 @@ protected:
     Runtime::NodeEnginePtr nodeEngine;
     /// termination machinery
     std::atomic<uint32_t> activeProducers;
-    SharedQueryId sharedQueryId;
-    DecomposedQueryPlanId decomposedQueryPlanId;
+    QueryId queryId;
     uint64_t numberOfOrigins;
     uint64_t sentBuffer{0};
     uint64_t sentTuples{0};

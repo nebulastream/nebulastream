@@ -25,29 +25,22 @@
 namespace NES
 {
 
-DecomposedQueryPlanPtr
-DecomposedQueryPlan::create(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId)
+DecomposedQueryPlanPtr DecomposedQueryPlan::create(QueryId queryId, WorkerId workerId)
 {
-    return std::make_shared<DecomposedQueryPlan>(decomposedQueryPlanId, sharedQueryId, workerId);
+    return std::make_shared<DecomposedQueryPlan>(queryId, workerId);
 }
 
-DecomposedQueryPlanPtr DecomposedQueryPlan::create(
-    DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators)
+DecomposedQueryPlanPtr DecomposedQueryPlan::create(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators)
 {
-    return std::make_shared<DecomposedQueryPlan>(decomposedQueryPlanId, sharedQueryId, workerId, rootOperators);
+    return std::make_shared<DecomposedQueryPlan>(queryId, workerId, rootOperators);
 }
 
-DecomposedQueryPlan::DecomposedQueryPlan(DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId)
-    : sharedQueryId(sharedQueryId), decomposedQueryPlanId(decomposedQueryPlanId), workerId(workerId)
+DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId) : queryId(queryId), workerId(workerId)
 {
 }
 
-DecomposedQueryPlan::DecomposedQueryPlan(
-    DecomposedQueryPlanId decomposedQueryPlanId, SharedQueryId sharedQueryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators)
-    : sharedQueryId(sharedQueryId)
-    , decomposedQueryPlanId(decomposedQueryPlanId)
-    , workerId(workerId)
-    , rootOperators(std::move(rootOperators))
+DecomposedQueryPlan::DecomposedQueryPlan(QueryId queryId, WorkerId workerId, std::vector<OperatorPtr> rootOperators)
+    : queryId(queryId), workerId(workerId), rootOperators(std::move(rootOperators))
 {
 }
 
@@ -108,19 +101,14 @@ std::vector<OperatorPtr> DecomposedQueryPlan::getLeafOperators() const
     return leafOperators;
 }
 
-DecomposedQueryPlanId DecomposedQueryPlan::getDecomposedQueryPlanId() const
+QueryId DecomposedQueryPlan::getQueryId() const
 {
-    return decomposedQueryPlanId;
+    return queryId;
 }
 
-SharedQueryId DecomposedQueryPlan::getSharedQueryId() const
+void DecomposedQueryPlan::setQueryId(QueryId queryId)
 {
-    return sharedQueryId;
-}
-
-void DecomposedQueryPlan::setDecomposedQueryPlanId(DecomposedQueryPlanId newDecomposedQueryPlanId)
-{
-    decomposedQueryPlanId = newDecomposedQueryPlanId;
+    this->queryId = queryId;
 }
 
 std::vector<SourceLogicalOperatorPtr> DecomposedQueryPlan::getSourceOperators() const
@@ -156,19 +144,9 @@ QueryState DecomposedQueryPlan::getState() const
     return currentState;
 }
 
-void DecomposedQueryPlan::setState(QueryState newState)
+void DecomposedQueryPlan::setState(QueryState state)
 {
-    currentState = newState;
-}
-
-DecomposedQueryPlanVersion DecomposedQueryPlan::getVersion() const
-{
-    return decomposedQueryPlanVersion;
-}
-
-void DecomposedQueryPlan::setVersion(DecomposedQueryPlanVersion newVersion)
-{
-    decomposedQueryPlanVersion = newVersion;
+    currentState = state;
 }
 
 bool DecomposedQueryPlan::hasOperatorWithId(OperatorId operatorId) const
@@ -258,7 +236,7 @@ std::unordered_set<OperatorPtr> DecomposedQueryPlan::getAllOperators() const
     return visitedOperators;
 }
 
-DecomposedQueryPlanPtr DecomposedQueryPlan::copy()
+DecomposedQueryPlanPtr DecomposedQueryPlan::copy() const
 {
     NES_INFO("DecomposedQueryPlan: make copy.");
     /// 1. We start by copying the root operators of this query plan to the queue of operators to be processed
@@ -333,9 +311,8 @@ DecomposedQueryPlanPtr DecomposedQueryPlan::copy()
     operatorIdToOperatorMap.clear();
 
     /// Create the duplicated decomposed query plan
-    auto copiedDecomposedQueryPlan = DecomposedQueryPlan::create(decomposedQueryPlanId, sharedQueryId, workerId, duplicateRootOperators);
+    auto copiedDecomposedQueryPlan = DecomposedQueryPlan::create(queryId, workerId, duplicateRootOperators);
     copiedDecomposedQueryPlan->setState(currentState);
-    copiedDecomposedQueryPlan->setVersion(decomposedQueryPlanVersion);
     return copiedDecomposedQueryPlan;
 }
 
