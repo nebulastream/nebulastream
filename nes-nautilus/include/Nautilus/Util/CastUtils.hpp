@@ -68,9 +68,7 @@ concept IsTyped = requires(T&) { IsBase<Typed, T> == true; };
 
 template <typename T>
 concept HasTypeIdentifier = requires(T&) {
-    {
-        std::remove_pointer<T>::type::type
-    } -> IsSame<const TypeIdentifier&>;
+    { std::remove_pointer<T>::type::type } -> IsSame<const TypeIdentifier&>;
 };
 
 /**

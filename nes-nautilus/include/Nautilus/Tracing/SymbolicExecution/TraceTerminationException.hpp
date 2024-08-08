@@ -25,7 +25,7 @@ namespace NES::Nautilus
 class TraceTerminationException final : public std::exception
 {
 public:
-    explicit TraceTerminationException() : std::exception(){};
+    explicit TraceTerminationException() : std::exception() {};
 };
 } /// namespace NES::Nautilus
 #endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_

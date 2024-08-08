@@ -43,9 +43,7 @@ private:
 
 template <typename T>
 concept GetType = requires(T a) {
-    {
-        T::type
-    } -> convertible_to<TypeCastable::Kind>;
+    { T::type } -> convertible_to<TypeCastable::Kind>;
 };
 
 template <class X, class Y>

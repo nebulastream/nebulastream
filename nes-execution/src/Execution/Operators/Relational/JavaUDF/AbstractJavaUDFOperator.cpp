@@ -24,7 +24,7 @@ AbstractJavaUDFOperator::AbstractJavaUDFOperator(
     uint64_t operatorHandlerIndex, NES::SchemaPtr operatorInputSchema, NES::SchemaPtr operatorOutputSchema)
     : operatorHandlerIndex(operatorHandlerIndex)
     , operatorInputSchema(std::move(operatorInputSchema))
-    , operatorOutputSchema(std::move(operatorOutputSchema)){};
+    , operatorOutputSchema(std::move(operatorOutputSchema)) {};
 
 void* getInstance(void* state)
 {

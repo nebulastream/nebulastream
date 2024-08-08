@@ -33,7 +33,7 @@ class TableBuilder;
 class Table
 {
 public:
-    Table(MemoryLayouts::MemoryLayoutPtr layout) : layout(std::move(layout)){};
+    Table(MemoryLayouts::MemoryLayoutPtr layout) : layout(std::move(layout)) {};
 
     std::vector<TupleBuffer>& getChunks() { return chunks; }
     MemoryLayouts::MemoryLayoutPtr& getLayout() { return layout; }

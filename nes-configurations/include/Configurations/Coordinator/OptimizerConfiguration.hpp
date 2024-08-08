@@ -34,8 +34,8 @@ namespace NES::Configurations
 class OptimizerConfiguration : public BaseConfiguration
 {
 public:
-    OptimizerConfiguration() : BaseConfiguration(){};
-    OptimizerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description){};
+    OptimizerConfiguration() : BaseConfiguration() {};
+    OptimizerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description) {};
 
     /**
      * @brief The rule to be used for performing query merging.

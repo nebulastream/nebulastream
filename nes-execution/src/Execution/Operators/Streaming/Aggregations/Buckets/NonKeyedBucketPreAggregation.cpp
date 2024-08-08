@@ -79,7 +79,7 @@ void* getDefaultBucketState(void* ss)
 class LocalBucketPreAggregationState : public Operators::OperatorState
 {
 public:
-    explicit LocalBucketPreAggregationState(const Value<MemRef>& bucketStore) : bucketStore(bucketStore){};
+    explicit LocalBucketPreAggregationState(const Value<MemRef>& bucketStore) : bucketStore(bucketStore) {};
     const Value<MemRef> bucketStore;
 };
 

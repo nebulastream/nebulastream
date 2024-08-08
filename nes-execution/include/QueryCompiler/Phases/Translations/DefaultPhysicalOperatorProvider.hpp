@@ -36,7 +36,7 @@ struct WindowOperatorProperties
         : windowOperator(std::move(windowOperator))
         , windowInputSchema(std::move(windowInputSchema))
         , windowOutputSchema(std::move(windowOutputSchema))
-        , windowDefinition(std::move(windowDefinition)){};
+        , windowDefinition(std::move(windowDefinition)) {};
 
     WindowOperatorPtr windowOperator;
     SchemaPtr windowInputSchema;

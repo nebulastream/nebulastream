@@ -18,7 +18,7 @@
 namespace NES::Nautilus
 {
 
-Int16::Int16(int16_t value) : Int(&type), value(value){};
+Int16::Int16(int16_t value) : Int(&type), value(value) {};
 Nautilus::IR::Types::StampPtr Int16::getType() const
 {
     return Nautilus::IR::Types::StampFactory::createInt16Stamp();

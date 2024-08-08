@@ -116,7 +116,7 @@ private:
     class Block
     {
     public:
-        explicit Block(uint64_t blockIndex) : blockIndex(blockIndex){};
+        explicit Block(uint64_t blockIndex) : blockIndex(blockIndex) {};
         ~Block() = default;
         const uint64_t blockIndex;
         std::array<Container, blockSize> log;

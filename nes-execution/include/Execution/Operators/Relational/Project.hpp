@@ -30,7 +30,7 @@ public:
      * @param inputFields: The output field names that the input field names of the record are mapped to during execute()
      */
     Project(const std::vector<Record::RecordFieldIdentifier>& inputFields, const std::vector<Record::RecordFieldIdentifier>& outputFields)
-        : inputFields(inputFields), outputFields(outputFields){};
+        : inputFields(inputFields), outputFields(outputFields) {};
     void execute(ExecutionContext& ctx, Record& record) const override;
 
 private:

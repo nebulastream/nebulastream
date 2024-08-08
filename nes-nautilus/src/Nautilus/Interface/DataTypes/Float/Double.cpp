@@ -16,7 +16,7 @@
 namespace NES::Nautilus
 {
 
-Double::Double(double value) : TraceableType(&type), value(value){};
+Double::Double(double value) : TraceableType(&type), value(value) {};
 Nautilus::IR::Types::StampPtr Double::getType() const
 {
     return Nautilus::IR::Types::StampFactory::createDoubleStamp();
