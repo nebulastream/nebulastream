@@ -104,34 +104,34 @@ void IntegrationTestUtil::removeFile(const std::string_view filepath)
 }
 
 bool IntegrationTestUtil::loadFile(
-    SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName, const std::string_view dataFileName)
+    SerializableDecomposedQueryPlan& queryPlan, const std::filesystem::path& queryFile, const std::string_view dataFileName)
 {
-    std::ifstream file(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
+    std::ifstream file(queryFile);
     if (!file)
     {
-        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
+        NES_ERROR("Query file is not available: {}", queryFile);
         return false;
     }
     if (!queryPlan.ParseFromIstream(&file))
     {
-        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
+        NES_ERROR("Could not load protobuffer file: {}", queryFile);
         return false;
     }
     copyInputFile(dataFileName);
     return true;
 }
 
-bool IntegrationTestUtil::loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName)
+bool IntegrationTestUtil::loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::filesystem::path& queryFile)
 {
-    std::ifstream f(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
+    std::ifstream f(queryFile);
     if (!f)
     {
-        NES_ERROR("Query file is not available: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
+        NES_ERROR("Query file is not available: {}", queryFile);
         return false;
     }
     if (!queryPlan.ParseFromIstream(&f))
     {
-        NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
+        NES_ERROR("Could not load protobuffer file: {}", queryFile);
         return false;
     }
     return true;

@@ -54,20 +54,20 @@ public:
     /**
      * Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
      * @param queryPlan mutable ptr to a @link SerializableDecomposedQueryPlan
-     * @param queryFileName name of the file in the TEST_DATA_DIR
+     * @param queryFile path to the protobuf representation of the query
      * @param dataFileName name of the file that the test reads data from
      * @return return false if the file could not be read or the query could not be parsed, otherwise returns true.
      */
     static bool
-    loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName, const std::string_view dataFileName);
+    loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::filesystem::path& queryFile, const std::string_view dataFileName);
 
     /**
      * Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
      * @param queryPlan mutable ptr to a @link SerializableDecomposedQueryPlan
-     * @param queryFileName name of the file in the TEST_DATA_DIR
+     * @param queryFile path to the protobuf representation of the query
      * @return return false if the file could not be read or the query could not be parsed, otherwise returns true.
      */
-    static bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName);
+    static bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::filesystem::path& queryFile);
 
     /**
      * Iterates over a decomposed query plan and replaces all CSV sink file paths to ensure expected behavior.
