@@ -34,7 +34,7 @@ This hierarchy implements the parsing functionality that is not intuitive. This 
 
 # Non-Goals
 
-NG1: Runtime configurations.
+NG1: Runtime reconfigurations of a worker, i.e. changing configurations after the launch of the worker.
 NG2: Configurations for the distributed setup or related to the coordinator.
 
 # Our Proposed Solution
@@ -43,28 +43,28 @@ NG2: Configurations for the distributed setup or related to the coordinator.
 As part of the first Milestone targeting a stable worker, I propose removing everything unrelated to the single worker and adding the rest later on. To address P1, I propose to leave the following configs (I further mark with "+" configs that stay and with "-" configs that go with an explanation)
 
 WorkerConfiguration.hpp
-- workerId (+)
-- localWorkerHost (+)
+- workerId (-) // Related to the distributed setup
+- localWorkerHost (+) // IP address or hostname of the worker, required for establishing communication with the worker
 - coordinatorHost (-) // No coordinator        
-- rpcPort (+)
+- rpcPort (+) // RPC server port of the worker, required for establishing communication with the worker
 - dataPort (-) // No ZMQ Server
 - coordinatorPort (-) // No coordinator
 - numberOfSlots (-) // Related to the heuristics-based placement strategy in the query optimizer
 - bandwidth (-) // Related to the distributed setup
 - latency (-) // Related to the distributed setup
-- numWorkerThreads (+)
-- numberOfBuffersInGlobalBufferManager (+)
-- numberOfBuffersPerWorker (+)
-- numberOfBuffersInSourceLocalBufferPool (+)
-- bufferSizeInBytes (+)
+- numWorkerThreads (+) // Number of threads allocated for parallel processing in the worker
+- numberOfBuffersInGlobalBufferManager (+) // Number of buffers allocated in the global buffer pool, determining the memory capacity of the worker
+- numberOfBuffersPerWorker (+) // Number of buffers allocated in the local task buffer pool, determining the number of buffers from numberOfBuffersInGlobalBufferManager within a specific task
+- numberOfBuffersInSourceLocalBufferPool (+) // Number of buffers allocated in the local source buffer pool, determining the number of buffers from numberOfBuffersInGlobalBufferManager that can be utilized by a source to produce new data
+- bufferSizeInBytes (+) // Size of each buffer, in bytes, that is used to pass data through the system
 - parentId (-) // Not sure about this config. At the stage of configuring the yaml the only id that is certain is the coordinator id (1). The rest is determined during the launch. For instance, even if you write 3 here and then launch 2 other workers with the parentId 1, it will depend on the order when the workers got launched who gets the id 3. In case one uses docker or Kubernetes to launch workers, this order is undefined. It also depends if the worker gets restarted. It gets even worse with deeper hierarchies. Individual workers have to get started manually to keep the order and assume that none of the workers will get restarted. To address these issues, typically, we use the REST calls "addParent" and "removeParent" to adjust the topology once all nodes are launched. 
-- logLevel (+)
+- logLevel (+) // The logging level for the system (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)
 - sourcePinList (-) // Related to the new implementation of sources
 - workerPinList (-) // Related to the distributed setup
 - numaAwareness (-) // Can be addressed at the later stages
 - enableMonitoring (-) // Partially supported
 - monitoringWaitTime (-) // Partially supported
-- queryCompiler (+)
+- queryCompiler (+) // Rename to queryCompilerType
 - physicalSourceTypes (-) // Related to the new implementation of sources
 - locationCoordinates (-) // Partially supported
 - nodeSpatialType (-) // Partially supported
@@ -74,9 +74,9 @@ WorkerConfiguration.hpp
 - numberOfThreadsPerQueue (-) // Related to the numberOfQueues
 - numberOfBuffersPerEpoch (-) // Not supported feature
 - queryManagerMode (-) // Does not make sense if we do not support numberOfQueues
-- enableSourceSharing (+)
+- enableSourceSharing (-) // Not implemented yet
 - workerHealthCheckWaitTime (-) // Related to the distributed setup
-- configPath (+) 
+- configPath (+) // Path to worker.yaml
 - connectSinksAsync (-) // Related to the new implementation of sources
 - connectSourceEventChannelsAsync (-) // Related to the new implementation of sources
 
@@ -91,13 +91,13 @@ Coordinator:
 - SchemaType (-) // Related to the new implementation of sources (Used in LogicalSourceType)
 
 Enum: 
-- CompilationStrategy (+)
+- CompilationStrategy (+) // Indicates the optimization strategy for the query compiler [FAST|DEBUG|OPTIMIZE]
 - DistributedJoinOptimizationMode (-) // Related to the distributed setup
-- DumpMode (+)
-- EnumOption (+)
+- DumpMode (+) // Specifies the mode for dumping intermediate representations during processing [NONE|CONSOLE|FILE|FILE_AND_CONSOLE]
+- EnumOption (+) // General enum class 
 - EnumOptionDetails (-) // Can be just added to EnumOption.hpp
 - MemoryLayoutPolicy (-) // Part of the query optimizer
-- NautilusBackend (+)
+- NautilusBackend (+) // // Specifies the backend used by the Nautilus system [INTERPRETER|MLIR_COMPILER_BACKEND|BC_INTERPRETER_BACKEND|FLOUNDER_COMPILER_BACKEND|CPP_COMPILER_BACKEND]
 - OutputBufferOptimizationLevel (-) // Part of a partially implemented feature
 - PipeliningStrategy (-) // Part of a partially implemented feature
 - PlacementAmendmentMode (-) // Part of the query optimizer
@@ -107,34 +107,34 @@ Enum:
 - StorageHandlerType (-) // Coordinator config
 - WindowingStrategy (-) // Only slicing for now
 
-Validation: All (+)
+Validation: All (+) // subdirectory that includes validation classes for primitive types, e.g. int, string, etc.
 
 Worker:
 PhysicalSourceTypes: All (-) // Related to the new implementation of sources
 - GeoLocationFactory (-) // Partially implemented feature
 - PhysicalSourceFactoryPlugin (-) // Related to the new implementation of sources
 - PhysicalSourceTypeFactory (-) // Related to the new implementation of sources
-- QueryCompilerConfiguration (+)
-- WorkerConfiguration (+)
+- QueryCompilerConfiguration (-) // Will be merged to a file with individual component configurations 
+- WorkerConfiguration (-) // Will be split to individual components
 - WorkerMobilityConfiguration (-) // Partially implemented feature
 
 The rest of the files without a specific type are related to the overall configuration hierarchy: 
-- BaseConfiguration (+)
-- BaseOption (+)
+- BaseConfiguration (-) // Not needed due to the proposed new architecture for configurations
+- BaseOption (-) // Not needed due to the proposed new architecture for configurations
 - ConfigOptions.md (-) // Can be moved to the documentation
 - ConfigurationException (-) // Related to the new exception handling
 - ConfigurationOption (-) // Can be merged with the TypedBaseOption. They basically do the same, except that ConfigurationOption handles magic_enum.
 - ConfigurationNames (+) // Adjust to the names of configurations that are left, remove the note
-- ScalarOption (+)
+- ScalarOption (-) // Not needed due to the proposed new architecture for configurations
 - SequenceOption (+) // Potentially is not used by the configurations that will be currently left in the system, however, is a valid type for future configurations
-- TypedBaseOption (+)
+- TypedBaseOption (-) // Not needed due to the proposed new architecture for configurations
 - WorkerConfigurationKeys.hpp (-) // Include TENSOR_FLOW, JAVA_UDF, MOBILITY, SPATIAL_TYPE, OPENCL_DEVICES
 - WorkerPropertyKeys (-) // SLOTS, LOCATION, MAINTENANCE are irrelevant for the current milestone, DATA_PORT, GRPC_PORT can be moved to ConfigurationNames.hpp. I am not sure what is ADDRESS (it is never used)
 - WrapOption (+) // It is currently used only for Sources and Spatial things. However, it's a good code basis for the future complex configuration types
 
 The "+" and "-" are related to both hpp and cpp files.
 
-## Create a lightweight architecture of handling and storing configuration options.
+## Proposed architecture for configurations
 
 Our proposed solution implements decentralized configuration architecture similar to (ClickHouse)[https://clickhouse.com/docs/en/operations/configuration-files]. A worker stores all configurations, and components proactively pull configurations from a specialized structure that is created after validation of individual configuration options.
 To this end, we propose:
@@ -214,17 +214,16 @@ NetworkConfig config;
 
 This implementation can be simplified by removing the intermediate component configuration classes. However,  having these classes allows us to keep track of existing configuration options and avoid duplicates in the future.
 
-## Make sure all the configuration options that are left are tested.
+## Configuration testing
 
-- We update the current test suite to include all system configurations.
-- The configurations should be included in all four types of the current test suite:
-	- Valid configuration option from the YAML file
-	- Valid configuration option from the command line
-	- Invalid configuration option from the YAML file
-	- Invalid configuration option from the command line 
-- Valid configuration tests check for every option a valid value and an empty value (a default value should be assigned).
-- Invalid configuration tests check for every option a value of a wrong type, a semantically incorrect value (out of range), or an incorrect value that is specific for the type (in case applicable) (e.g., impossible number of buffers per global buffer pool).
+- We update the current test suite to include all system configurations. We then provide the following tests:
 
+- **Default Configuration:** Test that the system correctly loads and applies default configuration values when no configuration is provided
+- **Custom Configuration:** Test that the system correctly loads and applies custom configurations from a yaml file or command-line
+- **Override Behavior:** Test scenarios where command-line arguments override configuration file options
+- **Type Validation:** Test how the system handles invalid or malformed configurations, such as incorrect data types, missing required fields, or unsupported values
+- **Semantic Validation:** Test the behavior of the system when specific configuration options set to minimum, maximum, or dependent values
+- **Interaction with Components:** Ensure that components correctly read and react to configuration changes
 
 # Alternatives
 
