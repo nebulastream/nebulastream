@@ -1,0 +1,28 @@
+vcpkg_from_github(
+        OUT_SOURCE_PATH SOURCE_PATH
+        REPO nebulastream/nautilus
+		REF 5faf0bcb47e16a3ac559c2b873a8e52a1cf08e2e
+        SHA512 1966ef938b290e31333a2c617c0f0d9a1493b1d6f09b33c89b3a81db606a3f2aa3252258f4387a1ec85768275091bfb71048ce0943ae73d7c015f02cd5279c4e
+		PATCHES
+		0001_tag_recorder.patch
+)
+
+vcpkg_cmake_configure(
+    SOURCE_PATH "${SOURCE_PATH}"
+		OPTIONS
+		-DENABLE_TESTS=OFF
+		-DENABLE_MLIR_BACKEND=ON
+		-DENABLE_BC_BACKEND=OFF
+		-DENABLE_C_BACKEND=OFF
+		-DENABLE_STACKTRACE=OFF
+		-DUSE_EXTERNAL_MLIR=ON
+		-DUSE_EXTERNAL_SPDLOG=ON
+		-DUSE_EXTERNAL_FMT=ON
+)
+
+vcpkg_cmake_install()
+vcpkg_copy_pdbs()
+vcpkg_cmake_config_fixup(CONFIG_PATH "lib/cmake/nautilus")
+file(REMOVE_RECURSE "${CURRENT_PACKAGES_DIR}/debug/include")
+
+file(INSTALL ${SOURCE_PATH}/LICENSE DESTINATION ${CURRENT_PACKAGES_DIR}/share/${PORT} RENAME copyright)
