@@ -55,7 +55,7 @@ struct QueryTestParam
  * @brief Integration tests for the SingleNodeWorker. Tests entire code path from registration to running the query, stopping and
  * unregistration.
  */
-class SingleNodeIntegrationTest : public BaseIntegrationTest, public testing::WithParamInterface<QueryTestParam>, public IntegrationTestUtil
+class SingleNodeIntegrationTest : public BaseIntegrationTest, public testing::WithParamInterface<QueryTestParam>
 {
 public:
     static void SetUpTestCase()
@@ -110,14 +110,14 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     const auto& [queryName, numSources, expectedNumTuples, expectedCheckSum] = GetParam();
     const std::string queryInputFile = fmt::format("{}.bin", queryName);
     const std::string queryResultFile = fmt::format("{}.csv", queryName);
-    removeFile(queryResultFile); /// remove outputFile if exists
+    IntegrationTestUtil::removeFile(queryResultFile); /// remove outputFile if exists
 
     SerializableDecomposedQueryPlan queryPlan;
-    if (!loadFile(queryPlan, queryInputFile))
+    if (!IntegrationTestUtil::loadFile(queryPlan, queryInputFile))
     {
         GTEST_SKIP();
     }
-    replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryName));
+    IntegrationTestUtil::replaceFileSinkPath(queryPlan, fmt::format("{}.csv", queryName));
 
     Configuration::SingleNodeWorkerConfiguration configuration{};
     configuration.queryCompilerConfiguration.nautilusBackend = QueryCompilation::NautilusBackend::MLIR_COMPILER_BACKEND;
@@ -129,13 +129,13 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     for (auto tcpSourceNumber = 0; tcpSourceNumber < numSources; ++tcpSourceNumber)
     {
         auto mockTcpServerPort = static_cast<uint16_t>(*detail::getPortDispatcher().getNextPort());
-        replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
+        IntegrationTestUtil::replacePortInTcpSources(queryPlan, mockTcpServerPort, tcpSourceNumber);
         mockedTcpServers.emplace_back(SyncedMockTcpServer::create(mockTcpServerPort));
     }
 
     /// Register the query and start it.
-    auto queryId = registerQueryPlan(queryPlan, uut);
-    startQuery(queryId, uut);
+    auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, uut);
+    IntegrationTestUtil::startQuery(queryId, uut);
 
     /// Start all SyncedMockTcpServers and wait until every sever sent all tuples.
     for (const auto& server : mockedTcpServers)
@@ -146,11 +146,11 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     /// Todo (#166) : stop query might be called to early, leading to no received data.
     std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    stopQuery(queryId, HardStop, uut);
-    unregisterQuery(queryId, uut);
+    IntegrationTestUtil::stopQuery(queryId, HardStop, uut);
+    IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto bufferManager = std::make_shared<NES::Runtime::BufferManager>();
-    const auto sinkSchema = loadSinkSchema(queryPlan);
+    const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
     auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, bufferManager, 0, "", true);
 
     size_t numProcessedTuples = 0;
@@ -166,7 +166,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     EXPECT_EQ(numProcessedTuples, expectedNumTuples) << "Query did not produce the expected number of tuples";
     EXPECT_EQ(checkSum, expectedCheckSum) << "Query did not produce the expected expected checksum";
 
-    removeFile(queryResultFile);
+    IntegrationTestUtil::removeFile(queryResultFile);
 }
 
 INSTANTIATE_TEST_CASE_P(
