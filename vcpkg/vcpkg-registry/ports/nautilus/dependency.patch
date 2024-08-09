@@ -1,0 +1,1116 @@
+Index: nautilus/include/nautilus/common/traceing.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/common/traceing.hpp b/nautilus/include/nautilus/common/traceing.hpp
+--- a/nautilus/include/nautilus/common/traceing.hpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/include/nautilus/common/traceing.hpp	(date 1724851191446)
+@@ -131,7 +131,7 @@
+ 
+ value_ref traceCast(value_ref state, Type resultType);
+ 
+-std::array<uint8_t, 256>& getVarRefMap();
++std::array<uint8_t, 10240>& getVarRefMap();
+ 
+ value_ref traceCall(void* fptn, const std::type_info& ti, Type resultType, const std::vector<tracing::value_ref>& arguments);
+ 
+Index: nautilus/include/nautilus/std/cmath.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/std/cmath.h b/nautilus/include/nautilus/std/cmath.h
+--- a/nautilus/include/nautilus/std/cmath.h	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/include/nautilus/std/cmath.h	(date 1724851191442)
+@@ -10,6 +10,10 @@
+  */
+ val<float> abs(val<float> x);
+ val<double> abs(val<double> x);
++val<int8_t> abs(val<int8_t> x);
++val<int16_t> abs(val<int16_t> x);
++val<int32_t> abs(val<int32_t> x);
++val<int64_t> abs(val<int64_t> x);
+ val<float> fabs(val<float> x);
+ val<double> fabs(val<double> x);
+ val<float> fabsf(val<float> x);
+@@ -164,7 +168,16 @@
+  */
+ val<float> log10(val<float> x);
+ val<double> log10(val<double> x);
+-val<float> log10f(val<float> x);
++
++/**
++ * @brief Computes the base-2 logarithm of x.
++ *
++ * @param x Value.
++ * @return Base-2 logarithm of x.
++ */
++val<float> log2(val<float> x);
++val<double> log2(val<double> x);
++
+ 
+ /**
+  * @brief natural logarithm (to base e) of 1 plus the given number (ln(1+x))
+Index: nautilus/include/nautilus/val.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/val.hpp b/nautilus/include/nautilus/val.hpp
+--- a/nautilus/include/nautilus/val.hpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/include/nautilus/val.hpp	(date 1724852495545)
+@@ -160,6 +160,12 @@
+ 		*this = *this - (ValueType) 1;
+ 		return temp;
+ 	}
++
++	friend std::ostream &operator<<(std::ostream &os, const val<ValueType>& value) {
++		os << value.value;
++		return os;
++	}
++
+ #ifdef ENABLE_TRACING
+ 	const tracing::TypedValueRefHolder state;
+ #endif
+@@ -273,13 +279,18 @@
+ 		return value;
+ 	}
+ 
++	friend std::ostream &operator<<(std::ostream &os, const val<bool>& value) {
++		os << value.value;
++		return os;
++	}
++
+ 	bool value;
+ };
+ 
+ template <is_fundamental_val Type>
+ auto inline&& make_value(Type&& value) {
+ 	return std::forward<Type>(value);
+-};
++}
+ 
+ template <convertible_to_fundamental Type>
+ auto inline make_value(const Type& value) {
+@@ -310,12 +321,12 @@
+ template <typename LeftType, is_bool RightType>
+ auto&& cast_value(LeftType&& value) {
+ 	return std::forward<LeftType>(value);
+-};
++}
+ 
+ template <typename LeftType, is_enum RightType>
+ auto&& cast_value(LeftType&& value) {
+ 	return std::forward<LeftType>(value);
+-};
++}
+ 
+ namespace details {
+ 
+@@ -348,17 +359,21 @@
+ #define DEFINE_BINARY_OPERATOR_HELPER(OP, OP_NAME, OP_TRACE, RES_TYPE)                                                                                                                                                                         \
+ 	template <typename LHS, typename RHS>                                                                                                                                                                                                      \
+ 	auto inline OP_NAME(LHS&& left, RHS&& right) {                                                                                                                                                                                             \
+-		typedef typename std::common_type<typename LHS::basic_type, typename RHS::basic_type>::type commonType;                                                                                                                                \
+-		auto&& lValue = cast_value<LHS, commonType>(std::forward<LHS>(left));                                                                                                                                                                  \
+-		auto&& rValue = cast_value<RHS, commonType>(std::forward<RHS>(right));                                                                                                                                                                 \
+-		using resultType = decltype(getRawValue(lValue) OP getRawValue(rValue));                                                                                                                                                                  \
+-		if SHOULD_TRACE () {                                                                                                                                                                                                                   \
+-			auto tc = tracing::traceBinaryOp<tracing::OP_TRACE, resultType>(details::getState(lValue), details::getState(rValue));                                                                                                             \
+-			return RES_TYPE(tc);                                                                                                                                                                                                               \
+-		}                                                                                                                                                                                                                                      \
+-		return RES_TYPE(getRawValue(lValue) OP getRawValue(rValue));                                                                                                                                                                           \
+-	}
+-
++		if constexpr (!requires(LHS l, RHS r) { getRawValue(l) OP getRawValue(r); }) {                                                                                                                                                                                   \
++			throw std::runtime_error(std::string("binary operator not implemented: ") + " " + #OP + " " + typeid(LHS).name() + " " + typeid(RHS).name());                                                                                      \
++			return left;                                                                                                                                                                                                                \
++		} else {                                                                                                                                                                                                                               \
++			typedef typename std::common_type<typename LHS::basic_type, typename RHS::basic_type>::type commonType;                                                                                                                            \
++			auto&& lValue = cast_value<LHS, commonType>(std::forward<LHS>(left));                                                                                                                                                              \
++			auto&& rValue = cast_value<RHS, commonType>(std::forward<RHS>(right));                                                                                                                                                             \
++			using resultType = decltype(getRawValue(lValue) OP getRawValue(rValue));                                                                                                                                                           \
++			if SHOULD_TRACE () {                                                                                                                                                                                                               \
++				auto tc = tracing::traceBinaryOp<tracing::OP_TRACE, resultType>(details::getState(lValue), details::getState(rValue));                                                                                                         \
++				return RES_TYPE(tc);                                                                                                                                                                                                           \
++			}                                                                                                                                                                                                                                  \
++			return RES_TYPE(getRawValue(lValue) OP getRawValue(rValue));                                                                                                                                                                       \
++		}                                                                                                                                                                                                                                      \
++	} // namespace details
+ 
+ DEFINE_BINARY_OPERATOR_HELPER(+, add, ADD, COMMON_RETURN_TYPE)
+ 
+@@ -413,7 +428,7 @@
+ 
+ #define DEFINE_BINARY_OPERATOR(OP, FUNC)                                                                                                                                                                                                       \
+ 	template <typename LHS, typename RHS>                                                                                                                                                                                                      \
+-	    requires(is_fundamental_val<LHS> && (is_fundamental_val<RHS> || convertible_to_fundamental<RHS>) ) || ((is_fundamental_val<LHS> || convertible_to_fundamental<LHS>) && is_fundamental_val<RHS>)                                \
++	    requires(is_fundamental_val<LHS> && (is_fundamental_val<RHS> || convertible_to_fundamental<RHS>)) || ((is_fundamental_val<LHS> || convertible_to_fundamental<LHS>) && is_fundamental_val<RHS>)                                         \
+ 	auto inline operator OP(LHS&& left, RHS&& right) {                                                                                                                                                                                         \
+ 		auto&& lhsV = make_value(std::forward<LHS>(left));                                                                                                                                                                                     \
+ 		auto&& rhsV = make_value(std::forward<RHS>(right));                                                                                                                                                                                    \
+@@ -549,34 +564,31 @@
+ }
+ } // namespace details
+ 
+-template <typename LHS, typename RHS>
+-auto inline operator||(LHS left, RHS right) {
+-	if constexpr (std::is_same_v<LHS, bool>) {
+-		auto leftV = make_value(left);
+-		return details::lOr(leftV, right);
+-	} else if constexpr (std::is_same_v<RHS, bool>) {
+-		auto rightV = make_value(right);
+-		return details::lOr(left, rightV);
+-	} else {
+-		return details::lOr(left, right);
+-	}
++auto inline operator||(bool left, val<bool> right) {
++	auto leftVal = make_value(left);
++	return details::lOr(leftVal, right);
++}
++auto inline operator||(val<bool> left, bool right) {
++	auto rightVal = make_value(right);
++	return details::lOr(left, rightVal);
++}
++auto inline operator||(val<bool> left, val<bool> right) {
++	return details::lOr(left, right);
++}
++
++auto inline operator&&(bool left, val<bool> right) {
++	auto leftVal = make_value(left);
++	return details::lAnd(leftVal, right);
+ }
+-
+-template <typename LHS, typename RHS>
+-auto inline operator&&(LHS left, RHS right) {
+-	if constexpr (std::is_same_v<LHS, bool>) {
+-		auto leftV = make_value(left);
+-		return details::lAnd(leftV, right);
+-	} else if constexpr (std::is_same_v<RHS, bool>) {
+-		auto rightV = make_value(right);
+-		return details::lAnd(left, rightV);
+-	} else {
+-		return details::lAnd(left, right);
+-	}
++auto inline operator&&(val<bool> left, bool right) {
++	auto rightVal = make_value(right);
++	return details::lAnd(left, rightVal);
++}
++auto inline operator&&(val<bool> left, val<bool> right) {
++	return details::lAnd(left, right);
+ }
+ 
+-template <typename LHS>
+-auto inline operator!(val<LHS> left) {
++auto inline operator!(val<bool> left) {
+ 	return details::lNot(left);
+ }
+ 
+Index: nautilus/src/nautilus/api/std/cmath.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/api/std/cmath.cpp b/nautilus/src/nautilus/api/std/cmath.cpp
+--- a/nautilus/src/nautilus/api/std/cmath.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/api/std/cmath.cpp	(date 1724851191443)
+@@ -20,6 +20,22 @@
+ 	return invoke<>(
+ 	    +[](double x) { return std::fabs(x); }, x);
+ }
++val<int8_t> abs(val<int8_t> x) {
++	return invoke<>(
++	    +[](int8_t x) -> int8_t { return std::abs(x); }, x);
++}
++val<int16_t > abs(val<int16_t > x) {
++	return invoke<>(
++	    +[](int16_t x) -> int16_t { return std::abs(x); }, x);
++}
++val<int32_t > abs(val<int32_t > x) {
++	return invoke<>(
++	    +[](int32_t x) -> int32_t { return std::abs(x); }, x);
++}
++val<int64_t> abs(val<int64_t> x) {
++	return invoke<>(
++	    +[](int64_t x) -> int64_t { return std::abs(x); }, x);
++}
+ #if defined(_LIBCPP_VERSION)
+ val<float> fabsf(val<float> x) {
+ 	return invoke<>(
+@@ -86,11 +102,11 @@
+ #endif
+ val<float> acos(val<float> x) {
+ 	return invoke<>(
+-	    +[](float x) { return std::asin(x); }, x);
++	    +[](float x) { return std::acos(x); }, x);
+ }
+ val<double> acos(val<double> x) {
+ 	return invoke<>(
+-	    +[](double x) { return std::asin(x); }, x);
++	    +[](double x) { return std::acos(x); }, x);
+ }
+ 
+ #if defined(_LIBCPP_VERSION)
+@@ -615,6 +631,15 @@
+ 	    +[](double x) { return std::log10(x); }, x);
+ }
+ 
++val<float> log2(val<float> x) {
++	return invoke<>(
++		+[](float x) { return std::log2(x); }, x);
++}
++val<double> log2(val<double> x) {
++	return invoke<>(
++		+[](double x) { return std::log2(x); }, x);
++}
++
+ #if defined(_LIBCPP_VERSION)
+ val<float> log10f(val<float> x) {
+ 	return invoke<>(
+Index: nautilus/src/nautilus/compiler/backends/bc/BCInterpreter.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/bc/BCInterpreter.cpp b/nautilus/src/nautilus/compiler/backends/bc/BCInterpreter.cpp
+--- a/nautilus/src/nautilus/compiler/backends/bc/BCInterpreter.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/compiler/backends/bc/BCInterpreter.cpp	(date 1724852495545)
+@@ -13,52 +13,52 @@
+ 
+ void dyncallReset(const OpCode&, RegisterFile&) {
+ 	Dyncall::getVM().reset();
+-};
++}
+ 
+ void dyncallArgB(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<bool>(regs, op.reg1);
+ 	Dyncall::getVM().addArgB(value);
+-};
++}
+ 
+ void dyncallArgI8(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<int8_t>(regs, op.reg1);
+ 	Dyncall::getVM().addArgI8(value);
+-};
++}
+ 
+ void dyncallArgI16(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<int16_t>(regs, op.reg1);
+ 	Dyncall::getVM().addArgI16(value);
+-};
++}
+ 
+ void dyncallArgI32(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<int32_t>(regs, op.reg1);
+ 	Dyncall::getVM().addArgI32(value);
+-};
++}
+ 
+ void dyncallArgI64(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<int64_t>(regs, op.reg1);
+ 	Dyncall::getVM().addArgI32(value);
+-};
++}
+ 
+ void dyncallArgF(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<float>(regs, op.reg1);
+ 	Dyncall::getVM().addArgF(value);
+-};
++}
+ 
+ void dyncallArgD(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<double>(regs, op.reg1);
+ 	Dyncall::getVM().addArgD(value);
+-};
++}
+ 
+ void dyncallArgPtr(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<void*>(regs, op.reg1);
+ 	Dyncall::getVM().addArgPtr(value);
+-};
++}
+ 
+ void dyncallCallV(const OpCode& op, RegisterFile& regs) {
+ 	auto value = readReg<void*>(regs, op.reg1);
+ 	Dyncall::getVM().callVoid(value);
+-};
++}
+ 
+ void dyncallCallB(const OpCode& op, RegisterFile& regs) {
+ 	auto address = readReg<void*>(regs, op.reg1);
+Index: nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp
+--- a/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/compiler/backends/mlir/MLIRLoweringProvider.cpp	(date 1724852495546)
+@@ -216,7 +216,7 @@
+ 	this->theModule = mlir::ModuleOp::create(getNameLoc("module"));
+ 	// Store InsertPoint for inserting globals such as Strings or TupleBuffers.
+ 	globalInsertPoint = new mlir::RewriterBase::InsertPoint(theModule.getBody(), theModule.begin());
+-};
++}
+ 
+ MLIRLoweringProvider::~MLIRLoweringProvider() {
+ 	delete globalInsertPoint;
+Index: nautilus/src/nautilus/compiler/backends/CMakeLists.txt
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/backends/CMakeLists.txt b/nautilus/src/nautilus/compiler/backends/CMakeLists.txt
+--- a/nautilus/src/nautilus/compiler/backends/CMakeLists.txt	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/compiler/backends/CMakeLists.txt	(date 1724852310255)
+@@ -1,6 +1,8 @@
+ 
+ if (ENABLE_TRACING)
+-    add_subdirectory(bc)
++    if (ENABLE_BC_BACKEND)
++        add_subdirectory(bc)
++    endif ()
+     add_subdirectory(cpp)
+     add_subdirectory(mlir)
+ endif ()
+Index: nautilus/src/nautilus/compiler/ir/IRGraph.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/compiler/ir/IRGraph.cpp b/nautilus/src/nautilus/compiler/ir/IRGraph.cpp
+--- a/nautilus/src/nautilus/compiler/ir/IRGraph.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/compiler/ir/IRGraph.cpp	(date 1724852495546)
+@@ -7,7 +7,7 @@
+ 
+ namespace nautilus::compiler::ir {
+ 
+-IRGraph::IRGraph(const compiler::CompilationUnitID& id) : id(id) {};
++IRGraph::IRGraph(const compiler::CompilationUnitID& id) : id(id) {}
+ 
+ std::unique_ptr<FunctionOperation>& IRGraph::addRootOperation(std::unique_ptr<FunctionOperation> root) {
+ 	this->rootOperation = std::move(root);
+Index: nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp
+--- a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.cpp	(date 1724852496282)
+@@ -11,7 +11,7 @@
+ 	// Initialize a new context and perform the inference of the SSA values
+ 	auto phaseContext = SSACreationPhaseContext(std::move(trace));
+ 	return phaseContext.process();
+-};
++}
+ 
+ SSACreationPhase::SSACreationPhaseContext::SSACreationPhaseContext(std::shared_ptr<ExecutionTrace> trace) : trace(std::move(trace)) {
+ }
+@@ -50,6 +50,7 @@
+ 	//  In the first step we get the return block, which contains the return call.
+ 	//  Starting with this block we trace all inputs
+ 
++	// Merging all potential return blocks into a single (new) return block
+ 	auto& returnBlock = getReturnBlock();
+ 	processBlock(returnBlock);
+ 	// Eliminate all assign operations. We only needed them to create the SSA
+@@ -162,7 +163,7 @@
+ 	for (auto& input : blockRef.arguments) {
+ 		processValueRef(block, input, input.type, operationIndex);
+ 	}
+-};
++}
+ 
+ void SSACreationPhase::SSACreationPhaseContext::removeAssignOperations() {
+ 	// Iterate over all block and eliminate the ASSIGN operation.
+Index: nautilus/src/nautilus/tracing/phases/SSACreationPhase.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.hpp b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.hpp
+--- a/nautilus/src/nautilus/tracing/phases/SSACreationPhase.hpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/phases/SSACreationPhase.hpp	(date 1724850842363)
+@@ -54,7 +54,7 @@
+ 		 * @param operationIndex the operation index, which accesses the ValueRef
+ 		 * @return true if Value Ref is defined locally.
+ 		 */
+-		bool isLocalValueRef(Block& block, value_ref& valRef, Type ref_type, uint32_t operationIndex);
++		static bool isLocalValueRef(Block& block, value_ref& valRef, Type ref_type, uint32_t operationIndex);
+ 
+ 		void processValueRef(Block& block, value_ref& type, Type ref_type, uint32_t operationIndex);
+ 
+Index: nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp
+--- a/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/phases/TraceToIRConversionPhase.cpp	(date 1724852496282)
+@@ -26,7 +26,7 @@
+ std::shared_ptr<IRGraph> TraceToIRConversionPhase::apply(std::shared_ptr<ExecutionTrace> trace, const compiler::CompilationUnitID& id) {
+ 	auto phaseContext = IRConversionContext(std::move(trace), id);
+ 	return phaseContext.process();
+-};
++}
+ 
+ std::shared_ptr<IRGraph> TraceToIRConversionPhase::IRConversionContext::process() {
+ 	auto& rootBlock = trace->getBlocks().front();
+Index: nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp
+--- a/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/symbolic_execution/SymbolicExecutionPath.cpp	(date 1724852496283)
+@@ -29,7 +29,7 @@
+ 
+ void SymbolicExecutionPath::setFinalTag(const Snapshot& t) {
+ 	this->finalTag = t;
+-};
++}
+ 
+ std::vector<bool>& SymbolicExecutionPath::getPath() {
+ 	return path;
+Index: nautilus/src/nautilus/tracing/Block.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/Block.cpp b/nautilus/src/nautilus/tracing/Block.cpp
+--- a/nautilus/src/nautilus/tracing/Block.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/Block.cpp	(date 1724852496281)
+@@ -4,7 +4,7 @@
+ 
+ namespace nautilus::tracing {
+ 
+-Block::Block(uint16_t blockId) : blockId(blockId), type(Type::Default) {};
++Block::Block(uint16_t blockId) : blockId(blockId), type(Type::Default) {}
+ 
+ operation_identifier Block::addOperation(nautilus::tracing::TraceOperation&& operation) {
+ 	uint16_t operationIndex = operations.size();
+Index: nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp
+--- a/nautilus/src/nautilus/tracing/ExecutionTrace.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/ExecutionTrace.cpp	(date 1724852496281)
+@@ -9,7 +9,7 @@
+ 
+ ExecutionTrace::ExecutionTrace() : currentBlockIndex(0), currentOperationIndex(0), blocks() {
+ 	createBlock();
+-};
++}
+ 
+ bool ExecutionTrace::checkTag(Snapshot& snapshot) {
+ 	// check if operation is in global map -> we have a repeating operation ->
+@@ -202,7 +202,7 @@
+ 	// arguments[index] = {argRef, type};
+ 	arguments[index] = value_ref(argRef, type);
+ 	return arguments[index];
+-};
++}
+ 
+ void ExecutionTrace::destruct(nautilus::tracing::value_ref) {
+ 	// variableBitset[inputs] = false;
+Index: nautilus/src/nautilus/tracing/Snapshot.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/Snapshot.cpp b/nautilus/src/nautilus/tracing/Snapshot.cpp
+--- a/nautilus/src/nautilus/tracing/Snapshot.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/Snapshot.cpp	(date 1724852496282)
+@@ -5,7 +5,7 @@
+ Snapshot::Snapshot(Tag* tag, uint64_t staticValueHash) : staticValueHash(staticValueHash), tag(tag) {
+ }
+ 
+-Snapshot::Snapshot() : staticValueHash(), tag() {};
++Snapshot::Snapshot() : staticValueHash(), tag() {}
+ 
+ bool Snapshot::operator==(const nautilus::tracing::Snapshot& rhs) const {
+ 	return staticValueHash == rhs.staticValueHash && tag == rhs.tag;
+Index: nautilus/src/nautilus/tracing/TraceContext.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.cpp b/nautilus/src/nautilus/tracing/TraceContext.cpp
+--- a/nautilus/src/nautilus/tracing/TraceContext.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/TraceContext.cpp	(date 1724852496282)
+@@ -59,7 +59,7 @@
+ 		return resultRef;
+ 	}
+ 	throw TraceTerminationException();
+-};
++}
+ 
+ void TraceContext::traceStore(value_ref target, value_ref src, Type valueType) {
+ 	if (isFollowing()) {
+Index: nautilus/src/nautilus/tracing/TraceContext.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceContext.hpp b/nautilus/src/nautilus/tracing/TraceContext.hpp
+--- a/nautilus/src/nautilus/tracing/TraceContext.hpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/TraceContext.hpp	(date 1724851191446)
+@@ -21,7 +21,7 @@
+ 	friend uint64_t hashStaticVector(const std::vector<StaticVarHolder>& data);
+ };
+ 
+-using DynamicValueMap = std::array<uint8_t, 256>;
++using DynamicValueMap = std::array<uint8_t, 10240>;
+ 
+ /**
+  * @brief The trace context manages a thread local instance to record a symbolic execution trace of a given Nautilus
+@@ -111,7 +111,7 @@
+ 	static std::unique_ptr<ExecutionTrace> trace(std::function<void()>& traceFunction);
+ 
+ 	std::vector<StaticVarHolder>& getStaticVars();
+-	std::array<uint8_t, 256>& getDynamicVars();
++	DynamicValueMap& getDynamicVars();
+ 
+ private:
+ 	explicit TraceContext(TagRecorder& tagRecorder);
+Index: nautilus/src/nautilus/tracing/TraceOperation.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TraceOperation.cpp b/nautilus/src/nautilus/tracing/TraceOperation.cpp
+--- a/nautilus/src/nautilus/tracing/TraceOperation.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/TraceOperation.cpp	(date 1724852496282)
+@@ -15,7 +15,7 @@
+ 	return os;
+ }
+ 
+-BlockRef::BlockRef(uint16_t block) : block(block) {};
++BlockRef::BlockRef(uint16_t block) : block(block) {}
+ 
+ std::ostream& operator<<(std::ostream& os, const BlockRef& ref) {
+ 	os << "B" << ref.block << "(";
+@@ -76,5 +76,5 @@
+ 	}
+ 	os << fmt::format(":{}\t", toString(operation.resultType));
+ 	return os;
+-};
++}
+ } // namespace nautilus::tracing
+Index: nautilus/src/nautilus/tracing/TracingUtil.cpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/src/nautilus/tracing/TracingUtil.cpp b/nautilus/src/nautilus/tracing/TracingUtil.cpp
+--- a/nautilus/src/nautilus/tracing/TracingUtil.cpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/src/nautilus/tracing/TracingUtil.cpp	(date 1724852496282)
+@@ -53,7 +53,7 @@
+ 
+ [[maybe_unused]] value_ref traceLoad(value_ref src, Type resultType) {
+ 	return TraceContext::get()->traceLoad(src, resultType);
+-};
++}
+ 
+ [[maybe_unused]] void traceStore(value_ref target, value_ref src, Type valueType) {
+ 	TraceContext::get()->traceStore(target, src, valueType);
+@@ -69,7 +69,7 @@
+ 
+ [[maybe_unused]] value_ref traceCast(value_ref state, Type resultType) {
+ 	return TraceContext::get()->traceCast(state, resultType);
+-};
++}
+ 
+ DynamicValueMap& getVarRefMap() {
+ 	return TraceContext::get()->getDynamicVars();
+@@ -80,7 +80,7 @@
+ 		return TraceContext::get()->traceCopy(state);
+ 	}
+ 	return {};
+-};
++}
+ 
+ [[maybe_unused]] bool inTracer() {
+ 	return TraceContext::get() != nullptr;
+Index: nautilus/test/execution-tests/PointerFunctions.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/PointerFunctions.hpp b/nautilus/test/execution-tests/PointerFunctions.hpp
+--- a/nautilus/test/execution-tests/PointerFunctions.hpp	(revision b040dca8c6759389ce6e3fbc964717cb318b2103)
++++ b/nautilus/test/execution-tests/PointerFunctions.hpp	(date 1724852310227)
+@@ -1,8 +1,11 @@
+ #pragma once
+ 
++#include <nautilus/val.hpp>
++#include <nautilus/val_ptr.hpp>
+ #include <nautilus/Engine.hpp>
+ #include <nautilus/std/cstring.h>
+ 
++
+ namespace nautilus {
+ 
+ val<int32_t> load(val<int32_t*> array, val<int32_t> index) {
+Index: scripts/nes_trace_parser.py
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/scripts/nes_trace_parser.py b/scripts/nes_trace_parser.py
+new file mode 100644
+--- /dev/null	(date 1724850842363)
++++ b/scripts/nes_trace_parser.py	(date 1724850842363)
+@@ -0,0 +1,445 @@
++trace = """
++Final trace: B0()
++    CONST   4   0   ui64    
++    CONST   5   0   ui64    
++    CONST   6   0   ui64    
++    CONST   7   0   ui64    
++    CONST   8   0   ui64    
++    CONST   9   0   ui64    
++    CONST   10  bool    
++    CALL    11  ($1)    ptr 
++    CONST   12  0   ui64    
++    CALL    13  ($11)   ptr 
++    CONST   14  0   ui64    
++    ASSIGN  15  14  ui64    
++    ASSIGN  16  15  ui64    
++    CALL    17  ($2,$16)    ptr 
++    CALL    18  ($3)    ptr 
++    CONST   19  24  ui64    
++    ASSIGN  20  19  ui64    
++    CONST   21  1   ui64    
++    MUL 22  20  21  ui64    
++    ADD 23  18  22  ptr 
++    LOAD    24  23  ui64    
++    CONST   25  bool    
++    ASSIGN  26  25  bool    
++    ASSIGN  27  24  ui64    
++    CONST   28  32  ui64    
++    ASSIGN  29  28  ui64    
++    CONST   30  1   ui64    
++    MUL 31  29  30  ui64    
++    ADD 32  18  31  ptr 
++    LOAD    33  32  ui64    
++    CONST   34  bool    
++    ASSIGN  35  34  bool    
++    ASSIGN  36  33  ui64    
++    CONST   37  0   ui64    
++    ASSIGN  38  37  ui64    
++    CONST   39  1   ui64    
++    MUL 40  38  39  ui64    
++    ADD 41  18  40  ptr 
++    LOAD    42  41  ui64    
++    CONST   43  bool    
++    ASSIGN  44  43  bool    
++    ASSIGN  45  42  ui64    
++    CONST   46  8   ui64    
++    ASSIGN  47  46  ui64    
++    CONST   48  1   ui64    
++    MUL 49  47  48  ui64    
++    ADD 50  18  49  ptr 
++    LOAD    51  50  ui64    
++    CONST   52  bool    
++    ASSIGN  53  52  bool    
++    ASSIGN  54  51  ui64    
++    CONST   55  16  ui64    
++    ASSIGN  56  55  ui64    
++    CONST   57  1   ui64    
++    MUL 58  56  57  ui64    
++    ADD 59  18  58  ptr 
++    LOAD    60  59  bool    
++    CONST   61  bool    
++    ASSIGN  62  61  bool    
++    ASSIGN  63  60  bool    
++    CALL    64  ($17,$18)   ptr 
++    CALL    65  ($64)   ptr 
++    CALL    66  ($18)   ui64    
++    CONST   67  0   ui64    
++    JMP 0   B5()    void    
++B1()
++    ASSIGN  70  67  ui64    
++    ASSIGN  71  70  ui64    
++    CALL    72  ($18,$71)   ptr 
++    CONST   73  48  ui64    
++    ASSIGN  74  73  ui64    
++    CONST   75  1   ui64    
++    MUL 76  74  75  ui64    
++    ADD 77  72  76  ptr 
++    LOAD    78  77  ui64    
++    CONST   79  0   ui64    
++    ASSIGN  80  78  ui64    
++    CONST   81  0   ui64    
++    CONST   82  0   ui64    
++    ASSIGN  83  82  ui64    
++    ASSIGN  84  83  ui64    
++    CALL    85  ($72,$84)   ptr 
++    CONST   86  0   ui64    
++    ASSIGN  87  79  ui64    
++    CONST   88  72  ui64    
++    ASSIGN  89  88  ui64    
++    CONST   90  1   ui64    
++    MUL 91  89  90  ui64    
++    ADD 92  72  91  ptr 
++    LOAD    93  92  ui64    
++    CONST   94  0   ui64    
++    CONST   95  0   ui64    
++    CONST   96  0   ui64    
++    ASSIGN  97  93  ui64    
++    JMP 0   B22()   void    
++B2()
++    CALL    105 ($18)   void    
++    ASSIGN  106 27  ui64    
++    ASSIGN  6   106 ui64    
++    CONST   107 1   ui64    
++    ASSIGN  4   107 ui64    
++    ASSIGN  108 45  ui64    
++    ASSIGN  8   108 ui64    
++    ASSIGN  109 54  ui64    
++    ASSIGN  9   109 ui64    
++    ASSIGN  110 63  bool    
++    ASSIGN  10  110 bool    
++    CALL    111 ($64)   ptr 
++    CONST   112 48  ui64    
++    ASSIGN  113 112 ui64    
++    CONST   114 1   ui64    
++    MUL 115 113 114 ui64    
++    ADD 116 111 115 ptr 
++    LOAD    117 116 ui64    
++    CONST   118 0   ui64    
++    ASSIGN  119 117 ui64    
++    CONST   120 0   ui64    
++    CONST   121 0   ui64    
++    ASSIGN  122 121 ui64    
++    ASSIGN  123 122 ui64    
++    CALL    124 ($111,$123) ptr 
++    CONST   125 0   ui64    
++    ASSIGN  126 118 ui64    
++    CONST   127 72  ui64    
++    ASSIGN  128 127 ui64    
++    CONST   129 1   ui64    
++    MUL 130 128 129 ui64    
++    ADD 131 111 130 ptr 
++    LOAD    132 131 ui64    
++    CONST   133 0   ui64    
++    CONST   134 0   ui64    
++    CONST   135 0   ui64    
++    ASSIGN  136 132 ui64    
++    EQ  137 126 136 ui64    
++    CMP 138 137 B6()    B7()    void    
++B3()
++    CONST   100 1   ui64    
++    ADD 101 67  100 ui64    
++    ASSIGN  67  101 ui64    
++    JMP 0   B5()    void    
++B4()
++    CONST   199 32  ui64    
++    MUL 200 199 81  ui64    
++    ASSIGN  201 200 ui64    
++    CONST   202 1   ui64    
++    MUL 203 201 202 ui64    
++    ADD 204 85  203 ptr 
++    CONST   205 8   ui64    
++    ASSIGN  206 205 ui64    
++    CONST   207 1   ui64    
++    MUL 208 206 207 ui64    
++    ADD 209 204 208 ptr 
++    LOAD    210 209 ui64    
++    ASSIGN  211 210 ui64    
++    ASSIGN  212 211 ui64    
++    CALL    213 ($65,$212)  ptr 
++    CONST   214 ptr 
++    JMP 0   B29()   void    
++B5() ControlFlowMerge
++    LT  68  67  66  ui64    
++    CMP 69  68  B1()    B2()    void    
++B6()
++    CALL    139 ($64)   void    
++    ASSIGN  140 4   ui64    
++    ASSIGN  141 8   ui64    
++    ASSIGN  142 9   ui64    
++    ASSIGN  143 10  bool    
++    ASSIGN  144 140 ui64    
++    ASSIGN  145 141 ui64    
++    ASSIGN  146 142 ui64    
++    ASSIGN  147 143 bool    
++    CALL    148 ($2,$144,$145,$146,$147)    bool    
++    ASSIGN  149 12  ui64    
++    ASSIGN  150 149 ui64    
++    CALL    151 ($11,$150)  void    
++    ASSIGN  152 6   ui64    
++    ASSIGN  153 152 ui64    
++    CALL    154 ($11,$153)  void    
++    ASSIGN  155 4   ui64    
++    ASSIGN  156 155 ui64    
++    CALL    157 ($11,$156)  void    
++    ASSIGN  158 5   ui64    
++    ASSIGN  159 158 ui64    
++    CALL    160 ($11,$159)  void    
++    ASSIGN  161 8   ui64    
++    ASSIGN  162 161 ui64    
++    CALL    163 ($11,$162)  void    
++    ASSIGN  164 4   ui64    
++    ASSIGN  165 8   ui64    
++    ASSIGN  166 164 ui64    
++    ASSIGN  167 165 ui64    
++    CALL    168 ($2,$166,$167)  ui64    
++    ASSIGN  169 168 ui64    
++    ASSIGN  170 169 ui64    
++    CALL    171 ($11,$170)  void    
++    ASSIGN  172 148 bool    
++    ASSIGN  173 172 bool    
++    CALL    174 ($11,$173)  void    
++    ASSIGN  175 7   ui64    
++    ASSIGN  176 175 ui64    
++    CALL    177 ($11,$176)  void    
++    CALL    178 ($11)   ui64    
++    CALL    179 ($11)   ui64    
++    CALL    180 ($11)   bool    
++    CALL    181 ($11)   ui64    
++    CALL    182 ($1,$2,$11) void    
++    CONST   183 bool    
++    CMP 184 148 B8()    B9()    void    
++B7()
++    CONST   319 32  ui64    
++    MUL 320 319 120 ui64    
++    ASSIGN  321 320 ui64    
++    CONST   322 1   ui64    
++    MUL 323 321 322 ui64    
++    ADD 324 124 323 ptr 
++    CONST   325 16  ui64    
++    ASSIGN  326 325 ui64    
++    CONST   327 1   ui64    
++    MUL 328 326 327 ui64    
++    ADD 329 324 328 ptr 
++    LOAD    330 329 i64 
++    CONST   331 bool    
++    ASSIGN  332 331 bool    
++    ASSIGN  333 330 i64 
++    CONST   334 8   ui64    
++    ASSIGN  335 334 ui64    
++    CONST   336 1   ui64    
++    MUL 337 335 336 ui64    
++    ADD 338 329 337 ptr 
++    CONST   339 24  ui64    
++    ASSIGN  340 339 ui64    
++    CONST   341 1   ui64    
++    MUL 342 340 341 ui64    
++    ADD 343 324 342 ptr 
++    LOAD    344 343 i64 
++    CONST   345 bool    
++    ASSIGN  346 345 bool    
++    ASSIGN  347 344 i64 
++    CONST   348 8   ui64    
++    ASSIGN  349 348 ui64    
++    CONST   350 1   ui64    
++    MUL 351 349 350 ui64    
++    ADD 352 343 351 ptr 
++    JMP 0   B25()   void    
++B8()
++    CONST   185 1   i32 
++    JMP 0   B26()   void    
++B9()
++    CONST   357 0   i32 
++    ASSIGN  185 357 i32 
++    JMP 0   B26()   void    
++B10()
++    CONST   187 1   i32 
++    JMP 0   B27()   void    
++B11()
++    CONST   361 0   i32 
++    ASSIGN  187 361 i32 
++    JMP 0   B27()   void    
++B12()
++    ASSIGN  190 4   ui64    
++    ASSIGN  191 8   ui64    
++    ASSIGN  192 190 ui64    
++    ASSIGN  193 191 ui64    
++    CALL    194 ($2,$192,$193)  void    
++    CONST   195 0   ui32    
++    RETURN  195 ui32    
++B13()
++    CONST   365 0   ui32    
++    ASSIGN  195 365 ui32    
++    RETURN  195 ui32    
++B14()
++    CONST   217 16  ui64    
++    ASSIGN  218 217 ui64    
++    CONST   219 1   ui64    
++    MUL 220 218 219 ui64    
++    ADD 221 213 220 ptr 
++    CONST   222 16  ui64    
++    ASSIGN  223 222 ui64    
++    CONST   224 1   ui64    
++    MUL 225 223 224 ui64    
++    ADD 226 204 225 ptr 
++    CONST   227 8   ui64    
++    ASSIGN  228 227 ui64    
++    ASSIGN  229 228 ui64    
++    ASSIGN  230 229 ui64    
++    CALL    231 ($221,$226,$230)    i32 
++    CONST   232 0   i32 
++    EQ  233 231 232 i32 
++    CMP 234 233 B16()   B17()   void    
++B15()
++    CONST   369 ptr 
++    ASSIGN  277 369 ptr 
++    JMP 0   B28()   void    
++B16()
++    CONST   235 16  ui64    
++    ASSIGN  236 235 ui64    
++    CONST   237 1   ui64    
++    MUL 238 236 237 ui64    
++    ADD 239 204 238 ptr 
++    CONST   240 24  ui64    
++    ASSIGN  241 240 ui64    
++    CONST   242 1   ui64    
++    MUL 243 241 242 ui64    
++    ADD 244 204 243 ptr 
++    CONST   245 24  ui64    
++    ASSIGN  246 245 ui64    
++    CONST   247 1   ui64    
++    MUL 248 246 247 ui64    
++    ADD 249 213 248 ptr 
++    LOAD    250 249 i64 
++    CONST   251 bool    
++    ASSIGN  252 251 bool    
++    ASSIGN  253 250 i64 
++    LOAD    254 244 i64 
++    CONST   255 bool    
++    ASSIGN  256 255 bool    
++    ASSIGN  257 254 i64 
++    ASSIGN  258 257 i64 
++    ASSIGN  259 252 bool    
++    ASSIGN  260 256 bool    
++    OR  261 259 260 bool    
++    ADD 262 253 258 i64 
++    ASSIGN  263 261 bool    
++    ASSIGN  264 263 bool    
++    ASSIGN  265 262 i64 
++    ASSIGN  266 265 i64 
++    STORE   249 266 i64 
++    CONST   267 8   ui64    
++    ASSIGN  268 267 ui64    
++    CONST   269 1   ui64    
++    MUL 270 268 269 ui64    
++    ADD 271 244 270 ptr 
++    CONST   272 8   ui64    
++    ASSIGN  273 272 ui64    
++    CONST   274 1   ui64    
++    MUL 275 273 274 ui64    
++    ADD 276 249 275 ptr 
++    CONST   277 ptr 
++    JMP 0   B28()   void    
++B17()
++    CALL    373 ($213)  ptr 
++    CONST   374 ptr 
++    ASSIGN  214 374 ptr 
++    JMP 0   B29()   void    
++B18()
++    CONST   280 8   ui64    
++    ASSIGN  281 280 ui64    
++    CONST   282 1   ui64    
++    MUL 283 281 282 ui64    
++    ADD 284 204 283 ptr 
++    LOAD    285 284 ui64    
++    ASSIGN  286 285 ui64    
++    ASSIGN  287 286 ui64    
++    CALL    288 ($65,$287)  ptr 
++    CONST   289 16  ui64    
++    ASSIGN  290 289 ui64    
++    CONST   291 1   ui64    
++    MUL 292 290 291 ui64    
++    ADD 293 288 292 ptr 
++    CONST   294 16  ui64    
++    ASSIGN  295 294 ui64    
++    CONST   296 1   ui64    
++    MUL 297 295 296 ui64    
++    ADD 298 204 297 ptr 
++    CONST   299 16  ui64    
++    ASSIGN  300 299 ui64    
++    ASSIGN  301 300 ui64    
++    ASSIGN  302 301 ui64    
++    CALL    303 ($293,$298,$302)    ptr 
++    CONST   304 1   ui64    
++    JMP 0   B30()   void    
++B19()
++    CONST   378 1   ui64    
++    ASSIGN  304 378 ui64    
++    JMP 0   B30()   void    
++B20()
++    CONST   308 0   ui64    
++    ASSIGN  81  308 ui64    
++    CONST   309 1   ui64    
++    ADD 310 86  309 ui64    
++    ASSIGN  86  310 ui64    
++    ASSIGN  311 86  ui64    
++    ASSIGN  312 311 ui64    
++    CALL    313 ($72,$312)  ptr 
++    CONST   314 1   ui64    
++    JMP 0   B31()   void    
++B21()
++    CONST   382 1   ui64    
++    ASSIGN  314 382 ui64    
++    JMP 0   B31()   void    
++B22() ControlFlowMerge
++    EQ  98  87  97  ui64    
++    CMP 99  98  B3()    B4()    void    
++B23()
++    JMP 0   B25()   void    
++B24()
++    JMP 0   B32()   void    
++B25() ControlFlowMerge
++    JMP 0   B32()   void    
++B26() ControlFlowMerge
++    CMP 186 183 B10()   B11()   void    
++B27() ControlFlowMerge
++    EQ  188 185 187 i32 
++    CMP 189 188 B12()   B13()   void    
++B28() ControlFlowMerge
++    EQ  278 213 277 ptr 
++    CMP 279 278 B18()   B19()   void    
++B29() ControlFlowMerge
++    NEQ 215 213 214 ptr 
++    CMP 216 215 B14()   B15()   void    
++B30() ControlFlowMerge
++    ADD 305 81  304 ui64    
++    ASSIGN  81  305 ui64    
++    EQ  306 80  81  ui64    
++    CMP 307 306 B20()   B21()   void    
++B31() ControlFlowMerge
++    ADD 315 87  314 ui64    
++    ASSIGN  87  315 ui64    
++    JMP 0   B22()   void    
++B32() ControlFlowMerge
++    CMP 353 346 B23()   B24()   void
++"""
++
++def generate_mermaid_diagram(trace):
++    lines = trace.strip().split('\n')
++    current_block = None
++    diagram = ["```mermaid\nflowchart TD"]
++
++    for line in lines:
++        stripped_line = line.strip()
++        if stripped_line.startswith("B"):
++            current_block = stripped_line.split("()")[0]
++        elif stripped_line.startswith("CMP") or stripped_line.startswith("JMP"):
++            parts = stripped_line.split()
++            command = parts[0]
++            targets = [part.split("()")[0] for part in parts if "()" in part]
++            for target in targets:
++                diagram.append(f"{current_block} --> {target}")
++
++    return "\n".join(diagram) + "\n```"
++
++mermaid_diagram = generate_mermaid_diagram(trace)
++print(mermaid_diagram)
+
