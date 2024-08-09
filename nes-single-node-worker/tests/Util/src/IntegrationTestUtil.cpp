@@ -17,19 +17,21 @@
 #include <fstream>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
+
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
-namespace NES
+namespace NES::IntegrationTestUtil
 {
-SchemaPtr IntegrationTestUtil::loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
+SchemaPtr loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan)
 {
     EXPECT_EQ(queryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = queryPlan.mutable_rootoperatorids()->at(0);
@@ -39,7 +41,7 @@ SchemaPtr IntegrationTestUtil::loadSinkSchema(SerializableDecomposedQueryPlan& q
     return SchemaSerializationUtil::deserializeSchema(rootOperator.outputschema());
 }
 
-QueryId IntegrationTestUtil::registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPCServer& uut)
+QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPCServer& uut)
 {
     grpc::ServerContext context;
     RegisterQueryRequest request;
@@ -49,7 +51,7 @@ QueryId IntegrationTestUtil::registerQueryPlan(const SerializableDecomposedQuery
     return QueryId(reply.queryid());
 }
 
-void IntegrationTestUtil::startQuery(QueryId queryId, GRPCServer& uut)
+void startQuery(QueryId queryId, GRPCServer& uut)
 {
     grpc::ServerContext context;
     StartQueryRequest request;
@@ -58,7 +60,7 @@ void IntegrationTestUtil::startQuery(QueryId queryId, GRPCServer& uut)
     EXPECT_TRUE(uut.StartQuery(&context, &request, &reply).ok());
 }
 
-void IntegrationTestUtil::stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut)
+void stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut)
 {
     grpc::ServerContext context;
     StopQueryRequest request;
@@ -68,7 +70,7 @@ void IntegrationTestUtil::stopQuery(QueryId queryId, QueryTerminationType type, 
     EXPECT_TRUE(uut.StopQuery(&context, &request, &reply).ok());
 }
 
-void IntegrationTestUtil::unregisterQuery(QueryId queryId, GRPCServer& uut)
+void unregisterQuery(QueryId queryId, GRPCServer& uut)
 {
     grpc::ServerContext context;
     UnregisterQueryRequest request;
@@ -77,12 +79,12 @@ void IntegrationTestUtil::unregisterQuery(QueryId queryId, GRPCServer& uut)
     EXPECT_TRUE(uut.UnregisterQuery(&context, &request, &reply).ok());
 }
 
-void IntegrationTestUtil::copyInputFile(const std::string_view inputFileName)
+void copyInputFile(const std::string_view inputFileName, const std::string_view querySpecificDataFileName)
 {
     try
     {
         const auto from = fmt::format("{}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, inputFileName);
-        const auto to = fmt::format("./{}", inputFileName);
+        const auto to = fmt::format("./{}", querySpecificDataFileName);
         copy_file(from, to, std::filesystem::copy_options::overwrite_existing);
     }
     catch (const std::filesystem::filesystem_error& e)
@@ -91,7 +93,7 @@ void IntegrationTestUtil::copyInputFile(const std::string_view inputFileName)
     }
 }
 
-void IntegrationTestUtil::removeFile(const std::string_view filepath)
+void removeFile(const std::string_view filepath)
 {
     try
     {
@@ -103,8 +105,11 @@ void IntegrationTestUtil::removeFile(const std::string_view filepath)
     }
 }
 
-bool IntegrationTestUtil::loadFile(
-    SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName, const std::string_view dataFileName)
+bool loadFile(
+    SerializableDecomposedQueryPlan& queryPlan,
+    const std::string_view queryFileName,
+    const std::string_view dataFileName,
+    const std::string_view querySpecificDataFileName)
 {
     std::ifstream file(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
     if (!file)
@@ -117,11 +122,11 @@ bool IntegrationTestUtil::loadFile(
         NES_ERROR("Could not load protobuffer file: {}/{}/{}", TEST_DATA_DIR, INPUT_CSV_FILES, queryFileName);
         return false;
     }
-    copyInputFile(dataFileName);
+    copyInputFile(dataFileName, querySpecificDataFileName);
     return true;
 }
 
-bool IntegrationTestUtil::loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName)
+bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName)
 {
     std::ifstream f(std::filesystem::path(TEST_DATA_DIR) / SERRIALIZED_QUERIES_DIRECTORY / (queryFileName));
     if (!f)
@@ -137,7 +142,7 @@ bool IntegrationTestUtil::loadFile(SerializableDecomposedQueryPlan& queryPlan, c
     return true;
 }
 
-void IntegrationTestUtil::replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName)
+void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName)
 {
     EXPECT_EQ(decomposedQueryPlan.mutable_rootoperatorids()->size(), 1) << "Redirection is only implemented for Single Sink Queries";
     const auto rootOperatorId = decomposedQueryPlan.mutable_rootoperatorids()->at(0);
@@ -160,8 +165,31 @@ void IntegrationTestUtil::replaceFileSinkPath(SerializableDecomposedQueryPlan& d
     }
 }
 
-void IntegrationTestUtil::replacePortInTcpSources(
-    SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
+void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName)
+{
+    for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
+    {
+        google::protobuf::uint64 key = pair.first;
+        auto& value = pair.second; /// Note: non-const reference
+        if (value.details().Is<SerializableOperator_SourceDetails>())
+        {
+            auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
+            auto descriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor()->as_if<CsvSourceDescriptor>();
+            if (descriptor)
+            {
+                /// Set socket port and serialize again.
+                descriptor->getSourceConfig()->setFilePath(std::move(newInputFileName));
+                auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
+
+                /// Reconfigure the original operator id, because deserialization/serialization changes them.
+                serializedOperator.set_operatorid(value.operatorid());
+                swap(value, serializedOperator);
+            }
+        }
+    }
+}
+
+void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
 {
     int queryPlanSourceTcpCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
