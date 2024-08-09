@@ -39,7 +39,6 @@ namespace NES::Compiler
 
 const std::string NESCoreIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-core/include/";
 const std::string NESCommonIncludePath = PATH_TO_NES_SOURCE_CODE "/nes-common/include/";
-const std::string DEBSIncludePath = PATH_TO_DEB_SOURCE_CODE "/include/";
 
 std::shared_ptr<LanguageCompiler> CPPCompiler::create()
 {
