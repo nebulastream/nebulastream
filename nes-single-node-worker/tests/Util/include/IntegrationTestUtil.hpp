@@ -16,75 +16,52 @@
 #define NES_SINGLE_NODE_WORKER_TESTS_UTIL_INCLUDE_INTEGRATIONTESTUTIL_HPP_
 
 #include <memory>
-#include <API/Schema.hpp>
 #include <GrpcService.hpp>
 
 namespace NES
 {
-class IntegrationTestUtil
+namespace IntegrationTestUtil
 {
-    inline static const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
-    inline static const std::string INPUT_CSV_FILES = "inputCSVFiles";
+inline static const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
+inline static const std::string INPUT_CSV_FILES = "inputCSVFiles";
 
-public:
-    /**
-     * Loads the output @link Schema of the SinkOperator in the @link SerializableDecomposedQueryPlan. This requieres the plan to only
-     * have a single root operator, which is the SinkOperator
-     * @param queryPlan the query plan that the sink schema is loaded from
-     * @return output @link Schema
-     */
-    static SchemaPtr loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan);
+/// Loads the output @link Schema of the SinkOperator in the @link SerializableDecomposedQueryPlan. This requieres the plan to only
+/// have a single root operator, which is the SinkOperator
+SchemaPtr loadSinkSchema(SerializableDecomposedQueryPlan& queryPlan);
 
-    static QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPCServer& uut);
+QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPCServer& uut);
 
-    static void startQuery(QueryId queryId, GRPCServer& uut);
+void startQuery(QueryId queryId, GRPCServer& uut);
 
-    static void stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut);
+void stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut);
 
-    static void unregisterQuery(QueryId queryId, GRPCServer& uut);
+void unregisterQuery(QueryId queryId, GRPCServer& uut);
 
-    /**
-     * @brief copies the input file to the directory where the test is executed to allow specifying only the input file name in
-     * query instead of an absolute path or a relative path that is not the directory where the test is executed.
-     */
-    static void copyInputFile(const std::string_view inputFileName);
+/// copies the input file to the directory where the test is executed to allow specifying only the input file name in
+/// query instead of an absolute path or a relative path that is not the directory where the test is executed.
+void copyInputFile(std::string_view inputFileName, std::string_view querySpecificDataFileName);
 
-    static void removeFile(const std::string_view filepath);
+void removeFile(std::string_view filepath);
 
-    /**
-     * Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
-     * @param queryPlan mutable ptr to a @link SerializableDecomposedQueryPlan
-     * @param queryFileName name of the file in the TEST_DATA_DIR
-     * @param dataFileName name of the file that the test reads data from
-     * @return return false if the file could not be read or the query could not be parsed, otherwise returns true.
-     */
-    static bool
-    loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName, const std::string_view dataFileName);
+/// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
+bool loadFile(
+    SerializableDecomposedQueryPlan& queryPlan,
+    std::string_view queryFileName,
+    std::string_view dataFileName,
+    std::string_view querySpecificDataFileName);
 
-    /**
-     * Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
-     * @param queryPlan mutable ptr to a @link SerializableDecomposedQueryPlan
-     * @param queryFileName name of the file in the TEST_DATA_DIR
-     * @return return false if the file could not be read or the query could not be parsed, otherwise returns true.
-     */
-    static bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName);
+/// Loads a protobuf serialized @link SerializableDecomposedQueryPlan from a file in the TEST_DATA_DIR if possible.
+bool loadFile(SerializableDecomposedQueryPlan& queryPlan, const std::string_view queryFileName);
 
-    /**
-     * Iterates over a decomposed query plan and replaces all CSV sink file paths to ensure expected behavior.
-     * @param decomposedQueryPlan the decomposed query plan containing the csv file sink.
-     * @param fileName the name that the csv file sink will write to.
-     */
-    static void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName);
+void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, std::string newInputFileName);
 
-    /**
-     * @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.
-     * @param decomposedQueryPlan the decomposed query plan containing the tcp sources.
-     * @param mockTcpServerPort the generated free socket used by the mocked tcp server.
-     * @param sourceNumber the current source number for which a free port needs to be configured.
-     */
-    static void
-    replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber);
-};
+/// Iterates over a decomposed query plan and replaces all CSV sink file paths to ensure expected behavior.
+void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName);
+
+/// @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.
+void replacePortInTcpSources(
+    SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber);
+}
 
 }
 
