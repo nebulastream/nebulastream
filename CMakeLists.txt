@@ -358,37 +358,6 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 
-# Set definition values.
-set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
-set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
-set(PATH_TO_BINARY_DIR ${CMAKE_BINARY_DIR})
-message("PATH_TO_DEB_SOURCE_CODE Dir: ${PATH_TO_DEB_SOURCE_CODE}")
-
-# Print definition values.
-message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
-message(STATUS "Clang-Format Executable: ${CLANG_FORMAT_EXECUTABLE}")
-message(STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}")
-
-# Add definitions as compile flag.
-add_definitions(-D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"')
-add_definitions(-D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"')
-add_definitions(-D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"')
-add_definitions(-D 'PATH_TO_NES_SOURCE_CODE=\"${PATH_TO_NES_SOURCE_CODE}\"')
-add_definitions(-D 'PATH_TO_DEB_SOURCE_CODE=\"${PATH_TO_DEB_SOURCE_CODE}\"')
-add_definitions(-D 'PATH_TO_BINARY_DIR=\"${PATH_TO_BINARY_DIR}\"')
-if (APPLE)
-    add_definitions(-D 'NES_OSX_SYSROOT=\"${CMAKE_OSX_SYSROOT}\"')
-endif ()
-
-add_definitions(-D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"')
-add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
-
-# fix compile error with llvm (https://stackoverflow.com/a/18966387)
-add_definitions(-D '__STDC_CONSTANT_MACROS')
-add_definitions(-D '__STDC_LIMIT_MACROS')
-
-
 # $ORIGIN is to read the shared object from the installation directory
 if (ORIGIN)
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
