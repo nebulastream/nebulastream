@@ -1,0 +1,39 @@
+Subject: [PATCH] Providing a static create method so that we can directly call the constructor of the parent class.
+---
+Index: nautilus/include/nautilus/std/sstream.h
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/std/sstream.h b/nautilus/include/nautilus/std/sstream.h
+--- a/nautilus/include/nautilus/std/sstream.h	(revision cef3add4ffad36ac042f6dd99a504a0a4b281bc9)
++++ b/nautilus/include/nautilus/std/sstream.h	(revision 367eda593a725c2bef6c255de56e93dd71ece62c)
+@@ -25,6 +25,18 @@
+ 		});
+ 		this->stream = data_ptr;
+ 	}
++
++	explicit val(val<std::basic_ostream<CharT, Traits>*> stream) : val<std::basic_ostream<CharT, Traits>>(stream) {
++	}
++
++	static val<std::basic_stringstream<CharT, Traits, Allocator>> create() {
++		auto data_ptr = invoke(+[]() -> auto* {
++			auto sb = new std::basic_stringstream<CharT, Traits, Allocator>();
++			return dynamic_cast<std::basic_ostream<CharT, Traits>*>(sb);
++		});
++		return val<std::basic_stringstream<CharT, Traits, Allocator>>(data_ptr);
++	}
++
+ 	/*
+ 	val<std::basic_string_view<CharT, Traits>> view() {
+ 	    auto view_ptr = invoke(
+@@ -51,8 +63,7 @@
+ 	}
+ 
+ 	~val() {
+-		invoke(
+-		    +[](std::basic_ostream<CharT, Traits>* ptr) -> void { delete ptr; }, this->stream);
++		invoke(+[](std::basic_ostream<CharT, Traits>* ptr) -> void { delete ptr; }, this->stream);
+ 	}
+ };
+ 

@@ -1,0 +1,148 @@
+Subject: [PATCH] Added support for nautilus::val<T> and T is a enum class
+---
+Index: nautilus/include/nautilus/val_enum.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/include/nautilus/val_enum.hpp b/nautilus/include/nautilus/val_enum.hpp
+--- a/nautilus/include/nautilus/val_enum.hpp	(revision cef3add4ffad36ac042f6dd99a504a0a4b281bc9)
++++ b/nautilus/include/nautilus/val_enum.hpp	(revision c3ae23c83dd25bcf4d2220fa19e60e8f6ab53f31)
+@@ -20,19 +20,55 @@
+ 	using raw_type = underlying_type_t;
+ 	using basic_type = raw_type;
+ 
+-	val() : value() {}
+-
+ #ifdef ENABLE_TRACING
+-	val(val<underlying_type_t> t) : state(t.state), value((T) details::getRawValue(t)) {}
+-	val(val<T>& t) : state(tracing::traceCopy(t.state)), value(t.value) {}
+-	val(val<T>&& t) : state(t.state), value(t.value) {}
+-	val(T val) : state(tracing::traceConstant((underlying_type_t) val)), value(val) {}
++	template <T>
++	    requires std::is_enum_v<T> && (!std::is_convertible_v<T, std::underlying_type_t<T>>)
++	val(T val) : state(tracing::traceConstant(static_cast<std::underlying_type_t<T>>(val))), value(static_cast<std::underlying_type_t<T>>(val)) {
++	}
++
++	template <T>
++	    requires std::is_enum_v<T> && (!std::is_convertible_v<T, std::underlying_type_t<T>>)
++	val(val<T>& val) : state(tracing::traceConstant(static_cast<std::underlying_type_t<T>>(val))), value(static_cast<std::underlying_type_t<T>>(val)) {
++	}
++	val(val<underlying_type_t> t) : state(t.state), value((T) details::getRawValue(t)) {
++	}
++	val(val<T>& t) : state(tracing::traceCopy(t.state)), value(t.value) {
++	}
++	val(val<T>&& t) : state(t.state), value(t.value) {
++	}
++	val(T val) : state(tracing::traceConstant((underlying_type_t) val)), value(val) {
++	}
+ #else
+-	val(val<underlying_type_t> t) : value((T) details::getRawValue(t)) {}
+-	val(val<T>& t) : value(t.value) {}
+-	val(T val) : value(val) {}
++	template <T>
++	    requires std::is_enum_v<T> && (!std::is_convertible_v<T, std::underlying_type_t<T>>)
++	val(T val) : value(static_cast<std::underlying_type_t<T>>(val)) {
++	}
++
++	template <T>
++	    requires std::is_enum_v<T> && (!std::is_convertible_v<T, std::underlying_type_t<T>>)
++	val(val<T>& val) : value(static_cast<std::underlying_type_t<T>>(val)) {
++	}
++
++	val(val<underlying_type_t> t) : value((T) details::getRawValue(t)) {
++	}
++	val(val<T>& t) : value(t.value) {
++	}
++	val(T val) : value(val) {
++	}
+ #endif
+ 
++	template <typename RHS>
++	    requires std::is_enum_v<RHS> && (!std::is_convertible_v<RHS, std::underlying_type_t<RHS>>)
++	bool operator==(const RHS& other) const {
++		return val(value) == val(static_cast<std::underlying_type_t<RHS>>(other));
++	}
++
++	template <typename RHS>
++	    requires std::is_enum_v<RHS> && (!std::is_convertible_v<RHS, std::underlying_type_t<RHS>>)
++	bool operator!=(const RHS& other) const {
++		return val(value) != val(static_cast<std::underlying_type_t<RHS>>(other));
++	}
++
+ 	operator val<underlying_type_t>() const {
+ 		return value;
+ 	}
+Index: nautilus/test/execution-tests/EnumFunction.hpp
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+diff --git a/nautilus/test/execution-tests/EnumFunction.hpp b/nautilus/test/execution-tests/EnumFunction.hpp
+--- a/nautilus/test/execution-tests/EnumFunction.hpp	(revision cef3add4ffad36ac042f6dd99a504a0a4b281bc9)
++++ b/nautilus/test/execution-tests/EnumFunction.hpp	(revision c3ae23c83dd25bcf4d2220fa19e60e8f6ab53f31)
+@@ -1,15 +1,22 @@
+ #pragma once
+ 
+ #include <nautilus/Engine.hpp>
++#include <nautilus/val.hpp>
+ 
+ namespace nautilus {
+ 
+ enum Color { BLUE, GREEN };
++enum class LogLevel : uint8_t { LOG_NONE = 1, LOG_FATAL_ERROR = 2, LOG_ERROR = 3, LOG_WARNING = 4, LOG_INFO = 5, LOG_DEBUG = 6, LOG_TRACE = 7 };
++
+ 
+ val<bool> handleEnum(val<Color> enumVal) {
+ 	return enumVal == Color::BLUE;
+ }
+ 
++val<bool> handleEnumLogLevel(val<LogLevel> enumVal) {
++	return enumVal == LogLevel::LOG_DEBUG || enumVal == LogLevel::LOG_INFO;
++}
++
+ val<int32_t> isEnum(val<Color> enumVal) {
+ 	if (enumVal == Color::BLUE) {
+ 		return 1;
+@@ -33,7 +40,40 @@
+ 	}
+ }
+ 
++auto enumClassFunction(LogLevel level) {
++	switch (level) {
++
++	case LogLevel::LOG_NONE:
++		return 42;
++		break;
++	case LogLevel::LOG_FATAL_ERROR:
++		return 42;
++		break;
++	case LogLevel::LOG_ERROR:
++		return 42;
++		break;
++	case LogLevel::LOG_WARNING:
++		return 42;
++		break;
++	case LogLevel::LOG_INFO:
++		return 42;
++		break;
++	case LogLevel::LOG_DEBUG:
++		return 42;
++		break;
++	case LogLevel::LOG_TRACE:
++		return 42;
++		break;
++	}
++
++	return 43;
++}
++
+ val<int32_t> callEnumFunction(val<Color> enumVal) {
+ 	return invoke(enumFunction, enumVal);
+ }
++
++val<int32_t> callEnumClassFunction(val<LogLevel> enumClassVal) {
++	return invoke(enumClassFunction, enumClassVal);
++}
+ } // namespace nautilus
+\ No newline at end of file
