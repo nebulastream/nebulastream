@@ -31,6 +31,7 @@
 //#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 //#include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
+#include <Execution/Operators/Relational/Project.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
@@ -173,10 +174,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto filter = lowerFilter(pipeline, operatorNode);
         parentOperator->setChild(filter);
         return filter;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>()) {
-//        auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
-//        parentOperator->setChild(limit);
-//        return limit;
+        //    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>()) {
+        //        auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
+        //        parentOperator->setChild(limit);
+        //        return limit;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>()) {
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
@@ -288,26 +289,26 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             parentOperator->setChild(flatMapJavaUDF);
             return flatMapJavaUDF;
         }
-#endif// ENABLE_JNI
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
-//        auto aggs =
-//            operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getWindowDefinition()->getWindowAggregation();
-//
-//        std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
-//        // iterate over all aggregation functions
-//        for (size_t i = 0; i < aggs.size(); ++i) {
-//            auto aggregationType = aggs[i]->getType();
-//            // collect aggValues for each aggType
-//            aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
-//        }
-//        // pass aggValues to ThresholdWindowHandler
-//        auto handler =
-//            std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
-//        operatorHandlers.push_back(handler);
-//        auto indexForThisHandler = operatorHandlers.size() - 1;
-//        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
-//        parentOperator->setChild(thresholdWindow);
-//        return thresholdWindow;
+#endif  // ENABLE_JNI
+        //    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
+        //        auto aggs =
+        //            operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getWindowDefinition()->getWindowAggregation();
+        //
+        //        std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
+        //        // iterate over all aggregation functions
+        //        for (size_t i = 0; i < aggs.size(); ++i) {
+        //            auto aggregationType = aggs[i]->getType();
+        //            // collect aggValues for each aggType
+        //            aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
+        //        }
+        //        // pass aggValues to ThresholdWindowHandler
+        //        auto handler =
+        //            std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
+        //        operatorHandlers.push_back(handler);
+        //        auto indexForThisHandler = operatorHandlers.size() - 1;
+        //        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
+        //        parentOperator->setChild(thresholdWindow);
+        //        return thresholdWindow;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()) {
         auto preAggregationOperator = lowerPreAggregationOperator(pipeline, operatorNode, operatorHandlers);
         parentOperator->setChild(preAggregationOperator);
@@ -320,13 +321,13 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto watermarkOperator = lowerWatermarkAssignmentOperator(pipeline, operatorNode, operatorHandlers);
         parentOperator->setChild(watermarkOperator);
         return watermarkOperator;
-//    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
-//        auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
-//        auto projection =
-//            std::make_shared<Runtime::Execution::Operators::Project>(projectOperator->getInputSchema()->getFieldNames(),
-//                                                                     projectOperator->getOutputSchema()->getFieldNames());
-//        parentOperator->setChild(projection);
-//        return projection;
+    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>()) {
+        auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
+        auto projection =
+            std::make_shared<Runtime::Execution::Operators::Project>(projectOperator->getInputSchema()->getFieldNames(),
+                                                                     projectOperator->getOutputSchema()->getFieldNames());
+        parentOperator->setChild(projection);
+        return projection;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>()) {
         auto probeOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinProbeOperator>();
         NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");

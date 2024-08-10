@@ -128,7 +128,7 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto entryMemRef = nautilus::invoke(insertFunctionProxy, joinState->hashTableReference, record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
     //write data
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    for (auto& field : schema->fields) {
+    for (auto& field : nautilus::static_iterable(schema->fields)) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 //        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());

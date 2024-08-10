@@ -80,7 +80,7 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
         }
         // load values and write them to result record
         auto sliceValue = globalEntry.getValuePtr();
-        for (const auto& aggregationFunction : aggregationFunctions) {
+        for (const auto& aggregationFunction : nautilus::static_iterable(aggregationFunctions)) {
             aggregationFunction->lower(sliceValue, resultWindow);
             sliceValue = sliceValue + nautilus::val<uint64_t>(aggregationFunction->getSize());
         }

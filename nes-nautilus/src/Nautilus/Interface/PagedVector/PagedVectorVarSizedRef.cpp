@@ -93,7 +93,7 @@ void PagedVectorVarSizedRef::writeRecord(const Record& record) {
     auto pageEntry = nautilus::invoke(getEntryVarSizedProxy, pagedVectorVarSizedRef, oldTotalNumberOfEntries);
 
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
-    for (auto& field : schema->fields) {
+    for (auto& field : nautilus::static_iterable(schema->fields)) {
         const auto fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         const auto fieldName = field->getName();
         const auto& fieldValue = record.read(fieldName);
@@ -117,7 +117,7 @@ Record PagedVectorVarSizedRef::readRecord(const UInt64& pos) {
     auto pageEntry = nautilus::invoke(getEntryVarSizedProxy, pagedVectorVarSizedRef, pos);
 
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
-    for (auto& field : schema->fields) {
+    for (auto& field : nautilus::static_iterable(schema->fields)) {
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
         auto const fieldName = field->getName();
 

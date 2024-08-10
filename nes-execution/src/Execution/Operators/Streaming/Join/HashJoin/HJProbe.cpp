@@ -153,7 +153,7 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
             auto leftRecord = leftMemProvider->read({}, leftRecordRef, zeroValue);
 
             //for every right page
-            for (UInt64 rightPageNo((uint64_t) 0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
+            for (UInt64 rightPageNo(0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
                 //TODO: introduce Bloomfilter here #3909
                 //                if (!rhsPage->bloomFilterCheck(lhsKeyPtr, sizeOfLeftKey)) {
                 //                    continue;
@@ -172,7 +172,7 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
                     Record joinedRecord;
                     createJoinedRecord(joinedRecord, leftRecord, rightRecord, ExecDataUInt64::create(windowStart)->as<ExecDataUInt64>(), ExecDataUInt64::create(windowEnd)->as<ExecDataUInt64>());
-                    if (joinExpression->execute(joinedRecord) == Boolean(true)) {
+                    if (joinExpression->execute(joinedRecord)->as<ExecDataBoolean>()->getRawValue()) {
                         // Calling the child operator for this joinedRecord
                         child->execute(ctx, joinedRecord);
                     }//end of key expression compare

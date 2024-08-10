@@ -38,13 +38,13 @@ class HJBuildSlicing : public StreamJoinBuild {
      * @param timeFunction
      * @param joinStrategy
      */
-    HJBuildSlicing(const uint64_t operatorHandlerIndex,
-                   const SchemaPtr& schema,
-                   const std::string& joinFieldName,
-                   const QueryCompilation::JoinBuildSideType joinBuildSide,
-                   const uint64_t entrySize,
-                   TimeFunctionPtr timeFunction,
-                   QueryCompilation::StreamJoinStrategy joinStrategy);
+  HJBuildSlicing(const uint64_t operatorHandlerIndex,
+                         const SchemaPtr& schema,
+                         const std::string& joinFieldName,
+                         const QueryCompilation::JoinBuildSideType joinBuildSide,
+                         const uint64_t entrySize,
+                         TimeFunctionPtr timeFunction,
+                         QueryCompilation::StreamJoinStrategy joinStrategy);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
     void execute(ExecutionContext& ctx, Record& record) const override;

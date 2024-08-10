@@ -72,8 +72,8 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
 }
 
 void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
-                                           Nautilus::MemRef& operatorHandlerMemRef,
-                                           Nautilus::UInt64& timestamp) const {
+                                           const Nautilus::MemRef& operatorHandlerMemRef,
+                                           const Nautilus::UInt64& timestamp) const {
 //    NES_DEBUG("Updating LocalJoinState for timestamp {}!", timestamp->toString());
 
     // Retrieving the slice of the current watermark, as we expect that more tuples will be inserted into this slice

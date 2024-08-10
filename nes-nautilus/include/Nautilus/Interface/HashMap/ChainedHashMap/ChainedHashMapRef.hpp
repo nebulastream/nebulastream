@@ -219,8 +219,8 @@ class ChainedHashMapRef {
     UInt64 getPageSize();
     MemRef getPage(const UInt64& pageIndex);
     UInt64 getEntriesPerPage();
-    EntryRef findChain(const UInt64& hash);
-    EntryRef insert(const UInt64& hash);
+    EntryRef findChain(const UInt64& hash) const;
+    EntryRef insert(const UInt64& hash) const;
     Boolean compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys);
     MemRef hashTableRef;
     const std::vector<PhysicalTypePtr> keyDataTypes;

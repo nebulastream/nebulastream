@@ -30,7 +30,7 @@ class Record {
     const ExecDataType& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
     void write(const RecordFieldIdentifier& recordFieldIdentifier, const ExecDataType& dataType);
     uint64_t numberOfFields() const;
-    bool hasField(const RecordFieldIdentifier& fieldName);
+    bool hasField(const RecordFieldIdentifier& fieldName) const;
     std::vector<RecordFieldIdentifier> getAllFields();
 
     // Get rid of this toString and override the << and the formatter

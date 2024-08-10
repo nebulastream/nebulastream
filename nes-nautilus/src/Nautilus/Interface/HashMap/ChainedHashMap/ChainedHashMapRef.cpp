@@ -62,19 +62,19 @@ ChainedHashMapRef::ChainedHashMapRef(const MemRef& hashTableRef,
                                      uint64_t valueSize)
     : hashTableRef(hashTableRef), keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize) {}
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const UInt64& hash) {
+ChainedHashMapRef::EntryRef ChainedHashMapRef::findChain(const UInt64& hash) const {
     auto entry = invoke(findChainProxy, hashTableRef, hash);
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 
-ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash) {
+ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash) const {
     auto entry = invoke(insertProxy, hashTableRef, hash);
     return {entry, sizeof(ChainedHashMap::Entry), sizeof(ChainedHashMap::Entry) + keySize};
 }
 
 ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash, const std::vector<ExecDataType>& keys) {
     // create new entry
-    auto entry = insert(hash);
+    const auto entry = insert(hash);
     // store keys
     auto keyPtr = entry.getKeyPtr();
     for (nautilus::static_val<uint64_t> i = 0; i < keys.size(); ++i) {
@@ -148,7 +148,7 @@ void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const st
 Boolean ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys) {
     auto equals = ExecutableDataType<bool>::create(true);
     auto keyPtr = entry.getKeyPtr();
-    for (nautilus::static_val<uint64_t> i = 0; i < keys.size(); i++) {
+    for (nautilus::static_val<uint64_t> i = 0; i < keys.size(); ++i) {
         auto& key = keys[i];
         const auto keyFromEntry = readExecDataTypeFromMemRef(keyPtr, keyDataTypes[i]);
         const auto tmp = (key == keyFromEntry);

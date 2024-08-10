@@ -111,7 +111,7 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     combineThreadLocalSlices(globalHashTable, sliceMergeTask);
     nautilus::invoke(freeKeyedSliceMergeTask, sliceMergeTask);
 
-//     4. emit global slice when we have a tumbling window.
+    // 4. emit global slice when we have a tumbling window.
     sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk, globalSlice);
 }
 
@@ -121,10 +121,11 @@ void KeyedSliceMerging::combineThreadLocalSlices(Interface::ChainedHashMapRef& g
     auto numberOfSlices = nautilus::invoke(getKeyedNumberOfSlicesFromTask, sliceMergeTask);
     NES_DEBUG("combining slices");
 
-    for (UInt64 i = 0_u64; i < numberOfSlices; i = i + 1_u64) {
+    for (UInt64 i = 0_u64; i < numberOfSlices; i = i + UInt64(1)) {
         auto partitionState = nautilus::invoke(getKeyedSliceStateFromTask, sliceMergeTask, i);
         auto partitionStateHashTable = Interface::ChainedHashMapRef(partitionState, keyDataTypes, keySize, valueSize);
         mergeHashTable(globalHashTable, partitionStateHashTable);
+        // ((void) globalHashTable);
     }
 }
 
@@ -142,7 +143,7 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
             auto threadLocalValue = threadLocalEntry.getValuePtr();
             MemRef globalValue = globalEntry.getValuePtr();
             // 2c. apply aggregation functions and combine the values
-            for (const auto& function : aggregationFunctions) {
+            for (const auto& function : static_iterable(aggregationFunctions)) {
                 function->combine(globalValue, threadLocalValue);
                 threadLocalValue = threadLocalValue + nautilus::val<uint64_t>(function->getSize());
 //                NES_TRACE("result value {}", globalValue.load<UInt64>()->toString());

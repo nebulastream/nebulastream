@@ -127,7 +127,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     // 2. derive key values
     std::vector<ExecDataType> keyValues;
     keyValues.reserve(keyExpressions.size());
-    for (const auto& exp : keyExpressions) {
+    for (const auto& exp : nautilus::static_iterable(keyExpressions)) {
         keyValues.emplace_back(exp->execute(record));
     }
 
@@ -143,7 +143,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     auto entry = sliceState.findOrCreate(hash->getRawValue(), keyValues, [this](auto& entry) {
         // set aggregation values if a new entry was created
         auto valuePtr = entry.getValuePtr();
-        for (const auto& aggFunction : aggregationFunctions) {
+        for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions)) {
             aggFunction->reset(valuePtr);
             valuePtr = valuePtr + nautilus::val<uint64_t>(aggFunction->getSize());
         }
@@ -151,7 +151,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 6. manipulate the current aggregate values
     auto valuePtr = entry.getValuePtr();
-    for (const auto& aggregationFunction : aggregationFunctions) {
+    for (const auto& aggregationFunction : nautilus::static_iterable(aggregationFunctions)) {
         aggregationFunction->lift(valuePtr, record);
         valuePtr = valuePtr + nautilus::val<uint64_t>(aggregationFunction->getSize());
     }

@@ -81,12 +81,12 @@ void StreamJoinProbe::createJoinedRecord(Record& joinedRecord,
     joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd);
 
     /* Writing the leftSchema fields, expect the join schema to have the fields in the same order then the left schema */
-    for (auto& field : joinSchema.leftSchema->fields) {
+    for (auto& field : nautilus::static_iterable(joinSchema.leftSchema->fields)) {
         joinedRecord.write(field->getName(), leftRecord.read(field->getName()));
     }
 
     /* Writing the rightSchema fields, expect the join schema to have the fields in the same order then the right schema */
-    for (auto& field : joinSchema.rightSchema->fields) {
+    for (auto& field : nautilus::static_iterable(joinSchema.rightSchema->fields)) {
         joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
     }
 }

@@ -26,39 +26,39 @@ MinAggregationFunction::MinAggregationFunction(const PhysicalTypePtr& inputType,
                                                const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
     : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
-Nautilus::ExecDataType callMin(const Nautilus::ExecDataType& leftValue, const Nautilus::ExecDataType& rightValue) {
-    if (leftValue < rightValue) {
-        return leftValue;
-    } else {
-        return rightValue;
+void MinAggregationFunction::storeMin(const Nautilus::ExecDataType& leftValue,
+              const Nautilus::ExecDataType& rightValue,
+              const Nautilus::MemRef& state,
+              const PhysicalTypePtr& inputType) {
+    // we have to do this, as otherwise we do not check if the val<> is true bti if there exists a pointer
+    if ((leftValue > rightValue)->as<Nautilus::ExecDataBoolean>()->getRawValue()) {
+        // store the rightValue
+        AggregationFunction::storeToMemRef(state, rightValue, inputType);
+    } else if ((leftValue < rightValue)->as<Nautilus::ExecDataBoolean>()->getRawValue())  {
+        // store the leftValue
+        AggregationFunction::storeToMemRef(state, leftValue, inputType);
     }
 }
 
 void MinAggregationFunction::lift(Nautilus::MemRef state, Nautilus::Record& inputRecord) {
-    // load
-    auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
-    // compare
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto inputValue = inputExpression->execute(inputRecord);
-    auto result = callMin(inputValue, oldValue);
-    AggregationFunction::storeToMemRef(state, result, inputType);
+    const auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
+    const auto inputValue = inputExpression->execute(inputRecord);
+    storeMin(inputValue, oldValue, state, inputType);
 }
 
 void MinAggregationFunction::combine(Nautilus::MemRef state1, Nautilus::MemRef state2) {
-    auto left = AggregationFunction::loadFromMemRef(state1, inputType);
-    auto right = AggregationFunction::loadFromMemRef(state2, inputType);
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto result = callMin(left, right);
-    AggregationFunction::storeToMemRef(state1, result, inputType);
+    const auto left = AggregationFunction::loadFromMemRef(state1, inputType);
+    const auto right = AggregationFunction::loadFromMemRef(state2, inputType);
+    storeMin(left, right, state1, inputType);
 }
 
 void MinAggregationFunction::lower(Nautilus::MemRef state, Nautilus::Record& resultRecord) {
-    auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
+    const auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
 void MinAggregationFunction::reset(Nautilus::MemRef memRef) {
-    auto minVal = createMaxValue(inputType);
+    const auto minVal = createMaxValue(inputType);
     AggregationFunction::storeToMemRef(memRef, minVal, inputType);
 }
 uint64_t MinAggregationFunction::getSize() { return inputType->size(); }

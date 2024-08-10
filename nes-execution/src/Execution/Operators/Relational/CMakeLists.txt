@@ -13,4 +13,5 @@
 add_source_files(nes-execution
         Map.cpp
         Selection.cpp
+        Project.cpp
         )

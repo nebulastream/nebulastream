@@ -71,8 +71,8 @@ class NLJBuildSlicing : public StreamJoinBuild {
      * @param timestamp: Timestamp, for which to get the sliceRef, sliceStart, and sliceEnd
      */
     void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
-                              Nautilus::MemRef& operatorHandlerMemRef,
-                              Nautilus::UInt64& timestamp) const;
+                              const Nautilus::MemRef& operatorHandlerMemRef,
+                              const Nautilus::UInt64& timestamp) const;
 };
 }// namespace NES::Runtime::Execution::Operators
 

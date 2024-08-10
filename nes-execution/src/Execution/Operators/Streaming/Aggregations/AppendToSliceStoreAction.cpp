@@ -62,7 +62,7 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(Runtime::WorkerCont
                                                              SequenceData sequenceNumber,
                                                              uint64_t slideEnd) {
 
-    NES_ASSERT(sliceStore != 0, "slice store is not initialized");
+    NES_ASSERT(sliceStore != nullptr, "slice store is not initialized");
     // the watermark update is an atomic process and returns the last and the current watermark.
     auto currentWatermark = watermarkProcessor->updateWatermark(slideEnd, sequenceNumber, INVALID_ORIGIN_ID);
 

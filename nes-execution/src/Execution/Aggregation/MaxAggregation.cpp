@@ -25,32 +25,30 @@ MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType,
     : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
 
-Nautilus::ExecDataType callMax(const Nautilus::ExecDataType& leftValue, const Nautilus::ExecDataType& rightValue) {
-    if (leftValue < rightValue) {
-        return rightValue;
-    } else {
-        return leftValue;
+void MaxAggregationFunction::storeMax(const Nautilus::ExecDataType& leftValue,
+              const Nautilus::ExecDataType& rightValue,
+              const Nautilus::MemRef& state,
+              const PhysicalTypePtr& inputType) {
+    // we have to do this, as otherwise we do not check if the val<> is true bti if there exists a pointer
+    if ((leftValue < rightValue)->as<Nautilus::ExecDataBoolean>()->getRawValue()) {
+        // store the rightValue
+        AggregationFunction::storeToMemRef(state, rightValue, inputType);
+    } else if ((leftValue > rightValue)->as<Nautilus::ExecDataBoolean>()->getRawValue()) {
+        // store the leftValue
+        AggregationFunction::storeToMemRef(state, leftValue, inputType);
     }
 }
 
 void MaxAggregationFunction::lift(Nautilus::MemRef state, Nautilus::Record& inputRecord) {
-    // load
-    auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
-    // compare
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto inputValue = inputExpression->execute(inputRecord);
-    auto result = callMax(inputValue, oldValue);
-    // store
-    AggregationFunction::storeToMemRef(state, result, inputType);
+    const auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
+    const auto inputValue = inputExpression->execute(inputRecord);
+    storeMax(inputValue, oldValue, state, inputType);
 }
 
 void MaxAggregationFunction::combine(Nautilus::MemRef state1, Nautilus::MemRef state2) {
-    auto left = AggregationFunction::loadFromMemRef(state1, inputType);
-    auto right = AggregationFunction::loadFromMemRef(state2, inputType);
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto result = callMax(left, right);
-    // store
-    AggregationFunction::storeToMemRef(state1, result, inputType);
+    const auto left = AggregationFunction::loadFromMemRef(state1, inputType);
+    const auto right = AggregationFunction::loadFromMemRef(state2, inputType);
+    storeMax(left, right, state1, inputType);
 }
 
 void MaxAggregationFunction::lower(Nautilus::MemRef state, Nautilus::Record& resultRecord) {

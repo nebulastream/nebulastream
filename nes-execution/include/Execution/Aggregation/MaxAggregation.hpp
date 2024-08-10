@@ -31,6 +31,12 @@ class MaxAggregationFunction : public AggregationFunction {
     void lower(Nautilus::MemRef state, Nautilus::Record& resultRecord) override;
     void reset(Nautilus::MemRef state) override;
     uint64_t getSize() override;
+
+private:
+    static void storeMax(const Nautilus::ExecDataType& leftValue,
+              const Nautilus::ExecDataType& rightValue,
+              const Nautilus::MemRef& state,
+              const PhysicalTypePtr& inputType);
 };
 
 }// namespace NES::Runtime::Execution::Aggregation

@@ -31,6 +31,12 @@ class MinAggregationFunction : public AggregationFunction {
     void lower(Nautilus::MemRef memref, Nautilus::Record& record) override;
     void reset(Nautilus::MemRef state) override;
     uint64_t getSize() override;
+
+  private:
+    static void storeMin(const Nautilus::ExecDataType& leftValue,
+                  const Nautilus::ExecDataType& rightValue,
+                  const Nautilus::MemRef& state,
+                  const PhysicalTypePtr& inputType);
 };
 }// namespace NES::Runtime::Execution::Aggregation
 

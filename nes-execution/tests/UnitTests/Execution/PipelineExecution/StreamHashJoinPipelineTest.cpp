@@ -22,7 +22,7 @@
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
@@ -145,7 +145,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         const auto leftEntrySize = leftSchema->getSchemaSizeInBytes();
         const auto rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
-        auto joinBuildLeft = std::make_shared<Operators::HJBuildSlicing>(
+        auto joinBuildLeft = std::make_shared<Operators::HJBuildSlicingVarSized>(
             handlerIndex,
             leftSchema,
             joinFieldNameLeft,
@@ -154,7 +154,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
                                                                                Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
-        auto joinBuildRight = std::make_shared<Operators::HJBuildSlicing>(
+        auto joinBuildRight = std::make_shared<Operators::HJBuildSlicingVarSized>(
             handlerIndex,
             rightSchema,
             joinFieldNameRight,
@@ -315,7 +315,7 @@ TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline) {
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         HashJoinPipelineTest,
                         ::testing::Values("PipelineInterpreter",
-                                          "PipelineCompiler"),//CPPPipelineCompiler is currently not working
+                                          "PipelineCompiler"),
                         [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

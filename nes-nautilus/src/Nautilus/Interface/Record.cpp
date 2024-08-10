@@ -14,6 +14,7 @@
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <bits/ranges_algo.h>
 #include <fmt/format.h>
 #include <sstream>
 
@@ -26,8 +27,8 @@ bool Record::operator==(const Record& rhs) const {
         return false;
     }
 
-    for (const auto& [fieldIdentifier, value] : recordFields) {
-        if (!rhs.recordFields.contains(fieldIdentifier)) {
+    for (const auto& [fieldIdentifier, value] : nautilus::static_iterable(recordFields)) {
+        if (!rhs.hasField(fieldIdentifier)) {
             return false;
         }
 
@@ -49,7 +50,7 @@ void Record::write(const Record::RecordFieldIdentifier& recordFieldIdentifier, c
 }
 
 std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
-    std::vector<Record::RecordFieldIdentifier> fieldIdentifierVec;
+    std::vector<RecordFieldIdentifier> fieldIdentifierVec;
     fieldIdentifierVec.reserve(recordFields.size());
     for (auto& [fieldIdentifier, value] : recordFields) {
         fieldIdentifierVec.emplace_back(fieldIdentifier);
@@ -71,6 +72,7 @@ std::string Record::toString() {
 }
 
 uint64_t Record::numberOfFields() const { return recordFields.size(); }
-bool Record::hasField(const Record::RecordFieldIdentifier& fieldName) { return recordFields.contains(fieldName); }
+
+bool Record::hasField(const Record::RecordFieldIdentifier& fieldName) const { return recordFields.contains(fieldName); }
 
 }// namespace NES::Nautilus
