@@ -42,7 +42,6 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
-option(NES_USE_CCACHE "USE CCACHE" OFF)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 #toggle GPU runtime and test
