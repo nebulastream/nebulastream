@@ -17,11 +17,11 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Windowing
 {
@@ -95,8 +95,7 @@ bool EventTimeWatermarkStrategyDescriptor::inferStamp(SchemaPtr schema)
     {
         return true;
     }
-    NES_ERROR("EventTimeWaterMark is using a non existing field  {}", fieldName);
-    throw InvalidFieldException("EventTimeWaterMark is using a non existing field " + fieldName);
+    throw InvalidField(fmt::format("EventTimeWaterMark is using a non existing field {}", fieldName));
 }
 
 } /// namespace NES::Windowing
