@@ -15,8 +15,6 @@
 #include <algorithm>
 #include <numeric>
 #include <sstream>
-
-#include <Exceptions/InvalidFieldException.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Nautilus/Util.hpp>
 #include <ErrorHandling.hpp>
@@ -36,7 +34,7 @@ const VarVal& Record::read(const RecordFieldIdentifier& recordFieldIdentifier) c
             recordFields.end(),
             std::string{},
             [](const std::string& acc, const auto& pair) { return acc + pair.first + ", "; });
-        throw InvalidFieldException(fmt::format("Field {} not found in record {}.", recordFieldIdentifier, allFields));
+        throw FieldNotFound("Field {} not found in record {}.", recordFieldIdentifier, allFields);
     }
     return recordFields.at(recordFieldIdentifier);
 }

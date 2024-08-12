@@ -19,7 +19,6 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
@@ -147,7 +146,7 @@ AttributeFieldPtr Schema::get(const std::string& fieldName) const
         return *fieldFound;
     }
 
-    throw InvalidFieldException(fmt::format("field {}  does not exist", fieldName));
+    throw FieldNotFound("field {}  does not exist", fieldName);
 }
 
 AttributeFieldPtr Schema::get(uint32_t index)
@@ -157,7 +156,7 @@ AttributeFieldPtr Schema::get(uint32_t index)
         return fields[index];
     }
     NES_FATAL_ERROR("Schema: No field in the schema with the id {}", index);
-    throw std::invalid_argument("field id " + std::to_string(index) + " does not exist");
+    throw FieldNotFound("field {}  does not exist", std::to_string(index));
 }
 
 bool Schema::equals(const SchemaPtr& schema, bool considerOrder)
