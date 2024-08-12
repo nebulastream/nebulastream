@@ -14,11 +14,11 @@
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/Integer.hpp>
 
 namespace NES::Windowing
@@ -36,8 +36,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
         auto existingField = schema->getField(fieldName);
         if (!NES::Util::instanceOf<Integer>(existingField->getDataType()))
         {
-            NES_ERROR("TimeBasedWindow should use a uint for time field {}", fieldName);
-            throw InvalidFieldException("TimeBasedWindow should use a uint for time field " + fieldName);
+            throw DifferentFieldTypeExpected("TimeBasedWindow should use a uint for time field " + fieldName);
         }
         else if (existingField)
         {
@@ -50,8 +49,7 @@ bool TimeBasedWindowType::inferStamp(const SchemaPtr& schema)
         }
         else
         {
-            NES_ERROR("TimeBasedWindow using a non existing time field  {}", fieldName);
-            throw InvalidFieldException("TimeBasedWindow using a non existing time field " + fieldName);
+            throw DifferentFieldTypeExpected("TimeBasedWindow using a non existing time field " + fieldName);
         }
     }
     return true;

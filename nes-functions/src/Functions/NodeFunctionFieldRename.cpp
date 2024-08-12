@@ -14,13 +14,12 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Exceptions/InvalidFieldException.hpp>
 #include <Functions/NodeFunctionFieldAccess.hpp>
 #include <Functions/NodeFunctionFieldRename.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/DataTypes/DataType.hpp>
-
 
 namespace NES
 {
@@ -72,28 +71,21 @@ void NodeFunctionFieldRename::inferStamp(SchemaPtr schema)
     {
         if (!fieldAttribute)
         {
-            throw InvalidFieldException(fmt::format(
-                "NodeFunctionFieldRename: Original field with name {} does not exists in the schema {}", fieldName, schema->toString()));
+            throw FieldNotFound("Original field with name " + fieldName + " does not exists in the schema " + schema->toString());
         }
         newFieldName = fieldName.substr(0, fieldName.find_last_of(Schema::ATTRIBUTE_NAME_SEPARATOR) + 1) + newFieldName;
     }
 
     if (fieldName == newFieldName)
     {
-        NES_WARNING(
-            "NodeFunctionFieldRename: Both existing and new fields are same: existing: {} new field name: {}", fieldName, newFieldName);
+        NES_WARNING("Both existing and new fields are same: existing: {} new field name: {}", fieldName, newFieldName);
     }
     else
     {
         auto newFieldAttribute = schema->getField(newFieldName);
         if (newFieldAttribute)
         {
-            NES_ERROR(
-                "NodeFunctionFieldRename: The new field name {} already exists in the input schema {}. "
-                "Can't use the name of an existing field.",
-                schema->toString(),
-                newFieldName);
-            throw InvalidFieldException("New field with name " + newFieldName + " already exists in the schema " + schema->toString());
+            throw FieldAlreadyExists("New field with name " + newFieldName + " already exists in the schema " + schema->toString());
         }
     }
     /// assign the stamp of this field access with the type of this field.
