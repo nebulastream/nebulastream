@@ -29,6 +29,9 @@ EXCEPTION(InvalidQuerySyntax, 2000, "invalid query syntax")
 EXCEPTION(CannotSerialize, 2001, "cannot serialize")
 EXCEPTION(CannotDeserialize, 2002, "cannot deserialize")
 EXCEPTION(CannotInferSchema, 2003, "cannot infer schema")
+EXCEPTION(FieldNotFound, 2004, "field not found")
+EXCEPTION(FieldAlreadyExists, 2005, "field already exists")
+EXCEPTION(DifferentFieldTypeExpected, 2006, "different field type expected")
 
 /// 21XX Errors during query compilation
 EXCEPTION(UnknownWindowingStrategy, 2100, "unknown windowing strategy")

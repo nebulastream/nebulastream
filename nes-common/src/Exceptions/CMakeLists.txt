@@ -16,5 +16,4 @@ add_source_files(nes-common
         NotImplementedException.cpp
         InvalidArgumentException.cpp
         RequestExecutionException.cpp
-        InvalidFieldException.cpp
 )
