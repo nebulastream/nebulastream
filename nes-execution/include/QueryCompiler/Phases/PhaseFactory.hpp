@@ -50,8 +50,7 @@ public:
     * @param QueryCompilerOptionsPtr options
     * @return LowerToExecutableQueryPlanPhasePtr
     */
-    virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options, bool sourceSharing)
-        = 0;
+    virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) = 0;
 
     /**
     * @brief Creates buffer optimization phase
