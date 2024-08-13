@@ -2,7 +2,7 @@ name: NES Release
 
 # The following pipeline, is executed whenever we create a new version tag at the main repository.
 # The pipeline first creates a new tag at nebulastream/nebulastream-dev-builds and nebulastream/nebulastream-demo, which
-# have the same tag_name as the $GITHUB_REF_NAME. Thus, if the master version tag is v10 also the tag_name is v10.
+# have the same tag_name as the $GITHUB_REF_NAME. Thus, if the main version tag is v10 also the tag_name is v10.
 # In the final step, the pipeline builds the individual debian packages and adds them to a release under the new tag.
 # This pipeline is not triggered automatically and must be triggered manually whenever a new version is ready to be released.
 
@@ -20,7 +20,7 @@ on:
 jobs:
   release:
     runs-on: [ self-hosted, linux, X64, Build ]
-    if: github.ref == 'refs/heads/master'
+    if: github.ref == 'refs/heads/main'
     env:
       DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
       DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}

@@ -40,7 +40,7 @@ class CheckConfig(object):
             We also tell git to only diff new or modified files (filter=AM)
         """
         with os.popen('(git ls-files --full-name :/;'
-                      ' git diff origin/master... --name-only --diff-filter=AM)'
+                      ' git diff origin/main... --name-only --diff-filter=AM)'
                       '| sort | uniq -u') as diff:
             for line in diff:
                 self.ignore_pats.append("/%s" % line.strip())

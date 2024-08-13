@@ -9,7 +9,7 @@ This pull request adds support for variable sized data to the nested loop join. 
 This change is tested by
 *(for example:)*
 - *Added integration tests for end-to-end deployment with large payloads (100MB)*
-- *Extended integration test for recovery after master failure*
+- *Extended integration test for recovery after main failure*
 - *Added test that validates that TaskInfo is transferred only once across recoveries*
 
 ## What components does this pull request potentially affect?
