@@ -23,23 +23,16 @@
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::Execution
 {
 
-/**
- * @brief An ExecutablePipeline represents a fragment of an overall query.
- * It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
- * Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
- */
+/// An ExecutablePipeline represents a fragment of an overall query.
+/// It can contain multiple operators and the implementation of its computation is defined in the ExecutablePipelineStage.
+/// Furthermore, it holds the PipelineExecutionContextPtr and a reference to the next pipeline in the query plan.
 class ExecutablePipeline : public Reconfigurable
 {
-    /// virtual_enable_shared_from_this necessary for double inheritance of enable_shared_from_this
-    using inherited0 = Reconfigurable;
-    using inherited1 = Runtime::RuntimeEventListener;
-
     friend class QueryManager;
 
     enum class PipelineStatus : uint8_t
