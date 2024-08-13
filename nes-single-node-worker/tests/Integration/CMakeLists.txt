@@ -45,3 +45,15 @@ target_link_libraries(
         Boost::asio
         nes-single-node-worker-test-util
 )
+
+add_nes_unit_test(single-node-integration-tests-query-status SingleNodeIntegrationTestsQueryStatus.cpp ../../src/GrpcService.cpp ../../src/SingleNodeWorker.cpp)
+target_include_directories(single-node-integration-tests-query-status PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/../../include/ ${CMAKE_CURRENT_SOURCE_DIR}/../Util/include/)
+target_link_libraries(
+        single-node-integration-tests-query-status
+        nes-grpc
+        nes-runtime
+        nes-execution
+        nes-execution-test-util
+        Boost::asio
+        nes-single-node-worker-test-util
+)

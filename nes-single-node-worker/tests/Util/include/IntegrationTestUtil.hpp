@@ -32,9 +32,19 @@ QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPC
 
 void startQuery(QueryId queryId, GRPCServer& uut);
 
-void stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut);
+void stopQuery(QueryId queryId, StopQueryRequest::QueryTerminationType type, GRPCServer& uut);
 
 void unregisterQuery(QueryId queryId, GRPCServer& uut);
+
+/// Summary structure of the query containing current status, number of retries and the exceptions.
+QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut);
+
+/// Current status of the query.
+QueryStatus queryStatus(QueryId queryId, GRPCServer& uut);
+
+std::vector<std::pair<Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut);
+
+void waitForQueryStatus(QueryId queryId, QueryStatus status, GRPCServer& uut);
 
 /// copies the input file to the directory where the test is executed to allow specifying only the input file name in
 /// query instead of an absolute path or a relative path that is not the directory where the test is executed.
