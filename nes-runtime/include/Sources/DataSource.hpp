@@ -18,7 +18,9 @@
 #include <chrono>
 #include <future>
 #include <mutex>
-#include <optional>
+#include <ostream>
+#include <string>
+#include <string_view>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -27,7 +29,7 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sources/Source.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
@@ -36,142 +38,42 @@ class TestTupleBuffer;
 
 namespace NES
 {
-/**
-* @brief Base class for all data sources in NES
-* we allow only three cases:
-*  1.) If the user specifies a numBuffersToProcess:
-*      1.1) if the source e.g. file is large enough we will read in numBuffersToProcess and then terminate
-*      1.2) if the file is not large enough, we will start at the beginning until we produced numBuffersToProcess
-*  2.) If the user set numBuffersToProcess to 0, we read the source until it ends, e.g, until the file ends
-*  3.) If the user just set numBuffersToProcess to n but does not say how many tuples he wants per buffer, we loop over the source until the buffer is full
-*/
 
+/// The DataSource starts a detached thread that runs 'runningRoutine()' upon calling 'start()'.
+/// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
+/// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
+/// The data source can call 'addEndOfStream()' from the QueryManager to stop a query via a reconfiguration message.
 class DataSource : public Runtime::Reconfigurable, public DataEmitter
 {
 public:
-    /**
-     * @brief public constructor for data source
-     * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
-     * by some test to produce a deterministic behavior
-     * @param schema of the data that this source produces
-     * @param poolProvider The DataSource will create a fixed size buffer pool once the source is started
-     * @param queryManager pointer to the query manager
-     * @param operatorId current operator id
-     * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-     * @param numSourceLocalBuffers number of local source buffers
-     * @param physicalSourceName the name and unique identifier of a physical source
-     * @param successors the subsequent operators in the pipeline to which the data is pushed
-     * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
-     * @param taskQueueId the ID of the queue to which the task is pushed
-     */
     explicit DataSource(
+        OriginId originId,
         SchemaPtr schema,
         std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
         Runtime::QueryManagerPtr queryManager,
         OperatorId operatorId,
         OriginId originId,
         size_t numSourceLocalBuffers,
-        const std::string& physicalSourceName,
-        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors
+        std::unique_ptr<Source> sourceImplementation,
+        uint64_t numberOfBuffersToProduce,
+        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors
         = std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
-        uint64_t sourceAffinity = std::numeric_limits<uint64_t>::max(),
         uint64_t taskQueueId = 0);
 
     DataSource() = delete;
 
-    /**
-     * @brief This methods initializes thread-local state. For instance, it creates the local buffer pool and is necessary
-     * because we cannot do it in the constructor.
-     */
-    virtual void open();
+    ~DataSource() NES_NOEXCEPT(false) override;
 
-    /**
-     * @brief This method cleans up thread-local state for the source.
-     */
-    virtual void close();
+    /// clean up thread-local state for the source.
+    void close();
 
-    /**
-     * @brief method to start the source.
-     * 1.) check if bool running is true, if true return if not start source
-     * 2.) start new thread with runningRoutine
-     */
-    virtual bool start();
+    /// if not already running, start new thread with runningRoutine (finishes, when runningRoutine finishes)
+    [[nodiscard]] bool start();
 
-    /**
-     * @brief method to stop the source.
-     * 1.) check if bool running is false, if false return, if not stop source
-     * 2.) stop thread by join
-     */
-    [[nodiscard]] virtual bool stop(Runtime::QueryTerminationType graceful);
+    /// check if bool running is false, if false return, if not stop source
+    [[nodiscard]] bool stop(Runtime::QueryTerminationType graceful);
 
-    /**
-     * @brief running routine while source is active
-     */
-    virtual void runningRoutine();
-
-    /**
-     * @brief virtual function to receive a buffer
-     * @Note this function is overwritten by the particular data source
-     * @return returns a tuple buffer
-     */
-    virtual std::optional<Memory::TupleBuffer> receiveData() = 0;
-
-    /**
-     * @brief virtual function to get a string describing the particular source
-     * @Note this function is overwritten by the particular data source
-     * @return string with name and additional information about the source
-     */
-    virtual std::string toString() const = 0;
-
-    /**
-     * @brief get source Type
-     * @return
-     */
-    virtual SourceType getType() const = 0;
-
-    /**
-     * @brief method to return the current schema of the source
-     * @return schema description of the source
-     */
-    SchemaPtr getSchema() const;
-
-    /**
-     * @brief method to return the current schema of the source as string
-     * @return schema description of the source as string
-     */
-    std::string getSourceSchemaAsString();
-
-    /**
-     * @brief debug function for testing to test if source is running
-     * @return bool indicating if source is running
-     * @dev    I made this function non-virtual. If implementations of this class should be able to override
-     *         this function, we have to ensure that `isRunning` and this class' private member `running` are
-     *         consistent or that this class does not evaluate `running` directly when checking if it is running.
-     */
-    inline bool isRunning() const noexcept { return running; }
-
-    /**
-     * @brief debug function for testing to get number of generated tuples
-     * @return number of generated tuples
-     */
-    uint64_t getNumberOfGeneratedTuples() const;
-
-    /**
-     * @brief debug function for testing to get number of generated buffer
-     * @return number of generated buffer
-     */
-    uint64_t getNumberOfGeneratedBuffers() const;
-
-    /**
-     * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
-     * @Note must be public because of boost serialize
-     */
-    virtual ~DataSource() NES_NOEXCEPT(false) override;
-
-    /**
-     * @brief Get number of buffers to be processed
-     */
-    uint64_t getNumBuffersToProcess() const;
+    [[nodiscard]] OriginId getOriginId() const;
 
     /**
      * @brief Gets the operator id for the data source
@@ -241,20 +143,16 @@ protected:
     std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
-    OriginId originId;
-    SchemaPtr schema;
-    uint64_t generatedTuples{0};
-    uint64_t generatedBuffers{0};
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t numSourceLocalBuffers;
     SourceType type;
-    Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful}; /// protected by mutex
+    Runtime::QueryTerminationType terminationType{Runtime::QueryTerminationType::Graceful}; /// protected by mutex
     std::atomic_bool wasStarted{false};
     std::atomic_bool futureRetrieved{false};
     std::atomic_bool running{false};
     std::promise<bool> completedPromise;
-    uint64_t sourceAffinity;
     uint64_t taskQueueId;
+    bool sourceSharing = false;
     const std::string physicalSourceName;
 
     ///this counter is used to count the number of queries that use this source
@@ -267,16 +165,17 @@ protected:
 
 protected:
     Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
-
-private:
-    mutable std::recursive_mutex startStopMutex;
     uint64_t maxSequenceNumber = 0;
-
+    std::unique_ptr<Source> sourceImplementation;
+    mutable std::recursive_mutex startStopMutex;
     mutable std::recursive_mutex successorModifyMutex;
-
     bool endOfStreamSent{false}; /// protected by startStopMutex
-};
 
-using DataSourcePtr = std::shared_ptr<DataSource>;
+    /// Runs in detached thread and kills thread when finishing.
+    /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
+    void runningRoutine();
+    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
+    NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
+};
 
 } /// namespace NES
