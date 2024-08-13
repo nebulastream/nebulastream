@@ -28,7 +28,7 @@ public:
     LowerLogicalToPhysicalOperatorsPtr createLowerLogicalQueryPlanPhase(QueryCompilerOptionsPtr options) override;
     PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
-    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options, bool sourceSharing) override;
+    LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options) override;
     BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
 };
 

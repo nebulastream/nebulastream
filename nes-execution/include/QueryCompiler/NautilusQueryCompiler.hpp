@@ -29,18 +29,12 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler
 {
 public:
     QueryCompilation::QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override;
-    /**
-     * @brief Creates a new instance of the NautilusQueryCompiler, with a set of options and phases.
-     * @param options QueryCompilationOptions.
-     * @param phaseFactory Factory which allows the injection of query optimization phases.
-     * @param sourceSharing indicates if source sharing should be used
-     * @return QueryCompilerPtr
-     */
+
     NautilusQueryCompiler(
-        QueryCompilation::QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing);
+        QueryCompilation::QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
 
     static QueryCompilerPtr
-    create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing = false);
+    create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
 
 protected:
     QueryCompilation::LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;
@@ -49,7 +43,6 @@ protected:
     QueryCompilation::LowerToExecutableQueryPlanPhasePtr lowerToExecutableQueryPlanPhase;
     QueryCompilation::PipeliningPhasePtr pipeliningPhase;
     QueryCompilation::AddScanAndEmitPhasePtr addScanAndEmitPhase;
-    bool sourceSharing;
 };
 
 } /// namespace NES::QueryCompilation

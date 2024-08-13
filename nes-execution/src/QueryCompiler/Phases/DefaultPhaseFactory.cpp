@@ -14,7 +14,6 @@
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
@@ -23,7 +22,6 @@
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -66,18 +64,11 @@ AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompi
 }
 
 LowerToExecutableQueryPlanPhasePtr
-DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options, bool sourceSharing)
+DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options)
 {
     NES_DEBUG("Create lower to executable query plan phase");
     DataSourceProviderPtr sourceProvider;
-    if (!sourceSharing)
-    {
-        sourceProvider = DefaultDataSourceProvider::create(options);
-    }
-    else
-    {
-        sourceProvider = SourceSharingDataSourceProvider::create(options);
-    }
+    sourceProvider = DefaultDataSourceProvider::create(options);
 
     auto sinkProvider = DataSinkProvider::create();
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);

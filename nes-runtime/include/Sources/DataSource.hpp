@@ -230,12 +230,6 @@ public:
     [[nodiscard]] virtual bool fail();
 
     /**
-     * @brief set source sharing value
-     * @param value
-     */
-    void setSourceSharing(bool value) { sourceSharing = value; };
-
-    /**
      * @brief set the number of queries that use this source
      * @param value
      */
@@ -261,7 +255,6 @@ protected:
     std::promise<bool> completedPromise;
     uint64_t sourceAffinity;
     uint64_t taskQueueId;
-    bool sourceSharing = false;
     const std::string physicalSourceName;
 
     ///this counter is used to count the number of queries that use this source

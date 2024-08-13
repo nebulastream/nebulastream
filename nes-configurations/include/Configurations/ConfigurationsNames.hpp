@@ -62,7 +62,6 @@ const std::string BUFFERS_SIZE_IN_BYTES_CONFIG = "bufferSizeInBytes";
 const std::string ENABLE_NEW_REQUEST_EXECUTOR_CONFIG = "enableNewRequestExecutor";
 const std::string REQUEST_EXECUTOR_THREAD_CONFIG = "numOfRequestExecutorThread";
 const std::string STORAGE_HANDLER_TYPE_CONFIG = "storageHandlerType";
-const std::string ENABLE_SOURCE_SHARING_CONFIG = "enableSourceSharing";
 const std::string ENABLE_USE_COMPILATION_CACHE_CONFIG = "useCompilationCache";
 
 const std::string ENABLE_STATISTIC_OUTPUT_CONFIG = "enableStatisticOutput";
