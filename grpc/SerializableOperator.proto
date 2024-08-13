@@ -67,7 +67,6 @@ message SerializablePhysicalSourceType{
     string delimiter = 3;
     uint32 numberOfBuffersToProduce = 4;
     uint32 numberOfTuplesToProducePerBuffer = 5;
-    uint32 sourceGatheringInterval = 6;
   }
 
   /**

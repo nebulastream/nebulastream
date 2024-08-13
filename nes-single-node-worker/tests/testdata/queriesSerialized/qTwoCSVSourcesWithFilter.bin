@@ -1,11 +1,10 @@
 
-íè
-µ
-8type.googleapis.com/NES.SerializableOperator.SinkDetailsy
-u
-Wtype.googleapis.com/NES.SerializableOperator.SinkDetails.SerializableFileSinkDescriptor
-
-query2.csv
+÷ò
+¿
+8type.googleapis.com/NES.SerializableOperator.SinkDetails‚
+~
+Wtype.googleapis.com/NES.SerializableOperator.SinkDetails.SerializableFileSinkDescriptor#
+[GENERATED_IN_TEST]
 CSV_FORMATÏ
 e
 default_source$idPL
@@ -19,7 +18,7 @@ e
 f
 default_source$id2PL
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ8@J
-¯ª
+¯ª
 ÿ
 :type.googleapis.com/NES.SerializableOperator.SourceDetailsÀ
 »
@@ -34,7 +33,7 @@ e
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ
 f
 default_source$id2PL
-;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿÏ
+;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿÏ
 e
 default_source$idPL
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ
@@ -46,7 +45,7 @@ e
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ
 f
 default_source$id2PL
-;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ8@
+;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ8@
 ¸³
 „
 :type.googleapis.com/NES.SerializableOperator.FilterDetailsÅ
@@ -78,7 +77,7 @@ e
 f
 default_source$id2PL
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ8J
-¯ª
+¯ª
 ÿ
 :type.googleapis.com/NES.SerializableOperator.SourceDetailsÀ
 »
@@ -93,7 +92,7 @@ e
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ
 f
 default_source$id2PL
-;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿÏ
+;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿÏ
 e
 default_source$idPL
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ
@@ -105,7 +104,7 @@ e
 ;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ
 f
 default_source$id2PL
-;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ8@
+;type.googleapis.com/NES.SerializableDataType.IntegerDetails@ÿÿÿÿÿÿÿÿÿ8@
 ºµ
 „
 :type.googleapis.com/NES.SerializableOperator.FilterDetailsÅ

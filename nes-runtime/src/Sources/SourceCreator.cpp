@@ -33,16 +33,7 @@ DataSourcePtr createCSVFileSource(
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
 {
     return std::make_shared<CSVSource>(
-        schema,
-        poolProvider,
-        queryManager,
-        csvSourceType,
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        GatheringMode::INTERVAL_MODE,
-        physicalSourceName,
-        successors);
+        schema, poolProvider, queryManager, csvSourceType, operatorId, originId, numSourceLocalBuffers, physicalSourceName, successors);
 }
 
 DataSourcePtr createTCPSource(
@@ -57,15 +48,6 @@ DataSourcePtr createTCPSource(
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
 {
     return std::make_shared<TCPSource>(
-        schema,
-        poolProvider,
-        queryManager,
-        tcpSourceType,
-        operatorId,
-        originId,
-        numSourceLocalBuffers,
-        GatheringMode::INTERVAL_MODE,
-        physicalSourceName,
-        successors);
+        schema, poolProvider, queryManager, tcpSourceType, operatorId, originId, numSourceLocalBuffers, physicalSourceName, successors);
 }
 } /// namespace NES

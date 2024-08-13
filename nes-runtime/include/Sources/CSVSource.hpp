@@ -39,7 +39,6 @@ public:
    * @param operatorId current operator id
    * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
    * @param numSourceLocalBuffers number of local source buffers
-   * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
    * @param physicalSourceName the name and unique identifier of a physical source
    * @param successors the subsequent operators in the pipeline to which the data is pushed
    * @return a DataSourcePtr pointing to the data source
@@ -52,7 +51,6 @@ public:
         OperatorId operatorId,
         OriginId originId,
         size_t numSourceLocalBuffers,
-        GatheringMode gatheringMode,
         const std::string& physicalSourceName,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
 

@@ -60,7 +60,6 @@ DataSource::DataSource(
     OperatorId operatorId,
     OriginId originId,
     size_t numSourceLocalBuffers,
-    GatheringMode gatheringMode,
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
     uint64_t sourceAffinity,
@@ -74,7 +73,6 @@ DataSource::DataSource(
     , originId(originId)
     , schema(std::move(pSchema))
     , numSourceLocalBuffers(numSourceLocalBuffers)
-    , gatheringMode(gatheringMode)
     , sourceAffinity(sourceAffinity)
     , taskQueueId(taskQueueId)
     , physicalSourceName(physicalSourceName)
@@ -321,11 +319,6 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful)
     return false;
 }
 
-void DataSource::setGatheringInterval(std::chrono::milliseconds interval)
-{
-    this->gatheringInterval = interval;
-}
-
 void DataSource::open()
 {
     bufferProvider = bufferPoolProvider->createFixedSizeBufferPool(numSourceLocalBuffers);
@@ -364,20 +357,79 @@ void DataSource::runningRoutine()
 {
     try
     {
-        if (gatheringMode == GatheringMode::INTERVAL_MODE)
+        NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
+        std::string thName = fmt::format("DataSrc-{}", operatorId);
+        setThreadName(thName.c_str());
+
+        NES_DEBUG("DataSource {}: Running Data Source of type={}", operatorId, magic_enum::enum_name(getType()));
+        if (numberOfBuffersToProduce == 0)
         {
-            runningRoutineWithGatheringInterval();
+            NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
+                      "the source is empty");
         }
-        else if (gatheringMode == GatheringMode::INGESTION_RATE_MODE)
+        else
         {
-            runningRoutineWithIngestionRate();
+            NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
         }
-        else if (gatheringMode == GatheringMode::ADAPTIVE_MODE)
+        open();
+        uint64_t numberOfBuffersProduced = 0;
+        while (running)
         {
-            NES_FATAL_ERROR("ADAPTIVE GATHERING IS CURRENTLY NOT SUPPORTED!");
-            NES_NOT_IMPLEMENTED();
+            ///check if already produced enough buffer
+            if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce)
+            {
+                auto optBuf = receiveData(); /// note that receiveData might block
+                ///this checks we received a valid output buffer
+                if (optBuf.has_value())
+                {
+                    auto& buf = optBuf.value();
+                    NES_TRACE(
+                        "DataSource produced buffer {} type= {} string={}: Received Data: {} "
+                        "operatorId={} orgID={}",
+                        numberOfBuffersProduced,
+                        magic_enum::enum_name(getType()),
+                        toString(),
+                        buf.getNumberOfTuples(),
+                        this->operatorId,
+                        this->operatorId);
+
+                    if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE)
+                    {
+                        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
+                        auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
+                        NES_TRACE("DataSource produced buffer content={}", buffer.toString(schema));
+                    }
+
+                    emitWork(buf);
+                    ++numberOfBuffersProduced;
+                }
+                else
+                {
+                    NES_DEBUG("DataSource {}: stopping cause of invalid buffer", operatorId);
+                    running = false;
+                    NES_DEBUG("DataSource {}: Thread going to terminating with graceful exit.", operatorId);
+                }
+                if (!running)
+                { /// necessary if source stops while receiveData is called due to stricter shutdown logic
+                    NES_DEBUG("Source is not running anymore.")
+                    break;
+                }
+            }
+            else
+            {
+                NES_DEBUG(
+                    "DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than "
+                    "numBuffersToProcess={} now return",
+                    operatorId,
+                    numberOfBuffersProduced,
+                    numberOfBuffersToProduce);
+                running = false;
+            }
+            NES_TRACE("DataSource {} : Data Source finished processing iteration {}", operatorId, numberOfBuffersProduced);
         }
-        completedPromise.set_value(true);
+        NES_DEBUG("DataSource {} call close", operatorId);
+        close();
+        NES_DEBUG("DataSource {} end running", operatorId);
     }
     catch (std::exception const& exception)
     {
@@ -403,190 +455,6 @@ void DataSource::runningRoutine()
     NES_DEBUG("DataSource {} end runningRoutine", operatorId);
 }
 
-void DataSource::runningRoutineWithIngestionRate()
-{
-    NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
-    NES_ASSERT(gatheringIngestionRate >= 10, "As we generate on 100 ms base we need at least an ingestion rate of 10");
-    std::string thName = fmt::format("DataSrc-{}", operatorId);
-    setThreadName(thName.c_str());
-
-    NES_DEBUG(
-        "DataSource {} Running Data Source of type={} ingestion rate={}",
-        operatorId,
-        magic_enum::enum_name(getType()),
-        gatheringIngestionRate);
-    if (numberOfBuffersToProduce == 0)
-    {
-        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffers until "
-                  "the source is empty");
-    }
-    else
-    {
-        NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
-    }
-    open();
-
-    uint64_t nextPeriodStartTime = 0;
-    uint64_t curPeriod = 0;
-    uint64_t processedOverallBufferCnt = 0;
-    uint64_t buffersToProducePer100Ms = gatheringIngestionRate / 10;
-    while (running && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0))
-    {
-        ///create as many tuples as requested and then sleep
-        auto startPeriod
-            = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        uint64_t buffersProcessedCnt = 0;
-
-        ///produce buffers until limit for this second or for all periods is reached or source is topped
-        while (buffersProcessedCnt < buffersToProducePer100Ms && running
-               && (processedOverallBufferCnt < numberOfBuffersToProduce || numberOfBuffersToProduce == 0))
-        {
-            auto optBuf = receiveData();
-
-            if (optBuf.has_value())
-            {
-                /// here we got a valid buffer
-                NES_TRACE("DataSource: add task for buffer");
-                auto& buf = optBuf.value();
-                emitWork(buf);
-
-                buffersProcessedCnt++;
-                processedOverallBufferCnt++;
-            }
-            else
-            {
-                NES_ERROR("DataSource: Buffer is invalid");
-                running = false;
-            }
-            NES_TRACE("DataSource: buffersProcessedCnt={} buffersPerSecond={}", buffersProcessedCnt, gatheringIngestionRate);
-        }
-
-        uint64_t endPeriod
-            = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-
-        ///next point in time when to start producing again
-        nextPeriodStartTime = uint64_t(startPeriod + (100));
-        NES_TRACE(
-            "DataSource: startTimeSendBuffers={} endTimeSendBuffers={} nextPeriodStartTime={}",
-            startPeriod,
-            endPeriod,
-            nextPeriodStartTime);
-
-        ///If this happens then the second was not enough to create so many tuples and the ingestion rate should be decreased
-        if (nextPeriodStartTime < endPeriod)
-        {
-            NES_ERROR(
-                "Creating buffer(s) for DataSource took longer than periodLength. nextPeriodStartTime={} endTimeSendBuffers={}",
-                nextPeriodStartTime,
-                endPeriod);
-        }
-
-        uint64_t sleepCnt = 0;
-        uint64_t curTime
-            = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        ///wait until the next period starts
-        while (curTime < nextPeriodStartTime)
-        {
-            curTime = std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
-        }
-        NES_DEBUG(
-            "DataSource: Done with period {} and overall buffers={} sleepCnt={} startPeriod={} endPeriod={} "
-            "nextPeriodStartTime={} curTime={}",
-            curPeriod++,
-            processedOverallBufferCnt,
-            sleepCnt,
-            startPeriod,
-            endPeriod,
-            nextPeriodStartTime,
-            curTime);
-    } ///end of while
-    NES_DEBUG("DataSource {} call close", operatorId);
-    close();
-    NES_DEBUG("DataSource {} end running", operatorId);
-}
-
-void DataSource::runningRoutineWithGatheringInterval()
-{
-    NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
-    std::string thName = fmt::format("DataSrc-{}", operatorId);
-    setThreadName(thName.c_str());
-
-    NES_DEBUG(
-        "DataSource {}: Running Data Source of type={} interval={}",
-        operatorId,
-        magic_enum::enum_name(getType()),
-        gatheringInterval.count());
-    if (numberOfBuffersToProduce == 0)
-    {
-        NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
-                  "the source is empty");
-    }
-    else
-    {
-        NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
-    }
-    open();
-    uint64_t numberOfBuffersProduced = 0;
-    while (running)
-    {
-        ///check if already produced enough buffer
-        if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce)
-        {
-            auto optBuf = receiveData(); /// note that receiveData might block
-            ///this checks we received a valid output buffer
-            if (optBuf.has_value())
-            {
-                auto& buf = optBuf.value();
-                NES_TRACE(
-                    "DataSource produced buffer {} type= {} string={}: Received Data: {} "
-                    "operatorId={} orgID={}",
-                    numberOfBuffersProduced,
-                    magic_enum::enum_name(getType()),
-                    toString(),
-                    buf.getNumberOfTuples(),
-                    this->operatorId,
-                    this->operatorId);
-
-                if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE)
-                {
-                    auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-                    auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
-                    NES_TRACE("DataSource produced buffer content={}", buffer.toString(schema));
-                }
-
-                emitWork(buf);
-                ++numberOfBuffersProduced;
-            }
-            else
-            {
-                NES_DEBUG("DataSource {}: stopping cause of invalid buffer", operatorId);
-                running = false;
-                NES_DEBUG("DataSource {}: Thread going to terminating with graceful exit.", operatorId);
-            }
-            if (!running)
-            { /// necessary if source stops while receiveData is called due to stricter shutdown logic
-                NES_DEBUG("Source is not running anymore.")
-                break;
-            }
-        }
-        else
-        {
-            NES_DEBUG(
-                "DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than "
-                "numBuffersToProcess={} now return",
-                operatorId,
-                numberOfBuffersProduced,
-                numberOfBuffersToProduce);
-            running = false;
-        }
-        NES_TRACE("DataSource {} : Data Source finished processing iteration {}", operatorId, numberOfBuffersProduced);
-    }
-    NES_DEBUG("DataSource {} call close", operatorId);
-    close();
-
-    NES_DEBUG("DataSource {} end running", operatorId);
-}
-
 /// debugging
 uint64_t DataSource::getNumberOfGeneratedTuples() const
 {
@@ -607,14 +475,6 @@ uint64_t DataSource::getNumBuffersToProcess() const
     return numberOfBuffersToProduce;
 }
 
-std::chrono::milliseconds DataSource::getGatheringInterval() const
-{
-    return gatheringInterval;
-}
-uint64_t DataSource::getGatheringIntervalCount() const
-{
-    return gatheringInterval.count();
-}
 std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts()
 {
     return {Schema::MemoryLayoutType::ROW_LAYOUT};
