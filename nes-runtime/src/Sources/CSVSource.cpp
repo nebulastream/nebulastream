@@ -38,7 +38,6 @@ CSVSource::CSVSource(
     OperatorId operatorId,
     OriginId originId,
     size_t numSourceLocalBuffers,
-    GatheringMode gatheringMode,
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(
@@ -48,9 +47,8 @@ CSVSource::CSVSource(
           operatorId,
           originId,
           numSourceLocalBuffers,
-          gatheringMode,
           physicalSourceName,
-          std::move(successors))
+        std::move(successors))
     , fileEnded(false)
     , csvSourceType(csvSourceType)
     , filePath(csvSourceType->getFilePath()->getValue())
@@ -59,7 +57,6 @@ CSVSource::CSVSource(
     , skipHeader(csvSourceType->getSkipHeader()->getValue())
 {
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
-    this->gatheringInterval = std::chrono::milliseconds(csvSourceType->getGatheringInterval()->getValue());
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     struct Deleter
@@ -91,9 +88,8 @@ CSVSource::CSVSource(
     }
 
     NES_DEBUG(
-        "CSVSource: tupleSize={} freq={}ms numBuff={} numberOfTuplesToProducePerBuffer={}",
+        "CSVSource: tupleSize={} numBuff={} numberOfTuplesToProducePerBuffer={}",
         this->tupleSize,
-        this->gatheringInterval.count(),
         this->numberOfBuffersToProduce,
         this->numberOfTuplesToProducePerBuffer);
 
@@ -123,10 +119,7 @@ std::optional<Memory::TupleBuffer> CSVSource::receiveData()
 
 std::string CSVSource::toString() const
 {
-    std::stringstream ss;
-    ss << "CSV_SOURCE(SCHEMA(" << schema->toString() << "), FILE=" << filePath << " freq=" << this->gatheringInterval.count() << "ms"
-       << " numBuff=" << this->numberOfBuffersToProduce << ")";
-    return ss.str();
+    return fmt::format("CSV_SOURCE(SCHEMA({}), FILE={} numBuff={})", schema->toString(), filePath, this->numberOfTuplesToProducePerBuffer);
 }
 
 void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)

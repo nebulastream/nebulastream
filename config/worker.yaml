@@ -64,9 +64,6 @@
       # Set number of tuples to produce per buffer
       #numberOfTuplesToProducePerBuffer: 1
       # Set sampling interval of source
-      #sourceGatheringInterval: 1
-      # Set gathering mode between [interval|ingestion|adaptive]
-      #sourceGatheringMode: interval
       # Set input data format
       #inputFormat: JSON
 

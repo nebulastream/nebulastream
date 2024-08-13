@@ -16,4 +16,3 @@ physical:
       filePath: oneToThirtyOneDoubleColumn.csv
       delimiter: ","
       numberOfBuffersToProduce: 32
-      gatheringInterval: 1

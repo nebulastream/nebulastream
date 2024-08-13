@@ -25,7 +25,5 @@ physicalSources:
       ###### Define only the following configurations for CSVSource source
       # Set number of buffers to produce, i.e. how often the default data is repeated for this source
       numberOfBuffersToProduce: 1
-      # Set gathering mode type
-      sourceGatheringMode: ADAPTIVE_MODE
       # Set path
       filePath: fileLoc
