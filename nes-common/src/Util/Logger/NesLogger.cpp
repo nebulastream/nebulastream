@@ -81,7 +81,7 @@ Logger::Logger(const std::string& logFileName, LogLevel level) {
     auto spdlogLevel = toSpdlogLevel(level);
 
     consoleSink->set_level(spdlogLevel);
-    consoleSink->set_color_mode(spdlog::color_mode::always);
+
     fileSink->set_level(spdlogLevel);
 
     consoleSink->set_pattern(SPDLOG_PATTERN);

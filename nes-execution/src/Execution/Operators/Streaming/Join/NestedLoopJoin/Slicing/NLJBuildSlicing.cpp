@@ -44,10 +44,10 @@ void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64
     return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getCurrentSliceOrCreate();
 }
 
-void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
+int8_t* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timestamp).get();
+    return (int8_t*) dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timestamp).get();
 }
 
 void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
@@ -77,12 +77,13 @@ void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinSt
 //    NES_DEBUG("Updating LocalJoinState for timestamp {}!", timestamp->toString());
 
     // Retrieving the slice of the current watermark, as we expect that more tuples will be inserted into this slice
-    localJoinState->sliceReference =
+    auto ptr =
         nautilus::invoke(getNLJSliceRefProxy,
                          operatorHandlerMemRef,
                          timestamp,
                          UInt64(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                          UInt64(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    localJoinState->sliceReference = ptr;
     localJoinState->sliceStart = nautilus::invoke(getNLJSliceStartProxy, localJoinState->sliceReference);
     localJoinState->sliceEnd = nautilus::invoke(getNLJSliceEndProxy, localJoinState->sliceReference);
 }

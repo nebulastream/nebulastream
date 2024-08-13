@@ -73,7 +73,7 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
         resultWindow.write(endTsFieldName, windowEnd);
         // load keys and write them to result record
         auto sliceKeys = globalEntry.getKeyPtr();
-        for (nautilus::static_val<uint64_t> i = 0; i < resultKeyFields.size(); ++i) {
+        for (nautilus::static_val<size_t> i = 0; i < resultKeyFields.size(); ++i) {
             const auto value = Nautilus::readExecDataTypeFromMemRef(sliceKeys, keyDataTypes[i]);
             resultWindow.write(resultKeyFields[i], value);
             sliceKeys = sliceKeys + nautilus::val<uint64_t>(keyDataTypes[i]->size());

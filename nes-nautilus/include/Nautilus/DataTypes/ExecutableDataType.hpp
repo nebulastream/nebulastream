@@ -164,7 +164,7 @@ using ExecDataBooleanPtr = ExecutableDataTypePtr<bool>;
 ExecDataType readExecDataTypeFromMemRef(MemRef& memRef, const PhysicalTypePtr& type);
 void writeExecDataTypeToMemRef(MemRef& memRef, const ExecDataType& execDataType);
 Boolean memEquals(MemRef ptr1, MemRef ptr2, const nautilus::val<uint64_t>& size);
-void memCopy(MemRef dest, MemRef src, const nautilus::val<uint64_t>& size);
+void memCopy(MemRef dest, MemRef src, const nautilus::val<size_t>& size);
 
 
 /// We assume that the first 4 bytes of a int8_t* to any var sized data contains the length of the var sized data

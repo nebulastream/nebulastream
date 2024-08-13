@@ -77,7 +77,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash, const 
     const auto entry = insert(hash);
     // store keys
     auto keyPtr = entry.getKeyPtr();
-    for (nautilus::static_val<uint64_t> i = 0; i < keys.size(); ++i) {
+    for (nautilus::static_val<size_t> i = 0; i < keys.size(); ++i) {
         auto& key = keys[i];
         writeExecDataTypeToMemRef(keyPtr, key);
         keyPtr = keyPtr + nautilus::val<uint64_t>(keyDataTypes[i]->size());
@@ -120,7 +120,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const UInt64& hash,
 
         std::stringstream ss;
         ss << (*keys[0]);
-        for (nautilus::static_val<uint64_t> i = 1; i < keys.size(); i++) {
+        for (nautilus::static_val<size_t> i = 1; i < keys.size(); i++) {
             ss << ", " << (*keys[i]);
         }
         NES_INFO("Created new entry for keys: {}", ss.str());
@@ -141,14 +141,14 @@ void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const st
     }
     if (entry == nullptr) {
         auto newEntry = insert(otherEntry.getHash());
-        memCopy(newEntry.getKeyPtr(), otherEntry.getKeyPtr(), UInt64(keySize + valueSize));
+        memCopy(newEntry.getKeyPtr(), otherEntry.getKeyPtr(), nautilus::val<size_t>(keySize + valueSize));
     }
 }
 
 Boolean ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys) {
     auto equals = ExecutableDataType<bool>::create(true);
     auto keyPtr = entry.getKeyPtr();
-    for (nautilus::static_val<uint64_t> i = 0; i < keys.size(); ++i) {
+    for (nautilus::static_val<size_t> i = 0; i < keys.size(); ++i) {
         auto& key = keys[i];
         const auto keyFromEntry = readExecDataTypeFromMemRef(keyPtr, keyDataTypes[i]);
         const auto tmp = (key == keyFromEntry);

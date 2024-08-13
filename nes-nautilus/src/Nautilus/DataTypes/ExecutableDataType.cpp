@@ -362,7 +362,7 @@ Boolean memEquals(nautilus::val<int8_t*> ptr1, nautilus::val<int8_t*> ptr2, cons
     return {true};
 }
 
-void memCopy(nautilus::val<int8_t*> dest, nautilus::val<int8_t*> src, const nautilus::val<uint64_t>& size) {
+void memCopy(nautilus::val<int8_t*> dest, nautilus::val<int8_t*> src, const nautilus::val<size_t>& size) {
     nautilus::memcpy(dest, src, size);
 }
 

@@ -47,7 +47,7 @@ class CompiledExecutablePipelineStage : public NautilusExecutablePipelineStage {
     auto compilePipeline();
     std::string compilationBackend;
     const nautilus::engine::Options options;
-    nautilus::engine::CallableFunction<nautilus::val<uint32_t>, nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>> pipelineFunction;
+    nautilus::engine::CallableFunction<void, nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>> pipelineFunction;
     std::shared_ptr<nautilus::engine::NautilusEngine> engine;
 };
 

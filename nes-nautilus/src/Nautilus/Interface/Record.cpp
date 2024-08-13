@@ -14,7 +14,6 @@
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <bits/ranges_algo.h>
 #include <fmt/format.h>
 #include <sstream>
 
