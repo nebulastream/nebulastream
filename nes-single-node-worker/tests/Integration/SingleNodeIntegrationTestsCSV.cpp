@@ -93,9 +93,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
 
     auto queryId = IntegrationTestUtil::registerQueryPlan(queryPlan, uut);
     IntegrationTestUtil::startQuery(queryId, uut);
-    ///TODO(#246) Use Query Status to determine of the query has stopped
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    IntegrationTestUtil::stopQuery(queryId, HardStop, uut);
+    IntegrationTestUtil::waitForQueryStatus(queryId, Running, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto bufferManager = Memory::BufferManager::create();

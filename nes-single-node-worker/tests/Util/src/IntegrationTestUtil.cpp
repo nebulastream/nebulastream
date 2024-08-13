@@ -60,7 +60,7 @@ void startQuery(QueryId queryId, GRPCServer& uut)
     EXPECT_TRUE(uut.StartQuery(&context, &request, &reply).ok());
 }
 
-void stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut)
+void stopQuery(QueryId queryId, StopQueryRequest::QueryTerminationType type, GRPCServer& uut)
 {
     grpc::ServerContext context;
     StopQueryRequest request;
@@ -77,6 +77,54 @@ void unregisterQuery(QueryId queryId, GRPCServer& uut)
     google::protobuf::Empty reply;
     request.set_queryid(queryId.getRawValue());
     EXPECT_TRUE(uut.UnregisterQuery(&context, &request, &reply).ok());
+}
+
+QuerySummaryReply querySummary(QueryId queryId, GRPCServer& uut)
+{
+    grpc::ServerContext context;
+    QuerySummaryRequest request;
+    QuerySummaryReply reply;
+    request.set_queryid(queryId.getRawValue());
+    EXPECT_TRUE(uut.RequestQuerySummary(&context, &request, &reply).ok());
+    return reply;
+}
+
+QueryStatus queryStatus(QueryId queryId, GRPCServer& uut)
+{
+    grpc::ServerContext context;
+    QuerySummaryRequest request;
+    QuerySummaryReply reply;
+    request.set_queryid(queryId.getRawValue());
+    EXPECT_TRUE(uut.RequestQuerySummary(&context, &request, &reply).ok());
+    return reply.status();
+}
+
+void waitForQueryStatus(QueryId queryId, QueryStatus status, GRPCServer& uut)
+{
+    do
+    {
+        std::this_thread::sleep_for(std::chrono::milliseconds(25));
+    } while (queryStatus(queryId, uut) == status);
+}
+
+std::vector<std::pair<Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point>> queryLog(QueryId queryId, GRPCServer& uut)
+{
+    grpc::ServerContext context;
+    QueryLogRequest request;
+    QueryLogReply reply;
+    request.set_queryid(queryId.getRawValue());
+    EXPECT_TRUE(uut.RequestQueryLog(&context, &request, &reply).ok());
+    std::vector<std::pair<Runtime::Execution::QueryStatus, std::chrono::system_clock::time_point>> logs;
+    for (const auto& log : reply.entries())
+    {
+        auto time_point = std::chrono::system_clock::time_point(std::chrono::milliseconds(log.unixtimeinms()));
+        auto status = magic_enum::enum_cast<Runtime::Execution::QueryStatus>(log.status());
+        if (status.has_value())
+        {
+            logs.emplace_back(status.value(), time_point);
+        }
+    }
+    return logs;
 }
 
 void copyInputFile(const std::string_view inputFileName, const std::string_view querySpecificDataFileName)
