@@ -113,16 +113,7 @@ void DataSource::emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData)
     uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors)
     {
-        /// find the queue to which this sources pushes
-        if (!sourceSharing)
-        {
-            queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
-        }
-        else
-        {
-            NES_DEBUG("push task for queueid= {} successor= ", queueId /*, &successor*/);
-            queryManager->addWorkForNextPipeline(buffer, successor, queueId);
-        }
+        queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
     }
 }
 
