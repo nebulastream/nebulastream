@@ -44,7 +44,6 @@ TCPSource::TCPSource(
     OperatorId operatorId,
     OriginId originId,
     size_t numSourceLocalBuffers,
-    GatheringMode gatheringMode,
     const std::string& physicalSourceName,
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(
@@ -54,7 +53,6 @@ TCPSource::TCPSource(
         operatorId,
         originId,
         numSourceLocalBuffers,
-        gatheringMode,
         physicalSourceName,
         std::move(executableSuccessors))
     , tupleSize(schema->getSchemaSizeInBytes())

@@ -14,9 +14,6 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
 
-#include <chrono>
-#include <condition_variable>
-#include <deque>
 #include <map>
 #include <memory>
 #include <mutex>

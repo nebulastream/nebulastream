@@ -293,56 +293,6 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
         workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
 }
 
-TEST_F(ConfigTest, testCSVPhysicalSourceAndDefaultGatheringModeWorkerConsoleInput)
-{
-    /// given
-    auto commandLineParams = makeCommandLineArgs(
-        {"type=CSV_SOURCE",
-         "numberOfBuffersToProduce=5",
-         "rowLayout=false",
-         "physicalSourceName=x",
-         "logicalSourceName=default",
-         "filePath=fileLoc"});
-    /// when
-    auto physicalSourceType = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
-    /// then
-    EXPECT_EQ(
-        physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(),
-        physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(), GatheringMode::INTERVAL_MODE);
-}
-
-TEST_F(ConfigTest, testCSVPhysicalSourceAndAdaptiveGatheringModeWorkerConsoleInput)
-{
-    /// given
-    auto commandLineParams = makeCommandLineArgs(
-        {"type=CSV_SOURCE",
-         "numberOfBuffersToProduce=5",
-         "rowLayout=false",
-         "physicalSourceName=x",
-         "logicalSourceName=default",
-         "filePath=fileLoc",
-         "sourceGatheringMode=ADAPTIVE_MODE"});
-    /// when
-    auto physicalSourceType = PhysicalSourceTypeFactory::createFromString("", commandLineParams);
-    /// then
-    EXPECT_NE(
-        physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(),
-        physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(physicalSourceType->as<CSVSourceType>()->getGatheringMode()->getValue(), GatheringMode::ADAPTIVE_MODE);
-}
-
-TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
-{
-    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    workerConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "workerWithAdaptiveCSVSource.yaml");
-    EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.size() == 1);
-
-    auto csvSourceType = workerConfigPtr->physicalSourceTypes.getValues()[0].getValue()->as<CSVSourceType>();
-    EXPECT_NE(csvSourceType->getGatheringMode()->getValue(), csvSourceType->getGatheringMode()->getDefaultValue());
-    EXPECT_EQ(csvSourceType->getGatheringMode()->getValue(), magic_enum::enum_cast<GatheringMode>("ADAPTIVE_MODE").value());
-}
-
 TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs

@@ -109,16 +109,6 @@ public:
     void setDelimiter(const std::string& delimiter);
 
     /**
-     * @brief gets a ConfigurationOption object with sourceGatheringInterval
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getGatheringInterval() const;
-
-    /**
-     * @brief set the value for sourceGatheringInterval with the appropriate data format
-     */
-    void setGatheringInterval(uint32_t sourceGatheringIntervalValue);
-
-    /**
      * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
@@ -132,22 +122,6 @@ public:
      * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
      */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
-
-    /**
-     * @brief Get gathering mode
-     */
-    [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<GatheringMode>> getGatheringMode() const;
-
-    /**
-     * @brief Set gathering mode
-     */
-    void setGatheringMode(std::string inputGatheringMode);
-
-    /**
-     * @brief Sets the gathering mode given as GatheringMode
-     * @param inputGatheringMode
-     */
-    void setGatheringMode(GatheringMode inputGatheringMode);
 
     /**
      * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
@@ -176,8 +150,6 @@ private:
     Configurations::StringConfigOption delimiter;
     Configurations::IntConfigOption numberOfBuffersToProduce;
     Configurations::IntConfigOption numberOfTuplesToProducePerBuffer;
-    Configurations::IntConfigOption sourceGatheringInterval;
-    Configurations::GatheringModeConfigOption gatheringMode;
 };
 
 } /// namespace NES

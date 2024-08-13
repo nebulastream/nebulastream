@@ -48,10 +48,6 @@ CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::st
           Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG, 0, "Number of buffers to produce."))
     , numberOfTuplesToProducePerBuffer(Configurations::ConfigurationOption<uint32_t>::create(
           Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG, 0, "Number of tuples to produce per buffer."))
-    , sourceGatheringInterval(Configurations::ConfigurationOption<uint32_t>::create(
-          Configurations::SOURCE_GATHERING_INTERVAL_CONFIG, 0, "Gathering interval of the source."))
-    , gatheringMode(Configurations::ConfigurationOption<GatheringMode>::create(
-          Configurations::SOURCE_GATHERING_MODE_CONFIG, GatheringMode::INTERVAL_MODE, "Gathering mode of the source."))
 {
     NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
@@ -87,15 +83,6 @@ CSVSourceType::CSVSourceType(
     {
         numberOfTuplesToProducePerBuffer->setValue(
             std::stoi(sourceConfigMap.find(Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG) != sourceConfigMap.end())
-    {
-        sourceGatheringInterval->setValue(std::stoi(sourceConfigMap.find(Configurations::SOURCE_GATHERING_INTERVAL_CONFIG)->second));
-    }
-    if (sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG) != sourceConfigMap.end())
-    {
-        gatheringMode->setValue(
-            magic_enum::enum_cast<GatheringMode>(sourceConfigMap.find(Configurations::SOURCE_GATHERING_MODE_CONFIG)->second).value());
     }
 }
 
@@ -135,17 +122,6 @@ CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::st
         numberOfTuplesToProducePerBuffer->setValue(
             yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<uint32_t>());
     }
-    if (!yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<std::string>() != "\n")
-    {
-        sourceGatheringInterval->setValue(yamlConfig[Configurations::SOURCE_GATHERING_INTERVAL_CONFIG].As<uint32_t>());
-    }
-    if (!yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>() != "\n")
-    {
-        gatheringMode->setValue(
-            magic_enum::enum_cast<GatheringMode>(yamlConfig[Configurations::SOURCE_GATHERING_MODE_CONFIG].As<std::string>()).value());
-    }
 }
 
 std::string CSVSourceType::toString()
@@ -155,8 +131,6 @@ std::string CSVSourceType::toString()
     ss << Configurations::FILE_PATH_CONFIG + ":" + filePath->toStringNameCurrentValue();
     ss << Configurations::SKIP_HEADER_CONFIG + ":" + skipHeader->toStringNameCurrentValue();
     ss << Configurations::DELIMITER_CONFIG + ":" + delimiter->toStringNameCurrentValue();
-    ss << Configurations::SOURCE_GATHERING_INTERVAL_CONFIG + ":" + sourceGatheringInterval->toStringNameCurrentValue();
-    ss << Configurations::SOURCE_GATHERING_MODE_CONFIG + ":" + std::string(magic_enum::enum_name(gatheringMode->getValue())) << "\n";
     ss << Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG + ":" + numberOfBuffersToProduce->toStringNameCurrentValue();
     ss << Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG + ":"
             + numberOfTuplesToProducePerBuffer->toStringNameCurrentValue();
@@ -174,8 +148,6 @@ bool CSVSourceType::equal(const PhysicalSourceTypePtr& other)
     return filePath->getValue() == otherSourceConfig->filePath->getValue()
         && skipHeader->getValue() == otherSourceConfig->skipHeader->getValue()
         && delimiter->getValue() == otherSourceConfig->delimiter->getValue()
-        && sourceGatheringInterval->getValue() == otherSourceConfig->sourceGatheringInterval->getValue()
-        && gatheringMode->getValue() == otherSourceConfig->gatheringMode->getValue()
         && numberOfBuffersToProduce->getValue() == otherSourceConfig->numberOfBuffersToProduce->getValue()
         && numberOfTuplesToProducePerBuffer->getValue() == otherSourceConfig->numberOfTuplesToProducePerBuffer->getValue();
 }
@@ -195,11 +167,6 @@ Configurations::StringConfigOption CSVSourceType::getDelimiter() const
     return delimiter;
 }
 
-Configurations::IntConfigOption CSVSourceType::getGatheringInterval() const
-{
-    return sourceGatheringInterval;
-}
-
 Configurations::IntConfigOption CSVSourceType::getNumberOfBuffersToProduce() const
 {
     return numberOfBuffersToProduce;
@@ -208,11 +175,6 @@ Configurations::IntConfigOption CSVSourceType::getNumberOfBuffersToProduce() con
 Configurations::IntConfigOption CSVSourceType::getNumberOfTuplesToProducePerBuffer() const
 {
     return numberOfTuplesToProducePerBuffer;
-}
-
-Configurations::GatheringModeConfigOption CSVSourceType::getGatheringMode() const
-{
-    return gatheringMode;
 }
 
 void CSVSourceType::setSkipHeader(bool skipHeaderValue)
@@ -230,11 +192,6 @@ void CSVSourceType::setDelimiter(const std::string& delimiterValue)
     delimiter->setValue(delimiterValue);
 }
 
-void CSVSourceType::setGatheringInterval(uint32_t sourceGatheringIntervalValue)
-{
-    sourceGatheringInterval->setValue(sourceGatheringIntervalValue);
-}
-
 void CSVSourceType::setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduceValue)
 {
     numberOfBuffersToProduce->setValue(numberOfBuffersToProduceValue);
@@ -245,16 +202,6 @@ void CSVSourceType::setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesT
     numberOfTuplesToProducePerBuffer->setValue(numberOfTuplesToProducePerBufferValue);
 }
 
-void CSVSourceType::setGatheringMode(std::string inputGatheringMode)
-{
-    gatheringMode->setValue(magic_enum::enum_cast<GatheringMode>(inputGatheringMode).value());
-}
-
-void CSVSourceType::setGatheringMode(GatheringMode inputGatheringMode)
-{
-    gatheringMode->setValue(inputGatheringMode);
-}
-
 void CSVSourceType::reset()
 {
     setFilePath(filePath->getDefaultValue());
@@ -262,8 +209,6 @@ void CSVSourceType::reset()
     setDelimiter(delimiter->getDefaultValue());
     setNumberOfBuffersToProduce(numberOfBuffersToProduce->getDefaultValue());
     setNumberOfTuplesToProducePerBuffer(numberOfTuplesToProducePerBuffer->getDefaultValue());
-    setGatheringInterval(sourceGatheringInterval->getDefaultValue());
-    setGatheringMode(gatheringMode->getDefaultValue());
 }
 
 } /// namespace NES

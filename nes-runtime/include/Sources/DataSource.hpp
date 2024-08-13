@@ -20,7 +20,6 @@
 #include <future>
 #include <mutex>
 #include <optional>
-#include <thread>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -28,7 +27,6 @@
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/GatheringMode.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
@@ -37,8 +35,6 @@ class TestTupleBuffer;
 
 namespace NES
 {
-class KalmanFilter;
-
 /**
 * @brief Base class for all data sources in NES
 * we allow only three cases:
@@ -62,7 +58,6 @@ public:
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
      * @param numSourceLocalBuffers number of local source buffers
-     * @param gatheringMode the gathering mode (INTERVAL_MODE, INGESTION_RATE_MODE, or ADAPTIVE_MODE)
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param successors the subsequent operators in the pipeline to which the data is pushed
      * @param sourceAffinity the subsequent operators in the pipeline to which the data is pushed
@@ -75,7 +70,6 @@ public:
         OperatorId operatorId,
         OriginId originId,
         size_t numSourceLocalBuffers,
-        GatheringMode gatheringMode,
         const std::string& physicalSourceName,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors
         = std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
@@ -168,13 +162,6 @@ public:
     uint64_t getNumberOfGeneratedBuffers() const;
 
     /**
-     * @brief method to set the sampling interval
-     * @note the source will sleep for interval seconds and then produce the next buffer
-     * @param interal to gather
-     */
-    void setGatheringInterval(std::chrono::milliseconds interval);
-
-    /**
      * @brief Internal destructor to make sure that the data source is stopped before deconstrcuted
      * @Note must be public because of boost serialize
      */
@@ -184,16 +171,6 @@ public:
      * @brief Get number of buffers to be processed
      */
     uint64_t getNumBuffersToProcess() const;
-
-    /**
-     * @brief Get gathering interval
-     */
-    std::chrono::milliseconds getGatheringInterval() const;
-
-    /**
-     * @brief Get number representation of gathering interval
-     */
-    uint64_t getGatheringIntervalCount() const;
 
     /**
      * @brief Gets the operator id for the data source
@@ -275,9 +252,6 @@ protected:
     uint64_t generatedBuffers{0};
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t numSourceLocalBuffers;
-    uint64_t gatheringIngestionRate{};
-    std::chrono::milliseconds gatheringInterval{0};
-    GatheringMode gatheringMode;
     SourceType type;
     Runtime::QueryTerminationType wasGracefullyStopped{Runtime::QueryTerminationType::Graceful}; /// protected by mutex
     std::atomic_bool wasStarted{false};
@@ -305,15 +279,6 @@ private:
     uint64_t maxSequenceNumber = 0;
 
     mutable std::recursive_mutex successorModifyMutex;
-    /**
-    * @brief running routine with a fixed gathering interval
-    */
-    virtual void runningRoutineWithGatheringInterval();
-
-    /**
-    * @brief running routine with a fix ingestion rate
-    */
-    virtual void runningRoutineWithIngestionRate();
 
     bool endOfStreamSent{false}; /// protected by startStopMutex
 };

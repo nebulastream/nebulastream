@@ -169,14 +169,12 @@ const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
-const std::string SOURCE_GATHERING_INTERVAL_CONFIG = "sourceGatheringInterval";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";
 const std::string UDFS_CONFIG = "udfs";
 const std::string FILE_PATH_CONFIG = "filePath";
 
 const std::string SKIP_HEADER_CONFIG = "skipHeader";
 const std::string DELIMITER_CONFIG = "delimiter";
-const std::string SOURCE_GATHERING_MODE_CONFIG = "sourceGatheringMode";
 
 const std::string URL_CONFIG = "url";
 const std::string CLIENT_ID_CONFIG = "clientId";
