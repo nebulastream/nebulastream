@@ -47,7 +47,6 @@ public:
      * @param operatorId represents a locally running query execution plan
      * @param originId represents an origin
      * @param numSourceLocalBuffers number of local source buffers
-     * @param gatheringMode the gathering mode used
      * @param physicalSourceName the name and unique identifier of a physical source
      * @param executableSuccessors executable operators coming after this source
      */
@@ -59,7 +58,6 @@ public:
         OperatorId operatorId,
         OriginId originId,
         size_t numSourceLocalBuffers,
-        GatheringMode gatheringMode,
         const std::string& physicalSourceName,
         std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
 

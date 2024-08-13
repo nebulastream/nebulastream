@@ -22,7 +22,6 @@
 #include <utility>
 #include <magic_enum.hpp>
 #include "Configurations/ConfigurationsNames.hpp"
-#include "Util/GatheringMode.hpp"
 #include "Util/Logger/Logger.hpp"
 #include "Util/yaml/Yaml.hpp"
 
@@ -224,7 +223,6 @@ using BoolConfigOption = std::shared_ptr<ConfigurationOption<bool>>;
 using FloatConfigOption = std::shared_ptr<ConfigurationOption<float>>;
 using CharConfigOption = std::shared_ptr<ConfigurationOption<char>>;
 using InputFormatConfigOption = std::shared_ptr<ConfigurationOption<InputFormat>>;
-using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringMode>>;
 using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
 } /// namespace NES::Configurations
