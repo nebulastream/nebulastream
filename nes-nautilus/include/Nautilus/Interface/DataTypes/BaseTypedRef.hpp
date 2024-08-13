@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BASETYPEDREF_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BASETYPEDREF_HPP_
+#pragma once
 
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 
@@ -26,4 +25,3 @@ public:
     BaseTypedRef(const TypeIdentifier* identifier) : Any(identifier) {};
 };
 } /// namespace NES::Nautilus
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_BASETYPEDREF_HPP_

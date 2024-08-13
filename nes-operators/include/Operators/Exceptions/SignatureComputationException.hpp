@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_
+#pragma once
 
 #include <stdexcept>
 
@@ -28,4 +27,3 @@ public:
     explicit SignatureComputationException(const std::string& message);
 };
 } /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_SIGNATURECOMPUTATIONEXCEPTION_HPP_

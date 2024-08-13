@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
-#define NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_
+#pragma once
 
 #include <Runtime/RuntimeForwardRefs.hpp>
 
@@ -59,4 +58,3 @@ private:
     const Configurations::WorkerConfiguration& workerConfiguration;
 };
 } /// namespace NES::Runtime
-#endif /// NES_EXECUTION_INCLUDE_RUNTIME_NODEENGINEBUILDER_HPP_

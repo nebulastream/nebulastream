@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_
-#define NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_
+#pragma once
 #include <cstdint>
 namespace NES::Testing
 {
@@ -46,4 +45,3 @@ public:
     [[nodiscard]] operator uint16_t() const;
 };
 } /// namespace NES::Testing
-#endif /// NES_COMMON_TESTS_UTIL_INCLUDE_BORROWEDPORT_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_
+#pragma once
 
 #include <memory>
 #include <Nodes/Node.hpp>
@@ -83,4 +82,3 @@ protected:
     DataTypePtr stamp;
 };
 } /// namespace NES
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONNODE_HPP_

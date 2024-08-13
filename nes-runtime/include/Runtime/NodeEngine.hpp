@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_
+#pragma once
 
 #include <unordered_map>
 #include <vector>
@@ -93,5 +92,3 @@ private:
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_NODEENGINE_HPP_

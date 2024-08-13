@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_
+#pragma once
 
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
@@ -52,5 +51,3 @@ private:
 using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WATERMARKS_WATERMARKASSIGNERLOGICALOPERATOR_HPP_

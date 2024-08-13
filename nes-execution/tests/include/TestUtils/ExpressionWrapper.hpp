@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
-#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_
+#pragma once
 
 #include <memory>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -78,5 +77,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution::Expressions
-
-#endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_EXPRESSIONWRAPPER_HPP_

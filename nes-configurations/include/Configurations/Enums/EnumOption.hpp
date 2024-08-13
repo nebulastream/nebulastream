@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_
+#pragma once
 #include <string>
 #include <type_traits>
 #include "Configurations/TypedBaseOption.hpp"
@@ -53,5 +52,3 @@ protected:
 };
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTION_HPP_

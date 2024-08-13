@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_UTIL_CIRCULARBUFFER_HPP_
-#define NES_RUNTIME_INCLUDE_UTIL_CIRCULARBUFFER_HPP_
+#pragma once
 
 #include <memory>
 #include <type_traits>
@@ -281,4 +280,3 @@ private:
 
 }; /// class CircularBuffer
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_UTIL_CIRCULARBUFFER_HPP_

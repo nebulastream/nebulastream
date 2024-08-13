@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
-#define NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_
+#pragma once
 #include <memory>
 #include <string>
 namespace NES
@@ -50,5 +49,3 @@ private:
     const std::string outputPath;
 };
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_DUMPHELPER_HPP_

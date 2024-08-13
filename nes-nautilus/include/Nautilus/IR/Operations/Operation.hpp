@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -93,4 +92,3 @@ using OperationWPtr = std::weak_ptr<Operation>;
 using OperationRawPtr = Operation*;
 
 } /// namespace NES::Nautilus::IR::Operations
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_OPERATION_HPP_

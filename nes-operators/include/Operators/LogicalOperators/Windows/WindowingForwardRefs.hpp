@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWINGFORWARDREFS_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWINGFORWARDREFS_HPP_
+#pragma once
 
 #include <chrono>
 #include <cstdint>
@@ -122,5 +121,3 @@ class WatermarkStrategyDescriptor;
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 
 } /// namespace NES::Windowing
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWINGFORWARDREFS_HPP_

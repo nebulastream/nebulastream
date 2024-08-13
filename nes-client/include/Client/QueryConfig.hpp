@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
-#define NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_
+#pragma once
 
 #include <ostream>
 #include <Util/Placement/PlacementStrategy.hpp>
@@ -45,5 +44,3 @@ private:
     Optimizer::PlacementStrategy placementType;
 };
 } /// namespace NES::Client
-
-#endif /// NES_CLIENT_INCLUDE_CLIENT_QUERYCONFIG_HPP_

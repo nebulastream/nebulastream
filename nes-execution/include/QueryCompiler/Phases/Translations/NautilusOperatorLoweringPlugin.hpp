@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_
+#pragma once
 #include <optional>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/PluginRegistry.hpp>
@@ -50,5 +49,3 @@ public:
 
 using NautilusOperatorLoweringPluginRegistry = Util::PluginRegistry<NautilusOperatorLoweringPlugin>;
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_NAUTILUSOPERATORLOWERINGPLUGIN_HPP_

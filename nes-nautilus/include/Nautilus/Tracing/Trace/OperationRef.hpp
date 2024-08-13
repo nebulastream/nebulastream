@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPERATIONREF_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPERATIONREF_HPP_
+#pragma once
 #include <cinttypes>
 namespace NES::Nautilus::Tracing
 {
@@ -27,5 +26,3 @@ public:
     uint32_t operationId;
 };
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPERATIONREF_HPP_

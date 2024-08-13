@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_
+#pragma once
 
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
@@ -241,4 +240,3 @@ private:
     Configurations::IntConfigOption bytesUsedForSocketBufferSizeTransfer;
 };
 } /// namespace NES
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPES_TCPSOURCETYPE_HPP_

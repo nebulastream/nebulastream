@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_BUCKETING_NLJBUILDBUCKETING_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_BUCKETING_NLJBUILDBUCKETING_HPP_
+#pragma once
 
 #include <Execution/Operators/Streaming/Join/StreamJoinBuildBucketing.hpp>
 
@@ -54,5 +53,3 @@ public:
         Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex, ValueId<WorkerThreadId>& workerThreadId, Record& record) const override;
 };
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_BUCKETING_NLJBUILDBUCKETING_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ARRAYSTAMP_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ARRAYSTAMP_HPP_
+#pragma once
 
 #include <cstdint>
 #include <Nautilus/IR/Types/Stamp.hpp>
@@ -42,5 +41,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::IR::Types
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ARRAYSTAMP_HPP_

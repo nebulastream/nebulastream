@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_
+#pragma once
 
 #include <cstring>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -63,5 +62,3 @@ protected:
     uint64_t numberOfRecords = 0;
 };
 } /// namespace NES::Runtime::MemoryLayouts
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUTTUPLEBUFFER_HPP_

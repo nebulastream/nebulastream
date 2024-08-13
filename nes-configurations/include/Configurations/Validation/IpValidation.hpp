@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_IPVALIDATION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_IPVALIDATION_HPP_
+#pragma once
 
 #include <string>
 #include "Configurations/Validation/ConfigurationValidation.hpp"
@@ -35,5 +34,3 @@ public:
     bool isValid(const std::string& ip) const override;
 };
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_VALIDATION_IPVALIDATION_HPP_

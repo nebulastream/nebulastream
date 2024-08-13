@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXECUTABLEFUNCTIONREGISTRY_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXECUTABLEFUNCTIONREGISTRY_HPP_
+#pragma once
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -73,5 +72,3 @@ public:
 using ExecutableFunctionRegistry = Util::PluginFactory<FunctionExpressionProvider>;
 
 } /// namespace NES::Runtime::Execution::Expressions
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_EXECUTABLEFUNCTIONREGISTRY_HPP_

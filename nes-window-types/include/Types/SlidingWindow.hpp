@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_WINDOW_TYPES_INCLUDE_TYPES_SLIDINGWINDOW_HPP_
-#define NES_WINDOW_TYPES_INCLUDE_TYPES_SLIDINGWINDOW_HPP_
+#pragma once
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 namespace NES::Windowing
@@ -51,5 +50,3 @@ private:
 };
 
 } /// namespace NES::Windowing
-
-#endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_SLIDINGWINDOW_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_
+#pragma once
 #include <vector>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
@@ -61,4 +60,3 @@ private:
     std::vector<std::unique_ptr<Nautilus::Interface::ChainedHashMap>> threadLocalSliceStores;
 };
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_AGGREGATION_BATCHKEYEDAGGREGATIONHANDLER_HPP_

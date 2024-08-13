@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_
+#pragma once
 
 #include <vector>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
@@ -83,5 +82,3 @@ private:
     std::atomic<Nautilus::Interface::FixedPage*> currentPage;
 };
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_FIXEDPAGESLINKEDLIST_HPP_

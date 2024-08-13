@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_
-#define NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_
+#pragma once
 #include <cstdint>
 #include <Measures/WindowMeasure.hpp>
 namespace NES::Windowing
@@ -72,5 +71,3 @@ private:
 };
 
 } /// namespace NES::Windowing
-
-#endif /// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMEMEASURE_HPP_

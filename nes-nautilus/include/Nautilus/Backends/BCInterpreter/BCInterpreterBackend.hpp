@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCINTERPRETERBACKEND_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCINTERPRETERBACKEND_HPP_
+#pragma once
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 namespace NES::Nautilus::Backends::BC
@@ -29,4 +28,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::Backends::BC
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCINTERPRETERBACKEND_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_
+#pragma once
 
 #include <memory>
 namespace NES
@@ -86,4 +85,3 @@ using InferModelOperatorHandlerPtr = std::shared_ptr<InferModelOperatorHandler>;
 } /// namespace InferModel
 
 } /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_OPERATORFORWARDDECLARATION_HPP_

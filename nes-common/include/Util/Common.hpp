@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
-#define NES_COMMON_INCLUDE_UTIL_COMMON_HPP_
+#pragma once
 #include <charconv>
 #include <functional>
 #include <memory>
@@ -326,5 +325,3 @@ void updateAtomicMax(std::atomic<T>& curVal, const T& newVal)
 };
 
 } /// namespace NES::Util
-
-#endif /// NES_COMMON_INCLUDE_UTIL_COMMON_HPP_

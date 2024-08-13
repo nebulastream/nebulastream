@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_
+#pragma once
 
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
@@ -42,5 +41,3 @@ public:
     void inferInputOrigins() override;
 };
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALUNARYOPERATOR_HPP_

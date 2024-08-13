@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_PLUGINREGISTRY_HPP_
-#define NES_COMMON_INCLUDE_UTIL_PLUGINREGISTRY_HPP_
+#pragma once
 #include <list>
 #include <map>
 #include <memory>
@@ -198,5 +197,3 @@ public:
 };
 
 } /// namespace NES::Util
-
-#endif /// NES_COMMON_INCLUDE_UTIL_PLUGINREGISTRY_HPP_

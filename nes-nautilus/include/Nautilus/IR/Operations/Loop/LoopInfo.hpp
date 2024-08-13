@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_
+#pragma once
 
 #include <vector>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
@@ -41,5 +40,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::IR::Operations
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPINFO_HPP_

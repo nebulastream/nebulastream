@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_
+#pragma once
 #include <memory>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES
@@ -61,4 +60,3 @@ void memCopy(Value<MemRef>&& destination, Value<MemRef>&& source, Value<UInt64>&
     (objectReference + ((uint64_t) __builtin_offsetof(classType, member))).as<NES::Nautilus::MemRef>()
 
 } /// namespace NES::Nautilus::MemRefUtils
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_MEMREFUTILS_HPP_

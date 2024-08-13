@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_
+#pragma once
 
 #include <cinttypes>
 #include <cstdint>
@@ -178,5 +177,3 @@ private:
     DCCallVM* vm;
 };
 } /// namespace NES::Nautilus::Backends::BC
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_DYNCALL_HPP_

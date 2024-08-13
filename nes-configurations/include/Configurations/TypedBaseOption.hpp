@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_
+#pragma once
 #include <memory>
 #include <typeinfo>
 #include <vector>
@@ -187,5 +186,3 @@ void TypedBaseOption<T>::isValid(std::string pValue)
 }
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_TYPEDBASEOPTION_HPP_

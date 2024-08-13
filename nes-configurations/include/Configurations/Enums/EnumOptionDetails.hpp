@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_
+#pragma once
 
 #include <magic_enum.hpp>
 #include "Configurations/Enums/EnumOption.hpp"
@@ -76,5 +75,3 @@ std::string EnumOption<T>::toString()
 }
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_ENUMOPTIONDETAILS_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_
+#pragma once
 
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -61,4 +60,3 @@ private:
 using TCPSourceDescriptorPtr = std::shared_ptr<TCPSourceDescriptor>;
 
 } /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_TCPSOURCEDESCRIPTOR_HPP_

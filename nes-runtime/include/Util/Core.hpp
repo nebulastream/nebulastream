@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
-#define NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
+#pragma once
 
 #include <algorithm>
 #include <any>
@@ -130,5 +129,3 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
     uint64_t lastTimeStamp);
 } /// namespace Util
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_

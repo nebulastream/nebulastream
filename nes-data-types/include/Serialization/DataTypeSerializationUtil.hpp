@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_SERIALIZATION_DATATYPESERIALIZATIONUTIL_HPP_
-#define NES_DATA_TYPES_INCLUDE_SERIALIZATION_DATATYPESERIALIZATIONUTIL_HPP_
+#pragma once
 
 #include <memory>
 
@@ -73,5 +72,3 @@ public:
     static ValueTypePtr deserializeDataValue(const SerializableDataValue& serializedDataValue);
 };
 } /// namespace NES
-
-#endif /// NES_DATA_TYPES_INCLUDE_SERIALIZATION_DATATYPESERIALIZATIONUTIL_HPP_

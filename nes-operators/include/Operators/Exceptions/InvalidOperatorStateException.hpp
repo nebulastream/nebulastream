@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_
+#pragma once
 
 #include <stdexcept>
 #include <vector>
@@ -37,4 +36,3 @@ private:
     std::string message;
 };
 } /// namespace NES::Exceptions
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_INVALIDOPERATORSTATEEXCEPTION_HPP_

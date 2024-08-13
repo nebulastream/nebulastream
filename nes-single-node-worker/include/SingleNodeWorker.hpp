@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_SINGLE_NODE_WORKER_INCLUDE_SINGLENODEWORKER_HPP_
-#define NES_SINGLE_NODE_WORKER_INCLUDE_SINGLENODEWORKER_HPP_
+#pragma once
 #include <Configuration.hpp>
 
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
@@ -95,4 +94,3 @@ public:
     [[nodiscard]] QueryStatus queryStatus(QueryId) const;
 };
 } /// namespace NES
-#endif /// NES_SINGLE_NODE_WORKER_INCLUDE_SINGLENODEWORKER_HPP_

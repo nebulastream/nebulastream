@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_
+#pragma once
 
 #include <chrono>
 #include <condition_variable>
@@ -426,4 +425,3 @@ using QueryManagerPtr = std::shared_ptr<QueryManager>;
 
 } /// namespace Runtime
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_QUERYMANAGER_HPP_

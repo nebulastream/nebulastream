@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
+#pragma once
 #include <cstdint>
 #include <memory>
 #include <unordered_map>
@@ -200,5 +199,3 @@ private:
 };
 
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_

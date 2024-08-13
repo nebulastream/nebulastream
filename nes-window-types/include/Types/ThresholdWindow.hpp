@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_WINDOW_TYPES_INCLUDE_TYPES_THRESHOLDWINDOW_HPP_
-#define NES_WINDOW_TYPES_INCLUDE_TYPES_THRESHOLDWINDOW_HPP_
+#pragma once
 
 #include <Expressions/ExpressionNode.hpp>
 #include <Measures/TimeMeasure.hpp>
@@ -70,5 +69,3 @@ private:
 };
 
 } /// namespace NES::Windowing
-
-#endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_THRESHOLDWINDOW_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAGRECORDER_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAGRECORDER_HPP_
+#pragma once
 #include <Nautilus/Tracing/Tag/Tag.hpp>
 
 namespace NES::Nautilus::Tracing
@@ -60,5 +59,3 @@ private:
     Tag rootTagThreeNode = Tag();
 };
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAGRECORDER_HPP_

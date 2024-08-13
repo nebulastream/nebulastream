@@ -37,8 +37,7 @@
  * SOFTWARE.
  */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTENCODE_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTENCODE_HPP_
+#pragma once
 
 #include <Exceptions/NotImplementedException.hpp>
 
@@ -221,4 +220,3 @@ typename EncoderTraits<T>::EncodedType encodeData(T value, bool descending = fal
 }
 
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTENCODE_HPP_

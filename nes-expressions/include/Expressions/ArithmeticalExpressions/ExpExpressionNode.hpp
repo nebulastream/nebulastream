@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_
+#pragma once
 #include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
 namespace NES
 {
@@ -50,5 +49,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_EXPEXPRESSIONNODE_HPP_

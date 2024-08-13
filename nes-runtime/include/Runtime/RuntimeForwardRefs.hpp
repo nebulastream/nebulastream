@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -163,5 +162,3 @@ using QueryCompilerOptionsPtr = std::shared_ptr<QueryCompilerOptions>;
 } /// namespace QueryCompilation
 
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_

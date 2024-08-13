@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_
-#define NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_
+#pragma once
 
 #include <vector>
 #include <Measures/TimeCharacteristic.hpp>
@@ -61,5 +60,3 @@ protected:
 };
 
 } /// namespace NES::Windowing
-
-#endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_TIMEBASEDWINDOWTYPE_HPP_

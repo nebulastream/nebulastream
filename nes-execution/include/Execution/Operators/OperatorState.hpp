@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_
+#pragma once
 namespace NES::Runtime::Execution::Operators
 {
 
@@ -27,4 +26,3 @@ public:
     virtual ~OperatorState() = default;
 };
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATORSTATE_HPP_

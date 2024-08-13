@@ -1,7 +1,6 @@
 /** \file */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_MAP_HH_
-#define NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_MAP_HH_
+#pragma once
 
 #include <algorithm>
 #include <array>
@@ -2749,4 +2748,3 @@ namespace std {
 
 } /// namespace std
 
-#endif /// NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_MAP_HH_

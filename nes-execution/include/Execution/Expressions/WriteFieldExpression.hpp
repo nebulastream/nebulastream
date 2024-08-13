@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_
+#pragma once
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -40,5 +39,3 @@ private:
     const ExpressionPtr subExpression;
 };
 } /// namespace NES::Runtime::Execution::Expressions
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_WRITEFIELDEXPRESSION_HPP_

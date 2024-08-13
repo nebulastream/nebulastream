@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_
+#pragma once
 
 #include "Configurations/TypedBaseOption.hpp"
 
@@ -86,5 +85,3 @@ std::string Configurations::WrapOption<Type, Factory>::toString()
 }
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WRAPOPTION_HPP_

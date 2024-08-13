@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_
+#pragma once
 
 #include <atomic>
 #include <cassert>
@@ -108,4 +107,3 @@ inline NesThread::ThreadId::~ThreadId()
 }
 
 } /// namespace NES::Runtime
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_NESTHREAD_HPP_

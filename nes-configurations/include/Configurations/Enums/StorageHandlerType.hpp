@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_
+#pragma once
 #include <cstdint>
 
 namespace NES::RequestProcessor
@@ -29,5 +28,3 @@ enum class StorageHandlerType : uint8_t
 };
 
 } /// namespace NES::RequestProcessor
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_STORAGEHANDLERTYPE_HPP_

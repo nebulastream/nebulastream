@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_UTIL_OPERATORSUTIL_HPP_
-#define NES_OPERATORS_INCLUDE_UTIL_OPERATORSUTIL_HPP_
+#pragma once
 
 #include <sstream>
 #include <vector>
@@ -55,5 +54,3 @@ std::string concatenateVectorAsString(const std::vector<T>& vector)
 }
 
 }; /// namespace Util
-
-#endif /// NES_OPERATORS_INCLUDE_UTIL_OPERATORSUTIL_HPP_

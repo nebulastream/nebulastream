@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFLATMAPUDFOPERATOR_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFLATMAPUDFOPERATOR_HPP_
+#pragma once
 
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
@@ -77,5 +76,3 @@ protected:
 };
 } /// namespace QueryCompilation::PhysicalOperators
 } /// namespace NES
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALFLATMAPUDFOPERATOR_HPP_

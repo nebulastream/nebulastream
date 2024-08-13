@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_
+#pragma once
 
 #include <string>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -58,4 +57,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::Backends::MLIR
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRUTILITY_HPP_

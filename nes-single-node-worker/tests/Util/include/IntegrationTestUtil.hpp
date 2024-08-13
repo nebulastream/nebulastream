@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_SINGLE_NODE_WORKER_TESTS_UTIL_INCLUDE_INTEGRATIONTESTUTIL_HPP_
-#define NES_SINGLE_NODE_WORKER_TESTS_UTIL_INCLUDE_INTEGRATIONTESTUTIL_HPP_
+#pragma once
 
 #include <memory>
 #include <GrpcService.hpp>
@@ -64,5 +63,3 @@ void replacePortInTcpSources(
 }
 
 }
-
-#endif /// NES_SINGLE_NODE_WORKER_TESTS_UTIL_INCLUDE_INTEGRATIONTESTUTIL_HPP_

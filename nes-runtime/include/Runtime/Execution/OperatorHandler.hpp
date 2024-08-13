@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
+#pragma once
 #include <list>
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/Execution/MigratableStateInterface.hpp>
@@ -101,5 +100,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_

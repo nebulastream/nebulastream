@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
-#define NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_
+#pragma once
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
@@ -38,4 +37,3 @@ public:
 };
 using AbstractQueryStatusListenerPtr = std::shared_ptr<AbstractQueryStatusListener>;
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_LISTENERS_QUERYSTATUSLISTENER_HPP_

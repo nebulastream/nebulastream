@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_
+#pragma once
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -24,5 +23,3 @@ class AbstractEmitOperator
 {
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_ABSTRACTEMITOPERATOR_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_
+#pragma once
 
 #include <ostream>
 #include <stdint.h>
@@ -69,5 +68,3 @@ struct formatter<NES::Runtime::QueryTerminationType> : formatter<std::string>
     }
 };
 } ///namespace fmt
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_QUERYTERMINATIONTYPE_HPP_

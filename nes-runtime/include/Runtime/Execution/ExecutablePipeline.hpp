@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_
+#pragma once
 #include <atomic>
 #include <memory>
 #include <variant>
@@ -113,5 +112,3 @@ private:
 };
 
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINE_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITPHASE_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITPHASE_HPP_
+#pragma once
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
@@ -31,5 +30,3 @@ public:
     static OperatorPipelinePtr process(OperatorPipelinePtr pipeline);
 };
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_ADDSCANANDEMITPHASE_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MODEXPRESSIONNODE_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MODEXPRESSIONNODE_HPP_
+#pragma once
 #include <Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
 namespace NES
 {
@@ -52,5 +51,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_ARITHMETICALEXPRESSIONS_MODEXPRESSIONNODE_HPP_

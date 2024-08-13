@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTCONSTANTS_HPP_
-#define NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTCONSTANTS_HPP_
+#pragma once
 
 #include <string>
 
@@ -33,5 +32,3 @@ const std::string UPSTREAM_LOGICAL_OPERATOR_ID
 const std::string DOWNSTREAM_LOGICAL_OPERATOR_ID
     = "DOWNSTREAM_LOGICAL_OPERATOR_ID"; /// Property containing the id of the next downstream non system operator of a system generated operator
 } /// namespace NES::Optimizer
-
-#endif /// NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTCONSTANTS_HPP_

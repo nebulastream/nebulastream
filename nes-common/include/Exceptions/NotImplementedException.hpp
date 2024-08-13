@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_NOTIMPLEMENTEDEXCEPTION_HPP_
-#define NES_COMMON_INCLUDE_EXCEPTIONS_NOTIMPLEMENTEDEXCEPTION_HPP_
+#pragma once
 #include <Exceptions/RuntimeException.hpp>
 
 namespace NES::Exceptions
@@ -26,5 +25,3 @@ public:
 };
 
 } /// namespace NES::Exceptions
-
-#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_NOTIMPLEMENTEDEXCEPTION_HPP_

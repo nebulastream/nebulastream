@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAYREF_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAYREF_HPP_
+#pragma once
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
@@ -75,4 +74,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::Interface
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAYREF_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_
+#pragma once
 
 #include <chrono>
 #include <cstddef>
@@ -121,4 +120,3 @@ public:
 TupleBuffer allocateVariableLengthField(std::shared_ptr<AbstractBufferProvider> provider, uint32_t size);
 
 } /// namespace NES::Runtime
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERPROVIDER_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDFIELDEXCEPTION_HPP_
-#define NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDFIELDEXCEPTION_HPP_
+#pragma once
 
 #include <stdexcept>
 
@@ -29,5 +28,3 @@ public:
     explicit InvalidFieldException(const std::string& msg);
 };
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDFIELDEXCEPTION_HPP_

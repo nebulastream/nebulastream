@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_ARRAYTYPE_HPP_
-#define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_ARRAYTYPE_HPP_
+#pragma once
 
 #include <Common/DataTypes/DataType.hpp>
 
@@ -73,5 +72,3 @@ public:
 };
 
 } /// namespace NES
-
-#endif /// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_ARRAYTYPE_HPP_

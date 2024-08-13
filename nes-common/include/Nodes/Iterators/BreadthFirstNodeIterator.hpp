@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_NODES_ITERATORS_BREADTHFIRSTNODEITERATOR_HPP_
-#define NES_COMMON_INCLUDE_NODES_ITERATORS_BREADTHFIRSTNODEITERATOR_HPP_
+#pragma once
 #include <memory>
 #include <queue>
 namespace NES
@@ -76,5 +75,3 @@ private:
     NodePtr start;
 };
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_NODES_ITERATORS_BREADTHFIRSTNODEITERATOR_HPP_

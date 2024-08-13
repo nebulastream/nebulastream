@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_WINDOW_TYPES_INCLUDE_TYPES_WINDOWTYPE_HPP_
-#define NES_WINDOW_TYPES_INCLUDE_TYPES_WINDOWTYPE_HPP_
+#pragma once
 #include <API/Schema.hpp>
 
 #include <memory>
@@ -94,5 +93,3 @@ public:
 };
 
 } /// namespace NES::Windowing
-
-#endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_WINDOWTYPE_HPP_

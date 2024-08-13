@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CLIENT_INCLUDE_API_QUERY_HPP_
-#define NES_CLIENT_INCLUDE_API_QUERY_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -550,5 +549,3 @@ private:
 using QueryPtr = std::shared_ptr<Query>;
 
 } /// namespace NES
-
-#endif /// NES_CLIENT_INCLUDE_API_QUERY_HPP_

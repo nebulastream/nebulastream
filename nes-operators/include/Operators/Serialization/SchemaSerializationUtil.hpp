@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_SCHEMASERIALIZATIONUTIL_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_SCHEMASERIALIZATIONUTIL_HPP_
+#pragma once
 
 #include <memory>
 
@@ -52,5 +51,3 @@ public:
     static SchemaPtr deserializeSchema(const SerializableSchema& serializedSchema);
 };
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_SCHEMASERIALIZATIONUTIL_HPP_

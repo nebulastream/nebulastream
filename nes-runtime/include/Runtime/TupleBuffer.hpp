@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_
+#pragma once
 
 #include <atomic>
 #include <cstddef>
@@ -365,4 +364,3 @@ T* allocateWithin(TupleBuffer& buffer)
 };
 
 } /// namespace NES::Runtime
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_TUPLEBUFFER_HPP_

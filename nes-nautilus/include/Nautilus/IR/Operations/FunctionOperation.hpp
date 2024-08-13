@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_
+#pragma once
 
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -44,5 +43,3 @@ private:
     std::vector<std::string> inputArgNames;
 };
 } /// namespace NES::Nautilus::IR::Operations
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_FUNCTIONOPERATION_HPP_

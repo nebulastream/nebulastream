@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_
+#pragma once
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 namespace NES
@@ -68,5 +67,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_FIELDRENAMEEXPRESSIONNODE_HPP_

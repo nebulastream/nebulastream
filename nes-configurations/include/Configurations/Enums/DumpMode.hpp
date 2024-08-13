@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DUMPMODE_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DUMPMODE_HPP_
+#pragma once
 
 #include <cstdint>
 
@@ -31,4 +30,3 @@ enum class DumpMode : uint8_t
     FILE_AND_CONSOLE
 };
 }
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_DUMPMODE_HPP_

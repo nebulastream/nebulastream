@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_
+#pragma once
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
@@ -103,5 +102,3 @@ protected:
  */
 void* insertFunctionProxy(void* ptrLocalHashTable, uint64_t key);
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HJOPERATORHANDLER_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWOPERATOR_HPP_
+#pragma once
 
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
@@ -40,4 +39,3 @@ public:
 };
 
 } /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_LOGICALWINDOWOPERATOR_HPP_

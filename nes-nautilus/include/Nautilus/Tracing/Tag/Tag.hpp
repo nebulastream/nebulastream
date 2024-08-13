@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAG_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAG_HPP_
+#pragma once
 
 #include <memory>
 #include <ostream>
@@ -49,5 +48,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TAG_TAG_HPP_

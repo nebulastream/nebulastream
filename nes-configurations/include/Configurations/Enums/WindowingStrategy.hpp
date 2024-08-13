@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_WINDOWINGSTRATEGY_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_WINDOWINGSTRATEGY_HPP_
+#pragma once
 #include <cstdint>
 
 namespace NES::QueryCompilation
@@ -28,4 +27,3 @@ enum class WindowingStrategy : uint8_t
     BUCKETING
 };
 }
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_WINDOWINGSTRATEGY_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_
-#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_
+#pragma once
 
 #include <utility>
 #include <vector>
@@ -37,5 +36,3 @@ class AbstractPipelineExecutionTest : public ::testing::WithParamInterface<std::
 {
 };
 } /// namespace NES::Runtime
-
-#endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTPIPELINEEXECUTIONTEST_HPP_

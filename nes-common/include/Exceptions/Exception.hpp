@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTION_HPP_
-#define NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTION_HPP_
+#pragma once
 
 #include <source_location>
 #include <string>
@@ -120,5 +119,3 @@ inline uint64_t getCurrentExceptionCode()
 }
 
 } /// Namespace NES
-
-#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTION_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_
+#pragma once
 
 #include <cstddef>
 #include <Runtime/TupleBuffer.hpp>
@@ -49,4 +48,3 @@ public:
     virtual size_t getStorageSize() const = 0;
 };
 } /// namespace NES::Runtime
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_ABSTRACTBUFFERSTORAGE_HPP_

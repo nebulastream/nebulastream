@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
-#define NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -124,4 +123,3 @@ private:
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SOURCES_TCPSOURCE_HPP_

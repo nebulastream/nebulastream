@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
-#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_
+#pragma once
 
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
@@ -44,5 +43,3 @@ public:
         const DumpHelper& dumpHelper = DumpHelper::create("", true, false, ""));
 };
 } /// namespace NES::Nautilus
-
-#endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_ABSTRACTCOMPILATIONBACKENDTEST_HPP_

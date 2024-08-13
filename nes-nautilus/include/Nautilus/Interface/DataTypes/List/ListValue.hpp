@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_
+#pragma once
 
 #include <string>
 #include <Runtime/TupleBuffer.hpp>
@@ -155,4 +154,3 @@ bool listEquals(const ListValue<T>* left, const ListValue<T>* right)
 }
 
 } /// namespace NES::Nautilus
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_LIST_LISTVALUE_HPP_

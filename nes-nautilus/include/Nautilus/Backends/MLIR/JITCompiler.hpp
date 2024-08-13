@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_
+#pragma once
 
 #include <vector>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
@@ -46,4 +45,3 @@ public:
         const DumpHelper& dumpHelper);
 };
 } /// namespace NES::Nautilus::Backends::MLIR
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_JITCOMPILER_HPP_

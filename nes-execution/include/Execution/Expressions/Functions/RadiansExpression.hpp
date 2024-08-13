@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RADIANSEXPRESSION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RADIANSEXPRESSION_HPP_
+#pragma once
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions
@@ -30,4 +29,3 @@ private:
     const ExpressionPtr SubExpression;
 };
 } /// namespace NES::Runtime::Execution::Expressions
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RADIANSEXPRESSION_HPP_

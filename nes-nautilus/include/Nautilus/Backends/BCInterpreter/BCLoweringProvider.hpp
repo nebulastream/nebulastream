@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCLOWERINGPROVIDER_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCLOWERINGPROVIDER_HPP_
+#pragma once
 
 #include <unordered_set>
 #include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
@@ -102,4 +101,3 @@ private:
     };
 };
 } /// namespace NES::Nautilus::Backends::BC
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_BCINTERPRETER_BCLOWERINGPROVIDER_HPP_

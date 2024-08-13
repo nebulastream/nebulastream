@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_
+#pragma once
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
@@ -28,5 +27,3 @@ public:
     virtual ~PipeliningPhase() = default;
 };
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_PIPELININGPHASE_HPP_

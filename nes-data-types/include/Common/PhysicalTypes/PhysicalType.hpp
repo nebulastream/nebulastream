@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_
-#define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_
+#pragma once
 #include <Common/DataTypes/DataType.hpp>
 
 #include <memory>
@@ -99,5 +98,3 @@ public:
 };
 
 } /// namespace NES
-
-#endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPE_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_
+#pragma once
 
 namespace NES::Runtime
 {
@@ -41,5 +40,3 @@ public:
 };
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERRECYCLER_HPP_

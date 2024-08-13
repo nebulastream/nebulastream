@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
+#pragma once
 
 #include <map>
 #include <memory>
@@ -48,5 +47,3 @@ private:
 };
 
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_

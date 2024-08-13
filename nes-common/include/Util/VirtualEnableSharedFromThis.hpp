@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_UTIL_VIRTUALENABLESHAREDFROMTHIS_HPP_
-#define NES_COMMON_INCLUDE_UTIL_VIRTUALENABLESHAREDFROMTHIS_HPP_
+#pragma once
 
 #include <cstddef>
 #include <memory>
@@ -54,5 +53,3 @@ struct virtual_enable_shared_from_this : virtual virtual_enable_shared_from_this
 };
 
 } /// namespace NES::detail
-
-#endif /// NES_COMMON_INCLUDE_UTIL_VIRTUALENABLESHAREDFROMTHIS_HPP_

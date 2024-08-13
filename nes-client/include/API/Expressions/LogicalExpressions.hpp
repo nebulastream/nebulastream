@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CLIENT_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_
-#define NES_CLIENT_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_
+#pragma once
 
 #include <memory>
 #include <type_traits>
@@ -149,5 +148,3 @@ inline auto operator>(LHS&& lhs, RHS&& rhs) -> ExpressionNodePtr
 }
 
 } /// namespace NES
-
-#endif /// NES_CLIENT_INCLUDE_API_EXPRESSIONS_LOGICALEXPRESSIONS_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPENCLOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPENCLOPERATOR_HPP_
+#pragma once
 
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
 
@@ -66,4 +65,3 @@ private:
     size_t deviceId;
 };
 } /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPENCLOPERATOR_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_
-#define NES_COMMON_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_
+#pragma once
 
 #include <algorithm>
 #include <condition_variable>
@@ -136,4 +135,3 @@ public:
     }
 };
 } /// namespace NES
-#endif /// NES_COMMON_INCLUDE_UTIL_BLOCKINGQUEUE_HPP_

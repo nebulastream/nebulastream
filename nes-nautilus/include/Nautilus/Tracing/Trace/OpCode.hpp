@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_
+#pragma once
 namespace NES::Nautilus::Tracing
 {
 /**
@@ -47,4 +46,3 @@ enum class OpCode : uint8_t
     CAST
 };
 } /// namespace NES::Nautilus::Tracing
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_OPCODE_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_
+#pragma once
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 
 namespace NES::QueryCompilation
@@ -29,5 +28,3 @@ public:
     bool isFusible(PhysicalOperators::PhysicalOperatorPtr physicalOperator) override;
 };
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_PIPELINING_OPERATORATATIMEPOLICY_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_WINDOW_TYPES_INCLUDE_MEASURES_WINDOWMEASURE_HPP_
-#define NES_WINDOW_TYPES_INCLUDE_MEASURES_WINDOWMEASURE_HPP_
+#pragma once
 #include <string>
 namespace NES::Windowing
 {
@@ -33,5 +32,3 @@ public:
 };
 
 } /// namespace NES::Windowing
-
-#endif /// NES_WINDOW_TYPES_INCLUDE_MEASURES_WINDOWMEASURE_HPP_

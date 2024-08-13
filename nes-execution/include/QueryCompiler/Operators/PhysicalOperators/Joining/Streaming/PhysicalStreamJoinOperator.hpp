@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_
+#pragma once
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
@@ -57,4 +56,3 @@ protected:
     Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr joinOperatorHandler;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_STREAMING_PHYSICALSTREAMJOINOPERATOR_HPP_

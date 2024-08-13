@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FIXEDCHAR_HPP_
-#define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FIXEDCHAR_HPP_
+#pragma once
 
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -39,5 +38,3 @@ public:
 };
 
 } /// namespace NES
-
-#endif /// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_FIXEDCHAR_HPP_

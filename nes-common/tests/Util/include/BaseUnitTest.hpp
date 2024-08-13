@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_
-#define NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_
+#pragma once
 #include <atomic>
 #include <future>
 #include <thread>
@@ -79,5 +78,3 @@ private:
 };
 
 } /// namespace NES::Testing
-
-#endif /// NES_COMMON_TESTS_UTIL_INCLUDE_BASEUNITTEST_HPP_

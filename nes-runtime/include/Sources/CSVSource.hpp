@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
-#define NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
+#pragma once
 
 #include <chrono>
 #include <fstream>
@@ -111,5 +110,3 @@ private:
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
