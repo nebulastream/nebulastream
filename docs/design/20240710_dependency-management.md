@@ -152,7 +152,7 @@ set(VCPKG_C_FLAGS "-fsanitize=address")
 
 In its current state, we require the clang binary to compile NebulaStream queries and the C++-Backend; on the other side, we require LLVM and MLIR for the MLIR backend. We could investigate to lift the strict requirement of a fixed C++ clang compiler and thus drop the Clang dependency. LLVM and MLIR are supported within VCPKG and can thus be built like any other dependency. The development docker image still contains the well-working clang compiler version.
 
-# Prototype
+# Proof Of Concept
 
 The [NebuLI](https://github.com/ls-1801/NebuLI) project uses the approach. Using a local VCPKG repository requires the user to specify it as a CMake configuration parameter.
 

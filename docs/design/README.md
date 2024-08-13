@@ -24,7 +24,7 @@ Since a design document claims time from multiple people from our team, we propo
 5. Assign all maintainers as reviewers to the PR of the design document.
 6. Collect feedback from the reviewers.
 7. Address the feedback of the reviewers.
-8. If possible, and not already done, create a [Minimal Viable Prototype](#minimal-viable-prototype) for the [Proposed Solution](#proposed-solution)
+8. If possible, and not already done, create a [Proof Of Concept](#proof-of-concept) for the [Proposed Solution](#proposed-solution)
 9. The design document is accepted if two code owners and one additional maintainer accept the PR.
 10. Ask one of the code owners to merge the PR.
 
@@ -35,7 +35,7 @@ Below, we discuss the different sections of the design document template.
 The problem section of the design document should explain the current state of our system and why we require a change that warrants this design document. To this end, the section should contain the context necessary to understand the problem(s) and a concise description of the problem(s). If there are multiple problems, enumerate them as P1, P2, ..., so we can reference them distinctly.
 
 ## Goals
-This section should precisely state all goals. Furthermore, the goals should address all problems stated in [The Problem](#the-problem). We suggest writing this section before performing more profound research or implementing a prototype. Another way to see goals is that goals are requirements that a proposed solution must fulfill. If multiple goals exist, enumerate them as G1, G2, ..., so we can reference them distinctly. For each goal, mention which problem(s) of [The Problem](#the-problem) it addresses and how it addresses it/them.
+This section should precisely state all goals. Furthermore, the goals should address all problems stated in [The Problem](#the-problem). We suggest writing this section before performing more profound research or implementing a proof of concept. Another way to see goals is that goals are requirements that a proposed solution must fulfill. If multiple goals exist, enumerate them as G1, G2, ..., so we can reference them distinctly. For each goal, mention which problem(s) of [The Problem](#the-problem) it addresses and how it addresses it/them.
 
 ## Non-Goals
 This section should list everything related to the design document that is out of the scope of the design document. For every non-goal, explain why it is out of the scope of the design document.
@@ -49,8 +49,8 @@ It is a good idea to label different prior work so that people know how to refer
 The section should start with a high-level overview of the solution. This can entail a [system context diagram](https://en.wikipedia.org/wiki/System_context_diagram) that explains the interfaces of a (new) system component in relation to other system components. Another good option is mermaid diagrams, e.g., a class diagram representing a potential implementation of the proposed solution.
 Furthermore, addressing the individual [Goals](#goals) and showing why the proposed solution achieves the individual goals and thereby overcomes ["The Problem"](#the-problem) helps structure this section.
 
-## Minimal Viable Prototype
-A minimal viable prototype should demonstrate that the solution generally works. It is acceptable to create a prototype after creating an initial [Draft](#draft) for the design document.
+## Proof Of Concept
+A proof of concept (PoC) should demonstrate that the solution generally works. It is acceptable to create a PoC after creating an initial [Draft](#draft) for the design document.
 
 ## Alternatives
 In this section, we discuss alternatives to the proposed solution.

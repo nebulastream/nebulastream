@@ -23,7 +23,7 @@ Creating a registry that:
 - G4: guarantees that specified plugins are registered (optimizer & linker cannot eliminate code essential to registering plugins)
 - G5: avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins
 - G6: is only instantiated if it is used
-- G7: has a prototype that demonstrates all the above capabilities (see 'Proposed Solution')
+- G7: has a proof of concept (PoC) implementation that demonstrates all the above capabilities (see 'Proposed Solution')
 - G8: disabling a plugin is as simple as turning it to OFF, in contrast to having multiple `#ifdefs` scattered across the codebase
 - G9: it must be possible to create tests for external plugins in the directory of the external plugin itself
   - the tests (and dependencies) of an external plugin are only picked up if the plugin is activated (G8)
@@ -302,7 +302,7 @@ void GeneratedTypeRegistrar::RegisterUInt8(TypeRegistry & typeRegistry) {
 ```
 
 ### External Plugin
-In the prototype, all external plugins exist in a `ExternalPlugins` directory. To create a new external plugin, a developer needs to follow three steps:
+In the PoC, all external plugins exist in a `ExternalPlugins` directory. To create a new external plugin, a developer needs to follow three steps:
 First, the developer needs to create an implementation for the new external plugin that contains a Register function similar to the `RegisterUInt8()` function above.
 Second, the developer needs to register the plugin using the cmake function `add_plugin_library()`:
 ```cmake
@@ -354,9 +354,9 @@ In the following we check wether we reached the goals defined in the [Goals](#go
 - G4: Our solution guarantees that specified plugins are registered (optimizer & linker cannot eliminate code essential to registering plugins) by making registration explicit using function calls that are executed during runtime.
 - G5: Our solution avoids the static initialization order fiasco, enabling dependencies of plugins on other plugins by entirely avoiding static initialization of plugins before the `main()` function is executed.
 - G6: Our solution is only instantiated if it is used, because it is constructed the first time `instance()` is called
-- G7: We provide a prototype that demonstrates all the above capabilities.
+- G7: We provide a PoC implementation that demonstrates all the above capabilities.
 - G8: Our solution allows to disable a plugin by simply turning it to OFF in a cmake config file
-- G9: it is possible to write tests in the directory of the external plugin itself. The prototype demonstrates this for a plugin that additionally has a dependency on grpc. To build the test, the external plugin must be activated in the config first.
+- G9: it is possible to write tests in the directory of the external plugin itself. The PoC demonstrates this for a plugin that additionally has a dependency on grpc. To build the test, the external plugin must be activated in the config first.
 
 Additionally, we checked that our solution supports external plugins with external dependencies and plugin-specific tests.
 
@@ -371,7 +371,7 @@ Why not use the factory pattern? In a way, the registry can be considered a fact
 Our prior registry approach used static, global code to implement auto-registering plugins. The downsides of this approach are discussed in [Context and Scope](#context-and-scope) and are also highlighted [here](https://openusd.org/dev/api/page_tf__registry_manager.html) and [here](https://www.cppstories.com/2018/02/factory-selfregister/).
 
 ## A3 - Single Templated Registry Implementation
-In our solution, each registry implements the singleton registry pattern again. We considered creating a templated registry. A functional prototype can be found at the end of this document [Templated Registry](#templated-registry). We decided against the templated registry for several reasons:
+In our solution, each registry implements the singleton registry pattern again. We considered creating a templated registry. A functional PoC implementation can be found at the end of this document [Templated Registry](#templated-registry). We decided against the templated registry for several reasons:
 1. It adds further complexity on top of an already complex data structure. Auto registering plugins via a registrar becomes more indirect (see constructor) and the unordered registry map needs to be hidden behind a static function to make sure that no copy of the non-static registry map is created.
 2. Registries might significantly diverge in the future making it difficult to cram all the logic in a single registry.
 3. We do not expect many registries to be created which means that the overhead of curating these registries individually, is negligible.
