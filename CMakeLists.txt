@@ -88,6 +88,8 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION OFF)
 
 # Use Libc++
 add_compile_options(-stdlib=libc++)
+# jthread in Libc++ is gated behind experimental
+add_compile_options(-fexperimental-library)
 add_link_options(-lc++)
 
 # Set NES Flags
@@ -590,5 +592,7 @@ if (CMAKE_CROSSCOMPILING)
     project_enable_emulated_tests()
 endif ()
 instrument_codebase()
+
+add_subdirectory(test)
 
 
