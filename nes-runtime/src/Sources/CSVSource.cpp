@@ -20,7 +20,6 @@
 #include <API/AttributeField.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
-#include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -30,33 +29,16 @@
 namespace NES
 {
 
-CSVSource::CSVSource(
-    SchemaPtr schema,
-    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
-    Runtime::QueryManagerPtr queryManager,
-    CSVSourceTypePtr csvSourceType,
-    OperatorId operatorId,
-    OriginId originId,
-    size_t numSourceLocalBuffers,
-    const std::string& physicalSourceName,
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
-    : DataSource(
-          schema,
-          std::move(poolProvider),
-          std::move(queryManager),
-          operatorId,
-          originId,
-          numSourceLocalBuffers,
-          physicalSourceName,
-          std::move(successors))
-    , fileEnded(false)
+CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
+    : fileEnded(false)
     , csvSourceType(csvSourceType)
     , filePath(csvSourceType->getFilePath()->getValue())
-    , numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue())
     , delimiter(csvSourceType->getDelimiter()->getValue())
     , skipHeader(csvSourceType->getSkipHeader()->getValue())
+    , schema(schema)
 {
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
+    this->numberOfTuplesToProducePerBuffer = csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
     this->tupleSize = schema->getSchemaSizeInBytes();
 
     struct Deleter
@@ -87,11 +69,7 @@ CSVSource::CSVSource(
         this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }
 
-    NES_DEBUG(
-        "CSVSource: tupleSize={} numBuff={} numberOfTuplesToProducePerBuffer={}",
-        this->tupleSize,
-        this->numberOfBuffersToProduce,
-        this->numberOfTuplesToProducePerBuffer);
+    NES_DEBUG("CSVSource: tupleSize={} numBuff={}", this->tupleSize, this->numberOfTuplesToProducePerBuffer);
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema->fields)
@@ -103,18 +81,11 @@ CSVSource::CSVSource(
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
 }
 
-std::optional<Memory::TupleBuffer> CSVSource::receiveData()
+bool CSVSource::fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
 {
-    NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
-    auto buffer = allocateBuffer();
-    fillBuffer(buffer);
-    NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", buffer.getNumberOfTuples());
-
-    if (buffer.getNumberOfTuples() == 0)
-    {
-        return std::nullopt;
-    }
-    return buffer.getBuffer();
+    fillBuffer(tupleBuffer);
+    return true;
+    NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", tupleBuffer.getNumberOfTuples());
 }
 
 std::string CSVSource::toString() const
@@ -169,9 +140,9 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
 
         std::getline(input, line);
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
-        /// TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
+        /// TODO #74: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferProvider);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
         tupleCount++;
     } ///end of while
 
@@ -186,11 +157,6 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
 SourceType CSVSource::getType() const
 {
     return SourceType::CSV_SOURCE;
-}
-
-std::string CSVSource::getFilePath() const
-{
-    return filePath;
 }
 
 const CSVSourceTypePtr& CSVSource::getSourceConfig() const
