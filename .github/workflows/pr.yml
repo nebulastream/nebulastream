@@ -12,7 +12,7 @@ on:
       - opened
       - reopened
     branches:
-      - master
+      - main
       - 'feature/**'
     paths-ignore:
       - nes-common/include/Version/version.hpp
