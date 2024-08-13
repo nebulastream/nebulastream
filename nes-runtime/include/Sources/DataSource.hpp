@@ -18,17 +18,13 @@
 #include <chrono>
 #include <future>
 #include <mutex>
-#include <ostream>
 #include <string>
 #include <string_view>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
-#include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/Source.hpp>
 
 namespace NES::Runtime::MemoryLayouts
