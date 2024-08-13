@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_WATERMARKPROCESSOR_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_WATERMARKPROCESSOR_HPP_
+#pragma once
 
 #include <atomic>
 #include <mutex>
@@ -80,5 +79,3 @@ private:
 };
 
 } /// namespace NES::Windowing
-
-#endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_WATERMARKPROCESSOR_HPP_

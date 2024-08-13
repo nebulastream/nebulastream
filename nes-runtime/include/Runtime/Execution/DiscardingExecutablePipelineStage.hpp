@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_
+#pragma once
 
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 namespace NES::Runtime::Execution
@@ -32,4 +31,3 @@ public:
     execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
 };
 } /// namespace NES::Runtime::Execution
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DISCARDINGEXECUTABLEPIPELINESTAGE_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_
+#pragma once
 
 #include <cstdint>
 
@@ -33,5 +32,3 @@ enum class ExecutionResult : uint8_t
 };
 
 }
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTIONRESULT_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_PHASES_TRACETOIRCONVERSIONPHASE_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_PHASES_TRACETOIRCONVERSIONPHASE_HPP_
+#pragma once
 #include <memory>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
@@ -98,5 +97,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_PHASES_TRACETOIRCONVERSIONPHASE_HPP_

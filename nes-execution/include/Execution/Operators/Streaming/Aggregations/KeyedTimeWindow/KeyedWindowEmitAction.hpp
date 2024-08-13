@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDWINDOWEMITACTION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDWINDOWEMITACTION_HPP_
+#pragma once
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -58,5 +57,3 @@ private:
     const OriginId resultOriginId;
 };
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_KEYEDTIMEWINDOW_KEYEDWINDOWEMITACTION_HPP_

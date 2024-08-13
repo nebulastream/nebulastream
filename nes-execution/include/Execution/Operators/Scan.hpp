@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_
+#pragma once
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/Operator.hpp>
@@ -45,4 +44,3 @@ private:
 };
 
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_

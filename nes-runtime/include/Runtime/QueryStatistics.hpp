@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_
+#pragma once
 #include <atomic>
 #include <map>
 #include <memory>
@@ -113,5 +112,3 @@ private:
 };
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_QUERYSTATISTICS_HPP_

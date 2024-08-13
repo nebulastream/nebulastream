@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_
+#pragma once
 
 #include <cstdint>
 #include <future>
@@ -111,4 +110,3 @@ public:
 };
 using WorkerContextPtr = std::shared_ptr<WorkerContext>;
 } /// namespace NES::Runtime
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_WORKERCONTEXT_HPP_

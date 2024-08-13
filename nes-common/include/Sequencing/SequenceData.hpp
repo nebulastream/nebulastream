@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
-#define NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_
+#pragma once
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
 
@@ -68,5 +67,3 @@ public:
 };
 
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_SEQUENCING_SEQUENCEDATA_HPP_

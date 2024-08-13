@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEXPRESSIONNODE_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEXPRESSIONNODE_HPP_
+#pragma once
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES
 {
@@ -45,5 +44,3 @@ protected:
     explicit LessExpressionNode(LessExpressionNode* other);
 };
 } /// namespace NES
-
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_LESSEXPRESSIONNODE_HPP_

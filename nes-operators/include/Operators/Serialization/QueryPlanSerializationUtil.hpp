@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_
+#pragma once
 
 #include <memory>
 #include <Util/QueryState.hpp>
@@ -48,4 +47,3 @@ public:
     static QueryPlanPtr deserializeQueryPlan(const SerializableQueryPlan* serializedQueryPlan);
 };
 } /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_QUERYPLANSERIALIZATIONUTIL_HPP_

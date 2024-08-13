@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_
+#pragma once
 
 #include <optional>
 #include <unordered_map>
@@ -142,5 +141,3 @@ protected:
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
 } /// namespace NES::Runtime::MemoryLayouts
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_MEMORYLAYOUT_HPP_

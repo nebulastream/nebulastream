@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_
+#pragma once
 
 #include <Sinks/Formats/SinkFormat.hpp>
 namespace NES
@@ -65,4 +64,3 @@ public:
     FormatTypes getSinkFormat() override;
 };
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_CSVFORMAT_HPP_

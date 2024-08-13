@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_
+#pragma once
 
 #include <cstdint>
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
@@ -108,4 +107,3 @@ private:
 
 using LogicalBatchJoinDescriptorPtr = std::shared_ptr<LogicalBatchJoinDescriptor>;
 } /// namespace NES::Join::Experimental
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINDESCRIPTOR_HPP_

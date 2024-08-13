@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_
+#pragma once
 
 #include <map>
 #include <memory>
@@ -47,5 +46,3 @@ public:
     static LogicalSourceTypePtr createFromYaml(Yaml::Node& yamlConfig);
 };
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_LOGICALSOURCETYPEFACTORY_HPP_

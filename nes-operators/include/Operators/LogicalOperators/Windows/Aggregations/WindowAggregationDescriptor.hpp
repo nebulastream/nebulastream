@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_
+#pragma once
 
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -109,5 +108,3 @@ protected:
     Type aggregationType;
 };
 } /// namespace NES::Windowing
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_WINDOWAGGREGATIONDESCRIPTOR_HPP_

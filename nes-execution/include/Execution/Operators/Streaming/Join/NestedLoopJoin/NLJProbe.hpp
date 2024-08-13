@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJPROBE_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJPROBE_HPP_
+#pragma once
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
@@ -52,4 +51,3 @@ protected:
     const SchemaPtr rightSchema;
 };
 }; /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_NESTEDLOOPJOIN_NLJPROBE_HPP_

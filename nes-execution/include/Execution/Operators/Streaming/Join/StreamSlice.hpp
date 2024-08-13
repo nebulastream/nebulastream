@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_
+#pragma once
 #include <atomic>
 #include <cstdint>
 #include <memory>
@@ -113,5 +112,3 @@ protected:
     uint64_t sliceEnd;
 };
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMSLICE_HPP_

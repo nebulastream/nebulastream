@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_
-#define NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_
+#pragma once
 
 #include <vector>
 #include <Types/WindowType.hpp>
@@ -51,5 +50,3 @@ public:
     static ThresholdWindowPtr asThresholdWindow(ContentBasedWindowTypePtr contentBasedWindowType);
 };
 } /// namespace NES::Windowing
-
-#endif /// NES_WINDOW_TYPES_INCLUDE_TYPES_CONTENTBASEDWINDOWTYPE_HPP_

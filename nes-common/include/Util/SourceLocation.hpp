@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
-#define NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
+#pragma once
 #include <cstring>
 /// The following provides a polyfill for the source location standard. On not supported platforms it will return an empty result.
 #if __has_include(<source_location>)
@@ -59,4 +58,3 @@ private:
 };
 } /// namespace std
 #endif
-#endif /// NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_

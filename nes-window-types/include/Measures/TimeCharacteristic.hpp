@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_
-#define NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_
+#pragma once
 
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
@@ -95,5 +94,3 @@ private:
     TimeUnit unit;
 };
 } /// namespace NES::Windowing
-
-#endif /// NES_WINDOW_TYPES_INCLUDE_MEASURES_TIMECHARACTERISTIC_HPP_

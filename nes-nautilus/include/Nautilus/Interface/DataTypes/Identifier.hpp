@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_IDENTIFIER_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_IDENTIFIER_HPP_
+#pragma once
 
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
@@ -117,5 +116,3 @@ private:
     typename T::Underlying value;
 };
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_IDENTIFIER_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
-#define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
+#pragma once
 
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -57,4 +56,3 @@ private:
 };
 
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_

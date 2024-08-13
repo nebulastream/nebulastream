@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTIONDEFINITIONS_HPP_
-#define NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTIONDEFINITIONS_HPP_
+#pragma once
 
 /***
  * NOTE: Do not include this header directly but use:
@@ -67,5 +66,3 @@ EXCEPTION(InvalidRefCountForBuffer, 9009, "invalid reference counter for buffer"
 
 /// Special errors
 EXCEPTION(UnknownException, 9999, "unknown exception")
-
-#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_EXCEPTIONDEFINITIONS_HPP_

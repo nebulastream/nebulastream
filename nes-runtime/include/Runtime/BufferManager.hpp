@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_
+#pragma once
 
 #include <atomic>
 #include <condition_variable>
@@ -225,5 +224,3 @@ private:
 };
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERMANAGER_HPP_

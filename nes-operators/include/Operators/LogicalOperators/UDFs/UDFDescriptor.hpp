@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -112,4 +111,3 @@ private:
     const SchemaPtr outputSchema;
 };
 } /// namespace NES::Catalogs::UDF
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_UDFDESCRIPTOR_HPP_

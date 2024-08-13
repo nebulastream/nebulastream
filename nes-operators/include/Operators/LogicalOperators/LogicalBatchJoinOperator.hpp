@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_
+#pragma once
 
 #include <memory>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
@@ -49,4 +48,3 @@ private:
     Join::Experimental::LogicalBatchJoinDescriptorPtr batchJoinDefinition;
 };
 } /// namespace NES::Experimental
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALBATCHJOINOPERATOR_HPP_

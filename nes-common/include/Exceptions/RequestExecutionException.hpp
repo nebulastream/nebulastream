@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
-#define NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_
+#pragma once
 
 #include <exception>
 #include <memory>
@@ -69,5 +68,3 @@ private:
     QueryId queryId;
 };
 } /// namespace NES::Exceptions
-
-#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_REQUESTEXECUTIONEXCEPTION_HPP_

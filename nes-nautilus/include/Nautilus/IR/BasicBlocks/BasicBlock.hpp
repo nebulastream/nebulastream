@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -88,4 +87,3 @@ private:
 using BasicBlockPtr = std::shared_ptr<BasicBlock>;
 
 } /// namespace NES::Nautilus::IR
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_BASICBLOCKS_BASICBLOCK_HPP_

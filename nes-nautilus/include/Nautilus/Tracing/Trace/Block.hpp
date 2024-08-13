@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_
+#pragma once
 #include <cinttypes>
 #include <ostream>
 #include <vector>
@@ -81,5 +80,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCK_HPP_

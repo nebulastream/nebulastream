@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWOPERATOR_HPP_
+#pragma once
 
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
@@ -56,5 +55,3 @@ protected:
 };
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_WINDOWOPERATOR_HPP_

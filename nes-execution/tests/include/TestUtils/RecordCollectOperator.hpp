@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
-#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_
+#pragma once
 #include <Execution/Operators/ExecutableOperator.hpp>
 namespace NES::Runtime::Execution::Operators
 {
@@ -30,5 +29,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_RECORDCOLLECTOPERATOR_HPP_

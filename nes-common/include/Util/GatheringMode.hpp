@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_GATHERINGMODE_HPP_
-#define NES_COMMON_INCLUDE_UTIL_GATHERINGMODE_HPP_
+#pragma once
 
 #include <cstdint>
 
@@ -28,5 +27,3 @@ enum class GatheringMode : uint8_t
 };
 
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_GATHERINGMODE_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_PLACEMENT_ELEGANTPAYLOADKEYS_HPP_
-#define NES_COMMON_INCLUDE_UTIL_PLACEMENT_ELEGANTPAYLOADKEYS_HPP_
+#pragma once
 
 #include <string>
 
@@ -45,5 +44,3 @@ const std::string AVAILABLE_NODES_KEY = "availNodes";
 const std::string PLACEMENT_KEY = "placement";
 
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_PLACEMENT_ELEGANTPAYLOADKEYS_HPP_

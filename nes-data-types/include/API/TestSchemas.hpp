@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
-#define NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_
+#pragma once
 
 #include <stdexcept>
 #include <unordered_map>
@@ -30,5 +29,3 @@ private:
     static std::unordered_map<std::string, SchemaPtr> testSchemaCatalog;
 };
 } /// namespace NES
-
-#endif /// NES_DATA_TYPES_INCLUDE_API_TESTSCHEMAS_HPP_

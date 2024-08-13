@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_MAXAGGREGATION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_MAXAGGREGATION_HPP_
+#pragma once
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
 
@@ -36,5 +35,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution::Aggregation
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_MAXAGGREGATION_HPP_

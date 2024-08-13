@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_
+#pragma once
 
 #include <map>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
@@ -51,5 +50,3 @@ protected:
     std::map<std::pair<std::string, std::string>, DataSourcePtr> sourceDescriptorToDataSourceMap;
 };
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCESHARINGDATASOURCEPROVIDER_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_
+#pragma once
 
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 namespace NES::Runtime::Execution
@@ -28,5 +27,3 @@ public:
     create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline, const Nautilus::CompilationOptions&) override;
 };
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_INTERPRETERPIPELINEPROVIDER_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_
+#pragma once
 #include <ostream>
 #include <string>
 namespace NES::Nautilus::Tracing
@@ -31,5 +30,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_FUNCTIONCALLTARGET_HPP_

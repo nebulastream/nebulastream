@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
-#define NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_
+#pragma once
 
 #include <cstdint>
 #if __has_include(<span> )
@@ -134,4 +133,3 @@ private:
     bool acive_read = false;
     bool acive_write = false;
 };
-#endif /// NES_RUNTIME_INCLUDE_UTIL_MMAPCIRCULARBUFFER_HPP_

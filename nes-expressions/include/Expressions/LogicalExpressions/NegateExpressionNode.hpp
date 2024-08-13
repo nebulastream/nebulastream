@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_
+#pragma once
 #include <Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
 namespace NES
 {
@@ -52,5 +51,3 @@ protected:
     explicit NegateExpressionNode(NegateExpressionNode* other);
 };
 } /// namespace NES
-
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_NEGATEEXPRESSIONNODE_HPP_

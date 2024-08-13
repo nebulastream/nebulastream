@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_NAUTILUSEXECUTABLEPIPELINESTAGE_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_NAUTILUSEXECUTABLEPIPELINESTAGE_HPP_
+#pragma once
 
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 
@@ -46,5 +45,3 @@ protected:
 };
 
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_NAUTILUSEXECUTABLEPIPELINESTAGE_HPP_

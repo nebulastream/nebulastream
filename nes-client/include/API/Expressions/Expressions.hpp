@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CLIENT_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
-#define NES_CLIENT_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -121,4 +120,3 @@ ExpressionNodePtr CASE(const std::vector<ExpressionNodePtr>& whenExpressions, Ex
 ExpressionNodePtr CASE(std::vector<ExpressionNodePtr> whenExpressions, ExpressionItem defaultValueExp);
 
 } ///end of namespace NES
-#endif /// NES_CLIENT_INCLUDE_API_EXPRESSIONS_EXPRESSIONS_HPP_

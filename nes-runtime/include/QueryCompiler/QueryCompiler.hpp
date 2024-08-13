@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
-#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_
+#pragma once
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
@@ -40,5 +39,3 @@ protected:
 };
 
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILER_HPP_

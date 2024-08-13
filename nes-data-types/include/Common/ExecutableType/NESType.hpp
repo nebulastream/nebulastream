@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_NESTYPE_HPP_
-#define NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_NESTYPE_HPP_
+#pragma once
 
 #include <cstdint>
 #include <string>
@@ -68,4 +67,3 @@ template <class Type>
 concept IsArray = std::is_fundamental_v<std::remove_pointer_t<Type>> || std::is_base_of_v<NESType, Type>;
 
 } /// namespace NES
-#endif /// NES_DATA_TYPES_INCLUDE_COMMON_EXECUTABLETYPE_NESTYPE_HPP_

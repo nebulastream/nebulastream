@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_STDINT_HPP_
-#define NES_COMMON_INCLUDE_UTIL_STDINT_HPP_
+#pragma once
 #include <cstdint>
 
 #include <cstdint>
@@ -74,4 +73,3 @@ consteval HelperStructLiterals<int64_t> operator""_s64(unsigned long long value)
 {
     return HelperStructLiterals<int64_t>(value);
 }
-#endif /// NES_COMMON_INCLUDE_UTIL_STDINT_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_
+#pragma once
 
 #include <ostream>
 #include "Configurations/ConfigurationException.hpp"
@@ -223,5 +222,3 @@ using UIntOption = ScalarOption<uint64_t>;
 using BoolOption = ScalarOption<bool>;
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_SCALAROPTION_HPP_

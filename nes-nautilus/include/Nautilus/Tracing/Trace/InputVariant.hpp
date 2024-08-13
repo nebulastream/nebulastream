@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_
+#pragma once
 #include <variant>
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
@@ -27,4 +26,3 @@ class None
 };
 using InputVariant = std::variant<ValueRef, ConstantValue, BlockRef, None, FunctionCallTarget>;
 } /// namespace NES::Nautilus::Tracing
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_INPUTVARIANT_HPP_

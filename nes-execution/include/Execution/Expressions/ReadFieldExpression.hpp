@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_
+#pragma once
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -40,5 +39,3 @@ private:
 using ReadFieldExpressionPtr = std::shared_ptr<Runtime::Execution::Expressions::ReadFieldExpression>;
 
 } /// namespace NES::Runtime::Execution::Expressions
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_READFIELDEXPRESSION_HPP_

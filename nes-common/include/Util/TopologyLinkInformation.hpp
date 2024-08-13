@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_
-#define NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_
+#pragma once
 #include <cstdint>
 #include <string>
 #include <Identifiers/Identifiers.hpp>
@@ -44,4 +43,3 @@ public:
     WorkerId downstreamTopologyNode;
 };
 } /// namespace NES
-#endif /// NES_COMMON_INCLUDE_UTIL_TOPOLOGYLINKINFORMATION_HPP_

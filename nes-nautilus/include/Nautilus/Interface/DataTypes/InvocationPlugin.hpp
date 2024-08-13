@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_
+#pragma once
 #include <optional>
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -50,5 +49,3 @@ public:
 using InvocationPluginRegistry = Util::PluginRegistry<InvocationPlugin>;
 
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_INVOCATIONPLUGIN_HPP_

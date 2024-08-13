@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_
+#pragma once
 #include <memory>
 #include <Compiler/DynamicObject.hpp>
 #include <Nautilus/Backends/Executable.hpp>
@@ -41,5 +40,3 @@ private:
     std::shared_ptr<Compiler::DynamicObject> obj;
 };
 } /// namespace NES::Nautilus::Backends::CPP
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPEXECUTABLE_HPP_

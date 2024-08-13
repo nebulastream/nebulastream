@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_
+#pragma once
 #include <utility>
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
 
@@ -46,4 +45,3 @@ private:
     FormatTypes sinkFormatType;
 };
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_FORMATITERATOR_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_
-#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_
+#pragma once
 
 #include <utility>
 #include <API/AttributeField.hpp>
@@ -228,5 +227,3 @@ PhysicalTypePtr getPhysicalTypePtr()
 }
 
 } /// namespace NES::Runtime::Execution::Util
-
-#endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_UTILITYFUNCTIONS_HPP_

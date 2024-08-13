@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_
+#pragma once
 
 #include <vector>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
@@ -58,4 +57,3 @@ private:
     std::shared_ptr<LoopInfo> loopInfo;
 };
 } /// namespace NES::Nautilus::IR::Operations
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOOP_LOOPOPERATION_HPP_

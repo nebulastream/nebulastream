@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_SIGNALHANDLING_HPP_
-#define NES_COMMON_INCLUDE_EXCEPTIONS_SIGNALHANDLING_HPP_
+#pragma once
 #include <exception>
 #include <memory>
 #include <string>
@@ -55,5 +54,3 @@ void installGlobalErrorListener(std::shared_ptr<ErrorListener> const& listener);
 void removeGlobalErrorListener(const std::shared_ptr<ErrorListener>& listener);
 
 } /// namespace NES::Exceptions
-
-#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_SIGNALHANDLING_HPP_

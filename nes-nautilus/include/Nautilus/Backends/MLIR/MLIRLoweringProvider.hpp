@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_
+#pragma once
 
 #include <unordered_set>
 #include <Nautilus/Backends/MLIR/ProxyFunctions.hpp>
@@ -216,4 +215,3 @@ private:
     ValueFrame createFrameFromParentBlock(ValueFrame& frame, IR::Operations::BasicBlockInvocation& invocation);
 };
 } /// namespace NES::Nautilus::Backends::MLIR
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_MLIR_MLIRLOWERINGPROVIDER_HPP_

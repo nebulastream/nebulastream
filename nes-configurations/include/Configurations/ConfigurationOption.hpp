@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_
+#pragma once
 
 #include <any>
 #include <memory>
@@ -229,5 +228,3 @@ using GatheringModeConfigOption = std::shared_ptr<ConfigurationOption<GatheringM
 using TCPDecideMessageSizeConfigOption = std::shared_ptr<ConfigurationOption<TCPDecideMessageSize>>;
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONOPTION_HPP_

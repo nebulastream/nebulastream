@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
-#define NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_
+#pragma once
 #include <string_view>
 #include <unordered_map>
 #include <Util/JNI/JNI.hpp>
@@ -182,5 +181,3 @@ std::string getStringObjectValue(jstring object);
 const std::string convertToJNIName(const std::string& javaClassName);
 
 } /// namespace NES::jni
-
-#endif /// NES_RUNTIME_INCLUDE_UTIL_JNI_JNIUTILS_HPP_

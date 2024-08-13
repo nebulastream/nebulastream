@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_
+#pragma once
 #include <Runtime/Allocator/MemoryResource.hpp>
 
 #include <cstdint>
@@ -52,5 +51,3 @@ private:
     uint8_t* data;
 };
 } /// namespace NES::Nautilus::Interface
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXED2DARRAY_FIXED2DARRAY_HPP_

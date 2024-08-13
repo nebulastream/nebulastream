@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_
+#pragma once
 
 #include <iterator>
 #include <stack>
@@ -107,5 +106,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_PLANS_UTILS_PLANITERATOR_HPP_

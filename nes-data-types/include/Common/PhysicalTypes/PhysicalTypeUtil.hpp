@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_
-#define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_
+#pragma once
 
 #include <cstdint>
 #include <Common/ExecutableType/NESType.hpp>
@@ -199,5 +198,3 @@ bool isSamePhysicalType(PhysicalTypePtr physicalType)
     return false;
 }
 } /// namespace NES::PhysicalTypes
-
-#endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_PHYSICALTYPEUTIL_HPP_

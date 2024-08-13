@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_
+#pragma once
 
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -342,5 +341,3 @@ void setByteField(void* state, void* classPtr, void* objectPtr, int fieldIndex, 
 void setStringField(void* state, void* classPtr, void* objectPtr, int fieldIndex, const Nautilus::TextValue* value);
 
 }; /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_JAVAUDFUTILS_HPP_

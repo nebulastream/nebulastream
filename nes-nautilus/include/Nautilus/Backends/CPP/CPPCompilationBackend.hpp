@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_
+#pragma once
 #include <Nautilus/Backends/CompilationBackend.hpp>
 namespace NES::Nautilus::Backends::CPP
 {
@@ -28,4 +27,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::Backends::CPP
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPCOMPILATIONBACKEND_HPP_

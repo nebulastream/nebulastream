@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
-#define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_
+#pragma once
 
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -52,4 +51,3 @@ private:
     std::vector<NES::PhysicalTypePtr> physicalTypes;
 };
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SOURCES_PARSERS_JSONPARSER_HPP_

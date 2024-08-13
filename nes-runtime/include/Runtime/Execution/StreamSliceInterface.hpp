@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_
+#pragma once
 #include <cstdint>
 #include <span>
 #include <Runtime/BufferManager.hpp>
@@ -49,4 +48,3 @@ public:
     virtual ~StreamSliceInterface() = default;
 };
 } /// namespace NES::Runtime::Execution
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_STREAMSLICEINTERFACE_HPP_

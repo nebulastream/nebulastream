@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_
+#pragma once
 
 #include <cstdint>
 #include <API/Schema.hpp>
@@ -160,4 +159,3 @@ private:
 
 using LogicalJoinDescriptorPtr = std::shared_ptr<LogicalJoinDescriptor>;
 } /// namespace NES::Join
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_JOINS_LOGICALJOINDESCRIPTOR_HPP_

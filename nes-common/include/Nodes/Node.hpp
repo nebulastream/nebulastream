@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_NODES_NODE_HPP_
-#define NES_COMMON_INCLUDE_NODES_NODE_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -424,5 +423,3 @@ private:
     std::string stackTrace;
 };
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_NODES_NODE_HPP_

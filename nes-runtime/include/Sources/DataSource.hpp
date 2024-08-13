@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_
-#define NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_
+#pragma once
 
 #include <atomic>
 #include <chrono>
@@ -321,5 +320,3 @@ private:
 using DataSourcePtr = std::shared_ptr<DataSource>;
 
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_SOURCES_DATASOURCE_HPP_

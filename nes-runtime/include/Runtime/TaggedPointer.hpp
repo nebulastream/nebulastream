@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_
+#pragma once
 #include <cstdint>
 #if !(defined(__x86_64__) || defined(_M_X64)) && !(defined(__powerpc64__)) && !(defined(__aarch64__))
 #    error "TaggedPointer is x64, arm64 and ppc64 specific code."
@@ -114,5 +113,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_TAGGEDPOINTER_HPP_

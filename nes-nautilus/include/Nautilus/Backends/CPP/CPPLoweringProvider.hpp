@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPLOWERINGPROVIDER_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPLOWERINGPROVIDER_HPP_
+#pragma once
 
 #include <sstream>
 #include <unordered_set>
@@ -112,4 +111,3 @@ private:
     };
 };
 } /// namespace NES::Nautilus::Backends::CPP
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_CPP_CPPLOWERINGPROVIDER_HPP_

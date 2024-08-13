@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_SCHEMATYPE_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_SCHEMATYPE_HPP_
+#pragma once
 
 #include <memory>
 #include <string>
@@ -53,5 +52,3 @@ private:
     std::vector<SchemaFieldDetail> schemaFieldDetails;
 };
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_SCHEMATYPE_HPP_

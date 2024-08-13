@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDARGUMENTEXCEPTION_HPP_
-#define NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDARGUMENTEXCEPTION_HPP_
+#pragma once
 
 #include <stdexcept>
 #include <string>
@@ -34,4 +33,3 @@ private:
     std::string message;
 };
 } /// namespace NES
-#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_INVALIDARGUMENTEXCEPTION_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_
+#pragma once
 
 #include <limits>
 #include <memory>
@@ -98,5 +97,3 @@ private:
 };
 static_assert(sizeof(Task) == 64);
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_TASK_HPP_

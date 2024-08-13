@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_
+#pragma once
 #include <memory>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 
@@ -44,4 +43,3 @@ private:
 
 } /// namespace QueryCompilation
 } /// namespace NES
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_EXPRESSIONPROVIDER_HPP_

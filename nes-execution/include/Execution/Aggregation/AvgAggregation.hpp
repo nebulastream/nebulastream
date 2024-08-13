@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP_
+#pragma once
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
 
@@ -39,5 +38,3 @@ private:
     Nautilus::Value<Nautilus::MemRef> loadSumMemRef(const Nautilus::Value<Nautilus::MemRef>& memref);
 };
 } /// namespace NES::Runtime::Execution::Aggregation
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AVGAGGREGATION_HPP_

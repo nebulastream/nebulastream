@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKERPROPERTYKEYS_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKERPROPERTYKEYS_HPP_
+#pragma once
 
 #include <string>
 
@@ -26,5 +25,3 @@ const std::string GRPC_PORT = "GRPC_PORT";
 const std::string ADDRESS = "ADDRESS";
 const std::string MAINTENANCE = "MAINTENANCE";
 } /// namespace NES::Worker::Properties
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKERPROPERTYKEYS_HPP_

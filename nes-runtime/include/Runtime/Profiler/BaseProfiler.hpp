@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_
+#pragma once
 
 #include <cstdint>
 
@@ -39,5 +38,3 @@ public:
     virtual uint64_t stopSampling(std::size_t numItems) = 0;
 };
 } /// namespace NES::Runtime::Profiler
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_PROFILER_BASEPROFILER_HPP_

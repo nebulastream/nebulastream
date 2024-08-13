@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_
-#define NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_
+#pragma once
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -138,5 +137,3 @@ private:
 };
 
 } /// namespace NES::Runtime
-
-#endif /// NES_EXECUTION_TESTS_INCLUDE_TPCH_TABLE_HPP_

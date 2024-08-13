@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_
+#pragma once
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/NotImplementedException.hpp>
@@ -129,4 +128,3 @@ private:
 };
 
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATITERATORS_ITERATOR_HPP_

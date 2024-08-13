@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_
-#define NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_
+#pragma once
 
 #include <chrono>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -73,4 +72,3 @@ DataSourcePtr createTCPSource(
     const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SOURCES_SOURCECREATOR_HPP_

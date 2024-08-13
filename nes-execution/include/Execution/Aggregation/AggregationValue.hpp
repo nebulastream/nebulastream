@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_
+#pragma once
 
 #include <cstdint>
 #include <numeric>
@@ -74,5 +73,3 @@ struct MaxAggregationValue : AggregationValue
 };
 
 } /// namespace NES::Runtime::Execution::Aggregation
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONVALUE_HPP_

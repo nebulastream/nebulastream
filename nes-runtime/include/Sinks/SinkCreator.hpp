@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_
+#pragma once
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES
@@ -92,4 +91,3 @@ DataSinkPtr createCSVPrintSink(
     uint64_t numberOfOrigins = 1);
 
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_SINKS_SINKCREATOR_HPP_

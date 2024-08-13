@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_UTIL_BUFFERSEQUENCENUMBER_HPP_
-#define NES_RUNTIME_INCLUDE_UTIL_BUFFERSEQUENCENUMBER_HPP_
+#pragma once
 
 #include <cstdint>
 #include <functional>
@@ -90,4 +89,3 @@ struct hash<NES::BufferSequenceNumber>
     uint64_t operator()(const NES::BufferSequenceNumber& sn) const { return sn.getSequenceNumber() ^ sn.getOriginId(); }
 };
 } /// namespace std
-#endif /// NES_RUNTIME_INCLUDE_UTIL_BUFFERSEQUENCENUMBER_HPP_

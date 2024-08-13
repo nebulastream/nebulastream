@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_BASICTRACEFUNCTIONS_HPP_
-#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_BASICTRACEFUNCTIONS_HPP_
+#pragma once
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
@@ -357,4 +356,3 @@ Value<> TracingBreaker()
 }
 
 } /// namespace NES::Nautilus::Tracing
-#endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_BASICTRACEFUNCTIONS_HPP_

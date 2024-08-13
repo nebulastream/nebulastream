@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_
-#define NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_
+#pragma once
 
 #include <string>
 
@@ -70,5 +69,3 @@ private:
 };
 
 } /// namespace NES::Util
-
-#endif /// NES_COMMON_INCLUDE_UTIL_FILEMUTEX_HPP_

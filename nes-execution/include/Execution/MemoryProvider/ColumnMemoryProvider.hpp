@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_
+#pragma once
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 
@@ -51,4 +50,3 @@ private:
 };
 
 } /// namespace NES::Runtime::Execution::MemoryProvider
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_COLUMNMEMORYPROVIDER_HPP_

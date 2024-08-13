@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_
+#pragma once
 #include <Expressions/ExpressionNode.hpp>
 namespace NES
 {
@@ -47,5 +46,3 @@ protected:
     explicit UnaryExpressionNode(UnaryExpressionNode* other);
 };
 } /// namespace NES
-
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_UNARYEXPRESSIONNODE_HPP_

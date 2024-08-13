@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_
+#pragma once
 
 #if __has_include(<memory_resource>)
 #    include <memory_resource>
@@ -24,4 +23,3 @@ namespace std::pmr
 using memory_resource = std::experimental::pmr::memory_resource;
 } /// namespace std::pmr
 #endif
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_MEMORYRESOURCE_HPP_

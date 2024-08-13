@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
+#pragma once
 
 #include <string>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
@@ -98,5 +97,3 @@ private:
 
 using FileSinkDescriptorPtr = std::shared_ptr<FileSinkDescriptor>;
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SINKS_FILESINKDESCRIPTOR_HPP_
