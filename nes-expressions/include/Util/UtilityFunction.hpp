@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#pragma once
+
 #include <string>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
