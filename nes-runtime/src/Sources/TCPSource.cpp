@@ -35,34 +35,17 @@
 namespace NES
 {
 
-TCPSource::TCPSource(
-    SchemaPtr schema,
-    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
-    Runtime::QueryManagerPtr queryManager,
-    TCPSourceTypePtr tcpSourceType,
-    OperatorId operatorId,
-    OriginId originId,
-    size_t numSourceLocalBuffers,
-    const std::string& physicalSourceName,
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
-    : DataSource(
-          schema,
-          std::move(poolProvider),
-          std::move(queryManager),
-          operatorId,
-          originId,
-          numSourceLocalBuffers,
-          physicalSourceName,
-          std::move(executableSuccessors))
+TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
+    : Source()
     , tupleSize(schema->getSchemaSizeInBytes())
     , sourceConfig(std::move(tcpSourceType))
     , timeout(TCP_SOCKET_DEFAULT_TIMEOUT)
     , circularBuffer(getpagesize() * 2)
+    , schema(schema)
 {
     /// init physical types
     std::vector<std::string> schemaKeys;
-    std::string fieldName;
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
 
     /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
     /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
@@ -70,7 +53,7 @@ TCPSource::TCPSource(
     {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
-        fieldName = field->getName();
+        std::string fieldName = field->getName();
         NES_TRACE("TCPSOURCE:: Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
@@ -102,7 +85,6 @@ std::string TCPSource::toString() const
 
 void TCPSource::open()
 {
-    DataSource::open();
     NES_TRACE("TCPSource::open: Trying to create socket and connect.");
 
     addrinfo hints;
@@ -155,28 +137,23 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-std::optional<Memory::TupleBuffer> TCPSource::receiveData()
+bool TCPSource::fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
 {
     NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
-    auto tupleBuffer = allocateBuffer();
     NES_DEBUG("TCPSource buffer allocated ");
     try
     {
-        do
+        while (fillBuffer(tupleBuffer))
         {
-            if (!running)
-            {
-                return std::nullopt;
-            }
-            fillBuffer(tupleBuffer);
-        } while (tupleBuffer.getNumberOfTuples() == 0);
+            /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
+        };
+        return tupleBuffer.getNumberOfTuples() > 0;
     }
     catch (const std::exception& e)
     {
         NES_ERROR("TCPSource::receiveData: Failed to fill the TupleBuffer. Error: {}.", e.what());
         throw e;
     }
-    return tupleBuffer.getBuffer();
 }
 
 std::pair<bool, size_t> sizeUntilSearchToken(SPAN_TYPE<const char> data, char token)
@@ -223,6 +200,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
     /// init flush interval value
     bool flushIntervalPassed = false;
     /// receive data until tupleBuffer capacity reached or flushIntervalPassed
+    bool isEoS = false;
     while (tupleCount < tuplesThisPass && !flushIntervalPassed)
     {
         /// if circular buffer is not full obtain data from socket
@@ -231,11 +209,12 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             auto writer = circularBuffer.write();
 
             auto bufferSizeReceived = read(sockfd, writer.data(), writer.size());
-            if (bufferSizeReceived == -1 && errno == EWOULDBLOCK)
+            if (bufferSizeReceived == -1)
             {
                 /// if read method returned -1 an error occurred during read.
                 NES_ERROR("TCPSource::fillBuffer: an error occurred while reading from socket. Error: {}", strerror(errno));
-                return false;
+                isEoS = true;
+                break;
             }
             if (bufferSizeReceived == 0)
             {
@@ -249,7 +228,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             if (bufferSizeReceived == 0 && circularBuffer.empty())
             {
                 NES_INFO("TCP Source detected EoS");
-                this->running.exchange(false);
+                isEoS = true;
                 break;
             }
         }
@@ -326,13 +305,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                 std::string_view buf(tupleData.data(), tupleData.size());
                 if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::NES_BINARY)
                 {
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferProvider);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
                     tupleCount = tupleBuffer.getNumberOfTuples();
                 }
                 else
                 {
                     NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferProvider);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
                     tupleCount++;
                 }
             }
@@ -351,13 +330,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
     tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
-    return true;
+    /// Return false, if there are tuples in the buffer, or the EoS was reached.
+    return tupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
 
 void TCPSource::close()
 {
     NES_TRACE("TCPSource::close: trying to close connection.");
-    DataSource::close();
     if (connection >= 0)
     {
         ::close(connection);
