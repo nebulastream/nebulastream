@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_
+#pragma once
 
 #include <any>
 #include <atomic>
@@ -164,4 +163,3 @@ private:
     std::any userdata;
 };
 } /// namespace NES::Runtime
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONMESSAGE_HPP_

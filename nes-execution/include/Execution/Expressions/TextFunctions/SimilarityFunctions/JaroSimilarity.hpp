@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_JAROSIMILARITY_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_JAROSIMILARITY_HPP_
+#pragma once
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
@@ -38,5 +37,3 @@ private:
 };
 
 } /// namespace NES::Runtime::Execution::Expressions
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_TEXTFUNCTIONS_SIMILARITYFUNCTIONS_JAROSIMILARITY_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_
+#pragma once
 
 #include <set>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
@@ -101,5 +100,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::Backends::Flounder
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERLOWERINGPROVIDER_HPP_

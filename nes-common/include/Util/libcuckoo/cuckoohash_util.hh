@@ -1,7 +1,6 @@
 /** \file */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_UTIL_HH_
-#define NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_UTIL_HH_
+#pragma once
 
 #include "cuckoohash_config.hh" /// for LIBCUCKOO_DEBUG
 #include <exception>
@@ -126,4 +125,3 @@ private:
     const size_t hashpower_;
 };
 
-#endif /// NES_COMMON_INCLUDE_UTIL_LIBCUCKOO_CUCKOOHASH_UTIL_HH_

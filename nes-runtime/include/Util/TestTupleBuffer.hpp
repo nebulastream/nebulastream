@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_
-#define NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_
+#pragma once
 
 #include <cstdint>
 #include <cstring>
@@ -563,5 +562,3 @@ private:
 };
 
 } /// namespace NES::Runtime::MemoryLayouts
-
-#endif /// NES_RUNTIME_INCLUDE_UTIL_TESTTUPLEBUFFER_HPP_

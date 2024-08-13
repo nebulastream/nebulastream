@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_BASICTYPES_HPP_
-#define NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_BASICTYPES_HPP_
+#pragma once
 
 #include <stdint.h>
 
@@ -37,5 +36,3 @@ enum class BasicType : uint8_t
 };
 
 }
-
-#endif /// NES_DATA_TYPES_INCLUDE_COMMON_DATATYPES_BASICTYPES_HPP_

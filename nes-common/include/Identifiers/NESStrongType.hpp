@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPE_HPP_
-#define NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPE_HPP_
+#pragma once
 #include <compare>
 #include <memory>
 #include <string>
@@ -95,5 +94,3 @@ struct hash<NES::NESStrongType<T, Tag, invalid, initial>>
     size_t operator()(NES::NESStrongType<T, Tag, invalid, initial> const& x) const { return std::hash<T>()(x.getRawValue()); }
 };
 } /// namespace std
-
-#endif /// NES_COMMON_INCLUDE_IDENTIFIERS_NESSTRONGTYPE_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
-#define NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_
+#pragma once
 #include <atomic>
 #include <cstdio>
 #include <iostream>
@@ -72,5 +71,3 @@ private:
 };
 
 } /// namespace NES::Util
-
-#endif /// NES_COMMON_INCLUDE_UTIL_SUBPROCESS_SUBPROCESS_HPP_

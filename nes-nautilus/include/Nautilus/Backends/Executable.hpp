@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_
+#pragma once
 #include <any>
 #include <memory>
 #include <string>
@@ -139,4 +138,3 @@ protected:
 };
 
 } /// namespace NES::Nautilus::Backends
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_EXECUTABLE_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_
+#pragma once
 
 #include <cstdint>
 namespace NES::Runtime
@@ -29,5 +28,3 @@ enum class QueryExecutionMode : uint8_t
     Invalid
 };
 }
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYEXECUTIONMODE_HPP_

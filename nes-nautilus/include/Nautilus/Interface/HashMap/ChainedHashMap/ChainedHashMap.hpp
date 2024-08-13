@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
+#pragma once
 #include <cassert>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -179,5 +178,3 @@ private:
     std::vector<int8_t*> pages;
 };
 } /// namespace NES::Nautilus::Interface
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_

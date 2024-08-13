@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILDBUCKETING_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILDBUCKETING_HPP_
+#pragma once
 
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 
@@ -135,4 +134,3 @@ private:
     uint64_t windowSlide;
 };
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINBUILDBUCKETING_HPP_

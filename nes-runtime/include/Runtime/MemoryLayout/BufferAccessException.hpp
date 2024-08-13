@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_BUFFERACCESSEXCEPTION_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_BUFFERACCESSEXCEPTION_HPP_
+#pragma once
 
 #include <Exceptions/RuntimeException.hpp>
 
@@ -39,4 +38,3 @@ private:
 };
 
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_BUFFERACCESSEXCEPTION_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_CONSTANTVALUE_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_CONSTANTVALUE_HPP_
+#pragma once
 #include <memory>
 namespace NES::Nautilus
 {
@@ -33,5 +32,3 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const ConstantValue& tag);
 };
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_CONSTANTVALUE_HPP_

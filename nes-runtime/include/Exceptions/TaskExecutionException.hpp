@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
-#define NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_
+#pragma once
 
 #include <string>
 #include <Exceptions/RuntimeException.hpp>
@@ -41,4 +40,3 @@ private:
     const Runtime::Execution::SuccessorExecutablePipeline pipeline;
 };
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_EXCEPTIONS_TASKEXECUTIONEXCEPTION_HPP_

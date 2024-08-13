@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_SOURCEMODE_HPP_
-#define NES_COMMON_INCLUDE_UTIL_SOURCEMODE_HPP_
+#pragma once
 
 #include <cinttypes>
 #include <string>
@@ -31,5 +30,3 @@ enum class SourceMode : uint8_t
     COPY_BUFFER_SIMD_APEX = 5
 };
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_SOURCEMODE_HPP_

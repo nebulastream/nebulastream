@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_
+#pragma once
 
 #include <map>
 #include <set>
@@ -124,5 +123,3 @@ protected:
 };
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_LOGICALOPERATOR_HPP_

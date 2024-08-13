@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_
+#pragma once
 #include <map>
 #include <string>
 #include "Configurations/BaseOption.hpp"
@@ -88,5 +87,3 @@ protected:
 };
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASECONFIGURATION_HPP_

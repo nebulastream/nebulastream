@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
-#define NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_
+#pragma once
 
 #include <exception>
 #include <stdexcept>
@@ -63,5 +62,3 @@ public:
 };
 
 } /// namespace NES::Exceptions
-
-#endif /// NES_COMMON_INCLUDE_EXCEPTIONS_RUNTIMEEXCEPTION_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_SINGLE_NODE_WORKER_INCLUDE_GRPCSERVICE_HPP_
-#define NES_SINGLE_NODE_WORKER_INCLUDE_GRPCSERVICE_HPP_
+#pragma once
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
 
@@ -42,4 +41,3 @@ private:
     SingleNodeWorker delegate;
 };
 } /// namespace NES
-#endif /// NES_SINGLE_NODE_WORKER_INCLUDE_GRPCSERVICE_HPP_

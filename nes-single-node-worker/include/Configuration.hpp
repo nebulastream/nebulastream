@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_SINGLE_NODE_WORKER_INCLUDE_CONFIGURATION_HPP_
-#define NES_SINGLE_NODE_WORKER_INCLUDE_CONFIGURATION_HPP_
+#pragma once
 #include <string>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
@@ -74,4 +73,3 @@ auto loadConfiguration(const int argc, const char** argv)
     return config;
 }
 } /// namespace NES::Configuration
-#endif /// NES_SINGLE_NODE_WORKER_INCLUDE_CONFIGURATION_HPP_

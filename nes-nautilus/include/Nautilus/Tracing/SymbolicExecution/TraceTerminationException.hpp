@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_
+#pragma once
 #include <Exceptions/RuntimeException.hpp>
 namespace NES::Nautilus
 {
@@ -28,4 +27,3 @@ public:
     explicit TraceTerminationException() : std::exception() {};
 };
 } /// namespace NES::Nautilus
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_TRACETERMINATIONEXCEPTION_HPP_

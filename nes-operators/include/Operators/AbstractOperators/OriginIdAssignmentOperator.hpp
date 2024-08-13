@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_
+#pragma once
 
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
@@ -59,4 +58,3 @@ protected:
 };
 } /// namespace NES
 /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_ABSTRACTOPERATORS_ORIGINIDASSIGNMENTOPERATOR_HPP_

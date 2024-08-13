@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_
+#pragma once
 
 #include <string>
 #include "Exceptions/RuntimeException.hpp"
@@ -37,4 +36,3 @@ public:
 };
 
 } /// namespace NES::Configurations
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONEXCEPTION_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_
+#pragma once
 
 #include <ostream>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
@@ -41,5 +40,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONPATH_HPP_

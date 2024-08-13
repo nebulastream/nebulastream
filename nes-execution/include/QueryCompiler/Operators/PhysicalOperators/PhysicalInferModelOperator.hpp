@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_
+#pragma once
 
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
@@ -61,5 +60,3 @@ protected:
     const std::vector<ExpressionNodePtr> outputFields;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALINFERMODELOPERATOR_HPP_

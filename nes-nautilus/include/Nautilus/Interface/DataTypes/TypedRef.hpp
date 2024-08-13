@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TYPEDREF_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TYPEDREF_HPP_
+#pragma once
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
@@ -70,5 +69,3 @@ public:
 };
 
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TYPEDREF_HPP_

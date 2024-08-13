@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_
+#pragma once
 
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
@@ -48,4 +47,3 @@ public:
     virtual bool startNewVersion() { return false; };
 };
 } /// namespace NES
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_DATAEMITTER_HPP_

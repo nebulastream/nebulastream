@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_
+#pragma once
 
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -119,5 +118,3 @@ struct formatter<NES::Runtime::Execution::ExecutablePipelineStage> : formatter<s
     }
 };
 } ///namespace fmt
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEPIPELINESTAGE_HPP_

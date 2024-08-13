@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_
+#pragma once
 #ifdef NES_ENABLE_NUMA_SUPPORT
 #    include <memory>
 #    include <Util/Logger/Logger.hpp>
@@ -57,4 +56,3 @@ private:
 using NumaRegionMemoryAllocatorPtr = std::shared_ptr<NumaRegionMemoryAllocator>;
 } /// namespace NES::Runtime
 #endif
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_ALLOCATOR_NUMAREGIONMEMORYALLOCATOR_HPP_

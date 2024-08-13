@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_TIMER_HPP_
-#define NES_COMMON_INCLUDE_UTIL_TIMER_HPP_
+#pragma once
 
 #include <chrono>
 #include <string>
@@ -294,4 +293,3 @@ private:
     bool running{false};
 };
 } /// namespace NES
-#endif /// NES_COMMON_INCLUDE_UTIL_TIMER_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_
+#pragma once
 
 #include <condition_variable>
 #include <deque>
@@ -110,5 +109,3 @@ private:
 };
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_FIXEDSIZEBUFFERPOOL_HPP_

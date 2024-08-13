@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_
+#pragma once
 
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Exceptions/RuntimeException.hpp>
@@ -49,4 +48,3 @@ private:
 };
 
 } /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_UDFEXCEPTION_HPP_

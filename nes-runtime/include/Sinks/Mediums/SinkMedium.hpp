@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_
+#pragma once
 
 #include <mutex>
 #include <Runtime/Reconfigurable.hpp>
@@ -148,5 +147,3 @@ protected:
 using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_SINKMEDIUM_HPP_

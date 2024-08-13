@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_
+#pragma once
 
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
@@ -227,4 +226,3 @@ auto createDefault()
 Value<Text> transformReturnValues(TextValue* value);
 
 } /// namespace NES::Nautilus
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_TEXT_TEXT_HPP_

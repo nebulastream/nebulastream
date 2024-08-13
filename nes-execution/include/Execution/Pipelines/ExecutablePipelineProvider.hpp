@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
+#pragma once
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <Util/PluginRegistry.hpp>
@@ -41,5 +40,3 @@ public:
 using ExecutablePipelineProviderRegistry = NES::Util::NamedPluginRegistry<ExecutablePipelineProvider>;
 
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
+#pragma once
 #include <memory>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
@@ -45,5 +44,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution::Expressions
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_

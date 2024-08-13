@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_
+#pragma once
 
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -98,5 +97,3 @@ protected:
 };
 using FileSinkPtr = std::shared_ptr<FileSink>;
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_FILESINK_HPP_

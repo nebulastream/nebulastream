@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_
+#pragma once
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -91,5 +90,3 @@ protected:
 
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;
 } /// namespace NES::Runtime::Execution::Aggregation
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_AGGREGATIONFUNCTION_HPP_

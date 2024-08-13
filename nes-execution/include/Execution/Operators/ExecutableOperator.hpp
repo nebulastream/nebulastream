@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTABLEOPERATOR_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTABLEOPERATOR_HPP_
+#pragma once
 #include <Execution/Operators/Operator.hpp>
 namespace NES::Runtime::Execution::Operators
 {
@@ -36,5 +35,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTABLEOPERATOR_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_QUERYSTATE_HPP_
-#define NES_COMMON_INCLUDE_UTIL_QUERYSTATE_HPP_
+#pragma once
 
 #include <cinttypes>
 #include <string>
@@ -60,5 +59,3 @@ enum class QueryState : uint8_t
 };
 
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_QUERYSTATE_HPP_

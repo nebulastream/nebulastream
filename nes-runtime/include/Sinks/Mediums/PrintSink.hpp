@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_
+#pragma once
 
 #include <cstdint>
 #include <memory>
@@ -89,5 +88,3 @@ private:
 };
 using PrintSinkPtr = std::shared_ptr<PrintSink>;
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_SINKS_MEDIUMS_PRINTSINK_HPP_

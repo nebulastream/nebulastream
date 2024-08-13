@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_GREATERTHANEXPRESSION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_GREATERTHANEXPRESSION_HPP_
+#pragma once
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES::Runtime::Execution::Expressions
@@ -34,5 +33,3 @@ private:
 };
 
 } /// namespace NES::Runtime::Execution::Expressions
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_GREATERTHANEXPRESSION_HPP_

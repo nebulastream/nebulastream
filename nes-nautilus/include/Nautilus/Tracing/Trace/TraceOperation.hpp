@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_
+#pragma once
 #include <variant>
 #include <vector>
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
@@ -48,5 +47,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_TRACEOPERATION_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_HPP_
+#pragma once
 
 #include <span>
 #include <API/Schema.hpp>
@@ -184,5 +183,3 @@ private:
     uint64_t varSizedDataEntryMapCounter;
 };
 } /// namespace NES::Nautilus::Interface
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_HPP_

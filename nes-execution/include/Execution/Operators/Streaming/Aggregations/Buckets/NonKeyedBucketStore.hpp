@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_
+#pragma once
 #include <memory>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 
@@ -42,4 +41,3 @@ private:
     const std::unique_ptr<State>& defaultState;
 };
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_BUCKETS_NONKEYEDBUCKETSTORE_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERCOMPILATIONBACKEND_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERCOMPILATIONBACKEND_HPP_
+#pragma once
 #include <Nautilus/Backends/CompilationBackend.hpp>
 namespace NES::Nautilus::Backends::Flounder
 {
@@ -28,5 +27,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::Backends::Flounder
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_BACKENDS_FLOUNDER_FLOUNDERCOMPILATIONBACKEND_HPP_

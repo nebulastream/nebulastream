@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_
+#pragma once
 
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
@@ -100,5 +99,3 @@ public:
 };
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EVENTS_HPP_

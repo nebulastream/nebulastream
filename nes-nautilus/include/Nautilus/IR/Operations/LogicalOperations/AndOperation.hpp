@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_ANDOPERATION_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_ANDOPERATION_HPP_
+#pragma once
 
 #include <Nautilus/IR/Operations/Operation.hpp>
 
@@ -35,4 +34,3 @@ private:
     OperationWPtr rightInput;
 };
 } /// namespace NES::Nautilus::IR::Operations
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_LOGICALOPERATIONS_ANDOPERATION_HPP_

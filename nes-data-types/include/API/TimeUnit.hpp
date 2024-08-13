@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_API_TIMEUNIT_HPP_
-#define NES_DATA_TYPES_INCLUDE_API_TIMEUNIT_HPP_
+#pragma once
 #include <cstdint>
 #include <string>
 
@@ -82,5 +81,3 @@ private:
 };
 
 } /// namespace NES::Windowing
-
-#endif /// NES_DATA_TYPES_INCLUDE_API_TIMEUNIT_HPP_

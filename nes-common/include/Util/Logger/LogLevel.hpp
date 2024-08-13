@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_
-#define NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_
+#pragma once
 #include <cstdint>
 #include <string_view>
 #include <type_traits>
@@ -60,5 +59,3 @@ constexpr uint64_t getLogLevel(const LogLevel value)
 }
 
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_LOGGER_LOGLEVEL_HPP_

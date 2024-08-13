@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_
-#define NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_
+#pragma once
 
 #include <chrono>
 #include <API/Query.hpp>
@@ -147,5 +146,3 @@ private:
 };
 using RemoteClientPtr = std::shared_ptr<RemoteClient>;
 } /// namespace NES::Client
-
-#endif /// NES_CLIENT_INCLUDE_CLIENT_REMOTECLIENT_HPP_

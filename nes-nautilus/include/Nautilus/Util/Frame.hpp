@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_
+#pragma once
 #include <unordered_map>
 #include <Exceptions/RuntimeException.hpp>
 namespace NES::Nautilus
@@ -47,5 +46,3 @@ private:
 };
 
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_FRAME_HPP_

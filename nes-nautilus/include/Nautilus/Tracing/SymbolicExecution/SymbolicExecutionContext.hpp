@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_
+#pragma once
 #include <list>
 #include <unordered_map>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
@@ -90,5 +89,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_SYMBOLICEXECUTION_SYMBOLICEXECUTIONCONTEXT_HPP_

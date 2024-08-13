@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_
-#define NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_
+#pragma once
 #include <cstdint>
 
 namespace NES
@@ -45,5 +44,3 @@ enum class RequestType : uint8_t
 };
 
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_REQUESTTYPE_HPP_

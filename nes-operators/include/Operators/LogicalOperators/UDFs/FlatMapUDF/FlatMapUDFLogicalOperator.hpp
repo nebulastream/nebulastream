@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_FLATMAPUDF_FLATMAPUDFLOGICALOPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_FLATMAPUDF_FLATMAPUDFLOGICALOPERATOR_HPP_
+#pragma once
 
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
 
@@ -42,4 +41,3 @@ public:
     [[nodiscard]] bool isIdentical(const NodePtr& other) const override;
 };
 } /// namespace NES
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_UDFS_FLATMAPUDF_FLATMAPUDFLOGICALOPERATOR_HPP_

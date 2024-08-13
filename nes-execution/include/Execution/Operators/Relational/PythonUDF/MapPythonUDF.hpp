@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_
+#pragma once
 
 #ifdef NAUTILUS_PYTHON_UDF_ENABLED
 
@@ -48,4 +47,3 @@ private:
 } /// namespace NES::Runtime::Execution::Operators
 
 #endif /// NAUTILUS_PYTHON_UDF_ENABLED
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_PYTHONUDF_MAPPYTHONUDF_HPP_

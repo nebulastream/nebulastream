@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_
+#pragma once
 
 #include <stdexcept>
 #include <string>
@@ -31,5 +30,3 @@ public:
     TypeInferenceException(QueryId queryId, const std::string& message);
 };
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_EXCEPTIONS_TYPEINFERENCEEXCEPTION_HPP_

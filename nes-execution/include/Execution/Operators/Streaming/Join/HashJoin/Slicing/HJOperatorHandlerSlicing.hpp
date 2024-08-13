@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJOPERATORHANDLERSLICING_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJOPERATORHANDLERSLICING_HPP_
+#pragma once
 
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerSlicing.hpp>
@@ -84,5 +83,3 @@ public:
         const uint64_t numPartitions);
 };
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_SLICING_HJOPERATORHANDLERSLICING_HPP_

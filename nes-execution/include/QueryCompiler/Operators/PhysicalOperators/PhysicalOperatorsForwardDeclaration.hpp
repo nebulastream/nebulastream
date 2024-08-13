@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORSFORWARDDECLARATION_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORSFORWARDDECLARATION_HPP_
+#pragma once
 #include <memory>
 namespace NES
 {
@@ -105,5 +104,3 @@ using PhysicalJoinSinkOperatorPtr = std::shared_ptr<PhysicalJoinSinkOperator>;
 
 } /// namespace QueryCompilation::PhysicalOperators
 } /// namespace NES
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_PHYSICALOPERATORSFORWARDDECLARATION_HPP_

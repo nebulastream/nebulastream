@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_PLACEMENTAMENDMENTMODE_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_PLACEMENTAMENDMENTMODE_HPP_
+#pragma once
 
 #include <cstdint>
 
@@ -25,4 +24,3 @@ enum class PlacementAmendmentMode : uint8_t
     OPTIMISTIC /// uses OCC
 };
 } /// namespace NES::Optimizer
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_PLACEMENTAMENDMENTMODE_HPP_

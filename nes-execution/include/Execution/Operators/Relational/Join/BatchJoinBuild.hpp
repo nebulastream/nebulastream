@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_
+#pragma once
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
@@ -64,4 +63,3 @@ private:
     void storeValues(std::vector<Value<>> keys, Value<MemRef> valuePtr) const;
 };
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JOIN_BATCHJOINBUILD_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_MEMORYPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_MEMORYPROVIDER_HPP_
+#pragma once
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -106,4 +105,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution::MemoryProvider
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_MEMORYPROVIDER_HPP_

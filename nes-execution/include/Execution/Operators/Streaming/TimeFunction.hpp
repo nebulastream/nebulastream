@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_
+#pragma once
 
 #include <API/TimeUnit.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
@@ -81,4 +80,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_TIMEFUNCTION_HPP_

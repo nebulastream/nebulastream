@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_
-#define NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_
+#pragma once
 
 #include <memory>
 
@@ -69,5 +68,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_EXECUTION_INCLUDE_UTIL_DUMPHANDLER_CONSOLEDUMPHANDLER_HPP_

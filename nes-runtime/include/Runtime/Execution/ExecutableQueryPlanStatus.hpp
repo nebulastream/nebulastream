@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
+#pragma once
 namespace NES::Runtime::Execution
 {
 /**
@@ -30,5 +29,3 @@ enum class ExecutableQueryPlanStatus : uint8_t
     Invalid
 };
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_
+#pragma once
 #include <functional>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 namespace NES
@@ -234,5 +233,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::Interface
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAPREF_HPP_

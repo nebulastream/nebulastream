@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_
+#pragma once
 
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
@@ -45,5 +44,3 @@ public:
 };
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_UDFSERIALIZATIONUTIL_HPP_

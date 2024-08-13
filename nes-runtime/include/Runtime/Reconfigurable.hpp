@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_
+#pragma once
 
 #include <Runtime/ReconfigurationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -52,5 +51,3 @@ public:
 };
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURABLE_HPP_

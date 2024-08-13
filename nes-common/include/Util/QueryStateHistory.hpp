@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_
-#define NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_
+#pragma once
 
 #include <vector>
 #include <Util/QueryState.hpp>
@@ -50,5 +49,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_QUERYSTATEHISTORY_HPP_

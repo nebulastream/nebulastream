@@ -33,8 +33,7 @@ Copyright (c) 2016 Mitchell Dowd
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_
-#define NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_
+#pragma once
 
 #include <algorithm>
 #include <cstdint>
@@ -160,5 +159,3 @@ public:
 };
 
 } /// namespace NES::jni
-
-#endif /// NES_RUNTIME_INCLUDE_UTIL_JNI_JNI_HPP_

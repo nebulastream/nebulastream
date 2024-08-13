@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTSTRATEGY_HPP_
-#define NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTSTRATEGY_HPP_
+#pragma once
 
 #include <cinttypes>
 
@@ -31,4 +30,3 @@ enum class PlacementStrategy : uint8_t
     ELEGANT_BALANCED = 7
 };
 } /// namespace NES::Optimizer
-#endif /// NES_COMMON_INCLUDE_UTIL_PLACEMENT_PLACEMENTSTRATEGY_HPP_

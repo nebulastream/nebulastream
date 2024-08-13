@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_
+#pragma once
 
 #include <memory>
 #include <vector>
@@ -33,5 +32,3 @@ public:
     friend std::ostream& operator<<(std::ostream& os, const BlockRef& ref);
 };
 } /// namespace NES::Nautilus::Tracing
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_TRACING_TRACE_BLOCKREF_HPP_

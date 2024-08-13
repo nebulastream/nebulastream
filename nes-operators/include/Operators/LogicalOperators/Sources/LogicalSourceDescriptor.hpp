@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LOGICALSOURCEDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LOGICALSOURCEDESCRIPTOR_HPP_
+#pragma once
 
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
@@ -45,5 +44,3 @@ private:
 using LogicalSourceDescriptorPtr = std::shared_ptr<LogicalSourceDescriptor>;
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_LOGICALSOURCEDESCRIPTOR_HPP_

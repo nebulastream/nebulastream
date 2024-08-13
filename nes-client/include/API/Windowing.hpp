@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
-#define NES_CLIENT_INCLUDE_API_WINDOWING_HPP_
+#pragma once
 
 #include <memory>
 #include <API/TimeUnit.hpp>
@@ -188,5 +187,3 @@ Windowing::TimeUnit Days();
 [[maybe_unused]] ExpressionNodePtr RecordCreationTs();
 
 } /// namespace NES::API
-
-#endif /// NES_CLIENT_INCLUDE_API_WINDOWING_HPP_

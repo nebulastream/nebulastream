@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_
+#pragma once
 
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
@@ -53,4 +52,3 @@ private:
     SumAggregationDescriptor(ExpressionNodePtr onField, ExpressionNodePtr asField);
 };
 } /// namespace NES::Windowing
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_WINDOWS_AGGREGATIONS_SUMAGGREGATIONDESCRIPTOR_HPP_

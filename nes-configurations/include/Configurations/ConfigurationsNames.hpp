@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_
+#pragma once
 #include <cstdint>
 #include <string>
 
@@ -231,4 +230,3 @@ const std::string SYNOPSIS_CONFIG_HEIGHT = "synopsisHeight";
 const std::string SYNOPSIS_CONFIG_WINDOWSIZE = "synopsisWindowSize";
 
 } /// namespace NES::Configurations
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_CONFIGURATIONSNAMES_HPP_

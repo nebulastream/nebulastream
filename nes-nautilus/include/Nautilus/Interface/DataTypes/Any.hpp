@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_
+#pragma once
 #include <memory>
 #include <ostream>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -101,5 +100,3 @@ SPECIALIZE_RAW_TO_NAUTILUS_TYPE(float, Float);
 SPECIALIZE_RAW_TO_NAUTILUS_TYPE(bool, Boolean);
 
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_ANY_HPP_

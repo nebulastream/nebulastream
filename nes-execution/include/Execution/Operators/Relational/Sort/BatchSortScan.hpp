@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTSCAN_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTSCAN_HPP_
+#pragma once
 
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
@@ -58,4 +57,3 @@ private:
 };
 
 } /// namespace NES::Runtime::Execution::Operators
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_SORT_BATCHSORTSCAN_HPP_

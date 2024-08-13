@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_
+#pragma once
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
@@ -83,5 +82,3 @@ protected:
 };
 
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_OPERATOR_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_
+#pragma once
 #include <cstdint>
 #include <memory>
 #include <type_traits>
@@ -794,5 +793,3 @@ typename Value<ValueType>::ValueIndexReference Value<ValueType>::operator[](uint
 }
 
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_DATATYPES_VALUE_HPP_

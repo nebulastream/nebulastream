@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_HPP_
+#pragma once
 #include <utility>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
@@ -53,5 +52,3 @@ private:
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;
 };
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_THRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_NONKEYEDTHRESHOLDWINDOW_HPP_

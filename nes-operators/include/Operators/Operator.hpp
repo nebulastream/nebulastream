@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_
+#pragma once
 
 #include <any>
 #include <unordered_map>
@@ -211,5 +210,3 @@ protected:
 };
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_OPERATOR_HPP_

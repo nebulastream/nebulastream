@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_
+#pragma once
 #include <cstdint>
 #include <string>
 namespace NES::Nautilus
@@ -160,5 +159,3 @@ private:
     uint8_t optimizationLevel = 1;
 };
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_UTIL_COMPILATIONOPTIONS_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP_
+#pragma once
 
 #include <Execution/Aggregation/AggregationFunction.hpp>
 
@@ -35,5 +34,3 @@ public:
     uint64_t getSize() override;
 };
 } /// namespace NES::Runtime::Execution::Aggregation
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_AGGREGATION_SUMAGGREGATION_HPP_

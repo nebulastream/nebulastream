@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_
+#pragma once
 
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
@@ -164,5 +163,3 @@ private:
     FixedPageRef fixedPageRef;
 };
 } /// namespace NES::Nautilus::Interface
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPEFACTORY_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPEFACTORY_HPP_
+#pragma once
 
 #include <map>
 #include <memory>
@@ -74,5 +73,3 @@ private:
 };
 } /// namespace Configurations
 } /// namespace NES
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_WORKER_PHYSICALSOURCETYPEFACTORY_HPP_

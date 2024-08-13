@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_INCLUDE_UTIL_TIMEMEASUREMENT_HPP_
-#define NES_COMMON_INCLUDE_UTIL_TIMEMEASUREMENT_HPP_
+#pragma once
 
 #include <cstdint>
 
@@ -25,5 +24,3 @@ using Timestamp = uint64_t;
 Timestamp getTimestamp();
 
 } /// namespace NES
-
-#endif /// NES_COMMON_INCLUDE_UTIL_TIMEMEASUREMENT_HPP_

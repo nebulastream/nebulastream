@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_
+#pragma once
 
 #include <deque>
 #include <memory>
@@ -98,5 +97,3 @@ private:
 };
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_LOCALBUFFERPOOL_HPP_

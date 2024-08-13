@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_SHAREDMEMORYFIXEDVECTOR_HPP_
-#define NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_SHAREDMEMORYFIXEDVECTOR_HPP_
+#pragma once
 
 #include <filesystem>
 #include <fstream>
@@ -142,4 +141,3 @@ private:
     bool created;
 };
 } /// namespace NES::Testing::detail
-#endif /// NES_COMMON_TESTS_UTIL_INCLUDE_DETAIL_SHAREDMEMORYFIXEDVECTOR_HPP_

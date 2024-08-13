@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_UTIL_QUERYCONSOLEDUMPHANDLER_HPP_
-#define NES_OPERATORS_INCLUDE_UTIL_QUERYCONSOLEDUMPHANDLER_HPP_
+#pragma once
 
 #include <memory>
 
@@ -59,5 +58,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_UTIL_QUERYCONSOLEDUMPHANDLER_HPP_

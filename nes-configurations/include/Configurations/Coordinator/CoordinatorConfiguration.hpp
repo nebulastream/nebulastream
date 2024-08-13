@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_
+#pragma once
 
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
@@ -158,5 +157,3 @@ private:
 };
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_COORDINATOR_COORDINATORCONFIGURATION_HPP_

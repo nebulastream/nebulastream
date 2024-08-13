@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_
+#pragma once
 
 #include <mutex>
 #include <optional>
@@ -55,5 +54,3 @@ private:
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
 } /// namespace NES::Runtime
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_BUFFERSTORAGE_HPP_

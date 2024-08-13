@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP_
-#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP_
+#pragma once
 #include <stdint.h>
 namespace NES::QueryCompilation
 {
@@ -44,5 +43,3 @@ enum class OutputBufferAllocationStrategy : uint8_t
 };
 
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_PHASES_OUTPUTBUFFERALLOCATIONSTRATEGIES_HPP_

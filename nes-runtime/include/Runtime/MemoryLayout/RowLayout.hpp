@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_
+#pragma once
 
 #include <vector>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
@@ -72,5 +71,3 @@ private:
 };
 
 } /// namespace NES::Runtime::MemoryLayouts
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUT_HPP_

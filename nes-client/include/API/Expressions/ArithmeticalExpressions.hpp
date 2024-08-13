@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CLIENT_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_
-#define NES_CLIENT_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_
+#pragma once
 
 #include <memory>
 
@@ -106,4 +105,3 @@ ExpressionNodePtr operator++(ExpressionItem exp, int);
 ExpressionNodePtr operator--(ExpressionItem exp, int);
 
 } /// namespace NES
-#endif /// NES_CLIENT_INCLUDE_API_EXPRESSIONS_ARITHMETICALEXPRESSIONS_HPP_

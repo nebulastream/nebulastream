@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
+#pragma once
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus::Interface
@@ -74,4 +73,3 @@ protected:
     virtual HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) = 0;
 };
 } /// namespace NES::Nautilus::Interface
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_

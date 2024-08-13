@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
+#pragma once
 
 #include <vector>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
@@ -50,5 +49,3 @@ protected:
     QueryCompilerOptionsPtr compilerOptions;
 };
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_

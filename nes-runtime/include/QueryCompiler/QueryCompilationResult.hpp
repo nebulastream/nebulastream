@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_
-#define NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_
+#pragma once
 
 #include <optional>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
@@ -65,5 +64,3 @@ private:
     std::optional<Timer<std::chrono::nanoseconds, std::milli, double, std::chrono::high_resolution_clock>> timer;
 };
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_RUNTIME_INCLUDE_QUERYCOMPILER_QUERYCOMPILATIONRESULT_HPP_

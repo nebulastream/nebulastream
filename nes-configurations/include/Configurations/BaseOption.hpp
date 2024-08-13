@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_
+#pragma once
 #include <string>
 #include "Util/yaml/Yaml.hpp"
 namespace NES::Configurations
@@ -90,5 +89,3 @@ template <class T>
 concept DerivedBaseOption = std::is_base_of_v<BaseOption, T>;
 
 } /// namespace NES::Configurations
-
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_BASEOPTION_HPP_

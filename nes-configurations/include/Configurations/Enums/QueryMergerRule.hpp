@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYMERGERRULE_HPP_
-#define NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYMERGERRULE_HPP_
+#pragma once
 #include <cstdint>
 
 namespace NES::Optimizer
@@ -35,4 +34,3 @@ enum class QueryMergerRule : uint8_t
     Z3SignatureBasedTopDownQueryContainmentMergerRule
 };
 }
-#endif /// NES_CONFIGURATIONS_INCLUDE_CONFIGURATIONS_ENUMS_QUERYMERGERRULE_HPP_

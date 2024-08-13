@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATTYPE_HPP_
-#define NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATTYPE_HPP_
+#pragma once
 
 namespace NES
 {
@@ -28,5 +27,3 @@ enum class FormatTypes : uint8_t
     NES_FORMAT
 };
 } /// namespace NES
-
-#endif /// NES_RUNTIME_INCLUDE_SINKS_FORMATS_FORMATTYPE_HPP_

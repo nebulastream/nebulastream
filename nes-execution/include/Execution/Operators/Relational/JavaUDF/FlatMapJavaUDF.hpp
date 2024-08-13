@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_FLATMAPJAVAUDF_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_FLATMAPJAVAUDF_HPP_
+#pragma once
 
 #include <utility>
 #include <API/AttributeField.hpp>
@@ -49,5 +48,3 @@ public:
 };
 
 } /// namespace NES::Runtime::Execution::Operators
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_RELATIONAL_JAVAUDF_FLATMAPJAVAUDF_HPP_

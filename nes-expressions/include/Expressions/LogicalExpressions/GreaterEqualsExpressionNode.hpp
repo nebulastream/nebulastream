@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_
+#pragma once
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
 namespace NES
 {
@@ -43,5 +42,3 @@ protected:
     explicit GreaterEqualsExpressionNode(GreaterEqualsExpressionNode* other);
 };
 } /// namespace NES
-
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_LOGICALEXPRESSIONS_GREATEREQUALSEXPRESSIONNODE_HPP_

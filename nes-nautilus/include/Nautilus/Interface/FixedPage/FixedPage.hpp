@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_
+#pragma once
 
 #include <atomic>
 #include <cstddef>
@@ -108,4 +107,3 @@ private:
 };
 
 } /// namespace NES::Nautilus::Interface
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGE_HPP_

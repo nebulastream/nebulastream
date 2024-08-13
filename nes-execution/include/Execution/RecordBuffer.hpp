@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
+#pragma once
 
 #include <memory>
 #include <ostream>
@@ -162,5 +161,3 @@ private:
 using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_

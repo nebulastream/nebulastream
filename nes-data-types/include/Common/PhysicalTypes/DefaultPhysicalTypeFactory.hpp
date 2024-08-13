@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_DEFAULTPHYSICALTYPEFACTORY_HPP_
-#define NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_DEFAULTPHYSICALTYPEFACTORY_HPP_
+#pragma once
 
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
@@ -75,5 +74,3 @@ private:
 };
 
 } /// namespace NES
-
-#endif /// NES_DATA_TYPES_INCLUDE_COMMON_PHYSICALTYPES_DEFAULTPHYSICALTYPEFACTORY_HPP_

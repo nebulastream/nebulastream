@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_
+#pragma once
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
@@ -340,5 +339,3 @@ public:
     static LogicalUnaryOperatorPtr deserializeOpenCLOperator(const SerializableOperator_OpenCLOperatorDetails& openCLDetails);
 };
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_SERIALIZATION_OPERATORSERIALIZATIONUTIL_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONSERIALIZATIONUTIL_HPP_
-#define NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONSERIALIZATIONUTIL_HPP_
+#pragma once
 
 #include <memory>
 
@@ -62,5 +61,3 @@ private:
     static ExpressionNodePtr deserializeArithmeticalExpressions(const SerializableExpression& serializedExpression);
 };
 } /// namespace NES
-
-#endif /// NES_EXPRESSIONS_INCLUDE_EXPRESSIONS_EXPRESSIONSERIALIZATIONUTIL_HPP_

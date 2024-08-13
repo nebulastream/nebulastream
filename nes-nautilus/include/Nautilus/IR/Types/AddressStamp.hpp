@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_
+#pragma once
 #include <Nautilus/IR/Types/Stamp.hpp>
 namespace NES::Nautilus::IR::Types
 {
@@ -34,5 +33,3 @@ public:
 };
 
 } /// namespace NES::Nautilus::IR::Types
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_TYPES_ADDRESSSTAMP_HPP_

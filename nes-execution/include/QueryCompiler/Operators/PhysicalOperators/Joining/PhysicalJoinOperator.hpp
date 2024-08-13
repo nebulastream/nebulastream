@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_
+#pragma once
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
@@ -34,4 +33,3 @@ protected:
     Join::JoinOperatorHandlerPtr operatorHandler;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_OPERATORS_PHYSICALOPERATORS_JOINING_PHYSICALJOINOPERATOR_HPP_

@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_
+#pragma once
 
 #include <vector>
 #include <Nautilus/IR/Operations/Operation.hpp>
@@ -46,4 +45,3 @@ private:
     std::vector<OperationWPtr> inputArguments;
 };
 } /// namespace NES::Nautilus::IR::Operations
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_IR_OPERATIONS_PROXYCALLOPERATION_HPP_

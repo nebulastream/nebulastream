@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_GENERATABLEOPERATORPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_GENERATABLEOPERATORPROVIDER_HPP_
+#pragma once
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
@@ -32,5 +31,3 @@ public:
     virtual void lower(QueryPlanPtr queryPlan, PhysicalOperators::PhysicalOperatorPtr operatorNode) = 0;
 };
 } /// namespace NES::QueryCompilation
-
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_GENERATABLEOPERATORPROVIDER_HPP_

@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_
+#pragma once
 
 #include <cerrno>
 #include <cstdint>
@@ -161,4 +160,3 @@ SchemaPtr createJoinSchema(const SchemaPtr& leftSchema, const SchemaPtr& rightSc
 
 } /// namespace Util
 } /// namespace NES::Runtime::Execution
-#endif /// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_STREAMJOINUTIL_HPP_

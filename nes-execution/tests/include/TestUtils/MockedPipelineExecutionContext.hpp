@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINEEXECUTIONCONTEXT_HPP_
-#define NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINEEXECUTIONCONTEXT_HPP_
+#pragma once
 
 #include <set>
 #include <vector>
@@ -36,5 +35,3 @@ public:
     std::set<SequenceData> seenSeqChunkLastChunk;
 };
 } /// namespace NES::Runtime::Execution
-
-#endif /// NES_EXECUTION_TESTS_INCLUDE_TESTUTILS_MOCKEDPIPELINEEXECUTIONCONTEXT_HPP_

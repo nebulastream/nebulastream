@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
-#define NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_
+#pragma once
 
 #include <chrono>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -52,5 +51,3 @@ private:
 using CsvSourceDescriptorPtr = std::shared_ptr<CsvSourceDescriptor>;
 
 } /// namespace NES
-
-#endif /// NES_OPERATORS_INCLUDE_OPERATORS_LOGICALOPERATORS_SOURCES_CSVSOURCEDESCRIPTOR_HPP_

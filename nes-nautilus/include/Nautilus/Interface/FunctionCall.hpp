@@ -11,8 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
-#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_
+#pragma once
 #include <cstdio>
 #include <memory>
 #include <unistd.h>
@@ -313,5 +312,3 @@ auto FunctionCall(std::string functionName, R (*fnptr)(FunctionArguments...), Va
 }
 
 } /// namespace NES::Nautilus
-
-#endif /// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FUNCTIONCALL_HPP_

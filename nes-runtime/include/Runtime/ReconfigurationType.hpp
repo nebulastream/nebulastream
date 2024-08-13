@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONTYPE_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONTYPE_HPP_
+#pragma once
 
 #include <cstdint>
 
@@ -33,5 +32,3 @@ enum class ReconfigurationType : uint8_t
     FailEndOfStream,
 };
 }
-
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_RECONFIGURATIONTYPE_HPP_
