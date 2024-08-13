@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#pragma once
+
 /// clang-format off
 #ifndef NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
 #    define NES_NES_CORE_INCLUDE_VERSION_VERSION_HPP_
