@@ -11,7 +11,7 @@ on:
       branch:
         description: 'Branch to build docker executable images for'
         required: true
-        default: 'master'
+        default: 'main'
 
 jobs:
     build-docker:
@@ -44,7 +44,7 @@ jobs:
             ref: ${{ github.event.inputs.branch }}
         - name: Build Executable Docker Image
           working-directory: ${{ github.workspace }}/docker
-          # Will create a docker image with the name dod-<branchname>-<arch>, e.g., dod-master-X64
+          # Will create a docker image with the name dod-<branchname>-<arch>, e.g., dod-main-X64
           run: bash scripts/build_docker_image_executable_image.sh dod-${{ github.event.inputs.branch }}-${{ matrix.arch }} ${{ matrix.arch }} ${{ matrix.package_name }} ${{ matrix.platform }} nes-public-executable-image
         - name: "Release and Push NES Executable Image"
           run: |

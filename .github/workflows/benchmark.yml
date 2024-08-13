@@ -34,7 +34,7 @@ jobs:
           exclude_assets: '*.py,*.so'
           keep_files: true
           external_repository: nebulastream/benchmark-data
-          publish_branch: master
+          publish_branch: main
       - name: docker cleanup
         if: ${{ always() }}
         run: |
