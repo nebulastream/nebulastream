@@ -15,7 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <string>
 #include <variant>
 
 namespace NES
@@ -52,14 +51,8 @@ class DataSource;
 class SourceHandle;
 using SourceHandlPtr = std::shared_ptr<SourceHandle>;
 
-class DataEmitter;
-using DataEmitterPtr = std::shared_ptr<DataEmitter>;
-
 namespace Runtime
 {
-
-class RuntimeEventListener;
-using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<BufferStorage>;
