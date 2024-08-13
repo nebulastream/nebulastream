@@ -29,41 +29,21 @@
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/ThreadNaming.hpp>
 
-#ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
-#    if defined(__linux__)
-#        include <numa.h>
-#        include <numaif.h>
-#    endif
-#endif
 #include <utility>
-using namespace std::string_literals;
 namespace NES
 {
 
-std::vector<Runtime::Execution::SuccessorExecutablePipeline> DataSource::getExecutableSuccessors()
-{
-    return executableSuccessors;
-}
-
-void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines)
-{
-    successorModifyMutex.lock();
-    for (auto& pipe : newPipelines)
-    {
-        executableSuccessors.push_back(pipe);
-    }
-}
-
 DataSource::DataSource(
+    OriginId originId,
     SchemaPtr pSchema,
     Runtime::BufferManagerPtr bufferManager,
     Runtime::QueryManagerPtr queryManager,
     OperatorId operatorId,
     OriginId originId,
+    std::unique_ptr<Source> sourceImplementation,
     size_t numSourceLocalBuffers,
-    const std::string& physicalSourceName,
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors,
-    uint64_t sourceAffinity,
+    uint64_t numberOfBuffersToProduce,
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors,
     uint64_t taskQueueId)
     : Runtime::Reconfigurable()
     , DataEmitter()
@@ -72,19 +52,17 @@ DataSource::DataSource(
     , executableSuccessors(std::move(executableSuccessors))
     , operatorId(operatorId)
     , originId(originId)
-    , schema(std::move(pSchema))
+    , schema(pSchema)
     , numSourceLocalBuffers(numSourceLocalBuffers)
-    , sourceAffinity(sourceAffinity)
+    , sourceAffinity(sourceAffinity) numberOfBuffersToProduce(numberOfBuffersToProduce)
     , taskQueueId(taskQueueId)
-    , physicalSourceName(physicalSourceName)
+    , sourceImplementation(std::move(sourceImplementation))
 {
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
     NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
-    /// TODO #4094: enable this exception -- currently many UTs are designed to assume empty executableSuccessors
-    ///    if (this->executableSuccessors.empty()) {
-    ///        throw Exceptions::RuntimeException("empty executable successors");
-    ///    }
+    /// TODO we should check if executableSuccessors.empty()
+    /// ReSharper disable once CppDFAUnreachableCode (the code below is reachable)
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
         memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, localBufferManager->getBufferSize());
@@ -93,6 +71,13 @@ DataSource::DataSource(
     {
         memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, localBufferManager->getBufferSize());
     }
+}
+
+DataSource::~DataSource() NES_NOEXCEPT(false)
+{
+    NES_ASSERT(running == false, "Data source destroyed but thread still running... stop() was not called");
+    NES_DEBUG("DataSource {}: Destroy Data Source.", originId);
+    executableSuccessors.clear();
 }
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
@@ -122,16 +107,7 @@ void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
     uint64_t queueId = 0;
     for (const auto& successor : executableSuccessors)
     {
-        /// find the queue to which this sources pushes
-        if (!sourceSharing)
-        {
-            queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
-        }
-        else
-        {
-            NES_DEBUG("push task for queueid= {} successor= ", queueId /*, &successor*/);
-            queryManager->addWorkForNextPipeline(buffer, successor, queueId);
-        }
+        queryManager->addWorkForNextPipeline(buffer, successor, taskQueueId);
     }
 }
 
@@ -144,12 +120,6 @@ void DataSource::setOperatorId(OperatorId operatorId)
 {
     this->operatorId = operatorId;
 }
-
-SchemaPtr DataSource::getSchema() const
-{
-    return schema;
-}
-
 DataSource::~DataSource() NES_NOEXCEPT(false)
 {
     NES_ASSERT(running == false, "Data source destroyed but thread still running... stop() was not called");
@@ -162,109 +132,57 @@ bool DataSource::start()
     NES_DEBUG("DataSource  {} : start source", operatorId);
     std::promise<bool> prom;
     std::unique_lock lock(startStopMutex);
-    bool expected = false;
-    std::shared_ptr<std::thread> thread{nullptr};
-    if (!running.compare_exchange_strong(expected, true))
     {
-        NES_WARNING("DataSource {}: is already running", operatorId);
-        return false;
-    }
-    else
-    {
-        type = getType();
+        bool expected = false;
+
+        /// Check if the DataSource is already running.
+        if (!running.compare_exchange_strong(expected, true))
+        {
+            NES_WARNING("DataSource {}: is already running", operatorId);
+            return false;
+        }
+        std::unique_ptr<std::thread> thread{nullptr};
+        type = sourceImplementation->getType();
         NES_DEBUG("DataSource {}: Spawn thread", operatorId);
-        auto expected = false;
+        expected = false;
+        /// Start the main thread and detach it if successfull.
         if (wasStarted.compare_exchange_strong(expected, true))
         {
-            thread = std::make_shared<std::thread>(
+            /// thread runs the runningRoutine indepenently (detach), until runningRoutine finishes.
+            thread = std::make_unique<std::thread>(
                 [this, &prom]()
                 {
-            /// Create a cpu_set_t object representing a set of CPUs. Clear it and mark
-            /// only CPU i as set.
-#ifdef __linux__
-                    if (sourceAffinity != std::numeric_limits<uint64_t>::max())
-                    {
-                        NES_ASSERT(
-                            sourceAffinity < std::thread::hardware_concurrency(),
-                            "pinning position is out of cpu range maxPosition=" << sourceAffinity);
-                        cpu_set_t cpuset;
-                        CPU_ZERO(&cpuset);
-                        CPU_SET(sourceAffinity, &cpuset);
-                        int rc = pthread_setaffinity_np(pthread_self(), sizeof(cpu_set_t), &cpuset);
-                        if (rc != 0)
-                        {
-                            NES_THROW_RUNTIME_ERROR("Cannot set thread affinity on source thread " << operatorId);
-                        }
-                    }
-                    else
-                    {
-                        NES_WARNING("Use default affinity for source");
-                    }
-#endif
                     prom.set_value(true);
                     runningRoutine();
                     NES_DEBUG("DataSource {}: runningRoutine is finished", operatorId);
                 });
         }
-    }
-    if (thread)
-    {
-        thread->detach();
+        if (thread)
+        {
+            thread->detach();
+        }
     }
     return prom.get_future().get();
 }
 
-bool DataSource::fail()
-{
-    bool isStopped = stop(Runtime::QueryTerminationType::Failure); /// this will block until the thread is stopped
-    NES_DEBUG("Source {} stop executed= {}", operatorId, (isStopped ? "stopped" : "cannot stop"));
-    {
-        /// it may happen that the source failed prior of sending its eos
-        std::unique_lock lock(startStopMutex); /// do not call stop if holding this mutex
-        auto self = shared_from_base<DataSource>();
-        NES_DEBUG("Source {} has already injected failure? {}", operatorId, (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
-        if (!this->endOfStreamSent)
-        {
-            endOfStreamSent = queryManager->addEndOfStream(self, Runtime::QueryTerminationType::Failure);
-            queryManager->notifySourceCompletion(self, Runtime::QueryTerminationType::Failure);
-            NES_DEBUG("Source {} injecting failure  {}", operatorId, (endOfStreamSent ? "EoS sent" : "cannot send EoS"));
-        }
-        return isStopped && endOfStreamSent;
-    }
-    return false;
-}
-
 namespace detail
 {
+/// Called only in asserts of stop(). If deadline is reached, the assert fails, thus during normal execution the future is not reached.
 template <typename R, typename P>
 bool waitForFuture(std::future<bool>&& future, std::chrono::duration<R, P>&& deadline)
 {
     auto terminationStatus = future.wait_for(deadline);
-    switch (terminationStatus)
-    {
-        case std::future_status::ready: {
-            return future.get();
-        }
-        default: {
-            return false;
-        }
-    }
+    return (terminationStatus == std::future_status::ready) ? future.get() : false;
 }
 } /// namespace detail
 
 bool DataSource::stop(Runtime::QueryTerminationType graceful)
 {
     using namespace std::chrono_literals;
-    /// Do not call stop from the runningRoutine!
+    /// Do not call stop from the runningRoutine! <-- is fine, because we want to call stop from the outside, but why does it matter?
     {
         std::unique_lock lock(startStopMutex); /// this mutex guards the thread variable
-        wasGracefullyStopped = graceful;
-    }
-
-    refCounter++;
-    if (refCounter != numberOfConsumerQueries)
-    {
-        return true;
+        terminationType = graceful;
     }
 
     NES_DEBUG("DataSource {}: Stop called and source is {}", operatorId, (running ? "running" : "not running"));
@@ -272,9 +190,8 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful)
 
     /// TODO add wakeUp call if source is blocking on something, e.g., tcp socket
     /// TODO in general this highlights how our source model has some issues
-
-    /// TODO this is also an issue in the current development of the StaticDataSource. If it is still running here, we give up to early and never join the thread.
-
+    ///
+    bool isStopped;
     try
     {
         if (!running.compare_exchange_strong(expected, false))
@@ -283,45 +200,47 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful)
             auto expected = false;
             if (wasStarted && futureRetrieved.compare_exchange_strong(expected, true))
             {
+                /// Todo: random magic timeout after 60s
                 NES_ASSERT2_FMT(
-                    detail::waitForFuture(completedPromise.get_future(), 60s), "Cannot complete future to stop source " << operatorId);
+                    detail::waitForFuture(completedPromise.get_future(), 60s), "Cannot complete future to stop source " << originId);
             }
             NES_DEBUG("DataSource {} was not running, future retrieved", operatorId);
-            return true; /// it's ok to return true because the source is stopped
         }
         else
         {
             NES_DEBUG("DataSource {} was running, retrieving future now...", operatorId);
             auto expected = false;
+            /// Todo: random magic timeout after 10min
             NES_ASSERT2_FMT(
                 wasStarted && futureRetrieved.compare_exchange_strong(expected, true)
                     && detail::waitForFuture(completedPromise.get_future(), 10min),
                 "Cannot complete future to stop source " << operatorId);
-            NES_WARNING("Stopped Source {} = {}", operatorId, wasGracefullyStopped);
-            return true;
+            NES_WARNING("Stopped Source {} = {}", operatorId, terminationType);
         }
+        /// it's ok to return true because the source is stopped
+        isStopped = true;
     }
     catch (...)
     {
         auto expPtr = std::current_exception();
-        wasGracefullyStopped = Runtime::QueryTerminationType::Failure;
+        terminationType = Runtime::QueryTerminationType::Failure;
         try
         {
             if (expPtr)
             {
                 std::rethrow_exception(expPtr);
             }
+            isStopped = false;
         }
-        catch (std::exception const& e)
-        { /// it would not work if you pass by value
-            /// I leave the following lines just as a reminder:
-            /// here we do not need to call notifySourceFailure because it is done from the main thread
-            /// the only reason to call notifySourceFailure is when the main thread was not stated
+        catch (std::exception const& e) /// e needs to be passed by reference
+        {
+            /// stop() can be called from an outside class before the start() finished creating the DataSource thread.
+            /// if the DataSource thread was not started, it cannot call notifySourceFailure, so we need to do it here instead.
             if (!wasStarted)
             {
                 queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
             }
-            return true;
+            isStopped = true;
         }
     }
 
@@ -335,10 +254,11 @@ void DataSource::open()
 
 void DataSource::close()
 {
+    sourceImplementation->close();
     Runtime::QueryTerminationType queryTerminationType;
     {
         std::unique_lock lock(startStopMutex);
-        queryTerminationType = this->wasGracefullyStopped;
+        queryTerminationType = this->terminationType;
     }
     if (queryTerminationType != Runtime::QueryTerminationType::Graceful
         || queryManager->canTriggerEndOfStream(shared_from_base<DataSource>(), queryTerminationType))
@@ -354,15 +274,25 @@ void DataSource::close()
     }
 }
 
+OriginId DataSource::getOriginId() const
+{
+    return this->originId;
+}
+
+std::string DataSource::toString() const
+{
+    return sourceImplementation->toString();
+}
+
 void DataSource::runningRoutine()
 {
     try
     {
-        NES_ASSERT(this->operatorId != INVALID_OPERATOR_ID, "The id of the source is not set properly");
+        NES_ASSERT(this->originId != INVALID_ORIGIN_ID, "The id of the source is not set properly");
         std::string thName = fmt::format("DataSrc-{}", operatorId);
         setThreadName(thName.c_str());
 
-        NES_DEBUG("DataSource {}: Running Data Source of type={}", operatorId, magic_enum::enum_name(getType()));
+        NES_DEBUG("DataSource {}: Running Data Source of type={}", operatorId, magic_enum::enum_name(sourceImplementation->getType()));
         if (numberOfBuffersToProduce == 0)
         {
             NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
@@ -372,36 +302,41 @@ void DataSource::runningRoutine()
         {
             NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
         }
-        open();
+        /// open
+        bufferManager = localBufferManager->createFixedSizeBufferPool(1);
+        sourceImplementation->open();
+
         uint64_t numberOfBuffersProduced = 0;
         while (running)
         {
             ///check if already produced enough buffer
             if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce)
             {
-                auto optBuf = receiveData(); /// note that receiveData might block
+                auto tupleBuffer = allocateBuffer();
+                auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer); /// note that receiveData might block
+                NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuplez: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
+
                 ///this checks we received a valid output buffer
-                if (optBuf.has_value())
+                if (isReceivedData)
                 {
-                    auto& buf = optBuf.value();
+                    std::stringstream sourceStringStream;
+                    sourceStringStream << this;
                     NES_TRACE(
                         "DataSource produced buffer {} type= {} string={}: Received Data: {} "
-                        "operatorId={} orgID={}",
+                        "operatorId={}",
                         numberOfBuffersProduced,
-                        magic_enum::enum_name(getType()),
-                        toString(),
-                        buf.getNumberOfTuples(),
-                        this->operatorId,
+                        magic_enum::enum_name(sourceImplementation->getType()),
+                        sourceStringStream.str(),
+                        tupleBuffer.getNumberOfTuples(),
                         this->operatorId);
 
                     if (Logger::getInstance()->getCurrentLogLevel() == LogLevel::LOG_TRACE)
                     {
-                        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, buf.getBufferSize());
-                        auto buffer = Runtime::MemoryLayouts::TestTupleBuffer(layout, buf);
-                        NES_TRACE("DataSource produced buffer content={}", buffer.toString(schema));
+                        auto layout = Runtime::MemoryLayouts::RowLayout::create(schema, tupleBuffer.getBuffer().getBufferSize());
+                        NES_TRACE("DataSource produced buffer content={}", tupleBuffer.toString(schema));
                     }
-
-                    emitWork(buf);
+                    auto buffer = tupleBuffer.getBuffer();
+                    emitWork(buffer);
                     ++numberOfBuffersProduced;
                 }
                 else
@@ -456,48 +391,15 @@ void DataSource::runningRoutine()
     NES_DEBUG("DataSource {} end runningRoutine", operatorId);
 }
 
-/// debugging
-uint64_t DataSource::getNumberOfGeneratedTuples() const
+const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& DataSource::getExecutableSuccessors()
 {
-    return generatedTuples;
-};
-uint64_t DataSource::getNumberOfGeneratedBuffers() const
-{
-    return generatedBuffers;
-};
-
-std::string DataSource::getSourceSchemaAsString()
-{
-    return schema->toString();
-}
-
-uint64_t DataSource::getNumBuffersToProcess() const
-{
-    return numberOfBuffersToProduce;
-}
-
-std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts()
-{
-    return {Schema::MemoryLayoutType::ROW_LAYOUT};
+    return executableSuccessors;
 }
 
 Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer()
 {
     auto buffer = bufferManager->getBufferBlocking();
     return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
-}
-
-void DataSource::onEvent(Runtime::BaseEvent& event)
-{
-    NES_DEBUG("DataSource::onEvent(event) called. operatorId: {}", this->operatorId);
-    /// no behaviour needed, call onEvent of direct ancestor
-    DataEmitter::onEvent(event);
-}
-
-void DataSource::onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef)
-{
-    NES_DEBUG("DataSource::onEvent(event, wrkContext) called. operatorId:  {}", this->operatorId);
-    onEvent(event);
 }
 
 } /// namespace NES

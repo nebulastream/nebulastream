@@ -15,79 +15,33 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_CSVSOURCE_HPP_
 
-#include <chrono>
 #include <fstream>
 #include <string>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Sources/Source.hpp>
 
 namespace NES
 {
 
 class CSVParser;
 using CSVParserPtr = std::shared_ptr<CSVParser>;
-/**
- * @brief this class implement the CSV as an input source
- */
-class CSVSource : public DataSource
+
+class CSVSource : public Source
 {
 public:
-    /**
-   * @brief constructor of the CSV source
-   * @param schema of the source
-   * @param bufferManager pointer to the buffer manager
-   * @param queryManager pointer to the query manager
-   * @param csvSourceType points to the current source configuration object, look at and CSVSourceType for info
-   * @param operatorId current operator id
-   * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
-   * @param numSourceLocalBuffers number of local source buffers
-   * @param physicalSourceName the name and unique identifier of a physical source
-   * @param successors the subsequent operators in the pipeline to which the data is pushed
-   * @return a DataSourcePtr pointing to the data source
-   */
-    explicit CSVSource(
-        SchemaPtr schema,
-        Runtime::BufferManagerPtr bufferManager,
-        Runtime::QueryManagerPtr queryManager,
-        CSVSourceTypePtr csvSourceType,
-        OperatorId operatorId,
-        OriginId originId,
-        size_t numSourceLocalBuffers,
-        const std::string& physicalSourceName,
-        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+    explicit CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
 
-    /**
-     * @brief override the receiveData method for the csv source
-     * @return returns a buffer if available
-     */
-    std::optional<Runtime::TupleBuffer> receiveData() override;
+    bool fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) override;
 
-    /**
-     *  @brief method to fill the buffer with tuples
-     *  @param buffer to be filled
-     */
+    void open() override{/* noop */};
+    void close() override{/* noop */};
+
     void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 
-    /**
-     * @brief override the toString method for the csv source
-     * @return returns string describing the binary source
-     */
     std::string toString() const override;
 
-    /**
-     * @brief Get source type
-     * @return source type
-     */
     SourceType getType() const override;
 
-    /**
-     * @brief Get file path for the csv file
-     */
-    std::string getFilePath() const;
-
-    /**
-     * @brief getter for source config
-     * @return csvSourceType1
-     */
     const CSVSourceTypePtr& getSourceConfig() const;
 
 protected:
@@ -105,6 +59,11 @@ private:
     size_t fileSize;
     bool skipHeader;
     CSVParserPtr inputParser;
+
+    uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
+    SchemaPtr schema;
+    uint64_t generatedTuples{0};
+    uint64_t generatedBuffers{0};
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
