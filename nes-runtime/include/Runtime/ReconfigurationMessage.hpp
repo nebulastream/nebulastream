@@ -29,22 +29,14 @@ namespace NES::Runtime
 class Reconfigurable;
 using ReconfigurablePtr = std::shared_ptr<Reconfigurable>;
 
-/**
- * @brief this class contains the description of the reconfiguration that
- * must be carried out
- */
+/// A reconfiguration message kickstarts the configuration process that passes a reconfiguration task to every running thread.
+/// A reconfiguration task is a synchronization/thread barrier. Upon receiving a reconfiguration task, a worker threads halts
+/// execution, until all worker threads received the reconfiguration message.
 class ReconfigurationMessage
 {
     using ThreadBarrierPtr = std::unique_ptr<ThreadBarrier>;
 
 public:
-    /**
-     * @brief create a reconfiguration task that will be used to kickstart the reconfiguration process
-     * @param parentPlanId the owning plan id
-     * @param type what kind of reconfiguration we want
-     * @param instance the target of the reconfiguration
-     * @param userdata extra information to use in this reconfiguration
-     */
     explicit ReconfigurationMessage(
         const SharedQueryId sharedQueryId,
         const DecomposedQueryPlanId parentPlanId,
@@ -63,14 +55,6 @@ public:
         NES_ASSERT(this->userdata.has_value(), "invalid userdata");
     }
 
-    /**
-     * @brief create a reconfiguration task that will be passed to every running thread
-     * @param other the task we want to issue (created using the other ctor)
-     * @param numThreads number of running threads
-     * @param instance the target of the reconfiguration
-     * @param userdata extra information to use in this reconfiguration
-     * @param blocking whether the reconfiguration must block for completion
-     */
     explicit ReconfigurationMessage(
         const SharedQueryId sharedQueryId,
         const DecomposedQueryPlanId parentPlanId,
@@ -96,12 +80,6 @@ public:
         }
     }
 
-    /**
-     * @brief create a reconfiguration task that will be passed to every running thread
-     * @param other the task we want to issue (created using the other ctor)
-     * @param numThreads number of running threads
-     * @param blocking whether the reconfiguration must block for completion
-     */
     explicit ReconfigurationMessage(const ReconfigurationMessage& other, uint64_t numThreads, bool blocking = false)
         : ReconfigurationMessage(other)
     {
@@ -114,71 +92,37 @@ public:
         }
     }
 
-    /**
-     * @brief copy constructor
-     * @param that
-     */
-    ReconfigurationMessage(const ReconfigurationMessage& that)
-        : type(that.type)
-        , instance(that.instance)
+    ReconfigurationMessage(const ReconfigurationMessage& other)
+        : type(other.type)
+        , instance(other.instance)
         , syncBarrier(nullptr)
         , postSyncBarrier(nullptr)
-        , sharedQueryId(that.sharedQueryId)
-        , parentPlanId(that.parentPlanId)
-        , userdata(that.userdata)
+        , sharedQueryId(other.sharedQueryId)
+        , parentPlanId(other.parentPlanId)
+        , userdata(other.userdata)
     {
         /// nop
     }
 
-    /**
-     * @brief Destructor that calls destroy()
-     */
     ~ReconfigurationMessage() { destroy(); }
 
-    /**
-     * @brief get the reconfiguration type
-     * @return the reconfiguration type
-     */
     [[nodiscard]] ReconfigurationType getType() const { return type; }
 
-    /**
-     * @brief get the target plan id
-     * @return the query id
-     */
     [[nodiscard]] SharedQueryId getQueryId() const { return sharedQueryId; }
 
-    /**
-     * @brief get the target plan id
-     * @return the plan id
-     */
     [[nodiscard]] DecomposedQueryPlanId getParentPlanId() const { return parentPlanId; }
 
-    /**
-     * @brief get the target instance to reconfigura
-     * @return the target instance
-     */
     [[nodiscard]] ReconfigurablePtr getInstance() const { return instance; };
 
-    /**
-     * @brief issue a synchronization barrier for all threads
-     */
+    /// issue a synchronization barrier for all threads
     void wait();
 
-    /**
-     * @brief callback executed after the reconfiguration is carried out
-     */
     void postReconfiguration();
 
-    /**
-     * @brief issue a synchronization barrier for all threads
-     */
+    /// issue a synchronization barrier for all threads
     void postWait();
 
-    /**
-     * @brief Provides the userdata installed in this reconfiguration descriptor
-     * @tparam T the type of the reconfiguration's userdata
-     * @return the user data value or error if that is not set
-     */
+    /// Provides the userdata installed in this reconfiguration descriptor
     template <typename T>
     [[nodiscard]] T getUserData() const
     {
@@ -187,9 +131,6 @@ public:
     }
 
 private:
-    /**
-     * @brief resouce cleanup method
-     */
     void destroy();
 
     /// type of the reconfiguration

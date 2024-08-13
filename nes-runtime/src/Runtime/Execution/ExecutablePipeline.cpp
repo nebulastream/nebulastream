@@ -92,7 +92,7 @@ bool ExecutablePipeline::start()
             sharedQueryId,
             decomposedQueryPlanId,
             ReconfigurationType::Initialize,
-            inherited0::shared_from_this(),
+            shared_from_this(),
             std::make_any<uint32_t>(activeProducers.load()));
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers())
         {
@@ -240,7 +240,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 fail();
                 /// tell the query manager about it
                 queryManager->notifyPipelineCompletion(
-                    decomposedQueryPlanId, inherited0::shared_from_this<ExecutablePipeline>(), Runtime::QueryTerminationType::Failure);
+                    decomposedQueryPlanId, shared_from_this<ExecutablePipeline>(), Runtime::QueryTerminationType::Failure);
                 for (const auto& successorPipeline : successorPipelines)
                 {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline))
@@ -292,8 +292,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 /// second, stop pipeline, if not stopped yet
                 stop(terminationType);
                 /// finally, notify query manager
-                queryManager->notifyPipelineCompletion(
-                    decomposedQueryPlanId, inherited0::shared_from_this<ExecutablePipeline>(), terminationType);
+                queryManager->notifyPipelineCompletion(decomposedQueryPlanId, shared_from_this<ExecutablePipeline>(), terminationType);
 
                 for (const auto& successorPipeline : successorPipelines)
                 {

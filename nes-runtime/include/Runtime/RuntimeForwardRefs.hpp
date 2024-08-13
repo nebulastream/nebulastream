@@ -16,7 +16,6 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEFORWARDREFS_HPP_
 
 #include <memory>
-#include <string>
 #include <variant>
 
 namespace NES
@@ -53,9 +52,6 @@ class DataSource;
 class SourceHandle;
 using SourceHandlPtr = std::shared_ptr<SourceHandle>;
 
-class DataEmitter;
-using DataEmitterPtr = std::shared_ptr<DataEmitter>;
-
 namespace Runtime
 {
 
@@ -64,9 +60,6 @@ enum class NumaAwarenessFlag : int8_t
     ENABLED,
     DISABLED
 };
-
-class RuntimeEventListener;
-using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<BufferStorage>;

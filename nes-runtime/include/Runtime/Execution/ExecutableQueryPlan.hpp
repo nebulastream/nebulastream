@@ -17,17 +17,14 @@
 
 #include <atomic>
 #include <future>
-#include <map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
-#include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourceHandle.hpp>
-#include <Sources/SourcesForwardedRefs.hpp>
 
 namespace NES::Runtime
 {
