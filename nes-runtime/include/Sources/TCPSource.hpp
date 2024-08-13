@@ -18,8 +18,9 @@
 #include <memory>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Sources/DataSource.hpp>
+#include <Sources/Source.hpp>
 #include <Util/MMapCircularBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES
 {
@@ -30,83 +31,32 @@ using ParserPtr = std::shared_ptr<Parser>;
 /**
  * @brief source to receive data via TCP connection
  */
-class TCPSource : public DataSource
+class TCPSource : public Source
 {
     /// TODO #74: make timeout configurable via descriptor
     constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
 
 public:
-    /**
-     * @brief constructor of a TCP Source
-     * @param schema the schema of the data
-     * @param bufferManager The BufferManager is responsible for: 1. Pooled Buffers: preallocated fixed-size buffers of memory that
-     * must be reference counted 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly.
-     * They are also subject to reference counting.
-     * @param queryManager comes with functionality to manage the queries
-     * @param tcpSourceType points at current TCPSourceType config object, look at same named file for info
-     * @param operatorId represents a locally running query execution plan
-     * @param originId represents an origin
-     * @param numSourceLocalBuffers number of local source buffers
-     * @param physicalSourceName the name and unique identifier of a physical source
-     * @param executableSuccessors executable operators coming after this source
-     */
-    explicit TCPSource(
-        SchemaPtr schema,
-        std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
-        Runtime::QueryManagerPtr queryManager,
-        TCPSourceTypePtr tcpSourceType,
-        OperatorId operatorId,
-        OriginId originId,
-        size_t numSourceLocalBuffers,
-        const std::string& physicalSourceName,
-        std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors);
+    explicit TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
 
-    /**
-     * @brief override the receiveData method for the csv source
-     * @return returns a buffer if available
-     */
-    std::optional<Memory::TupleBuffer> receiveData() override;
+    bool fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) override;
 
-    /**
-     *  @brief method to fill the buffer with tuples
-     *  @param buffer to be filled
-     */
     bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 
-    /**
-     * @brief override the toString method for the csv source
-     * @return returns string describing the binary source
-     */
     std::string toString() const override;
 
-    /**
-     * @brief Get source type
-     * @return source type
-     */
     SourceType getType() const override;
 
-    /**
-     * @brief getter for source config
-     * @return tcpSourceType
-     */
     const TCPSourceTypePtr& getSourceConfig() const;
 
-    /**
-     * @brief opens TCP connection
-     */
+    /// Open TCP connection.
     void open() override;
-
-    /**
-     * @brief closes TCP connection
-     */
+    /// Close TCP connection.
     void close() override;
 
 private:
-    /**
-     * \brief converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
-     * \param data data memory segment which contains the buffersize
-     * \return buffersize
-     */
+    /// Oonverts buffersize in either binary (NES Format) or ASCII (Json and CSV)
+    /// takes 'data', which is a data memory segment which contains the buffersize
     [[nodiscard]] size_t parseBufferSize(SPAN_TYPE<const char> data) const;
 
     std::vector<PhysicalTypePtr> physicalTypes;
@@ -118,6 +68,10 @@ private:
     int sockfd = -1;
     timeval timeout;
     MMapCircularBuffer circularBuffer;
+
+    SchemaPtr schema;
+    uint64_t generatedTuples{0};
+    uint64_t generatedBuffers{0};
 };
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
 } /// namespace NES
