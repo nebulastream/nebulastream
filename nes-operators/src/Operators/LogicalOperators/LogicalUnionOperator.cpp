@@ -13,11 +13,11 @@
 */
 
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
 
 namespace NES
@@ -68,19 +68,15 @@ bool LogicalUnionOperator::inferSchema()
 
     if (!leftInputSchema->hasEqualTypes(rightInputSchema))
     {
-        NES_ERROR(
-            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {} ",
+        throw CannotInferSchema(fmt::format(
+            "Found Schema mismatch for left and right schema types. Left schema {} and Right schema {}",
             leftInputSchema->toString(),
-            rightInputSchema->toString());
-        throw TypeInferenceException(
-            "Found Schema mismatch for left and right schema types. Left schema " + leftInputSchema->toString() + " and Right schema "
-            + rightInputSchema->toString());
+            rightInputSchema->toString()));
     }
 
     if (leftInputSchema->getLayoutType() != rightInputSchema->getLayoutType())
     {
-        NES_ERROR("Left and right should have same memory layout");
-        throw TypeInferenceException("Left and right should have same memory layout");
+        throw CannotInferSchema("Left and right should have same memory layout");
     }
 
     ///Copy the schema of left input

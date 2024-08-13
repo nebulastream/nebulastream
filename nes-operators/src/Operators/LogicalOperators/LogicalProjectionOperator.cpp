@@ -18,10 +18,10 @@
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {
@@ -84,14 +84,10 @@ bool LogicalProjectionOperator::inferSchema()
         }
         else
         {
-            NES_ERROR(
-                "LogicalProjectionOperator: Expression has to be an FieldAccessExpression or a FieldRenameExpression "
-                "but it was a {}",
-                expression->toString());
-            throw TypeInferenceException(
+            throw CannotInferSchema(fmt::format(
                 "LogicalProjectionOperator: Expression has to be an FieldAccessExpression or a "
-                "FieldRenameExpression but it was a "
-                + expression->toString());
+                "FieldRenameExpression but it was a {}.",
+                expression->toString()));
         }
     }
     return true;

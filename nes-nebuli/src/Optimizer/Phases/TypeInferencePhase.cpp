@@ -13,7 +13,6 @@
 */
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
@@ -43,14 +42,9 @@ QueryPlanPtr TypeInferencePhase::execute(QueryPlanPtr queryPlan)
     {
         NES_WARNING("TypeInferencePhase: No SourceCatalog specified!");
     }
-    /// Fetch the source and sink operators.
     auto sourceOperators = queryPlan->getSourceOperators();
     auto sinkOperators = queryPlan->getSinkOperators();
-
-    if (sourceOperators.empty() || sinkOperators.empty())
-    {
-        throw TypeInferenceException(queryPlan->getQueryId(), "Found no source or sink operators");
-    }
+    PRECONDITION(!sourceOperators.empty() && !sinkOperators.empty(), "Given query plan does not inlcude source and sink");
 
     performTypeInference(queryPlan->getQueryId(), sourceOperators, sinkOperators);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
@@ -66,11 +60,7 @@ DecomposedQueryPlanPtr TypeInferencePhase::execute(DecomposedQueryPlanPtr decomp
     /// Fetch the source and sink operators.
     auto sourceOperators = decomposedQueryPlan->getSourceOperators();
     auto sinkOperators = decomposedQueryPlan->getSinkOperators();
-
-    if (sourceOperators.empty() || sinkOperators.empty())
-    {
-        throw TypeInferenceException("Found no source or sink operators");
-    }
+    PRECONDITION(!sourceOperators.empty() && !sinkOperators.empty(), "Given query plan does not inlcude source and sink");
 
     performTypeInference(decomposedQueryPlan->getQueryId(), sourceOperators, sinkOperators);
     NES_DEBUG("TypeInferencePhase: we inferred all schemas");
@@ -120,8 +110,7 @@ void TypeInferencePhase::performTypeInference(
     {
         if (!sink->inferSchema())
         {
-            NES_ERROR("TypeInferencePhase: Exception occurred during type inference phase.");
-            throw TypeInferenceException(planId, "TypeInferencePhase: Failed!");
+            throw CannotInferSchema(fmt::format("Schema inference for sink failed in plan id: {}", planId.toString()));
         }
     }
 }
