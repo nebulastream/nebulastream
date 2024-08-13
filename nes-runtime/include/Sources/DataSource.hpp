@@ -43,7 +43,7 @@ namespace NES
 /// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
 /// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
 /// The data source can call 'addEndOfStream()' from the QueryManager to stop a query via a reconfiguration message.
-class DataSource : public Runtime::Reconfigurable, public DataEmitter
+class DataSource : public Runtime::Reconfigurable
 {
 public:
     explicit DataSource(
@@ -51,8 +51,6 @@ public:
         SchemaPtr schema,
         Runtime::BufferManagerPtr bufferManager,
         Runtime::QueryManagerPtr queryManager,
-        OperatorId operatorId,
-        OriginId originId,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
         uint64_t numberOfBuffersToProduce,
@@ -75,67 +73,9 @@ public:
 
     [[nodiscard]] OriginId getOriginId() const;
 
-    /**
-     * @brief Gets the operator id for the data source
-     * @return OperatorId
-     */
-    OperatorId getOperatorId() const;
+    [[nodiscard]] std::string toString() const;
 
-    /**
-     * @brief Set the operator id for the data source
-     * @param operatorId
-     */
-    void setOperatorId(OperatorId operatorId);
-
-    /**
-     * @brief Returns the list of successor pipelines.
-     * @return  std::vector<Runtime::Execution::SuccessorExecutablePipeline>
-     */
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> getExecutableSuccessors();
-
-    /**
-     * @brief Add a list of successor pipelines.
-     */
-    void addExecutableSuccessors(std::vector<Runtime::Execution::SuccessorExecutablePipeline> newPipelines);
-
-    /**
-     * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
-     * @tparam Derived the class type that we want to cast the shared ptr
-     * @return this instance casted to the desired shared_ptr<Derived> type
-     */
-    template <typename Derived>
-    std::shared_ptr<Derived> shared_from_base()
-    {
-        return std::static_pointer_cast<Derived>(DataEmitter::shared_from_this());
-    }
-
-    /**
-     * @brief This method returns all supported layouts.
-     * @return
-     */
-    virtual std::vector<Schema::MemoryLayoutType> getSupportedLayouts();
-
-    /**
-     * @brief API method called upon receiving an event.
-     * @note Currently has no behaviour. We need to overwrite DataEmitter::onEvent for compliance.
-     * @param event
-     */
-    virtual void onEvent(Runtime::BaseEvent&) override;
-    /**
-     * @brief API method called upon receiving an event, whose handling requires the WorkerContext (e.g. its network channels).
-     * @note Only calls onEvent(event) of this class or derived classes.
-     * @param event
-     * @param workerContext
-     */
-    virtual void onEvent(Runtime::BaseEvent& event, Runtime::WorkerContextRef workerContext);
-
-    [[nodiscard]] virtual bool fail();
-
-    /**
-     * @brief set source sharing value
-     * @param value
-     */
-    void setSourceSharing(bool value) { sourceSharing = value; };
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& getExecutableSuccessors();
 
 private:
     OriginId originId;
@@ -144,7 +84,6 @@ private:
     Runtime::BufferManagerPtr localBufferManager;
     Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
-    OperatorId operatorId;
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t numSourceLocalBuffers;
     SourceType type;
@@ -164,7 +103,7 @@ private:
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine();
-    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
+    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true);
     NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
 };
 

@@ -26,11 +26,11 @@ public:
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
     virtual bool canTriggerEndOfStream(
-        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OperatorId sourceId, Runtime::QueryTerminationType)
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OriginId sourceId, Runtime::QueryTerminationType)
         = 0;
 
     virtual bool notifySourceTermination(
-        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OperatorId sourceId, Runtime::QueryTerminationType)
+        SharedQueryId sharedQueryId, DecomposedQueryPlanId decomposedQueryPlanId, OriginId sourceId, Runtime::QueryTerminationType)
         = 0;
 
     virtual bool notifyQueryFailure(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId, std::string errorMsg) = 0;

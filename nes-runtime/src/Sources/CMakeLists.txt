@@ -11,9 +11,9 @@
 # limitations under the License.
 
 add_source_files(nes-runtime
+        SourceHandle.cpp
         DataSource.cpp
         CSVSource.cpp
-        SourceCreator.cpp
         TCPSource.cpp
 )
 add_subdirectory(Parsers)

@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-execution
-        ConvertLogicalToPhysicalSource.cpp
         ConvertLogicalToPhysicalSink.cpp
         NautilusOperatorLoweringPlugin.cpp
         LowerLogicalToPhysicalOperators.cpp

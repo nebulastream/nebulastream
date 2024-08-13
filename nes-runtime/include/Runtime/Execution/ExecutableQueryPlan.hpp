@@ -26,6 +26,7 @@
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
+#include <Sources/SourceHandle.hpp>
 #include <Sources/SourcesForwardedRefs.hpp>
 
 namespace NES::Runtime
@@ -49,7 +50,7 @@ enum class ExecutableQueryPlanResult : uint8_t
  * A valid query plan should contain at least one source and sink.
  * This class is thread-safe.
  */
-class ExecutableQueryPlan : public Reconfigurable, public RuntimeEventListener
+class ExecutableQueryPlan : public Reconfigurable
 {
 public:
     /**
@@ -65,7 +66,7 @@ public:
     explicit ExecutableQueryPlan(
         SharedQueryId sharedQueryId,
         DecomposedQueryPlanId decomposedQueryPlanId,
-        std::vector<DataSourcePtr>&& sources,
+        std::vector<SourceHandlePtr>&& sources,
         std::vector<DataSinkPtr>&& sinks,
         std::vector<ExecutablePipelinePtr>&& pipelines,
         QueryManagerPtr&& queryManager,
@@ -84,7 +85,7 @@ public:
     static ExecutableQueryPlanPtr create(
         SharedQueryId sharedQueryId,
         DecomposedQueryPlanId decomposedQueryPlanId,
-        std::vector<DataSourcePtr> sources,
+        std::vector<SourceHandlePtr> sources,
         std::vector<DataSinkPtr> sinks,
         std::vector<ExecutablePipelinePtr> pipelines,
         QueryManagerPtr queryManager,
@@ -95,7 +96,7 @@ public:
      * @brief
      * @param source
      */
-    void notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType);
+    void notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType);
 
     /**
      * @brief
@@ -142,7 +143,7 @@ public:
     /**
      * @brief Get data sources.
      */
-    const std::vector<DataSourcePtr>& getSources() const;
+    const std::vector<SourceHandlePtr>& getSources() const;
 
     /**
      * @brief Get data sinks.
@@ -192,14 +193,6 @@ public:
      */
     void destroy();
 
-protected:
-    /**
-     * @brief API method called upon receiving an event.
-     * @note Add handling for different event types here.
-     * @param event
-     */
-    void onEvent(BaseEvent& event) override;
-
 private:
     /**
      * @brief This method is necessary to avoid problems with the shared_from_this machinery combined with multi-inheritance
@@ -215,7 +208,7 @@ private:
 private:
     const SharedQueryId sharedQueryId;
     const DecomposedQueryPlanId decomposedQueryPlanId;
-    std::vector<DataSourcePtr> sources;
+    std::vector<SourceHandlePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;

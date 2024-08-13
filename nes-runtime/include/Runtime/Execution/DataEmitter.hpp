@@ -45,11 +45,6 @@ public:
      */
     virtual void onEndOfStream(Runtime::QueryTerminationType) { }
 
-    /**
-     * @brief
-     */
-    virtual void onEvent(Runtime::BaseEvent&) override { }
-
     virtual DecomposedQueryPlanVersion getVersion() const
     {
         NES_WARNING("Trying to get version of a data emitter that does not carry version information, returning 0");

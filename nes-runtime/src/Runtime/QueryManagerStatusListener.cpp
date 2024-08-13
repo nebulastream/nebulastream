@@ -26,6 +26,7 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include "Identifiers/Identifiers.hpp"
 
 namespace NES::Runtime
 {
@@ -38,7 +39,7 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
         {
             NES_ASSERT2_FMT(
                 source->stop(Runtime::QueryTerminationType::Graceful),
-                "Cannot cleanup source " << source->getOperatorId()); /// just a clean-up op
+                "Cannot cleanup source " << source->getSourceId()); /// just a clean-up op
         }
         addReconfigurationMessage(
             qep->getSharedQueryId(),
@@ -63,13 +64,13 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
             qep->getSharedQueryId(), qep->getDecomposedQueryPlanId(), Execution::ExecutableQueryPlanStatus::ErrorState);
     }
 }
-void QueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason)
+void QueryManager::notifySourceFailure(const OriginId failedSourceOriginId, const std::string reason)
 {
-    NES_DEBUG("notifySourceFailure called for query id= {}  reason= {}", failedSource->getOperatorId(), reason);
+    NES_DEBUG("notifySourceFailure called for query id= {}  reason= {}", failedSourceOriginId, reason);
     std::vector<Execution::ExecutableQueryPlanPtr> plansToFail;
     {
         std::unique_lock lock(queryMutex);
-        plansToFail = sourceToQEPMapping[failedSource->getOperatorId()];
+        plansToFail = sourceToQEPMapping[failedSourceOriginId];
     }
     /// we cant fail a query from a source because failing a query eventually calls stop on the failed query
     /// this means we are going to call join on the source thread
@@ -133,22 +134,22 @@ void QueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipe
         std::move(qepToFail));
 }
 
-void QueryManager::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType)
+void QueryManager::notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType)
 {
     std::unique_lock lock(queryMutex);
     ///THIS is now shutting down all
-    for (auto& entry : sourceToQEPMapping[source->getOperatorId()])
+    for (auto& entry : sourceToQEPMapping[sourceId])
     {
         NES_TRACE(
             "notifySourceCompletion operator id={} plan id={} subplan={}",
-            source->getOperatorId(),
+            sourceId,
             entry->getSharedQueryId(),
             entry->getDecomposedQueryPlanId());
-        entry->notifySourceCompletion(source, terminationType);
+        entry->notifySourceCompletion(sourceId, terminationType);
         if (terminationType == QueryTerminationType::Graceful)
         {
             queryStatusListener->notifySourceTermination(
-                entry->getSharedQueryId(), entry->getDecomposedQueryPlanId(), source->getOperatorId(), QueryTerminationType::Graceful);
+                entry->getSharedQueryId(), entry->getDecomposedQueryPlanId(), sourceId, QueryTerminationType::Graceful);
         }
     }
 }

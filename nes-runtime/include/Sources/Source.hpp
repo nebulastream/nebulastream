@@ -14,10 +14,7 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_SOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_SOURCE_HPP_
-
-#include <optional>
 #include <string>
-#include <Sources/DataSource.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES

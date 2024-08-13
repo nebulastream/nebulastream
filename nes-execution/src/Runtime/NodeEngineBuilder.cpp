@@ -51,8 +51,8 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
 class SimpleQueryStatusListener : public AbstractQueryStatusListener
 {
 public:
-    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
-    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override
+    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OriginId, Runtime::QueryTerminationType) override { return true; }
+    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OriginId, Runtime::QueryTerminationType) override
     {
         NES_INFO("Source has terminated");
         return true;

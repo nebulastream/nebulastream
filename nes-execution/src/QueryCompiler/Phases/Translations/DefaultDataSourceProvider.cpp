@@ -12,10 +12,22 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <stdexcept>
 #include <utility>
-#include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
+#include <vector>
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sources/CSVSource.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/TCPSource.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -24,25 +36,53 @@ DefaultDataSourceProvider::DefaultDataSourceProvider(QueryCompilerOptionsPtr com
 {
 }
 
-DataSourceProviderPtr QueryCompilation::DefaultDataSourceProvider::create(const QueryCompilerOptionsPtr& compilerOptions)
+DataSourceProviderPtr DefaultDataSourceProvider::create(const QueryCompilerOptionsPtr& compilerOptions)
 {
     return std::make_shared<DefaultDataSourceProvider>(compilerOptions);
 }
 
-DataSourcePtr DefaultDataSourceProvider::lower(
-    OperatorId operatorId,
+SourceHandlPtr DefaultDataSourceProvider::lower(
     OriginId originId,
-    SourceDescriptorPtr sourceDescriptor,
-    Runtime::NodeEnginePtr nodeEngine,
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
+    const SourceDescriptorPtr& sourceDescriptor,
+    const Runtime::NodeEnginePtr& nodeEngine,
+    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
 {
-    return ConvertLogicalToPhysicalSource::createDataSource(
-        operatorId,
-        originId,
-        std::move(sourceDescriptor),
-        std::move(nodeEngine),
-        compilerOptions->getNumSourceLocalBuffers(),
-        std::move(successors));
+    auto bufferManager = nodeEngine->getBufferManager();
+    auto queryManager = nodeEngine->getQueryManager();
+    auto schema = sourceDescriptor->getSchema();
+    if (sourceDescriptor->instanceOf<CSVSourceDescriptor>())
+    {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
+        const auto csvSourceType = sourceDescriptor->as<CSVSourceDescriptor>()->getSourceConfig();
+
+        auto csvSource = std::make_unique<CSVSource>(schema, csvSourceType);
+        return std::make_shared<SourceHandle>(
+            originId,
+            schema,
+            bufferManager,
+            queryManager,
+            compilerOptions->getNumSourceLocalBuffers(),
+            std::move(csvSource),
+            csvSourceType->getNumberOfBuffersToProduce()->getValue(),
+            successors);
+    }
+    if (sourceDescriptor->instanceOf<TCPSourceDescriptor>())
+    {
+        NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
+        const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
+        auto tcpSource = std::make_unique<TCPSource>(schema, tcpSourceType);
+        return std::make_shared<SourceHandle>(
+            originId,
+            schema,
+            bufferManager,
+            queryManager,
+            compilerOptions->getNumSourceLocalBuffers(),
+            std::move(tcpSource),
+            0,
+            successors);
+    }
+    NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
+    throw std::invalid_argument("Unknown Source Descriptor Type");
 }
 
 } /// namespace NES::QueryCompilation
