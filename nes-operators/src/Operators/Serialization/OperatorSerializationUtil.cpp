@@ -945,7 +945,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
             csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
         csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
             csvSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
-        csvSerializedSourceConfig.set_sourcegatheringinterval(csvSourceDescriptor->getSourceConfig()->getGatheringInterval()->getValue());
         csvSerializedSourceConfig.set_filepath(csvSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
         csvSerializedSourceConfig.set_skipheader(csvSourceDescriptor->getSourceConfig()->getSkipHeader()->getValue());
         csvSerializedSourceConfig.set_delimiter(csvSourceDescriptor->getSourceConfig()->getDelimiter()->getValue());
@@ -1027,7 +1026,6 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const
         sourceConfig->setFilePath(csvSourceConfig->filepath());
         sourceConfig->setSkipHeader(csvSourceConfig->skipheader());
         sourceConfig->setDelimiter(csvSourceConfig->delimiter());
-        sourceConfig->setGatheringInterval(csvSourceConfig->sourcegatheringinterval());
         sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
         sourceConfig->setNumberOfTuplesToProducePerBuffer(csvSourceConfig->numberoftuplestoproduceperbuffer());
         auto ret = CsvSourceDescriptor::create(schema, sourceConfig);
