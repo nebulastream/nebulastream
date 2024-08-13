@@ -88,7 +88,7 @@ bool ExecutablePipeline::start()
     if (pipelineStatus.compare_exchange_strong(expected, PipelineStatus::PipelineRunning))
     {
         auto newReconf = ReconfigurationMessage(
-            queryId, ReconfigurationType::Initialize, inherited0::shared_from_this(), std::make_any<uint32_t>(activeProducers.load()));
+            queryId, ReconfigurationType::Initialize, shared_from_this(), std::make_any<uint32_t>(activeProducers.load()));
         for (const auto& operatorHandler : pipelineContext->getOperatorHandlers())
         {
             operatorHandler->start(pipelineContext, localStateVariableId);
@@ -233,7 +233,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                 }
                 /// tell the query manager about it
                 queryManager->notifyPipelineCompletion(
-                    queryId, inherited0::shared_from_this<ExecutablePipeline>(), Runtime::QueryTerminationType::Failure);
+                    queryId, shared_from_this<ExecutablePipeline>(), Runtime::QueryTerminationType::Failure);
                 for (const auto& successorPipeline : successorPipelines)
                 {
                     if (auto* pipe = std::get_if<ExecutablePipelinePtr>(&successorPipeline))
@@ -292,7 +292,7 @@ void ExecutablePipeline::postReconfigurationCallback(ReconfigurationMessage& tas
                         pipelineId);
                 }
                 /// finally, notify query manager
-                queryManager->notifyPipelineCompletion(queryId, inherited0::shared_from_this<ExecutablePipeline>(), terminationType);
+                queryManager->notifyPipelineCompletion(queryId, shared_from_this<ExecutablePipeline>(), terminationType);
 
                 for (const auto& successorPipeline : successorPipelines)
                 {
