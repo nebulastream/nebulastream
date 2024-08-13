@@ -71,12 +71,12 @@ nes-worker-->nes-execution
 ```
 
 
-# Clang-Format, Clang-Tidy, Fix-Guards, and Check Correct Comments
-We use clang-format, clang-tidy, and fix-guards to ensure code quality and consistency.
+# Clang-Format, Clang-Tidy, License & Pragma Once Check, and Check Correct Comments
+We use clang-format and clang-tidy to ensure code quality and consistency.
 To run the clang tools, you need to use the cmake option: `-DNES_SELF_HOSTING=ON`.
 Afterward, there exist multiple new targets:
 - `format` runs clang-format 
 - `check-format` runs clang-format and checks if the code is formatted correctly but does not fix it
 - `tidy`  runs clang-tidy 
-- `fix-guards` runs `fix-guard` ensuring the include guards are correct, e.g., `#ifndef NES_COMMON_H` and `#define NES_COMMON_H`
+- `check-license-and-pragma-once` runs a script that checks that all of our header files start with our license preamble followed by `#pragma once` 
 - `check-comment-format` runs a script that checks if the comments are correct.
