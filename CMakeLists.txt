@@ -569,7 +569,7 @@ INCLUDE(CPack)
 
 #Other configurations
 project_enable_clang_format()
-project_enable_fixguards()
+project_enable_clang_tidy()
 project_enable_check_comment_format()
 project_enable_check_preamble()
 if (CMAKE_CROSSCOMPILING)
