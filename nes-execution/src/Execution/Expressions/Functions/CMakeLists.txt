@@ -13,30 +13,30 @@
  add_source_files(nes-execution
          AbsExpression.cpp
          AcosExpression.cpp
+         Log2Expression.cpp
+         Log10Expression.cpp
+         LnExpression.cpp
 
          # We disable the other expressions as we have not ported them yet
-#         ModExpression.cpp
-#         PiExpression.cpp
-#         RadiansExpression.cpp
-#         DegreesExpression.cpp
-#         CosExpression.cpp
-#         SinExpression.cpp
-#         CotExpression.cpp
-#         AsinExpression.cpp
-#         MinExpression.cpp
-#         MaxExpression.cpp
-#         AtanExpression.cpp
-#         Atan2Expression.cpp
-#         SqrtExpression.cpp
-#         CbrtExpression.cpp
-#         FactorialExpression.cpp
-#         GammaExpression.cpp
-#         LGammaExpression.cpp
-#         Log10Expression.cpp
-#         PowerExpression.cpp
-#         BitcounterExpression.cpp
-#         Log2Expression.cpp
-#         LnExpression.cpp
+         #         ModExpression.cpp
+         #         PiExpression.cpp
+         #         RadiansExpression.cpp
+         #         DegreesExpression.cpp
+         #         CosExpression.cpp
+         #         SinExpression.cpp
+         #         CotExpression.cpp
+         #         AsinExpression.cpp
+         #         MinExpression.cpp
+         #         MaxExpression.cpp
+         #         AtanExpression.cpp
+         #         Atan2Expression.cpp
+         #         SqrtExpression.cpp
+         #         CbrtExpression.cpp
+         #         FactorialExpression.cpp
+         #         GammaExpression.cpp
+         #         LGammaExpression.cpp
+         #         PowerExpression.cpp
+         #         BitcounterExpression.cpp
 #         TanExpression.cpp
 #         FloorExpression.cpp
 #         CeilExpression.cpp

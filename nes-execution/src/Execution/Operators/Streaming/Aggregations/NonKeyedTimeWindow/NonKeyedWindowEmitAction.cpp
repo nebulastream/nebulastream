@@ -47,7 +47,7 @@ void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
     resultWindow.write(startTsFieldName, windowStart);
     resultWindow.write(endTsFieldName, windowEnd);
     UInt64 stateOffset = 0;
-    for (const auto& function : aggregationFunctions) {
+    for (const auto& function : nautilus::static_iterable(aggregationFunctions)) {
         auto valuePtr = windowState + stateOffset;
         function->lower(valuePtr, resultWindow);
         stateOffset = stateOffset + function->getSize();

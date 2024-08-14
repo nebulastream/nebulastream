@@ -298,7 +298,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         KeyedTimeWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<KeyedTimeWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

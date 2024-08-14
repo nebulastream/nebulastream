@@ -20,27 +20,19 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-AcosExpression::AcosExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : Expression(expression) {}
-
-/**
-* @brief This method calculates the acosinus of x.
-* This function is basically a wrapper for std::acos and enables us to use it in our execution engine framework.
-* @param x double
-* @return double
-*/
-double calculateAcos(double x) { return std::acos(x); }
+AcosExpression::AcosExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : Expression() {}
 
 ExecDataType AcosExpression::execute(NES::Nautilus::Record& record) const {
-    auto subValue = expression->execute(record);
+    const auto subValue = expression->execute(record);
 
-    if (subValue->isType<float>()) {
-        return ExecutableDataType<float>::create(acos(subValue->as<float>()));
-    } else if  (subValue->isType<double>()) {
-        return ExecutableDataType<double>::create(acos(subValue->as<double>()));
-    } else if (subValue->isType<uint64_t>() || subValue->isType<uint32_t>() || subValue->isType<uint16_t>()
-               || subValue->isType<uint8_t>() || subValue->isType<int64_t>() || subValue->isType<int32_t>()
-               || subValue->isType<int16_t>() || subValue->isType<int8_t>()) {
-        return ExecutableDataType<double>::create(acos(subValue->as<double>()));
+    if (subValue->instanceOf<ExecDataFloat>()) {
+        return ExecDataFloat::create(nautilus::acos(subValue->as<ExecDataFloat>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataDouble>()) {
+        return ExecDataDouble::create(nautilus::acos(subValue->as<ExecDataDouble>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt64>() || subValue->instanceOf<ExecDataUInt32>() || subValue->instanceOf<ExecDataUInt16>()
+               || subValue->instanceOf<ExecDataUInt8>() || subValue->instanceOf<ExecDataInt64>() || subValue->instanceOf<ExecDataInt32>()
+               || subValue->instanceOf<ExecDataInt16>() || subValue->instanceOf<ExecDataInt8>()) {
+        return ExecDataDouble::create(nautilus::acos(subValue->as<ExecDataDouble>()->valueAsType<double>()));
     } else {
         throw Exceptions::NotImplementedException(
             "This expression is only defined on a numeric input argument that is ether Float or Double.");

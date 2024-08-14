@@ -84,7 +84,7 @@ void NonKeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     }
     nautilus::invoke(setupWindowHandler, globalOperatorHandler, executionCtx.getPipelineContext(), entrySize);
     auto defaultState = nautilus::invoke(getDefaultState, globalOperatorHandler);
-    for (const auto& function : aggregationFunctions) {
+    for (const auto& function : nautilus::static_iterable(aggregationFunctions)) {
         function->reset(defaultState);
         defaultState = defaultState + UInt64(function->getSize());
     }
@@ -113,7 +113,7 @@ void NonKeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionCont
     auto sliceState = nautilus::invoke(findSliceStateByTsProxy, sliceStore->sliceStoreState, timestampValue);
     // 3. manipulate the current aggregate values
     uint64_t stateOffset = 0;
-    for (const auto& aggregationFunction : aggregationFunctions) {
+    for (const auto& aggregationFunction : nautilus::static_iterable(aggregationFunctions)) {
         auto state = sliceState + nautilus::val<uint64_t>(stateOffset);
         stateOffset = stateOffset + aggregationFunction->getSize();
         aggregationFunction->lift(state, record);

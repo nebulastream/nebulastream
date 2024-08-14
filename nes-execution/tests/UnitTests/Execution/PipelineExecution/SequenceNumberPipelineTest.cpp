@@ -218,7 +218,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataFullWithConstantFieldValues(bm, inputSchema)) {
+    for (auto buf : createDataFullWithConstantFieldValues(bm, inputSchema)) {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
     executablePipeline->stop(pipelineContext);

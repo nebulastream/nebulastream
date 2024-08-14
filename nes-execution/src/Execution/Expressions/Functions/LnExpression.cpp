@@ -14,7 +14,7 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/LnExpression.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <nautilus/std/cmath.h>
 #include <cmath>
 
 namespace NES::Runtime::Execution::Expressions {
@@ -22,42 +22,34 @@ namespace NES::Runtime::Execution::Expressions {
 LnExpression::LnExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
     : subExpression(subExpression) {}
 
-/**
-* @brief This method calculates the ln of x.
-* This function is basically a wrapper for std::log and enables us to use it in our execution engine framework.
-* @param x double
-* @return double
-*/
-double calculateLn(double x) { return std::log(x); }
 
 ExecDataType LnExpression::execute(NES::Nautilus::Record& record) const {
-    // Evaluate the  expression and retrieve the value.
-    Value subValue = subExpression->execute(record);
+    // Evaluate the sub expression and retrieve the value.
+    const auto subValue = subExpression->execute(record);
 
-    if (subValue->isType<Int8>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateLn", calculateLn, subValue.as<Double>());
+    if (subValue->instanceOf<ExecDataFloat>()) {
+        return ExecDataFloat::create(nautilus::log(subValue->as<ExecDataFloat>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataDouble>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataDouble>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt64>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataUInt64>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt32>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataUInt32>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt16>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataUInt16>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt8>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataUInt8>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt64>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataInt64>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt32>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataInt32>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt16>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataInt16>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt8>()) {
+        return ExecDataDouble::create(nautilus::log(subValue->as<ExecDataInt8>()->valueAsType<double>()));
     } else {
-        // If no type is applicable, throw an exception.
         throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
+            "This expression is only defined on a numeric input argument that is ether Float or Double.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LnExpression>> lnFunction("ln");

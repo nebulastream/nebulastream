@@ -83,7 +83,7 @@ void NonKeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
                            executionCtx.getPipelineContext(),
                            entrySize);
     auto defaultState = nautilus::invoke(getDefaultMergingState, globalOperatorHandler);
-    for (auto& function : aggregationFunctions) {
+    for (auto& function : nautilus::static_iterable(aggregationFunctions)) {
         function->reset(defaultState);
         defaultState = defaultState + nautilus::val<uint64_t>(function->getSize());
     }
@@ -120,7 +120,7 @@ VoidRef NonKeyedSliceMerging::combineThreadLocalSlices(MemRef& globalOperatorHan
     for (UInt64 i = 0_u64; i < numberOfSlices; i = i + 1_u64) {
         auto srcSliceState = nautilus::invoke(getNonKeyedSliceState, sliceMergeTask, i);
         UInt64 stateOffset = 0;
-        for (const auto& function : aggregationFunctions) {
+        for (const auto& function : nautilus::static_iterable(aggregationFunctions)) {
             auto globalValuePtr = globalSliceState + stateOffset;
             auto partitionValuePtr = srcSliceState + stateOffset;
             function->combine(globalValuePtr, partitionValuePtr);

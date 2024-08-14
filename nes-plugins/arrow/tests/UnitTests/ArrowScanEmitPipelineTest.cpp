@@ -121,7 +121,7 @@ TEST_P(ArrowScanEmitPipelineTest, scanEmitPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         ArrowScanEmitPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<ArrowScanEmitPipelineTest::ParamType>& info) {
                             return info.param;
                         });

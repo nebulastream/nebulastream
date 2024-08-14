@@ -60,7 +60,7 @@ void emitBufferProxy(void* wc, void* pc, void* tupleBuffer) {
      * sequence numbers to reach any operator. Sending empty buffers will have some overhead. As we are performing operator
      * fusion, this should only happen occasionally.
      */
-    pipelineCtx->emitBuffer(*tb, *workerCtx);
+    pipelineCtx->dispatchBuffer(*tb);
 
     // delete tuple buffer as it was allocated within the pipeline and is not required anymore
     delete tb;

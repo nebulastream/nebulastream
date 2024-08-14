@@ -14,49 +14,41 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/Log2Expression.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <cmath>
+#include <nautilus/std/cmath.h>
 
 namespace NES::Runtime::Execution::Expressions {
 
 Log2Expression::Log2Expression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
     : subExpression(subExpression) {}
 
-/**
- * @brief This method calculates the log2 of x.
- * This function is basically a wrapper for std::log2 and enables us to use it in our execution engine framework.
- * @param x double
- * @return double
- */
-double calculateLog2(double x) { return std::log2(x); }
-
 ExecDataType Log2Expression::execute(NES::Nautilus::Record& record) const {
-    Value subValue = subExpression->execute(record);
+    // Evaluate the sub expression and retrieve the value.
+    const auto subValue = subExpression->execute(record);
 
-    if (subValue->isType<Int8>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int8>());
-    } else if (subValue->isType<Int16>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int16>());
-    } else if (subValue->isType<Int32>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int32>());
-    } else if (subValue->isType<Int64>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Int64>());
-    } else if (subValue->isType<UInt8>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt8>());
-    } else if (subValue->isType<UInt16>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt16>());
-    } else if (subValue->isType<UInt32>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt32>());
-    } else if (subValue->isType<UInt64>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<UInt64>());
-    } else if (subValue->isType<Float>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Float>());
-    } else if (subValue->isType<Double>()) {
-        return FunctionCall<>("calculateLog2", calculateLog2, subValue.as<Double>());
+    if (subValue->instanceOf<ExecDataFloat>()) {
+        return ExecDataFloat::create(nautilus::log2(subValue->as<ExecDataFloat>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataDouble>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataDouble>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt64>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataUInt64>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt32>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataUInt32>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt16>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataUInt16>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt8>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataUInt8>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt64>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataInt64>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt32>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataInt32>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt16>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataInt16>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt8>()) {
+        return ExecDataDouble::create(nautilus::log2(subValue->as<ExecDataInt8>()->valueAsType<double>()));
     } else {
-        // Throw an exception if no type is applicable
         throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
+            "This expression is only defined on a numeric input argument that is ether Float or Double.");
     }
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log2Expression>> log2Expression("log2");

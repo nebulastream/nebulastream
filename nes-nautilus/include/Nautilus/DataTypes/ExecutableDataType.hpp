@@ -97,8 +97,10 @@ class ExecutableDataType : public AbstractDataType {
 
 // TODO define here the C++ data types and the nautilus data types. this way, we can use the c++ data types in the proxy functions
 // TODO e.g.
-// TODO using ExecVoidRef = nautilus::val<void*>;
-// TODO using VoidRef = void*;
+// TODO using ExecMemRef = nautilus::val<int8_t*>;
+// TODO using MemRef = int8_t*;
+// TODO we do not want to use voidref as we can simply wirte val<class_name*> and val<struct_name*> instead
+// TODO this should be automatically translated to clas_name* and struct_name* in the proxy functions after calling invoke
 
 
 /// Define common nautilus data types, we might move this definition some place else

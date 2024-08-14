@@ -31,7 +31,7 @@ AvgAggregationFunction::AvgAggregationFunction(const PhysicalTypePtr& inputType,
 }
 
 Nautilus::MemRef AvgAggregationFunction::loadSumMemRef(const Nautilus::MemRef& memRef) {
-    const static nautilus::val<int64_t> sizeOfCountInBytes = 8L;// the sum is stored after the count, and the count is of type uint64
+    const nautilus::val<int64_t> sizeOfCountInBytes = 8L;// the sum is stored after the count, and the count is of type uint64
     return (memRef + sizeOfCountInBytes);
 }
 

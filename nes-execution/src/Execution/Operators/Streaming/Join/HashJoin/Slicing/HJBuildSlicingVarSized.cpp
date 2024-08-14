@@ -97,22 +97,36 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
         joinState->sliceStart = nautilus::invoke(getSliceStartVarSizedProxy, joinState->sliceReference);
         joinState->sliceEnd = nautilus::invoke(getSliceEndVarSizedProxy, joinState->sliceReference);
 
-//        NES_DEBUG("reinit join state with start={} end={} for ts={} for isLeftSide={}",
-//                  joinState->sliceStart->toString(),
-//                  joinState->sliceEnd->toString(),
-//                  tsValue->toString(),
-//                  to_underlying(joinBuildSide));
+        //        NES_DEBUG("reinit join state with start={} end={} for ts={} for isLeftSide={}",
+        //                  joinState->sliceStart->toString(),
+        //                  joinState->sliceEnd->toString(),
+        //                  tsValue->toString(),
+        //                  to_underlying(joinBuildSide));
     }
 
-    // Write record to the pagedVector
-    auto hjPagedVectorMemRef = nautilus::invoke(getHJPagedVectorVarSizedProxy,
-                                                joinState->sliceReference,
-                                                ctx.getWorkerThreadId(),
-                                                UInt64(to_underlying(joinBuildSide)),
-                                                record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
+    // TODO we should come up with something else than this cast
+    const auto key = record.read(joinFieldName);
+    if (key->instanceOf<ExecDataInt64>()) {
+        // Write record to the pagedVector
+        auto hjPagedVectorMemRef = nautilus::invoke(getHJPagedVectorVarSizedProxy,
+                                                    joinState->sliceReference,
+                                                    ctx.getWorkerThreadId(),
+                                                    UInt64(to_underlying(joinBuildSide)),
+                                                    record.read(joinFieldName)->as<ExecDataInt64>()->valueAsType<uint64_t>());
 
-    Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
-    pagedVectorVarSizedRef.writeRecord(record);
+        Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
+        pagedVectorVarSizedRef.writeRecord(record);
+    } else if (key->instanceOf<ExecDataUInt64>()) {
+        // Write record to the pagedVector
+        auto hjPagedVectorMemRef = nautilus::invoke(getHJPagedVectorVarSizedProxy,
+                                                    joinState->sliceReference,
+                                                    ctx.getWorkerThreadId(),
+                                                    UInt64(to_underlying(joinBuildSide)),
+                                                    record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
+
+        Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
+        pagedVectorVarSizedRef.writeRecord(record);
+    }
 }
 
 void* getDefaultMemRefVarSized() { return nullptr; }

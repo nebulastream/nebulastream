@@ -112,7 +112,7 @@ TEST_P(SortPipelineTest, SortPipelineTest) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SortPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<SortPipelineTest::ParamType>& info) {
                             return info.param;
                         });

@@ -27,25 +27,31 @@ AbsExpression::AbsExpression(const NES::Runtime::Execution::Expressions::Express
 ExecDataType AbsExpression::execute(NES::Nautilus::Record& record) const {
     auto subValue = subExpression->execute(record);
 
-    if (subValue->isType<float>()) {
-        return ExecutableDataType<float>::create(abs(subValue->as<float>()));
-    } else if (subValue->isType<double>()) {
-        return ExecutableDataType<double>::create(abs(subValue->as<double>()));
-    } else if (subValue->isType<uint64_t>() || subValue->isType<uint32_t>() || subValue->isType<uint16_t>()
-               || subValue->isType<uint8_t>()) {
-        return subValue;
-    } else if (subValue->isType<int64_t>()) {
-        return ExecutableDataType<int64_t>::create(abs(subValue->as<int64_t>()));
-    } else if (subValue->isType<int32_t>()) {
-        return ExecutableDataType<int32_t>::create(abs(subValue->as<int32_t>()));
-    } else if (subValue->isType<int16_t>()) {
-        return ExecutableDataType<int16_t>::create(abs(subValue->as<int16_t>()));
-    } else if (subValue->isType<int8_t>()) {
-        return ExecutableDataType<int8_t>::create(abs(subValue->as<int8_t>()));
+    if (subValue->instanceOf<ExecDataFloat>()) {
+        return ExecDataFloat::create(nautilus::abs(subValue->as<ExecDataFloat>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataDouble>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataDouble>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt64>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataUInt64>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt32>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataUInt32>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt16>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataUInt16>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataUInt8>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataUInt8>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt64>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataInt64>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt32>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataInt32>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt16>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataInt16>()->valueAsType<double>()));
+    } else if (subValue->instanceOf<ExecDataInt8>()) {
+        return ExecDataDouble::create(nautilus::abs(subValue->as<ExecDataInt8>()->valueAsType<double>()));
     } else {
         throw Exceptions::NotImplementedException(
             "This expression is only defined on a numeric input argument that is ether Float or Double.");
     }
+
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AbsExpression>> absFunction("abs");
 }// namespace NES::Runtime::Execution::Expressions
