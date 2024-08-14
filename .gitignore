@@ -11,8 +11,8 @@
 .debs
 
 # Build files
-build
-cmake-build*
+/build
+/cmake-build*
 CMakeUserPresets.json
 debug*
 vcpkg-repository
