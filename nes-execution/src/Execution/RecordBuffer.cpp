@@ -18,7 +18,7 @@
 
 namespace NES::Runtime::Execution {
 
-RecordBuffer::RecordBuffer(const nautilus::val<int8_t*>& tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
+RecordBuffer::RecordBuffer(const Nautilus::MemRef& tupleBufferRef) : tupleBufferRef(tupleBufferRef) {}
 
 val<uint64_t> RecordBuffer::getNumRecords() {
     return invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples, tupleBufferRef);
@@ -28,7 +28,7 @@ void RecordBuffer::setNumRecords(const val<uint64_t>& numRecordsValue) {
     invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples, tupleBufferRef, numRecordsValue);
 }
 
-val<int8_t*> RecordBuffer::getBuffer() const {
+Nautilus::MemRef RecordBuffer::getBuffer() const {
     return invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);
 }
 const val<int8_t*>& RecordBuffer::getReference() const { return tupleBufferRef; }

@@ -230,8 +230,6 @@ ExecDataType ExecutableDataType<ValueType>::operator!() const {
 
 ExecDataType ExecutableVariableDataType::operator&&(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
 ExecDataType ExecutableVariableDataType::operator||(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
-ExecDataType ExecutableVariableDataType::operator==(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
-ExecDataType ExecutableVariableDataType::operator!=(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
 ExecDataType ExecutableVariableDataType::operator<(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
 ExecDataType ExecutableVariableDataType::operator>(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
 ExecDataType ExecutableVariableDataType::operator<=(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
@@ -247,6 +245,31 @@ ExecDataType ExecutableVariableDataType::operator^(const ExecDataType&) const { 
 ExecDataType ExecutableVariableDataType::operator<<(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
 ExecDataType ExecutableVariableDataType::operator>>(const ExecDataType&) const { NES_NOT_IMPLEMENTED(); }
 ExecDataType ExecutableVariableDataType::operator!() const { NES_NOT_IMPLEMENTED(); }
+
+ExecDataType ExecutableVariableDataType::operator==(const ExecDataType& rhs) const {
+    if (!rhs->instanceOf<ExecutableVariableDataType>()) {
+        NES_THROW_RUNTIME_ERROR("Can only compare ExecutableVariableDataType with ExecutableVariableDataType");
+    }
+
+    if (null || rhs->isNull()) {
+        return ExecutableDataType<bool>::create(false, true);
+    }
+
+    if (size != rhs->as<ExecutableVariableDataType>()->size) {
+        return ExecutableDataType<bool>::create(false, false);
+    }
+
+    const auto compareResult = (nautilus::memcmp(content, rhs->as<ExecutableVariableDataType>()->content, size) == 0);
+    return ExecutableDataType<bool>::create(compareResult, false);
+}
+ExecDataType ExecutableVariableDataType::operator!=(const ExecDataType& rhs) const {
+    if (!rhs->instanceOf<ExecutableVariableDataType>()) {
+        NES_THROW_RUNTIME_ERROR("Can only compare ExecutableVariableDataType with ExecutableVariableDataType");
+    }
+    return !(*this == rhs);
+}
+
+
 
 template class ExecutableDataType<int8_t>;
 template class ExecutableDataType<int16_t>;

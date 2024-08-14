@@ -38,7 +38,6 @@ const uint8_t* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex) {
 Nautilus::ExecDataType TupleBufferMemoryProvider::load(const PhysicalTypePtr& type,
                                                        nautilus::val<int8_t*>& bufferReference,
                                                        nautilus::val<int8_t*>& fieldReference) {
-    // TODO Think about, if we can maybe use here readExecDataTypeFromMemRef() here
     // Maybe we can have a default read and write for stateful operators that uses the same as for the tuple buffers
     // and then if somebody wants to write something custom they can do that. If we choose the default, then it is required that
     // we store the data in tuple buffers in the stateful operator
@@ -46,12 +45,9 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::load(const PhysicalTypePtr& ty
     if (type->isBasicType()) {
         return Nautilus::readExecDataTypeFromMemRef(fieldReference, type);
     } else if (type->isTextType()) {
-        auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
-        nautilus::val<uint32_t> childIndex = *fieldReferenceCastedU32;
-        auto textPtr = nautilus::invoke(loadAssociatedTextValue, bufferReference, childIndex);
-        auto sizePtr = static_cast<nautilus::val<uint32_t*>>(fieldReference);
-        auto contextPtr = textPtr + nautilus::val<uint64_t>(4);
-        return Nautilus::ExecutableVariableDataType::create(contextPtr, sizePtr[0]);
+        const auto childIndex = readValueFromMemRef(fieldReference, uint32_t);
+        const auto textPtr = nautilus::invoke(loadAssociatedTextValue, bufferReference, childIndex);
+        return Nautilus::ExecutableVariableDataType::create(textPtr);
     } else {
         NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
@@ -74,8 +70,8 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::store(const NES::PhysicalTypeP
         Nautilus::writeExecDataTypeToMemRef(fieldReference, value);
         return value;
     } else if (type->isTextType()) {
-        auto textValue = std::dynamic_pointer_cast<Nautilus::ExecutableVariableDataType>(value);
-        auto childIndex = nautilus::invoke(storeAssociatedTextValue, bufferReference, textValue->getContent());
+        auto textValue = value->as<Nautilus::ExecutableVariableDataType>();
+        auto childIndex = nautilus::invoke(storeAssociatedTextValue, bufferReference, textValue->getReference());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;

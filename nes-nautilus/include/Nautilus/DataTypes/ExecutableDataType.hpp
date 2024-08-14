@@ -18,6 +18,7 @@
 #include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+#include <google/protobuf/stubs/port.h>
 #include <nautilus/common/Types.hpp>
 #include <nautilus/std/string.hpp>
 #include <nautilus/val.hpp>
@@ -177,11 +178,11 @@ class ExecutableVariableDataType : public AbstractDataType {
                                const nautilus::val<bool>& null)
         : AbstractDataType(null), size(size), content(content) {}
 
-    static ExecDataType create(MemRef content, const nautilus::val<uint32_t>& size, bool null = false) {
+    static ExecDataType create(const MemRef& content, const nautilus::val<uint32_t>& size, const bool null = false) {
         return std::make_shared<ExecutableVariableDataType>(content, size, null);
     }
 
-    static ExecDataType create(MemRef pointerToVarSized, bool null = false) {
+    static ExecDataType create(const MemRef& pointerToVarSized, const bool null = false) {
         const auto varSized = readValueFromMemRef(pointerToVarSized, uint32_t);
         const auto pointerToContent = pointerToVarSized + nautilus::val<uint32_t>(sizeof(uint32_t));
         return create(pointerToContent, varSized, null);
@@ -191,6 +192,7 @@ class ExecutableVariableDataType : public AbstractDataType {
 
     [[nodiscard]] nautilus::val<uint32_t> getSize() const { return size; }
     [[nodiscard]] MemRef getContent() const { return content; }
+    [[nodiscard]] MemRef getReference() const { return content - UInt64(sizeof(uint32_t)); }
 
   protected:
     ExecDataType operator&&(const ExecDataType&) const override;

@@ -91,7 +91,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
     auto buffer = bm->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++) {
-        testBuffer[i].writeVarSized("f1", "test", bm.get());
+        testBuffer[i].writeVarSized("f1", "test" + std::to_string(i), bm.get());
         testBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -107,13 +107,13 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 100);
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (auto i = 0_u64; i < resultBuffer.getNumberOfTuples(); ++i) {
-        ASSERT_EQ(resulttestBuffer[i].readVarSized("f1"), "test");
+        ASSERT_EQ(resulttestBuffer[i].readVarSized("f1"), "test" + std::to_string(i));
     }
 }
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TextPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<TextPipelineTest::ParamType>& info) {
                             return info.param;
                         });

@@ -34,14 +34,15 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
     // initialize state variable and create new buffer
     auto resultBufferRef = ctx.allocateBuffer();
     auto resultBuffer = RecordBuffer(resultBufferRef);
-    ctx.setLocalOperatorState(this, std::make_unique<EmitState>(resultBuffer));
+    auto emitState = std::make_unique<EmitState>(resultBuffer);
+    ctx.setLocalOperatorState(this, std::move(emitState));
 }
 
 void Emit::execute(ExecutionContext& ctx, Record& record) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     // emit buffer if it reached the maximal capacity
     const auto result = emitState->outputIndex >= nautilus::val<uint64_t>(maxRecordsPerBuffer);
-    if (result.value) {
+    if (result) {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         auto resultBufferRef = ctx.allocateBuffer();
         emitState->resultBuffer = RecordBuffer(resultBufferRef);
@@ -54,7 +55,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
      * to the brim, i.e., have no more space left.
      */
     memoryProvider->write(emitState->outputIndex, emitState->bufferReference, record);
-    emitState->outputIndex = emitState->outputIndex + 1_u64;
+    emitState->outputIndex = emitState->outputIndex + UInt64(1);
 }
 
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
@@ -65,8 +66,8 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
 
 void Emit::emitRecordBuffer(ExecutionContext& ctx,
                             RecordBuffer& recordBuffer,
-                            const val<uint64_t>& numRecords,
-                            const val<bool>& lastChunk) const {
+                            const UInt64& numRecords,
+                            const Boolean& lastChunk) const {
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
     recordBuffer.setOriginId(ctx.getOriginId());
@@ -84,7 +85,7 @@ void Emit::emitRecordBuffer(ExecutionContext& ctx,
 
     ctx.emitBuffer(recordBuffer);
 
-    if (lastChunk == Boolean(true)) {
+    if (lastChunk) {
         ctx.removeSequenceState();
     }
 }
