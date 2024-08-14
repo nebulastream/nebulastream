@@ -173,25 +173,18 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure CMake
         run: cmake -B build
-      - name: preamble-check
-        run: python3 scripts/build/check_license.py . .no-license-check || exit 1
-      - name: format-check
+      - name: check-preamble
+          run: |
+            docker run --name ${{ github.run_id }}_check-preamble -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-check-preamble.sh nes_build_ubuntu
+      - name: check-format
         run: |
-          cmake --build build --target format
+          cmake --build build --target check-format
           if ! git diff --quiet; then
             git status  # print unformatted files
-            echo "Please build 'format' target locally before shipping your changes on remote"
+            echo "Please build 'check-format' target locally before shipping your changes on remote"
             exit 1
           fi
-      - name: guard-check
-        run: |
-          cmake --build build --target fix-guards
-          if ! git diff --quiet; then
-            git status  # print files with non-conforming include guards
-            echo "Please build 'fix-guards' target locally before shipping your changes on remote"
-            exit 1
-          fi
-      - name: comment-format-check
+      - name: check-comment-format
         run: |
           cmake --build build --target check-comment-format
           if [ $? -ne 0 ]; then

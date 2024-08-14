@@ -54,7 +54,7 @@ def is_excluded(path, patterns):
 if __name__ == "__main__":
     print(str(sys.argv))
     if len(sys.argv) != 3:
-        print("Usage: check_license_and_pragma_once.py <path> <no-license-check file>")
+        print("Usage: check_preamble.py <path> <no-license-check file>")
         sys.exit(1)
 
     root_dir = sys.argv[1]
