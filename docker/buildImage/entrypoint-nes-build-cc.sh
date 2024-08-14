@@ -37,7 +37,7 @@ then
     # Build NES
     mkdir -p /nebulastream/build
     cd /nebulastream/build
-    python3 /nebulastream/scripts/build/check_license.py /nebulastream /nebulastream/.no-license-check || exit 1
+    python3 /nebulastream/scripts/build/check_preamble.py /nebulastream /nebulastream/.no-license-check || exit 1
     cmake -DCMAKE_BUILD_TYPE=Release -DNES_CODE_COVERAGE=ON -DNES_TEST_PARALLELISM=$NesTestParallelism  ..
     make -j$NesBuildParallelism
 
