@@ -571,9 +571,8 @@ INCLUDE(CPack)
 project_enable_clang_format()
 project_enable_fixguards()
 project_enable_check_comment_format()
+project_enable_check_license_and_pragma_once()
 if (CMAKE_CROSSCOMPILING)
     project_enable_emulated_tests()
 endif ()
 instrument_codebase()
-
-
