@@ -105,29 +105,6 @@ function(project_enable_clang_format)
     add_custom_target(format-check COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/run_clang_format.py ${CLANG_FORMAT_EXECUTABLE} --exclude_globs ${CMAKE_SOURCE_DIR}/clang_suppressions.txt --source_dirs ${NES_FOLDER_NAMES_COMMA_SEPARATED} USES_TERMINAL)
 endfunction(project_enable_clang_format)
 
-function(project_enable_fixguards)
-    find_program(GUARD2ONCE_EXECUTABLE guard2once)
-    find_program(ONCE2GUARD_EXECUTABLE once2guard)
-
-    if (NOT GUARD2ONCE_EXECUTABLE)
-        message(WARNING "guard2once is not installed on the system. Install with pipx install guardonce. Disabling fix-guards target")
-        return()
-    endif ()
-
-    if (NOT ONCE2GUARD_EXECUTABLE)
-        message(WARNING "once2guard is not installed on the system. Install with pipx install guardonce. Disabling fix-guards target")
-        return()
-    endif ()
-
-    # converts to `#pragma once` and then back to include guard, so that guarding variable is derived from file path
-    add_custom_target(fix-guards
-            COMMAND guard2once -r -e="nes-common/include/Version/version.hpp" nes-*/
-            COMMAND once2guard -r -e="nes-commom/include/Version/version.hpp" -p 'path | append _ | upper' -s '\#endif /// %\\n' nes-*/
-            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-    )
-    message(STATUS "guardonce utility to fix include guards is available via the 'fix-guards' target")
-endfunction(project_enable_fixguards)
-
 macro(project_enable_check_comment_format)
     get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
     if (NOT_ALLOWED_COMMENT_STYLE_REGEX)
@@ -137,6 +114,16 @@ macro(project_enable_check_comment_format)
         message(FATAL_ERROR "check-comment-format is not enabled as ${NOT_ALLOWED_COMMENT_STYLE_REGEX} is not set.")
     endif ()
 endmacro(project_enable_check_comment_format)
+
+macro(project_enable_check_license_and_pragma_once)
+    get_nes_folders(NES_FOLDER_NAMES_COMMA_SEPARATED)
+    if (NOT_ALLOWED_COMMENT_STYLE_REGEX)
+        message(STATUS "License and pragma once check is is available via the 'license-and-pragma-once-check' target")
+        add_custom_target(check-license-and-pragma-once COMMAND python3 ${CMAKE_SOURCE_DIR}/scripts/build/check_license_and_pragma_once.py ${CMAKE_SOURCE_DIR} ${CMAKE_SOURCE_DIR}/.no-license-check)
+    else ()
+        message(FATAL_ERROR "check-license-and-pragma-once is not enabled as ${NOT_ALLOWED_COMMENT_STYLE_REGEX} is not set.")
+    endif ()
+endmacro(project_enable_check_license_and_pragma_once)
 
 macro(project_enable_emulated_tests)
     find_program(QEMU_EMULATOR qemu-aarch64)
