@@ -25,7 +25,7 @@ num_threads=$1
 
 
 # Build NES
-python3 /nebulastream/scripts/build/check_license.py /nebulastream /nebulastream/.no-license-check || exit 1
+python3 /nebulastream/scripts/build/check_preamble.py /nebulastream /nebulastream/.no-license-check || exit 1
 
 # Depending if the ccache_dir exists, we will instruct NebulaStream to compile with a ccache in mind or not
 USE_CCACHE=0
