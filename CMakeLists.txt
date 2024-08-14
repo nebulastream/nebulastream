@@ -372,18 +372,6 @@ if (CMAKE_USE_PAPI_PROFILER)
     include_directories(${PAPI_INCLUDE_DIRS})
 endif ()
 
-# LLVM
-find_package(LLVM ${LLVM_VERSION} CONFIG REQUIRED)
-if (LLVM_FOUND)
-    get_property(LLVM_COV_PATH TARGET llvm-cov PROPERTY LOCATION)
-    get_property(LLVM_PROFDATA_PATH TARGET llvm-profdata PROPERTY LOCATION)
-    get_property(LCOV_PATH TARGET llvm-cov PROPERTY LOCATION)
-    message(STATUS "LLVM version ${LLVM_PACKAGE_VERSION}")
-    message(STATUS "LLVM binary dir ${LLVM_BINARY_DIR}")
-else ()
-    message(FATAL_ERROR "Cannot find llvm. LLVM ${LLVM_VERSION} is required. Use self-hosted=1 or install it manually.")
-endif ()
-
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     find_package(JNI)
     if (JNI_FOUND)
