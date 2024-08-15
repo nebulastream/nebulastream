@@ -13,7 +13,7 @@
 */
 
 #include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>

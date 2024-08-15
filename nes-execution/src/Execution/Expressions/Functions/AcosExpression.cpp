@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AcosExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>

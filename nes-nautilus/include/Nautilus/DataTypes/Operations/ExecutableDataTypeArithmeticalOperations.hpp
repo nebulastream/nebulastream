@@ -16,7 +16,7 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPEARITHMETICALOPERATIONS_HPP_
 
 #include <Nautilus/DataTypes/AbstractDataType.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Nautilus/DataTypes/ExecutableDataTypesConcepts.hpp>
 
 namespace NES::Nautilus {
@@ -35,12 +35,12 @@ ExecDataType operator+(const LHS& lhs, const ExecDataType& rhs) {
 
 template<FixedDataTypes RHS>
 ExecDataType operator+(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
-    return lhs + ExecutableDataType<RHS>::create(rhs);
+    return lhs + FixedSizeExecutableDataType<RHS>::create(rhs);
 }
 
 template<FixedDataTypes LHS>
 ExecDataType operator+(const nautilus::val<LHS>& lhs, const ExecDataType& rhs) {
-    return ExecutableDataType<LHS>::create(lhs) + rhs;
+    return FixedSizeExecutableDataType<LHS>::create(lhs) + rhs;
 }
 
 ExecDataType operator+(const ExecDataType& lhs, const ExecDataType& rhs);
@@ -59,11 +59,11 @@ ExecDataType operator-(const LHS& lhs, const ExecDataType& rhs) {
 
 template<FixedDataTypes RHS>
 ExecDataType operator-(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
-    return lhs - ExecutableDataType<RHS>::create(rhs);
+    return lhs - FixedSizeExecutableDataType<RHS>::create(rhs);
 }
 template<FixedDataTypes LHS>
 ExecDataType operator-(const nautilus::val<LHS>& lhs, const ExecDataType& rhs) {
-    return ExecutableDataType<LHS>::create(lhs) - rhs;
+    return FixedSizeExecutableDataType<LHS>::create(lhs) - rhs;
 }
 
 ExecDataType operator-(const ExecDataType& lhs, const ExecDataType& rhs);
@@ -82,11 +82,11 @@ ExecDataType operator*(const LHS& lhs, const ExecDataType& rhs) {
 
 template<FixedDataTypes RHS>
 ExecDataType operator*(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
-    return lhs * ExecutableDataType<RHS>::create(rhs);
+    return lhs * FixedSizeExecutableDataType<RHS>::create(rhs);
 }
 template<FixedDataTypes LHS>
 ExecDataType operator*(const nautilus::val<LHS>& lhs, const ExecDataType& rhs) {
-    return ExecutableDataType<LHS>::create(lhs) * rhs;
+    return FixedSizeExecutableDataType<LHS>::create(lhs) * rhs;
 }
 
 ExecDataType operator*(const ExecDataType& lhs, const ExecDataType& rhs);
@@ -105,11 +105,11 @@ ExecDataType operator/(const LHS& lhs, const ExecDataType& rhs) {
 
 template<FixedDataTypes RHS>
 ExecDataType operator/(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
-    return lhs / ExecutableDataType<RHS>::create(rhs);
+    return lhs / FixedSizeExecutableDataType<RHS>::create(rhs);
 }
 template<FixedDataTypes LHS>
 ExecDataType operator/(const nautilus::val<LHS>& lhs, const ExecDataType& rhs) {
-    return ExecutableDataType<LHS>::create(lhs) / rhs;
+    return FixedSizeExecutableDataType<LHS>::create(lhs) / rhs;
 }
 
 ExecDataType operator/(const ExecDataType& lhs, const ExecDataType& rhs);
@@ -128,11 +128,11 @@ ExecDataType operator%(const LHS& lhs, const ExecDataType& rhs) {
 
 template<FixedDataTypes RHS>
 ExecDataType operator%(const ExecDataType& lhs, const nautilus::val<RHS>& rhs) {
-    return lhs % ExecutableDataType<RHS>::create(rhs);
+    return lhs % FixedSizeExecutableDataType<RHS>::create(rhs);
 }
 template<FixedDataTypes LHS>
 ExecDataType operator%(const nautilus::val<LHS>& lhs, const ExecDataType& rhs) {
-    return ExecutableDataType<LHS>::create(lhs) % rhs;
+    return FixedSizeExecutableDataType<LHS>::create(lhs) % rhs;
 }
 
 ExecDataType operator%(const ExecDataType& lhs, const ExecDataType& rhs);

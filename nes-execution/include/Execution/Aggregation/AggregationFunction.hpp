@@ -17,7 +17,8 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/DataTypes/AbstractDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+
 
 namespace NES::Runtime::Execution::Aggregation {
 /**

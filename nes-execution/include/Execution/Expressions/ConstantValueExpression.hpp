@@ -14,7 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_CONSTANTVALUEEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <type_traits>
 
 namespace NES::Runtime::Execution::Expressions {

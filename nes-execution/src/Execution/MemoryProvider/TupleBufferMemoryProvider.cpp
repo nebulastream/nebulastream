@@ -17,7 +17,8 @@
 #include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VariableSizeExecutableDataType.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -47,7 +48,7 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::load(const PhysicalTypePtr& ty
     } else if (type->isTextType()) {
         const auto childIndex = readValueFromMemRef(fieldReference, uint32_t);
         const auto textPtr = nautilus::invoke(loadAssociatedTextValue, bufferReference, childIndex);
-        return Nautilus::ExecutableVariableDataType::create(textPtr);
+        return Nautilus::VariableSizeExecutableDataType::create(textPtr);
     } else {
         NES_ERROR("Physical Type: type {} is currently not supported", type->toString());
         NES_NOT_IMPLEMENTED();
@@ -70,7 +71,7 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::store(const NES::PhysicalTypeP
         Nautilus::writeFixedExecDataTypeToMemRef(fieldReference, value);
         return value;
     } else if (type->isTextType()) {
-        auto textValue = value->as<Nautilus::ExecutableVariableDataType>();
+        auto textValue = value->as<Nautilus::VariableSizeExecutableDataType>();
         auto childIndex = nautilus::invoke(storeAssociatedTextValue, bufferReference, textValue->getReference());
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;

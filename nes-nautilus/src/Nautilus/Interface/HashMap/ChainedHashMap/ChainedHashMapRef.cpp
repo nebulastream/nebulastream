@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Util/StdInt.hpp>
@@ -146,7 +146,7 @@ void ChainedHashMapRef::insertEntryOrUpdate(const EntryRef& otherEntry, const st
 }
 
 BooleanVal ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys) {
-    auto equals = ExecutableDataType<bool>::create(true);
+    auto equals = FixedSizeExecutableDataType<bool>::create(true);
     auto keyPtr = entry.getKeyPtr();
     for (nautilus::static_val<size_t> i = 0; i < keys.size(); ++i) {
         auto& key = keys[i];

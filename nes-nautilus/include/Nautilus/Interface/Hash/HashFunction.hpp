@@ -14,7 +14,8 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VariableSizeExecutableDataType.hpp>
 
 namespace NES::Nautilus::Interface {
 

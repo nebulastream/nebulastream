@@ -14,7 +14,7 @@
 
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <limits>
 

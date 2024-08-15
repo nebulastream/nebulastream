@@ -19,9 +19,10 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
-#include <nautilus/val.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/val.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -96,11 +97,11 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     // 1. get the operator handler and extract the slice information that should be combined.
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    auto startSliceTs = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, startSlice, uint64_t);
-    auto endSliceTs = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, endSlice, uint64_t);
-    auto sequenceNumber = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, sequenceNumber, uint64_t);
-    auto chunkNumber = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, chunkNumber, uint64_t);
-    auto lastChunk = getMemberAsExecDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, lastChunk, bool);
+    auto startSliceTs = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, startSlice, uint64_t);
+    auto endSliceTs = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, endSlice, uint64_t);
+    auto sequenceNumber = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, sequenceNumber, uint64_t);
+    auto chunkNumber = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, chunkNumber, uint64_t);
+    auto lastChunk = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, lastChunk, bool);
 
     // 2. initialize global slice state, which is represented by a chained hashtable
     auto globalSlice = nautilus::invoke(createKeyedState, globalOperatorHandler, sliceMergeTask);

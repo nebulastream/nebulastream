@@ -14,7 +14,7 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORREF_HPP_
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 namespace NES::Nautilus::Interface {
 

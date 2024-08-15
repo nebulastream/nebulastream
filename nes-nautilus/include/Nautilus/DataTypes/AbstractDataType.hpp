@@ -139,9 +139,9 @@ using BooleanVal = nautilus::val<bool>; using Boolean = bool;
 #define getMember(objectReference, classType, member, dataType)                                                                  \
 (static_cast<nautilus::val<dataType>>(*static_cast<nautilus::val<dataType*>>(                                                \
 objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member))))))
-#define getMemberAsExecDataType(objectReference, classType, member, dataType)                                                    \
-(std::dynamic_pointer_cast<ExecutableDataType<dataType>>(                                                                    \
-ExecutableDataType<dataType>::create(*static_cast<nautilus::val<dataType*>>(                                             \
+#define getMemberAsFixedSizeExecutableDataType(objectReference, classType, member, dataType)                                                    \
+(std::dynamic_pointer_cast<FixedSizeExecutableDataType<dataType>>(                                                                    \
+FixedSizeExecutableDataType<dataType>::create(*static_cast<nautilus::val<dataType*>>(                                             \
 objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member)))))))
 #define getMemberAsPointer(objectReference, classType, member, dataType)                                                         \
 (static_cast<nautilus::val<dataType*>>(objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member)))))

@@ -15,7 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_LOGICALEXPRESSIONS_EQUALSEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 namespace NES::Runtime::Execution::Expressions {
 
 /**

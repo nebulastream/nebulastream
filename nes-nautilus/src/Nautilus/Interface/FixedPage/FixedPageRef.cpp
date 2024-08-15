@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
 

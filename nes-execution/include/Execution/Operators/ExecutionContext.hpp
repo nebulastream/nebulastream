@@ -15,8 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EXECUTIONCONTEXT_HPP_
 #include <Execution/Operators/OperatorState.hpp>
-#include <Identifiers/Identifiers.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <cstdint>
 #include <memory>
 #include <nautilus/val.hpp>

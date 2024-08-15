@@ -14,7 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_TUPLEBUFFERMEMORYPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_TUPLEBUFFERMEMORYPROVIDER_HPP_
 
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VariableSizeExecutableDataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 

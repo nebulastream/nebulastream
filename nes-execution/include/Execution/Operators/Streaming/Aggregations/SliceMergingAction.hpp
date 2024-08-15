@@ -15,6 +15,8 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+
 namespace NES::Runtime::Execution::Operators {
 using namespace Nautilus;
 class ExecutableOperator;

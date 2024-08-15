@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Expressions {

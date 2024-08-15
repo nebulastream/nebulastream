@@ -12,7 +12,8 @@
 
 add_source_files(nes-nautilus
         AbstractDataType.cpp
-        ExecutableDataType.cpp
+        FixedSizeExecutableDataType.cpp
+        VariableSizeExecutableDataType.cpp
         Operations/ExecutableDataTypeArithmeticalOperations.cpp
         Operations/ExecutableDataTypeLogicalOperations.cpp
         Operations/ExecutableDataTypeBitwiseOperations.cpp

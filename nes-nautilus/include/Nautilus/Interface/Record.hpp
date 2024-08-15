@@ -15,7 +15,7 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
 
-#include <Nautilus/DataTypes/ExecutableDataType.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <unordered_map>
 
 namespace NES::Nautilus {
