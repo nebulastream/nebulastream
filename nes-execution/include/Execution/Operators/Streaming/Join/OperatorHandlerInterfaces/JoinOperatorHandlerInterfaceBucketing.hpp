@@ -32,7 +32,7 @@ public:
      * @param workerThreadId
      * @return Vector of pointer to StreamSlices
      */
-    virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId) = 0;
+    virtual std::vector<StreamSlice*>* getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId, AbstractBufferProvider&) = 0;
 };
 } /// namespace NES::Runtime::Execution::Operators
 

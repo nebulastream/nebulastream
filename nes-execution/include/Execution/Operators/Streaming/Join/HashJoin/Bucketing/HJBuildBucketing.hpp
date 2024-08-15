@@ -52,7 +52,11 @@ public:
         const uint64_t windowSlide);
 
     void insertRecordForWindow(
-        Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex, ValueId<WorkerThreadId>& workerThreadId, Record& record) const override;
+        Value<MemRef>& allWindowsToFill,
+        Value<UInt64>& curIndex,
+        ValueId<WorkerThreadId>& workerThreadId,
+        Record& record,
+        Value<MemRef> pipelineExecutionContext) const override;
 };
 } /// namespace NES::Runtime::Execution::Operators
 

@@ -67,7 +67,7 @@ public:
                 continue;
             }
 
-            auto buffer = bm->getBufferNoBlocking();
+            auto buffer = bm.getBufferNoBlocking();
             if (!buffer.has_value())
             {
                 NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");
@@ -124,7 +124,7 @@ public:
 private:
     void appendBuffer()
     {
-        auto buffer = bm->getBufferNoBlocking();
+        auto buffer = bm.getBufferNoBlocking();
         if (!buffer.has_value())
         {
             NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");

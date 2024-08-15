@@ -38,13 +38,12 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
+        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, *bm, 1024);
         NES_DEBUG("Setup ReplacingRegexTest test case.")
     }
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ReplacingRegexTest test class."); }
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 

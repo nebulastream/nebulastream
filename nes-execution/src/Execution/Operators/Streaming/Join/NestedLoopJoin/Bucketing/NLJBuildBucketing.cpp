@@ -49,7 +49,11 @@ void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, WorkerThread
 }
 
 void NLJBuildBucketing::insertRecordForWindow(
-    Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex, ValueId<WorkerThreadId>& workerThreadId, Record& record) const
+    Value<MemRef>& allWindowsToFill,
+    Value<UInt64>& curIndex,
+    ValueId<WorkerThreadId>& workerThreadId,
+    Record& record,
+    Value<MemRef> pipelineExecutionContext) const
 {
     auto curPagedVectorRef = Nautilus::FunctionCall(
         "getPagedVectorRefProxy",
@@ -60,7 +64,7 @@ void NLJBuildBucketing::insertRecordForWindow(
         Value<UInt64>(to_underlying(joinBuildSide)));
 
     /// Write record to the pagedVector
-    auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(curPagedVectorRef, schema);
+    auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(curPagedVectorRef, schema, pipelineExecutionContext);
     pagedVectorVarSizedRef.writeRecord(record);
 }
 

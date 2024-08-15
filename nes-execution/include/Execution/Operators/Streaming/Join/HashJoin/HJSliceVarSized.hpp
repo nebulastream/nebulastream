@@ -41,13 +41,13 @@ public:
       * @param pageSize
       * @param numPartitions
       */
-    explicit HJSliceVarSized(
+    HJSliceVarSized(
         size_t numberOfWorker,
         uint64_t sliceStart,
         uint64_t sliceEnd,
         SchemaPtr& leftSchema,
         SchemaPtr& rightSchema,
-        BufferManagerPtr& bufferManager,
+        AbstractBufferProvider& bufferManager,
         size_t pageSize,
         size_t numPartitions);
 
@@ -91,7 +91,6 @@ public:
      * @brief Merges all local hash tables to the global one
      */
     void mergeLocalToGlobalHashTable();
-
     /**
      * @brief Returns the number of tuples in this window
      * @param joinBuildSide

@@ -61,7 +61,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
         const CsvSourceDescriptorPtr csvSourceDescriptor = sourceDescriptor->as<CsvSourceDescriptor>();
         return createCSVFileSource(
             csvSourceDescriptor->getSchema(),
-            std::dynamic_pointer_cast<Runtime::AbstractBufferProvider>(bufferManager),
+            std::dynamic_pointer_cast<Runtime::AbstractPoolProvider>(bufferManager),
             queryManager,
             csvSourceDescriptor->getSourceConfig(),
             operatorId,
@@ -76,7 +76,7 @@ DataSourcePtr ConvertLogicalToPhysicalSource::createDataSource(
         auto tcpSourceDescriptor = sourceDescriptor->as<TCPSourceDescriptor>();
         return createTCPSource(
             tcpSourceDescriptor->getSchema(),
-            std::dynamic_pointer_cast<Runtime::AbstractBufferProvider>(bufferManager),
+            std::dynamic_pointer_cast<Runtime::AbstractPoolProvider>(bufferManager),
             queryManager,
             tcpSourceDescriptor->getSourceConfig(),
             operatorId,

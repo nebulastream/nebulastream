@@ -77,7 +77,8 @@ public:
         LocalStateBucketing* localStateBucketing,
         Value<MemRef>& opHandlerMemRef,
         Value<UInt64>& ts,
-        ValueId<WorkerThreadId>& workerThreadId) const;
+        ValueId<WorkerThreadId>& workerThreadId,
+        ExecutionContext& ctx) const;
 
     /**
      * @brief Checks if the current local hash join state is up-to-date, meaning the correct windows are stored
@@ -113,7 +114,11 @@ public:
      * @param record
      */
     virtual void insertRecordForWindow(
-        Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex, ValueId<WorkerThreadId>& workerThreadId, Record& record) const
+        Value<MemRef>& allWindowsToFill,
+        Value<UInt64>& curIndex,
+        ValueId<WorkerThreadId>& workerThreadId,
+        Record& record,
+        Value<MemRef> pipelineExecutionContext) const
         = 0;
 
 private:

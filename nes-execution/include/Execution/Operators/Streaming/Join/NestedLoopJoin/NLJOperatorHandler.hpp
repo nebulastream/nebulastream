@@ -49,13 +49,13 @@ public:
 
     ~NLJOperatorHandler() override = default;
 
-    StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
+    StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, AbstractBufferProvider& bufferProvider) override;
 
     void emitSliceIdsToProbe(
         StreamSlice& sliceLeft, StreamSlice& sliceRight, const WindowInfo& windowInfo, PipelineExecutionContext* pipelineCtx) override;
 
 private:
-    StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) override;
+    StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers, AbstractBufferProvider& bufferManager) override;
 
 protected:
     const uint64_t pageSizeLeft;

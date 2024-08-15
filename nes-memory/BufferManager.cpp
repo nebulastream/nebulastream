@@ -23,7 +23,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 
-#include <NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 
 #include "FixedSizeBufferPool.hpp"
 #include "LocalBufferPool.hpp"

@@ -54,7 +54,7 @@ public:
      */
     explicit TCPSource(
         SchemaPtr schema,
-        std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+        std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
         Runtime::QueryManagerPtr queryManager,
         TCPSourceTypePtr tcpSourceType,
         OperatorId operatorId,

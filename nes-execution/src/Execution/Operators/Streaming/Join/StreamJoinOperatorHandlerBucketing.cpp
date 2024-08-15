@@ -28,7 +28,8 @@ void StreamJoinOperatorHandlerBucketing::setNumberOfWorkerThreads(uint64_t numbe
     }
 }
 
-std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(uint64_t ts, WorkerThreadId workerThreadId)
+std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFillForTs(
+    uint64_t ts, WorkerThreadId workerThreadId, AbstractBufferProvider& bufferProvider)
 {
     auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
 
@@ -50,7 +51,7 @@ std::vector<StreamSlice*>* StreamJoinOperatorHandlerBucketing::getAllWindowsToFi
         }
         else
         {
-            auto newWindow = createNewSlice(windowInfo.windowStart, windowInfo.windowEnd);
+            auto newWindow = createNewSlice(windowInfo.windowStart, windowInfo.windowEnd, bufferProvider);
             (*windowToSlicesLocked)[windowInfo].slices.emplace_back(newWindow);
             (*windowToSlicesLocked)[windowInfo].windowState = WindowInfoState::BOTH_SIDES_FILLING;
             slicesWriteLocked->emplace_back(newWindow);

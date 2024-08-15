@@ -55,7 +55,7 @@ void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::Success
 
 DataSource::DataSource(
     SchemaPtr pSchema,
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+    std::shared_ptr<Runtime::AbstractPoolProvider> bufferManager,
     Runtime::QueryManagerPtr queryManager,
     OperatorId operatorId,
     OriginId originId,
@@ -68,7 +68,7 @@ DataSource::DataSource(
     : Runtime::Reconfigurable()
     , DataEmitter()
     , queryManager(std::move(queryManager))
-    , localBufferManager(std::move(bufferManager))
+    , bufferPoolProvider(std::move(bufferManager))
     , executableSuccessors(std::move(executableSuccessors))
     , operatorId(operatorId)
     , originId(originId)
@@ -80,20 +80,12 @@ DataSource::DataSource(
     , physicalSourceName(physicalSourceName)
 {
     NES_DEBUG("DataSource  {} : Init Data Source with schema  {}", operatorId, schema->toString());
-    NES_ASSERT(this->localBufferManager, "Invalid buffer manager");
+    NES_ASSERT(this->bufferPoolProvider, "Invalid buffer manager");
     NES_ASSERT(this->queryManager, "Invalid query manager");
     /// TODO #4094: enable this exception -- currently many UTs are designed to assume empty executableSuccessors
     ///    if (this->executableSuccessors.empty()) {
     ///        throw Exceptions::RuntimeException("empty executable successors");
     ///    }
-    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
-    {
-        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, localBufferManager->getBufferSize());
-    }
-    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
-    {
-        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, localBufferManager->getBufferSize());
-    }
 }
 
 void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
@@ -336,7 +328,15 @@ void DataSource::setGatheringInterval(std::chrono::milliseconds interval)
 
 void DataSource::open()
 {
-    bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
+    bufferManager = bufferPoolProvider->createFixedSizeBufferPool(numSourceLocalBuffers);
+    if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
+    {
+        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    }
+    else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
+    {
+        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+    }
 }
 
 void DataSource::close()

@@ -56,7 +56,7 @@ class SequenceNumberPipelineTest : public Testing::BaseUnitTest, public Abstract
 {
 public:
     ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -76,8 +76,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -87,14 +86,14 @@ public:
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(BufferManagerPtr bm, SchemaPtr schema)
+std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(AbstractBufferProvider& bm, SchemaPtr schema)
 {
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
-        auto buffer = bm->getBufferBlocking();
+        auto buffer = bm.getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (int64_t i = 0; i < 100; ++i)
         {
@@ -146,9 +145,9 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, *bm);
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataAllSeqNumbersEmitted(bm, schema))
+    for (auto& buf : createDataAllSeqNumbersEmitted(*bm, schema))
     {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
@@ -179,14 +178,14 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataFullWithConstantFieldValues(BufferManagerPtr bm, SchemaPtr schema)
+std::vector<TupleBuffer> createDataFullWithConstantFieldValues(AbstractBufferProvider& bm, SchemaPtr schema)
 {
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
-        auto buffer = bm->getBufferBlocking();
+        auto buffer = bm.getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
         {
@@ -233,9 +232,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, *bm);
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataFullWithConstantFieldValues(bm, inputSchema))
+    for (auto& buf : createDataFullWithConstantFieldValues(*bm, inputSchema))
     {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
@@ -376,9 +375,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
     /// Creating pipeline execution contexts
-    auto pipeline1Context = MockedPipelineExecutionContext();
-    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false);
-    auto pipeline3Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({}, true, *bm);
+    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false, *bm);
+    auto pipeline3Context = MockedPipelineExecutionContext({sliceMergingHandler}, true, *bm);
 
     /// Setting up all pipelines
     pipeline1->setup(pipeline1Context);

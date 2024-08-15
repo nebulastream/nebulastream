@@ -37,7 +37,7 @@ namespace NES
 
 TCPSource::TCPSource(
     SchemaPtr schema,
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+    std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
     Runtime::QueryManagerPtr queryManager,
     TCPSourceTypePtr tcpSourceType,
     OperatorId operatorId,
@@ -48,7 +48,7 @@ TCPSource::TCPSource(
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors)
     : DataSource(
           schema,
-          std::move(bufferManager),
+          std::move(poolProvider),
           std::move(queryManager),
           operatorId,
           originId,
@@ -328,13 +328,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                 std::string_view buf(tupleData.data(), tupleData.size());
                 if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::NES_BINARY)
                 {
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferManager);
                     tupleCount = tupleBuffer.getNumberOfTuples();
                 }
                 else
                 {
                     NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferManager);
                     tupleCount++;
                 }
             }

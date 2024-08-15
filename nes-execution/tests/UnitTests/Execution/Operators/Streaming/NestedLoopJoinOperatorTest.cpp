@@ -53,7 +53,7 @@ auto constexpr DEFAULT_RIGHT_PAGE_SIZE = 256;
 class NLJBuildPipelineExecutionContext : public PipelineExecutionContext
 {
 public:
-    NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
+    NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManager& bm)
         : PipelineExecutionContext(
               INVALID_PIPELINE_ID, /// mock pipeline id
               INVALID_QUERY_ID, /// mock query id
@@ -70,7 +70,7 @@ class NLJProbePipelineExecutionContext : public PipelineExecutionContext
 {
 public:
     std::vector<TupleBuffer> emittedBuffers;
-    NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
+    NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManager& bm)
         : PipelineExecutionContext(
               INVALID_PIPELINE_ID, /// mock pipeline id
               INVALID_QUERY_ID, /// mock query id
@@ -92,8 +92,8 @@ public:
 class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest
 {
 public:
+    Runtime::BufferManagerPtr bm = Runtime::BufferManager::create(8196, 5000);
     Operators::NLJOperatorHandlerPtr nljOperatorHandler;
-    std::shared_ptr<Runtime::BufferManager> bm;
     Expressions::ExpressionPtr joinExpression;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
@@ -134,8 +134,12 @@ public:
 
         nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
             {INVALID_ORIGIN_ID}, OriginId(1), windowSize, windowSize, leftSchema, rightSchema, leftPageSize, rightPageSize);
-        bm = std::make_shared<BufferManager>(8196, 5000);
-        nljOperatorHandler->setBufferManager(bm);
+    }
+
+    void TearDown() override
+    {
+        Testing::BaseUnitTest::TearDown();
+        nljOperatorHandler = nullptr;
     }
 
     /**
@@ -204,16 +208,18 @@ public:
      * @param allRecords
      * @param memoryProvider
      * @param schema
+     * @param pipelineExecutionContext
      */
     void checkRecordsInBuild(
         uint64_t windowIdentifier,
         Value<MemRef>& pagedVectorRef,
         uint64_t expectedNumberOfTuplesInWindow,
         std::vector<Record>& allRecords,
-        SchemaPtr& schema)
+        SchemaPtr& schema,
+        const Value<MemRef>& pipelineExecutionContext)
     {
         Nautilus::Value<UInt64> zeroVal(0_u64);
-        Nautilus::Interface::PagedVectorVarSizedRef pagedVector(pagedVectorRef, schema);
+        Nautilus::Interface::PagedVectorVarSizedRef pagedVector(pagedVectorRef, schema, pipelineExecutionContext);
         auto windowStartPos = windowIdentifier - windowSize;
         auto windowEndPos = windowStartPos + expectedNumberOfTuplesInWindow;
         uint64_t posInWindow = 0;
@@ -236,8 +242,13 @@ public:
      * @param maxTimestamp
      * @param allLeftRecords
      * @param allRightRecords
+     * @param pipelineExecutionContext
      */
-    void checkWindowsInBuild(uint64_t maxTimestamp, std::vector<Record>& allLeftRecords, std::vector<Record>& allRightRecords)
+    void checkWindowsInBuild(
+        uint64_t maxTimestamp,
+        std::vector<Record>& allLeftRecords,
+        std::vector<Record>& allRightRecords,
+        const Value<MemRef>& pipelineExecutionContext)
     {
         auto numberOfRecordsLeft = allLeftRecords.size();
         auto numberOfRecordsRight = allRightRecords.size();
@@ -263,11 +274,23 @@ public:
             Nautilus::Value<UInt64> zeroVal(static_cast<uint64_t>(0));
             auto leftPagedVectorRef
                 = Nautilus::Value<Nautilus::MemRef>(static_cast<int8_t*>(nljWindow->getPagedVectorRefLeft(INITIAL<WorkerThreadId>)));
-            checkRecordsInBuild(windowIdentifier, leftPagedVectorRef, expectedNumberOfTuplesInWindowLeft, allLeftRecords, leftSchema);
+            checkRecordsInBuild(
+                windowIdentifier,
+                leftPagedVectorRef,
+                expectedNumberOfTuplesInWindowLeft,
+                allLeftRecords,
+                leftSchema,
+                pipelineExecutionContext);
 
             auto rightPagedVectorRef
                 = Nautilus::Value<Nautilus::MemRef>(static_cast<int8_t*>(nljWindow->getPagedVectorRefRight(INITIAL<WorkerThreadId>)));
-            checkRecordsInBuild(windowIdentifier, rightPagedVectorRef, expectedNumberOfTuplesInWindowRight, allRightRecords, rightSchema);
+            checkRecordsInBuild(
+                windowIdentifier,
+                rightPagedVectorRef,
+                expectedNumberOfTuplesInWindowRight,
+                allRightRecords,
+                rightSchema,
+                pipelineExecutionContext);
         }
     }
 
@@ -275,11 +298,12 @@ public:
      * @brief calls insertRecordsIntoBuild() to set up, open and execute NLJBuild, then calls checkWindowsInBuild()
      * @param numberOfRecordsLeft
      * @param numberOfRecordsRight
+     * @param pipelineExecutionContext
      */
-    void insertRecordsIntoBuildAndCheck(uint64_t numberOfRecordsLeft, uint64_t numberOfRecordsRight)
+    void insertRecordsIntoBuildAndCheck(uint64_t numberOfRecordsLeft, uint64_t numberOfRecordsRight, Value<MemRef> pipelineExecutionContext)
     {
         auto [leftRecords, rightRecords, maxTimestamp] = insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
-        checkWindowsInBuild(maxTimestamp, leftRecords, rightRecords);
+        checkWindowsInBuild(maxTimestamp, leftRecords, rightRecords, pipelineExecutionContext);
     }
 
     /**
@@ -313,8 +337,8 @@ public:
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
-        NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
-        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
+        NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, *bm);
         auto executionContext = ExecutionContext(
             Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
             Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
@@ -434,8 +458,8 @@ public:
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
-        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
+        NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, *bm);
         auto executionContext = ExecutionContext(
             Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
             Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
@@ -481,15 +505,15 @@ public:
      * @brief writes every record to the corresponding window's PagedVector and calls checkWindowsInProbe()
      * @param numberOfRecordsLeft
      * @param numberOfRecordsRight
+     * @param pipelineExecutionContext
      */
-    void insertRecordsIntoProbe(uint64_t numberOfRecordsLeft, uint64_t numberOfRecordsRight)
+    void insertRecordsIntoProbe(uint64_t numberOfRecordsLeft, uint64_t numberOfRecordsRight, const Value<MemRef>& pipelineExecutionContext)
     {
         auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, QueryCompilation::JoinBuildSideType::Left);
         auto allRightRecords = createRandomRecords(numberOfRecordsRight, QueryCompilation::JoinBuildSideType::Right);
 
         auto memoryProviderLeft = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), leftSchema);
         auto memoryProviderRight = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), rightSchema);
-        nljOperatorHandler->setBufferManager(bm);
 
         uint64_t maxTimestamp = 0;
         Value<UInt64> zeroVal(0_u64);
@@ -499,9 +523,9 @@ public:
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
             auto nljOpHandler = std::dynamic_pointer_cast<Operators::NLJOperatorHandlerSlicing>(nljOperatorHandler);
-            auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp));
+            auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp, *bm));
             auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefLeft(INITIAL<WorkerThreadId>));
-            Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
+            Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema, pipelineExecutionContext);
             leftPagedVector.writeRecord(leftRecord);
         }
 
@@ -511,10 +535,10 @@ public:
             maxTimestamp = std::max(timestamp, maxTimestamp);
 
             auto nljOpHandler = std::dynamic_pointer_cast<Operators::NLJOperatorHandlerSlicing>(nljOperatorHandler);
-            auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp));
+            auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp, *bm));
             auto rightPagedVectorRef
                 = Nautilus::Value<Nautilus::MemRef>((int8_t*)nljWindow->getPagedVectorRefRight(INITIAL<WorkerThreadId>));
-            Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
+            Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema, pipelineExecutionContext);
             rightPagedVector.writeRecord(rightRecord);
         }
 
@@ -556,7 +580,7 @@ public:
     {
         auto expectedNumberOfSlice = (end - start) / windowSize;
 
-        auto buffers = nljOperatorHandler->getStateToMigrate(start, end);
+        auto buffers = nljOperatorHandler->getStateToMigrate(start, end, *bm);
 
         auto numberOfBuffersInLeft = std::ceil((double)windowSize / (leftPageSize / getSizeOfRecord(leftSchema)));
         auto numberOfBuffersInRight = std::ceil((double)windowSize / (rightPageSize / getSizeOfRecord(rightSchema)));
@@ -594,7 +618,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestOneRecord)
     auto numberOfRecordsLeft = 1;
     auto numberOfRecordsRight = 1;
 
-    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight);
+    NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, *bm);
+    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight, Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords)
@@ -602,7 +627,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleRecords)
     auto numberOfRecordsLeft = 250;
     auto numberOfRecordsRight = 250;
 
-    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight);
+    NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, *bm);
+    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight, Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows)
@@ -610,7 +636,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinBuildSimpleTestMultipleWindows)
     auto numberOfRecordsLeft = 2000;
     auto numberOfRecordsRight = 2000;
 
-    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight);
+    NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, *bm);
+    insertRecordsIntoBuildAndCheck(numberOfRecordsLeft, numberOfRecordsRight, Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow)
@@ -618,7 +645,8 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindow)
     const auto numberOfRecordsLeft = 250;
     const auto numberOfRecordsRight = 250;
 
-    insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
+    NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, *bm);
+    insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight, Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 }
 /**
  * Check getting the state from NestedLoopJoinOperatorHandler, when stopTS is equal to end timestamp of slice.
@@ -630,7 +658,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTest)
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     /// Checking corner case when stopTS is equal to end timestamp of slice.
-    auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);
+    auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000, *bm);
     checkNumberOfBuffers(2000, 4000);
 }
 /**
@@ -643,10 +671,8 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTestWithSmallBufferSize)
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     /// make buffer size less and check that more metadata buffers are created
-    bm = std::make_shared<BufferManager>(20, 10000);
-    nljOperatorHandler->setBufferManager(bm);
     /// Checking corner case when stopTS is equal to end timestamp of slice.
-    auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);
+    auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000, *bm);
     checkNumberOfBuffers(2000, 4000);
 }
 /**
@@ -659,7 +685,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesMiddleBordersTest)
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     /// Checking case when startTS and stopTS are in the middle of slices timestamps.
-    auto slices = nljOperatorHandler->getStateToMigrate(1500, 3500);
+    auto slices = nljOperatorHandler->getStateToMigrate(1500, 3500, *bm);
     checkNumberOfBuffers(1000, 4000);
 }
 
@@ -668,10 +694,11 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestMultipleWindows)
     auto numberOfRecordsLeft = 200;
     auto numberOfRecordsRight = 200;
     windowSize = 10;
+    NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, *bm);
     nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
         {INVALID_ORIGIN_ID}, OriginId(1), windowSize, windowSize, leftSchema, rightSchema, leftPageSize, rightPageSize);
 
-    insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
+    insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight, Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 }
 
 TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindowMulipleExpressions)
@@ -679,11 +706,13 @@ TEST_F(NestedLoopJoinOperatorTest, joinProbeSimpleTestOneWindowMulipleExpression
     const auto numberOfRecordsLeft = 250;
     const auto numberOfRecordsRight = 250;
 
+    NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, *bm);
+
     auto onLeftKey = std::make_shared<Expressions::ReadFieldExpression>("test1$value");
     auto onRightKey = std::make_shared<Expressions::ReadFieldExpression>("test2$value");
     auto expression = std::make_shared<Expressions::GreaterThanExpression>(onLeftKey, onRightKey);
     joinExpression = std::make_shared<Expressions::AndExpression>(joinExpression, expression);
 
-    insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight);
+    insertRecordsIntoProbe(numberOfRecordsLeft, numberOfRecordsRight, Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 }
 } /// namespace NES::Runtime::Execution

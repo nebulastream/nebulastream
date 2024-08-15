@@ -22,6 +22,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -40,7 +41,7 @@ namespace NES::Runtime::Execution::Operators
 class AppendToSliceStoreActionTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<BufferManager> bufferManager;
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -51,8 +52,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bufferManager, 100);
     }
     std::shared_ptr<NonKeyedSlice> createNonKeyedSlice(size_t start, size_t end, int64_t value)
     {
@@ -90,7 +90,7 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice)
 
     auto handler = std::make_shared<AppendToSliceStoreHandler<NonKeyedSlice>>(600, 200);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bufferManager);
     auto context = ExecutionContext(
         Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
@@ -147,7 +147,7 @@ TEST_F(AppendToSliceStoreActionTest, KeyedSlice)
     using namespace std::literals;
     auto handler = std::make_shared<AppendToSliceStoreHandler<KeyedSlice>>(600, 200);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bufferManager);
     auto ctx = ExecutionContext(
         Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 

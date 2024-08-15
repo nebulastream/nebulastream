@@ -57,7 +57,7 @@ public:
         auto map = FlatMapJavaUDF(0, javaUDFDescriptor->getInputSchema(), javaUDFDescriptor->getOutputSchema());
         auto collector = std::make_shared<CollectOperator>();
         map.setChild(collector);
-        auto pipelineContext = MockedPipelineExecutionContext({handler});
+        auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
         auto ctx = ExecutionContext(Value<MemRef>(buffer), Value<MemRef>((int8_t*)&pipelineContext));
         RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
         map.setup(ctx);
@@ -73,7 +73,7 @@ public:
 */
 TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
+    BufferManagerPtr bm = BufferManager::create();
     auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bm, 1024);
     auto inputRecord = Record({{"id", Value<Text>("Hallo World")}});
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder()
@@ -96,7 +96,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest)
 */
 TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
+    BufferManagerPtr bm = BufferManager::create();
     auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bm, 1024);
     auto schema = Schema::create()
                       ->addField("byteVariable", BasicType::INT8)

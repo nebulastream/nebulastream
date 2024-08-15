@@ -43,7 +43,7 @@ namespace NES::Runtime::Execution::Operators
 class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<BufferManager> bufferManager;
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -54,8 +54,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>();
-        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
+        workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bufferManager, 100);
     }
 
     void emitWatermark(
@@ -79,6 +78,8 @@ public:
     {
         slicePreAggregation.execute(ctx, record);
     }
+
+    BufferManagerPtr bm = BufferManager::create();
 };
 
 TEST_F(KeyedSlicePreAggregationTest, aggregate)
@@ -99,7 +100,7 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate)
 
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto handler = std::make_shared<KeyedSlicePreAggregationHandler>(10, 10, origins);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
 
     auto ctx = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>((int8_t*)&pipelineContext));
     auto buffer = bufferManager->getBufferBlocking();

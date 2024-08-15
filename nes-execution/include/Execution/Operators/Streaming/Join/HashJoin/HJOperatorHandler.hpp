@@ -56,7 +56,7 @@ public:
         uint64_t pageSize,
         uint64_t numPartitions);
 
-    StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) override;
+    StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, AbstractBufferProvider& bufferProvider) override;
     void emitSliceIdsToProbe(
         StreamSlice& sliceLeft, StreamSlice& sliceRight, const WindowInfo& windowInfo, PipelineExecutionContext* pipelineCtx) override;
 
@@ -85,7 +85,7 @@ public:
     uint64_t getTotalSizeForDataStructures() const;
 
 private:
-    StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer>) override;
+    StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer>, AbstractBufferProvider& bufferManager) override;
 
 protected:
     QueryCompilation::StreamJoinStrategy joinStrategy;
