@@ -39,8 +39,7 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
         return *this;
     }
 
-
-    operator bool() const {
+    explicit operator bool() const {
         return !null && isBool();
     }
 
