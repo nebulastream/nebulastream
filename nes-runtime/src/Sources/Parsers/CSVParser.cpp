@@ -18,8 +18,9 @@
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+
+#include <Util/TestTupleBuffer.hpp>
 
 using namespace std::string_literals;
 namespace NES

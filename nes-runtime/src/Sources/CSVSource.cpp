@@ -18,13 +18,12 @@
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Util/Core.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Util/TestTupleBuffer.hpp>
+#include <Util/Core.hpp>
 
 namespace NES
 {

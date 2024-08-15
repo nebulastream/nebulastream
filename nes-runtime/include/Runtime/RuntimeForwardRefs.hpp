@@ -49,9 +49,6 @@ using DataSinkPtr = std::shared_ptr<SinkMedium>;
 
 class DataSource;
 
-class SourceHandle;
-using SourceHandlPtr = std::shared_ptr<SourceHandle>;
-
 namespace Runtime
 {
 

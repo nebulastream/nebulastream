@@ -14,10 +14,10 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
 
-#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sources/SourceReturnType.hpp>
+#include <Sources/SourceHandle.hpp>
 
 namespace NES::QueryCompilation
 {
@@ -31,13 +31,14 @@ public:
     explicit DefaultDataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
     static DataSourceProviderPtr create(const QueryCompilerOptionsPtr& compilerOptions);
 
-    virtual SourceHandlPtr lower(
+    /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
+    SourceHandlePtr lower(
         OriginId originId,
         const SourceDescriptorPtr& sourceDescriptor,
-        const Runtime::NodeEnginePtr& nodeEngine,
-        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
+        Runtime::BufferManagerPtr bufferManager,
+        SourceReturnType::EmitFunction&& emitFunction);
 
-    virtual ~DefaultDataSourceProvider() = default;
+    ~DefaultDataSourceProvider() = default;
 
 private:
     QueryCompilerOptionsPtr compilerOptions;

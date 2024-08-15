@@ -17,14 +17,13 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES
 {

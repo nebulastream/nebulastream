@@ -558,7 +558,7 @@ private:
     }
 
 private:
-    const MemoryLayoutPtr memoryLayout;
+    MemoryLayoutPtr memoryLayout;
     mutable TupleBuffer buffer;
 };
 

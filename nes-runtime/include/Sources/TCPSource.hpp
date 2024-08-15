@@ -18,10 +18,9 @@
 #include <cstdint>
 #include <memory>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/Source.hpp>
+
 #include <Util/MMapCircularBuffer.hpp>
-#include <Util/TestTupleBuffer.hpp>
 
 namespace NES
 {
@@ -29,9 +28,6 @@ namespace NES
 class Parser;
 using ParserPtr = std::shared_ptr<Parser>;
 
-/**
- * @brief source to receive data via TCP connection
- */
 class TCPSource : public Source
 {
     /// TODO #74: make timeout configurable via descriptor

@@ -16,14 +16,17 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_SOURCEHANDLE_HPP_
 
 #include <memory>
-#include <utility>
+#include <string>
 #include <Sources/DataSource.hpp>
+#include <Sources/SourceReturnType.hpp>
 namespace NES
 {
 
-/**
- * @brief Todo
- */
+/// Interface class to handle sources.
+/// Created from a source descriptor via the SourceProvider.
+/// start(): The underlying source starts consuming data. All queries using the source start processing.
+/// stop(): The underlying source stops consuming data, notifying the QueryManager,
+/// that decides whether to keep queries, which used the particular source, alive.
 class SourceHandle
 {
 public:
@@ -31,23 +34,23 @@ public:
         OriginId originId,
         SchemaPtr schema,
         Runtime::BufferManagerPtr bufferManager,
-        Runtime::QueryManagerPtr queryManager,
+        SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
-        uint64_t numberOfBuffersToProduce,
-        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors
-        = std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
-        uint64_t taskQueueId = 0);
+        uint64_t numberOfBuffersToProduce);
 
     ~SourceHandle() = default;
 
     bool start() const;
-    bool stop(Runtime::QueryTerminationType graceful) const;
+    bool stop() const;
 
-    std::string toString() const;
-    OriginId getSourceId() const;
+    friend std::ostream & operator<<(std::ostream& out, const SourceHandle& sourceHandle);
+
+    [[nodiscard]] OriginId getSourceId() const;
 
 private:
+    // Used to print the data source via the overloaded '<<' operator.
+    [[nodiscard]] const DataSource* getDataSource() const;
     std::unique_ptr<DataSource> dataSource;
 };
 
