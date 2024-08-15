@@ -16,7 +16,6 @@
 
 #include <optional>
 #include <string>
-#include <Sources/DataSource.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES

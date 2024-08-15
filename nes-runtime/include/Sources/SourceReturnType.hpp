@@ -11,24 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #pragma once
 
-#include <memory>
+#include <cstdint>
+#include <variant>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/TupleBuffer.hpp>
+
 namespace NES
 {
-
-class DataSource;
-using DataSourcePtr = std::shared_ptr<DataSource>;
-
-namespace Runtime
+namespace SourceReturnType
 {
 
-class TupleBuffer;
-
-namespace detail
+enum class TerminationType : uint8_t
 {
-class MemorySegment;
-} /// namespace detail
-} /// namespace Runtime
+    STOP,
+    EOS,
+    FAILURE
+};
+using SourceReturnType = std::variant<Runtime::TupleBuffer, TerminationType>;
+using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 
-} /// namespace NES
+}
+}

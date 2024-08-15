@@ -25,6 +25,7 @@
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Task.hpp>
+#include <Sources/SourceReturnType.hpp>
 #include <Util/AtomicCounter.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
@@ -189,6 +190,14 @@ public:
      * @return node id
      */
     [[nodiscard]] WorkerId getNodeId() const;
+
+    /// Create an emit function that sources use to notify the QueryManager of events.
+    /// 1. Data: the source filled a buffer. The QueryManager (QM) schedules a Task for the buffer.
+    /// 2. EOS: the source encountered an end of stream (EOS). The QM initiates a soft end of stream and registers the source's completion.
+    /// 3. STOP: the source was told to stop. The QM initiates a hard EOS and registers the source's completion.
+    /// 4. FAILURE: the source failed. The QM stops all decomposed query plans that are using the source.
+    SourceReturnType::EmitFunction
+    createSourceEmitFunction(std::vector<Execution::SuccessorExecutablePipeline>&& executableSuccessorPipelines);
 
     /**
      * @brief this methods adds a reconfiguration task on the worker queue
