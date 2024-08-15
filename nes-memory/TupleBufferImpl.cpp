@@ -21,7 +21,7 @@
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #    include <mutex>
 #    include <thread>
-#    include <Util/Backward/backward.hpp>
+#    include <cpptrace.hpp>
 #endif
 
 namespace NES::Runtime
@@ -156,23 +156,14 @@ void BufferControlBlock::addRecycleCallback(std::function<void(MemorySegment*, B
  * @param threadName
  * @param callstack
  */
-void fillThreadOwnershipInfo(std::string& threadName, std::string& callstack)
+void fillThreadOwnershipInfo(std::string& threadName, cpptrace::raw_trace& callstack)
 {
-    static constexpr int CALLSTACK_DEPTH = 16;
-
-    backward::StackTrace st;
-    backward::Printer p;
-    st.load_here(CALLSTACK_DEPTH);
-    std::stringbuf callStackBuffer;
-    std::ostream os0(&callStackBuffer);
-    p.print(st, os0);
-
     std::stringbuf threadNameBuffer;
     std::ostream os1(&threadNameBuffer);
     os1 << std::this_thread::get_id();
 
     threadName = threadNameBuffer.str();
-    callstack = callStackBuffer.str();
+    callstack = cpptrace::raw_trace::current(1);
 }
 #endif
 bool BufferControlBlock::prepare()
@@ -210,12 +201,16 @@ BufferControlBlock* BufferControlBlock::retain()
 void BufferControlBlock::dumpOwningThreadInfo()
 {
     std::unique_lock lock(owningThreadsMutex);
-    NES_FATAL_ERROR("Buffer {} has {} live references", getOwner(), referenceCounter.load());
+    NES_FATAL_ERROR("Buffer {} has {} live references", fmt::ptr(getOwner()), referenceCounter.load());
     for (auto& item : owningThreads)
     {
         for (auto& v : item.second)
         {
-            NES_FATAL_ERROR("Thread {} has buffer {} requested on callstack: {}", v.threadName, getOwner(), v.callstack);
+            NES_FATAL_ERROR(
+                "Thread {} has buffer {} requested on callstack: {}",
+                v.threadName,
+                fmt::ptr(getOwner()),
+                v.callstack.resolve().to_string());
         }
     }
 }
@@ -263,13 +258,13 @@ bool BufferControlBlock::release()
 }
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
-BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack)
+BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo(std::string&& threadName, cpptrace::raw_trace&& callstack)
     : threadName(threadName), callstack(callstack)
 {
     /// nop
 }
 
-BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT-SAMPLED"), callstack("NOT-SAMPLED")
+BufferControlBlock::ThreadOwnershipInfo::ThreadOwnershipInfo() : threadName("NOT-SAMPLED"), callstack(cpptrace::raw_trace::current(1))
 {
     /// nop
 }

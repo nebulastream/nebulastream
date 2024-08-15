@@ -87,6 +87,12 @@ void BufferManager::destroy()
         {
             if (!holder.segment || holder.segment->controlBlock->getReferenceCount() != 0)
             {
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+                if (holder.segment)
+                {
+                    holder.segment->controlBlock->dumpOwningThreadInfo();
+                }
+#endif
                 NES_ASSERT2_FMT(
                     false,
                     "Deletion of unpooled buffer invoked on used memory segment size="

@@ -27,6 +27,7 @@
 #    include <mutex>
 #    include <thread>
 #    include <unordered_map>
+#    include <cpptrace.hpp>
 #endif
 
 namespace NES::Runtime
@@ -238,12 +239,12 @@ private:
 
     private:
         std::string threadName;
-        std::string callstack;
+        cpptrace::raw_trace callstack;
 
     public:
         ThreadOwnershipInfo();
 
-        ThreadOwnershipInfo(std::string&& threadName, std::string&& callstack);
+        ThreadOwnershipInfo(std::string&& threadName, cpptrace::raw_trace&& callstack);
 
         ThreadOwnershipInfo(const ThreadOwnershipInfo&) = default;
 
@@ -251,7 +252,7 @@ private:
 
         friend std::ostream& operator<<(std::ostream& os, const ThreadOwnershipInfo& info)
         {
-            os << info.threadName << " buffer is used in " << info.callstack;
+            os << info.threadName << " buffer is used in " << info.callstack.resolve();
             return os;
         }
     };
