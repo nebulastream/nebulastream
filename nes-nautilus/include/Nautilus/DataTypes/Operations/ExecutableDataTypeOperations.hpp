@@ -17,8 +17,8 @@
 
 /// The sole purpose of this file is to include all the other files that contain the definitions of the operations for the ExecDataType.
 /// This is done to avoid having to include all the files separately in any that uses the ExecDataType.
-#include <Nautilus/DataTypes/ExecutableDataTypeArithmeticalOperations.hpp>
-#include <Nautilus/DataTypes/ExecutableDataTypeBitwiseOperations.hpp>
-#include <Nautilus/DataTypes/ExecutableDataTypeLogicalOperations.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeArithmeticalOperations.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeBitwiseOperations.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeLogicalOperations.hpp>
 
 #endif// NES_NAUTILUS_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPEOPERATIONS_HPP_

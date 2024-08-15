@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/ExecutableDataTypeArithmeticalOperations.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeArithmeticalOperations.hpp>
 
 namespace NES::Nautilus {
 

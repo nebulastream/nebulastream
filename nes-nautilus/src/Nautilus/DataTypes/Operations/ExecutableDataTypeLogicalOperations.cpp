@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/ExecutableDataTypeLogicalOperations.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeLogicalOperations.hpp>
 
 
 namespace NES::Nautilus {

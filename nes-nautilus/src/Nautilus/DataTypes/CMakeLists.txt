@@ -13,7 +13,7 @@
 add_source_files(nes-nautilus
         AbstractDataType.cpp
         ExecutableDataType.cpp
-        ExecutableDataTypeArithmeticalOperations.cpp
-        ExecutableDataTypeLogicalOperations.cpp
-        ExecutableDataTypeBitwiseOperations.cpp
+        Operations/ExecutableDataTypeArithmeticalOperations.cpp
+        Operations/ExecutableDataTypeLogicalOperations.cpp
+        Operations/ExecutableDataTypeBitwiseOperations.cpp
 )

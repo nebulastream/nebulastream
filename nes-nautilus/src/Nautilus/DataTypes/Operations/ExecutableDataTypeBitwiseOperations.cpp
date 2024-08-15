@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/ExecutableDataTypeBitwiseOperations.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeBitwiseOperations.hpp>
 
 
 namespace NES::Nautilus {
