@@ -224,8 +224,8 @@ Value<> listLengthTest(Value<List>& list)
 
 /*
 TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    BufferManagerPtr bm = BufferManager::create();
+    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
 
     auto list = RawList(10);
     auto listRef = TypedRef<RawList>(list);
@@ -261,8 +261,8 @@ Value<> textTestFunction(Value<Text>& text)
 
 TEST_P(TypeCompilationTest, compileTextFunctionTest)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    Runtime::BufferManagerPtr bm = Runtime::BufferManager::create();
+    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
 
     auto textA = Value<Text>("test");
     auto listRef = textA.value->getReference();

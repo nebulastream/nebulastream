@@ -51,11 +51,13 @@ public:
     Value<UInt64> sliceEnd;
 };
 
-void* getHJSliceProxy(void* ptrOpHandler, uint64_t timeStamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+void* getHJSliceProxy(
+    void* ptrOpHandler, uint64_t timeStamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt, void* pipelineExecutionContext)
 {
     NES_DEBUG("getHJSliceProxy with ts={}", timeStamp);
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    auto currentSlice = dynamic_cast<HJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timeStamp);
+    auto currentSlice = dynamic_cast<HJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(
+        timeStamp, static_cast<Runtime::Execution::PipelineExecutionContext*>(pipelineExecutionContext)->getBufferManager());
     NES_ASSERT2_FMT(currentSlice != nullptr, "invalid window");
     return currentSlice.get();
 }
@@ -119,7 +121,8 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const
             operatorHandlerMemRef,
             Value<UInt64>(tsValue),
             Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-            Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+            Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)),
+            ctx.getPipelineContext());
 
         joinState->hashTableReference = Nautilus::FunctionCall(
             "getLocalHashTableProxy",

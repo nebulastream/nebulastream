@@ -31,7 +31,6 @@ class QueryStatistics
 {
 public:
     QueryStatistics(SharedQueryId sharedQueryId, DecomposedQueryPlanId subQueryId) : queryId(sharedQueryId), subQueryId(subQueryId){};
-
     QueryStatistics(const QueryStatistics& other);
 
     /**

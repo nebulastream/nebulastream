@@ -39,7 +39,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
+        bufferManager = BufferManager::create(4096, 10);
 
         schema
             = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);

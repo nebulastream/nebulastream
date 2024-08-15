@@ -54,8 +54,10 @@ public:
         }
     }
 
-    static std::unique_ptr<Table>
-    load(const std::string& tableDir, const std::shared_ptr<Runtime::AbstractBufferProvider>& bm, const MemoryLayouts::MemoryLayoutPtr& layout)
+    static std::unique_ptr<Table> load(
+        const std::string& tableDir,
+        const std::shared_ptr<Runtime::AbstractBufferProvider>& bm,
+        const MemoryLayouts::MemoryLayoutPtr& layout)
     {
         auto table = std::make_unique<Table>(layout);
         for (const auto& chunkFile : std::filesystem::directory_iterator(tableDir))
@@ -65,7 +67,7 @@ public:
                 continue;
             }
 
-            auto buffer = bm->getBufferNoBlocking();
+            auto buffer = bm.getBufferNoBlocking();
             if (!buffer.has_value())
             {
                 NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");
@@ -122,7 +124,7 @@ public:
 private:
     void appendBuffer()
     {
-        auto buffer = bm->getBufferNoBlocking();
+        auto buffer = bm.getBufferNoBlocking();
         if (!buffer.has_value())
         {
             NES_THROW_RUNTIME_ERROR("BufferManager is out of buffers");

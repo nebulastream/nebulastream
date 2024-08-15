@@ -26,7 +26,8 @@
 namespace NES
 {
 
-CsvFormat::CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager))
+CsvFormat::CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
+    : SinkFormat(std::move(schema), std::move(bufferManager))
 {
 }
 

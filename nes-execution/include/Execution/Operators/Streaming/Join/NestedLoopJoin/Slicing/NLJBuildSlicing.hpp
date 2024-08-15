@@ -81,7 +81,8 @@ public:
     void updateLocalJoinState(
         LocalNestedLoopJoinState* localJoinState,
         Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
-        Nautilus::Value<Nautilus::UInt64>& timestamp) const;
+        Nautilus::Value<Nautilus::UInt64>& timestamp,
+        Value<MemRef> pipelineExecutionContext) const;
 };
 } /// namespace NES::Runtime::Execution::Operators
 

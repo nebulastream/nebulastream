@@ -81,14 +81,14 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         ///create one buffer manager per queue
         if (numberOfQueues == 1)
         {
-            bufferManagers.push_back(std::make_shared<BufferManager>(
+            bufferManagers.push_back(BufferManager::create(
                 workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()));
         }
         else
         {
             for (auto i = 0u; i < numberOfQueues; ++i)
             {
-                bufferManagers.push_back(std::make_shared<BufferManager>(
+                bufferManagers.push_back(BufferManager::create(
                     workerConfiguration.bufferSizeInBytes.getValue(),
                     ///if we run in static with multiple queues, we divide the whole buffer manager among the queues
                     workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues));

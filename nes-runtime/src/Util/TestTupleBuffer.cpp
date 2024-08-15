@@ -55,10 +55,11 @@ DynamicTuple::DynamicTuple(const uint64_t tupleIndex, MemoryLayoutPtr memoryLayo
 {
 }
 
-void DynamicTuple::writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, BufferManager* bufferManager)
+void DynamicTuple::writeVarSized(
+    std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferManager)
 {
     const auto valueLength = value.length();
-    auto childBuffer = bufferManager->getUnpooledBuffer(valueLength + sizeof(uint32_t));
+    auto childBuffer = bufferManager.getUnpooledBuffer(valueLength + sizeof(uint32_t));
     if (childBuffer.has_value())
     {
         auto& childBufferVal = childBuffer.value();

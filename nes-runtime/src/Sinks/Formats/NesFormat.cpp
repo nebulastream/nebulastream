@@ -24,7 +24,8 @@
 namespace NES
 {
 
-NesFormat::NesFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager) : SinkFormat(std::move(schema), std::move(bufferManager))
+NesFormat::NesFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
+    : SinkFormat(std::move(schema), std::move(bufferManager))
 {
     serializedSchema = std::make_shared<SerializableSchema>();
 }

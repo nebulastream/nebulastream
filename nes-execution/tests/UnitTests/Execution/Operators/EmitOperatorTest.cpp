@@ -53,13 +53,13 @@ public:
  */
 TEST_F(EmitOperatorTest, emitRecordsToRowBuffer)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    BufferManagerPtr bm = BufferManager::create();
+    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, *bm);
     auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
@@ -89,14 +89,14 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer)
  */
 TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    BufferManagerPtr bm = BufferManager::create();
+    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
     auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, *bm);
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
 
@@ -129,14 +129,14 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow)
  */
 TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer)
 {
-    auto bm = std::make_shared<Runtime::BufferManager>();
-    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+    BufferManagerPtr bm = BufferManager::create();
+    auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
     auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, *bm);
     auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*)wc.get()), Value<MemRef>((int8_t*)&pipelineContext));

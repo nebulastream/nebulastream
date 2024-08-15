@@ -19,7 +19,8 @@
 namespace NES
 {
 
-SinkFormat::SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager) : SinkFormat(schema, bufferManager, false)
+SinkFormat::SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
+    : SinkFormat(schema, bufferManager, false)
 {
 }
 

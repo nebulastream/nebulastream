@@ -20,13 +20,13 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer>)
+StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer>, AbstractBufferProvider&)
 {
     NES_WARNING("Deserialize Slice function is not implemented for HJOperatorHandler.")
     NES_NOT_IMPLEMENTED();
 }
 
-StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd)
+StreamSlicePtr HJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, Runtime::AbstractBufferProvider& bufferManager)
 {
     switch (joinStrategy)
     {
@@ -76,7 +76,7 @@ void HJOperatorHandler::emitSliceIdsToProbe(
         for (auto i = 0UL; i < getNumPartitions(); ++i)
         {
             ///create task for current window and current partition
-            auto buffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+            auto buffer = pipelineCtx->getBufferManager().getBufferBlocking();
             auto bufferAs = buffer.getBuffer<JoinPartitionIdSliceIdWindow>();
             bufferAs->partitionId = i;
             bufferAs->sliceIdentifierLeft = sliceLeft.getSliceIdentifier();

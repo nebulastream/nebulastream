@@ -30,9 +30,9 @@
 namespace NES::Runtime::Execution::Util
 {
 
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, BufferManagerPtr bufferManager)
+Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, AbstractBufferProvider& bufferManager)
 {
-    auto buffer = bufferManager->getBufferBlocking();
+    auto buffer = bufferManager.getBufferBlocking();
     uint8_t* bufferPtr = buffer.getBuffer();
 
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -48,20 +48,20 @@ Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& s
 }
 
 void writeNautilusRecord(
-    uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager)
+    uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferManager)
 {
     Nautilus::Value<Nautilus::UInt64> nautilusRecordIndex(recordIndex);
     Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+        auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager.getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
 
         memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+        auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager.getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
 
         memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
@@ -72,10 +72,12 @@ void writeNautilusRecord(
     }
 }
 
-Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
+Runtime::TupleBuffer mergeBuffers(
+    std::vector<Runtime::TupleBuffer>& buffersToBeMerged,
+    const SchemaPtr schema,
+    Runtime::AbstractBufferProvider& bufferManager)
 {
-    auto retBuffer = bufferManager->getBufferBlocking();
+    auto retBuffer = bufferManager.getBufferBlocking();
     auto retBufferPtr = retBuffer.getBuffer();
 
     auto maxPossibleTuples = retBuffer.getBufferSize() / schema->getSchemaSizeInBytes();
@@ -103,7 +105,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
     std::vector<Runtime::TupleBuffer>& buffers,
     SchemaPtr schema,
     const std::string& timeStampFieldName,
-    BufferManagerPtr bufferManager,
+    AbstractBufferProvider& bufferManager,
     uint64_t windowSize)
 {
     if (buffers.size() == 0)
@@ -120,12 +122,12 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
 
     std::vector<Runtime::TupleBuffer> retVector;
 
-    auto curBuffer = bufferManager->getBufferBlocking();
+    auto curBuffer = bufferManager.getBufferBlocking();
     auto numberOfTuplesInBuffer = 0UL;
     auto lastTimeStamp = windowSize - 1;
     for (auto buf : buffers)
     {
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager.getBufferSize());
         auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
 
         for (auto curTuple = 0UL; curTuple < testTupleBuffer.getNumberOfTuples(); ++curTuple)
@@ -141,7 +143,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
                 curBuffer.setNumberOfTuples(numberOfTuplesInBuffer);
                 retVector.emplace_back(std::move(curBuffer));
 
-                curBuffer = bufferManager->getBufferBlocking();
+                curBuffer = bufferManager.getBufferBlocking();
                 numberOfTuplesInBuffer = 0;
             }
 
@@ -164,7 +166,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
 }
 
 std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
-    std::vector<Runtime::TupleBuffer>& buffersToSort, SchemaPtr schema, const std::string& sortFieldName, BufferManagerPtr bufferManager)
+    std::vector<Runtime::TupleBuffer>& buffersToSort, SchemaPtr schema, const std::string& sortFieldName, AbstractBufferProvider& bufferManager)
 {
     if (buffersToSort.size() == 0)
     {
@@ -179,10 +181,10 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
     for (auto bufRead : buffersToSort)
     {
         std::vector<size_t> indexAlreadyInNewBuffer;
-        auto memLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+        auto memLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager.getBufferSize());
         auto testTupleBuf = Runtime::MemoryLayouts::TestTupleBuffer(memLayout, bufRead);
 
-        auto bufRet = bufferManager->getBufferBlocking();
+        auto bufRet = bufferManager.getBufferBlocking();
 
         for (auto outer = 0UL; outer < bufRead.getNumberOfTuples(); ++outer)
         {
@@ -217,16 +219,16 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
             bufRet.setNumberOfTuples(posRet + 1);
         }
         retVector.emplace_back(bufRet);
-        bufRet = bufferManager->getBufferBlocking();
+        bufRet = bufferManager.getBufferBlocking();
     }
 
     return retVector;
 }
 
-Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager)
+Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferManager)
 {
-    auto buffer = bufferManager->getBufferBlocking();
-    auto* bufferPtr = (int8_t*)buffer.getBuffer();
+    auto buffer = bufferManager.getBufferBlocking();
+    auto* bufferPtr = buffer.getBuffer<int8_t>();
 
     writeNautilusRecord(0, bufferPtr, nautilusRecord, std::move(schema), bufferManager);
 
@@ -265,7 +267,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+    Runtime::AbstractBufferProvider& bufferManager,
     uint64_t originId,
     const std::string& timestampFieldName,
     bool skipFirstLine)
@@ -282,9 +284,9 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
         std::getline(file, line);
     }
 
-    const auto maxTuplesPerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
+    const auto maxTuplesPerBuffer = bufferManager.getBufferSize() / schema->getSchemaSizeInBytes();
     auto tupleCount = 0UL;
-    auto tupleBuffer = bufferManager->getBufferBlocking();
+    auto tupleBuffer = bufferManager.getBufferBlocking();
     const auto numberOfSchemaFields = schema->fields.size();
     const auto physicalTypes = getPhysicalTypes(schema);
 
@@ -315,7 +317,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
             NES_DEBUG("watermarkTS {} sequenceNumber {} originId {}", watermarkTS, sequenceNumber, originId);
 
             recordBuffers.emplace_back(tupleBuffer);
-            tupleBuffer = bufferManager->getBufferBlocking();
+            tupleBuffer = bufferManager.getBufferBlocking();
             tupleCount = 0UL;
             watermarkTS = 0UL;
         }
@@ -340,7 +342,7 @@ void writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
+    Runtime::AbstractBufferProvider& bufferManager)
 {
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
@@ -448,7 +450,7 @@ void writeFieldValueToTupleBuffer(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
                 "to tuple buffer",
                 inputString);
-            tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
+            tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager);
         }
         else
         { /// char array(string) case

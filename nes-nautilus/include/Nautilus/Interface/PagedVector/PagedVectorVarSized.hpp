@@ -60,7 +60,7 @@ public:
      * @param schema - schema of tuples associated with paged vector
      * @param pageSize - size of page to get from buffer manager
      */
-    PagedVectorVarSized(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
+    PagedVectorVarSized(Runtime::AbstractBufferProvider& bufferProvider, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
 
     /**
      * @brief Constructor. Recreated PagedVectorVarSized from tuple buffers [Recreation not implemented for variable sized pages right now]
@@ -69,9 +69,7 @@ public:
      * @param buffers - buffers to recreate paged vector from
      * @param pageSize - size of page to get from buffer manager
      */
-    PagedVectorVarSized(
-        std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
-        SchemaPtr schema,
+    PagedVectorVarSized(Runtime::AbstractBufferProvider& bufferProvider, SchemaPtr schema,
         std::span<const Runtime::TupleBuffer> buffers,
         uint64_t pageSize = PAGE_SIZE);
 
@@ -79,29 +77,31 @@ public:
      * @brief Appends a new page to the pages vector. It also sets the number of tuples in the TupleBuffer to capacityPerPage
      * and updates the numberOfEntriesOnCurrPage.
      */
-    void appendPage();
+    void appendPage(Runtime::AbstractBufferProvider&);
 
     /**
      * @brief Appends a new page to the varSizedDataPages vector. It also updates the currVarSizedDataEntry pointer.
      */
-    void appendVarSizedDataPage();
+    void appendVarSizedDataPage(Runtime::AbstractBufferProvider&);
 
     /**
      * @brief Stores text of the given length in the varSizedDataPages. If the current page is full, a new page is appended.
      * It then creates a new entry in the varSizedDataEntryMap with the given key and the pointer to the text and its length.
      * @param text
      * @param length
+     * @param bufferProvider
      * @return uint64_t Returns the key of the new entry in the varSizedDataEntryMap.
      */
-    uint64_t storeText(const char* text, uint32_t length);
+    uint64_t storeText(const char* text, uint32_t length, Runtime::AbstractBufferProvider& bufferProvider);
 
     /**
      * @brief Loads text from the varSizedDataPages by retrieving the pointer to the text and its length from the
      * varSizedDataEntryMap with the given key.
      * @param textEntryMapKey
+     * @param bufferProvider
      * @return TextValue*
      */
-    TextValue* loadText(uint64_t textEntryMapKey);
+    TextValue* loadText(uint64_t textEntryMapKey, Runtime::AbstractBufferProvider& bufferProvider);
 
     /**
      * @brief Combines the pages of the given PagedVectorVarSized with the pages of this PagedVectorVarSized.
@@ -170,7 +170,6 @@ private:
     void setEntrySizeAndCapacityPerPage();
 
     friend PagedVectorVarSizedRef;
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;
     SchemaPtr schema;
     uint64_t pageSize;
     uint64_t entrySize;

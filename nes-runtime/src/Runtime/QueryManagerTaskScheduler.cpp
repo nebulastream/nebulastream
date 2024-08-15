@@ -38,7 +38,7 @@ public:
         : Execution::PipelineExecutionContext(
             INVALID_PIPELINE_ID, /// this is a dummy pipelineID
             queryExecutionPlanId,
-            queryManager->getBufferManager(),
+            *queryManager->getBufferManager(),
             queryManager->getNumberOfWorkerThreads(),
             [](TupleBuffer&, NES::Runtime::WorkerContext&) {},
             [](TupleBuffer&) {},

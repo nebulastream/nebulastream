@@ -80,7 +80,7 @@ HJSliceVarSized::HJSliceVarSized(
     uint64_t sliceEnd,
     SchemaPtr& leftSchema,
     SchemaPtr& rightSchema,
-    BufferManagerPtr& bufferManager,
+    AbstractBufferProvider& bufferManager,
     size_t pageSize,
     size_t numPartitions)
     : StreamSlice(sliceStart, sliceEnd)

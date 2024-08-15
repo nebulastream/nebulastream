@@ -17,6 +17,7 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -40,14 +41,15 @@ public:
     Value<UInt64> sliceEnd;
 };
 
-void* getHJSliceVarSizedProxy(void* ptrOpHandler, uint64_t timeStamp)
+void* getHJSliceVarSizedProxy(void* ptrOpHandler, uint64_t timeStamp, void* pipelineExecutionContext)
 {
     NES_DEBUG("getHJSliceVarSizedProxy with ts={}", timeStamp);
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(
         ptrOpHandler,
         magic_enum::enum_integer(QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED),
         magic_enum::enum_integer(QueryCompilation::WindowingStrategy::SLICING));
-    auto currentSlice = dynamic_cast<HJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timeStamp);
+    auto currentSlice = dynamic_cast<HJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(
+        timeStamp, static_cast<Runtime::Execution::PipelineExecutionContext*>(pipelineExecutionContext)->getBufferManager());
     NES_ASSERT2_FMT(currentSlice != nullptr, "invalid window");
     return currentSlice.get();
 }
@@ -105,7 +107,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd))
     {
         joinState->sliceReference
-            = FunctionCall("getHJSliceVarSizedProxy", getHJSliceVarSizedProxy, operatorHandlerMemRef, Value<UInt64>(tsValue));
+            = FunctionCall("getHJSliceVarSizedProxy", getHJSliceVarSizedProxy, operatorHandlerMemRef, Value<UInt64>(tsValue), ctx.getPipelineContext());
         joinState->sliceStart = FunctionCall("getSliceStartVarSizedProxy", getSliceStartVarSizedProxy, joinState->sliceReference);
         joinState->sliceEnd = FunctionCall("getSliceEndVarSizedProxy", getSliceEndVarSizedProxy, joinState->sliceReference);
 
@@ -126,7 +128,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
         Value<UInt64>(to_underlying(joinBuildSide)),
         record.read(joinFieldName).as<UInt64>());
 
-    Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
+    Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema, ctx.getPipelineContext());
     pagedVectorVarSizedRef.writeRecord(record);
 }
 

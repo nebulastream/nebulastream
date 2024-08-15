@@ -31,6 +31,7 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -49,7 +50,7 @@ class NonKeyedTimeWindowPipelineTest : public Testing::BaseUnitTest, public Abst
 {
 public:
     ExecutablePipelineProvider* provider{};
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -68,8 +69,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
     }
 };
 
@@ -140,13 +140,13 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum)
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
 
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, *bm);
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
-    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, *bm);
     sliceMergingExecutablePipeline->setup(pipeline2Context);
     EXPECT_EQ(pipeline1Context.buffers.size(), 1);
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
@@ -237,13 +237,13 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates)
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
 
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, *bm);
     preAggExecutablePipeline->setup(pipeline1Context);
 
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
-    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, *bm);
     sliceMergingExecutablePipeline->setup(pipeline2Context);
 
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
@@ -339,13 +339,13 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     std::vector<OriginId> origins = {INVALID_ORIGIN_ID};
     auto preAggregationHandler = std::make_shared<Operators::NonKeyedSlicePreAggregationHandler>(10, 10, origins);
 
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, *bm);
     preAggExecutablePipeline->setup(pipeline1Context);
 
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
-    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, *bm);
     sliceMergingExecutablePipeline->setup(pipeline2Context);
 
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);

@@ -48,7 +48,7 @@ public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -68,8 +68,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -155,7 +154,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<Operators::KeyedThresholdWindowOperatorHandler>();
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -268,7 +267,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<Operators::KeyedThresholdWindowOperatorHandler>();
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

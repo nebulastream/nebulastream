@@ -123,8 +123,8 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
         workerThreadIdForPages,
         Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
-    Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
-    Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
+    Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema, ctx.getPipelineContext());
+    Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema, ctx.getPipelineContext());
 
     const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
     const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();

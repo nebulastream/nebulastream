@@ -12,18 +12,18 @@
     limitations under the License.
 */
 
-#include <Runtime/BufferManager.hpp>
 #include <cstring>
 #include <iostream>
 #include <thread>
 #include <unistd.h>
 #include <Exceptions/Exception.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 
-#include <NesDefaultMemoryAllocator.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 
 #include "FixedSizeBufferPool.hpp"
 #include "LocalBufferPool.hpp"

@@ -146,7 +146,7 @@ void Parser::writeFieldValueToTupleBuffer(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
                 "to tuple buffer",
                 inputString);
-            tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
+            tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, *bufferManager);
         }
         else
         { /// char array(string) case

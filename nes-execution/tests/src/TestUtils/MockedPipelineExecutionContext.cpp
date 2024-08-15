@@ -17,24 +17,10 @@
 namespace NES::Runtime::Execution
 {
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler)
-    : MockedPipelineExecutionContext(std::move(handler), true)
-{
-}
-
-MockedPipelineExecutionContext::MockedPipelineExecutionContext() : MockedPipelineExecutionContext(true)
-{
-}
-
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(bool logSeenSeqChunk)
-    : MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr>(), logSeenSeqChunk, nullptr)
-{
-}
-
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     std::vector<OperatorHandlerPtr> handler,
     bool logSeenSeqChunk,
-    BufferManagerPtr bufferManager)
+    AbstractBufferProvider& bufferManager)
     : PipelineExecutionContext(
         INVALID_PIPELINE_ID, /// mock pipeline id
         INVALID_DECOMPOSED_QUERY_PLAN_ID, /// mock query id

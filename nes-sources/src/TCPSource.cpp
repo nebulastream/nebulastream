@@ -298,9 +298,17 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             if (!tupleData.empty())
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
-                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, nullptr);
-                tupleCount++;
+                if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::NES_BINARY)
+                {
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
+                    tupleCount = tupleBuffer.getNumberOfTuples();
+                }
+                else
+                {
+                    NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
+                    tupleCount++;
+                }
             }
         }
         /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving

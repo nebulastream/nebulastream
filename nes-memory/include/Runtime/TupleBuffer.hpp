@@ -34,10 +34,11 @@ static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
 namespace NES::Runtime
 {
-namespace detail {
+namespace detail
+{
 class BufferControlBlock;
 class MemorySegment;
-}// namespace detail
+} // namespace detail
 
 /**
  * @brief The TupleBuffer allows Runtime components to access memory to store records in a reference-counted and

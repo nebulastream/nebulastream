@@ -215,7 +215,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     auto executionContext = std::make_shared<Runtime::Execution::PipelineExecutionContext>(
         pipeline->getPipelineId(),
         pipelineQueryPlan->getQuerySubPlanId(),
-        queryManager->getBufferManager(),
+        *queryManager->getBufferManager(),
         queryManager->getNumberOfWorkerThreads(),
         emitToSuccessorFunctionHandler,
         emitToQueryManagerFunctionHandler,

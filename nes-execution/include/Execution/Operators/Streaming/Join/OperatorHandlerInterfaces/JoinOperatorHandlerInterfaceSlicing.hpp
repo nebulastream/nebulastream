@@ -26,14 +26,14 @@ public:
      * @param timestamp
      * @return StreamSlicePtr
      */
-    virtual StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp) = 0;
+    virtual StreamSlicePtr getSliceByTimestampOrCreateIt(uint64_t timestamp, AbstractBufferProvider&) = 0;
 
     /**
      * @brief Returns the current slice, by current we mean the last added window to the list. If no slice exists,
      * a slice for the timestamp 0 will be created
      * @return StreamSlice*
      */
-    virtual StreamSlice* getCurrentSliceOrCreate() = 0;
+    virtual StreamSlice* getCurrentSliceOrCreate(AbstractBufferProvider&) = 0;
 };
 } /// namespace NES::Runtime::Execution::Operators
 

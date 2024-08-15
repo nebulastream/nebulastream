@@ -20,7 +20,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-StreamSlicePtr NLJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer> buffers)
+StreamSlicePtr NLJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer> buffers, AbstractBufferProvider& bufferManager)
 {
     return NLJSlice::deserialize(bufferManager, leftSchema, pageSizeLeft, rightSchema, pageSizeRight, buffers);
 }
@@ -33,7 +33,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
         dynamic_cast<NLJSlice&>(sliceLeft).combinePagedVectors();
         dynamic_cast<NLJSlice&>(sliceRight).combinePagedVectors();
 
-        auto tupleBuffer = pipelineCtx->getBufferManager()->getBufferBlocking();
+        auto tupleBuffer = pipelineCtx->getBufferManager().getBufferBlocking();
         auto bufferMemory = tupleBuffer.getBuffer<EmittedNLJWindowTriggerTask>();
         bufferMemory->leftSliceIdentifier = sliceLeft.getSliceIdentifier();
         bufferMemory->rightSliceIdentifier = sliceRight.getSliceIdentifier();
@@ -61,7 +61,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
     }
 }
 
-StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd)
+StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, Runtime::AbstractBufferProvider& bufferManager)
 {
     return std::make_shared<NLJSlice>(
         sliceStart, sliceEnd, numberOfWorkerThreads, bufferManager, leftSchema, pageSizeLeft, rightSchema, pageSizeRight);

@@ -18,7 +18,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 StreamJoinHashTableVarSized::StreamJoinHashTableVarSized(
-    size_t numPartitions, BufferManagerPtr& bufferManager, size_t pageSize, SchemaPtr& schema)
+    size_t numPartitions, AbstractBufferProvider& bufferManager, size_t pageSize, SchemaPtr& schema)
     : mask(numPartitions - 1)
 {
     for (auto i = 0UL; i < numPartitions; ++i)

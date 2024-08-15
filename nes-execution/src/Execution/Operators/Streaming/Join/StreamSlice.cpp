@@ -52,7 +52,7 @@ bool StreamSlice::operator!=(const StreamSlice& rhs) const
 }
 
 /// default implementation to not implementing this method for HJSlice
-std::vector<Runtime::TupleBuffer> StreamSlice::serialize(std::shared_ptr<BufferManager>&)
+std::vector<Runtime::TupleBuffer> StreamSlice::serialize(AbstractBufferProvider&)
 {
     return {};
 }

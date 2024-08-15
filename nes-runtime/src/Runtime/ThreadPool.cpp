@@ -161,7 +161,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping)
                 /// TODO (2310) properly initialize the profiler with a file, thread, and core id
                 auto workerId = NesThread::getId();
                 NES_DEBUG("worker {} with workerId {} pins to queue {}", i, workerId, queueIdx);
-                runningRoutine(WorkerContext(workerId, localBufferManager, numberOfBuffersPerWorker, queueIdx));
+                runningRoutine(WorkerContext(workerId, *localBufferManager, numberOfBuffersPerWorker, queueIdx));
             });
     }
     barrier->wait();
