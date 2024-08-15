@@ -15,6 +15,7 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZEDREF_HPP_
 
+
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
@@ -30,7 +31,7 @@ public:
      * @param pagedVectorVarSizedRef
      * @param schema
      */
-    PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema);
+    PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema, Value<MemRef> pipelineExecutionContext);
 
     /**
      * @brief Writes a new record to the PagedVectorVarSizedRef
@@ -104,6 +105,7 @@ private:
 
     Value<MemRef> pagedVectorVarSizedRef;
     const SchemaPtr schema;
+    Value<MemRef> pipelineExecutionContext;
 };
 
 class PagedVectorVarSizedRefIter

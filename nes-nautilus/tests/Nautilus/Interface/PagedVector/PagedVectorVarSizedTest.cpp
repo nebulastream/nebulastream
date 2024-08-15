@@ -20,6 +20,8 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
+
 #include <BaseIntegrationTest.hpp>
 
 namespace NES::Nautilus::Interface
@@ -40,7 +42,7 @@ public:
     void SetUp() override
     {
         BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<Runtime::BufferManager>();
+        bufferManager = Runtime::BufferManager::create();
         NES_INFO("Setup PagedVectorVarSizedTest test case.");
     }
 
@@ -104,13 +106,15 @@ public:
         const SchemaPtr& schema,
         const uint64_t entrySize,
         const uint64_t pageSize,
-        const std::vector<Record>& allRecords)
+        const std::vector<Record>& allRecords,
+        Value<MemRef> pipelineExecutionContext)
     {
         ASSERT_EQ(entrySize, pagedVector.getEntrySize());
         const uint64_t capacityPerPage = pageSize / entrySize;
         const uint64_t expectedNumberOfEntries = allRecords.size();
         const uint64_t numberOfPages = std::ceil((double)expectedNumberOfEntries / capacityPerPage);
-        auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema);
+        auto pagedVectorVarSizedRef
+            = PagedVectorVarSizedRef(Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema, pipelineExecutionContext);
 
         for (auto& record : allRecords)
         {
@@ -126,9 +130,14 @@ public:
         ASSERT_EQ(pagedVector.getNumberOfEntriesOnCurrentPage(), numTuplesLastPage);
     }
 
-    void runRetrieveTest(PagedVectorVarSized& pagedVector, const SchemaPtr& schema, const std::vector<Record>& allRecords)
+    void runRetrieveTest(
+        PagedVectorVarSized& pagedVector,
+        const SchemaPtr& schema,
+        const std::vector<Record>& allRecords,
+        Value<MemRef> pipelineExecutionContext)
     {
-        auto pagedVectorVarSizedRef = PagedVectorVarSizedRef(Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema);
+        auto pagedVectorVarSizedRef
+            = PagedVectorVarSizedRef(Value<MemRef>(reinterpret_cast<int8_t*>(&pagedVector)), schema, pipelineExecutionContext);
         ASSERT_EQ(pagedVector.getNumberOfEntries(), allRecords.size());
 
         auto itemPos = 0_u64;
@@ -146,7 +155,8 @@ public:
         const uint64_t totalNumTextFields,
         const std::vector<std::vector<Record>>& allRecordsAndVectors,
         const std::vector<Record>& expectedRecordsAfterAppendAll,
-        uint64_t differentPageSizes)
+        uint64_t differentPageSizes,
+        const Value<MemRef>& pipelineExecutionContext)
     {
         /// Inserting data into each PagedVector and checking for correct values
         std::vector<std::unique_ptr<PagedVectorVarSized>> allPagedVectors;
@@ -157,9 +167,9 @@ public:
                 differentPageSizes++;
             }
             pageSize += differentPageSizes * entrySize;
-            allPagedVectors.emplace_back(std::make_unique<PagedVectorVarSized>(bufferManager, schema, pageSize));
-            runStoreTest(*allPagedVectors.back(), schema, entrySize, pageSize, allRecords);
-            runRetrieveTest(*allPagedVectors.back(), schema, allRecords);
+            allPagedVectors.emplace_back(std::make_unique<PagedVectorVarSized>(*bufferManager, schema, pageSize));
+            runStoreTest(*allPagedVectors.back(), schema, entrySize, pageSize, allRecords, pipelineExecutionContext);
+            runRetrieveTest(*allPagedVectors.back(), schema, allRecords, pipelineExecutionContext);
         }
 
         /// Appending and deleting all PagedVectors except for the first one
@@ -184,12 +194,13 @@ public:
         /// Checking for number of pagedVectors and correct values
         EXPECT_EQ(allPagedVectors.size(), 1);
         EXPECT_EQ(firstPagedVec->getVarSizedDataEntryMapCounter(), totalNumTextFields);
-        runRetrieveTest(*firstPagedVec, schema, expectedRecordsAfterAppendAll);
+        runRetrieveTest(*firstPagedVec, schema, expectedRecordsAfterAppendAll, pipelineExecutionContext);
     }
 };
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, *bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::UINT64))
@@ -199,13 +210,14 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues)
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
-    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
-    runRetrieveTest(pagedVector, testSchema, allRecords);
+    PagedVectorVarSized pagedVector(*bufferManager, testSchema, pageSize);
+    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
+    runRetrieveTest(pagedVector, testSchema, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
 }
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, *bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", DataTypeFactory::createText()))
                           ->addField(createField("value2", DataTypeFactory::createText()))
@@ -215,26 +227,28 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues)
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
-    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
-    runRetrieveTest(pagedVector, testSchema, allRecords);
+    PagedVectorVarSized pagedVector(*bufferManager, testSchema, pageSize);
+    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
+    runRetrieveTest(pagedVector, testSchema, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
 }
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveLargeVarSizedValues)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, *bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(createField("value1", DataTypeFactory::createText()));
     const auto entrySize = 1 * sizeof(uint64_t);
     const auto pageSize = 8_u64;
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 2 * pageSize);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
-    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
-    runRetrieveTest(pagedVector, testSchema, allRecords);
+    PagedVectorVarSized pagedVector(*bufferManager, testSchema, pageSize);
+    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
+    runRetrieveTest(pagedVector, testSchema, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
 }
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, *bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", DataTypeFactory::createText()))
@@ -244,13 +258,14 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes)
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
-    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
-    runRetrieveTest(pagedVector, testSchema, allRecords);
+    PagedVectorVarSized pagedVector(*bufferManager, testSchema, pageSize);
+    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
+    runRetrieveTest(pagedVector, testSchema, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
 }
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, *bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::UINT64));
@@ -259,13 +274,14 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
     const auto numItems = 507_u64;
     auto allRecords = createRecords(testSchema, numItems, 0);
 
-    PagedVectorVarSized pagedVector(bufferManager, testSchema, pageSize);
-    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords);
-    runRetrieveTest(pagedVector, testSchema, allRecords);
+    PagedVectorVarSized pagedVector(*bufferManager, testSchema, pageSize);
+    runStoreTest(pagedVector, testSchema, entrySize, pageSize, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
+    runRetrieveTest(pagedVector, testSchema, allRecords, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
 }
 
 TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, *bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", DataTypeFactory::createText()));
@@ -289,11 +305,12 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors)
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
     }
 
-    insertAndAppendAllPagesTest(testSchema, entrySize, pageSize, totalNumTextFields, allRecords, allRecordsAfterAppendAll, 0);
+    insertAndAppendAllPagesTest(testSchema, entrySize, pageSize, totalNumTextFields, allRecords, allRecordsAfterAppendAll, 0, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
 }
 
 TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, *bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", DataTypeFactory::createText()))
@@ -318,11 +335,12 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors)
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
     }
 
-    insertAndAppendAllPagesTest(testSchema, entrySize, pageSize, totalNumTextFields, allRecords, allRecordsAfterAppendAll, 0);
+    insertAndAppendAllPagesTest(testSchema, entrySize, pageSize, totalNumTextFields, allRecords, allRecordsAfterAppendAll, 0, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
 }
 
 TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, *bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", DataTypeFactory::createText()))
@@ -347,7 +365,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectorsWithDifferentPageSi
         allRecordsAfterAppendAll.insert(allRecordsAfterAppendAll.end(), allRecords[i].begin(), allRecords[i].end());
     }
 
-    insertAndAppendAllPagesTest(testSchema, entrySize, pageSize, totalNumTextFields, allRecords, allRecordsAfterAppendAll, 1);
+    insertAndAppendAllPagesTest(testSchema, entrySize, pageSize, totalNumTextFields, allRecords, allRecordsAfterAppendAll, 1, Value<MemRef>(reinterpret_cast<int8_t*>(&context)));
 }
 
 } /// namespace NES::Nautilus::Interface

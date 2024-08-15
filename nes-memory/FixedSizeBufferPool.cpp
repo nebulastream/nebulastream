@@ -14,9 +14,9 @@
 
 #include "FixedSizeBufferPool.hpp"
 #include <Exceptions/Exception.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Runtime/BufferManager.hpp>
 #include "TupleBufferImpl.hpp"
 
 namespace NES::Runtime

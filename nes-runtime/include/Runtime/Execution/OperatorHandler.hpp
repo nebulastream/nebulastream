@@ -16,6 +16,7 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_OPERATORHANDLER_HPP_
 #include <list>
 #include <Exceptions/RuntimeException.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/MigratableStateInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -55,13 +56,14 @@ public:
      * @param stopTS
      * @return list of TupleBuffers
      */
-    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) override;
+    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t, uint64_t, AbstractBufferProvider& bufferProvider) override;
 
     /**
      * @brief Merges migrated slices
      * @param buffer
+     * @param bufferProvider
      */
-    void restoreState(std::vector<Runtime::TupleBuffer>&) override;
+    void restoreState(std::vector<Runtime::TupleBuffer>&, AbstractBufferProvider& bufferProvider) override;
 
     /**
      * @brief Default deconstructor

@@ -42,18 +42,23 @@ uint64_t getNLJSliceEndProxy(void* ptrNljSlice)
     return nljSlice->getSliceEnd();
 }
 
-void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt, void* pipelineExecutionContext)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getCurrentSliceOrCreate();
+    return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getCurrentSliceOrCreate(
+        static_cast<Runtime::Execution::PipelineExecutionContext*>(pipelineExecutionContext)->getBufferManager());
 }
 
-void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+void* getNLJSliceRefProxy(
+    void* ptrOpHandler, uint64_t timestamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt, void* pipelineExecutionContext)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timestamp).get();
+    return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)
+        ->getSliceByTimestampOrCreateIt(
+            timestamp, static_cast<Runtime::Execution::PipelineExecutionContext*>(pipelineExecutionContext)->getBufferManager())
+        .get();
 }
 
 void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const
@@ -67,7 +72,7 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const
     {
         /// We have to get the slice for the current timestamp
         auto workerThreadId = ctx.getWorkerThreadId();
-        updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal);
+        updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal, ctx.getPipelineContext());
     }
 
     /// Write record to the pagedVector
@@ -77,12 +82,15 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const
         localJoinState->sliceReference,
         ctx.getWorkerThreadId(),
         Value<UInt64>(to_underlying(joinBuildSide)));
-    Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
+    Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(nljPagedVectorMemRef, schema, ctx.getPipelineContext());
     pagedVectorVarSizedRef.writeRecord(record);
 }
 
 void NLJBuildSlicing::updateLocalJoinState(
-    LocalNestedLoopJoinState* localJoinState, Value<Nautilus::MemRef>& operatorHandlerMemRef, Value<Nautilus::UInt64>& timestamp) const
+    LocalNestedLoopJoinState* localJoinState,
+    Value<Nautilus::MemRef>& operatorHandlerMemRef,
+    Value<Nautilus::UInt64>& timestamp,
+    Value<MemRef> pipelineExecutionContext) const
 {
     NES_DEBUG("Updating LocalJoinState for timestamp {}!", timestamp->toString());
 
@@ -93,7 +101,8 @@ void NLJBuildSlicing::updateLocalJoinState(
         operatorHandlerMemRef,
         timestamp,
         Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)),
+        pipelineExecutionContext);
     localJoinState->sliceStart = Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, localJoinState->sliceReference);
     localJoinState->sliceEnd = Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
 }
@@ -108,10 +117,12 @@ void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const
         getCurrentWindowProxy,
         opHandlerMemRef,
         Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)),
+        ctx.getPipelineContext()
+        );
     auto nljPagedVectorMemRef = Nautilus::FunctionCall(
         "getNLJPagedVectorProxy", getNLJPagedVectorProxy, sliceReference, workerThreadId, Value<UInt64>(to_underlying(joinBuildSide)));
-    auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
+    auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(nljPagedVectorMemRef, schema, ctx.getPipelineContext());
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, sliceReference, pagedVectorVarSizedRef);
 
     /// Getting the current slice start and end

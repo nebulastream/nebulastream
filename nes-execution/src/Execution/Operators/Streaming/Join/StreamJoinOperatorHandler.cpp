@@ -22,7 +22,6 @@ void StreamJoinOperatorHandler::start(PipelineExecutionContextPtr pipelineCtx, u
 {
     NES_INFO("Started StreamJoinOperatorHandler!");
     setNumberOfWorkerThreads(pipelineCtx->getNumberOfWorkerThreads());
-    setBufferManager(pipelineCtx->getBufferManager());
 }
 
 void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, PipelineExecutionContextPtr pipelineCtx)
@@ -34,7 +33,7 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, 
     }
 }
 
-std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS)
+std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS, AbstractBufferProvider& bufferManager)
 {
     auto slicesLocked = slices.rlock();
 
@@ -55,7 +54,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
 
     /// metadata buffer
-    auto mainMetadata = bufferManager->getBufferBlocking();
+    auto mainMetadata = bufferManager.getBufferBlocking();
     buffersToTransfer.insert(buffersToTransfer.begin(), mainMetadata);
     auto metadataBuffersCount = 1;
 
@@ -79,14 +78,14 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
      * @param dataToWrite - value to write to the buffer
     */
     auto writeToMetadata
-        = [&mainMetadata, &metadataPtr, &metadataIdx, this, &metadataBuffersCount, &buffersToTransfer](uint64_t dataToWrite)
+        = [&mainMetadata, &metadataPtr, &metadataIdx, &metadataBuffersCount, &buffersToTransfer, &bufferManager](uint64_t dataToWrite)
     {
         /// check that current metadata buffer has enough space, by sending used space and space needed
         if (!mainMetadata.hasSpaceLeft(metadataIdx * sizeof(uint64_t), sizeof(uint64_t)))
         {
             /// if current buffer does not contain enough space then
             /// get new buffer and insert to vector of buffers
-            auto newBuffer = bufferManager->getBufferBlocking();
+            auto newBuffer = bufferManager.getBufferBlocking();
             buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
             /// update pointer and index
             metadataPtr = newBuffer.getBuffer<uint64_t>();
@@ -115,7 +114,7 @@ std::vector<Runtime::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(u
     return buffersToTransfer;
 }
 
-void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers)
+void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& buffers, AbstractBufferProvider& bufferProvider)
 {
     /// get main metadata buffer
     auto metadataBuffersIdx = 0;
@@ -157,7 +156,7 @@ void StreamJoinOperatorHandler::restoreState(std::vector<Runtime::TupleBuffer>& 
         auto numberOfBuffers = readFromMetadata();
 
         const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
-        auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers));
+        auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers), bufferProvider);
 
         /// insert recreated slice
         auto indexToInsert = std::find_if(
@@ -367,11 +366,6 @@ uint64_t StreamJoinOperatorHandler::getWindowSlide() const
 uint64_t StreamJoinOperatorHandler::getWindowSize() const
 {
     return sliceAssigner.getWindowSize();
-}
-
-void StreamJoinOperatorHandler::setBufferManager(const NES::std::shared_ptr<Runtime::AbstractBufferProvider>& bufManager)
-{
-    this->bufferManager = bufManager;
 }
 
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(

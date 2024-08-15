@@ -75,7 +75,7 @@ public:
      * @param stopTS as a right border of slice
      * @return vector of tuple buffers
      */
-    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override;
+    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t startTS, uint64_t stopTS, AbstractBufferProvider& bufferManager) override;
 
     /**
      * @brief Restores the state from vector of tuple buffers
@@ -87,8 +87,9 @@ public:
      *-----------------------------------------
      * all other buffers are: 1st buffer of 1st slice | .... | m_0 buffer of 1 slice | ... | 1 buffer of n-th slice | m_n buffer of n-th slice
      * @param buffers
+     * @param bufferProvider
      */
-    void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
+    void restoreState(std::vector<Runtime::TupleBuffer>& buffers, AbstractBufferProvider& bufferProvider) override;
 
     /**
      * @brief Retrieves the slice/window by a slice/window identifier. If no slice/window exists for the windowIdentifier,
@@ -147,9 +148,10 @@ public:
      * @brief Creates a new slice/window for the given start and end
      * @param sliceStart
      * @param sliceEnd
+     * @param bufferManager
      * @return StreamSlicePtr
      */
-    virtual StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd) = 0;
+    virtual StreamSlicePtr createNewSlice(uint64_t sliceStart, uint64_t sliceEnd, Runtime::AbstractBufferProvider& bufferManager) = 0;
 
     /**
      * @brief Emits the left and right slice to the probe
@@ -205,15 +207,14 @@ public:
      */
     uint64_t getWindowSize() const;
 
-    void setBufferManager(const BufferManagerPtr& bufManager);
-
 private:
     /**
      * Deserialize slice from span of buffers, which is join specific and is implemented in sub-classes
      * @param buffers as a span
+     * @param bufferManager
      * @return recreated StreamSlicePtr
      */
-    virtual StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) = 0;
+    virtual StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers, AbstractBufferProvider& bufferManager) = 0;
 
 protected:
     uint64_t numberOfWorkerThreads = 1;
@@ -233,7 +234,6 @@ protected:
     size_t sizeOfRecordRight;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
-    BufferManagerPtr bufferManager;
 };
 } /// namespace NES::Runtime::Execution::Operators
 

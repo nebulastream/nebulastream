@@ -135,8 +135,8 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
         Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
         partitionId);
 
-    Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
-    Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
+    Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema, ctx.getPipelineContext());
+    Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema, ctx.getPipelineContext());
     const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
     const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
 

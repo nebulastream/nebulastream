@@ -20,7 +20,6 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -112,7 +111,7 @@ void AppendToSliceStoreHandler<Slice>::stop(
         std::lock_guard<std::mutex> lock(triggerMutex);
         auto windows = sliceStore->collectAllWindows(lastTriggerWatermark);
         /// collect all slices that end <= watermark from all thread local slice stores.
-        auto bufferProvider = ctx->getBufferManager();
+        auto& bufferProvider = ctx->getBufferManager();
         for (const auto& [windowStart, windowEnd] : windows)
         {
             auto slicesForWindow = sliceStore->collectSlicesForWindow(windowStart, windowEnd);
@@ -121,7 +120,7 @@ void AppendToSliceStoreHandler<Slice>::stop(
                 continue;
             }
             NES_TRACE("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
-            auto buffer = bufferProvider->getBufferBlocking();
+            auto buffer = bufferProvider.getBufferBlocking();
             auto task = allocateWithin<SliceMergeTask<Slice>>(buffer);
             task->startSlice = windowStart;
             task->endSlice = windowEnd;

@@ -41,7 +41,7 @@ class TextPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineEx
 {
 public:
     ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -61,8 +61,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -98,13 +97,13 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++)
     {
-        testBuffer[i].writeVarSized("f1", "test", bm.get());
+        testBuffer[i].writeVarSized("f1", "test", *bm);
         testBuffer.setNumberOfTuples(i + 1);
     }
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, *bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

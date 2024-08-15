@@ -36,7 +36,11 @@ void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, WorkerThreadId
 }
 
 void HJBuildBucketing::insertRecordForWindow(
-    Value<MemRef>& allWindowsToFill, Value<UInt64>& curIndex, ValueId<WorkerThreadId>& workerThreadId, Record& record) const
+    Value<MemRef>& allWindowsToFill,
+    Value<UInt64>& curIndex,
+    ValueId<WorkerThreadId>& workerThreadId,
+    Record& record,
+    Value<MemRef>) const
 {
     auto hashTableReference = Nautilus::FunctionCall(
         "getHashTableRefProxy",

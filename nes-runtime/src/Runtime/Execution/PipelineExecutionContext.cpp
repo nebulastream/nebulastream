@@ -13,7 +13,8 @@
 */
 
 #include <utility>
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
 
@@ -23,7 +24,7 @@ namespace NES::Runtime::Execution
 PipelineExecutionContext::PipelineExecutionContext(
     PipelineId pipelineId,
     QueryId queryId,
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
+    Runtime::AbstractBufferProvider& bufferProvider,
     size_t numberOfWorkerThreads,
     std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunction,
     std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
@@ -63,7 +64,7 @@ uint64_t PipelineExecutionContext::getNumberOfWorkerThreads() const
 {
     return numberOfWorkerThreads;
 }
-std::shared_ptr<Runtime::AbstractBufferProvider> DefaultPipelineExecutionContext::getBufferManager() const
+Runtime::AbstractBufferProvider& PipelineExecutionContext::getBufferManager() const
 {
     return bufferProvider;
 }

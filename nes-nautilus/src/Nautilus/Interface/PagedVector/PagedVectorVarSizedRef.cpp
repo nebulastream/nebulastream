@@ -18,20 +18,22 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Nautilus::Interface
 {
-PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema)
-    : pagedVectorVarSizedRef(pagedVectorVarSizedRef), schema(std::move(schema))
+PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorVarSizedRef, SchemaPtr schema, Value<MemRef> pipelineExecutionContext)
+    : pagedVectorVarSizedRef(pagedVectorVarSizedRef), schema(std::move(schema)), pipelineExecutionContext(pipelineExecutionContext)
 {
 }
 
-void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr)
+void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr, void* pipelineExecutionContext)
 {
     auto* pagedVectorVarSized = (PagedVectorVarSized*)pagedVectorVarSizedPtr;
-    pagedVectorVarSized->appendPage();
+    pagedVectorVarSized->appendPage(
+        static_cast<Runtime::Execution::PipelineExecutionContext*>(pipelineExecutionContext)->getBufferManager());
 }
 
 void* getEntryVarSizedProxy(void* pagedVectorVarSizedPtr, uint64_t entryPos)
@@ -62,16 +64,20 @@ void* getEntryVarSizedProxy(void* pagedVectorVarSizedPtr, uint64_t entryPos)
     return nullptr;
 }
 
-uint64_t storeTextProxy(void* pagedVectorVarSizedPtr, TextValue* textValue)
+uint64_t storeTextProxy(void* pagedVectorVarSizedPtr, TextValue* textValue, void* pipelineExecutionContext)
 {
     auto* pagedVectorVarSized = (PagedVectorVarSized*)pagedVectorVarSizedPtr;
-    return pagedVectorVarSized->storeText(textValue->c_str(), textValue->length());
+    return pagedVectorVarSized->storeText(
+        textValue->c_str(),
+        textValue->length(),
+        static_cast<Runtime::Execution::PipelineExecutionContext*>(pipelineExecutionContext)->getBufferManager());
 }
 
-TextValue* loadTextProxy(void* pagedVectorVarSizedPtr, uint64_t textEntryMapKey)
+TextValue* loadTextProxy(void* pagedVectorVarSizedPtr, uint64_t textEntryMapKey, void* pipelineExecutionContext)
 {
     auto* pagedVectorVarSized = (PagedVectorVarSized*)pagedVectorVarSizedPtr;
-    return pagedVectorVarSized->loadText(textEntryMapKey);
+    return pagedVectorVarSized->loadText(
+        textEntryMapKey, static_cast<Runtime::Execution::PipelineExecutionContext*>(pipelineExecutionContext)->getBufferManager());
 }
 
 Value<UInt64> PagedVectorVarSizedRef::getCapacityPerPage()
@@ -104,7 +110,7 @@ void PagedVectorVarSizedRef::writeRecord(Record record)
     auto tuplesOnPage = getNumberOfEntriesOnCurrPage();
     if (tuplesOnPage >= getCapacityPerPage())
     {
-        Nautilus::FunctionCall("allocateNewPageVarSizedProxy", allocateNewPageVarSizedProxy, pagedVectorVarSizedRef);
+        Nautilus::FunctionCall("allocateNewPageVarSizedProxy", allocateNewPageVarSizedProxy, pagedVectorVarSizedRef, pipelineExecutionContext);
         tuplesOnPage = 0_u64;
     }
 
@@ -124,7 +130,7 @@ void PagedVectorVarSizedRef::writeRecord(Record record)
         if (fieldType->type->isText())
         {
             auto textEntryMapKey
-                = Nautilus::FunctionCall("storeTextProxy", storeTextProxy, pagedVectorVarSizedRef, fieldValue.as<Text>()->getReference());
+                = Nautilus::FunctionCall("storeTextProxy", storeTextProxy, pagedVectorVarSizedRef, fieldValue.as<Text>()->getReference(), pipelineExecutionContext);
             pageEntry.as<MemRef>().store(textEntryMapKey.as<UInt64>());
             /// We need casting sizeof() to a uint64 as it otherwise fails on MacOS
             pageEntry = pageEntry + Value<UInt64>((uint64_t)sizeof(uint64_t));
@@ -153,7 +159,7 @@ Record PagedVectorVarSizedRef::readRecord(const Value<UInt64>& pos)
             auto textEntryMapKey = pageEntry.as<MemRef>().load<UInt64>();
             /// We need casting sizeof() to a uint64 as it otherwise fails on MacOS
             pageEntry = pageEntry + Value<UInt64>((uint64_t)sizeof(uint64_t));
-            auto text = Nautilus::FunctionCall("loadTextProxy", loadTextProxy, pagedVectorVarSizedRef, textEntryMapKey);
+            auto text = Nautilus::FunctionCall("loadTextProxy", loadTextProxy, pagedVectorVarSizedRef, textEntryMapKey, pipelineExecutionContext);
             record.write(fieldName, text);
         }
         else

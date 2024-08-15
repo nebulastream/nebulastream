@@ -16,16 +16,24 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinBuildBucketing.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
 void* getAllWindowsToFillProxy(
-    void* ptrOpHandler, uint64_t ts, WorkerThreadId workerThreadId, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+    void* ptrOpHandler,
+    uint64_t ts,
+    WorkerThreadId workerThreadId,
+    uint64_t joinStrategyInt,
+    uint64_t windowingStrategyInt,
+    void* executionContext)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
+    auto* pec = static_cast<PipelineExecutionContext*>(executionContext);
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
-    return dynamic_cast<StreamJoinOperatorHandlerBucketing*>(opHandler)->getAllWindowsToFillForTs(ts, workerThreadId);
+    return dynamic_cast<StreamJoinOperatorHandlerBucketing*>(opHandler)->getAllWindowsToFillForTs(
+        ts, workerThreadId, pec->getBufferManager());
 }
 
 /// TODO ask Philipp why I can not write this directly in Nautilus. How can I cast a UINT64 to INT64?
@@ -105,13 +113,13 @@ void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) co
     {
         /// If the current local state is not up-to-date anymore then we have to update it
         auto opHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-        updateLocalState(joinState, opHandlerMemRef, timestampVal, workerThreadId);
+        updateLocalState(joinState, opHandlerMemRef, timestampVal, workerThreadId, ctx);
     }
 
     /// Iterating over all windows and then inserting the current record in all windows
     for (Value<UInt64> curWindowIdx = 0_u64; curWindowIdx < joinState->numWindowsToFill; curWindowIdx = curWindowIdx + 1_u64)
     {
-        insertRecordForWindow(joinState->allWindowsToFill, curWindowIdx, workerThreadId, record);
+        insertRecordForWindow(joinState->allWindowsToFill, curWindowIdx, workerThreadId, record, ctx.getPipelineContext());
     }
 }
 
@@ -119,7 +127,8 @@ void StreamJoinBuildBucketing::updateLocalState(
     LocalStateBucketing* localStateBucketing,
     Value<MemRef>& opHandlerMemRef,
     Value<UInt64>& ts,
-    ValueId<WorkerThreadId>& workerThreadId) const
+    ValueId<WorkerThreadId>& workerThreadId,
+    ExecutionContext& ctx) const
 {
     localStateBucketing->numWindowsToFill = calcNumWindows(ts);
     localStateBucketing->allWindowsToFill = Nautilus::FunctionCall(
@@ -129,7 +138,8 @@ void StreamJoinBuildBucketing::updateLocalState(
         ts,
         workerThreadId,
         Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)),
+        ctx.getPipelineContext());
     localStateBucketing->minWindowStart = getMinWindowStartForTs(ts);
     localStateBucketing->maxWindowEnd = getMaxWindowStartForTs(ts);
 }

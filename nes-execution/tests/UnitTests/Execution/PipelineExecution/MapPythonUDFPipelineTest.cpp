@@ -40,7 +40,7 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
 {
 public:
     ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -55,8 +55,7 @@ public:
     {
         NES_INFO("Setup MapPythonUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
     }
 
     std::string testDataPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "PythonUDFTestData";
@@ -158,7 +157,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap)
     std::string function = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "integer_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -182,7 +181,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap)
     std::string function = "def short_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "short_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -206,7 +205,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap)
     std::string function = "def byte_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "byte_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -230,7 +229,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap)
     std::string function = "def long_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "long_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -254,7 +253,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap)
     std::string function = "def double_test(x):\n\ty = x + 10.0\n\treturn y\n";
     std::string functionName = "double_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -284,7 +283,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap)
     std::string function = "def boolean_test(x):\n\tx = False\n\treturn x\n";
     std::string functionName = "boolean_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -331,7 +330,7 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap)
     std::string functionName = "string_test";
     auto handler = initMapHandler(function, functionName, schema);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -405,7 +404,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
     std::string functionName = "complex_test";
     auto handler = initMapHandler(function, functionName, schema);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, *bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

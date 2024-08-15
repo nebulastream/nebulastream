@@ -18,9 +18,9 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
-#include <Runtime/TupleBuffer.hpp>
-#include <Runtime/AbstractBufferProvider.hpp>
 #include <API/Schema.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::MemoryLayouts

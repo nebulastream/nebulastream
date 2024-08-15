@@ -17,7 +17,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(uint64_t timestamp)
+StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(uint64_t timestamp, AbstractBufferProvider& bufferProvider)
 {
     auto [slicesWriteLocked, windowToSlicesLocked] = folly::acquireLocked(slices, windowToSlices);
 
@@ -33,7 +33,7 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
 
     /// No slice was found for the timestamp
     NES_DEBUG("Creating slice for slice start={} and end={} for ts={}", sliceStart, sliceEnd, timestamp);
-    auto newSlice = createNewSlice(sliceStart, sliceEnd);
+    auto newSlice = createNewSlice(sliceStart, sliceEnd, bufferProvider);
     slicesWriteLocked->emplace_back(newSlice);
 
     /// For all possible slices in their respective windows, reset the state
@@ -48,11 +48,11 @@ StreamSlicePtr StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(u
     return newSlice;
 }
 
-StreamSlice* StreamJoinOperatorHandlerSlicing::getCurrentSliceOrCreate()
+StreamSlice* StreamJoinOperatorHandlerSlicing::getCurrentSliceOrCreate(AbstractBufferProvider& bufferProvider)
 {
     if (slices.rlock()->empty())
     {
-        return StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(0).get();
+        return StreamJoinOperatorHandlerSlicing::getSliceByTimestampOrCreateIt(0, bufferProvider).get();
     }
     return slices.rlock()->back().get();
 }
