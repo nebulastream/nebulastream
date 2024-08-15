@@ -63,6 +63,11 @@ class BufferManager : public std::enable_shared_from_this<BufferManager>,
 {
     friend class TupleBuffer;
     friend class detail::MemorySegment;
+    /// Hide the BufferManager constructor and only allow creation via BufferManager::create().
+    struct Private
+    {
+        explicit Private() = default;
+    };
 
 private:
     class UnpooledBufferHolder
@@ -88,13 +93,15 @@ private:
     static constexpr auto DEFAULT_ALIGNMENT = 64;
 
 public:
+    explicit BufferManager(Private, uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment);
+
     /**
      * @brief Creates a new global buffer manager
      * @param bufferSize the size of each buffer in bytes
      * @param numOfBuffers the total number of buffers in the pool
      * @param withAlignment the alignment of each buffer, default is 64 so ony cache line aligned buffers, This value must be a pow of two and smaller than page size
      */
-    explicit BufferManager(
+    static std::shared_ptr<BufferManager> create(
         uint32_t bufferSize = DEFAULT_BUFFER_SIZE,
         uint32_t numOfBuffers = DEFAULT_NUMBER_OF_BUFFERS,
         uint32_t withAlignment = DEFAULT_ALIGNMENT);

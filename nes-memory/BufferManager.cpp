@@ -32,7 +32,7 @@
 namespace NES::Runtime
 {
 
-BufferManager::BufferManager(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment)
+BufferManager::BufferManager(Private, uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment)
     : availableBuffers(numOfBuffers)
     , numOfAvailableBuffers(numOfBuffers)
     , bufferSize(bufferSize)
@@ -97,6 +97,11 @@ void BufferManager::destroy()
         NES_DEBUG("Shutting down Buffer Manager completed");
         memoryResource->deallocate(basePointer, allocatedAreaSize);
     }
+}
+
+std::shared_ptr<BufferManager> BufferManager::create(uint32_t bufferSize, uint32_t numOfBuffers, uint32_t withAlignment)
+{
+    return std::make_shared<BufferManager>(Private{}, bufferSize, numOfBuffers, withAlignment);
 }
 
 BufferManager::~BufferManager()
