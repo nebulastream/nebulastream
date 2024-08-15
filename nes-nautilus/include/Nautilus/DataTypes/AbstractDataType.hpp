@@ -29,24 +29,13 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
     explicit AbstractDataType(const nautilus::val<bool>& null) : null(null) {}
     virtual ~AbstractDataType() = default;
 
-    friend std::ostream& operator<<(std::ostream& os, const ExecDataType& type) {
-        os << type->toString();
-        return os;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const ExecDataType& type);
 
-    friend std::ostream& operator<<(std::ostream& os, const AbstractDataType& type) {
-        os << type.toString();
-        return os;
-    }
+    friend std::ostream& operator<<(std::ostream& os, const AbstractDataType& type);
 
-    AbstractDataType& operator=(const AbstractDataType& other) {
-        null = other.null;
-        return *this;
-    }
-
-    explicit operator bool() const { return !null && isBool(); }
-
-    [[nodiscard]] const nautilus::val<bool>& isNull() const { return null; }
+    AbstractDataType& operator=(const AbstractDataType& other);
+    explicit operator bool() const;
+    [[nodiscard]] const nautilus::val<bool>& isNull() const;
 
     template<class DataType>
     bool instanceOf() {
@@ -62,6 +51,8 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
                                            + std::string(typeid(DataType).name()));
     }
 
+
+    /// Declaring friend functions for operations on data types, so that we can access private methods in these methods
     friend ExecDataType operator+(const ExecDataType& lhs, const ExecDataType& rhs);
     friend ExecDataType operator&&(const ExecDataType& lhs, const ExecDataType& rhs);
     friend ExecDataType operator||(const ExecDataType& lhs, const ExecDataType& rhs);
@@ -107,7 +98,13 @@ class AbstractDataType : public std::enable_shared_from_this<AbstractDataType> {
     virtual ExecDataType operator>>(const ExecDataType& rightExp) const = 0;
     virtual ExecDataType operator!() const = 0;
 
+    /// Every child class implements their own custom toString() method.
+    /// This method gets called when the format operator<< is called for the AbstractDataType
     [[nodiscard]] virtual std::string toString() const = 0;
+
+    /// Every child class implements their own custom isBool() method.
+    /// This method gets called once a data type is checked if it is a boolean, i.e., in an if-statement.
+    [[nodiscard]]
     virtual nautilus::val<bool> isBool() const = 0;
 
     nautilus::val<bool> null;

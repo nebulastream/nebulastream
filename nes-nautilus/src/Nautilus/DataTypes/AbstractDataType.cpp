@@ -17,6 +17,25 @@
 
 namespace NES::Nautilus {
 
+std::ostream& operator<<(std::ostream& os, const ExecDataType& type) {
+    os << type->toString();
+    return os;
+}
+
+std::ostream& operator<<(std::ostream& os, const AbstractDataType& type) {
+    os << type.toString();
+    return os;
+}
+
+AbstractDataType& AbstractDataType::operator=(const AbstractDataType& other) {
+    null = other.null;
+    return *this;
+}
+
+AbstractDataType::operator bool() const { return !null && isBool(); }
+
+[[nodiscard]] const nautilus::val<bool>& AbstractDataType::isNull() const { return null; }
+
 BooleanVal memEquals(const MemRefVal& ptr1, const MemRefVal& ptr2, const nautilus::val<uint64_t>& size) {
     // Somehow we have to write our own memEquals, as we otherwise get a error: 'llvm.call' op result type mismatch: '!llvm.ptr' != 'i32'
     // return nautilus::memcmp(ptr1, ptr2, size) == nautilus::val<uint64_t>(0);
@@ -36,4 +55,4 @@ void memCopy(const MemRefVal& dest, const MemRefVal& src, const nautilus::val<si
     nautilus::memcpy(dest, src, size);
 }
 
-} /// namespace NES::Nautilus
+}// namespace NES::Nautilus
