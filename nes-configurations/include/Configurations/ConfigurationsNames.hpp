@@ -104,10 +104,8 @@ const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; /// URL for acc
 const auto TRANSFER_RATE = "transferRate"s; /// Fake transfer rate between two workers
 
 ///Worker Configuration Names
-const std::string WORKER_ID = "workerId";
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; ///needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_HOST_CONFIG = "localWorkerHost";
-const std::string PARENT_ID_CONFIG = "parentId";
 const std::string QUERY_COMPILER_TYPE_CONFIG = "queryCompilerType";
 const std::string QUERY_COMPILER_DUMP_MODE = "queryCompilerDumpMode";
 const std::string QUERY_COMPILER_NAUTILUS_BACKEND_CONFIG = "queryCompilerNautilusBackendConfig";
@@ -115,25 +113,16 @@ const std::string QUERY_COMPILER_COMPILATION_STRATEGY_CONFIG = "compilationStrat
 const std::string QUERY_COMPILER_PIPELINING_STRATEGY_CONFIG = "pipeliningStrategy";
 const std::string QUERY_COMPILER_OUTPUT_BUFFER_OPTIMIZATION_CONFIG = "outputBufferOptimizationLevel";
 const std::string QUERY_COMPILER_WINDOWING_STRATEGY_CONFIG = "windowingStrategy";
-const std::string SOURCE_PIN_LIST_CONFIG = "sourcePinList";
-const std::string WORKER_PIN_LIST_CONFIG = "workerPinList";
-const std::string QUEUE_PIN_LIST_CONFIG = "queuePinList";
-const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
-const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
-const std::string CONNECT_SOURCE_ASYNC = "connectSourceEventChannelsAsync";
 
 /// CUDA config names
 const std::string CUDA_SDK_PATH = "cudaSdkPath";
 
-const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";
 const std::string QUERY_COMPILER_CONFIG = "queryCompiler";
 const std::string HEALTH_CHECK_WAIT_TIME = "healthCheckWaitTime";
 
 ///worker mobility config names
-const std::string MOBILITY_CONFIG_CONFIG = "mobility";
-const std::string SPATIAL_TYPE_CONFIG = "nodeSpatialType";
 const std::string PATH_PREDICTION_UPDATE_INTERVAL_CONFIG = "pathPredictionUpdateInterval";
 const std::string LOCATION_BUFFER_SIZE_CONFIG = "locationBufferSize";
 const std::string LOCATION_BUFFER_SAVE_RATE_CONFIG = "locationBufferSaveRate";
@@ -210,12 +199,6 @@ const std::string DECIDE_MESSAGE_SIZE_CONFIG = "decideMessageSize";
 const std::string TUPLE_SEPARATOR_CONFIG = "tupleSeparator";
 const std::string SOCKET_BUFFER_SIZE_CONFIG = "socketBufferSize";
 const std::string BYTES_USED_FOR_SOCKET_BUFFER_SIZE_TRANSFER_CONFIG = "bytesUsedForSocketBufferSizeTransfer";
-
-///Runtime configuration
-const std::string NUMBER_OF_QUEUES = "numberOfQueues";
-const std::string NUMBER_OF_THREAD_PER_QUEUE = "numberOfThreadsPerQueue";
-const std::string NUMBER_OF_BUFFERS_PER_EPOCH = "numberOfBuffersPerEpoch";
-const std::string QUERY_MANAGER_MODE = "queryManagerMode";
 
 /// Logical source configurations
 const std::string LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG = "fields";
