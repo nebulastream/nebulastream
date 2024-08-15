@@ -18,17 +18,13 @@
 #include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime
 {
-
-class QueryStartException : NES::Exceptions::RuntimeException
-{
-};
-
 /**
  * @brief this class represents the interface and entrance point into the
  * query processing part of NES. It provides basic functionality
@@ -43,12 +39,8 @@ public:
     NodeEngine(const NodeEngine&) = delete;
     NodeEngine& operator=(const NodeEngine&) = delete;
 
-    /**
-     * @brief registers a new ExecutableQueryPlan
-     * @param queryExecutionPlan plan to register
-     * @throws QueryRegistrationException
-     * @return QueryId of the newly registered Query
-     */
+    explicit NodeEngine(std::vector<Memory::BufferManagerPtr>&&, QueryManagerPtr&&, QueryLogPtr&&);
+
     [[nodiscard]] QueryId registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
 
     /**
@@ -58,38 +50,20 @@ public:
      * @return true if succeeded, else false
      */
     void unregisterQuery(QueryId queryId);
-
-    /**
-     * @brief method to start a registered query
-     * @param queryId identifies the target query
-     * @throws QueryStartException of the query could not be started
-     */
     void startQuery(QueryId queryId);
-
-    /**
-     * @brief method to initiate a query stop
-     * @note Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after
-     * this method has returned
-     * @param queryId identifies the target query
-     * @param terminationType termination type. Read more @link Runtime::QueryTerminationType
-     */
+    /// Termination will happen asynchronously, thus the query might very well be running for an indeterminate time after this method has
+    /// been called.
     void stopQuery(QueryId queryId, QueryTerminationType terminationType = QueryTerminationType::HardStop);
 
-    Memory::BufferManagerPtr getBufferManager() { return bufferManagers[0]; }
-    QueryManagerPtr getQueryManager() { return queryManager; }
-
-    /**
-     * @brief Create a node engine and gather node information
-     * and initialize QueryManager, BufferManager and ThreadPool
-     */
-    explicit NodeEngine(std::vector<Memory::BufferManagerPtr>&&, QueryManagerPtr&&);
+    [[nodiscard]] Memory::BufferManagerPtr getBufferManager() { return bufferManagers[0]; }
+    [[nodiscard]] QueryManagerPtr getQueryManager() { return queryManager; }
+    [[nodiscard]] QueryLogPtr getQueryLog() { return queryLog; }
 
 private:
     std::vector<Memory::BufferManagerPtr> bufferManagers;
     std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> registeredQueries;
     QueryManagerPtr queryManager;
+    QueryLogPtr queryLog;
 };
-
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
-
 } /// namespace NES::Runtime

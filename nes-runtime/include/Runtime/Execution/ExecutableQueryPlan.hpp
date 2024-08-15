@@ -14,13 +14,15 @@
 
 #pragma once
 
+#include "QueryStatus.hpp"
+
+
 #include <atomic>
 #include <future>
 #include <map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
@@ -133,7 +135,7 @@ public:
      */
     bool fail();
 
-    [[nodiscard]] ExecutableQueryPlanStatus getStatus();
+    [[nodiscard]] QueryStatus getStatus() const;
 
     /**
      * @brief Get data sources.
@@ -155,13 +157,13 @@ public:
      * @brief Returns a reference to the query manager
      * @return QueryManagerPtr
      */
-    [[nodiscard]] QueryManagerPtr getQueryManager();
+    [[nodiscard]] QueryManagerPtr getQueryManager() const;
 
     /**
      * @brief Returns a reference to the buffer manager
      * @return BufferManagerPtr
      */
-    [[nodiscard]] Memory::BufferManagerPtr getBufferManager();
+    [[nodiscard]] Memory::BufferManagerPtr getBufferManager() const;
 
     /**
      * @brief Get the query id
@@ -209,7 +211,7 @@ private:
     std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;
     Memory::BufferManagerPtr bufferManager;
-    std::atomic<ExecutableQueryPlanStatus> qepStatus;
+    std::atomic<QueryStatus> queryStatus;
     /// number of producers that provide data to this qep
     std::atomic<uint32_t> numOfTerminationTokens;
     /// promise that indicates how a qep terminates

@@ -60,13 +60,13 @@ void startQuery(QueryId queryId, GRPCServer& uut)
     EXPECT_TRUE(uut.StartQuery(&context, &request, &reply).ok());
 }
 
-void stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut)
+void stopQuery(QueryId queryId, Runtime::QueryTerminationType type, GRPCServer& uut)
 {
     grpc::ServerContext context;
     StopQueryRequest request;
     google::protobuf::Empty reply;
     request.set_queryid(queryId.getRawValue());
-    request.set_terminationtype(type);
+    request.set_terminationtype(static_cast<StopQueryRequest_QueryTerminationType>(type));
     EXPECT_TRUE(uut.StopQuery(&context, &request, &reply).ok());
 }
 

@@ -29,7 +29,10 @@
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wdeprecated"
 #include <boost/asio.hpp>
+#pragma clang diagnostic pop
 
 namespace NES::Testing
 {
@@ -147,7 +150,7 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
     /// Todo (#166) : stop query might be called to early, leading to no received data.
     /// Todo:(#169) : CSV triggers soft end of stream even before stopQuery is called.
     std::this_thread::sleep_for(std::chrono::milliseconds(500));
-    IntegrationTestUtil::stopQuery(queryId, HardStop, uut);
+    IntegrationTestUtil::stopQuery(queryId, Runtime::QueryTerminationType::HardStop, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
     auto bufferManager = Memory::BufferManager::create();

@@ -29,6 +29,7 @@ grpc::Status NES::GRPCServer::RegisterQuery(grpc::ServerContext*, const Register
         return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
     }
 }
+
 grpc::Status NES::GRPCServer::UnregisterQuery(grpc::ServerContext*, const UnregisterQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
@@ -42,6 +43,7 @@ grpc::Status NES::GRPCServer::UnregisterQuery(grpc::ServerContext*, const Unregi
         return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
     }
 }
+
 grpc::Status NES::GRPCServer::StartQuery(grpc::ServerContext*, const StartQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
@@ -55,6 +57,7 @@ grpc::Status NES::GRPCServer::StartQuery(grpc::ServerContext*, const StartQueryR
         return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
     }
 }
+
 grpc::Status NES::GRPCServer::StopQuery(grpc::ServerContext*, const StopQueryRequest* request, google::protobuf::Empty*)
 {
     auto queryId = QueryId(request->queryid());
@@ -69,7 +72,37 @@ grpc::Status NES::GRPCServer::StopQuery(grpc::ServerContext*, const StopQueryReq
         return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
     }
 }
-grpc::Status NES::GRPCServer::QueryStatus(grpc::ServerContext*, const QueryStatusRequest*, QueryStatusReply*)
+
+grpc::Status NES::GRPCServer::QueryStatus(grpc::ServerContext*, const QueryStatusRequest* request, QueryStatusReply* reply)
 {
-    return {grpc::StatusCode::UNIMPLEMENTED, "Query Status is not implemented"};
+    auto queryId = QueryId(request->queryid());
+    auto currentStatus = delegate.getQueryStatus(queryId);
+    auto exceptions = delegate.getExceptions(queryId);
+    auto numberOfRestarts = delegate.getNumberOfRestarts(queryId);
+    if (currentStatus.has_value())
+    {
+        reply->set_status((QueryStatusReply::QueryStatus)currentStatus->state);
+        reply->set_numberofrestarts(numberOfRestarts);
+        for (size_t i = 0; i < exceptions.size(); ++i)
+        {
+            reply->set_failures(i, exceptions[i].what());
+        }
+        return grpc::Status::OK;
+    }
+    return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
+}
+
+grpc::Status NES::GRPCServer::QueryLog(grpc::ServerContext*, const QueryLogRequest* request, QueryLogReply* reply)
+{
+    auto queryId = QueryId(request->queryid());
+    auto log = delegate.getStatusLog(queryId);
+    if (!log.empty())
+    {
+        for (size_t i = 0; i < log.size(); ++i)
+        {
+            reply->add_logs(log[i]);
+        }
+        return grpc::Status::OK;
+    }
+    return {grpc::StatusCode::UNKNOWN, "This could have been a nice error message, sorry"};
 }

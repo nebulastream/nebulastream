@@ -15,8 +15,11 @@
 #pragma once
 #include <Configuration.hpp>
 
+#include <Listeners/QueryLog.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Configuration.hpp>
 
 namespace NES
 {
@@ -28,11 +31,6 @@ namespace QueryCompilation
 {
 class QueryCompiler;
 }
-
-///TODO(#136): QueryStatus is not yet implemented
-class QueryStatus
-{
-};
 
 /**
  * @brief The SingleNodeWorker is a compiling StreamProcessingEngine, working alone on local sources and sinks, without external
@@ -87,10 +85,13 @@ public:
      */
     void unregisterQuery(QueryId queryId);
 
-    /**
-     * Currently Not Supported.
-     * @return QueryStatus
-     */
-    [[nodiscard]] QueryStatus queryStatus(QueryId) const;
+    /// Current query status. Invalid query with id does not exist.
+    [[nodiscard]] std::optional<Runtime::QueryStatusChange> getQueryStatus(QueryId queryId) const;
+    /// All exceptions that have occurred during the lifetime
+    [[nodiscard]] std::vector<Exception> getExceptions(QueryId queryId) const;
+    /// How many times was a query restarted: stopped --> running, failed --> running
+    [[nodiscard]] uint64_t getNumberOfRestarts(QueryId queryId) const;
+    /// Status log of the query in the format: [STATUS TIMESTAMP]
+    [[nodiscard]] std::vector<std::string> getStatusLog(QueryId queryId) const;
 };
 } /// namespace NES

@@ -32,7 +32,7 @@ QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPC
 
 void startQuery(QueryId queryId, GRPCServer& uut);
 
-void stopQuery(QueryId queryId, QueryTerminationType type, GRPCServer& uut);
+void stopQuery(QueryId queryId, Runtime::QueryTerminationType type, GRPCServer& uut);
 
 void unregisterQuery(QueryId queryId, GRPCServer& uut);
 

@@ -65,7 +65,7 @@ public:
         grpc::ClientContext context;
         StopQueryRequest request;
         request.set_queryid(queryId);
-        request.set_terminationtype(QueryTerminationType::HardStop);
+        request.set_terminationtype(StopQueryRequest_QueryTerminationType_HardStop);
         google::protobuf::Empty response;
         auto status = stub->StopQuery(&context, request, &response);
         if (status.ok())

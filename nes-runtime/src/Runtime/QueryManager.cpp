@@ -12,14 +12,8 @@
     limitations under the License.
 */
 
-/* TODO
- * add to Reconfig... constructors:
- -1, /// any query ID
- */
-
 #include <iostream>
 #include <memory>
-#include <stack>
 #include <utility>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
@@ -32,6 +26,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime
 {
 
@@ -56,26 +51,6 @@ QueryManager::QueryManager(
 
     asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>(1);
     NES_DEBUG("QueryManger: use dynamic mode with numThreads= {}", numThreads);
-}
-
-uint64_t QueryManager::getNumberOfBuffersPerEpoch() const
-{
-    return numberOfBuffersPerEpoch;
-}
-
-uint64_t QueryManager::getNumberOfTasksInWorkerQueues() const
-{
-    return taskQueue.size();
-}
-
-uint64_t QueryManager::getCurrentTaskSum()
-{
-    size_t sum = 0;
-    for (auto& val : tempCounterTasksCompleted)
-    {
-        sum += val.counter.load(std::memory_order_relaxed);
-    }
-    return sum;
 }
 
 QueryManager::~QueryManager() NES_NOEXCEPT(false)
@@ -130,7 +105,7 @@ void QueryManager::destroy()
     if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Destroyed))
     {
         {
-            std::scoped_lock locks(queryMutex, statisticsMutex);
+            std::scoped_lock const locks(queryMutex, statisticsMutex);
 
             queryToStatisticsMap.clear();
             runningQEPs.clear();
@@ -149,18 +124,7 @@ void QueryManager::destroy()
     }
 }
 
-QueryId QueryManager::getQueryId(QueryId queryId) const
-{
-    std::unique_lock lock(statisticsMutex);
-    auto iterator = runningQEPs.find(queryId);
-    if (iterator != runningQEPs.end())
-    {
-        return iterator->second->getQueryId();
-    }
-    return INVALID_QUERY_ID;
-}
-
-Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(QueryId queryId)
+Execution::QueryStatus QueryManager::getQueryStatus(QueryId queryId) const
 {
     std::unique_lock lock(queryMutex);
     auto it = runningQEPs.find(queryId);
@@ -168,27 +132,7 @@ Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(QueryId queryId)
     {
         return it->second->getStatus();
     }
-    return Execution::ExecutableQueryPlanStatus::Invalid;
-}
-
-Execution::ExecutableQueryPlanPtr QueryManager::getQueryExecutionPlan(QueryId queryId) const
-{
-    std::unique_lock lock(queryMutex);
-    auto it = runningQEPs.find(queryId);
-    if (it != runningQEPs.end())
-    {
-        return it->second;
-    }
-    return nullptr;
-}
-
-QueryStatisticsPtr QueryManager::getQueryStatistics(QueryId queryId)
-{
-    if (queryToStatisticsMap.contains(queryId))
-    {
-        return queryToStatisticsMap.find(queryId);
-    }
-    return nullptr;
+    return Execution::QueryStatus::Invalid;
 }
 
 void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context)
@@ -212,17 +156,17 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task)
     {
         case ReconfigurationType::Destroy: {
             auto queryId = task.getQueryId();
-            auto status = getQepStatus(queryId);
-            if (status == Execution::ExecutableQueryPlanStatus::Invalid)
+            auto status = getQueryStatus(queryId);
+            if (status == Execution::QueryStatus::Invalid)
             {
                 NES_WARNING("Query {} was already removed or never deployed", queryId);
                 return;
             }
             NES_ASSERT(
-                status == Execution::ExecutableQueryPlanStatus::Stopped || status == Execution::ExecutableQueryPlanStatus::Finished
-                    || status == Execution::ExecutableQueryPlanStatus::ErrorState,
+                status == Execution::QueryStatus::Stopped || status == Execution::QueryStatus::Finished
+                    || status == Execution::QueryStatus::Failed,
                 "query plan " << queryId << " is not in valid state " << int(status));
-            std::unique_lock lock(queryMutex);
+            std::unique_lock const lock(queryMutex);
             if (auto it = runningQEPs.find(queryId); it != runningQEPs.end())
             { /// note that this will release all shared pointers stored in a QEP object
                 it->second->destroy();
@@ -237,16 +181,6 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task)
             NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
         }
     }
-}
-
-WorkerId QueryManager::getNodeId() const
-{
-    return nodeEngineId;
-}
-
-bool QueryManager::isThreadPoolRunning() const
-{
-    return threadPool != nullptr;
 }
 
 uint64_t QueryManager::getNextTaskId()
