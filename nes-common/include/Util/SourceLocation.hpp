@@ -13,7 +13,6 @@
 */
 #ifndef NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
 #define NES_COMMON_INCLUDE_UTIL_SOURCELOCATION_HPP_
-#include <cstring>
 // The following provides a polyfill for the source location standard. On not supported platforms it will return an empty result.
 #if __has_include(<source_location>)
 #include <source_location>

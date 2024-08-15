@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_RowTupleBufferMemoryProvider_HPP_
-#define NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_RowTupleBufferMemoryProvider_HPP_
+#ifndef NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWTUPLEBUFFERMEMORYPROVIDER_HPP_
+#define NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWTUPLEBUFFERMEMORYPROVIDER_HPP_
 
 #include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 
@@ -47,4 +47,4 @@ class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider {
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider
-#endif// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_RowTupleBufferMemoryProvider_HPP_
+#endif// NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_ROWTUPLEBUFFERMEMORYPROVIDER_HPP_

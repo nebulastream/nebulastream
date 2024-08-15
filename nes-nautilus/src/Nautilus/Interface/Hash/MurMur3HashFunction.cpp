@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Nautilus/DataTypes/ExecutableDataTypeOperations.hpp>
 
 namespace NES::Nautilus::Interface {
 

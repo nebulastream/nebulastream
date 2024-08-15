@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#ifndef NES_NES_NAUTILUS_NEW_INCLUDE_INTERFACE_RECORD_HPP_
-#define NES_NES_NAUTILUS_NEW_INCLUDE_INTERFACE_RECORD_HPP_
+#ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
+#define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
 
 #include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <unordered_map>
@@ -43,4 +43,4 @@ class Record {
 
 }// namespace NES::Nautilus
 
-#endif//NES_NES_NAUTILUS_NEW_INCLUDE_INTERFACE_RECORD_HPP_
+#endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_

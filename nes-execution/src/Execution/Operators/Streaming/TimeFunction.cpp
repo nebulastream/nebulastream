@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <Nautilus/DataTypes/ExecutableDataTypeOperations.hpp>
+#include <Nautilus/DataTypes/ExecutableDataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>

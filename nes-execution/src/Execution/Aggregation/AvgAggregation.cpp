@@ -15,6 +15,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
+#include <Nautilus/DataTypes/ExecutableDataTypeOperations.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {

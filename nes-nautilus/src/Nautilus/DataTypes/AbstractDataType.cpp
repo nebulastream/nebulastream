@@ -12,13 +12,12 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/ExecutableDataTypeOperations.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <nautilus/std/cstring.h>
 
 namespace NES::Nautilus {
 
-
-BooleanVal memEquals(MemRefVal ptr1, MemRefVal ptr2, const nautilus::val<uint64_t>& size) {
+BooleanVal memEquals(const MemRefVal& ptr1, const MemRefVal& ptr2, const nautilus::val<uint64_t>& size) {
     // Somehow we have to write our own memEquals, as we otherwise get a error: 'llvm.call' op result type mismatch: '!llvm.ptr' != 'i32'
     // return nautilus::memcmp(ptr1, ptr2, size) == nautilus::val<uint64_t>(0);
 
@@ -33,8 +32,8 @@ BooleanVal memEquals(MemRefVal ptr1, MemRefVal ptr2, const nautilus::val<uint64_
     return {true};
 }
 
-void memCopy(MemRefVal dest, MemRefVal src, const nautilus::val<size_t>& size) {
+void memCopy(const MemRefVal& dest, const MemRefVal& src, const nautilus::val<size_t>& size) {
     nautilus::memcpy(dest, src, size);
 }
 
-}// namespace NES::Nautilus
+} /// namespace NES::Nautilus
