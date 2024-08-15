@@ -12,14 +12,8 @@
     limitations under the License.
 */
 
-/* TODO
- * add to Reconfig... constructors:
- -1, /// any query ID
- */
-
 #include <iostream>
 #include <memory>
-#include <stack>
 #include <utility>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
@@ -33,6 +27,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime
 {
 
@@ -44,7 +39,6 @@ QueryManager::QueryManager(
     WorkerId nodeEngineId,
     uint16_t numThreads,
     uint64_t numberOfBuffersPerEpoch,
-
     std::vector<uint64_t> workerToCoreMapping)
     : taskQueue(folly::MPMCQueue<Task>(DEFAULT_QUEUE_INITIAL_CAPACITY))
     , nodeEngineId(nodeEngineId)
@@ -58,26 +52,6 @@ QueryManager::QueryManager(
 
     asyncTaskExecutor = std::make_shared<AsyncTaskExecutor>(1);
     NES_DEBUG("QueryManger: use dynamic mode with numThreads= {}", numThreads);
-}
-
-uint64_t QueryManager::getNumberOfBuffersPerEpoch() const
-{
-    return numberOfBuffersPerEpoch;
-}
-
-uint64_t QueryManager::getNumberOfTasksInWorkerQueues() const
-{
-    return taskQueue.size();
-}
-
-uint64_t QueryManager::getCurrentTaskSum()
-{
-    size_t sum = 0;
-    for (auto& val : tempCounterTasksCompleted)
-    {
-        sum += val.counter.load(std::memory_order_relaxed);
-    }
-    return sum;
 }
 
 QueryManager::~QueryManager() NES_NOEXCEPT(false)
@@ -132,7 +106,7 @@ void QueryManager::destroy()
     if (queryManagerStatus.compare_exchange_strong(expected, QueryManagerStatus::Destroyed))
     {
         {
-            std::scoped_lock locks(queryMutex, statisticsMutex);
+            std::scoped_lock const locks(queryMutex, statisticsMutex);
 
             queryToStatisticsMap.clear();
             runningQEPs.clear();
@@ -151,46 +125,15 @@ void QueryManager::destroy()
     }
 }
 
-SharedQueryId QueryManager::getSharedQueryId(DecomposedQueryPlanId decomposedQueryPlanId) const
+Execution::QueryStatus QueryManager::getQueryStatus(QueryId queryId) const
 {
-    std::unique_lock lock(statisticsMutex);
-    auto iterator = runningQEPs.find(decomposedQueryPlanId);
-    if (iterator != runningQEPs.end())
-    {
-        return iterator->second->getSharedQueryId();
-    }
-    return INVALID_SHARED_QUERY_ID;
-}
-
-Execution::ExecutableQueryPlanStatus QueryManager::getQepStatus(DecomposedQueryPlanId id)
-{
-    std::unique_lock lock(queryMutex);
-    auto it = runningQEPs.find(id);
+    std::unique_lock const lock(queryMutex);
+    auto it = runningQEPs.find(queryId);
     if (it != runningQEPs.end())
     {
         return it->second->getStatus();
     }
-    return Execution::ExecutableQueryPlanStatus::Invalid;
-}
-
-Execution::ExecutableQueryPlanPtr QueryManager::getQueryExecutionPlan(DecomposedQueryPlanId id) const
-{
-    std::unique_lock lock(queryMutex);
-    auto it = runningQEPs.find(id);
-    if (it != runningQEPs.end())
-    {
-        return it->second;
-    }
-    return nullptr;
-}
-
-QueryStatisticsPtr QueryManager::getQueryStatistics(DecomposedQueryPlanId qepId)
-{
-    if (queryToStatisticsMap.contains(qepId))
-    {
-        return queryToStatisticsMap.find(qepId);
-    }
-    return nullptr;
+    return Execution::QueryStatus::Invalid;
 }
 
 void QueryManager::reconfigure(ReconfigurationMessage& task, WorkerContext& context)
@@ -213,42 +156,32 @@ void QueryManager::postReconfigurationCallback(ReconfigurationMessage& task)
     switch (task.getType())
     {
         case ReconfigurationType::Destroy: {
-            auto qepId = task.getParentPlanId();
-            auto status = getQepStatus(qepId);
-            if (status == Execution::ExecutableQueryPlanStatus::Invalid)
+            auto queryId = task.getQueryId();
+            auto status = getQueryStatus(queryId);
+            if (status == Execution::QueryStatus::Invalid)
             {
-                NES_WARNING("Query {} was already removed or never deployed", qepId);
+                NES_WARNING("Query {} was already removed or never deployed", queryId);
                 return;
             }
             NES_ASSERT(
-                status == Execution::ExecutableQueryPlanStatus::Stopped || status == Execution::ExecutableQueryPlanStatus::Finished
-                    || status == Execution::ExecutableQueryPlanStatus::ErrorState,
-                "query plan " << qepId << " is not in valid state " << int(status));
-            std::unique_lock lock(queryMutex);
-            if (auto it = runningQEPs.find(qepId); it != runningQEPs.end())
+                status == Execution::QueryStatus::Stopped || status == Execution::QueryStatus::Finished
+                    || status == Execution::QueryStatus::Failed,
+                "query plan " << queryId << " is not in valid state " << int(status));
+            std::unique_lock const lock(queryMutex);
+            if (auto it = runningQEPs.find(queryId); it != runningQEPs.end())
             { /// note that this will release all shared pointers stored in a QEP object
                 it->second->destroy();
                 runningQEPs.erase(it);
             }
             /// we need to think if we want to remove this after a soft stop
             ///            queryToStatisticsMap.erase(qepId);
-            NES_DEBUG("QueryManager: removed running QEP  {}", qepId);
+            NES_DEBUG("QueryManager: removed running QEP  {}", queryId);
             break;
         }
         default: {
             NES_THROW_RUNTIME_ERROR("QueryManager: task type not supported");
         }
     }
-}
-
-WorkerId QueryManager::getNodeId() const
-{
-    return nodeEngineId;
-}
-
-bool QueryManager::isThreadPoolRunning() const
-{
-    return threadPool != nullptr;
 }
 
 uint64_t QueryManager::getNextTaskId()

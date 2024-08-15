@@ -29,10 +29,10 @@
 
 namespace NES::Runtime
 {
-void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::ExecutableQueryPlanStatus status)
+void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanPtr& qep, Execution::QueryStatus status)
 {
     NES_ASSERT(qep, "Invalid query plan object");
-    if (status == Execution::ExecutableQueryPlanStatus::Finished)
+    if (status == Execution::QueryStatus::Finished)
     {
         for (const auto& source : qep->getSources())
         {
@@ -41,31 +41,23 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
                 "Cannot cleanup source " << source->getOperatorId()); /// just a clean-up op
         }
         addReconfigurationMessage(
-            qep->getSharedQueryId(),
-            qep->getDecomposedQueryPlanId(),
-            ReconfigurationMessage(
-                qep->getSharedQueryId(), qep->getDecomposedQueryPlanId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
+            qep->getQueryId(),
+            ReconfigurationMessage(qep->getQueryId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
             false);
-
-        queryStatusListener->notifyQueryStatusChange(
-            qep->getSharedQueryId(), qep->getDecomposedQueryPlanId(), Execution::ExecutableQueryPlanStatus::Finished);
     }
-    else if (status == Execution::ExecutableQueryPlanStatus::ErrorState)
+    else if (status == Execution::QueryStatus::Failed)
     {
         addReconfigurationMessage(
-            qep->getSharedQueryId(),
-            qep->getDecomposedQueryPlanId(),
-            ReconfigurationMessage(
-                qep->getSharedQueryId(), qep->getDecomposedQueryPlanId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
+            qep->getQueryId(),
+            ReconfigurationMessage(qep->getQueryId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
             false);
-
-        queryStatusListener->notifyQueryStatusChange(
-            qep->getSharedQueryId(), qep->getDecomposedQueryPlanId(), Execution::ExecutableQueryPlanStatus::ErrorState);
     }
+    queryStatusListener->notifyQueryStatusChange(qep->getQueryId(), status);
 }
-void QueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::string reason)
+
+void QueryManager::notifySourceFailure(DataSourcePtr failedSource, const Exception& exception)
 {
-    NES_DEBUG("notifySourceFailure called for query id= {}  reason= {}", failedSource->getOperatorId(), reason);
+    NES_DEBUG("notifySourceFailure called for query id= {}  reason= {}", failedSource->getOperatorId(), exception.what());
     std::vector<Execution::ExecutableQueryPlanPtr> plansToFail;
     {
         std::unique_lock lock(queryMutex);
@@ -77,15 +69,13 @@ void QueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::st
     for (auto qepToFail : plansToFail)
     {
         auto future = asyncTaskExecutor->runAsync(
-            [this, reason, qepToFail = std::move(qepToFail)]() -> Execution::ExecutableQueryPlanPtr
+            [this, exception, qepToFail = std::move(qepToFail)]() -> Execution::ExecutableQueryPlanPtr
             {
-                NES_DEBUG(
-                    "Going to fail query id={} subplan={}", qepToFail->getDecomposedQueryPlanId(), qepToFail->getDecomposedQueryPlanId());
+                NES_DEBUG("Going to fail query id={}", qepToFail->getQueryId());
                 if (failQuery(qepToFail))
                 {
-                    NES_DEBUG(
-                        "Failed query id= {} subplan={}", qepToFail->getDecomposedQueryPlanId(), qepToFail->getDecomposedQueryPlanId());
-                    queryStatusListener->notifyQueryFailure(qepToFail->getSharedQueryId(), qepToFail->getDecomposedQueryPlanId(), reason);
+                    NES_DEBUG("Failed query id= {}", qepToFail->getQueryId());
+                    queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), exception);
                     return qepToFail;
                 }
                 return nullptr;
@@ -95,37 +85,38 @@ void QueryManager::notifySourceFailure(DataSourcePtr failedSource, const std::st
 
 void QueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipelineOrSink, const std::string& errorMessage)
 {
-    DecomposedQueryPlanId planId = INVALID_DECOMPOSED_QUERY_PLAN_ID;
+    QueryId queryId = INVALID_QUERY_ID;
     Execution::ExecutableQueryPlanPtr qepToFail;
     if (auto* pipe = std::get_if<Execution::ExecutablePipelinePtr>(&pipelineOrSink))
     {
-        planId = (*pipe)->getDecomposedQueryPlanId();
+        queryId = (*pipe)->getQueryId();
     }
     else if (auto* sink = std::get_if<DataSinkPtr>(&pipelineOrSink))
     {
-        planId = (*sink)->getParentPlanId();
+        queryId = (*sink)->getQueryId();
     }
     {
         std::unique_lock lock(queryMutex);
-        if (auto it = runningQEPs.find(planId); it != runningQEPs.end())
+        if (auto it = runningQEPs.find(queryId); it != runningQEPs.end())
         {
             qepToFail = it->second;
         }
         else
         {
-            NES_WARNING("Cannot fail non existing sub query plan: {}", planId);
+            NES_WARNING("Cannot fail non existing query: {}", queryId);
             return;
         }
     }
     auto future = asyncTaskExecutor->runAsync(
         [this, errorMessage](Execution::ExecutableQueryPlanPtr qepToFail) -> Execution::ExecutableQueryPlanPtr
         {
-            NES_DEBUG(
-                "Going to fail query id= {} subplan={}", qepToFail->getDecomposedQueryPlanId(), qepToFail->getDecomposedQueryPlanId());
+            NES_DEBUG("Going to fail query id= {}", qepToFail->getQueryId());
             if (failQuery(qepToFail))
             {
-                NES_DEBUG("Failed query id= {}  subplan= {}", qepToFail->getDecomposedQueryPlanId(), qepToFail->getDecomposedQueryPlanId());
-                queryStatusListener->notifyQueryFailure(qepToFail->getSharedQueryId(), qepToFail->getDecomposedQueryPlanId(), errorMessage);
+                NES_DEBUG("Failed query id= {}", qepToFail->getQueryId());
+                auto exception = UnknownException();
+                exception.what() += errorMessage;
+                queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), exception);
                 return qepToFail;
             }
             return nullptr;
@@ -139,34 +130,29 @@ void QueryManager::notifySourceCompletion(DataSourcePtr source, QueryTermination
     ///THIS is now shutting down all
     for (auto& entry : sourceToQEPMapping[source->getOperatorId()])
     {
-        NES_TRACE(
-            "notifySourceCompletion operator id={} plan id={} subplan={}",
-            source->getOperatorId(),
-            entry->getSharedQueryId(),
-            entry->getDecomposedQueryPlanId());
+        NES_TRACE("notifySourceCompletion operator id={} plan id={}", source->getOperatorId(), entry->getQueryId());
         entry->notifySourceCompletion(source, terminationType);
         if (terminationType == QueryTerminationType::Graceful)
         {
-            queryStatusListener->notifySourceTermination(
-                entry->getSharedQueryId(), entry->getDecomposedQueryPlanId(), source->getOperatorId(), QueryTerminationType::Graceful);
+            queryStatusListener->notifySourceTermination(entry->getQueryId(), source->getOperatorId(), QueryTerminationType::Graceful);
         }
     }
 }
 
 void QueryManager::notifyPipelineCompletion(
-    DecomposedQueryPlanId decomposedQueryPlanId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType)
+    QueryId queryId, Execution::ExecutablePipelinePtr pipeline, QueryTerminationType terminationType)
 {
     std::unique_lock lock(queryMutex);
-    auto& qep = runningQEPs[decomposedQueryPlanId];
+    auto& qep = runningQEPs[queryId];
     NES_ASSERT2_FMT(qep, "invalid query plan for pipeline " << pipeline->getPipelineId());
     qep->notifyPipelineCompletion(pipeline, terminationType);
 }
 
-void QueryManager::notifySinkCompletion(DecomposedQueryPlanId decomposedQueryPlanId, DataSinkPtr sink, QueryTerminationType terminationType)
+void QueryManager::notifySinkCompletion(QueryId queryId, DataSinkPtr sink, QueryTerminationType terminationType)
 {
     std::unique_lock lock(queryMutex);
-    auto& qep = runningQEPs[decomposedQueryPlanId];
-    NES_ASSERT2_FMT(qep, "invalid decomposed query plan id " << decomposedQueryPlanId << " for sink " << sink->toString());
+    auto& qep = runningQEPs[queryId];
+    NES_ASSERT2_FMT(qep, "invalid query id " << queryId << " for sink " << sink->toString());
     qep->notifySinkCompletion(sink, terminationType);
 }
 } /// namespace NES::Runtime

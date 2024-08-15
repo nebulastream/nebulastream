@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_
+#ifndef NES_RUNTIME_INCLUDE_LISTENERS_RUNTIMEEVENTLISTENER_HPP_
+#define NES_RUNTIME_INCLUDE_LISTENERS_RUNTIMEEVENTLISTENER_HPP_
+
 #include <memory>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 
@@ -35,4 +36,4 @@ protected:
 using RuntimeEventListenerPtr = std::shared_ptr<RuntimeEventListener>;
 } /// namespace NES::Runtime
 
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_RUNTIMEEVENTLISTENER_HPP_
+#endif /// NES_RUNTIME_INCLUDE_LISTENERS_RUNTIMEEVENTLISTENER_HPP_

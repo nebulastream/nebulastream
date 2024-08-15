@@ -12,23 +12,22 @@
     limitations under the License.
 */
 
-#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
-#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
+#ifndef NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_QUERYSTATUS_HPP_
+#define NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_QUERYSTATUS_HPP_
+
 namespace NES::Runtime::Execution
 {
-/**
- * @brief Represents the query status.
- */
-enum class ExecutableQueryPlanStatus : uint8_t
+enum class QueryStatus : uint8_t
 {
-    Created,
+    Registered,
+    Unregistered, /// Instead of this state, in the future, we might want to remove queries completely from the system
     Deployed, /// Created->Deployed when calling setup()
     Running, /// Deployed->Running when calling start()
     Finished, /// Running->Finished when all data sources soft stop
     Stopped, /// Running->Stopped when calling stop() and in Running state
-    ErrorState,
+    Failed,
     Invalid
 };
 } /// namespace NES::Runtime::Execution
 
-#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_EXECUTABLEQUERYPLANSTATUS_HPP_
+#endif /// NES_RUNTIME_INCLUDE_RUNTIME_EXECUTION_QUERYSTATUS_HPP_

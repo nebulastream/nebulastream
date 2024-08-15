@@ -25,7 +25,7 @@ service WorkerRPCService {
   rpc StopQuery (StopQueryRequest) returns (google.protobuf.Empty) {}
 
   rpc QueryStatus (QueryStatusRequest) returns (QueryStatusReply) {}
-
+  rpc QueryLog (QueryLogRequest) returns (QueryLogReply) {}
 }
 
 message RegisterQueryRequest {
@@ -48,21 +48,32 @@ message StartQueryRequest {
   uint64 queryId = 2;
 }
 
-enum QueryTerminationType {Graceful = 0; HardStop = 1; Failure = 2; Invalid = 3;};
 message StopQueryRequest {
+    enum QueryTerminationType {Graceful = 0; HardStop = 1; Failure = 2; Invalid = 3;};
   uint64 queryId = 2;
   QueryTerminationType terminationType = 3;
 }
 
-enum QueryStatus {
-  Stopped = 0;
-  Running = 1;
-  Failed = 2;
-  Unregistered = 3;
-}
-
 message QueryStatusReply {
+    enum QueryStatus {
+        Registered = 0;
+        Unregistered = 1;
+        Deployed = 2;
+        Running = 3;
+        Finished = 4;
+        Stopped = 5;
+        Failed = 6;
+        Invalid = 7;
+    }
   QueryStatus status = 1;
   repeated string failures = 2;
   uint64 numberOfRestarts = 3;
+}
+
+message QueryLogRequest {
+    uint64 queryId = 1;
+}
+
+message QueryLogReply {
+    repeated string logs = 1;
 }

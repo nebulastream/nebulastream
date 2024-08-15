@@ -11,8 +11,6 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <SingleNodeWorker.hpp>
-
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
@@ -22,6 +20,7 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <SingleNodeWorker.hpp>
 
 namespace NES
 {
@@ -87,9 +86,9 @@ SingleNodeWorker& SingleNodeWorker::operator=(SingleNodeWorker&& other) noexcept
 
 SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfiguration& configuration)
     : qc(std::make_unique<QueryCompilation::NautilusQueryCompiler>(
-          createQueryCompilationOptions(configuration.queryCompilerConfiguration),
-          QueryCompilation::Phases::DefaultPhaseFactory::create(),
-          false))
+        createQueryCompilationOptions(configuration.queryCompilerConfiguration),
+        QueryCompilation::Phases::DefaultPhaseFactory::create(),
+        false))
     , nodeEngine(Runtime::NodeEngineBuilder(configuration.engineConfiguration).build())
 {
 }
@@ -105,20 +104,39 @@ QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
 
     return nodeEngine->registerExecutableQueryPlan(compilationResult->getExecutableQueryPlan());
 }
+
 void SingleNodeWorker::startQuery(QueryId queryId)
 {
     nodeEngine->startQuery(queryId);
 }
+
 void SingleNodeWorker::stopQuery(QueryId queryId, Runtime::QueryTerminationType type)
 {
     nodeEngine->stopQuery(queryId, type);
 }
+
 void SingleNodeWorker::unregisterQuery(QueryId queryId)
 {
     nodeEngine->unregisterQuery(queryId);
 }
-QueryStatus SingleNodeWorker::queryStatus(QueryId) const
+
+std::optional<Runtime::QueryStatusChange> SingleNodeWorker::getQueryStatus(QueryId queryId) const
 {
-    return {};
+    return nodeEngine->getQueryLog()->getQueryStatus(queryId);
+}
+
+std::vector<Exception> SingleNodeWorker::getExceptions(QueryId queryId) const
+{
+    return nodeEngine->getQueryLog()->getExceptions(queryId);
+}
+
+uint64_t SingleNodeWorker::getNumberOfRestarts(QueryId queryId) const
+{
+    return nodeEngine->getQueryLog()->getNumberOfRestarts(queryId);
+}
+
+std::vector<std::string> SingleNodeWorker::getStatusLog(QueryId queryId) const
+{
+    return nodeEngine->getQueryLog()->getStatusLog(queryId);
 }
 } /// namespace NES

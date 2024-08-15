@@ -14,8 +14,12 @@
 
 #include <memory>
 #include <utility>
+#include <Compiler/LanguageCompiler.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 #include <Exceptions/SignalHandling.hpp>
+#include <QueryCompiler/NautilusQueryCompiler.hpp>
+#include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -43,27 +47,6 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
     this->queryManager = std::move(queryManager);
     return *this;
 }
-
-class SimpleQueryStatusListener : public AbstractQueryStatusListener
-{
-public:
-    bool canTriggerEndOfStream(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override { return true; }
-    bool notifySourceTermination(SharedQueryId, DecomposedQueryPlanId, OperatorId, Runtime::QueryTerminationType) override
-    {
-        NES_INFO("Source has terminated");
-        return true;
-    }
-    bool notifyQueryFailure(SharedQueryId, DecomposedQueryPlanId, std::string errorMsg) override
-    {
-        NES_FATAL_ERROR("Query Failure: {}", errorMsg);
-        return true;
-    }
-    bool notifyQueryStatusChange(SharedQueryId, DecomposedQueryPlanId, Runtime::Execution::ExecutableQueryPlanStatus) override
-    {
-        return true;
-    }
-    bool notifyEpochTermination(uint64_t, uint64_t) override { return true; }
-};
 
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
@@ -98,6 +81,8 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
                 "Error while building NodeEngine : no BufferManager provided", NES::collectAndPrintStacktrace());
         }
 
+        auto queryLog = std::make_shared<QueryLog>();
+
         QueryManagerPtr queryManager{this->queryManager};
         if (!this->queryManager)
         {
@@ -106,12 +91,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
             std::vector<uint64_t> workerToCoreMappingVec
                 = NES::Util::splitWithStringDelimiter<uint64_t>(workerConfiguration.workerPinList.getValue(), ",");
             queryManager = std::make_shared<QueryManager>(
-                std::make_shared<SimpleQueryStatusListener>(),
-                bufferManagers,
-                WorkerId(0),
-                numOfThreads,
-                numberOfBuffersPerEpoch,
-                workerToCoreMappingVec);
+                queryLog, bufferManagers, WorkerId(0), numOfThreads, numberOfBuffersPerEpoch, workerToCoreMappingVec);
         }
         if (!queryManager)
         {
@@ -120,7 +100,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
                 "Error while building NodeEngine : Error while creating QueryManager", NES::collectAndPrintStacktrace());
         }
 
-        return std::make_unique<NodeEngine>(std::move(bufferManagers), std::move(queryManager));
+        return std::make_unique<NodeEngine>(std::move(bufferManagers), std::move(queryManager), std::move(queryLog));
     }
     catch (std::exception& err)
     {

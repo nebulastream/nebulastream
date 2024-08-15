@@ -321,7 +321,9 @@ bool DataSource::stop(Runtime::QueryTerminationType graceful)
             /// the only reason to call notifySourceFailure is when the main thread was not stated
             if (!wasStarted)
             {
-                queryManager->notifySourceFailure(shared_from_base<DataSource>(), std::string(e.what()));
+                auto exception = UnknownException();
+                exception.what() += e.what();
+                queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception);
             }
             return true;
         }
@@ -380,10 +382,12 @@ void DataSource::runningRoutine()
         }
         completedPromise.set_value(true);
     }
-    catch (std::exception const& exception)
+    catch (std::exception const& e)
     {
-        queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception.what());
-        completedPromise.set_exception(std::make_exception_ptr(exception));
+        auto exception = UnknownException();
+        exception.what() += e.what();
+        queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception);
+        completedPromise.set_exception(std::make_exception_ptr(e));
     }
     catch (...)
     {
@@ -396,9 +400,11 @@ void DataSource::runningRoutine()
                 std::rethrow_exception(expPtr);
             }
         }
-        catch (std::exception const& exception)
+        catch (std::exception const& e)
         {
-            queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception.what());
+            auto exception = UnknownException();
+            exception.what() += e.what();
+            queryManager->notifySourceFailure(shared_from_base<DataSource>(), exception);
         }
     }
     NES_DEBUG("DataSource {} end runningRoutine", operatorId);

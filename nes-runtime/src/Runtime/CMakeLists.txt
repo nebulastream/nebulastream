@@ -46,4 +46,5 @@ add_source_files(nes-runtime
 )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)
+add_subdirectory(Listeners)
 add_subdirectory(detail)
