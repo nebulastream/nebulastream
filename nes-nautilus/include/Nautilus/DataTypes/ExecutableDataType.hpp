@@ -165,7 +165,7 @@ using ExecDataBooleanPtr = ExecutableDataTypePtr<bool>;
 
 // Might move these methods into a MemRefUtils or something like that
 ExecDataType readExecDataTypeFromMemRef(MemRef& memRef, const PhysicalTypePtr& type);
-void writeExecDataTypeToMemRef(MemRef& memRef, const ExecDataType& execDataType);
+void writeFixedExecDataTypeToMemRef(MemRef& memRef, const ExecDataType& execDataType);
 Boolean memEquals(MemRef ptr1, MemRef ptr2, const nautilus::val<uint64_t>& size);
 void memCopy(MemRef dest, MemRef src, const nautilus::val<size_t>& size);
 
@@ -184,15 +184,14 @@ class ExecutableVariableDataType : public AbstractDataType {
 
     static ExecDataType create(const MemRef& pointerToVarSized, const bool null = false) {
         const auto varSized = readValueFromMemRef(pointerToVarSized, uint32_t);
-        const auto pointerToContent = pointerToVarSized + nautilus::val<uint32_t>(sizeof(uint32_t));
-        return create(pointerToContent, varSized, null);
+        return create(pointerToVarSized, varSized, null);
     }
 
     ~ExecutableVariableDataType() override = default;
 
     [[nodiscard]] nautilus::val<uint32_t> getSize() const { return size; }
-    [[nodiscard]] MemRef getContent() const { return content; }
-    [[nodiscard]] MemRef getReference() const { return content - UInt64(sizeof(uint32_t)); }
+    [[nodiscard]] MemRef getContent() const { return content + UInt64(sizeof(uint32_t)); }
+    [[nodiscard]] MemRef getReference() const { return content ; }
 
   protected:
     ExecDataType operator&&(const ExecDataType&) const override;

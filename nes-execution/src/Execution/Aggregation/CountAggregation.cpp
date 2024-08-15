@@ -26,29 +26,29 @@ CountAggregationFunction::CountAggregationFunction(const PhysicalTypePtr& inputT
 
 void CountAggregationFunction::lift(Nautilus::MemRef state, Nautilus::Record&) {
     // load memRef
-    auto oldValue = AggregationFunction::loadFromMemRef(state, resultType);
+    const auto oldValue = AggregationFunction::loadFromMemRef(state, resultType);
     // add the value
-    auto newValue = oldValue + 1_u64;
+    const auto newValue = oldValue + createConstValue(1, resultType);
     // put back to the memRef
-    AggregationFunction::storeToMemRef(state, newValue, inputType);
+    AggregationFunction::storeToMemRef(state, newValue, resultType);
 }
 
 void CountAggregationFunction::combine(Nautilus::MemRef state1, Nautilus::MemRef state2) {
-    auto left = AggregationFunction::loadFromMemRef(state1, resultType);
-    auto right = AggregationFunction::loadFromMemRef(state2, resultType);
+    const auto left = AggregationFunction::loadFromMemRef(state1, resultType);
+    const auto right = AggregationFunction::loadFromMemRef(state2, resultType);
 
-    auto tmp = left + right;
+    const auto tmp = left + right;
     AggregationFunction::storeToMemRef(state1, tmp, inputType);
 }
 
 void CountAggregationFunction::lower(Nautilus::MemRef state, Nautilus::Record& record) {
-    auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
+    const auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
     record.write(resultFieldIdentifier, finalVal);
 }
 
 void CountAggregationFunction::reset(Nautilus::MemRef memRef) {
-    auto zero = createConstValue(0L, inputType);
-    AggregationFunction::storeToMemRef(memRef, zero, inputType);
+    const auto zero = createConstValue(0L, resultType);
+    AggregationFunction::storeToMemRef(memRef, zero, resultType);
 }
 uint64_t CountAggregationFunction::getSize() { return sizeof(int64_t); }
 

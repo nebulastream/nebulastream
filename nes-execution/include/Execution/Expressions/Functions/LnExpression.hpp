@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Expressions {
      */
 class LnExpression : public Expression {
   public:
-    explicit LnExpression(const ExpressionPtr& subExpression);
+    explicit LnExpression(ExpressionPtr subExpression);
     ExecDataType execute(Record& record) const override;
 
   private:

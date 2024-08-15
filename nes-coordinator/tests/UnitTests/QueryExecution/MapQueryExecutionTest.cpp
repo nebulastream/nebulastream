@@ -267,14 +267,11 @@ TEST_P(MapQueryExecutionTest, MapAllFunctions) {
 
         for (uint32_t recordIndex = 0u; recordIndex < expectedNumberOfTuples; ++recordIndex) {
             for (uint32_t index = 1; index < resultArray.size(); index++) {
-                const auto input = sign * recordIndex;
+                const auto input = (double)sign * recordIndex;
                 const auto resultValue = resultBuffer[recordIndex][resultArray[index]].read<double>();
                 const auto expectedValue = getFunction(resultArray[index], input);
                 NES_INFO("expectedValue {} resultValue {} input {} function {}", expectedValue, resultValue, input, resultArray[index]);
                 EXPECT_EQ(resultValue, expectedValue);
-
-                EXPECT_EQ(resultBuffer[recordIndex][resultArray[index]].read<double>(),
-                          getFunction(resultArray[index], sign * recordIndex));
             }
         }
     }

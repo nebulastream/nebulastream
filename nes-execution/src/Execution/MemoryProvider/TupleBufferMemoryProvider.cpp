@@ -67,7 +67,7 @@ Nautilus::ExecDataType TupleBufferMemoryProvider::store(const NES::PhysicalTypeP
 
 
     if (type->isBasicType()) {
-        Nautilus::writeExecDataTypeToMemRef(fieldReference, value);
+        Nautilus::writeFixedExecDataTypeToMemRef(fieldReference, value);
         return value;
     } else if (type->isTextType()) {
         auto textValue = value->as<Nautilus::ExecutableVariableDataType>();

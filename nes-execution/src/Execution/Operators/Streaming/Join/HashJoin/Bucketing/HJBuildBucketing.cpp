@@ -49,7 +49,7 @@ void HJBuildBucketing::insertRecordForWindow(MemRef& allWindowsToFill,
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 //        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
-        Nautilus::writeExecDataTypeToMemRef(entryMemRef, record.read(fieldName));
+        Nautilus::writeFixedExecDataTypeToMemRef(entryMemRef, record.read(fieldName));
         entryMemRef = entryMemRef + nautilus::val<uint64_t>(fieldType->size());
     }
 }

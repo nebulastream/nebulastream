@@ -79,7 +79,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64& hash, const 
     auto keyPtr = entry.getKeyPtr();
     for (nautilus::static_val<size_t> i = 0; i < keys.size(); ++i) {
         auto& key = keys[i];
-        writeExecDataTypeToMemRef(keyPtr, key);
+        writeFixedExecDataTypeToMemRef(keyPtr, key);
         keyPtr = keyPtr + nautilus::val<uint64_t>(keyDataTypes[i]->size());
     }
     return entry;

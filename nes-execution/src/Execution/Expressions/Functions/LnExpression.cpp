@@ -16,11 +16,12 @@
 #include <Execution/Expressions/Functions/LnExpression.hpp>
 #include <nautilus/std/cmath.h>
 #include <cmath>
+#include <utility>
 
 namespace NES::Runtime::Execution::Expressions {
 
-LnExpression::LnExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
-    : subExpression(subExpression) {}
+LnExpression::LnExpression(NES::Runtime::Execution::Expressions::ExpressionPtr  subExpression)
+    : subExpression(std::move(subExpression)) {}
 
 
 ExecDataType LnExpression::execute(NES::Nautilus::Record& record) const {

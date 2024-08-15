@@ -342,7 +342,7 @@ ExecDataType readExecDataTypeFromMemRef(nautilus::val<int8_t*>& memRef, const Ph
     }
 }
 
-void writeExecDataTypeToMemRef(nautilus::val<int8_t*>& memRef, const ExecDataType& execDataType) {
+void writeFixedExecDataTypeToMemRef(nautilus::val<int8_t*>& memRef, const ExecDataType& execDataType) {
     if (execDataType->instanceOf<ExecDataInt8>()) {
         writeValueToMemRef(memRef, execDataType->as<ExecDataInt8>()->getRawValue(), int8_t);
     } else if (execDataType->instanceOf<ExecDataInt16>()) {
