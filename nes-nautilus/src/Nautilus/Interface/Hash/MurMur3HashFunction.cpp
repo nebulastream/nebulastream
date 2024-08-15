@@ -16,7 +16,7 @@
 
 namespace NES::Nautilus::Interface {
 
-HashFunction::HashValue MurMur3HashFunction::init() { return FixedSizeExecutableDataType<uint64_t>::create(SEED)->as<FixedSizeExecutableDataType<uint64_t>>(); }
+HashFunction::HashValue MurMur3HashFunction::init() { return {SEED}; }
 
 /**
  * @brief Hash Function that implements murmurhas3 by Robin-Hood-Hashing:
@@ -24,7 +24,7 @@ HashFunction::HashValue MurMur3HashFunction::init() { return FixedSizeExecutable
  * @param x
  * @return
  */
-ExecDataType hashExecDataType(const ExecDataType& input) {
+UInt64Val hashExecDataType(const UInt64Val& input) {
     auto x = (input >> 33U);
     x = x * (UINT64_C(0xff51afd7ed558ccd));
     x = x ^ (x >> 33U);
@@ -97,11 +97,9 @@ uint64_t hashBytes(const int8_t* data, uint64_t length) {
 HashFunction::HashValue MurMur3HashFunction::calculate(const HashValue& hash, const ExecDataType& value) {
     if (value->instanceOf<VariableSizeExecutableDataType>()) {
         const auto varSizedContent = value->as<VariableSizeExecutableDataType>();
-        const auto result = hash ^ invoke(hashBytes, varSizedContent->getContent(), varSizedContent->getSize());
-        return result->as<ExecDataUInt64>();
+        return hash ^ invoke(hashBytes, varSizedContent->getContent(), varSizedContent->getSize());
     } else {
-        const auto result = hash ^ hashExecDataType(value);
-        return result->as<ExecDataUInt64>();
+        return hash ^ hashExecDataType(castToValue(value, uint64_t));
     };
 
     NES_NOT_IMPLEMENTED();

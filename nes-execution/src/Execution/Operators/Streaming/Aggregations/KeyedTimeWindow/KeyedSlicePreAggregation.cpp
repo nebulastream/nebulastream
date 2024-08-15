@@ -137,10 +137,10 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 4. calculate hash
     auto hash = hashFunction->calculate(keyValues);
-    NES_INFO("Calculated hash: {} from record {}", hash->getRawValue().toString(), record.toString());
+    NES_INFO("Calculated hash: {} from record {}", hash.toString(), record.toString());
 
     // 5. create entry in the slice hash map. If the entry is new set default values for aggregations.
-    auto entry = sliceState.findOrCreate(hash->getRawValue(), keyValues, [this](auto& entry) {
+    auto entry = sliceState.findOrCreate(hash, keyValues, [this](auto& entry) {
         // set aggregation values if a new entry was created
         auto valuePtr = entry.getValuePtr();
         for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions)) {

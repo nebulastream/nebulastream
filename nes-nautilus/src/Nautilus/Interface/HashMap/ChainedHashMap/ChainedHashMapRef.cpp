@@ -119,9 +119,8 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const UInt64Val& has
         entry = insert(hash, keys);
 
         std::stringstream ss;
-        ss << (*keys[0]);
-        for (nautilus::static_val<size_t> i = 1; i < keys.size(); i++) {
-            ss << ", " << (*keys[i]);
+        for (auto& key : nautilus::static_iterable(keys)) {
+            ss << key << ", ";
         }
         NES_INFO("Created new entry for keys: {}", ss.str());
 

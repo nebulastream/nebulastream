@@ -147,7 +147,7 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
         auto hash = hashFunction->calculate(keyValues);
 
         // 5. create entry in the slice hash map. If the entry is new set default values for aggregations.
-        auto entry = map.findOrCreate(hash->getRawValue(), keyValues, [this](auto& entry) {
+        auto entry = map.findOrCreate(hash, keyValues, [this](auto& entry) {
             // set aggregation values if a new entry was created
             auto valuePtr = entry.getValuePtr();
             for (const auto& aggFunction : aggregationFunctions) {

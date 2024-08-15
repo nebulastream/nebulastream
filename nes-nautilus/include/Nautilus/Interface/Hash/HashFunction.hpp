@@ -25,14 +25,14 @@ namespace NES::Nautilus::Interface {
  */
 class HashFunction {
   public:
-    using HashValue = ExecDataUInt64Ptr;
+    using HashValue = UInt64Val;
 
     /**
      * @brief Calculates the hash of one value.
      * @param value a nautilus value
      * @return the hash
      */
-    HashValue calculate(ExecDataType value);
+    HashValue calculate(const ExecDataType& value);
 
     /**
      * @brief This is only necessary as long as TODO #3648 is not merged
