@@ -37,25 +37,25 @@ class RecordBuffer {
      * @brief Creates a new record buffer with a reference to a tuple buffer
      * @param tupleBufferRef
      */
-    explicit RecordBuffer(const Nautilus::MemRef& tupleBufferRef);
+    explicit RecordBuffer(const Nautilus::MemRefVal& tupleBufferRef);
 
     /**
      * @brief Read number of record that are currently stored in the record buffer.
      * @return val<uint64_t>
      */
-    val<uint64_t> getNumRecords();
+    Nautilus::UInt64Val getNumRecords();
 
     /**
      * @brief Retrieve the reference to the underling buffer from the record buffer.
      * @return val<void*>
      */
-    [[nodiscard]] Nautilus::MemRef getBuffer() const;
+    [[nodiscard]] Nautilus::MemRefVal getBuffer() const;
 
     /**
      * @brief Get the reference to the TupleBuffer
      * @return val<void*>
      */
-    [[nodiscard]] const Nautilus::MemRef& getReference() const;
+    [[nodiscard]] const Nautilus::MemRefVal& getReference() const;
 
     /**
      * @brief Set the number of records in the underlying tuple buffer.
@@ -163,7 +163,7 @@ class RecordBuffer {
     ~RecordBuffer() = default;
 
   private:
-    Nautilus::MemRef tupleBufferRef;
+    Nautilus::MemRefVal tupleBufferRef;
 };
 
 }// namespace NES::Runtime::Execution

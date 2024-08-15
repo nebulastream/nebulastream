@@ -17,17 +17,17 @@
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
 
 namespace NES::Nautilus::Interface {
-FixedPageRef::FixedPageRef(const Nautilus::MemRef& fixedPageRef) : fixedPageRef(fixedPageRef) {}
+FixedPageRef::FixedPageRef(const Nautilus::MemRefVal& fixedPageRef) : fixedPageRef(fixedPageRef) {}
 
 void addHashToBloomFilterProxy(void* fixedPagePtr, uint64_t hash) {
     auto* fixedPage = (FixedPage*) fixedPagePtr;
     fixedPage->addHashToBloomFilter(hash);
 }
 
-Nautilus::MemRef FixedPageRef::allocateEntry(const Nautilus::UInt64& hash) {
+Nautilus::MemRefVal FixedPageRef::allocateEntry(const Nautilus::UInt64Val& hash) {
     auto currentPos = getCurrentPos();
 
-    Nautilus::MemRef entry(nullptr);
+    Nautilus::MemRefVal entry(nullptr);
     if (currentPos < getCapacity()) {
         //TODO replace nautilus::invoke with Nautilus alternative, see #4176
         nautilus::invoke(addHashToBloomFilterProxy, fixedPageRef, hash);
@@ -40,19 +40,19 @@ Nautilus::MemRef FixedPageRef::allocateEntry(const Nautilus::UInt64& hash) {
     return entry;
 }
 
-Nautilus::UInt64 FixedPageRef::getSizeOfRecord() { return getMember(fixedPageRef, FixedPage, sizeOfRecord, uint64_t); }
+Nautilus::UInt64Val FixedPageRef::getSizeOfRecord() { return getMember(fixedPageRef, FixedPage, sizeOfRecord, uint64_t); }
 
-Nautilus::MemRef FixedPageRef::getDataPtr() { return getMemberAsPointer(fixedPageRef, FixedPage, data, int8_t); }
+Nautilus::MemRefVal FixedPageRef::getDataPtr() { return getMemberAsPointer(fixedPageRef, FixedPage, data, int8_t); }
 
-Nautilus::UInt64 FixedPageRef::getCurrentPos() { return getMember(fixedPageRef, FixedPage, currentPos, uint64_t); }
+Nautilus::UInt64Val FixedPageRef::getCurrentPos() { return getMember(fixedPageRef, FixedPage, currentPos, uint64_t); }
 
-Nautilus::UInt64 FixedPageRef::getCapacity() { return getMember(fixedPageRef, FixedPage, capacity, uint64_t); }
+Nautilus::UInt64Val FixedPageRef::getCapacity() { return getMember(fixedPageRef, FixedPage, capacity, uint64_t); }
 
-void FixedPageRef::setCurrentPos(const UInt64& pos) { *getMemberAsPointer(fixedPageRef, FixedPage, currentPos, uint64_t) = pos; }
+void FixedPageRef::setCurrentPos(const UInt64Val& pos) { *getMemberAsPointer(fixedPageRef, FixedPage, currentPos, uint64_t) = pos; }
 
 FixedPageRefIter FixedPageRef::begin() { return at(0); }
 
-FixedPageRefIter FixedPageRef::at(const Nautilus::UInt64& pos) {
+FixedPageRefIter FixedPageRef::at(const Nautilus::UInt64Val& pos) {
     FixedPageRefIter fixedPageRefIter(*this);
     fixedPageRefIter.addr = fixedPageRefIter.addr + pos * getSizeOfRecord();
     return fixedPageRefIter;
@@ -82,7 +82,7 @@ FixedPageRefIter& FixedPageRefIter::operator=(const FixedPageRefIter& it) {
     return *this;
 }
 
-Nautilus::MemRef FixedPageRefIter::operator*() { return addr; }
+Nautilus::MemRefVal FixedPageRefIter::operator*() { return addr; }
 
 FixedPageRefIter& FixedPageRefIter::operator++() {
     addr = addr + fixedPageRef.getSizeOfRecord();

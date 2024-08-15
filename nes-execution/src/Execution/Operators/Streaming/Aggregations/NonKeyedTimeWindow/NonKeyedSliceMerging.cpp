@@ -22,7 +22,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* createGlobalState(void* op, void* sliceMergeTaskPtr) {
+NonKeyedSlice* createGlobalState(void* op, void* sliceMergeTaskPtr) {
     auto handler = static_cast<NonKeyedSliceMergingHandler*>(op);
     auto sliceMergeTask = static_cast<SliceMergeTask<NonKeyedSlice>*>(sliceMergeTaskPtr);
     auto globalState = handler->createGlobalSlice(sliceMergeTask);
@@ -74,14 +74,11 @@ NonKeyedSliceMerging::NonKeyedSliceMerging(
 
 void NonKeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    UInt64 entrySize = 0_u64;
+    UInt64Val entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
-    nautilus::invoke(setupSliceMergingHandler,
-                           globalOperatorHandler,
-                           executionCtx.getPipelineContext(),
-                           entrySize);
+    nautilus::invoke(setupSliceMergingHandler, globalOperatorHandler, executionCtx.getPipelineContext(), entrySize);
     auto defaultState = nautilus::invoke(getDefaultMergingState, globalOperatorHandler);
     for (auto& function : nautilus::static_iterable(aggregationFunctions)) {
         function->reset(defaultState);
@@ -112,14 +109,14 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk, combinedSlice);
 }
 
-VoidRef NonKeyedSliceMerging::combineThreadLocalSlices(MemRef& globalOperatorHandler,
-                                                             MemRef& sliceMergeTask) const {
+ObjRefVal<void> NonKeyedSliceMerging::combineThreadLocalSlices(MemRefVal& globalOperatorHandler,
+                                                               MemRefVal& sliceMergeTask) const {
     auto globalSlice = nautilus::invoke(createGlobalState, globalOperatorHandler, sliceMergeTask);
     auto globalSliceState = nautilus::invoke(getGlobalSliceState, globalSlice);
     auto numberOfSlices = nautilus::invoke(getNonKeyedNumberOfSlices, sliceMergeTask);
-    for (UInt64 i = 0_u64; i < numberOfSlices; i = i + 1_u64) {
+    for (UInt64Val i = 0_u64; i < numberOfSlices; i = i + 1_u64) {
         auto srcSliceState = nautilus::invoke(getNonKeyedSliceState, sliceMergeTask, i);
-        UInt64 stateOffset = 0;
+        UInt64Val stateOffset = 0;
         for (const auto& function : nautilus::static_iterable(aggregationFunctions)) {
             auto globalValuePtr = globalSliceState + stateOffset;
             auto partitionValuePtr = srcSliceState + stateOffset;

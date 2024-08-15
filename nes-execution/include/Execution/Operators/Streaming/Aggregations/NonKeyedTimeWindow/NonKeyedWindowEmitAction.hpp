@@ -34,7 +34,7 @@ class NonKeyedWindowEmitAction : public SliceMergingAction {
                    ExecDataUInt64Ptr& sequenceNumber,
                    ExecDataUInt64Ptr& chunkNumber,
                    ExecDataBooleanPtr& lastChunk,
-                   VoidRef& globalSlice) const override;
+                   ObjRefVal<void>& globalSlice) const override;
 
   private:
     const std::vector<std::shared_ptr<Aggregation::AggregationFunction>> aggregationFunctions;

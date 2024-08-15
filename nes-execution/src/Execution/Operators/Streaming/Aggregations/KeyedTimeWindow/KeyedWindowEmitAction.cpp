@@ -45,7 +45,7 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                       ExecDataUInt64Ptr& sequenceNumber,
                                       ExecDataUInt64Ptr& chunkNumber,
                                       ExecDataBooleanPtr& lastChunk,
-                                      VoidRef& globalSlice) const {
+                                      ObjRefVal<void>& globalSlice) const {
     ctx.setWatermarkTs(windowStart->getRawValue());
     ctx.setOrigin(resultOriginId.getRawValue());
     ctx.setSequenceNumber(sequenceNumber->getRawValue());

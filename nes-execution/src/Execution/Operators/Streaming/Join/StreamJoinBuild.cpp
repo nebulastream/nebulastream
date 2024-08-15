@@ -61,8 +61,8 @@ void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
                      ctx.getChunkNumber(),
                      ctx.getLastChunk(),
                      ctx.getOriginId(),
-                     UInt64(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                     UInt64(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+                     UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                     UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 }
 
 StreamJoinBuild::StreamJoinBuild(const uint64_t operatorHandlerIndex,

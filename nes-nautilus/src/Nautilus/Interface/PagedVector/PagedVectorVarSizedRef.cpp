@@ -20,7 +20,7 @@
 #include <utility>
 
 namespace NES::Nautilus::Interface {
-PagedVectorVarSizedRef::PagedVectorVarSizedRef(const MemRef& pagedVectorVarSizedRef, SchemaPtr schema)
+PagedVectorVarSizedRef::PagedVectorVarSizedRef(const MemRefVal& pagedVectorVarSizedRef, SchemaPtr schema)
     : pagedVectorVarSizedRef(pagedVectorVarSizedRef), schema(std::move(schema)) {}
 
 void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr) {
@@ -60,23 +60,23 @@ int8_t* loadTextProxy(void* pagedVectorVarSizedPtr, uint64_t textEntryMapKey) {
     return pagedVectorVarSized->loadText(textEntryMapKey);
 }
 
-UInt64 PagedVectorVarSizedRef::getCapacityPerPage() {
+UInt64Val PagedVectorVarSizedRef::getCapacityPerPage() {
     return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, capacityPerPage, uint64_t);
 }
 
-UInt64 PagedVectorVarSizedRef::getTotalNumberOfEntries() {
+UInt64Val PagedVectorVarSizedRef::getTotalNumberOfEntries() {
     return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, totalNumberOfEntries, uint64_t);
 }
 
-void PagedVectorVarSizedRef::setTotalNumberOfEntries(const UInt64& val) {
+void PagedVectorVarSizedRef::setTotalNumberOfEntries(const UInt64Val& val) {
     *getMemberAsPointer(pagedVectorVarSizedRef, PagedVectorVarSized, totalNumberOfEntries, uint64_t) = val;
 }
 
-UInt64 PagedVectorVarSizedRef::getNumberOfEntriesOnCurrPage() {
+UInt64Val PagedVectorVarSizedRef::getNumberOfEntriesOnCurrPage() {
     return getMember(pagedVectorVarSizedRef, PagedVectorVarSized, numberOfEntriesOnCurrPage, uint64_t);
 }
 
-void PagedVectorVarSizedRef::setNumberOfEntriesOnCurrPage(const UInt64& val) {
+void PagedVectorVarSizedRef::setNumberOfEntriesOnCurrPage(const UInt64Val& val) {
     *getMemberAsPointer(pagedVectorVarSizedRef, PagedVectorVarSized, numberOfEntriesOnCurrPage, uint64_t) = val;
 }
 
@@ -104,15 +104,15 @@ void PagedVectorVarSizedRef::writeRecord(const Record& record) {
                 nautilus::invoke(storeTextProxy, pagedVectorVarSizedRef, textContent->getContent(), textContent->getSize());
             writeValueToMemRef(pageEntry, textEntryMapKey, uint64_t);
             // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
-            pageEntry = pageEntry + UInt64((uint64_t) sizeof(uint64_t));
+            pageEntry = pageEntry + UInt64Val((uint64_t) sizeof(uint64_t));
         } else {
             writeFixedExecDataTypeToMemRef(pageEntry, fieldValue);
-            pageEntry = pageEntry + UInt64(fieldType->size());
+            pageEntry = pageEntry + UInt64Val(fieldType->size());
         }
     }
 }
 
-Record PagedVectorVarSizedRef::readRecord(const UInt64& pos) {
+Record PagedVectorVarSizedRef::readRecord(const UInt64Val& pos) {
     Record record;
     auto pageEntry = nautilus::invoke(getEntryVarSizedProxy, pagedVectorVarSizedRef, pos);
 
@@ -124,7 +124,7 @@ Record PagedVectorVarSizedRef::readRecord(const UInt64& pos) {
         if (fieldType->type->isText()) {
             const auto textEntryMapKey = readValueFromMemRef(pageEntry, uint64_t);
             // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
-            pageEntry = pageEntry + UInt64((uint64_t) sizeof(uint64_t));
+            pageEntry = pageEntry + UInt64Val((uint64_t) sizeof(uint64_t));
             auto ptrToVarSized = nautilus::invoke(loadTextProxy, pagedVectorVarSizedRef, textEntryMapKey);
             const auto varSizedData = ExecutableVariableDataType::create(ptrToVarSized);
             record.write(fieldName, varSizedData);
@@ -132,7 +132,7 @@ Record PagedVectorVarSizedRef::readRecord(const UInt64& pos) {
             auto fieldMemRef = pageEntry;
             auto fieldValue = readExecDataTypeFromMemRef(fieldMemRef, fieldType);
             record.write(fieldName, fieldValue);
-            pageEntry = pageEntry + UInt64(fieldType->size());
+            pageEntry = pageEntry + UInt64Val(fieldType->size());
         }
     }
 
@@ -141,7 +141,7 @@ Record PagedVectorVarSizedRef::readRecord(const UInt64& pos) {
 
 PagedVectorVarSizedRefIter PagedVectorVarSizedRef::begin() { return at(0); }
 
-PagedVectorVarSizedRefIter PagedVectorVarSizedRef::at(UInt64 pos) {
+PagedVectorVarSizedRefIter PagedVectorVarSizedRef::at(UInt64Val pos) {
     PagedVectorVarSizedRefIter pagedVectorVarSizedRefIter(*this);
     pagedVectorVarSizedRefIter.setPos(std::move(pos));
     return pagedVectorVarSizedRefIter;
@@ -177,6 +177,6 @@ bool PagedVectorVarSizedRefIter::operator==(const PagedVectorVarSizedRefIter& ot
 
 bool PagedVectorVarSizedRefIter::operator!=(const PagedVectorVarSizedRefIter& other) const { return !(*this == other); }
 
-void PagedVectorVarSizedRefIter::setPos(UInt64 newValue) { pos = newValue; }
+void PagedVectorVarSizedRefIter::setPos(UInt64Val newValue) { pos = newValue; }
 
 }// namespace NES::Nautilus::Interface

@@ -28,7 +28,7 @@ void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuff
 EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit)
     : unit(unit), timestampExpression(std::move(timestampExpression)) {}
 
-UInt64 EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
+UInt64Val EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
     auto ts = this->timestampExpression->execute(record);
     const auto timeMultiplier = unit.getMillisecondsConversionMultiplier();
     auto tsInMs = (ts * timeMultiplier);
@@ -41,7 +41,7 @@ void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::Re
     ctx.setCurrentTs(buffer.getCreatingTs());
 }
 
-UInt64 IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&) {
+UInt64Val IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&) {
     return ctx.getCurrentTs();
 }
 

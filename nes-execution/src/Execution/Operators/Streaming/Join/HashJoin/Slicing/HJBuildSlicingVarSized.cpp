@@ -24,14 +24,14 @@ namespace NES::Runtime::Execution::Operators {
  */
 class LocalHashJoinState : public OperatorState {
   public:
-    LocalHashJoinState(MemRef& operatorHandler, MemRef& pagedVectorVarSizedRef, MemRef& sliceReference)
+    LocalHashJoinState(MemRefVal& operatorHandler, MemRefVal& pagedVectorVarSizedRef, MemRefVal& sliceReference)
         : joinOperatorHandler(operatorHandler), pagedVectorVarSizedRef(pagedVectorVarSizedRef), sliceReference(sliceReference),
           sliceStart(0_u64), sliceEnd(0_u64){};
-    MemRef joinOperatorHandler;
-    MemRef pagedVectorVarSizedRef;
-    MemRef sliceReference;
-    UInt64 sliceStart;
-    UInt64 sliceEnd;
+    MemRefVal joinOperatorHandler;
+    MemRefVal pagedVectorVarSizedRef;
+    MemRefVal sliceReference;
+    UInt64Val sliceStart;
+    UInt64Val sliceEnd;
 };
 
 void* getHJSliceVarSizedProxy(void* ptrOpHandler, uint64_t timeStamp) {
@@ -89,11 +89,11 @@ HJBuildSlicingVarSized::HJBuildSlicingVarSized(const uint64_t operatorHandlerInd
 void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalHashJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
-    UInt64 tsValue = timeFunction->getTs(ctx, record);
+    UInt64Val tsValue = timeFunction->getTs(ctx, record);
 
     //check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
-        joinState->sliceReference = nautilus::invoke(getHJSliceVarSizedProxy, operatorHandlerMemRef, UInt64(tsValue));
+        joinState->sliceReference = nautilus::invoke(getHJSliceVarSizedProxy, operatorHandlerMemRef, UInt64Val(tsValue));
         joinState->sliceStart = nautilus::invoke(getSliceStartVarSizedProxy, joinState->sliceReference);
         joinState->sliceEnd = nautilus::invoke(getSliceEndVarSizedProxy, joinState->sliceReference);
 
@@ -111,7 +111,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
         auto hjPagedVectorMemRef = nautilus::invoke(getHJPagedVectorVarSizedProxy,
                                                     joinState->sliceReference,
                                                     ctx.getWorkerThreadId(),
-                                                    UInt64(to_underlying(joinBuildSide)),
+                                                    UInt64Val(to_underlying(joinBuildSide)),
                                                     record.read(joinFieldName)->as<ExecDataInt64>()->valueAsType<uint64_t>());
 
         Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
@@ -121,7 +121,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
         auto hjPagedVectorMemRef = nautilus::invoke(getHJPagedVectorVarSizedProxy,
                                                     joinState->sliceReference,
                                                     ctx.getWorkerThreadId(),
-                                                    UInt64(to_underlying(joinBuildSide)),
+                                                    UInt64Val(to_underlying(joinBuildSide)),
                                                     record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
 
         Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
@@ -135,8 +135,8 @@ void HJBuildSlicingVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuf
     // We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
     Operator::open(ctx, recordBuffer);
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    MemRef dummyRef1 = nautilus::invoke(getDefaultMemRefVarSized);
-    MemRef dummyRef2 = nautilus::invoke(getDefaultMemRefVarSized);
+    MemRefVal dummyRef1 = nautilus::invoke(getDefaultMemRefVarSized);
+    MemRefVal dummyRef2 = nautilus::invoke(getDefaultMemRefVarSized);
     auto joinState = std::make_unique<LocalHashJoinState>(operatorHandlerMemRef, dummyRef1, dummyRef2);
     ctx.setLocalOperatorState(this, std::move(joinState));
 }

@@ -27,7 +27,7 @@ HashFunction::HashValue HashFunction::calculate(std::vector<ExecDataType>& value
     return hash;
 }
 
-HashFunction::HashValue HashFunction::calculateWithState(ExecDataType value, MemRef& state) {
+HashFunction::HashValue HashFunction::calculateWithState(ExecDataType value, MemRefVal& state) {
     auto hash = init();
     return calculateWithState(hash, value, state);
 }

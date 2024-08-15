@@ -35,14 +35,14 @@ namespace NES::Runtime::Execution::Operators {
  */
 class LocalJoinState : public Operators::OperatorState {
   public:
-    LocalJoinState(MemRef& operatorHandler, MemRef& hashTableReference, MemRef& sliceReference)
+    LocalJoinState(MemRefVal& operatorHandler, MemRefVal& hashTableReference, MemRefVal& sliceReference)
         : joinOperatorHandler(operatorHandler), hashTableReference(hashTableReference), sliceReference(sliceReference),
           sliceStart(0_u64), sliceEnd(0_u64){};
-    MemRef joinOperatorHandler;
-    MemRef hashTableReference;
-    MemRef sliceReference;
-    UInt64 sliceStart;
-    UInt64 sliceEnd;
+    MemRefVal joinOperatorHandler;
+    MemRefVal hashTableReference;
+    MemRefVal sliceReference;
+    UInt64Val sliceStart;
+    UInt64Val sliceEnd;
 };
 
 void* getHJSliceProxy(void* ptrOpHandler, uint64_t timeStamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt) {
@@ -97,7 +97,7 @@ HJBuildSlicing::HJBuildSlicing(const uint64_t operatorHandlerIndex,
 void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
-    UInt64 tsValue = timeFunction->getTs(ctx, record);
+    UInt64Val tsValue = timeFunction->getTs(ctx, record);
 
     //check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
@@ -105,14 +105,14 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         joinState->sliceReference =
             nautilus::invoke(getHJSliceProxy,
                              operatorHandlerMemRef,
-                             UInt64(tsValue),
-                             UInt64(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                             UInt64(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+                             UInt64Val(tsValue),
+                             UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                             UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 
         joinState->hashTableReference = nautilus::invoke(getLocalHashTableProxy,
                                                          joinState->sliceReference,
                                                          ctx.getWorkerThreadId(),
-                                                         UInt64(to_underlying(joinBuildSide)));
+                                                         UInt64Val(to_underlying(joinBuildSide)));
 
         joinState->sliceStart = nautilus::invoke(getSliceStartProxy, joinState->sliceReference);
         joinState->sliceEnd = nautilus::invoke(getSliceEndProxy, joinState->sliceReference);
@@ -133,7 +133,7 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 //        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
         writeFixedExecDataTypeToMemRef(entryMemRef, record.read(fieldName));
-        entryMemRef = entryMemRef + UInt64(fieldType->size());
+        entryMemRef = entryMemRef + UInt64Val(fieldType->size());
     }
 }
 
@@ -143,8 +143,8 @@ void HJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) con
     // We override the Operator::open() and have to call it explicitly here, as we must set the statistic id
     Operator::open(ctx, recordBuffer);
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    MemRef dummyRef1 = nautilus::invoke(getDefaultMemRef);
-    MemRef dummyRef2 = nautilus::invoke(getDefaultMemRef);
+    MemRefVal dummyRef1 = nautilus::invoke(getDefaultMemRef);
+    MemRefVal dummyRef2 = nautilus::invoke(getDefaultMemRef);
     auto joinState = std::make_unique<LocalJoinState>(operatorHandlerMemRef, dummyRef1, dummyRef2);
     ctx.setLocalOperatorState(this, std::move(joinState));
 }

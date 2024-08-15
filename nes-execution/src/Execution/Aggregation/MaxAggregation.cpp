@@ -27,7 +27,7 @@ MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType,
 
 void MaxAggregationFunction::storeMax(const Nautilus::ExecDataType& leftValue,
               const Nautilus::ExecDataType& rightValue,
-              const Nautilus::MemRef& state,
+              const Nautilus::MemRefVal& state,
               const PhysicalTypePtr& inputType) {
     // we have to do this, as otherwise we do not check if the val<> is true bti if there exists a pointer
     if ((leftValue < rightValue)->as<Nautilus::ExecDataBoolean>()->getRawValue()) {
@@ -39,23 +39,23 @@ void MaxAggregationFunction::storeMax(const Nautilus::ExecDataType& leftValue,
     }
 }
 
-void MaxAggregationFunction::lift(Nautilus::MemRef state, Nautilus::Record& inputRecord) {
+void MaxAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& inputRecord) {
     const auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
     const auto inputValue = inputExpression->execute(inputRecord);
     storeMax(inputValue, oldValue, state, inputType);
 }
 
-void MaxAggregationFunction::combine(Nautilus::MemRef state1, Nautilus::MemRef state2) {
+void MaxAggregationFunction::combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) {
     const auto left = AggregationFunction::loadFromMemRef(state1, inputType);
     const auto right = AggregationFunction::loadFromMemRef(state2, inputType);
     storeMax(left, right, state1, inputType);
 }
 
-void MaxAggregationFunction::lower(Nautilus::MemRef state, Nautilus::Record& resultRecord) {
+void MaxAggregationFunction::lower(Nautilus::MemRefVal state, Nautilus::Record& resultRecord) {
     auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
-void MaxAggregationFunction::reset(Nautilus::MemRef memRef) {
+void MaxAggregationFunction::reset(Nautilus::MemRefVal memRef) {
     auto maxVal = createMinValue(inputType);
     AggregationFunction::storeToMemRef(memRef, maxVal, inputType);
 }

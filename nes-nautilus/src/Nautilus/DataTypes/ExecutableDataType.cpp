@@ -283,53 +283,43 @@ template class ExecutableDataType<float>;
 template class ExecutableDataType<double>;
 template class ExecutableDataType<bool>;
 
-ExecDataType readExecDataTypeFromMemRef(nautilus::val<int8_t*>& memRef, const PhysicalTypePtr& type) {
+
+ExecDataType readExecDataTypeFromMemRef(MemRefVal& memRef, const PhysicalTypePtr& type) {
     if (type->isBasicType()) {
         auto basicType = std::static_pointer_cast<BasicPhysicalType>(type);
         switch (basicType->nativeType) {
             case BasicPhysicalType::NativeType::BOOLEAN: {
-                return Nautilus::ExecutableDataType<bool>::create(
-                    static_cast<nautilus::val<bool>>(*static_cast<nautilus::val<bool*>>(memRef)));
+                return Nautilus::ExecutableDataType<bool>::create((*static_cast<nautilus::val<bool*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::INT_8: {
-                return Nautilus::ExecutableDataType<int8_t>::create(
-                    static_cast<nautilus::val<int8_t>>(*static_cast<nautilus::val<int8_t*>>(memRef)));
+                return Nautilus::ExecutableDataType<int8_t>::create((*static_cast<MemRefVal>(memRef)));
             };
             case BasicPhysicalType::NativeType::INT_16: {
-                return Nautilus::ExecutableDataType<int16_t>::create(
-                    static_cast<nautilus::val<int16_t>>(*static_cast<nautilus::val<int16_t*>>(memRef)));
+                return Nautilus::ExecutableDataType<int16_t>::create((*static_cast<nautilus::val<int16_t*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::INT_32: {
-                return Nautilus::ExecutableDataType<int32_t>::create(
-                    static_cast<nautilus::val<int32_t>>(*static_cast<nautilus::val<int32_t*>>(memRef)));
+                return Nautilus::ExecutableDataType<int32_t>::create((*static_cast<nautilus::val<int32_t*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::INT_64: {
-                return Nautilus::ExecutableDataType<int64_t>::create(
-                    static_cast<nautilus::val<int64_t>>(*static_cast<nautilus::val<int64_t*>>(memRef)));
+                return Nautilus::ExecutableDataType<int64_t>::create((*static_cast<nautilus::val<int64_t*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::UINT_8: {
-                return Nautilus::ExecutableDataType<uint8_t>::create(
-                    static_cast<nautilus::val<uint8_t>>(*static_cast<nautilus::val<uint8_t*>>(memRef)));
+                return Nautilus::ExecutableDataType<uint8_t>::create((*static_cast<nautilus::val<uint8_t*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::UINT_16: {
-                return Nautilus::ExecutableDataType<uint16_t>::create(
-                    static_cast<nautilus::val<uint16_t>>(*static_cast<nautilus::val<uint16_t*>>(memRef)));
+                return Nautilus::ExecutableDataType<uint16_t>::create((*static_cast<nautilus::val<uint16_t*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::UINT_32: {
-                return Nautilus::ExecutableDataType<uint32_t>::create(
-                    static_cast<nautilus::val<uint32_t>>(*static_cast<nautilus::val<uint32_t*>>(memRef)));
+                return Nautilus::ExecutableDataType<uint32_t>::create((*static_cast<nautilus::val<uint32_t*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::UINT_64: {
-                return Nautilus::ExecutableDataType<uint64_t>::create(
-                    static_cast<nautilus::val<uint64_t>>(*static_cast<nautilus::val<uint64_t*>>(memRef)));
+                return Nautilus::ExecutableDataType<uint64_t>::create((*static_cast<nautilus::val<uint64_t*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::FLOAT: {
-                return Nautilus::ExecutableDataType<float>::create(
-                    static_cast<nautilus::val<float>>(*static_cast<nautilus::val<float*>>(memRef)));
+                return Nautilus::ExecutableDataType<float>::create((*static_cast<nautilus::val<float*>>(memRef)));
             };
             case BasicPhysicalType::NativeType::DOUBLE: {
-                return Nautilus::ExecutableDataType<double>::create(
-                    static_cast<nautilus::val<double>>(*static_cast<nautilus::val<double*>>(memRef)));
+                return Nautilus::ExecutableDataType<double>::create((*static_cast<nautilus::val<double*>>(memRef)));
             };
             default: {
                 NES_ERROR("Physical Type: {} is currently not supported", type->toString());
@@ -342,7 +332,7 @@ ExecDataType readExecDataTypeFromMemRef(nautilus::val<int8_t*>& memRef, const Ph
     }
 }
 
-void writeFixedExecDataTypeToMemRef(nautilus::val<int8_t*>& memRef, const ExecDataType& execDataType) {
+void writeFixedExecDataTypeToMemRef(MemRefVal& memRef, const ExecDataType& execDataType) {
     if (execDataType->instanceOf<ExecDataInt8>()) {
         writeValueToMemRef(memRef, execDataType->as<ExecDataInt8>()->getRawValue(), int8_t);
     } else if (execDataType->instanceOf<ExecDataInt16>()) {
@@ -368,25 +358,6 @@ void writeFixedExecDataTypeToMemRef(nautilus::val<int8_t*>& memRef, const ExecDa
     } else {
         NES_NOT_IMPLEMENTED();
     }
-}
-
-Boolean memEquals(nautilus::val<int8_t*> ptr1, nautilus::val<int8_t*> ptr2, const nautilus::val<uint64_t>& size) {
-    // Somehow we have to write our own memEquals, as we otherwise get a error: 'llvm.call' op result type mismatch: '!llvm.ptr' != 'i32'
-    // return nautilus::memcmp(ptr1, ptr2, size) == nautilus::val<uint64_t>(0);
-
-    for (UInt64 i(0); i < size; ++i) {
-        const auto tmp1 = static_cast<nautilus::val<int8_t>>(*(ptr1 + i));
-        const auto tmp2 = static_cast<nautilus::val<int8_t>>(*(ptr2 + i));
-        if (tmp1 != tmp2) {
-            return {false};
-        }
-    }
-
-    return {true};
-}
-
-void memCopy(nautilus::val<int8_t*> dest, nautilus::val<int8_t*> src, const nautilus::val<size_t>& size) {
-    nautilus::memcpy(dest, src, size);
 }
 
 ExecDataType Nautilus::operator==(const ExecDataType& lhs, const ExecDataType& rhs) {

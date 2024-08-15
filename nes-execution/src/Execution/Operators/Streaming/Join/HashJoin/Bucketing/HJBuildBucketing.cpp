@@ -33,13 +33,13 @@ void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, uint32_t worke
     return nljWindow->getHashTable(joinBuildSide, WorkerThreadId(workerThreadId));
 }
 
-void HJBuildBucketing::insertRecordForWindow(MemRef& allWindowsToFill,
-                                             UInt64& curIndex,
-                                             UInt32& workerThreadId,
+void HJBuildBucketing::insertRecordForWindow(MemRefVal& allWindowsToFill,
+                                             UInt64Val& curIndex,
+                                             UInt32Val& workerThreadId,
                                              Record& record) const {
 
     auto hashTableReference =
-        nautilus::invoke(getHashTableRefProxy, allWindowsToFill, curIndex, workerThreadId, UInt64(to_underlying(joinBuildSide)));
+        nautilus::invoke(getHashTableRefProxy, allWindowsToFill, curIndex, workerThreadId, UInt64Val(to_underlying(joinBuildSide)));
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     auto entryMemRef = nautilus::invoke(insertFunctionProxy, hashTableReference, record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());

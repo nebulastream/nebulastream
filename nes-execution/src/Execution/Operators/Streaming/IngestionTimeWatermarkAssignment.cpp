@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Operators {
 class WatermarkState : public OperatorState {
   public:
     explicit WatermarkState() {}
-    UInt64 currentWatermark = 0;
+    UInt64Val currentWatermark = 0;
 };
 
 IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction)

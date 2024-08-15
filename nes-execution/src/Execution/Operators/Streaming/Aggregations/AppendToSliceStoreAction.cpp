@@ -140,7 +140,7 @@ void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
                                                 ExecDataUInt64Ptr& sequenceNumber,
                                                 ExecDataUInt64Ptr& chunkNumber,
                                                 ExecDataBooleanPtr& lastChunk,
-                                                VoidRef& combinedSlice) const {
+                                                ObjRefVal<void>& combinedSlice) const {
 
     auto actionHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     nautilus::invoke(appendToGlobalSliceStore<Slice>, actionHandler, combinedSlice);

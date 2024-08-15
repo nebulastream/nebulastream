@@ -65,8 +65,8 @@ int8_t* getDefaultState(void* ss) {
 
 class LocalGlobalPreAggregationState : public Operators::OperatorState {
   public:
-    explicit LocalGlobalPreAggregationState(const MemRef& sliceStoreState) : sliceStoreState(sliceStoreState){};
-    const MemRef sliceStoreState;
+    explicit LocalGlobalPreAggregationState(const MemRefVal& sliceStoreState) : sliceStoreState(sliceStoreState){};
+    const MemRefVal sliceStoreState;
 };
 
 NonKeyedSlicePreAggregation::NonKeyedSlicePreAggregation(
@@ -78,7 +78,7 @@ NonKeyedSlicePreAggregation::NonKeyedSlicePreAggregation(
 
 void NonKeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    UInt64 entrySize = 0_u64;
+    UInt64Val entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
@@ -86,7 +86,7 @@ void NonKeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     auto defaultState = nautilus::invoke(getDefaultState, globalOperatorHandler);
     for (const auto& function : nautilus::static_iterable(aggregationFunctions)) {
         function->reset(defaultState);
-        defaultState = defaultState + UInt64(function->getSize());
+        defaultState = defaultState + UInt64Val(function->getSize());
     }
 }
 

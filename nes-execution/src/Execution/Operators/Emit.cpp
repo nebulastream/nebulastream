@@ -55,7 +55,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
      * to the brim, i.e., have no more space left.
      */
     memoryProvider->write(emitState->outputIndex, emitState->bufferReference, record);
-    emitState->outputIndex = emitState->outputIndex + UInt64(1);
+    emitState->outputIndex = emitState->outputIndex + UInt64Val(1);
 }
 
 void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
@@ -66,8 +66,8 @@ void Emit::close(ExecutionContext& ctx, RecordBuffer&) const {
 
 void Emit::emitRecordBuffer(ExecutionContext& ctx,
                             RecordBuffer& recordBuffer,
-                            const UInt64& numRecords,
-                            const Boolean& lastChunk) const {
+                            const UInt64Val& numRecords,
+                            const BooleanVal& lastChunk) const {
     recordBuffer.setNumRecords(numRecords);
     recordBuffer.setWatermarkTs(ctx.getWatermarkTs());
     recordBuffer.setOriginId(ctx.getOriginId());

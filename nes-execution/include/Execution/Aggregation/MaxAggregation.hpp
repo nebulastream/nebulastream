@@ -26,16 +26,16 @@ class MaxAggregationFunction : public AggregationFunction {
                            const Expressions::ExpressionPtr& inputExpression,
                            const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
-    void lift(Nautilus::MemRef state, Nautilus::Record& inputRecord) override;
-    void combine(Nautilus::MemRef state1, Nautilus::MemRef state2) override;
-    void lower(Nautilus::MemRef state, Nautilus::Record& resultRecord) override;
-    void reset(Nautilus::MemRef state) override;
+    void lift(Nautilus::MemRefVal state, Nautilus::Record& inputRecord) override;
+    void combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) override;
+    void lower(Nautilus::MemRefVal state, Nautilus::Record& resultRecord) override;
+    void reset(Nautilus::MemRefVal state) override;
     uint64_t getSize() override;
 
 private:
     static void storeMax(const Nautilus::ExecDataType& leftValue,
               const Nautilus::ExecDataType& rightValue,
-              const Nautilus::MemRef& state,
+              const Nautilus::MemRefVal& state,
               const PhysicalTypePtr& inputType);
 };
 

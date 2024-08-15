@@ -62,8 +62,8 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
                          ctx.getChunkNumber(),
                          ctx.getLastChunk(),
                          ctx.getOriginId(),
-                         UInt64(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                         UInt64(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+                         UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                         UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     }
 
     // Now close for all children
@@ -107,8 +107,8 @@ void StreamJoinProbe::terminate(ExecutionContext& ctx) const {
     nautilus::invoke(deleteAllWindowsProxy,
                      operatorHandlerMemRef,
                      ctx.getPipelineContext(),
-                     UInt64(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                     UInt64(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+                     UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                     UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     Operator::terminate(ctx);
 }
 

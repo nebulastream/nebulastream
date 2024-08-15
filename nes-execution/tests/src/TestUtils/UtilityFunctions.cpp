@@ -36,8 +36,8 @@ void writeNautilusRecord(uint64_t recordIndex,
                          Nautilus::Record nautilusRecord,
                          SchemaPtr schema,
                          BufferManagerPtr bufferManager) {
-    Nautilus::UInt64 nautilusRecordIndex(recordIndex);
-    Nautilus::MemRef nautilusBufferPtr(baseBufferPtr);
+    Nautilus::UInt64Val nautilusRecordIndex(recordIndex);
+    Nautilus::MemRefVal nautilusBufferPtr(baseBufferPtr);
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT) {
         auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(rowMemoryLayout);

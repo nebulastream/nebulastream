@@ -54,7 +54,7 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     // Get the local state
     auto localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
-    UInt64 timestampVal = timeFunction->getTs(ctx, record);
+    UInt64Val timestampVal = timeFunction->getTs(ctx, record);
 
     if (!(localJoinState->sliceStart <= timestampVal && timestampVal < localJoinState->sliceEnd)) {
         // We have to get the slice for the current timestamp
@@ -66,14 +66,14 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto nljPagedVectorMemRef = nautilus::invoke(getNLJPagedVectorProxy,
                                                  localJoinState->sliceReference,
                                                  ctx.getWorkerThreadId(),
-                                                 UInt64(to_underlying(joinBuildSide)));
+                                                 UInt64Val(to_underlying(joinBuildSide)));
     Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
     pagedVectorVarSizedRef.writeRecord(record);
 }
 
 void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
-                                           const Nautilus::MemRef& operatorHandlerMemRef,
-                                           const Nautilus::UInt64& timestamp) const {
+                                           const Nautilus::MemRefVal& operatorHandlerMemRef,
+                                           const Nautilus::UInt64Val& timestamp) const {
 //    NES_DEBUG("Updating LocalJoinState for timestamp {}!", timestamp->toString());
 
     // Retrieving the slice of the current watermark, as we expect that more tuples will be inserted into this slice
@@ -81,8 +81,8 @@ void NLJBuildSlicing::updateLocalJoinState(LocalNestedLoopJoinState* localJoinSt
         nautilus::invoke(getNLJSliceRefProxy,
                          operatorHandlerMemRef,
                          timestamp,
-                         UInt64(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                         UInt64(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+                         UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                         UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     localJoinState->sliceReference = ptr;
     localJoinState->sliceStart = nautilus::invoke(getNLJSliceStartProxy, localJoinState->sliceReference);
     localJoinState->sliceEnd = nautilus::invoke(getNLJSliceEndProxy, localJoinState->sliceReference);
@@ -94,10 +94,10 @@ void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const {
     auto workerThreadId = ctx.getWorkerThreadId();
     auto sliceReference = nautilus::invoke(getCurrentWindowProxy,
                                            opHandlerMemRef,
-                                           UInt64(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                                           UInt64(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+                                           UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                                           UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     auto nljPagedVectorMemRef =
-        nautilus::invoke(getNLJPagedVectorProxy, sliceReference, workerThreadId, UInt64(to_underlying(joinBuildSide)));
+        nautilus::invoke(getNLJPagedVectorProxy, sliceReference, workerThreadId, UInt64Val(to_underlying(joinBuildSide)));
     auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
     auto localJoinState = std::make_unique<LocalNestedLoopJoinState>(opHandlerMemRef, sliceReference, pagedVectorVarSizedRef);
 

@@ -35,8 +35,8 @@ class Emit : public ExecutableOperator {
     void close(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
     void emitRecordBuffer(ExecutionContext& ctx,
                           RecordBuffer& recordBuffer,
-                          const UInt64& numRecords,
-                          const Boolean& lastChunk) const;
+                          const UInt64Val& numRecords,
+                          const BooleanVal& lastChunk) const;
 
   private:
     uint64_t maxRecordsPerBuffer;

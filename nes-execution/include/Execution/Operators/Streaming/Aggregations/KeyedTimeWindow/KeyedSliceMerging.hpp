@@ -52,7 +52,7 @@ class KeyedSliceMerging : public Operator {
      * @param endSliceTs the end timestamp
      * @return reference to the newly created slice
      */
-    void combineThreadLocalSlices(Nautilus::Interface::ChainedHashMapRef& globalHashTable, MemRef& sliceMergeTask) const;
+    void combineThreadLocalSlices(Nautilus::Interface::ChainedHashMapRef& globalHashTable, MemRefVal& sliceMergeTask) const;
 
     /**
      * @brief Function to merge a thread local hash table of key-value paris into the global hash table

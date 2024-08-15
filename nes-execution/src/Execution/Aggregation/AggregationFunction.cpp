@@ -24,7 +24,7 @@ AggregationFunction::AggregationFunction(PhysicalTypePtr inputType,
     : inputType(std::move(inputType)), resultType(std::move(resultType)), inputExpression(std::move(inputExpression)),
       resultFieldIdentifier(std::move(resultFieldIdentifier)) {}
 
-void AggregationFunction::storeToMemRef(Nautilus::MemRef memRef, const Nautilus::ExecDataType& execValue, const PhysicalTypePtr& physicalType) {
+void AggregationFunction::storeToMemRef(Nautilus::MemRefVal memRef, const Nautilus::ExecDataType& execValue, const PhysicalTypePtr& physicalType) {
 
     if (physicalType->isBasicType()) {
         Nautilus::writeFixedExecDataTypeToMemRef(memRef, execValue);
@@ -37,7 +37,7 @@ void AggregationFunction::storeToMemRef(Nautilus::MemRef memRef, const Nautilus:
     }
 }
 
-Nautilus::ExecDataType AggregationFunction::loadFromMemRef(Nautilus::MemRef memRef, const PhysicalTypePtr& physicalType) {
+Nautilus::ExecDataType AggregationFunction::loadFromMemRef(Nautilus::MemRefVal memRef, const PhysicalTypePtr& physicalType) {
     if (physicalType->isBasicType()) {
         return Nautilus::readExecDataTypeFromMemRef(memRef, physicalType);
     } else {

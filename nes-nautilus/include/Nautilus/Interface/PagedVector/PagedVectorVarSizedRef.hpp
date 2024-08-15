@@ -28,7 +28,7 @@ class PagedVectorVarSizedRef {
      * @param pagedVectorVarSizedRef
      * @param schema
      */
-    PagedVectorVarSizedRef(const MemRef& pagedVectorVarSizedRef, SchemaPtr schema);
+    PagedVectorVarSizedRef(const MemRefVal& pagedVectorVarSizedRef, SchemaPtr schema);
 
     /**
      * @brief Writes a new record to the PagedVectorVarSizedRef
@@ -45,7 +45,7 @@ class PagedVectorVarSizedRef {
 
     /**
      * @brief Returns the total number of entries in the PagedVectorVarSizedRef
-     * @return UInt64
+     * @return UInt64Val
      */
     nautilus::val<uint64_t> getTotalNumberOfEntries();
 
@@ -78,7 +78,7 @@ class PagedVectorVarSizedRef {
   private:
     /**
      * @brief Returns the capacity per page
-     * @return UInt64
+     * @return UInt64Val
      */
     nautilus::val<uint64_t> getCapacityPerPage();
 
@@ -86,21 +86,21 @@ class PagedVectorVarSizedRef {
      * @brief Sets the total number of entries to the given value
      * @param val
      */
-    void setTotalNumberOfEntries(const UInt64& val);
+    void setTotalNumberOfEntries(const UInt64Val& val);
 
     /**
      * @brief Returns the number of entries on the current page
-     * @return UInt64
+     * @return UInt64Val
      */
-    UInt64 getNumberOfEntriesOnCurrPage();
+    UInt64Val getNumberOfEntriesOnCurrPage();
 
     /**
      * @brief Sets the number of entries on the current page
      * @param val
      */
-    void setNumberOfEntriesOnCurrPage(const UInt64& val);
+    void setNumberOfEntriesOnCurrPage(const UInt64Val& val);
 
-    MemRef pagedVectorVarSizedRef;
+    MemRefVal pagedVectorVarSizedRef;
     const SchemaPtr schema;
 };
 
@@ -145,7 +145,7 @@ class PagedVectorVarSizedRefIter {
      * @brief Sets the position with the newValue
      * @param newValue
      */
-    void setPos(UInt64 newValue);
+    void setPos(UInt64Val newValue);
 
     nautilus::val<uint64_t> pos;
     PagedVectorVarSizedRef pagedVectorVarSized;

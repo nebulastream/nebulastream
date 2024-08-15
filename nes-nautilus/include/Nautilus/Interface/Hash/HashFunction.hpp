@@ -39,7 +39,7 @@ class HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculateWithState(ExecDataType value, MemRef& state);
+    HashValue calculateWithState(ExecDataType value, MemRefVal& state);
 
     /**
      * @brief Calculates the hash across a set of values.
@@ -69,7 +69,7 @@ class HashFunction {
      * @param state
      * @return HashValue
      */
-    virtual HashValue calculateWithState(HashValue& hash, ExecDataType& value, MemRef& state) = 0;
+    virtual HashValue calculateWithState(HashValue& hash, ExecDataType& value, MemRefVal& state) = 0;
 };
 }// namespace NES::Nautilus::Interface
 #endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_

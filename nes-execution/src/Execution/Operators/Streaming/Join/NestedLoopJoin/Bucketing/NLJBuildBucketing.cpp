@@ -42,15 +42,15 @@ void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, uint32_t wor
     }
 }
 
-void NLJBuildBucketing::insertRecordForWindow(MemRef& allWindowsToFill,
-                                              UInt64& curIndex,
-                                              UInt32& workerThreadId,
+void NLJBuildBucketing::insertRecordForWindow(MemRefVal& allWindowsToFill,
+                                              UInt64Val& curIndex,
+                                              UInt32Val& workerThreadId,
                                               Record& record) const {
     auto curPagedVectorRef = nautilus::invoke(getPagedVectorRefProxy,
                                               allWindowsToFill,
                                               curIndex,
                                               workerThreadId,
-                                              UInt64(to_underlying(joinBuildSide)));
+                                              UInt64Val(to_underlying(joinBuildSide)));
 
     // Write record to the pagedVector
     auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(curPagedVectorRef, schema);

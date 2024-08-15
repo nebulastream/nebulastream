@@ -35,26 +35,26 @@ class AggregationFunction {
      * @param memRef existing aggregation value
      * @param value the value to add
      */
-    virtual void lift(Nautilus::MemRef memRef, Nautilus::Record& record) = 0;
+    virtual void lift(Nautilus::MemRefVal memRef, Nautilus::Record& record) = 0;
 
     /**
      * @brief combine composes to aggregation value into one
      * @param memRef1 an aggregation value (intermediate result)
      * @param memRef2 another aggregation value (intermediate result)
      */
-    virtual void combine(Nautilus::MemRef memRef1, Nautilus::MemRef memRef2) = 0;
+    virtual void combine(Nautilus::MemRefVal memRef1, Nautilus::MemRefVal memRef2) = 0;
 
     /**
      * @brief lower returns the aggregation value
      * @param memRef the derived aggregation value
      */
-    virtual void lower(Nautilus::MemRef memRef, Nautilus::Record& resultRecord) = 0;
+    virtual void lower(Nautilus::MemRefVal memRef, Nautilus::Record& resultRecord) = 0;
 
     /**
      * @brief resets the stored aggregation value to init (=0)
      * @param memRef the current aggragtion value which need to be reset
      */
-    virtual void reset(Nautilus::MemRef memRef) = 0;
+    virtual void reset(Nautilus::MemRefVal memRef) = 0;
 
     /**
      * @brief gets the size of the partial aggregate in byte.
@@ -76,9 +76,9 @@ class AggregationFunction {
      * @param physicalType the intended data type to which the value should be casted
      * @return value in the type of physicalType
      */
-    static Nautilus::ExecDataType loadFromMemRef(Nautilus::MemRef memRef, const PhysicalTypePtr& physicalType);
+    static Nautilus::ExecDataType loadFromMemRef(Nautilus::MemRefVal memRef, const PhysicalTypePtr& physicalType);
 
-    static void storeToMemRef(Nautilus::MemRef memRef, const Nautilus::ExecDataType& execValue, const PhysicalTypePtr& physicalType);
+    static void storeToMemRef(Nautilus::MemRefVal memRef, const Nautilus::ExecDataType& execValue, const PhysicalTypePtr& physicalType);
 
     static Nautilus::ExecDataType createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
 

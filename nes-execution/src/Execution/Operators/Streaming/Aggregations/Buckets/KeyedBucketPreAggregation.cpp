@@ -75,13 +75,13 @@ class LocalKeyedBucketStoreState : public Operators::OperatorState {
     explicit LocalKeyedBucketStoreState(const std::vector<PhysicalTypePtr>& keyDataTypes,
                                         uint64_t keySize,
                                         uint64_t valueSize,
-                                        const MemRef& sliceStoreState)
+                                        const MemRefVal& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
 
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const uint64_t keySize;
     const uint64_t valueSize;
-    const MemRef sliceStoreState;
+    const MemRefVal sliceStoreState;
 };
 KeyedBucketPreAggregation::KeyedBucketPreAggregation(
     uint64_t operatorHandlerIndex,
@@ -106,8 +106,8 @@ void KeyedBucketPreAggregation::setup(ExecutionContext& executionCtx) const {
     nautilus::invoke(setupKeyedBucketWindowHandler,
                      globalOperatorHandler,
                      executionCtx.getPipelineContext(),
-                     UInt64(keySize),
-                     UInt64(valueSize));
+                     UInt64Val(keySize),
+                     UInt64Val(valueSize));
 }
 
 void KeyedBucketPreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
@@ -140,7 +140,7 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
 
     auto buckets = nautilus::invoke(findKeyedBucketsByTs, state->sliceStoreState, timestampValue);
     auto numberOfBuckets = nautilus::invoke(getKeyedBucketListSize, buckets);
-    for (UInt64 i = 0_u64; i < numberOfBuckets; i = i + 1_u64) {
+    for (UInt64Val i = 0_u64; i < numberOfBuckets; i = i + 1_u64) {
         auto bucketState = nautilus::invoke(getKeyedBucket, buckets, i);
         auto map = Interface::ChainedHashMapRef(bucketState, keyDataTypes, keySize, valueSize);
         // 4. calculate hash

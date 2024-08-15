@@ -74,8 +74,8 @@ void KeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
     nautilus::invoke(setupKeyedSliceMergingHandler,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
-                           UInt64(keySize),
-                           UInt64(valueSize));
+                           UInt64Val(keySize),
+                           UInt64Val(valueSize));
     if (this->child != nullptr)
         this->child->setup(executionCtx);
 }
@@ -116,12 +116,12 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
 }
 
 void KeyedSliceMerging::combineThreadLocalSlices(Interface::ChainedHashMapRef& globalHashTable,
-                                                 MemRef& sliceMergeTask) const {
+                                                 MemRefVal& sliceMergeTask) const {
     // combine all thread local partitions into the global slice hash map
     auto numberOfSlices = nautilus::invoke(getKeyedNumberOfSlicesFromTask, sliceMergeTask);
     NES_DEBUG("combining slices");
 
-    for (UInt64 i = 0_u64; i < numberOfSlices; i = i + UInt64(1)) {
+    for (UInt64Val i = 0_u64; i < numberOfSlices; i = i + UInt64Val(1)) {
         auto partitionState = nautilus::invoke(getKeyedSliceStateFromTask, sliceMergeTask, i);
         auto partitionStateHashTable = Interface::ChainedHashMapRef(partitionState, keyDataTypes, keySize, valueSize);
         mergeHashTable(globalHashTable, partitionStateHashTable);
@@ -141,7 +141,7 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
             // 2b. update aggregation if the entry was already existing in the global hash map
             auto key = threadLocalEntry.getKeyPtr();
             auto threadLocalValue = threadLocalEntry.getValuePtr();
-            MemRef globalValue = globalEntry.getValuePtr();
+            MemRefVal globalValue = globalEntry.getValuePtr();
             // 2c. apply aggregation functions and combine the values
             for (const auto& function : static_iterable(aggregationFunctions)) {
                 function->combine(globalValue, threadLocalValue);

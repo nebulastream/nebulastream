@@ -14,6 +14,8 @@
 
 #ifndef NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
 #define NES_NES_NAUTILUS_NEW_INCLUDE_NAUTILUS_DATATYPES_EXECUTABLEDATATYPE_HPP_
+#include <Nautilus/DataTypes/ExecutableDataTypeOperations.hpp>
+
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -96,93 +98,37 @@ class ExecutableDataType : public AbstractDataType {
     nautilus::val<ValueType> rawValue;
 };
 
-// TODO define here the C++ data types and the nautilus data types. this way, we can use the c++ data types in the proxy functions
-// TODO e.g.
-// TODO using ExecMemRef = nautilus::val<int8_t*>;
-// TODO using MemRef = int8_t*;
-// TODO we do not want to use voidref as we can simply wirte val<class_name*> and val<struct_name*> instead
-// TODO this should be automatically translated to clas_name* and struct_name* in the proxy functions after calling invoke
+// Define common ExecutableDataTypes and their pointer counterparts
+using ExecDataInt8 = ExecutableDataType<Int8>; using ExecDataInt8Ptr = ExecutableDataTypePtr<Int8>;
+using ExecDataInt16 = ExecutableDataType<Int16>; using ExecDataInt16Ptr = ExecutableDataTypePtr<Int16>;
+using ExecDataInt32 = ExecutableDataType<Int32>; using ExecDataInt32Ptr = ExecutableDataTypePtr<Int32>;
+using ExecDataInt64 = ExecutableDataType<Int64>; using ExecDataInt64Ptr = ExecutableDataTypePtr<Int64>;
+using ExecDataUInt8 = ExecutableDataType<UInt8>; using ExecDataUInt8Ptr = ExecutableDataTypePtr<UInt8>;
+using ExecDataUInt16 = ExecutableDataType<UInt16>; using ExecDataUInt16Ptr = ExecutableDataTypePtr<UInt16>;
+using ExecDataUInt32 = ExecutableDataType<UInt32>; using ExecDataUInt32Ptr = ExecutableDataTypePtr<UInt32>;
+using ExecDataUInt64 = ExecutableDataType<UInt64>; using ExecDataUInt64Ptr = ExecutableDataTypePtr<UInt64>;
+using ExecDataFloat = ExecutableDataType<Float>; using ExecDataFloatPtr = ExecutableDataTypePtr<Float>;
+using ExecDataDouble = ExecutableDataType<Double>; using ExecDataDoublePtr = ExecutableDataTypePtr<Double>;
+using ExecDataBoolean = ExecutableDataType<Boolean>; using ExecDataBooleanPtr = ExecutableDataTypePtr<Boolean>;
 
+ExecDataType readExecDataTypeFromMemRef(MemRefVal& memRef, const PhysicalTypePtr& type);
+void writeFixedExecDataTypeToMemRef(MemRefVal& memRef, const ExecDataType& execDataType);
 
-/// Define common nautilus data types, we might move this definition some place else
-using VoidRef = nautilus::val<void*>;
-using MemRef = nautilus::val<int8_t*>;
-using Int8 = nautilus::val<int8_t>;
-using Int16 = nautilus::val<int16_t>;
-using Int32 = nautilus::val<int32_t>;
-using Int64 = nautilus::val<int64_t>;
-using UInt8 = nautilus::val<uint8_t>;
-using UInt16 = nautilus::val<uint16_t>;
-using UInt32 = nautilus::val<uint32_t>;
-using UInt64 = nautilus::val<uint64_t>;
-using Float = nautilus::val<float>;
-using Double = nautilus::val<double>;
-using Boolean = nautilus::val<bool>;
-
-
-using ExecDataInt8 = ExecutableDataType<int8_t>;
-using ExecDataInt16 = ExecutableDataType<int16_t>;
-using ExecDataInt32 = ExecutableDataType<int32_t>;
-using ExecDataInt64 = ExecutableDataType<int64_t>;
-using ExecDataUInt8 = ExecutableDataType<uint8_t>;
-using ExecDataUInt16 = ExecutableDataType<uint16_t>;
-using ExecDataUInt32 = ExecutableDataType<uint32_t>;
-using ExecDataUInt64 = ExecutableDataType<uint64_t>;
-using ExecDataFloat = ExecutableDataType<float>;
-using ExecDataDouble = ExecutableDataType<double>;
-using ExecDataBoolean = ExecutableDataType<bool>;
-
-using ExecDataInt8Ptr = ExecutableDataTypePtr<int8_t>;
-using ExecDataInt16Ptr = ExecutableDataTypePtr<int16_t>;
-using ExecDataInt32Ptr = ExecutableDataTypePtr<int32_t>;
-using ExecDataInt64Ptr = ExecutableDataTypePtr<int64_t>;
-using ExecDataUInt8Ptr = ExecutableDataTypePtr<uint8_t>;
-using ExecDataUInt16Ptr = ExecutableDataTypePtr<uint16_t>;
-using ExecDataUInt32Ptr = ExecutableDataTypePtr<uint32_t>;
-using ExecDataUInt64Ptr = ExecutableDataTypePtr<uint64_t>;
-using ExecDataFloatPtr = ExecutableDataTypePtr<float>;
-using ExecDataDoublePtr = ExecutableDataTypePtr<double>;
-using ExecDataBooleanPtr = ExecutableDataTypePtr<bool>;
-
-/**
- * @brief Get member returns the MemRef to a specific class member as an offset to a objectReference.
- * @note This assumes the offsetof works for the classType.
- * @param objectReference reference to the object that contains the member.
- * @param classType type of a class or struct
- * @param member a member that is part of the classType
- */
-#define getMember(objectReference, classType, member, dataType) \
-    (static_cast<nautilus::val<dataType>>(*static_cast<nautilus::val<dataType*>>(objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member))))))
-#define getMemberAsExecDataType(objectReference, classType, member, dataType) \
-    (std::dynamic_pointer_cast<ExecutableDataType<dataType>>(ExecutableDataType<dataType>::create(*static_cast<nautilus::val<dataType*>>(objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member)))))))
-#define getMemberAsPointer(objectReference, classType, member, dataType) \
-    (static_cast<nautilus::val<dataType*>>(objectReference + nautilus::val<uint64_t>((__builtin_offsetof(classType, member)))))
-
-#define writeValueToMemRef(memRef, value, dataType) \
-    (*static_cast<nautilus::val<dataType*>>(memRef) = value)
-#define readValueFromMemRef(memRef, dataType) \
-    (static_cast<nautilus::val<dataType>>(*static_cast<nautilus::val<dataType*>>(memRef)))
-
-// Might move these methods into a MemRefUtils or something like that
-ExecDataType readExecDataTypeFromMemRef(MemRef& memRef, const PhysicalTypePtr& type);
-void writeFixedExecDataTypeToMemRef(MemRef& memRef, const ExecDataType& execDataType);
-Boolean memEquals(MemRef ptr1, MemRef ptr2, const nautilus::val<uint64_t>& size);
-void memCopy(MemRef dest, MemRef src, const nautilus::val<size_t>& size);
 
 
 /// We assume that the first 4 bytes of a int8_t* to any var sized data contains the length of the var sized data
 class ExecutableVariableDataType : public AbstractDataType {
   public:
-    ExecutableVariableDataType(const MemRef& content,
+    ExecutableVariableDataType(const MemRefVal& content,
                                const nautilus::val<uint32_t>& size,
                                const nautilus::val<bool>& null)
         : AbstractDataType(null), size(size), content(content) {}
 
-    static ExecDataType create(const MemRef& content, const nautilus::val<uint32_t>& size, const bool null = false) {
+    static ExecDataType create(const MemRefVal& content, const nautilus::val<uint32_t>& size, const bool null = false) {
         return std::make_shared<ExecutableVariableDataType>(content, size, null);
     }
 
-    static ExecDataType create(const MemRef& pointerToVarSized, const bool null = false) {
+    static ExecDataType create(const MemRefVal& pointerToVarSized, const bool null = false) {
         const auto varSized = readValueFromMemRef(pointerToVarSized, uint32_t);
         return create(pointerToVarSized, varSized, null);
     }
@@ -190,8 +136,8 @@ class ExecutableVariableDataType : public AbstractDataType {
     ~ExecutableVariableDataType() override = default;
 
     [[nodiscard]] nautilus::val<uint32_t> getSize() const { return size; }
-    [[nodiscard]] MemRef getContent() const { return content + UInt64(sizeof(uint32_t)); }
-    [[nodiscard]] MemRef getReference() const { return content ; }
+    [[nodiscard]] MemRefVal getContent() const { return content + UInt64Val(sizeof(uint32_t)); }
+    [[nodiscard]] MemRefVal getReference() const { return content ; }
 
   protected:
     ExecDataType operator&&(const ExecDataType&) const override;
@@ -226,7 +172,7 @@ class ExecutableVariableDataType : public AbstractDataType {
     }
 
     nautilus::val<uint32_t> size;
-    MemRef content;
+    MemRefVal content;
 };
 
 /// Later, we will refactor this and maybe move this

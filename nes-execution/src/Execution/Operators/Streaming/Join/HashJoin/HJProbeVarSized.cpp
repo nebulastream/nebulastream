@@ -93,24 +93,24 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
 
     const auto sliceIdLeft = nautilus::invoke(getHJSliceIdVarSizedProxy,
                                               joinPartitionIdSliceIdMemRef,
-                                              UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+                                              UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
     const auto sliceIdRight = nautilus::invoke(getHJSliceIdVarSizedProxy,
                                                joinPartitionIdSliceIdMemRef,
-                                               UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+                                               UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const UInt32 workerThreadIdForPagedVectors = INITIAL<WorkerThreadId>.getRawValue();
+    const UInt32Val workerThreadIdForPagedVectors = INITIAL<WorkerThreadId>.getRawValue();
 
     const auto hashSliceRefLeft = nautilus::invoke(getHashSliceRefFromIdVarSizedProxy, operatorHandlerMemRef, sliceIdLeft);
     const auto hashSliceRefRight = nautilus::invoke(getHashSliceRefFromIdVarSizedProxy, operatorHandlerMemRef, sliceIdRight);
 
     const auto leftPagedVectorRef = nautilus::invoke(getHJBucketAtPosVarSizedProxy,
                                                      hashSliceRefLeft,
-                                                     UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+                                                     UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
                                                      partitionId);
     const auto rightPagedVectorRef = nautilus::invoke(getHJBucketAtPosVarSizedProxy,
                                                       hashSliceRefRight,
-                                                      UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                                                      UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
                                                       partitionId);
 
     Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
@@ -118,8 +118,8 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
     const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
     const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
 
-    for (UInt64 leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
-        for (UInt64 rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
+    for (UInt64Val leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
+        for (UInt64Val rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
             auto leftRecord = leftPagedVector.readRecord(leftCnt);
             auto rightRecord = rightPagedVector.readRecord(rightCnt);
 

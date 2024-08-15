@@ -73,8 +73,8 @@ int8_t* getDefaultBucketState(void* ss) {
 
 class LocalBucketPreAggregationState : public Operators::OperatorState {
   public:
-    explicit LocalBucketPreAggregationState(const MemRef& bucketStore) : bucketStore(bucketStore){};
-    const MemRef bucketStore;
+    explicit LocalBucketPreAggregationState(const MemRefVal& bucketStore) : bucketStore(bucketStore){};
+    const MemRefVal bucketStore;
 };
 
 NonKeyedBucketPreAggregation::NonKeyedBucketPreAggregation(
@@ -86,7 +86,7 @@ NonKeyedBucketPreAggregation::NonKeyedBucketPreAggregation(
 
 void NonKeyedBucketPreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    UInt64 entrySize = 0_u64;
+    UInt64Val entrySize = 0_u64;
     for (auto& function : aggregationFunctions) {
         entrySize = entrySize + function->getSize();
     }
@@ -121,9 +121,9 @@ void NonKeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionCon
     auto buckets = nautilus::invoke(findBucketsByTs, localState->bucketStore, timestampValue);
     // 3. manipulate the current aggregate values in each bucket
     auto numberOfBuckets = nautilus::invoke(getBucketListSize, buckets);
-    for (UInt64 i = 0_u64; i < numberOfBuckets; i = i + 1_u64) {
+    for (UInt64Val i = 0_u64; i < numberOfBuckets; i = i + 1_u64) {
         auto bucketState = nautilus::invoke(getBucket, buckets, i);
-        UInt64 stateOffset = 0;
+        UInt64Val stateOffset = 0;
         for (const auto& aggregationFunction : aggregationFunctions) {
             auto state = bucketState + stateOffset;
             stateOffset = stateOffset + aggregationFunction->getSize();

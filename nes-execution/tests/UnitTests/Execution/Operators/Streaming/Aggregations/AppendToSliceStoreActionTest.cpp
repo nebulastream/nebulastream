@@ -99,7 +99,7 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice) {
         UInt64 seq(1_u64);
         UInt64 chunk(1_u64);
         Boolean lastChunk(true);
-        MemRef combinedSlice(reinterpret_cast<int8_t*>(slice.get()));
+        MemRefVal combinedSlice(reinterpret_cast<int8_t*>(slice.get()));
         action.emitSlice(context, child, start, end, seq, chunk, lastChunk, combinedSlice);
     };
 
@@ -155,7 +155,7 @@ TEST_F(AppendToSliceStoreActionTest, KeyedSlice) {
         UInt64 seq(1_u64);
         UInt64 chunk(1_u64);
         Boolean lastChunk(true);
-        MemRef combinedSlice(reinterpret_cast<int8_t*>(slice.get()));
+        MemRefVal combinedSlice(reinterpret_cast<int8_t*>(slice.get()));
         action.emitSlice(ctx, child, start, end, seq, chunk, lastChunk, combinedSlice);
     };
 

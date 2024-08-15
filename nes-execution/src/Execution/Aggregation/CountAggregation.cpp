@@ -24,7 +24,7 @@ CountAggregationFunction::CountAggregationFunction(const PhysicalTypePtr& inputT
                                                    const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
     : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
-void CountAggregationFunction::lift(Nautilus::MemRef state, Nautilus::Record&) {
+void CountAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record&) {
     // load memRef
     const auto oldValue = AggregationFunction::loadFromMemRef(state, resultType);
     // add the value
@@ -33,7 +33,7 @@ void CountAggregationFunction::lift(Nautilus::MemRef state, Nautilus::Record&) {
     AggregationFunction::storeToMemRef(state, newValue, resultType);
 }
 
-void CountAggregationFunction::combine(Nautilus::MemRef state1, Nautilus::MemRef state2) {
+void CountAggregationFunction::combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) {
     const auto left = AggregationFunction::loadFromMemRef(state1, resultType);
     const auto right = AggregationFunction::loadFromMemRef(state2, resultType);
 
@@ -41,12 +41,12 @@ void CountAggregationFunction::combine(Nautilus::MemRef state1, Nautilus::MemRef
     AggregationFunction::storeToMemRef(state1, tmp, inputType);
 }
 
-void CountAggregationFunction::lower(Nautilus::MemRef state, Nautilus::Record& record) {
+void CountAggregationFunction::lower(Nautilus::MemRefVal state, Nautilus::Record& record) {
     const auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
     record.write(resultFieldIdentifier, finalVal);
 }
 
-void CountAggregationFunction::reset(Nautilus::MemRef memRef) {
+void CountAggregationFunction::reset(Nautilus::MemRefVal memRef) {
     const auto zero = createConstValue(0L, resultType);
     AggregationFunction::storeToMemRef(memRef, zero, resultType);
 }

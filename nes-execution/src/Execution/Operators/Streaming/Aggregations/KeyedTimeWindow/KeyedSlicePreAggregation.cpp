@@ -65,17 +65,17 @@ class LocalKeyedSliceStoreState : public Operators::OperatorState {
     explicit LocalKeyedSliceStoreState(const std::vector<PhysicalTypePtr>& keyDataTypes,
                                        uint64_t keySize,
                                        uint64_t valueSize,
-                                       const MemRef& sliceStoreState)
+                                       const MemRefVal& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
 
-    auto findSliceStateByTs(UInt64& timestampValue) {
+    auto findSliceStateByTs(UInt64Val& timestampValue) {
         auto htPtr = nautilus::invoke(findKeyedSliceStateByTsProxy, sliceStoreState, timestampValue);
         return Interface::ChainedHashMapRef(htPtr, keyDataTypes, keySize, valueSize);
     }
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const uint64_t keySize;
     const uint64_t valueSize;
-    const MemRef sliceStoreState;
+    const MemRefVal sliceStoreState;
 };
 
 KeyedSlicePreAggregation::KeyedSlicePreAggregation(
@@ -101,8 +101,8 @@ void KeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     nautilus::invoke(setupWindowHandler2,
                      globalOperatorHandler,
                      executionCtx.getPipelineContext(),
-                     UInt64(keySize),
-                     UInt64(valueSize));
+                     UInt64Val(keySize),
+                     UInt64Val(valueSize));
 }
 
 void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {

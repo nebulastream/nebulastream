@@ -35,13 +35,13 @@ class ChainedHashMapRef {
      */
     class EntryRef {
       public:
-        EntryRef(const MemRef& ref, uint64_t keyOffset, uint64_t valueOffset);
+        EntryRef(const MemRefVal& ref, uint64_t keyOffset, uint64_t valueOffset);
 
         /**
          * @brief Gets the hash value of this entry.
-         * @returns UInt64
+         * @returns UInt64Val
          */
-        UInt64 getHash() const;
+        UInt64Val getHash() const;
 
         /**
          * @brief Gets the pointer to the next entry in the chain.
@@ -52,15 +52,15 @@ class ChainedHashMapRef {
 
         /**
          * @brief Gets the pointer to the keys in the entry.
-         * @return MemRef
+         * @return MemRefVal
          */
-        MemRef getKeyPtr() const;
+        MemRefVal getKeyPtr() const;
 
         /**
          * @brief Gets the pointer to the values in the entry.
-         * @return MemRef
+         * @return MemRefVal
          */
-        MemRef getValuePtr() const;
+        MemRefVal getValuePtr() const;
 
         /**
          * @brief Returns true if the next entry is not null.
@@ -75,7 +75,7 @@ class ChainedHashMapRef {
         nautilus::val<bool> operator==(std::nullptr_t rhs) const;
 
       private:
-        mutable MemRef ref;
+        mutable MemRefVal ref;
         mutable uint64_t keyOffset;
         mutable uint64_t valueOffset;
     };
@@ -86,19 +86,19 @@ class ChainedHashMapRef {
      */
     class EntryIterator {
       public:
-        EntryIterator(ChainedHashMapRef& hashTableRef, const UInt64& entriesPerPage, const UInt64& currentIndex);
-        EntryIterator(ChainedHashMapRef& hashTableRef, const UInt64& currentIndex);
+        EntryIterator(ChainedHashMapRef& hashTableRef, const UInt64Val& entriesPerPage, const UInt64Val& currentIndex);
+        EntryIterator(ChainedHashMapRef& hashTableRef, const UInt64Val& currentIndex);
         EntryIterator& operator++();
         bool operator==(const EntryIterator& other) const;
         EntryRef operator*();
 
       private:
         ChainedHashMapRef& hashTableRef;
-        UInt64 entriesPerPage;
-        UInt64 inPageIndex;
-        MemRef currentPage;
-        UInt64 currentPageIndex;
-        UInt64 currentIndex;
+        UInt64Val entriesPerPage;
+        UInt64Val inPageIndex;
+        MemRefVal currentPage;
+        UInt64Val currentPageIndex;
+        UInt64Val currentIndex;
     };
 
     /**
@@ -107,9 +107,9 @@ class ChainedHashMapRef {
     class KeyEntryIterator {
       public:
         KeyEntryIterator(ChainedHashMapRef& hashTableRef,
-                         const UInt64& hash,
+                         const UInt64Val& hash,
                          const std::vector<ExecDataType>& keys,
-                         const UInt64& currentIndex);
+                         const UInt64Val& currentIndex);
         KeyEntryIterator& operator++();
         bool operator==(KeyEntryIterator other) const;
         bool operator==(std::nullptr_t) const;
@@ -117,7 +117,7 @@ class ChainedHashMapRef {
 
       private:
         ChainedHashMapRef& hashTableRef;
-        UInt64 currentIndex;
+        UInt64Val currentIndex;
         std::vector<ExecDataType> keys;
         EntryRef currentEntry;
     };
@@ -129,7 +129,7 @@ class ChainedHashMapRef {
      * @param keySize size of the compound keys in bytes.
      * @param valueSize size of the compound value in bytes.
      */
-    ChainedHashMapRef(const MemRef& hashTableRef,
+    ChainedHashMapRef(const MemRefVal& hashTableRef,
                       const std::vector<PhysicalTypePtr>& keyDataTypes,
                       uint64_t keySize,
                       uint64_t valueSize);
@@ -142,7 +142,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef find(const UInt64& hash, const std::vector<ExecDataType>& keys);
+    EntryRef find(const UInt64Val& hash, const std::vector<ExecDataType>& keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -152,7 +152,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return KeyEntryIterator
      */
-    KeyEntryIterator findAll(const UInt64& hash, const std::vector<ExecDataType>& keys);
+    KeyEntryIterator findAll(const UInt64Val& hash, const std::vector<ExecDataType>& keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -164,7 +164,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef findOrCreate(const UInt64& hash, const std::vector<ExecDataType>& keys);
+    EntryRef findOrCreate(const UInt64Val& hash, const std::vector<ExecDataType>& keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -177,7 +177,7 @@ class ChainedHashMapRef {
      * @return EntryRef
      */
     EntryRef
-    findOrCreate(const UInt64& hash, const std::vector<ExecDataType>& keys, const std::function<void(EntryRef&)>& onInsert);
+    findOrCreate(const UInt64Val& hash, const std::vector<ExecDataType>& keys, const std::function<void(EntryRef&)>& onInsert);
 
     /**
      * @brief This function inserts an already existing entry from another hash map to this hash map.
@@ -190,9 +190,9 @@ class ChainedHashMapRef {
 
     /**
      * @brief Returns the size, in number of entries, of the underling hash map.
-     * @return UInt64
+     * @return UInt64Val
      */
-    UInt64 getCurrentSize();
+    UInt64Val getCurrentSize();
 
     /**
      * @brief Start of the new iterator.
@@ -213,16 +213,16 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef insert(const UInt64& hash, const std::vector<ExecDataType>& keys);
+    EntryRef insert(const UInt64Val& hash, const std::vector<ExecDataType>& keys);
 
   private:
-    UInt64 getPageSize();
-    MemRef getPage(const UInt64& pageIndex);
-    UInt64 getEntriesPerPage();
-    EntryRef findChain(const UInt64& hash) const;
-    EntryRef insert(const UInt64& hash) const;
-    Boolean compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys);
-    MemRef hashTableRef;
+    UInt64Val getPageSize();
+    MemRefVal getPage(const UInt64Val& pageIndex);
+    UInt64Val getEntriesPerPage();
+    EntryRef findChain(const UInt64Val& hash) const;
+    EntryRef insert(const UInt64Val& hash) const;
+    BooleanVal compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys);
+    MemRefVal hashTableRef;
     const std::vector<PhysicalTypePtr> keyDataTypes;
     uint64_t keySize;
     uint64_t valueSize;

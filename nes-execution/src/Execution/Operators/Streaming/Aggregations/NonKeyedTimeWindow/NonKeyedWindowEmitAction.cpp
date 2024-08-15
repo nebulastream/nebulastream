@@ -35,7 +35,7 @@ void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                          ExecDataUInt64Ptr& sequenceNumber,
                                          ExecDataUInt64Ptr& chunkNumber,
                                          ExecDataBooleanPtr& lastChunk,
-                                         VoidRef& globalSlice) const {
+                                         ObjRefVal<void>& globalSlice) const {
     ctx.setWatermarkTs(windowStart->getRawValue());
     ctx.setOrigin(resultOriginId.getRawValue());
     ctx.setSequenceNumber(sequenceNumber->getRawValue());
@@ -46,7 +46,7 @@ void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
     Record resultWindow;
     resultWindow.write(startTsFieldName, windowStart);
     resultWindow.write(endTsFieldName, windowEnd);
-    UInt64 stateOffset = 0;
+    UInt64Val stateOffset = 0;
     for (const auto& function : nautilus::static_iterable(aggregationFunctions)) {
         auto valuePtr = windowState + stateOffset;
         function->lower(valuePtr, resultWindow);

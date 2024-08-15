@@ -32,20 +32,20 @@ class PagedVectorRef {
      * @param pagedVectorRef memref to the list
      * @param entrySize size of entries.
      */
-    PagedVectorRef(const MemRef& pagedVectorRef, uint64_t entrySize);
+    PagedVectorRef(const MemRefVal& pagedVectorRef, uint64_t entrySize);
 
     /**
      * @brief Allocates an new entry and returns a reference to it.
      * @return MemRef
      */
-    MemRef allocateEntry();
+    MemRefVal allocateEntry();
 
     /**
      * @brief Returns the reference to the start of the record at the pos
      * @param pos
-     * @return MemRef
+     * @return MemRefVal
      */
-    MemRef getEntry(const nautilus::val<uint64_t>& pos);
+    MemRefVal getEntry(const nautilus::val<uint64_t>& pos);
 
     /**
      * @brief Returns the number of entries in the current page.
@@ -104,9 +104,9 @@ class PagedVectorRef {
     bool operator==(const PagedVectorRef& other) const;
 
   private:
-    MemRef getCurrentPage();
-    MemRef pagedVectorRef;
-    uint64_t entrySize;
+    MemRefVal getCurrentPage();
+    MemRefVal pagedVectorRef;
+    UInt64 entrySize;
 };
 
 class PagedVectorRefIter {
@@ -134,9 +134,9 @@ class PagedVectorRefIter {
 
     /**
      * @brief Dereference operator that points to a given entry in the ListRef
-     * @return MemRef
+     * @return MemRefVal
      */
-    MemRef operator*();
+    MemRefVal operator*();
 
     /**
      * @brief Pre-increment operator that first increments and then returns the reference

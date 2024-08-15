@@ -106,7 +106,7 @@ HashFunction::HashValue MurMur3HashFunction::calculate(const HashValue& hash, co
     NES_NOT_IMPLEMENTED();
 }
 
-HashFunction::HashValue MurMur3HashFunction::calculateWithState(HashFunction::HashValue&, ExecDataType&, MemRef&) {
+HashFunction::HashValue MurMur3HashFunction::calculateWithState(HashFunction::HashValue&, ExecDataType&, MemRefVal&) {
     NES_THROW_RUNTIME_ERROR("This does not hash the value. Please use calculate().");
 }
 

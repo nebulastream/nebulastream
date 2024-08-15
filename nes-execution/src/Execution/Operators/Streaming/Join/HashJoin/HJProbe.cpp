@@ -122,38 +122,38 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     const auto partitionId = nautilus::invoke(getPartitionIdProxy, joinPartitionIdSliceIdMemRef);
     const auto sliceIdLeft = nautilus::invoke(getSliceIdHJProxy,
                                               joinPartitionIdSliceIdMemRef,
-                                              UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+                                              UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
     const auto sliceIdRight = nautilus::invoke(getSliceIdHJProxy,
                                                joinPartitionIdSliceIdMemRef,
-                                               UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+                                               UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     const auto hashSliceRefLeft = nautilus::invoke(getHashSliceProxy, operatorHandlerMemRef, sliceIdLeft);
     const auto hashSliceRefRight = nautilus::invoke(getHashSliceProxy, operatorHandlerMemRef, sliceIdRight);
     const auto numberOfPagesLeft = nautilus::invoke(getNumberOfPagesProxyForHashJoin,
                                                     hashSliceRefLeft,
-                                                    UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+                                                    UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
                                                     partitionId);
     const auto numberOfPagesRight = nautilus::invoke(getNumberOfPagesProxyForHashJoin,
                                                      hashSliceRefRight,
-                                                     UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                                                     UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
                                                      partitionId);
 
     //for every left page
-    for (UInt64 leftPageNo(0_u64); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
+    for (UInt64Val leftPageNo(0_u64); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
         //for every key in left page
         auto leftPageRef = nautilus::invoke(getPageFromBucketAtPosProxyForHashJoin,
                                             hashSliceRefLeft,
-                                            UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+                                            UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
                                             partitionId,
                                             leftPageNo);
         Nautilus::Interface::FixedPageRef leftFixedPageRef(leftPageRef);
 
         for (auto leftRecordRef : leftFixedPageRef) {
-            UInt64 zeroValue = 0_u64;
+            UInt64Val zeroValue = 0_u64;
             auto leftRecord = leftMemProvider->read({}, leftRecordRef, zeroValue);
 
             //for every right page
-            for (UInt64 rightPageNo(0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
+            for (UInt64Val rightPageNo(0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
                 //TODO: introduce Bloomfilter here #3909
                 //                if (!rhsPage->bloomFilterCheck(lhsKeyPtr, sizeOfLeftKey)) {
                 //                    continue;
@@ -162,7 +162,7 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                 //for every key in right page
                 auto rightPageRef = nautilus::invoke(getPageFromBucketAtPosProxyForHashJoin,
                                                      hashSliceRefRight,
-                                                     UInt64(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                                                     UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
                                                      partitionId,
                                                      rightPageNo);
                 Nautilus::Interface::FixedPageRef rightFixedPageRef(rightPageRef);

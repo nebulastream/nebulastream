@@ -20,7 +20,7 @@
 #include <Util/StdInt.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorRef::PagedVectorRef(const Nautilus::MemRef& pagedVectorRef, uint64_t entrySize)
+PagedVectorRef::PagedVectorRef(const Nautilus::MemRefVal& pagedVectorRef, uint64_t entrySize)
     : pagedVectorRef(pagedVectorRef), entrySize(entrySize) {}
 
 void allocateNewPageProxy(void* pagedVectorPtr) {
@@ -33,11 +33,11 @@ int8_t* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
     return pagedVector->getPages()[pagePos];
 }
 
-Nautilus::UInt64 PagedVectorRef::getCapacityPerPage() const {
+Nautilus::UInt64Val PagedVectorRef::getCapacityPerPage() const {
     return getMember(pagedVectorRef, PagedVector, capacityPerPage, uint64_t);
 }
 
-Nautilus::MemRef PagedVectorRef::allocateEntry() {
+Nautilus::MemRefVal PagedVectorRef::allocateEntry() {
     // check if we should allocate a new page
     if (getNumberOfEntries() >= getCapacityPerPage()) {
         nautilus::invoke(allocateNewPageProxy, pagedVectorRef);
@@ -51,39 +51,39 @@ Nautilus::MemRef PagedVectorRef::allocateEntry() {
     return entry;
 }
 
-Nautilus::MemRef PagedVectorRef::getCurrentPage() { return getMemberAsPointer(pagedVectorRef, PagedVector, currentPage, int8_t); }
+Nautilus::MemRefVal PagedVectorRef::getCurrentPage() { return getMemberAsPointer(pagedVectorRef, PagedVector, currentPage, int8_t); }
 
-Nautilus::UInt64 PagedVectorRef::getNumberOfEntries() {
+Nautilus::UInt64Val PagedVectorRef::getNumberOfEntries() {
     return getMember(pagedVectorRef, PagedVector, numberOfEntries, uint64_t);
 }
 
-Nautilus::UInt64 PagedVectorRef::getTotalNumberOfEntries() {
+Nautilus::UInt64Val PagedVectorRef::getTotalNumberOfEntries() {
     return getMember(pagedVectorRef, PagedVector, totalNumberOfEntries, uint64_t);
 }
 
-Nautilus::MemRef PagedVectorRef::getEntry(const Nautilus::UInt64& pos) {
+Nautilus::MemRefVal PagedVectorRef::getEntry(const Nautilus::UInt64Val& pos) {
     // Calculating on what page and at what position the entry lies
-    Nautilus::UInt64 capacityPerPage = getCapacityPerPage();
+    Nautilus::UInt64Val capacityPerPage = getCapacityPerPage();
     auto pagePos = (pos / capacityPerPage);
     auto positionOnPage = pos - (pagePos * capacityPerPage);
 
-    auto page = nautilus::invoke(getPagedVectorPageProxy, pagedVectorRef, Nautilus::UInt64(pagePos));
+    auto page = nautilus::invoke(getPagedVectorPageProxy, pagedVectorRef, Nautilus::UInt64Val(pagePos));
     auto ptrOnPage = (positionOnPage * entrySize);
     auto retPos = page + ptrOnPage;
     return retPos;
 }
 
-void PagedVectorRef::setNumberOfEntries(const UInt64& val) {
+void PagedVectorRef::setNumberOfEntries(const UInt64Val& val) {
     *getMemberAsPointer(pagedVectorRef, PagedVector, numberOfEntries, uint64_t) = val;
 }
 
-void PagedVectorRef::setNumberOfTotalEntries(const UInt64& val) {
+void PagedVectorRef::setNumberOfTotalEntries(const UInt64Val& val) {
     *getMemberAsPointer(pagedVectorRef, PagedVector, totalNumberOfEntries, uint64_t) = val;
 }
 
 PagedVectorRefIter PagedVectorRef::begin() { return at(0_u64); }
 
-PagedVectorRefIter PagedVectorRef::at(Nautilus::UInt64 pos) {
+PagedVectorRefIter PagedVectorRef::at(Nautilus::UInt64Val pos) {
     PagedVectorRefIter pagedVectorRefIter(*this);
     pagedVectorRefIter.setPos(pos);
     return pagedVectorRefIter;
@@ -113,7 +113,7 @@ PagedVectorRefIter& PagedVectorRefIter::operator=(const PagedVectorRefIter& it) 
     return *this;
 }
 
-Nautilus::MemRef PagedVectorRefIter::operator*() { return pagedVectorRef.getEntry(pos); }
+Nautilus::MemRefVal PagedVectorRefIter::operator*() { return pagedVectorRef.getEntry(pos); }
 
 PagedVectorRefIter& PagedVectorRefIter::operator++() {
     pos = pos + 1;
@@ -136,5 +136,5 @@ bool PagedVectorRefIter::operator==(const PagedVectorRefIter& other) const {
 
 bool PagedVectorRefIter::operator!=(const PagedVectorRefIter& other) const { return !(*this == other); }
 
-void PagedVectorRefIter::setPos(Nautilus::UInt64 newValue) { pos = newValue; }
+void PagedVectorRefIter::setPos(Nautilus::UInt64Val newValue) { pos = newValue; }
 }// namespace NES::Nautilus::Interface

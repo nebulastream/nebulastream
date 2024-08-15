@@ -40,7 +40,7 @@ class SliceMergingAction {
                            ExecDataUInt64Ptr& sequenceNumber,
                            ExecDataUInt64Ptr& chunkNumber,
                            ExecDataBooleanPtr& lastChunk,
-                           VoidRef& globalSlice) const = 0;
+                           ObjRefVal<void>& globalSlice) const = 0;
 
     virtual ~SliceMergingAction() = default;
 };
