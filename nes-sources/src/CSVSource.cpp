@@ -18,7 +18,6 @@
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
@@ -27,7 +26,6 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 #include <Util/TestTupleBuffer.hpp>
-#include <Util/Core.hpp>
 
 namespace NES
 {
@@ -154,7 +152,6 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
     generatedTuples += tupleCount;
     generatedBuffers++;
     NES_TRACE("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
-    NES_TRACE("CSVSource::fillBuffer: read produced buffer=  {}", Util::printTupleBufferAsCSV(buffer.getBuffer(), schema));
 }
 
 SourceType CSVSource::getType() const

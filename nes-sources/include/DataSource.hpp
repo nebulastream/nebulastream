@@ -22,8 +22,9 @@
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Source.hpp>
+#include <SourceReturnType.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
@@ -69,6 +70,8 @@ public:
     friend std::ostream & operator<<(std::ostream& out, const DataSource& dataSource);
 
 protected:
+    OriginId originId;
+    SchemaPtr schema;
     std::shared_ptr<Memory::AbstractPoolProvider> localBufferManager;
     SourceReturnType::EmitFunction emitFunction;
     std::shared_ptr<Memory::AbstractBufferProvider> bufferManager{nullptr};

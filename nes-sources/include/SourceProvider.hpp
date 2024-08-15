@@ -14,32 +14,31 @@
 #pragma once
 
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Sources/SourceReturnType.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <SourceHandle.hpp>
+#include <SourceReturnType.hpp>
 
-namespace NES::QueryCompilation
+namespace NES
 {
 
 /// Transform a source descriptor to a SourceHandle that handles a 'DataSource' and a 'Source'
 /// The DataSource spawns an independent thread for data ingestion and it manages the pipeline and task logic.
 /// The Source is owned by the DataSource. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
-class DefaultDataSourceProvider
+class SourceProvider
 {
 public:
-    explicit DefaultDataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
-    static DataSourceProviderPtr create(const QueryCompilerOptionsPtr& compilerOptions);
+    SourceProvider() = default;
+    static std::shared_ptr<SourceProvider> create();
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     SourceHandlePtr lower(
         OriginId originId,
         const SourceDescriptorPtr& sourceDescriptor,
-        Runtime::BufferManagerPtr bufferManager,
+        std::shared_ptr<Runtime::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 
-    ~DefaultDataSourceProvider() = default;
-
-private:
-    QueryCompilerOptionsPtr compilerOptions;
+    ~SourceProvider() = default;
 };
+using DataSourceProviderPtr = std::shared_ptr<SourceProvider>;
+
 } /// namespace NES::QueryCompilation

@@ -14,8 +14,8 @@
 
 #pragma once
 
-#include <optional>
 #include <string>
+
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES

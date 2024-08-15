@@ -15,9 +15,9 @@
 #include <numeric>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Util/MMapCircularBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
+#include <MMapCircularBuffer.hpp>
 #include <magic_enum.hpp>
 #include <Common/ExecutableType/Array.hpp>
 namespace NES

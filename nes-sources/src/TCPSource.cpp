@@ -23,9 +23,9 @@
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/TCPSource.hpp>
+#include <API/Schema.hpp>
+#include <Parsers/CSVParser.hpp>
+#include <TCPSource.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -297,17 +297,9 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             if (!tupleData.empty())
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
-                if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::NES_BINARY)
-                {
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
-                    tupleCount = tupleBuffer.getNumberOfTuples();
-                }
-                else
-                {
-                    NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, localBufferManager);
-                    tupleCount++;
-                }
+                NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
+                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, nullptr);
+                tupleCount++;
             }
         }
         /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving

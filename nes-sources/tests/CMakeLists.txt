@@ -10,10 +10,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
-        SourceHandle.cpp
-        DataSource.cpp
-        CSVSource.cpp
-        TCPSource.cpp
-)
-add_subdirectory(Parsers)
+include(ExternalProject)
+include(GoogleTest)
+
+function(add_nes_test_sources)
+    add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-sources)
+endfunction()
+
+add_subdirectory(UnitTests)

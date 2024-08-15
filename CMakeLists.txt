@@ -415,23 +415,15 @@ add_custom_target(build_all_plugins)
 # Add target for common lib, which contains a minimal set
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
-# Add target for all data types
 add_subdirectory(nes-data-types)
-# Add target for the runtime
 add_subdirectory(nes-runtime)
-# Add target for configurations
+add_subdirectory(nes-sources)
 add_subdirectory(nes-configurations)
-# Add target for operators
 add_subdirectory(nes-operators)
-# Add target for client
 add_subdirectory(nes-client)
-# Add targets for execution
 add_subdirectory(nes-execution)
-# Add targets for nautilus
 add_subdirectory(nes-nautilus)
-# Add targets nes-expressions
 add_subdirectory(nes-expressions)
-# Add targets nes-window-types
 add_subdirectory(nes-window-types)
 
 add_subdirectory(nes-memory)
