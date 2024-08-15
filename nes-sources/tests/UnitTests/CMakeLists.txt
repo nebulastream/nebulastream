@@ -10,5 +10,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-### TestTupleBuffer Tests ###
-add_nes_runtime_test(test-tuple-buffer-tests "TestTupleBufferTest.cpp")
+add_nes_test_sources(mmap-circular-buffer-tests "MMapCircularBufferTest.cpp")

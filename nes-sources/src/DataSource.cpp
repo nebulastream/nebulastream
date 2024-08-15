@@ -16,17 +16,11 @@
 #include <future>
 #include <iostream>
 #include <thread>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/QueryManager.hpp>
-#include <Sources/DataSource.hpp>
+#include <utility>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <Util/magicenum/magic_enum.hpp>
+#include <DataSource.hpp>
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>

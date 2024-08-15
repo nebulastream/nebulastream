@@ -21,28 +21,23 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Sources/CSVSource.hpp>
-#include <Sources/SourceHandle.hpp>
-#include <Sources/TCPSource.hpp>
+#include <CSVSource.hpp>
+#include <SourceHandle.hpp>
+#include <SourceProvider.hpp>
+#include <TCPSource.hpp>
 
 namespace NES::QueryCompilation
 {
 
-DefaultDataSourceProvider::DefaultDataSourceProvider(QueryCompilerOptionsPtr compilerOptions) : compilerOptions(std::move(compilerOptions))
+DataSourceProviderPtr SourceProvider::create()
 {
+    return std::make_shared<SourceProvider>();
 }
 
-DataSourceProviderPtr DefaultDataSourceProvider::create(const QueryCompilerOptionsPtr& compilerOptions)
-{
-    return std::make_shared<DefaultDataSourceProvider>(compilerOptions);
-}
-
-SourceHandlePtr DefaultDataSourceProvider::lower(
+SourceHandlePtr SourceProvider::lower(
     OriginId originId,
     const SourceDescriptorPtr& sourceDescriptor,
-    Runtime::BufferManagerPtr bufferManager,
+    std::shared_ptr<Runtime::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
     auto schema = sourceDescriptor->getSchema();
@@ -55,7 +50,7 @@ SourceHandlePtr DefaultDataSourceProvider::lower(
         return std::make_shared<SourceHandle>(
             originId,
             schema,
-            bufferManager,
+            std::move(bufferPool),
             std::move(emitFunction),
             compilerOptions->getNumSourceLocalBuffers(),
             std::move(csvSource),
@@ -67,7 +62,13 @@ SourceHandlePtr DefaultDataSourceProvider::lower(
         const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
         auto tcpSource = std::make_unique<TCPSource>(schema, tcpSourceType);
         return std::make_shared<SourceHandle>(
-            originId, schema, bufferManager, std::move(emitFunction), compilerOptions->getNumSourceLocalBuffers(), std::move(tcpSource), 0);
+            originId,
+            schema,
+            std::move(bufferPool),
+            std::move(emitFunction),
+            compilerOptions->getNumSourceLocalBuffers(),
+            std::move(tcpSource),
+            0);
     }
     NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
     throw std::invalid_argument("Unknown Source Descriptor Type");

@@ -25,10 +25,10 @@
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Task.hpp>
-#include <Sources/SourceReturnType.hpp>
 #include <Util/AtomicCounter.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
+#include <SourceReturnType.hpp>
 
 #ifdef ENABLE_PAPI_PROFILER
 #    include <Runtime/Profiler/PAPIProfiler.hpp>
