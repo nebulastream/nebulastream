@@ -18,12 +18,12 @@
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultPhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <SourceProvider.hpp>
 
 namespace NES::QueryCompilation::Phases
 {
@@ -66,8 +66,8 @@ AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompi
 LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase()
 {
     NES_DEBUG("Create lower to executable query plan phase");
-    DataSourceProviderPtr sourceProvider;
-    sourceProvider = DefaultDataSourceProvider::create();
+    SourceProviderPtr sourceProvider;
+    sourceProvider = SourceProvider::create();
 
     auto sinkProvider = DataSinkProvider::create();
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);

@@ -13,11 +13,12 @@
 */
 #pragma once
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
-
 #include <vector>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <SourceHandle.hpp>
+#include <SourceProvider.hpp>
 
 namespace NES
 {
