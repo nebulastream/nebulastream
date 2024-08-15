@@ -19,13 +19,11 @@
 #include <future>
 #include <mutex>
 #include <string>
-#include <string_view>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/Reconfigurable.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceReturnType.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
@@ -39,24 +37,23 @@ namespace NES
 /// The runningRoutine orchestrates data ingestion until an end of stream (EOS) or a failure happens.
 /// The data source emits tasks into the TaskQueue when buffers are full, a timeout was hit, or a flush happens.
 /// The data source can call 'addEndOfStream()' from the QueryManager to stop a query via a reconfiguration message.
-class DataSource : public Runtime::Reconfigurable
+class DataSource
 {
+    static constexpr auto STOP_TIMEOUT_NOT_RUNNING = std::chrono::seconds(60);
+    static constexpr auto STOP_TIMEOUT_RUNNING = std::chrono::seconds(300);
 public:
     explicit DataSource(
         OriginId originId,
         SchemaPtr schema,
-        std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
-        Runtime::QueryManagerPtr queryManager,
+        std::shared_ptr<Memory::AbstractPoolProvider> bufferManager,
+        SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
-        uint64_t numberOfBuffersToProduce,
-        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors
-        = std::vector<Runtime::Execution::SuccessorExecutablePipeline>(),
-        uint64_t taskQueueId = 0);
+        uint64_t numberOfBuffersToProduce);
 
     DataSource() = delete;
 
-    ~DataSource() NES_NOEXCEPT(false) override;
+    ~DataSource() = default;
 
     /// clean up thread-local state for the source.
     void close();
@@ -65,52 +62,35 @@ public:
     [[nodiscard]] bool start();
 
     /// check if bool running is false, if false return, if not stop source
-    [[nodiscard]] bool stop(Runtime::QueryTerminationType graceful);
+    [[nodiscard]] bool stop();
 
     [[nodiscard]] OriginId getOriginId() const;
 
-    [[nodiscard]] std::string toString() const;
-
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& getExecutableSuccessors();
+    friend std::ostream & operator<<(std::ostream& out, const DataSource& dataSource);
 
 protected:
-    Runtime::QueryManagerPtr queryManager;
-    std::shared_ptr<Memory::AbstractPoolProvider> bufferPoolProvider;
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider{nullptr};
-    std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
+    std::shared_ptr<Memory::AbstractPoolProvider> localBufferManager;
+    SourceReturnType::EmitFunction emitFunction;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferManager{nullptr};
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t numSourceLocalBuffers;
     SourceType type;
-    Runtime::QueryTerminationType terminationType{Runtime::QueryTerminationType::Graceful}; /// protected by mutex
     std::atomic_bool wasStarted{false};
     std::atomic_bool futureRetrieved{false};
     std::atomic_bool running{false};
     std::promise<bool> completedPromise;
-    uint64_t taskQueueId;
-    bool sourceSharing = false;
-    const std::string physicalSourceName;
-
-    ///this counter is used to count the number of queries that use this source
-    std::atomic<uint64_t> refCounter = 0;
-    std::atomic<uint64_t> numberOfConsumerQueries = 1;
-
-    void emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData = true) override;
-
-    NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
-
-protected:
-    Runtime::MemoryLayouts::MemoryLayoutPtr memoryLayout;
     uint64_t maxSequenceNumber = 0;
     std::unique_ptr<Source> sourceImplementation;
     mutable std::recursive_mutex startStopMutex;
     mutable std::recursive_mutex successorModifyMutex;
-    bool endOfStreamSent{false}; /// protected by startStopMutex
+    std::unique_ptr<std::thread> thread{nullptr};
 
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine();
-    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true);
-    NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
+    void emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
+    [[nodiscard]] std::string toString() const;
+    NES::Memory::MemoryLayouts::TestTupleBuffer allocateBuffer() const;
 };
 
 } /// namespace NES

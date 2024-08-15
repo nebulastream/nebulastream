@@ -103,23 +103,20 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep)
     NES_ASSERT2_FMT(
         queryManagerStatus.load() == QueryManagerStatus::Running,
         "QueryManager::startQuery: cannot accept new query id " << qep->getQueryId());
-    ///    NES_ASSERT(qep->getStatus() == Execution::ExecutableQueryPlanStatus::Running,
-    ///               "Invalid status for starting the QEP " << qep->getQuerySubPlanId());
 
     /// 5. start data sources
     for (const auto& source : qep->getSources())
     {
-        std::stringstream s;
-        s << source;
-        std::string sourceString = s.str();
-        NES_DEBUG("QueryManager: start source  {}  str= {}", sourceString, source->toString());
+        std::stringstream sourceStringStream;
+        sourceStringStream << source;
+        NES_DEBUG("QueryManager: start source: {}", sourceStringStream.str());
         if (!source->start())
         {
-            NES_WARNING("QueryManager: source {} could not started as it is already running", source->toString());
+            NES_WARNING("QueryManager: source {} could not started as it is already running", sourceStringStream.str());
         }
         else
         {
-            NES_DEBUG("QueryManager: source  {}  started successfully", source->toString());
+            NES_DEBUG("QueryManager: source  {}  started successfully", sourceStringStream.str());
         }
     }
 
@@ -205,7 +202,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     for (const auto& source : qep->getSources())
     {
         NES_ASSERT2_FMT(
-            source->stop(QueryTerminationType::Failure), "Cannot fail source " << source->getSourceId() << " belonging to query plan=" << qep->getQueryId());
+            source->stop(), "Cannot fail source " << source->getSourceId() << " belonging to query plan=" << qep->getQueryId());
     }
 
     auto terminationFuture = qep->getTerminationFuture();
@@ -264,11 +261,11 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
     {
         if (type == QueryTerminationType::Graceful)
         {
-            NES_ASSERT2_FMT(source->stop(QueryTerminationType::Graceful), "Cannot terminate source " << source->getSourceId());
+            NES_ASSERT2_FMT(source->stop(), "Cannot terminate source " << source->getSourceId());
         }
         else if (type == QueryTerminationType::HardStop)
         {
-            NES_ASSERT2_FMT(source->stop(QueryTerminationType::HardStop), "Cannot terminate source " << source->getSourceId());
+            NES_ASSERT2_FMT(source->stop(), "Cannot terminate source " << source->getSourceId());
         }
     }
 

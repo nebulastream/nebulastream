@@ -23,37 +23,33 @@ SourceHandle::SourceHandle(
     OriginId originId,
     SchemaPtr schema,
     Runtime::BufferManagerPtr bufferManager,
-    Runtime::QueryManagerPtr queryManager,
+    SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation,
-    uint64_t numberOfBuffersToProduce,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& executableSuccessors,
-    uint64_t taskQueueId)
+    uint64_t numberOfBuffersToProduce)
 {
     this->dataSource = std::make_unique<DataSource>(
         originId,
         schema,
         bufferManager,
-        queryManager,
+        std::move(emitFunction),
         numSourceLocalBuffers,
         std::move(sourceImplementation),
-        numberOfBuffersToProduce,
-        executableSuccessors,
-        taskQueueId);
+        numberOfBuffersToProduce);
 }
 
 bool SourceHandle::start() const
 {
     return this->dataSource->start();
 }
-bool SourceHandle::stop(Runtime::QueryTerminationType graceful) const
+bool SourceHandle::stop() const
 {
-    return this->dataSource->stop(graceful);
+    return this->dataSource->stop();
 }
 
-std::string SourceHandle::toString() const
+const DataSource* SourceHandle::getDataSource() const
 {
-    return this->dataSource->toString();
+    return this->dataSource.get();
 }
 
 OriginId SourceHandle::getSourceId() const
@@ -61,4 +57,8 @@ OriginId SourceHandle::getSourceId() const
     return this->dataSource->getOriginId();
 }
 
+std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)
+{
+    return out << sourceHandle.getDataSource();
+}
 } /// namespace NES

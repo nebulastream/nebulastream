@@ -26,6 +26,9 @@
 #include <fmt/std.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
+#include <Util/TestTupleBuffer.hpp>
+#include <Util/Core.hpp>
+
 namespace NES
 {
 

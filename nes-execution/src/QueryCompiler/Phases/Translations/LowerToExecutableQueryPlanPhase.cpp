@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <variant>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
@@ -126,8 +127,9 @@ void LowerToExecutableQueryPlanPhase::processSource(
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
-    /// Todo: lower here should directly lower
-    auto source = sourceProvider->lower(sourceOperator->getOriginId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
+    auto emitFunction = nodeEngine->getQueryManager()->createSourceEmitFunction(std::move(executableSuccessorPipelines));
+    auto source
+        = sourceProvider->lower(sourceOperator->getOriginId(), sourceDescriptor, nodeEngine->getBufferManager(), std::move(emitFunction));
     sources.emplace_back(source);
 }
 

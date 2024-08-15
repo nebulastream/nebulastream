@@ -560,7 +560,7 @@ private:
     }
 
 private:
-    const MemoryLayoutPtr memoryLayout;
+    MemoryLayoutPtr memoryLayout;
     mutable Memory::TupleBuffer buffer;
 };
 
