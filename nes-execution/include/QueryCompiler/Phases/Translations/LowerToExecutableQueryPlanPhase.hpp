@@ -14,11 +14,12 @@
 #ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_LOWERTOEXECUTABLEQUERYPLANPHASE_HPP_
 
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
-
 #include <vector>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <SourceHandle.hpp>
+#include <SourceProvider.hpp>
 
 namespace NES
 {

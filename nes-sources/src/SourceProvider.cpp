@@ -21,25 +21,24 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Sources/CSVSource.hpp>
-#include <Sources/SourceHandle.hpp>
-#include <Sources/TCPSource.hpp>
+#include <SourceProvider.hpp>
+#include <CSVSource.hpp>
+#include <SourceHandle.hpp>
+#include <TCPSource.hpp>
 
 namespace NES::QueryCompilation
 {
 
-DefaultDataSourceProvider::DefaultDataSourceProvider(QueryCompilerOptionsPtr compilerOptions) : compilerOptions(std::move(compilerOptions))
+SourceProvider::SourceProvider() : compilerOptions()
 {
 }
 
-DataSourceProviderPtr DefaultDataSourceProvider::create(const QueryCompilerOptionsPtr& compilerOptions)
+DataSourceProviderPtr SourceProvider::create()
 {
-    return std::make_shared<DefaultDataSourceProvider>(compilerOptions);
+    return std::make_shared<SourceProvider>();
 }
 
-SourceHandlePtr DefaultDataSourceProvider::lower(
+SourceHandlePtr SourceProvider::lower(
     OriginId originId,
     const SourceDescriptorPtr& sourceDescriptor,
     Runtime::BufferManagerPtr bufferManager,

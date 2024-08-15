@@ -34,28 +34,16 @@ using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
-/**
- * @brief Base class for all input data parsers in NES
- */
+
+/// Base class for all input data parsers in NES
 class Parser
 {
 public:
-    /**
-   * @brief public constructor for input data parser
-   * @param physicalTypes vector with physical data types
-   */
     explicit Parser(std::vector<PhysicalTypePtr> physicalTypes);
 
     virtual ~Parser() = default;
 
-    /**
-   * @brief takes a tuple as string, casts its values to the correct types and writes it to the TupleBuffer
-   * @param inputTuple: string value that is cast to the PhysicalType and written to the TupleBuffer
-   * @param tupleCount: the number of tuples already written to the current TupleBuffer
-   * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
-   * @param schema: data schema
-   * @param bufferManager: the buffer manager
-   */
+    /// takes a tuple as string, casts its values to the correct types and writes it to the TupleBuffer
     virtual bool writeInputTupleToTupleBuffer(
         std::string_view inputTuple,
         uint64_t tupleCount,
@@ -64,16 +52,7 @@ public:
         const Runtime::BufferManagerPtr& bufferManager)
         = 0;
 
-    /**
-   * @brief casts a value in string format to the correct type and writes it to the TupleBuffer
-   * @param value: string value that is cast to the PhysicalType and written to the TupleBuffer
-   * @param schemaFieldIndex: field/attribute that is currently processed
-   * @param tupleBuffer: the TupleBuffer to which the value is written containing the currently chosen memory layout
-   * @param json: denotes whether input comes from JSON for correct parsing
-   * @param schema: the schema the data are supposed to have
-   * @param tupleCount: current tuple count, i.e. how many tuples have already been produced
-   * @param bufferManager: the buffer manager
-   */
+    /// casts a value in string format to the correct type and writes it to the TupleBuffer
     void writeFieldValueToTupleBuffer(
         std::string value,
         uint64_t schemaFieldIndex,

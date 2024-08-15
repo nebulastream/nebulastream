@@ -14,13 +14,9 @@
 
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_SOURCE_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_SOURCE_HPP_
-#include <string>
 
+#include <string>
 #include <Util/TestTupleBuffer.hpp>
-// namespace Runtime::MemoryLayouts
-// {
-// class TestTupleBuffer;
-// }
 
 namespace NES
 {

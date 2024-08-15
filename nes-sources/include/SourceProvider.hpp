@@ -11,25 +11,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
-#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
+#ifndef NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCEPROVIDER_HPP_
+#define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCEPROVIDER_HPP_
 
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
-#include <Sources/SourceReturnType.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <SourceReturnType.hpp>
+#include <SourceHandle.hpp>
 
-namespace NES::QueryCompilation
+namespace NES
 {
 
 /// Transform a source descriptor to a SourceHandle that handles a 'DataSource' and a 'Source'
 /// The DataSource spawns an independent thread for data ingestion and it manages the pipeline and task logic.
 /// The Source is owned by the DataSource. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
-class DefaultDataSourceProvider
+class SourceProvider
 {
 public:
-    explicit DefaultDataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
-    static DataSourceProviderPtr create(const QueryCompilerOptionsPtr& compilerOptions);
+    explicit SourceProvider();
+    static std::shared_ptr<SourceProvider> create();
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     SourceHandlePtr lower(
@@ -38,11 +37,10 @@ public:
         Runtime::BufferManagerPtr bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 
-    ~DefaultDataSourceProvider() = default;
-
-private:
-    QueryCompilerOptionsPtr compilerOptions;
+    ~SourceProvider() = default;
 };
+using DataSourceProviderPtr = std::shared_ptr<SourceProvider>;
+
 } /// namespace NES::QueryCompilation
 
-#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_DEFAULTDATASOURCEPROVIDER_HPP_
+#endif /// NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCEPROVIDER_HPP_

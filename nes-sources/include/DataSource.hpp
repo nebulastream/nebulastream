@@ -23,8 +23,8 @@
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Sources/Source.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <Source.hpp>
+#include <SourceReturnType.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {

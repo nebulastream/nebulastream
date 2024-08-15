@@ -70,7 +70,7 @@ DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsP
     DataSourceProviderPtr sourceProvider;
     if (!sourceSharing)
     {
-        sourceProvider = DefaultDataSourceProvider::create(options);
+        sourceProvider = SourceProvider::create(options);
     }
 
     auto sinkProvider = DataSinkProvider::create();

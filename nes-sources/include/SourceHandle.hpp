@@ -16,9 +16,8 @@
 #define NES_RUNTIME_INCLUDE_SOURCES_SOURCEHANDLE_HPP_
 
 #include <memory>
-#include <string>
-#include <Sources/DataSource.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <DataSource.hpp>
+#include <SourceReturnType.hpp>
 namespace NES
 {
 

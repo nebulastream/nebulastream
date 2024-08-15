@@ -15,17 +15,11 @@
 #ifndef NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
 #define NES_RUNTIME_INCLUDE_UTIL_CORE_HPP_
 
-#include <algorithm>
 #include <any>
-#include <functional>
 #include <map>
-#include <set>
 #include <string>
 #include <API/Schema.hpp>
-#include <Identifiers/Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 
 /**
  * @brief a collection of shared utility functions

@@ -18,7 +18,6 @@ add_source_files(nes-execution
         DefaultPhysicalOperatorProvider.cpp
         LowerToExecutableQueryPlanPhase.cpp
         DataSinkProvider.cpp
-        DefaultDataSourceProvider.cpp
         LowerPhysicalToNautilusOperators.cpp
         ExpressionProvider.cpp
         TimestampField.cpp

@@ -34,7 +34,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <SourceHandle.hpp>
 #include <Util/magicenum/magic_enum.hpp>
 
 namespace NES::QueryCompilation
