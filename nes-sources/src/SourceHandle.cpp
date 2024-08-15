@@ -14,15 +14,17 @@
 
 #include <memory>
 #include <utility>
-#include <Sources/DataSource.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <DataSource.hpp>
+#include <SourceHandle.hpp>
 
 namespace NES
 {
 SourceHandle::SourceHandle(
     OriginId originId,
     SchemaPtr schema,
-    Runtime::BufferManagerPtr bufferManager,
+    std::shared_ptr<Runtime::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
     std::unique_ptr<Source> sourceImplementation,
@@ -31,7 +33,7 @@ SourceHandle::SourceHandle(
     this->dataSource = std::make_unique<DataSource>(
         originId,
         schema,
-        bufferManager,
+        std::move(bufferPool),
         std::move(emitFunction),
         numSourceLocalBuffers,
         std::move(sourceImplementation),

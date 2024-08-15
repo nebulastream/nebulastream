@@ -19,8 +19,8 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <SourceHandle.hpp>
 
 namespace NES::Runtime::Execution
 {

@@ -14,34 +14,18 @@
 
 #pragma once
 
-#include <Sources/Parsers/Parser.hpp>
+#include <Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES
 {
 
-class CSVParser;
-using CSVParserPtr = std::shared_ptr<CSVParser>;
-
 class CSVParser : public Parser
 {
 public:
-    /**
-   * @brief public constructor for CSV input data parser
-   * @param numberOfSchemaFields number of schema fields
-   * @param physicalTypes vector with physical nes data types
-   * @param delimiter delimiter of input file
-   */
     CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTypePtr> physicalTypes, std::string delimiter);
 
-    /**
-   * @brief takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
-   * @param csvInput: csv string value(one line) that is cast to the PhysicalType and written to the TupleBuffer
-   * @param tupleCount: the number of tuples already written to the current TupleBuffer
-   * @param tupleBuffer: the TupleBuffer to which the value is written to containing the chosen memory layout
-   * @param schema: data schema
-   * @param bufferManager: the buffer manager
-   */
+    /// takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
     bool writeInputTupleToTupleBuffer(
         std::string_view csvInput,
         uint64_t tupleCount,

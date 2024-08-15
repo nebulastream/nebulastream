@@ -15,9 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <string>
-#include <Sources/DataSource.hpp>
-#include <Sources/SourceReturnType.hpp>
+#include <DataSource.hpp>
+#include <SourceReturnType.hpp>
 namespace NES
 {
 
@@ -32,7 +31,7 @@ public:
     explicit SourceHandle(
         OriginId originId,
         SchemaPtr schema,
-        Runtime::BufferManagerPtr bufferManager,
+        std::shared_ptr<Runtime::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation,
