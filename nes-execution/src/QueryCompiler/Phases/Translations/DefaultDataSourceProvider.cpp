@@ -23,8 +23,6 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/TCPSource.hpp>
@@ -41,14 +39,12 @@ DataSourceProviderPtr DefaultDataSourceProvider::create(const QueryCompilerOptio
     return std::make_shared<DefaultDataSourceProvider>(compilerOptions);
 }
 
-SourceHandlPtr DefaultDataSourceProvider::lower(
+SourceHandlePtr DefaultDataSourceProvider::lower(
     OriginId originId,
     const SourceDescriptorPtr& sourceDescriptor,
-    const Runtime::NodeEnginePtr& nodeEngine,
-    const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors)
+    Runtime::BufferManagerPtr bufferManager,
+    SourceReturnType::EmitFunction&& emitFunction)
 {
-    auto bufferManager = nodeEngine->getBufferManager();
-    auto queryManager = nodeEngine->getQueryManager();
     auto schema = sourceDescriptor->getSchema();
     if (sourceDescriptor->instanceOf<CSVSourceDescriptor>())
     {
@@ -60,11 +56,10 @@ SourceHandlPtr DefaultDataSourceProvider::lower(
             originId,
             schema,
             bufferManager,
-            queryManager,
+            std::move(emitFunction),
             compilerOptions->getNumSourceLocalBuffers(),
             std::move(csvSource),
-            csvSourceType->getNumberOfBuffersToProduce()->getValue(),
-            successors);
+            csvSourceType->getNumberOfBuffersToProduce()->getValue());
     }
     if (sourceDescriptor->instanceOf<TCPSourceDescriptor>())
     {
@@ -72,14 +67,7 @@ SourceHandlPtr DefaultDataSourceProvider::lower(
         const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
         auto tcpSource = std::make_unique<TCPSource>(schema, tcpSourceType);
         return std::make_shared<SourceHandle>(
-            originId,
-            schema,
-            bufferManager,
-            queryManager,
-            compilerOptions->getNumSourceLocalBuffers(),
-            std::move(tcpSource),
-            0,
-            successors);
+            originId, schema, bufferManager, std::move(emitFunction), compilerOptions->getNumSourceLocalBuffers(), std::move(tcpSource), 0);
     }
     NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
     throw std::invalid_argument("Unknown Source Descriptor Type");

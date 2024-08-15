@@ -36,9 +36,8 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
     {
         for (const auto& source : qep->getSources())
         {
-            NES_ASSERT2_FMT(
-                source->stop(Runtime::QueryTerminationType::Graceful),
-                "Cannot cleanup source " << source->getSourceId()); /// just a clean-up op
+            NES_ASSERT2_FMT(source->stop(),
+                            "Cannot cleanup source " << source->getSourceId()); /// just a clean-up op
         }
         addReconfigurationMessage(
             qep->getQueryId(),
