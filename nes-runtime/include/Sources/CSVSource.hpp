@@ -16,8 +16,10 @@
 
 #include <fstream>
 #include <string>
+#include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Sources/Source.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {

@@ -25,10 +25,7 @@
 #include <API/AttributeField.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/Parsers/JSONParser.hpp>
-#include <Sources/Parsers/NESBinaryParser.hpp>
 #include <Sources/TCPSource.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -60,15 +57,12 @@ TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
 
     switch (sourceConfig->getInputFormat()->getValue())
     {
-        case Configurations::InputFormat::JSON:
-            inputParser = std::make_unique<JSONParser>(schema->getSize(), schemaKeys, physicalTypes);
-            break;
         case Configurations::InputFormat::CSV:
             inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
             break;
-        case Configurations::InputFormat::NES_BINARY:
-            inputParser = std::make_unique<NESBinaryParser>();
-            break;
+        default:
+            NES_ERROR("InputFormat not supported.")
+            NES_NOT_IMPLEMENTED();
     }
 
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
