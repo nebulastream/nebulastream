@@ -20,11 +20,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
-#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Execution/MemoryProvider/ColumnTupleBufferMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
@@ -34,77 +31,6 @@
 #include <utility>
 
 namespace NES::Runtime::Execution::Util {
-
-/**
- * @brief Creates data for the schema <UINT64,UINT64>. The fieldToBuildCountMinOver is rnd() while timestampField gets monotonic
- * increasing timestamps
- * @param numberOfTuples
- * @param bufferManager
- * @param schema
- * @param fieldToBuildCountMinOver
- * @param timestampFieldName
- * @param isIngestionTime
- * @return Vector of TupleBuffers
- */
-std::vector<TupleBuffer> createDataForOneFieldAndTimeStamp(int numberOfTuples,
-                                                           BufferManager& bufferManager,
-                                                           SchemaPtr schema,
-                                                           const std::string& fieldToBuildCountMinOver,
-                                                           const std::string& timestampFieldName,
-                                                           const bool isIngestionTime = false);
-
-/**
-* @brief Creates a CountMinSketch (if none exists) in the statisticStore and updates the counter at <row,col>
-* @param testTupleBuffer
-* @param statisticStore
-* @param metricHash
-* @param numberOfBitsInKey
-* @param windowSize
-* @param windowSlide
-* @param width
-* @param depth
-* @param fieldToBuildCountMinOver
-* @param timestampFieldName
-*/
-void updateTestCountMinStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-                                 Statistic::StatisticStorePtr statisticStore,
-                                 Statistic::StatisticMetricHash metricHash,
-                                 uint64_t numberOfBitsInKey,
-                                 uint64_t windowSize,
-                                 uint64_t windowSlide,
-                                 uint64_t width,
-                                 uint64_t depth,
-                                 const std::string& fieldToBuildCountMinOver,
-                                 const std::string& timestampFieldName);
-
-/**
-* @brief Creates a HyperLogLogSketch (if none exists) in the statisticStore and updates the sketch
-* @param testTupleBuffer
-* @param statisticStore
-* @param metricHash
-* @param windowSize
-* @param windowSlide
-* @param width
-* @param fieldToBuildCountMinOver
-* @param timestampFieldName
-*/
-void updateTestHyperLogLogStatistic(MemoryLayouts::TestTupleBuffer& testTupleBuffer,
-                                    Statistic::StatisticStorePtr statisticStore,
-                                    Statistic::StatisticMetricHash metricHash,
-                                    uint64_t windowSize,
-                                    uint64_t windowSlide,
-                                    uint64_t width,
-                                    const std::string& fieldToBuildCountMinOver,
-                                    const std::string& timestampFieldName);
-
-/**
-* @brief Creates a TupleBuffer from recordPtr
-* @param recordPtr
-* @param schema
-* @param bufferManager
-* @return Filled tupleBuffer
-*/
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, BufferManagerPtr bufferManager);
 
 /**
 * @brief Writes from the nautilusRecord to the record at index recordIndex

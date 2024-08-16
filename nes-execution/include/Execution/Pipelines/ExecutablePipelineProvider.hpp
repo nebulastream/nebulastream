@@ -15,7 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_PIPELINES_EXECUTABLEPIPELINEPROVIDER_HPP_
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
+#include <nautilus/options.hpp>
 #include <Util/PluginRegistry.hpp>
 namespace NES::Runtime::Execution {
 class ExecutablePipelineStage;
@@ -32,7 +32,7 @@ class ExecutablePipelineProvider {
      * @return std::unique_ptr<ExecutablePipelineStage>
      */
     virtual std::unique_ptr<ExecutablePipelineStage> create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                                            const Nautilus::CompilationOptions&) = 0;
+                                                            const nautilus::engine::Options&) = 0;
     virtual ~ExecutablePipelineProvider() = default;
 };
 

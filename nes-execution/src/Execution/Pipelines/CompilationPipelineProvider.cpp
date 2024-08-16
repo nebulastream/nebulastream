@@ -15,12 +15,12 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Nautilus/Util/CompilationOptions.hpp>
+#include <nautilus/options.hpp>
 
 namespace NES::Runtime::Execution {
 
 std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> pipeline,
-                                                                             const Nautilus::CompilationOptions& options) {
+                                                                             const nautilus::engine::Options& options) {
     return std::make_unique<CompiledExecutablePipelineStage>(pipeline, "MLIR", options);
 }
 

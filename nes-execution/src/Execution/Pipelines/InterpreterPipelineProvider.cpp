@@ -19,7 +19,7 @@ namespace NES::Runtime::Execution {
 
 std::unique_ptr<ExecutablePipelineStage>
 InterpreterPipelineProvider::create(std::shared_ptr<PhysicalOperatorPipeline> physicalOperatorPipeline,
-                                    const Nautilus::CompilationOptions&) {
+                                    const nautilus::engine::Options&) {
     return std::make_unique<NautilusExecutablePipelineStage>(physicalOperatorPipeline);
 }
 

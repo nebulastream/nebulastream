@@ -19,7 +19,7 @@
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Operator.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+//#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Expressions/ExpressionNode.hpp>
@@ -94,10 +94,10 @@ class LowerPhysicalToNautilusOperators {
     lowerFilter(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
                 const PhysicalOperators::PhysicalOperatorPtr& physicalOperator);
 
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerLimit(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-               std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
+//    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+//    lowerLimit(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+//               const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+//               std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
     std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
     lowerMap(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
@@ -154,10 +154,10 @@ class LowerPhysicalToNautilusOperators {
                                      const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
                                      std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers);
 
-    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-    lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
-                         const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
-                         uint64_t handlerIndex);
+//    std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+//    lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline& pipeline,
+//                         const PhysicalOperators::PhysicalOperatorPtr& physicalOperator,
+//                         uint64_t handlerIndex);
 
     std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
     lowerAggregations(const std::vector<Windowing::WindowAggregationDescriptorPtr>& functions);
@@ -238,30 +238,6 @@ class LowerPhysicalToNautilusOperators {
                       Runtime::Execution::Operators::TimeFunctionPtr timeFunction,
                       uint64_t windowSize,
                       uint64_t windowSlide);
-
-    /**
-     * @brief Lowers a physicalCountMinBuild to a CountMinBuild
-     * @param physicalCountMinBuild
-     * @param operatorHandlers
-     * @param bufferSize
-     * @return ExecutableOperatorPtr
-     */
-    Runtime::Execution::Operators::ExecutableOperatorPtr
-    lowerCountMinBuildOperator(const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
-                               std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-                               uint64_t bufferSize);
-
-    /**
-     * @brief Lowers a physicalHyperLogLogBuild to a HyperLogLogBuild
-     * @param physicalHLLBuildOperator
-     * @param operatorHandlers
-     * @param bufferSize
-     * @return ExecutableOperatorPtr
-     */
-    Runtime::Execution::Operators::ExecutableOperatorPtr
-    lowerHyperLogLogBuildOperator(const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
-                                  std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-                                  uint64_t bufferSize);
 
     const QueryCompilation::QueryCompilerOptionsPtr options;
     std::unique_ptr<ExpressionProvider> expressionProvider;
