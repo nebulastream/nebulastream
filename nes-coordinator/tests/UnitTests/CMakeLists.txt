@@ -12,9 +12,9 @@
 
 
 #-------------------------------##############----------------------------------
-#------------------------------- # Unit Test Suite --------------------------------
+#------------------------------- # Unit Test Suite -----------------------------
 
-### Node Engine Tests ###
+## Node Engine Tests ###
 add_nes_integration_test(node-engine-test "Runtime/NodeEngineTest.cpp")
 
 add_nes_unit_test(watermark-manager-test "Runtime/WatermarkManagerTest.cpp")
@@ -87,7 +87,7 @@ add_nes_unit_test(reconnect-schedule-predictor-tests "Spatial/ReconnectScheduleP
 ### Serial Storage Handler Test ###
 add_nes_unit_test(serial-storage-handler-tests "RequestProcessor/StorageHandles/SerialStorageHandlerTest.cpp")
 
-### 2 Phase Lcoking Storage Handler Test ###
+### 2 Phase Locking Storage Handler Test ###
 add_nes_unit_test(two-phase-locking-storage-handler-tests "RequestProcessor/StorageHandles/TwoPhaseLockingStorageHandlerTest.cpp")
 
 ### Unlock Deleter Test ###

@@ -35,7 +35,6 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Optimizer/QueryPlacementAddition/ElegantPlacementStrategy.hpp>
-#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
@@ -115,7 +114,6 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
-        auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
         auto topologySpecificQueryRewritePhase = Optimizer::TopologySpecificQueryRewritePhase::create(topology,
@@ -170,9 +168,6 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
 
         //7. Execute type inference phase on rewritten query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
-
-        //8. Generate sample code for elegant planner
-        queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
 
         //9. Perform signature inference phase for sharing identification among query plans
         signatureInferencePhase->execute(queryPlan);
@@ -232,8 +227,7 @@ std::vector<AbstractRequestPtr> ExplainRequest::executeRequestLogic(const Storag
                                                              globalExecutionPlan,
                                                              topology,
                                                              accelerateJavaUdFs,
-                                                             accelerationServiceURL,
-                                                             sampleCodeGenerationPhase);
+                                                             accelerationServiceURL);
 
         //24. clean up the global query plan by marking it for removal
         globalQueryPlan->removeQuery(queryId, RequestType::StopQuery);
@@ -303,8 +297,7 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
                                                      const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                      const TopologyPtr& topology,
                                                      bool accelerateJavaUDFs,
-                                                     const std::string& accelerationServiceURL,
-                                                     const Optimizer::SampleCodeGenerationPhasePtr& sampleCodeGenerationPhase) {
+                                                     const std::string& accelerationServiceURL) {
     NES_INFO("UtilityFunctions: getting execution plan as JSON");
 
     nlohmann::json executionPlanJson{};
@@ -334,25 +327,6 @@ ExplainRequest::getExecutionPlanForSharedQueryAsJson(SharedQueryId sharedQueryId
 
             // add logical query plan to the json object
             currentQuerySubPlanMetaData["logicalQuerySubPlan"] = decomposedQueryPlan->toString();
-
-            // Generate Code Snippets for the sub query plan
-            auto updatedSubQueryPlan = sampleCodeGenerationPhase->execute(decomposedQueryPlan);
-            std::vector<std::string> generatedCodeSnippets;
-            std::set<PipelineId> pipelineIds;
-            auto queryPlanIterator = PlanIterator(updatedSubQueryPlan);
-            for (auto itr = queryPlanIterator.begin(); itr != PlanIterator::end(); ++itr) {
-                auto visitingOp = (*itr)->as<Operator>();
-                if (visitingOp->hasProperty("PIPELINE_ID")) {
-                    auto pipelineId = std::any_cast<PipelineId>(visitingOp->getProperty("PIPELINE_ID"));
-                    if (pipelineIds.emplace(pipelineId).second) {
-                        generatedCodeSnippets.emplace_back(std::any_cast<std::string>(
-                            visitingOp->getProperty(Optimizer::ElegantPlacementStrategy::sourceCodeKey)));
-                    }
-                }
-            }
-
-            // Added generated code snippets to the response
-            currentQuerySubPlanMetaData["Pipelines"] = generatedCodeSnippets;
 
             scheduledSubQueries.push_back(currentQuerySubPlanMetaData);
         }

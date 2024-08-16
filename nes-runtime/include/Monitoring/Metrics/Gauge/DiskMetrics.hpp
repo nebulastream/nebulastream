@@ -79,7 +79,7 @@ class DiskMetrics {
     uint64_t fBlocks;
     uint64_t fBfree;
     uint64_t fBavail;
-} __attribute__((packed));
+} ;
 
 using DiskMetricsPtr = std::shared_ptr<DiskMetrics>;
 

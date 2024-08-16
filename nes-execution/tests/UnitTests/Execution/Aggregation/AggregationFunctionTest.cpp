@@ -52,7 +52,7 @@ TEST_F(AggregationFunctionTest, sumAggregation) {
     auto readFieldExpression = std::make_shared<Expressions::ReadFieldExpression>("value");
     auto sumAgg = Aggregation::SumAggregationFunction(integerType, integerType, readFieldExpression, "result");
     auto sumValue = Aggregation::SumAggregationValue<int64_t>();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &sumValue);
+    auto memref = Nautilus::MemRef((int8_t*) &sumValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>(1_s64);
     auto inputRecord = Record({{"value", incomingValue}});
@@ -87,7 +87,7 @@ TEST_F(AggregationFunctionTest, countAggregation) {
     auto countAgg = Aggregation::CountAggregationFunction(integerType, unsignedIntegerType, readFieldExpression, "result");
 
     auto countValue = Aggregation::CountAggregationValue<uint64_t>();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &countValue);
+    auto memref = Nautilus::MemRef((int8_t*) &countValue);
 
     // test lift
     Record inputRecord;
@@ -118,7 +118,7 @@ TEST_F(AggregationFunctionTest, AvgAggregation) {
     PhysicalTypePtr doubleType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createDouble());
     auto avgAgg = Aggregation::AvgAggregationFunction(integerType, doubleType, readFieldExpression, "result");
     auto avgValue = Aggregation::AvgAggregationValue<int64_t>();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &avgValue);
+    auto memref = Nautilus::MemRef((int8_t*) &avgValue);
 
     auto incomingValue = Nautilus::Value<Nautilus::Int64>(2_s64);
     // test lift
@@ -155,7 +155,7 @@ TEST_F(AggregationFunctionTest, MinAggregation) {
 
     auto minAgg = Aggregation::MinAggregationFunction(integerType, integerType, readFieldExpression, "result");
     auto minValue = Aggregation::MinAggregationValue<int64_t>();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &minValue);
+    auto memref = Nautilus::MemRef((int8_t*) &minValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>(5_s64);
     auto incomingValueTen = Nautilus::Value<Nautilus::Int64>(10_s64);
     auto incomingValueOne = Nautilus::Value<Nautilus::Int64>(1_s64);
@@ -183,7 +183,7 @@ TEST_F(AggregationFunctionTest, MinAggregation) {
 
     // combine memrefs in minAgg
     auto anotherMinValue = Aggregation::MinAggregationValue<int64_t>();
-    auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMinValue);
+    auto anotherMemref = Nautilus::MemRef((int8_t*) &anotherMinValue);
     inputRecord = Record({{"value", incomingValueTen}});
     minAgg.lift(anotherMemref, inputRecord);
 
@@ -221,7 +221,7 @@ TEST_F(AggregationFunctionTest, MaxAggregation) {
 
     auto maxAgg = Aggregation::MaxAggregationFunction(integerType, integerType, readFieldExpression, "result");
     auto maxValue = Aggregation::MaxAggregationValue<int64_t>();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &maxValue);
+    auto memref = Nautilus::MemRef((int8_t*) &maxValue);
     auto incomingValueFive = Nautilus::Value<Nautilus::Int64>(5_s64);
     auto incomingValueTen = Nautilus::Value<Nautilus::Int64>(10_s64);
     auto incomingValueOne = Nautilus::Value<Nautilus::Int64>(1_s64);
@@ -253,7 +253,7 @@ TEST_F(AggregationFunctionTest, MaxAggregation) {
 
     // combine memrefs in maxAgg
     auto anotherMaxValue = Aggregation::MaxAggregationValue<int64_t>();
-    auto anotherMemref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &anotherMaxValue);
+    auto anotherMemref = Nautilus::MemRef((int8_t*) &anotherMaxValue);
 
     inputRecord = Record({{"value", incomingValueOne}});
     maxAgg.lift(anotherMemref, inputRecord);
@@ -294,7 +294,7 @@ TEST_F(AggregationFunctionTest, HyperLogLogAggregationSimpleTest) {
     auto distinctCountEstimation =
         Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType, readFieldExpression, "result");
     auto distinctCountValue = Aggregation::HyperLogLogDistinctCountApproximationValue();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &distinctCountValue);
+    auto memref = Nautilus::MemRef((int8_t*) &distinctCountValue);
     auto incomingValue = Nautilus::Value<Nautilus::Int64>(1_s64);
 
     // lift several records in HyperLogLogAgg with an initial value of 1
@@ -329,7 +329,7 @@ TEST_F(AggregationFunctionTest, HyperLogLogComplexTest) {
     auto distinctCountEstimation =
         Aggregation::HyperLogLogDistinctCountApproximation(integerType, integerType, readFieldExpression, "result");
     auto distinctCountValue = Aggregation::HyperLogLogDistinctCountApproximationValue();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &distinctCountValue);
+    auto memref = Nautilus::MemRef((int8_t*) &distinctCountValue);
     auto incomingValue4 = Nautilus::Value<Nautilus::Int64>(4_s64);
     auto incomingValue3 = Nautilus::Value<Nautilus::Int64>(3_s64);
     auto incomingValue6 = Nautilus::Value<Nautilus::Int64>(6_s64);
@@ -374,7 +374,7 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantile) {
     auto quantileEstimationAgg =
         Aggregation::QuantileEstimationAggregation(integerType, outputType, readFieldExpression, "result");
     auto quantileEstimationValue = Aggregation::QuantileEstimationValue();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &quantileEstimationValue);
+    auto memref = Nautilus::MemRef((int8_t*) &quantileEstimationValue);
     auto incomingValue4 = Nautilus::Value<Nautilus::Int64>(4_s64);
     auto incomingValue3 = Nautilus::Value<Nautilus::Int64>(3_s64);
     auto incomingValue6 = Nautilus::Value<Nautilus::Int64>(6_s64);
@@ -435,8 +435,8 @@ TEST_F(AggregationFunctionTest, scanEmitPipelineQuantileCombine) {
     auto quantileEstimationAgg =
         Aggregation::QuantileEstimationAggregation(integerType, outputType, readFieldExpression, "result");
     auto quantileEstimationValue = Aggregation::QuantileEstimationValue();
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) &quantileEstimationValue);
-    auto memref2 = Nautilus::Value<Nautilus::MemRef>((int8_t*) &quantileEstimationValue);
+    auto memref = Nautilus::MemRef((int8_t*) &quantileEstimationValue);
+    auto memref2 = Nautilus::MemRef((int8_t*) &quantileEstimationValue);
     auto incomingValue4 = Nautilus::Value<Nautilus::Int64>(4_s64);
     auto incomingValue3 = Nautilus::Value<Nautilus::Int64>(3_s64);
     auto incomingValue6 = Nautilus::Value<Nautilus::Int64>(6_s64);

@@ -104,7 +104,7 @@ class RegistrationMetrics {
 
     bool isMoving;
     bool hasBattery;
-} __attribute__((packed));
+};
 
 using RegistrationMetricsPtr = std::shared_ptr<RegistrationMetrics>;
 

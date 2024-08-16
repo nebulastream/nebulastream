@@ -68,9 +68,6 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
-class SampleCodeGenerationPhase;
-using SampleCodeGenerationPhasePtr = std::shared_ptr<SampleCodeGenerationPhase>;
-
 class OriginIdInferencePhase;
 using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
 

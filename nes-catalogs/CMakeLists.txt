@@ -29,8 +29,9 @@ target_link_libraries(nes-catalogs PRIVATE folly::folly)
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
+    # Disabled as they do not exist anymore on the main
+#    add_subdirectory(tests)
+#    message(STATUS "Tests are enabled")
 else ()
     message(STATUS "Tests are disabled")
 endif ()

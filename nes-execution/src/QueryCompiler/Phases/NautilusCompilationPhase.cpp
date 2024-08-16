@@ -68,24 +68,24 @@ OperatorPipelinePtr NautilusCompilationPhase::apply(OperatorPipelinePtr pipeline
     NES_ASSERT(pipelineRoots.size() == 1, "A pipeline should have a single root operator.");
     auto rootOperator = pipelineRoots[0];
     auto nautilusPipeline = rootOperator->as<NautilusPipelineOperator>();
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     auto identifier = fmt::format("NautilusCompilation-{}-{}-{}",
                                   pipeline->getDecomposedQueryPlan()->getSharedQueryId(),
                                   pipeline->getDecomposedQueryPlan()->getDecomposedQueryPlanId(),
                                   pipeline->getPipelineId());
-    options.setIdentifier(identifier);
-
-    // enable dump to console if the compiler options are set
-    options.setDumpToConsole(compilerOptions->getDumpMode() == DumpMode::CONSOLE
-                             || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
-
-    // enable dump to file if the compiler options are set
-    options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE
-                          || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
-
-    options.setProxyInlining(compilerOptions->getCompilationStrategy() == CompilationStrategy::PROXY_INLINING);
-
-    options.setCUDASdkPath(compilerOptions->getCUDASdkPath());
+//    options.setIdentifier(identifier);
+//
+//    // enable dump to console if the compiler options are set
+//    options.setDumpToConsole(compilerOptions->getDumpMode() == DumpMode::CONSOLE
+//                             || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+//
+//    // enable dump to file if the compiler options are set
+//    options.setDumpToFile(compilerOptions->getDumpMode() == DumpMode::FILE
+//                          || compilerOptions->getDumpMode() == DumpMode::FILE_AND_CONSOLE);
+//
+//    options.setProxyInlining(compilerOptions->getCompilationStrategy() == CompilationStrategy::PROXY_INLINING);
+//
+//    options.setCUDASdkPath(compilerOptions->getCUDASdkPath());
 
     auto providerName = getPipelineProviderIdentifier(compilerOptions);
     auto& provider = Runtime::Execution::ExecutablePipelineProviderRegistry::getPlugin(providerName);

@@ -21,7 +21,7 @@ get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
 # Add Library
 add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 # link libraries
-target_link_libraries(nes-execution PUBLIC nes-nautilus)
+target_link_libraries(nes-execution PUBLIC nes-nautilus nautilus)
 target_include_directories(nes-execution PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
@@ -60,8 +60,9 @@ endif ()
 message(STATUS "Execution benchmarks status: ${NES_BUILD_BENCHMARKS}")
 if (NES_BUILD_BENCHMARKS)
     # Add tests with command
-    add_subdirectory(benchmark)
-    message(STATUS "Execution benchmarks are enabled")
+    # for now, we do not want to include the benchmark folder, as it is not ported to the new nautilus API yet.
+    # add_subdirectory(benchmark)
+    # message(STATUS "Execution benchmarks are enabled")
 endif ()
 
 #Add the nes common and headers to cpack

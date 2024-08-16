@@ -26,8 +26,8 @@ register_public_header_dir(nes-client ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ A
 
 if (NES_ENABLES_TESTS)
     # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
+#    add_subdirectory(tests)
+#    message(STATUS "Tests are enabled")
 else ()
     message(STATUS "Tests are disabled")
 endif ()

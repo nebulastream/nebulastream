@@ -42,7 +42,6 @@
 #include <Optimizer/Phases/TopologySpecificQueryRewritePhase.hpp>
 #include <Optimizer/Phases/TypeInferencePhase.hpp>
 #include <Phases/DeploymentPhase.hpp>
-#include <Phases/SampleCodeGenerationPhase.hpp>
 #include <Plans/Global/Execution/ExecutionNode.hpp>
 #include <Plans/Global/Execution/GlobalExecutionPlan.hpp>
 #include <Plans/Global/Query/GlobalQueryPlan.hpp>
@@ -198,7 +197,6 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
         auto optimizerConfigurations = coordinatorConfiguration->optimizer;
         auto queryMergerPhase = Optimizer::QueryMergerPhase::create(this->z3Context, optimizerConfigurations);
         typeInferencePhase = Optimizer::TypeInferencePhase::create(sourceCatalog, std::move(udfCatalog));
-        auto sampleCodeGenerationPhase = Optimizer::SampleCodeGenerationPhase::create();
         auto queryRewritePhase = Optimizer::QueryRewritePhase::create(coordinatorConfiguration);
         auto originIdInferencePhase = Optimizer::OriginIdInferencePhase::create();
         auto statisticIdInferencePhase = Optimizer::StatisticIdInferencePhase::create();
@@ -266,13 +264,6 @@ std::vector<AbstractRequestPtr> AddQueryRequest::executeRequestLogic(const Stora
 
         //7. Execute type inference phase on rewritten query plan
         queryPlan = typeInferencePhase->execute(queryPlan);
-
-        //8. Generate sample code for elegant planner
-        if (queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_BALANCED
-            || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_PERFORMANCE
-            || queryPlacementStrategy == Optimizer::PlacementStrategy::ELEGANT_ENERGY) {
-            queryPlan = sampleCodeGenerationPhase->execute(queryPlan);
-        }
 
         //9. Perform signature inference phase for sharing identification among query plans
         signatureInferencePhase->execute(queryPlan);

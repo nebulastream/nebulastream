@@ -97,7 +97,17 @@ ExecutionResult DynamicQueryManager::processNextTask(bool running, WorkerContext
 #endif
 
         NES_TRACE("QueryManager: provide task {} to thread (getWork())", task.toString());
+        const auto taskExecutable = task.getExecutable();
+        if (auto nextExecPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&taskExecutable)) {
+            const auto nextPipelineId = nextExecPipeline->get()->getPipelineId();
+            NES_INFO("ExecDataPipeline is being executed for pipeline id {} and buffer {}", nextPipelineId, task.getBufferRef().getSequenceData().toString());
+        } else if (auto sinkPipeline = std::get_if<DataSinkPtr>(&taskExecutable)) {
+            NES_INFO("SinkPipeline is being executed for sink pipeline {} and buffer {}", sinkPipeline->get()->toString(), task.getBufferRef().getSequenceData().toString());
+        }
         ExecutionResult result = task(workerContext);
+
+        NES_INFO("Task execution result is {}", magic_enum::enum_name(result));
+
 #ifdef ENABLE_PAPI_PROFILER
         profiler->stopSampling(numOfInputTuples);
 #endif
@@ -187,6 +197,11 @@ void DynamicQueryManager::addWorkForNextPipeline(TupleBuffer& buffer,
             return;
         }
 
+        NES_DEBUG("Added Task for pipelineID={} for Number of next pipelines {} inputBuffer {} queueId={}",
+                  (*nextPipeline)->getPipelineId(),
+                  (*nextPipeline)->getSuccessors().size(),
+                  buffer.getSequenceData().toString(),
+                  queueId);
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
 
     } else if (auto sink = std::get_if<DataSinkPtr>(&executable); sink) {

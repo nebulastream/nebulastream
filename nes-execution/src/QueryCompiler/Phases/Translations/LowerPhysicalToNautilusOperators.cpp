@@ -24,12 +24,12 @@
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
-#include <Execution/Operators/Relational/Limit.hpp>
+//#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
+//#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
+//#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
+//#include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Project.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
@@ -59,13 +59,9 @@
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinBuild.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/CountMin/CountMinOperatorHandler.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogBuild.hpp>
-#include <Execution/Operators/Streaming/StatisticCollection/HyperLogLog/HyperLogLogOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
-#include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
+//#include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
+//#include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -178,10 +174,10 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
         auto filter = lowerFilter(pipeline, operatorNode);
         parentOperator->setChild(filter);
         return filter;
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>()) {
-        auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
-        parentOperator->setChild(limit);
-        return limit;
+        //    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>()) {
+        //        auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
+        //        parentOperator->setChild(limit);
+        //        return limit;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>()) {
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
@@ -293,26 +289,26 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
             parentOperator->setChild(flatMapJavaUDF);
             return flatMapJavaUDF;
         }
-#endif// ENABLE_JNI
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
-        auto aggs =
-            operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getWindowDefinition()->getWindowAggregation();
-
-        std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
-        // iterate over all aggregation functions
-        for (size_t i = 0; i < aggs.size(); ++i) {
-            auto aggregationType = aggs[i]->getType();
-            // collect aggValues for each aggType
-            aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
-        }
-        // pass aggValues to ThresholdWindowHandler
-        auto handler =
-            std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
-        operatorHandlers.push_back(handler);
-        auto indexForThisHandler = operatorHandlers.size() - 1;
-        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
-        parentOperator->setChild(thresholdWindow);
-        return thresholdWindow;
+#endif  // ENABLE_JNI
+        //    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>()) {
+        //        auto aggs =
+        //            operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getWindowDefinition()->getWindowAggregation();
+        //
+        //        std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
+        //        // iterate over all aggregation functions
+        //        for (size_t i = 0; i < aggs.size(); ++i) {
+        //            auto aggregationType = aggs[i]->getType();
+        //            // collect aggValues for each aggType
+        //            aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
+        //        }
+        //        // pass aggValues to ThresholdWindowHandler
+        //        auto handler =
+        //            std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
+        //        operatorHandlers.push_back(handler);
+        //        auto indexForThisHandler = operatorHandlers.size() - 1;
+        //        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
+        //        parentOperator->setChild(thresholdWindow);
+        //        return thresholdWindow;
     } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>()) {
         auto preAggregationOperator = lowerPreAggregationOperator(pipeline, operatorNode, operatorHandlers);
         parentOperator->setChild(preAggregationOperator);
@@ -438,16 +434,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
 
         parentOperator->setChild(joinBuildNautilus);
         return joinBuildNautilus;
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalCountMinBuildOperator>()) {
-        const auto physicalCountMinBuild = operatorNode->as<const PhysicalOperators::PhysicalCountMinBuildOperator>();
-        auto countMinBuildOperator = lowerCountMinBuildOperator(*physicalCountMinBuild, operatorHandlers, bufferSize);
-        parentOperator->setChild(countMinBuildOperator);
-        return countMinBuildOperator;
-    } else if (operatorNode->instanceOf<PhysicalOperators::PhysicalHyperLogLogBuildOperator>()) {
-        const auto physicalHyperLogLog = operatorNode->as<const PhysicalOperators::PhysicalHyperLogLogBuildOperator>();
-        auto hyperLogLogBuildOperator = lowerHyperLogLogBuildOperator(*physicalHyperLogLog, operatorHandlers, bufferSize);
-        parentOperator->setChild(hyperLogLogBuildOperator);
-        return hyperLogLogBuildOperator;
     }
 
     // Check if a plugin is registered that handles this physical operator
@@ -460,94 +446,6 @@ LowerPhysicalToNautilusOperators::lower(Runtime::Execution::PhysicalOperatorPipe
     }
 
     NES_NOT_IMPLEMENTED();
-}
-
-Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerCountMinBuildOperator(
-    const PhysicalOperators::PhysicalCountMinBuildOperator& physicalCountMinBuild,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-    uint64_t bufferSize) {
-    using namespace Runtime::Execution::Operators;
-
-    // 1. Getting all the necessary variables for the operator and its handler
-    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory;
-    const auto fieldToTrackFieldName = physicalCountMinBuild.getNameOfFieldToTrack();
-    const auto numberOfBitsInKey = 8
-        * defaultPhysicalTypeFactory
-              .getPhysicalType(physicalCountMinBuild.getInputSchema()->getField(fieldToTrackFieldName)->getDataType())
-              ->size();
-    const auto width = physicalCountMinBuild.getWidth();
-    const auto depth = physicalCountMinBuild.getDepth();
-    const auto metricHash = physicalCountMinBuild.getMetricHash();
-    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalCountMinBuild.getOutputSchema(), bufferSize);
-    const auto inputOriginIds = physicalCountMinBuild.getInputOriginIds();
-    const auto sendingPolicy = physicalCountMinBuild.getSendingPolicy();
-    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
-    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalCountMinBuild.getOutputSchema(),
-                                                                                     bufferSize,
-                                                                                     Statistic::StatisticSynopsisType::COUNT_MIN,
-                                                                                     sinkDataCodec);
-
-    // 2. Getting the windowSize, windowSlide, and timestampFieldName.
-    const auto windowType = physicalCountMinBuild.getWindowType()->as<Windowing::TimeBasedWindowType>();
-    NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-               "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
-    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
-
-    // 3. Create operator handler
-    auto countMinBuildOperatorHandler = CountMinOperatorHandler::create(windowSize,
-                                                                        windowSlide,
-                                                                        sendingPolicy,
-                                                                        width,
-                                                                        depth,
-                                                                        statisticFormat,
-                                                                        inputOriginIds,
-                                                                        numberOfBitsInKey);
-    operatorHandlers.push_back(countMinBuildOperatorHandler);
-    auto handlerIndex = operatorHandlers.size() - 1;
-
-    // 4. Creating the operator
-    return std::make_shared<CountMinBuild>(handlerIndex,
-                                           fieldToTrackFieldName,
-                                           numberOfBitsInKey,
-                                           width,
-                                           depth,
-                                           metricHash,
-                                           std::move(timeFunction));
-}
-
-Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerHyperLogLogBuildOperator(
-    const PhysicalOperators::PhysicalHyperLogLogBuildOperator& physicalHLLBuildOperator,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers,
-    uint64_t bufferSize) {
-    using namespace Runtime::Execution::Operators;
-
-    // 1. Getting all the necessary variables for the operator and its handler
-    const auto fieldToTrackFieldName = physicalHLLBuildOperator.getNameOfFieldToTrack();
-    const auto width = physicalHLLBuildOperator.getWidth();
-    const auto metricHash = physicalHLLBuildOperator.getMetricHash();
-    const auto outputMemoryLayout = ::NES::Util::createMemoryLayout(physicalHLLBuildOperator.getOutputSchema(), bufferSize);
-    const auto inputOriginIds = physicalHLLBuildOperator.getInputOriginIds();
-    const auto sendingPolicy = physicalHLLBuildOperator.getSendingPolicy();
-    const auto sinkDataCodec = sendingPolicy->getSinkDataCodec();
-    const auto statisticFormat = Statistic::StatisticFormatFactory::createFromSchema(physicalHLLBuildOperator.getOutputSchema(),
-                                                                                     bufferSize,
-                                                                                     Statistic::StatisticSynopsisType::HLL,
-                                                                                     sinkDataCodec);
-
-    // 2. Getting the windowSize, windowSlide, and timestampFieldName. We will refactor this in #4739
-    const auto windowType = physicalHLLBuildOperator.getWindowType()->as<Windowing::TimeBasedWindowType>();
-    NES_ASSERT(windowType->instanceOf<Windowing::TumblingWindow>() || windowType->instanceOf<Windowing::SlidingWindow>(),
-               "Only a tumbling or sliding window is currently supported for CountMinBuildOperator");
-    auto [windowSize, windowSlide, timeFunction] = Util::getWindowingParameters(*windowType);
-
-    // 3. Create operator handler
-    auto hyperLogLogBuildOperatorHandler =
-        HyperLogLogOperatorHandler::create(windowSize, windowSlide, sendingPolicy, statisticFormat, width, inputOriginIds);
-    operatorHandlers.push_back(hyperLogLogBuildOperatorHandler);
-    auto handlerIndex = operatorHandlers.size() - 1;
-
-    // 4. Creating the operator
-    return std::make_shared<HyperLogLogBuild>(handlerIndex, fieldToTrackFieldName, metricHash, std::move(timeFunction));
 }
 
 Runtime::Execution::Operators::ExecutableOperatorPtr LowerPhysicalToNautilusOperators::lowerNLJSlicing(
@@ -1012,8 +910,8 @@ LowerPhysicalToNautilusOperators::lowerScan(Runtime::Execution::PhysicalOperator
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
-        std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider =
+        std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
 }
 
@@ -1025,8 +923,8 @@ LowerPhysicalToNautilusOperators::lowerEmit(Runtime::Execution::PhysicalOperator
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     // pass buffer size here
     auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
-    std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider =
-        std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
+    std::unique_ptr<Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider> memoryProvider =
+        std::make_unique<Runtime::Execution::MemoryProvider::RowTupleBufferMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));
 }
 
@@ -1038,15 +936,15 @@ LowerPhysicalToNautilusOperators::lowerFilter(Runtime::Execution::PhysicalOperat
     return std::make_shared<Runtime::Execution::Operators::Selection>(expression);
 }
 
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerLimit(Runtime::Execution::PhysicalOperatorPipeline&,
-                                             const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
-                                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
-    auto limitOperator = operatorPtr->as<PhysicalOperators::PhysicalLimitOperator>();
-    const auto handler = std::make_shared<Runtime::Execution::Operators::LimitOperatorHandler>(limitOperator->getLimit());
-    operatorHandlers.push_back(handler);
-    return std::make_shared<Runtime::Execution::Operators::Limit>(operatorHandlers.size() - 1);
-}
+//std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+//LowerPhysicalToNautilusOperators::lowerLimit(Runtime::Execution::PhysicalOperatorPipeline&,
+//                                             const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+//                                             std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers) {
+//    auto limitOperator = operatorPtr->as<PhysicalOperators::PhysicalLimitOperator>();
+//    const auto handler = std::make_shared<Runtime::Execution::Operators::LimitOperatorHandler>(limitOperator->getLimit());
+//    operatorHandlers.push_back(handler);
+//    return std::make_shared<Runtime::Execution::Operators::Limit>(operatorHandlers.size() - 1);
+//}
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
 LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorPipeline&,
@@ -1060,35 +958,35 @@ LowerPhysicalToNautilusOperators::lowerMap(Runtime::Execution::PhysicalOperatorP
     return std::make_shared<Runtime::Execution::Operators::Map>(writeField);
 }
 
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
-LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
-                                                       const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
-                                                       uint64_t handlerIndex) {
-    NES_INFO("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
-    auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
-    auto contentBasedWindowType =
-        thresholdWindowOperator->getWindowDefinition()->getWindowType()->as<Windowing::ContentBasedWindowType>();
-    auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
-    NES_INFO("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
-    auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());
-    auto minCount = thresholdWindowType->getMinimumCount();
-
-    auto aggregations = thresholdWindowOperator->getWindowDefinition()->getWindowAggregation();
-    auto aggregationFunctions = lowerAggregations(aggregations);
-    std::vector<std::string> aggregationResultFieldNames;
-    std::transform(aggregations.cbegin(),
-                   aggregations.cend(),
-                   std::back_inserter(aggregationResultFieldNames),
-                   [&](const Windowing::WindowAggregationDescriptorPtr& agg) {
-                       return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
-                   });
-
-    return std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindow>(predicate,
-                                                                                    aggregationResultFieldNames,
-                                                                                    minCount,
-                                                                                    aggregationFunctions,
-                                                                                    handlerIndex);
-}
+//std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator>
+//LowerPhysicalToNautilusOperators::lowerThresholdWindow(Runtime::Execution::PhysicalOperatorPipeline&,
+//                                                       const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
+//                                                       uint64_t handlerIndex) {
+//    NES_INFO("lowerThresholdWindow {} and handlerid {}", operatorPtr->toString(), handlerIndex);
+//    auto thresholdWindowOperator = operatorPtr->as<PhysicalOperators::PhysicalThresholdWindowOperator>();
+//    auto contentBasedWindowType =
+//        thresholdWindowOperator->getWindowDefinition()->getWindowType()->as<Windowing::ContentBasedWindowType>();
+//    auto thresholdWindowType = Windowing::ContentBasedWindowType::asThresholdWindow(contentBasedWindowType);
+//    NES_INFO("lowerThresholdWindow Predicate {}", thresholdWindowType->getPredicate()->toString());
+//    auto predicate = expressionProvider->lowerExpression(thresholdWindowType->getPredicate());
+//    auto minCount = thresholdWindowType->getMinimumCount();
+//
+//    auto aggregations = thresholdWindowOperator->getWindowDefinition()->getWindowAggregation();
+//    auto aggregationFunctions = lowerAggregations(aggregations);
+//    std::vector<std::string> aggregationResultFieldNames;
+//    std::transform(aggregations.cbegin(),
+//                   aggregations.cend(),
+//                   std::back_inserter(aggregationResultFieldNames),
+//                   [&](const Windowing::WindowAggregationDescriptorPtr& agg) {
+//                       return agg->as()->as_if<FieldAccessExpressionNode>()->getFieldName();
+//                   });
+//
+//    return std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindow>(predicate,
+//                                                                                    aggregationResultFieldNames,
+//                                                                                    minCount,
+//                                                                                    aggregationFunctions,
+//                                                                                    handlerIndex);
+//}
 
 std::vector<std::shared_ptr<Runtime::Execution::Aggregation::AggregationFunction>>
 LowerPhysicalToNautilusOperators::lowerAggregations(const std::vector<Windowing::WindowAggregationDescriptorPtr>& aggs) {

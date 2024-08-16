@@ -67,9 +67,6 @@ using TypeInferencePhasePtr = std::shared_ptr<TypeInferencePhase>;
 class QueryRewritePhase;
 using QueryRewritePhasePtr = std::shared_ptr<QueryRewritePhase>;
 
-class SampleCodeGenerationPhase;
-using SampleCodeGenerationPhasePtr = std::shared_ptr<SampleCodeGenerationPhase>;
-
 class OriginIdInferencePhase;
 using OriginIdInferencePhasePtr = std::shared_ptr<OriginIdInferencePhase>;
 
@@ -200,8 +197,7 @@ class ExplainRequest : public AbstractUniRequest {
                                                         const Optimizer::GlobalExecutionPlanPtr& globalExecutionPlan,
                                                         const TopologyPtr& topology,
                                                         bool accelerateJavaUDFs,
-                                                        const std::string& accelerationServiceURL,
-                                                        const Optimizer::SampleCodeGenerationPhasePtr& sampleCodeGenerationPhase);
+                                                        const std::string& accelerationServiceURL);
 
   private:
     QueryId queryId;

@@ -581,7 +581,7 @@ TEST_P(StreamJoinQueryExecutionTest, DISABLED_testJoinWithFixedCharKey) {
     runSingleJoinQuery<ResultRecord>(csvFileParams, joinParams, window, "id", "id2");
 }
 
-TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows) {
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestWithSlidingWindows) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
         && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
         GTEST_SKIP();
@@ -670,7 +670,7 @@ TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithSlidingWindows)
     EXPECT_THAT(resultRecords, ::testing::UnorderedElementsAreArray(expectedSinkVector));
 }
 
-TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutiontTestWithWindows) {
+TEST_P(StreamJoinQueryExecutionTest, streamJoinExecutionTestWithWindows) {
     if (joinStrategy == QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED
         && windowingStrategy == QueryCompilation::WindowingStrategy::BUCKETING) {
         GTEST_SKIP();

@@ -78,7 +78,7 @@ class AggregationFunctionDataTypeTest : public Testing::BaseUnitTest, public ::t
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui32")) {
             return Nautilus::Value<Nautilus::UInt32>(1_u32);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "ui64")) {
-            return Nautilus::Value<Nautilus::UInt64>(1_u64);
+            return Nautilus::UInt64(1_u64);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f32")) {
             return Nautilus::Value<Nautilus::Float>((float) 1.0);
         } else if (std::equal(dataTypeString.begin(), dataTypeString.end(), "f64")) {
@@ -242,7 +242,7 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineSum) {
 
     // create an aggregation value based on the aggregation function type and data type
     auto sumValue = getAggregationValue(aggFunctionType, testParam);
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) sumValue.get());
+    auto memref = Nautilus::MemRef((int8_t*) sumValue.get());
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
@@ -272,7 +272,7 @@ TEST_P(AggregationFunctionDataTypeTest, DISABLED_scanEmitPipelineAvg) {
 
     // create an aggregation value based on the aggregation function type and data type
     auto avgValue = getAggregationValue(aggFunctionType, testParam);
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) avgValue.get());
+    auto memref = Nautilus::MemRef((int8_t*) avgValue.get());
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
@@ -300,7 +300,7 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMin) {
 
     // create an aggregation value based on the aggregation function type and data type
     auto minValue = getAggregationValue(aggFunctionType, testParam);
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) minValue.get());
+    auto memref = Nautilus::MemRef((int8_t*) minValue.get());
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
@@ -329,7 +329,7 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineMax) {
 
     // create an aggregation value based on the aggregation function type and data type
     auto maxValue = getAggregationValue(aggFunctionType, testParam);
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) maxValue.get());
+    auto memref = Nautilus::MemRef((int8_t*) maxValue.get());
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);
@@ -359,7 +359,7 @@ TEST_P(AggregationFunctionDataTypeTest, scanEmitPipelineCount) {
 
     // create an aggregation value based on the aggregation function type and data type
     auto countValue = getAggregationValue(aggFunctionType, ui64);
-    auto memref = Nautilus::Value<Nautilus::MemRef>((int8_t*) countValue.get());
+    auto memref = Nautilus::MemRef((int8_t*) countValue.get());
 
     // create an incoming value using the selected data type
     auto incomingValue = getIncomingValue(testParam);

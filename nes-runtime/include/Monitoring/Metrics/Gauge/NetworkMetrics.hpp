@@ -102,7 +102,7 @@ class NetworkMetrics {
     uint64_t tColls;
     uint64_t tCarrier;
     uint64_t tCompressed;
-} __attribute__((packed));
+};
 
 /**
  * @brief Writes metrics objects to a given Schema and TupleBuffer.

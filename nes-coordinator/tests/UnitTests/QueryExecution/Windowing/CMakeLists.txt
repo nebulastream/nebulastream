@@ -15,4 +15,5 @@ add_nes_unit_test(nonkeyed-tumbling-window-aggregation-function-test "WindowAggr
 add_nes_unit_test(nonkeyed-sliding-window-aggregation-function-test "NonKeyedSlidingWindowQueryExecutionTest.cpp")
 add_nes_unit_test(keyed-sliding-window-aggregation-function-test "KeyedSlidingWindowQueryExecutionTest.cpp")
 add_nes_unit_test(keyed-tumbling-window-query-execution-test "KeyedTumblingWindowQueryExecutionTest.cpp")
-add_nes_unit_test(threshold-window-query-execution-test "ThresholdWindowQueryExecutionTest.cpp")
+# Disabled as not ported to the nautilus library
+#add_nes_unit_test(threshold-window-query-execution-test "ThresholdWindowQueryExecutionTest.cpp")

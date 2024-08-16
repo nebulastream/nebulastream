@@ -148,10 +148,6 @@ bool NesWorker::start(bool blocking, bool withConnect) {
     if (!isRunning.compare_exchange_strong(expected, true)) {
         NES_ASSERT2_FMT(false, "cannot start nes worker");
     }
-
-    // load all plugins from the default folder.
-    pluginLoader.loadDefaultPlugins();
-
     try {
         NES_DEBUG("NesWorker: MonitoringAgent configured with monitoring={}", workerConfig->enableMonitoring.getValue());
         monitoringAgent = Monitoring::MonitoringAgent::create(workerConfig->enableMonitoring.getValue());
