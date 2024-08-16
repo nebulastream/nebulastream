@@ -48,14 +48,5 @@ public:
      * @return HashValue
      */
     HashValue calculate(Value<>& value);
-
-    /**
-     * @brief Do not use this method for MurMur3Hash, we require this only until issue #3648 has been fixed TODO
-     * @param hash
-     * @param value
-     * @param state
-     * @return HashValue
-     */
-    HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) override;
 };
 } /// namespace NES::Nautilus::Interface

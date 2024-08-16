@@ -37,7 +37,6 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
         add_executable(${TEST_EXECUTABLE} ${SOURCE_FILE} ${CACHE_FILE})
         target_link_libraries(${TEST_EXECUTABLE}
                 PRIVATE
-                nes-execution-test-util
                 nebuli-lib
                 nes-single-node-worker-test-util
         )
@@ -78,7 +77,6 @@ function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAM
         add_executable(${TEST_EXECUTABLE} EXCLUDE_FROM_ALL ${SOURCE_FILE} ${CACHE_FILES})
         target_link_libraries(${TEST_EXECUTABLE}
                 PRIVATE
-                nes-execution-test-util
                 nebuli-lib
                 nes-single-node-worker-test-util
         )
