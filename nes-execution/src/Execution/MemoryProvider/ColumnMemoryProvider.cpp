@@ -15,7 +15,7 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {

@@ -17,10 +17,10 @@
 #include <memory>
 #include <ostream>
 #include <vector>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Nautilus
 {
