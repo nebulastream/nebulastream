@@ -57,7 +57,7 @@ class GlobalHashTableLockFree : public StreamJoinHashTable {
      * @param key
      * @return Pointer to free memory space where the data shall be written
      */
-    virtual uint8_t* insert(uint64_t key) const override;
+    virtual int8_t* insert(uint64_t key) const override;
 };
 }// namespace NES::Runtime::Execution::Operators
 #endif// NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_JOIN_HASHJOIN_HASHTABLE_GLOBALHASHTABLELOCKFREE_HPP_

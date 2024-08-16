@@ -43,7 +43,7 @@ uint64_t MergingHashTable::getNumberOfTuplesForPage(size_t bucketPos, size_t pag
     return lockedBucketHeads->at(pageNo)->size();
 }
 
-uint8_t* getNumberOfTuplesForPage(size_t bucket, size_t page);
+int8_t* getNumberOfTuplesForPage(size_t bucket, size_t page);
 
 size_t MergingHashTable::getNumBuckets() const { return bucketNumPages.size(); }
 

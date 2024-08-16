@@ -13,7 +13,7 @@
 */
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
@@ -22,7 +22,6 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
@@ -118,82 +117,71 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // Getting all needed references or values
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto joinPartitionIdSliceIdMemRef = recordBuffer.getBuffer();
-    const auto windowStart =
-        Nautilus::FunctionCall("getWindowStartProxyForHashJoin", getWindowStartProxyForHashJoin, joinPartitionIdSliceIdMemRef);
-    const auto windowEnd =
-        Nautilus::FunctionCall("getWindowEndProxyForHashJoin", getWindowEndProxyForHashJoin, joinPartitionIdSliceIdMemRef);
-    const auto partitionId = Nautilus::FunctionCall("getPartitionIdProxy", getPartitionIdProxy, joinPartitionIdSliceIdMemRef);
-    const auto sliceIdLeft = Nautilus::FunctionCall("getSliceIdHJProxy",
-                                                    getSliceIdHJProxy,
-                                                    joinPartitionIdSliceIdMemRef,
-                                                    Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    const auto sliceIdRight = Nautilus::FunctionCall("getSliceIdHJProxy",
-                                                     getSliceIdHJProxy,
-                                                     joinPartitionIdSliceIdMemRef,
-                                                     Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+    const auto windowStart = nautilus::invoke(getWindowStartProxyForHashJoin, joinPartitionIdSliceIdMemRef);
+    const auto windowEnd = nautilus::invoke(getWindowEndProxyForHashJoin, joinPartitionIdSliceIdMemRef);
+    const auto partitionId = nautilus::invoke(getPartitionIdProxy, joinPartitionIdSliceIdMemRef);
+    const auto sliceIdLeft = nautilus::invoke(getSliceIdHJProxy,
+                                              joinPartitionIdSliceIdMemRef,
+                                              UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+    const auto sliceIdRight = nautilus::invoke(getSliceIdHJProxy,
+                                               joinPartitionIdSliceIdMemRef,
+                                               UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
-    const auto hashSliceRefLeft =
-        Nautilus::FunctionCall("getHashSliceProxy", getHashSliceProxy, operatorHandlerMemRef, sliceIdLeft);
-    const auto hashSliceRefRight =
-        Nautilus::FunctionCall("getHashSliceProxy", getHashSliceProxy, operatorHandlerMemRef, sliceIdRight);
-    const auto numberOfPagesLeft = Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin",
-                                                          getNumberOfPagesProxyForHashJoin,
-                                                          hashSliceRefLeft,
-                                                          Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
-                                                          partitionId);
-    const auto numberOfPagesRight =
-        Nautilus::FunctionCall("getNumberOfPagesProxyForHashJoin",
-                               getNumberOfPagesProxyForHashJoin,
-                               hashSliceRefRight,
-                               Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
-                               partitionId);
+    const auto hashSliceRefLeft = nautilus::invoke(getHashSliceProxy, operatorHandlerMemRef, sliceIdLeft);
+    const auto hashSliceRefRight = nautilus::invoke(getHashSliceProxy, operatorHandlerMemRef, sliceIdRight);
+    const auto numberOfPagesLeft = nautilus::invoke(getNumberOfPagesProxyForHashJoin,
+                                                    hashSliceRefLeft,
+                                                    UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+                                                    partitionId);
+    const auto numberOfPagesRight = nautilus::invoke(getNumberOfPagesProxyForHashJoin,
+                                                     hashSliceRefRight,
+                                                     UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                                                     partitionId);
 
     //for every left page
-    for (Value<UInt64> leftPageNo(0_u64); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
+    for (UInt64Val leftPageNo(0_u64); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
         //for every key in left page
-        auto leftPageRef = Nautilus::FunctionCall("getPageFromBucketAtPosProxyForHashJoin",
-                                                  getPageFromBucketAtPosProxyForHashJoin,
-                                                  hashSliceRefLeft,
-                                                  Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
-                                                  partitionId,
-                                                  leftPageNo);
+        auto leftPageRef = nautilus::invoke(getPageFromBucketAtPosProxyForHashJoin,
+                                            hashSliceRefLeft,
+                                            UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+                                            partitionId,
+                                            leftPageNo);
         Nautilus::Interface::FixedPageRef leftFixedPageRef(leftPageRef);
 
         for (auto leftRecordRef : leftFixedPageRef) {
-            Value<UInt64> zeroValue = 0_u64;
+            UInt64Val zeroValue = 0_u64;
             auto leftRecord = leftMemProvider->read({}, leftRecordRef, zeroValue);
 
             //for every right page
-            for (Value<UInt64> rightPageNo((uint64_t) 0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
+            for (UInt64Val rightPageNo(0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
                 //TODO: introduce Bloomfilter here #3909
                 //                if (!rhsPage->bloomFilterCheck(lhsKeyPtr, sizeOfLeftKey)) {
                 //                    continue;
                 //                }
 
                 //for every key in right page
-                auto rightPageRef =
-                    Nautilus::FunctionCall("getPageFromBucketAtPosProxyForHashJoin",
-                                           getPageFromBucketAtPosProxyForHashJoin,
-                                           hashSliceRefRight,
-                                           Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
-                                           partitionId,
-                                           rightPageNo);
+                auto rightPageRef = nautilus::invoke(getPageFromBucketAtPosProxyForHashJoin,
+                                                     hashSliceRefRight,
+                                                     UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                                                     partitionId,
+                                                     rightPageNo);
                 Nautilus::Interface::FixedPageRef rightFixedPageRef(rightPageRef);
 
                 for (auto rightRecordRef : rightFixedPageRef) {
                     auto rightRecord = rightMemProvider->read({}, rightRecordRef, zeroValue);
 
                     Record joinedRecord;
-                    createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-                    if (joinExpression->execute(joinedRecord).as<Boolean>()) {
+                    createJoinedRecord(joinedRecord, leftRecord, rightRecord, FixedSizeExecutableDataType<UInt64>::create(windowStart)->as<FixedSizeExecutableDataType<UInt64>>(), FixedSizeExecutableDataType<UInt64>::create(windowEnd)->as<FixedSizeExecutableDataType<UInt64>>());
+                    if (*(joinExpression->execute(joinedRecord))) {
                         // Calling the child operator for this joinedRecord
                         child->execute(ctx, joinedRecord);
                     }//end of key expression compare
-                }    //end of for every right key
-            }        //end of for every right page
-        }            //end of for every left key
-    }                //end of for every left page
+                }//end of for every right key
+            }//end of for every right page
+        }//end of for every left key
+    }//end of for every left page
 }
+
 
 HJProbe::HJProbe(const uint64_t operatorHandlerIndex,
                  const JoinSchema& joinSchema,
@@ -210,8 +198,9 @@ HJProbe::HJProbe(const uint64_t operatorHandlerIndex,
                       windowingStrategy,
                       withDeletion),
       // As we are only ever reading a single record, we do not care about the buffer size
-      leftMemProvider(
-          Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.leftSchema)),
+      leftMemProvider(Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider::createMemoryProvider(/*bufferSize*/ 1,
+                                                                                                          joinSchema.leftSchema)),
       rightMemProvider(
-          Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.rightSchema)) {}
+          Runtime::Execution::MemoryProvider::TupleBufferMemoryProvider::createMemoryProvider(/*bufferSize*/ 1,
+                                                                                              joinSchema.rightSchema)) {}
 }// namespace NES::Runtime::Execution::Operators

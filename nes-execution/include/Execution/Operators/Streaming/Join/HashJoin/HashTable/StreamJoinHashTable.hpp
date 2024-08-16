@@ -57,7 +57,7 @@ class StreamJoinHashTable {
      * @param key
      * @return Pointer to free memory space where the data shall be written
      */
-    virtual uint8_t* insert(uint64_t key) const = 0;
+    virtual int8_t* insert(uint64_t key) const = 0;
 
     /**
      * @brief Returns the bucket at bucketPos

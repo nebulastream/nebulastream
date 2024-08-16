@@ -16,7 +16,6 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -88,57 +87,45 @@ void HJProbeVarSized::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) co
     const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     const auto joinPartitionIdSliceIdMemRef = recordBuffer.getBuffer();
 
-    const auto windowStart =
-        FunctionCall("getHJWindowStartVarSizedProxy", getHJWindowStartVarSizedProxy, joinPartitionIdSliceIdMemRef);
-    const auto windowEnd = FunctionCall("getHJWindowEndVarSizedProxy", getHJWindowEndVarSizedProxy, joinPartitionIdSliceIdMemRef);
-    const auto partitionId =
-        FunctionCall("getPartitionIdVarSizedProxy", getPartitionIdVarSizedProxy, joinPartitionIdSliceIdMemRef);
+    const auto windowStart = nautilus::invoke(getHJWindowStartVarSizedProxy, joinPartitionIdSliceIdMemRef);
+    const auto windowEnd = nautilus::invoke(getHJWindowEndVarSizedProxy, joinPartitionIdSliceIdMemRef);
+    const auto partitionId = nautilus::invoke(getPartitionIdVarSizedProxy, joinPartitionIdSliceIdMemRef);
 
-    const auto sliceIdLeft = FunctionCall("getHJSliceIdVarSizedProxy",
-                                          getHJSliceIdVarSizedProxy,
-                                          joinPartitionIdSliceIdMemRef,
-                                          Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
-    const auto sliceIdRight = FunctionCall("getHJSliceIdVarSizedProxy",
-                                           getHJSliceIdVarSizedProxy,
-                                           joinPartitionIdSliceIdMemRef,
-                                           Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
+    const auto sliceIdLeft = nautilus::invoke(getHJSliceIdVarSizedProxy,
+                                              joinPartitionIdSliceIdMemRef,
+                                              UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)));
+    const auto sliceIdRight = nautilus::invoke(getHJSliceIdVarSizedProxy,
+                                               joinPartitionIdSliceIdMemRef,
+                                               UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)));
 
     // During triggering the slice, we append all pages of all local copies to a single PagedVector located at position 0
-    const ValueId<WorkerThreadId> workerThreadIdForPagedVectors(INITIAL<WorkerThreadId>);
+    const UInt32Val workerThreadIdForPagedVectors = INITIAL<WorkerThreadId>.getRawValue();
 
-    const auto hashSliceRefLeft = FunctionCall("getHashSliceRefFromIdVarSizedProxy",
-                                               getHashSliceRefFromIdVarSizedProxy,
-                                               operatorHandlerMemRef,
-                                               sliceIdLeft);
-    const auto hashSliceRefRight = FunctionCall("getHashSliceRefFromIdVarSizedProxy",
-                                                getHashSliceRefFromIdVarSizedProxy,
-                                                operatorHandlerMemRef,
-                                                sliceIdRight);
+    const auto hashSliceRefLeft = nautilus::invoke(getHashSliceRefFromIdVarSizedProxy, operatorHandlerMemRef, sliceIdLeft);
+    const auto hashSliceRefRight = nautilus::invoke(getHashSliceRefFromIdVarSizedProxy, operatorHandlerMemRef, sliceIdRight);
 
-    const auto leftPagedVectorRef = FunctionCall("getHJBucketAtPosVarSizedProxy",
-                                                 getHJBucketAtPosVarSizedProxy,
-                                                 hashSliceRefLeft,
-                                                 Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
-                                                 partitionId);
-    const auto rightPagedVectorRef = FunctionCall("getHJBucketAtPosVarSizedProxy",
-                                                  getHJBucketAtPosVarSizedProxy,
-                                                  hashSliceRefRight,
-                                                  Value<UInt64>(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
-                                                  partitionId);
+    const auto leftPagedVectorRef = nautilus::invoke(getHJBucketAtPosVarSizedProxy,
+                                                     hashSliceRefLeft,
+                                                     UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Left)),
+                                                     partitionId);
+    const auto rightPagedVectorRef = nautilus::invoke(getHJBucketAtPosVarSizedProxy,
+                                                      hashSliceRefRight,
+                                                      UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
+                                                      partitionId);
 
     Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
     Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
     const auto leftNumberOfEntries = leftPagedVector.getTotalNumberOfEntries();
     const auto rightNumberOfEntries = rightPagedVector.getTotalNumberOfEntries();
 
-    for (Value<UInt64> leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
-        for (Value<UInt64> rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
+    for (UInt64Val leftCnt = 0_u64; leftCnt < leftNumberOfEntries; leftCnt = leftCnt + 1) {
+        for (UInt64Val rightCnt = 0_u64; rightCnt < rightNumberOfEntries; rightCnt = rightCnt + 1) {
             auto leftRecord = leftPagedVector.readRecord(leftCnt);
             auto rightRecord = rightPagedVector.readRecord(rightCnt);
 
             Record joinedRecord;
-            createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
-            if (joinExpression->execute(joinedRecord).as<Boolean>()) {
+            createJoinedRecord(joinedRecord, leftRecord, rightRecord, FixedSizeExecutableDataType<UInt64>::create(windowStart)->as<FixedSizeExecutableDataType<UInt64>>(), FixedSizeExecutableDataType<UInt64>::create(windowEnd)->as<FixedSizeExecutableDataType<UInt64>>());
+            if (*(joinExpression->execute(joinedRecord))) {
                 // Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }

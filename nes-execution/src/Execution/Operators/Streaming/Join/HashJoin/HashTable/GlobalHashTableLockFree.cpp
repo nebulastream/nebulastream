@@ -25,7 +25,7 @@ GlobalHashTableLockFree::GlobalHashTableLockFree(size_t sizeOfRecord,
                                                  size_t preAllocPageSizeCnt)
     : StreamJoinHashTable(sizeOfRecord, numPartitions, fixedPagesAllocator, pageSize, preAllocPageSizeCnt) {}
 
-uint8_t* GlobalHashTableLockFree::insert(uint64_t key) const {
+int8_t* GlobalHashTableLockFree::insert(uint64_t key) const {
     auto hashedKey = NES::Util::murmurHash(key);
     NES_TRACE("into key={} bucket={}", key, getBucketPos(hashedKey));
     auto entry = buckets[getBucketPos(hashedKey)]->appendConcurrentLockFree(hashedKey);
