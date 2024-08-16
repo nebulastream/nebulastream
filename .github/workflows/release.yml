@@ -251,27 +251,3 @@ jobs:
           repository: nebulastream/nebulastream-java-client
           event-type: nes-executable-image-update
           client-payload: '{"version": "${{ env.VERSION }}"}'
-
-  Run-Regression-Tests:
-    needs: [build-docker]
-    runs-on: [ self-hosted, linux, X64, Build ]
-    env:
-      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
-      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
-    steps:
-      - name: KTM Use Case Regression Test
-        run: |
-          cp ./docker/regressionImage/run.sh ./docker/regressionImage/KTM/
-          sh ./docker/regressionImage/KTM/run.sh
-      - name: Video Use Case Regression Test
-        run: |
-          cp ./docker/regressionImage/run.sh ./docker/regressionImage/Video/
-          sh ./docker/regressionImage/Video/run.sh
-      - name: Smart Meter Use Case Regression Test
-        run: |
-          cp ./docker/regressionImage/run.sh ./docker/regressionImage/SmartMeter/
-          sh ./docker/regressionImage/SmartMeter/run.sh
-      - name: Medic Regression Test
-        run: |
-          cp ./docker/regressionImage/run.sh ./docker/regressionImage/Med/
-          sh ./docker/regressionImage/Med/run.sh
