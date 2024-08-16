@@ -52,8 +52,6 @@ class FixedSizeExecutableDataType : public AbstractDataType {
         }
     }
 
-    nautilus::val<ValueType> operator()() const { return rawValue; }
-
     ~FixedSizeExecutableDataType() override = default;
 
   protected:
