@@ -14,7 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_PIEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 namespace NES::Runtime::Execution::Expressions {
 /**
  * @brief This expression return the pi value
@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Expressions {
 class PiExpression : public Expression {
   public:
     PiExpression(const ExpressionPtr& SubExpression);
-    Value<> execute(NES::Nautilus::Record& record) const override;
+    ExecDataType execute(NES::Nautilus::Record& record) const override;
 
   private:
     const ExpressionPtr SubExpression;

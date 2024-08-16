@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -19,10 +19,10 @@ namespace NES::Runtime::Execution::Operators {
 
 void Selection::execute(ExecutionContext& ctx, Record& record) const {
     // evaluate expression and call child operator if expression is valid
-    if (expression->execute(record)) {
-        if (child != nullptr) {
-            child->execute(ctx, record);
-        }
+    const auto expressionResult = expression->execute(record);
+
+    if (*expressionResult) {
+        child->execute(ctx, record);
     }
 }
 

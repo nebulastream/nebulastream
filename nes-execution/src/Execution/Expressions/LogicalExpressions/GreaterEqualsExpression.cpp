@@ -20,9 +20,9 @@ namespace NES::Runtime::Execution::Expressions {
 GreaterEqualsExpression::GreaterEqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
 
-Value<> GreaterEqualsExpression::execute(Record& record) const {
-    Value<> leftValue = leftSubExpression->execute(record);
-    Value<> rightValue = rightSubExpression->execute(record);
+ExecDataType GreaterEqualsExpression::execute(Record& record) const {
+    const auto leftValue = leftSubExpression->execute(record);
+    const auto rightValue = rightSubExpression->execute(record);
     return leftValue >= rightValue;
 }
 

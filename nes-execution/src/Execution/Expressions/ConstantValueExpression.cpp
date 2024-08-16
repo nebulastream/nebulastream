@@ -12,6 +12,8 @@
     limitations under the License.
 */
 #include <Execution/Expressions/ConstantValueExpression.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+
 namespace NES::Runtime::Execution::Expressions {
 
 template<typename T>
@@ -20,8 +22,8 @@ ConstantValueExpression<T>::ConstantValueExpression(T value) : value(value) {}
 
 template<typename T>
     requires std::is_integral_v<T> || std::is_floating_point_v<T>
-Value<> ConstantValueExpression<T>::execute(Record&) const {
-    return Value<>(value);
+ExecDataType ConstantValueExpression<T>::execute(Record&) const {
+    return FixedSizeExecutableDataType<T>::create(value);
 }
 
 template class ConstantValueExpression<int8_t>;

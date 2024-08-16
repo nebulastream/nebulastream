@@ -31,7 +31,7 @@ MinExpression::MinExpression(const NES::Runtime::Execution::Expressions::Express
  */
 double calculateMin(double x, double y) { return std::min(x, y); }
 
-Value<> MinExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType MinExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.

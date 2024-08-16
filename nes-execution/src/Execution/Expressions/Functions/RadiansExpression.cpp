@@ -23,7 +23,7 @@ RadiansExpression::RadiansExpression(const NES::Runtime::Execution::Expressions:
     : SubExpression(SubExpression) {}
 
 double calculateRadians(double x) { return (x * M_PI) / 180; }
-Value<> RadiansExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType RadiansExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     Value subValue = SubExpression->execute(record);
     //check the type and then call the function.

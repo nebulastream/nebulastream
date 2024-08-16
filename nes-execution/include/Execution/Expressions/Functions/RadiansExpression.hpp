@@ -14,7 +14,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RADIANSEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_RADIANSEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 namespace NES::Runtime::Execution::Expressions {
 /**
  * @brief This expression converts the degrees to radians
@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Expressions {
 class RadiansExpression : public Expression {
   public:
     RadiansExpression(const ExpressionPtr& SubExpression);
-    Value<> execute(NES::Nautilus::Record& record) const override;
+    ExecDataType execute(NES::Nautilus::Record& record) const override;
 
   private:
     const ExpressionPtr SubExpression;

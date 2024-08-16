@@ -15,7 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_ARITHMETICALEXPRESSIONS_DIVEXPRESSION_HPP_
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 namespace NES::Runtime::Execution::Expressions {
 
 /**
@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::Expressions {
 class DivExpression : public Expression {
   public:
     DivExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    Value<> execute(Record& record) const override;
+    ExecDataType execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;

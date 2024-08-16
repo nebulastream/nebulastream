@@ -23,7 +23,7 @@ TanExpression::TanExpression(const NES::Runtime::Execution::Expressions::Express
 
 double calculateTan(double x) { return std::tan(x); }
 
-Value<> TanExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType TanExpression::execute(NES::Nautilus::Record& record) const {
     Value value = expression->execute(record);
 
     if (value->isType<Int8>()) {

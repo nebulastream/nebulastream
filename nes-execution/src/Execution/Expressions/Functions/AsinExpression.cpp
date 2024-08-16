@@ -30,7 +30,7 @@ AsinExpression::AsinExpression(const NES::Runtime::Execution::Expressions::Expre
 */
 double calculateAsin(double x) { return std::asin(x); }
 
-Value<> AsinExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType AsinExpression::execute(NES::Nautilus::Record& record) const {
 
     Value subValue = radians->execute(record);
     if (subValue->isType<Float>()) {

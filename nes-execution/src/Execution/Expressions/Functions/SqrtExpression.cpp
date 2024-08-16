@@ -29,7 +29,7 @@ SqrtExpression::SqrtExpression(const NES::Runtime::Execution::Expressions::Expre
  */
 double calculateSqrt(double x) { return std::sqrt(x); }
 
-Value<> SqrtExpression::execute(NES::Nautilus::Record& record) const {
+ExecDataType SqrtExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     Value value = subExpression->execute(record);
 

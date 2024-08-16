@@ -12,15 +12,14 @@
     limitations under the License.
 */
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Nautilus/Interface/DataTypes/Any.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Expressions {
 WriteFieldExpression::WriteFieldExpression(Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression)
     : field(field), subExpression(subExpression) {}
-Value<> WriteFieldExpression::execute(Record& record) const {
-    Value<> newValue = subExpression->execute(record);
+
+ExecDataType WriteFieldExpression::execute(Record& record) const {
+    ExecDataType newValue = subExpression->execute(record);
     record.write(field, newValue);
     return newValue;
 }

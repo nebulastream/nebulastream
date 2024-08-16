@@ -16,7 +16,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_FUNCTIONS_ATANEXPRESSION_HPP_
 
 #include <Execution/Expressions/Expression.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 
 namespace NES::Runtime::Execution::Expressions {
 
@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class AtanExpression : public Expression {
   public:
     AtanExpression(const ExpressionPtr& leftSubExpression);
-    Value<> execute(Record& record) const override;
+    ExecDataType execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;
