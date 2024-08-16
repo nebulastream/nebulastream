@@ -16,7 +16,7 @@
 
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES::Runtime

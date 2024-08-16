@@ -23,6 +23,7 @@
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <Runtime/BufferManager.hpp>
 
 
 namespace NES::Testing

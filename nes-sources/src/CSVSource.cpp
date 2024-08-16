@@ -143,7 +143,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         /// TODO #74: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, nullptr);
         tupleCount++;
     } ///end of while
 

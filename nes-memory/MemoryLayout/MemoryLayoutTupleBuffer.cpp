@@ -13,7 +13,7 @@
 */
 
 #include <utility>
-#include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
+#include <MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {

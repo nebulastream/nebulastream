@@ -23,6 +23,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Source.hpp>
 #include <SourceReturnType.hpp>
 

@@ -23,7 +23,7 @@
 #include <Util/magicenum/magic_enum.hpp>
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES

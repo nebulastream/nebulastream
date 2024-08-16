@@ -30,7 +30,7 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>

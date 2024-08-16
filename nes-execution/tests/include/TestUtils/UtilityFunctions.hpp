@@ -23,8 +23,8 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>

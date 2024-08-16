@@ -21,9 +21,8 @@
 #include <string>
 #include <variant>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <MemoryLayout/BufferAccessException.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/ExecutableType/NESType.hpp>
@@ -199,7 +198,7 @@ public:
      * @param memoryLayout
      * @param buffer
      */
-    DynamicTuple(uint64_t tupleIndex, MemoryLayoutPtr memoryLayout, Memory::TupleBuffer buffer);
+    DynamicTuple(uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer);
     /**
      * @brief Accesses an individual field in the tuple by index.
      * @param fieldIndex
@@ -248,7 +247,7 @@ public:
 
 private:
     const uint64_t tupleIndex;
-    const MemoryLayoutPtr memoryLayout;
+    const std::shared_ptr<MemoryLayout> memoryLayout;
     const Memory::TupleBuffer buffer;
 };
 
@@ -298,7 +297,7 @@ public:
      * @param memoryLayout memory layout to calculate field offset
      * @param tupleBuffer buffer that we want to access
      */
-    explicit TestTupleBuffer(const MemoryLayoutPtr& memoryLayout, Memory::TupleBuffer buffer);
+    explicit TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer);
 
     /**
      * @brief Creates a TestTupleBuffer from the TupleBuffer and the schema
@@ -524,7 +523,7 @@ public:
      * @brief Gets the memoryLayout.
      * @return MemoryLayoutPtr
      */
-    MemoryLayoutPtr getMemoryLayout() const;
+    std::shared_ptr<MemoryLayout> getMemoryLayout() const;
 
 private:
     /**
@@ -560,7 +559,7 @@ private:
     }
 
 private:
-    MemoryLayoutPtr memoryLayout;
+    std::shared_ptr<MemoryLayout> memoryLayout;
     mutable Memory::TupleBuffer buffer;
 };
 

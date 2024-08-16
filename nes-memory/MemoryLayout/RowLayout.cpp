@@ -12,32 +12,37 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <MemoryLayout/BufferAccessException.hpp>
+#include <MemoryLayout/RowLayout.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
 
-ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
+RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
 {
     uint64_t offsetCounter = 0;
     for (auto& fieldSize : physicalFieldSizes)
     {
-        columnOffsets.emplace_back(offsetCounter);
-        offsetCounter += fieldSize * capacity;
+        fieldOffSets.emplace_back(offsetCounter);
+        offsetCounter += fieldSize;
     }
 }
 
-std::shared_ptr<ColumnLayout> ColumnLayout::create(SchemaPtr schema, uint64_t bufferSize)
+std::shared_ptr<RowLayout> RowLayout::create(SchemaPtr schema, uint64_t bufferSize)
 {
-    return std::make_shared<ColumnLayout>(schema, bufferSize);
+    return std::make_shared<RowLayout>(schema, bufferSize);
 }
 
-uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const
+const std::vector<FIELD_SIZE>& RowLayout::getFieldOffSets() const
 {
-    if (fieldIndex >= physicalFieldSizes.size())
+    return fieldOffSets;
+}
+
+uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const
+{
+    if (fieldIndex >= fieldOffSets.size())
     {
         throw BufferAccessException(
             "field index: " + std::to_string(fieldIndex) + " is larger the number of field in the memory layout "
@@ -49,13 +54,9 @@ uint64_t ColumnLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) 
             "tuple index: " + std::to_string(tupleIndex) + " is larger the maximal capacity in the memory layout "
             + std::to_string(getCapacity()));
     }
-
-    auto fieldOffset = (tupleIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex];
-    return fieldOffset;
-}
-const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const
-{
-    return columnOffsets;
+    auto offSet = (tupleIndex * recordSize) + fieldOffSets[fieldIndex];
+    NES_TRACE("DynamicRowLayoutBuffer.calcOffset: offSet = {}", offSet);
+    return offSet;
 }
 
 } /// namespace NES::Runtime::MemoryLayouts

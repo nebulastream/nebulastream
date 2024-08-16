@@ -19,8 +19,8 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 

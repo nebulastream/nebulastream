@@ -12,17 +12,17 @@
     limitations under the License.
 */
 #include <utility>
+#include <Util/Logger/Logger.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/TupleBuffer.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+#include <MemoryLayout/BufferAccessException.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
+#include <include/Runtime/BufferManager.hpp>
+#include <include/Runtime/TupleBuffer.hpp>
+#include <include/Util/TestTupleBuffer.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
@@ -358,13 +358,13 @@ TestTupleBuffer TestTupleBuffer::createTestTupleBuffer(Memory::TupleBuffer buffe
 {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, buffer.getBufferSize());
-        return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+        auto memoryLayout = RowLayout::create(schema, buffer.getBufferSize());
+        return TestTupleBuffer(memoryLayout, buffer);
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, buffer.getBufferSize());
-        return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+        auto memoryLayout = ColumnLayout::create(schema, buffer.getBufferSize());
+        return TestTupleBuffer(memoryLayout, buffer);
     }
     else
     {
