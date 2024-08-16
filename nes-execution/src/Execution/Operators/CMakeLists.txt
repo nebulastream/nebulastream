@@ -18,5 +18,4 @@ add_source_files(nes-execution
         ExecutionContext.cpp)
 
 add_subdirectory(Relational)
-add_subdirectory(ThresholdWindow)
 add_subdirectory(Streaming)
