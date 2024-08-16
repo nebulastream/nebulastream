@@ -13,9 +13,9 @@
 */
 
 #include <API/Schema.hpp>
+#include <MemoryLayout/ColumnLayoutField.hpp>
+#include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <magic_enum.hpp>

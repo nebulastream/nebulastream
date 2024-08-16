@@ -18,7 +18,7 @@
 #include <string>
 #include <unordered_map>
 #include <API/Schema.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 #include <TPCH/Table.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>

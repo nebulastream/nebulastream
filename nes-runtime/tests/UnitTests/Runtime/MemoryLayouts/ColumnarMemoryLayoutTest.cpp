@@ -15,9 +15,9 @@
 #include <cstdlib>
 #include <iostream>
 #include <API/Schema.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>

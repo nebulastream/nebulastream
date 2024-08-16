@@ -26,7 +26,7 @@
 #include <SourceProvider.hpp>
 #include <TCPSource.hpp>
 
-namespace NES::QueryCompilation
+namespace NES
 {
 
 DataSourceProviderPtr SourceProvider::create()
@@ -52,7 +52,7 @@ SourceHandlePtr SourceProvider::lower(
             schema,
             std::move(bufferPool),
             std::move(emitFunction),
-            compilerOptions->getNumSourceLocalBuffers(),
+            64,
             std::move(csvSource),
             csvSourceType->getNumberOfBuffersToProduce()->getValue());
     }
@@ -62,16 +62,10 @@ SourceHandlePtr SourceProvider::lower(
         const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
         auto tcpSource = std::make_unique<TCPSource>(schema, tcpSourceType);
         return std::make_shared<SourceHandle>(
-            originId,
-            schema,
-            std::move(bufferPool),
-            std::move(emitFunction),
-            compilerOptions->getNumSourceLocalBuffers(),
-            std::move(tcpSource),
-            0);
+            originId, schema, std::move(bufferPool), std::move(emitFunction), 64, std::move(tcpSource), 0);
     }
     NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
     throw std::invalid_argument("Unknown Source Descriptor Type");
 }
 
-} /// namespace NES::QueryCompilation
+} /// namespace NES
