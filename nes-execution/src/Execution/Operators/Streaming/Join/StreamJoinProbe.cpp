@@ -17,7 +17,6 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <utility>
@@ -56,38 +55,38 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
     if (withDeletion) {
         // Update the watermark for the nlj probe and delete all slices that can be deleted
         const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-        Nautilus::FunctionCall("deleteAllSlicesProxy",
-                               deleteAllSlicesProxy,
-                               operatorHandlerMemRef,
-                               ctx.getWatermarkTs(),
-                               ctx.getSequenceNumber(),
-                               ctx.getChunkNumber(),
-                               ctx.getLastChunk(),
-                               ctx.getOriginId(),
-                               Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                               Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        nautilus::invoke(deleteAllSlicesProxy,
+                         operatorHandlerMemRef,
+                         ctx.getWatermarkTs(),
+                         ctx.getSequenceNumber(),
+                         ctx.getChunkNumber(),
+                         ctx.getLastChunk(),
+                         ctx.getOriginId(),
+                         UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                         UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     }
 
     // Now close for all children
     Operator::close(ctx, recordBuffer);
 }
 
+// TODO create an overloaded function that takes nautilus values for the windowStart and windowEnd
 void StreamJoinProbe::createJoinedRecord(Record& joinedRecord,
                                          Record& leftRecord,
                                          Record& rightRecord,
-                                         const Value<UInt64>& windowStart,
-                                         const Value<UInt64>& windowEnd) const {
+                                         const ExecDataUI64& windowStart,
+                                         const ExecDataUI64& windowEnd) const {
     // Writing the window start, end, and key field
     joinedRecord.write(windowMetaData.windowStartFieldName, windowStart);
     joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd);
 
     /* Writing the leftSchema fields, expect the join schema to have the fields in the same order then the left schema */
-    for (auto& field : joinSchema.leftSchema->fields) {
+    for (auto& field : nautilus::static_iterable(joinSchema.leftSchema->fields)) {
         joinedRecord.write(field->getName(), leftRecord.read(field->getName()));
     }
 
     /* Writing the rightSchema fields, expect the join schema to have the fields in the same order then the right schema */
-    for (auto& field : joinSchema.rightSchema->fields) {
+    for (auto& field : nautilus::static_iterable(joinSchema.rightSchema->fields)) {
         joinedRecord.write(field->getName(), rightRecord.read(field->getName()));
     }
 }
@@ -105,12 +104,11 @@ StreamJoinProbe::StreamJoinProbe(const uint64_t operatorHandlerIndex,
 void StreamJoinProbe::terminate(ExecutionContext& ctx) const {
     // Delete all slices, as the query has ended
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("deleteAllWindowsProxy",
-                           deleteAllWindowsProxy,
-                           operatorHandlerMemRef,
-                           ctx.getPipelineContext(),
-                           Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                           Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    nautilus::invoke(deleteAllWindowsProxy,
+                     operatorHandlerMemRef,
+                     ctx.getPipelineContext(),
+                     UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                     UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
     Operator::terminate(ctx);
 }
 

@@ -23,7 +23,7 @@
 
 namespace NES::Nautilus::Interface {
 
-FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, double bloomFalsePosRate)
+FixedPage::FixedPage(int8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, double bloomFalsePosRate)
     : sizeOfRecord(sizeOfRecord), data(dataPtr), capacity(pageSize / sizeOfRecord), bloomFalsePosRate(bloomFalsePosRate) {
     NES_ASSERT2_FMT(0 < capacity,
                     "Capacity is zero for pageSize " + std::to_string(pageSize) + " and sizeOfRecord "
@@ -33,7 +33,7 @@ FixedPage::FixedPage(uint8_t* dataPtr, size_t sizeOfRecord, size_t pageSize, dou
     currentPos = 0;
 }
 
-uint8_t* FixedPage::append(const uint64_t hash) {
+int8_t* FixedPage::append(const uint64_t hash) {
     auto posToWriteTo = currentPos++;
     if (posToWriteTo >= capacity) {
         currentPos--;
@@ -42,7 +42,7 @@ uint8_t* FixedPage::append(const uint64_t hash) {
 
     addHashToBloomFilter(hash);
 
-    uint8_t* ptr = &data[posToWriteTo * sizeOfRecord];
+    int8_t* ptr = &data[posToWriteTo * sizeOfRecord];
     NES_DEBUG("Inserting tuple at pos {}", posToWriteTo);
     return ptr;
 }
@@ -62,7 +62,7 @@ std::string FixedPage::getContentAsString(SchemaPtr schema) const {
         for (auto u = 0UL; u < schema->getSize(); u++) {
             ss << " field=" << schema->get(u)->getName();
             NES_ASSERT(schema->get(u)->getDataType()->isNumeric(), "This method is only supported for uint64");
-            uint8_t* pointer = &data[i * sizeOfRecord];
+            int8_t* pointer = &data[i * sizeOfRecord];
             auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
             for (auto& field : schema->fields) {
                 if (field->getName() == schema->get(u)->getName()) {
@@ -79,7 +79,7 @@ std::string FixedPage::getContentAsString(SchemaPtr schema) const {
 
 bool FixedPage::bloomFilterCheck(const uint64_t hash) const { return bloomFilter->checkContains(hash); }
 
-uint8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeOfRecord]); }
+int8_t* FixedPage::operator[](size_t index) const { return &(data[index * sizeOfRecord]); }
 
 size_t FixedPage::size() const { return currentPos; }
 

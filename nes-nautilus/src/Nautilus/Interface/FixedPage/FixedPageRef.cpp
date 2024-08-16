@@ -12,48 +12,48 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 
 namespace NES::Nautilus::Interface {
-FixedPageRef::FixedPageRef(const Value<MemRef>& fixedPageRef) : fixedPageRef(fixedPageRef) {}
+FixedPageRef::FixedPageRef(const Nautilus::MemRefVal& fixedPageRef) : fixedPageRef(fixedPageRef) {}
 
 void addHashToBloomFilterProxy(void* fixedPagePtr, uint64_t hash) {
     auto* fixedPage = (FixedPage*) fixedPagePtr;
     fixedPage->addHashToBloomFilter(hash);
 }
 
-Value<MemRef> FixedPageRef::allocateEntry(const Value<UInt64>& hash) {
+Nautilus::MemRefVal FixedPageRef::allocateEntry(const Nautilus::UInt64Val& hash) {
     auto currentPos = getCurrentPos();
 
-    Value<MemRef> entry(nullptr);
+    Nautilus::MemRefVal entry(nullptr);
     if (currentPos < getCapacity()) {
-        //TODO replace FunctionCall with Nautilus alternative, see #4176
-        FunctionCall("addHashToBloomFilterProxy", addHashToBloomFilterProxy, fixedPageRef, hash);
+        //TODO replace nautilus::invoke with Nautilus alternative, see #4176
+        nautilus::invoke(addHashToBloomFilterProxy, fixedPageRef, hash);
 
         auto ptr = getDataPtr() + currentPos * getSizeOfRecord();
         setCurrentPos(currentPos + 1);
-        entry = ptr.as<MemRef>();
+        entry = ptr;
     }
 
     return entry;
 }
 
-Value<UInt64> FixedPageRef::getSizeOfRecord() { return getMember(fixedPageRef, FixedPage, sizeOfRecord).load<UInt64>(); }
+Nautilus::UInt64Val FixedPageRef::getSizeOfRecord() { return getMember(fixedPageRef, FixedPage, sizeOfRecord, uint64_t); }
 
-Value<MemRef> FixedPageRef::getDataPtr() { return getMember(fixedPageRef, FixedPage, data).load<MemRef>(); }
+Nautilus::MemRefVal FixedPageRef::getDataPtr() { return getMemberAsPointer(fixedPageRef, FixedPage, data, int8_t); }
 
-Value<UInt64> FixedPageRef::getCurrentPos() { return getMember(fixedPageRef, FixedPage, currentPos).load<UInt64>(); }
+Nautilus::UInt64Val FixedPageRef::getCurrentPos() { return getMember(fixedPageRef, FixedPage, currentPos, uint64_t); }
 
-Value<UInt64> FixedPageRef::getCapacity() { return getMember(fixedPageRef, FixedPage, capacity).load<UInt64>(); }
+Nautilus::UInt64Val FixedPageRef::getCapacity() { return getMember(fixedPageRef, FixedPage, capacity, uint64_t); }
 
-void FixedPageRef::setCurrentPos(const Value<>& pos) { getMember(fixedPageRef, FixedPage, currentPos).store(pos); }
+void FixedPageRef::setCurrentPos(const UInt64Val& pos) { *getMemberAsPointer(fixedPageRef, FixedPage, currentPos, uint64_t) = pos; }
 
-FixedPageRefIter FixedPageRef::begin() { return at(0_u64); }
+FixedPageRefIter FixedPageRef::begin() { return at(0); }
 
-FixedPageRefIter FixedPageRef::at(const Value<UInt64>& pos) {
+FixedPageRefIter FixedPageRef::at(const Nautilus::UInt64Val& pos) {
     FixedPageRefIter fixedPageRefIter(*this);
     fixedPageRefIter.addr = fixedPageRefIter.addr + pos * getSizeOfRecord();
     return fixedPageRefIter;
@@ -83,7 +83,7 @@ FixedPageRefIter& FixedPageRefIter::operator=(const FixedPageRefIter& it) {
     return *this;
 }
 
-Value<MemRef> FixedPageRefIter::operator*() { return addr; }
+Nautilus::MemRefVal FixedPageRefIter::operator*() { return addr; }
 
 FixedPageRefIter& FixedPageRefIter::operator++() {
     addr = addr + fixedPageRef.getSizeOfRecord();

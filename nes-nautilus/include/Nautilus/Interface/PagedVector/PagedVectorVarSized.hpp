@@ -16,7 +16,7 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_HPP_
 
 #include <API/Schema.hpp>
-#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <span>
@@ -89,7 +89,7 @@ class PagedVectorVarSized {
      * @param length
      * @return uint64_t Returns the key of the new entry in the varSizedDataEntryMap.
      */
-    uint64_t storeText(const char* text, uint32_t length);
+    uint64_t storeText(const int8_t* text, uint32_t length);
 
     /**
      * @brief Loads text from the varSizedDataPages by retrieving the pointer to the text and its length from the
@@ -97,7 +97,7 @@ class PagedVectorVarSized {
      * @param textEntryMapKey
      * @return TextValue*
      */
-    TextValue* loadText(uint64_t textEntryMapKey);
+    int8_t* loadText(uint64_t textEntryMapKey);
 
     /**
      * @brief Combines the pages of the given PagedVectorVarSized with the pages of this PagedVectorVarSized.

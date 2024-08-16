@@ -17,7 +17,6 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -27,7 +26,7 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, WorkerThreadId workerThreadId, uint64_t joinBuildSideInt) {
+void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, uint32_t workerThreadId, uint64_t joinBuildSideInt) {
     NES_ASSERT2_FMT(ptrWindowVector != nullptr, "ptrPagedVector should not be null!");
     auto allWindowVec = static_cast<std::vector<NLJSlice*>*>(ptrWindowVector);
     auto nljWindow = allWindowVec->operator[](index);
@@ -35,24 +34,23 @@ void* getPagedVectorRefProxy(void* ptrWindowVector, uint64_t index, WorkerThread
     NES_INFO("allWindowVec->size(): {}", allWindowVec->size());
     NES_INFO("joinBuildSide: {}", magic_enum::enum_name(joinBuildSide));
 
-    NES_INFO("getPagedVectorRefProxy for index {} workerThreadId {} nljWindow {}", index, workerThreadId, nljWindow->toString());
+    NES_INFO("getPagedVectorRefProxy for index {} workerThreadId {} nljWindow {}", index, WorkerThreadId(workerThreadId), nljWindow->toString());
 
     switch (joinBuildSide) {
-        case QueryCompilation::JoinBuildSideType::Left: return nljWindow->getPagedVectorRefLeft(workerThreadId);
-        case QueryCompilation::JoinBuildSideType::Right: return nljWindow->getPagedVectorRefRight(workerThreadId);
+        case QueryCompilation::JoinBuildSideType::Left: return nljWindow->getPagedVectorRefLeft(WorkerThreadId(workerThreadId));
+        case QueryCompilation::JoinBuildSideType::Right: return nljWindow->getPagedVectorRefRight(WorkerThreadId(workerThreadId));
     }
 }
 
-void NLJBuildBucketing::insertRecordForWindow(Value<MemRef>& allWindowsToFill,
-                                              Value<UInt64>& curIndex,
-                                              ValueId<WorkerThreadId>& workerThreadId,
-                                              Record& record) const {
-    auto curPagedVectorRef = Nautilus::FunctionCall("getPagedVectorRefProxy",
-                                                    getPagedVectorRefProxy,
-                                                    allWindowsToFill,
-                                                    curIndex,
-                                                    workerThreadId,
-                                                    Value<UInt64>(to_underlying(joinBuildSide)));
+void NLJBuildBucketing::insertRecordForWindow(const MemRefVal& allWindowsToFill,
+                                              const UInt64Val& curIndex,
+                                              const UInt32Val& workerThreadId,
+                                              const Record& record) const {
+    auto curPagedVectorRef = nautilus::invoke(getPagedVectorRefProxy,
+                                              allWindowsToFill,
+                                              curIndex,
+                                              workerThreadId,
+                                              UInt64Val(to_underlying(joinBuildSide)));
 
     // Write record to the pagedVector
     auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(curPagedVectorRef, schema);

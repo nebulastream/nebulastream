@@ -14,7 +14,6 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/magicenum/magic_enum.hpp>
@@ -53,18 +52,17 @@ void checkWindowsTriggerProxy(void* ptrOpHandler,
 void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
     // Update the watermark for the nlj operator and trigger slices
     auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("checkWindowsTriggerProxy",
-                           checkWindowsTriggerProxy,
-                           operatorHandlerMemRef,
-                           ctx.getPipelineContext(),
-                           ctx.getWorkerContext(),
-                           ctx.getWatermarkTs(),
-                           ctx.getSequenceNumber(),
-                           ctx.getChunkNumber(),
-                           ctx.getLastChunk(),
-                           ctx.getOriginId(),
-                           Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-                           Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+    nautilus::invoke(checkWindowsTriggerProxy,
+                     operatorHandlerMemRef,
+                     ctx.getPipelineContext(),
+                     ctx.getWorkerContext(),
+                     ctx.getWatermarkTs(),
+                     ctx.getSequenceNumber(),
+                     ctx.getChunkNumber(),
+                     ctx.getLastChunk(),
+                     ctx.getOriginId(),
+                     UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
+                     UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 }
 
 StreamJoinBuild::StreamJoinBuild(const uint64_t operatorHandlerIndex,

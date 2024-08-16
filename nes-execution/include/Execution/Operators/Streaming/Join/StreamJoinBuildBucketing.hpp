@@ -25,13 +25,13 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      */
     class LocalStateBucketing : public OperatorState {
       public:
-        explicit LocalStateBucketing(const Value<MemRef>& allWindowsToFill)
+        explicit LocalStateBucketing(const MemRefVal& allWindowsToFill)
             : allWindowsToFill(allWindowsToFill), numWindowsToFill(0_u64), minWindowStart(0_u64), maxWindowEnd(0_u64) {}
 
-        Value<MemRef> allWindowsToFill;
-        Value<UInt64> numWindowsToFill;
-        Value<UInt64> minWindowStart;
-        Value<UInt64> maxWindowEnd;
+        MemRefVal allWindowsToFill;
+        UInt64Val numWindowsToFill;
+        UInt64Val minWindowStart;
+        UInt64Val maxWindowEnd;
     };
 
     /**
@@ -68,9 +68,9 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param workerThreadId
      */
     void updateLocalState(LocalStateBucketing* localStateBucketing,
-                          Value<MemRef>& opHandlerMemRef,
-                          Value<UInt64>& ts,
-                          ValueId<WorkerThreadId>& workerThreadId) const;
+                          const MemRefVal& opHandlerMemRef,
+                          const UInt64Val& ts,
+                          const UInt32Val& workerThreadId) const;
 
     /**
      * @brief Checks if the current local hash join state is up-to-date, meaning the correct windows are stored
@@ -78,21 +78,21 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param localStateBucketing
      * @return Boolean
      */
-    Value<Boolean> checkIfLocalStateUpToDate(Value<UInt64>& ts, LocalStateBucketing* localStateBucketing) const;
+    BooleanVal checkIfLocalStateUpToDate(const UInt64Val& ts, LocalStateBucketing* localStateBucketing) const;
 
     /**
      * @brief Calculates the minimum window start for the timestamp (ts).
      * @param ts
-     * @return Value<UINT64>
+     * @return UInt64Val
      */
-    Value<UInt64> getMinWindowStartForTs(Value<UInt64>& ts) const;
+    UInt64Val getMinWindowStartForTs(const UInt64Val& ts) const;
 
     /**
      * @brief Calculates the maximum window end for the timestamp (ts).
      * @param ts
-     * @return Value<UINT64>
+     * @return UInt64Val
      */
-    Value<UInt64> getMaxWindowStartForTs(Value<UInt64>& ts) const;
+    UInt64Val getMaxWindowStartForTs(const UInt64Val& ts) const;
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
@@ -105,10 +105,10 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param workerThreadId
      * @param record
      */
-    virtual void insertRecordForWindow(Value<MemRef>& allWindowsToFill,
-                                       Value<UInt64>& curIndex,
-                                       ValueId<WorkerThreadId>& workerThreadId,
-                                       Record& record) const = 0;
+    virtual void insertRecordForWindow(const MemRefVal& allWindowsToFill,
+                                       const UInt64Val& curIndex,
+                                       const UInt32Val& workerThreadId,
+                                       const Record& record) const = 0;
 
   private:
     /**
@@ -116,14 +116,14 @@ class StreamJoinBuildBucketing : public StreamJoinBuild {
      * @param ts
      * @return Value<INT64>
      */
-    inline Value<UInt64> calcLastStartForTs(Value<UInt64>& ts) const;
+    inline UInt64Val calcLastStartForTs(const UInt64Val& ts) const;
 
     /**
      * @brief Calculates the num of windows for the given timestamp (ts)
      * @param ts
      * @return Value<INT64>
      */
-    inline Value<UInt64> calcNumWindows(Value<UInt64>& ts) const;
+    inline UInt64Val calcNumWindows(const UInt64Val& ts) const;
 
     uint64_t windowSize;
     uint64_t windowSlide;

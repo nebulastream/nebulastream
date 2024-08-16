@@ -31,16 +31,16 @@ class NLJBuildSlicing : public StreamJoinBuild {
      */
     class LocalNestedLoopJoinState : public Operators::OperatorState {
       public:
-        LocalNestedLoopJoinState(const Value<MemRef>& operatorHandler,
-                                 const Value<MemRef>& sliceReference,
+        LocalNestedLoopJoinState(const MemRefVal& operatorHandler,
+                                 const MemRefVal& sliceReference,
                                  Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef)
             : joinOperatorHandler(operatorHandler), sliceReference(sliceReference),
               pagedVectorVarSizedRef(std::move(pagedVectorVarSizedRef)), sliceStart(0_u64), sliceEnd(0_u64){};
-        Value<MemRef> joinOperatorHandler;
-        Value<MemRef> sliceReference;
+        MemRefVal joinOperatorHandler;
+        MemRefVal sliceReference;
         Nautilus::Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef;
-        Value<UInt64> sliceStart;
-        Value<UInt64> sliceEnd;
+        UInt64Val sliceStart;
+        UInt64Val sliceEnd;
     };
 
     /**
@@ -67,12 +67,12 @@ class NLJBuildSlicing : public StreamJoinBuild {
     /**
      * @brief Updates the localJoinState by getting the values via Nautilus::FunctionCalls()
      * @param localJoinState: The pointer to the joinstate that we want to update
-     * @param operatorHandlerMemRef: MemRef to the operator handler
+     * @param operatorHandlerMemRef: MemRefVal to the operator handler
      * @param timestamp: Timestamp, for which to get the sliceRef, sliceStart, and sliceEnd
      */
     void updateLocalJoinState(LocalNestedLoopJoinState* localJoinState,
-                              Nautilus::Value<Nautilus::MemRef>& operatorHandlerMemRef,
-                              Nautilus::Value<Nautilus::UInt64>& timestamp) const;
+                              const Nautilus::MemRefVal& operatorHandlerMemRef,
+                              const Nautilus::UInt64Val& timestamp) const;
 };
 }// namespace NES::Runtime::Execution::Operators
 

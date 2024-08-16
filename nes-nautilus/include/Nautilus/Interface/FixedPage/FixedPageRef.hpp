@@ -15,7 +15,7 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_FIXEDPAGE_FIXEDPAGEREF_HPP_
 
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <nautilus/val.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 
 namespace NES::Nautilus::Interface {
@@ -24,53 +24,53 @@ class FixedPageRefIter;
 
 /**
  * @brief This is a Nautilus wrapper for the FixedPage.
- * It wraps a MemRef to the underling data structure and provides access methods.
+ * It wraps a MemRefVal to the underling data structure and provides access methods.
  */
 class FixedPageRef {
   public:
     /**
      * @brief Constructs the wrapper.
-     * @param fixedPageRef MemRef to the FixedPage
+     * @param fixedPageRef MemRefVal to the FixedPage
      * @param sizeOfRecord size of one record
      */
-    FixedPageRef(const Value<MemRef>& fixedPageRef);
+    FixedPageRef(const Nautilus::MemRefVal& fixedPageRef);
 
     /**
      * @brief Allocates an new entry and returns a reference to it
      * @param hash
-     * @return Value<MemRef>
+     * @return Nautilus::MemRefVal
      */
-    Value<MemRef> allocateEntry(const Value<UInt64>& hash);
+    Nautilus::MemRefVal allocateEntry(const Nautilus::UInt64Val& hash);
 
     /**
      * @brief Getter for sizeOfRecord
-     * @return Value<UInt64> sizeOfRecord
+     * @return Nautilus::UInt64Val sizeOfRecord
      */
-    Value<UInt64> getSizeOfRecord();
+    Nautilus::UInt64Val getSizeOfRecord();
 
     /**
      * @brief Getter for data
-     * @return Value<MemRef> data
+     * @return Nautilus::MemRefVal data
      */
-    Value<MemRef> getDataPtr();
+    Nautilus::MemRefVal getDataPtr();
 
     /**
      * @brief Getter for currentPos
-     * @return Value<UInt64> currentPos
+     * @return Nautilus::UInt64Val currentPos
      */
-    Value<UInt64> getCurrentPos();
+    Nautilus::UInt64Val getCurrentPos();
 
     /**
      * @brief Getter for capacity
-     * @return Value<UInt64> capacity
+     * @return Nautilus::UInt64Val capacity
      */
-    Value<UInt64> getCapacity();
+    Nautilus::UInt64Val getCapacity();
 
     /**
      * @brief Setter for currentPos
      * @param pos
      */
-    void setCurrentPos(const Value<>& pos);
+    void setCurrentPos(const Nautilus::UInt64Val& pos);
 
     /**
      * @brief Returns an iterator that points to the begin of this FixedPageRef
@@ -83,7 +83,7 @@ class FixedPageRef {
      * @param pos
      * @return FixedPageRefIter
      */
-    FixedPageRefIter at(const Value<UInt64>& pos);
+    FixedPageRefIter at(const Nautilus::UInt64Val& pos);
 
     /**
      * @brief Returns an iterator that points to the end of this FixedPageRef
@@ -99,7 +99,7 @@ class FixedPageRef {
     bool operator==(const FixedPageRef& other) const;
 
   private:
-    Value<MemRef> fixedPageRef;
+    Nautilus::MemRefVal fixedPageRef;
 };
 
 class FixedPageRefIter {
@@ -127,9 +127,9 @@ class FixedPageRefIter {
 
     /**
      * @brief Dereference operator that points to a given entry in the FixedPageRef
-     * @return Value<MemRef>
+     * @return Nautilus::ObjRefVal<void>Val
      */
-    Value<MemRef> operator*();
+    Nautilus::MemRefVal operator*();
 
     /**
      * @brief Pre-increment operator that first increments and then returns the reference
@@ -158,7 +158,7 @@ class FixedPageRefIter {
     bool operator!=(const FixedPageRefIter& other) const;
 
   private:
-    Value<MemRef> addr;
+    Nautilus::MemRefVal addr;
     FixedPageRef fixedPageRef;
 };
 }// namespace NES::Nautilus::Interface

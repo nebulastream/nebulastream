@@ -11,15 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/function.hpp>
+#include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 
 namespace NES::Nautilus::Interface {
-PagedVectorRef::PagedVectorRef(const Value<MemRef>& pagedVectorRef, uint64_t entrySize)
+PagedVectorRef::PagedVectorRef(const Nautilus::MemRefVal& pagedVectorRef, uint64_t entrySize)
     : pagedVectorRef(pagedVectorRef), entrySize(entrySize) {}
 
 void allocateNewPageProxy(void* pagedVectorPtr) {
@@ -27,19 +29,19 @@ void allocateNewPageProxy(void* pagedVectorPtr) {
     pagedVector->appendPage();
 }
 
-void* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
+int8_t* getPagedVectorPageProxy(void* pagedVectorPtr, uint64_t pagePos) {
     auto* pagedVector = (PagedVector*) pagedVectorPtr;
     return pagedVector->getPages()[pagePos];
 }
 
-Value<UInt64> PagedVectorRef::getCapacityPerPage() const {
-    return getMember(pagedVectorRef, PagedVector, capacityPerPage).load<UInt64>();
+Nautilus::UInt64Val PagedVectorRef::getCapacityPerPage() const {
+    return getMember(pagedVectorRef, PagedVector, capacityPerPage, uint64_t);
 }
 
-Value<MemRef> PagedVectorRef::allocateEntry() {
+Nautilus::MemRefVal PagedVectorRef::allocateEntry() {
     // check if we should allocate a new page
     if (getNumberOfEntries() >= getCapacityPerPage()) {
-        FunctionCall("allocateNewPageProxy", allocateNewPageProxy, pagedVectorRef);
+        nautilus::invoke(allocateNewPageProxy, pagedVectorRef);
     }
     // gets the current page and reserve space for the new entry.
     auto page = getCurrentPage();
@@ -47,43 +49,42 @@ Value<MemRef> PagedVectorRef::allocateEntry() {
     setNumberOfEntries(getNumberOfEntries() + 1_u64);
     setNumberOfTotalEntries(getTotalNumberOfEntries() + 1_u64);
 
-    return entry.as<MemRef>();
+    return entry;
 }
 
-Value<MemRef> PagedVectorRef::getCurrentPage() { return getMember(pagedVectorRef, PagedVector, currentPage).load<MemRef>(); }
+Nautilus::MemRefVal PagedVectorRef::getCurrentPage() { return getMemberAsPointer(pagedVectorRef, PagedVector, currentPage, int8_t); }
 
-Value<UInt64> PagedVectorRef::getNumberOfEntries() {
-    return getMember(pagedVectorRef, PagedVector, numberOfEntries).load<UInt64>();
+Nautilus::UInt64Val PagedVectorRef::getNumberOfEntries() {
+    return getMember(pagedVectorRef, PagedVector, numberOfEntries, uint64_t);
 }
 
-Value<UInt64> PagedVectorRef::getTotalNumberOfEntries() {
-    return getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).load<UInt64>();
+Nautilus::UInt64Val PagedVectorRef::getTotalNumberOfEntries() {
+    return getMember(pagedVectorRef, PagedVector, totalNumberOfEntries, uint64_t);
 }
 
-Value<MemRef> PagedVectorRef::getEntry(const Value<UInt64>& pos) {
+Nautilus::MemRefVal PagedVectorRef::getEntry(const Nautilus::UInt64Val& pos) {
     // Calculating on what page and at what position the entry lies
-    Value<UInt64> capacityPerPage = getCapacityPerPage();
-    auto pagePos = (pos / capacityPerPage).as<UInt64>();
+    Nautilus::UInt64Val capacityPerPage = getCapacityPerPage();
+    auto pagePos = (pos / capacityPerPage);
     auto positionOnPage = pos - (pagePos * capacityPerPage);
 
-    auto page =
-        Nautilus::FunctionCall("getPagedVectorPageProxy", getPagedVectorPageProxy, pagedVectorRef, Value<UInt64>(pagePos));
+    auto page = nautilus::invoke(getPagedVectorPageProxy, pagedVectorRef, Nautilus::UInt64Val(pagePos));
     auto ptrOnPage = (positionOnPage * entrySize);
     auto retPos = page + ptrOnPage;
-    return retPos.as<MemRef>();
+    return retPos;
 }
 
-void PagedVectorRef::setNumberOfEntries(const Value<>& val) {
-    getMember(pagedVectorRef, PagedVector, numberOfEntries).store(val);
+void PagedVectorRef::setNumberOfEntries(const UInt64Val& val) {
+    *getMemberAsPointer(pagedVectorRef, PagedVector, numberOfEntries, uint64_t) = val;
 }
 
-void PagedVectorRef::setNumberOfTotalEntries(const Value<>& val) {
-    getMember(pagedVectorRef, PagedVector, totalNumberOfEntries).store(val);
+void PagedVectorRef::setNumberOfTotalEntries(const UInt64Val& val) {
+    *getMemberAsPointer(pagedVectorRef, PagedVector, totalNumberOfEntries, uint64_t) = val;
 }
 
 PagedVectorRefIter PagedVectorRef::begin() { return at(0_u64); }
 
-PagedVectorRefIter PagedVectorRef::at(Value<UInt64> pos) {
+PagedVectorRefIter PagedVectorRef::at(Nautilus::UInt64Val pos) {
     PagedVectorRefIter pagedVectorRefIter(*this);
     pagedVectorRefIter.setPos(pos);
     return pagedVectorRefIter;
@@ -113,7 +114,7 @@ PagedVectorRefIter& PagedVectorRefIter::operator=(const PagedVectorRefIter& it) 
     return *this;
 }
 
-Value<MemRef> PagedVectorRefIter::operator*() { return pagedVectorRef.getEntry(pos); }
+Nautilus::MemRefVal PagedVectorRefIter::operator*() { return pagedVectorRef.getEntry(pos); }
 
 PagedVectorRefIter& PagedVectorRefIter::operator++() {
     pos = pos + 1;
@@ -136,5 +137,5 @@ bool PagedVectorRefIter::operator==(const PagedVectorRefIter& other) const {
 
 bool PagedVectorRefIter::operator!=(const PagedVectorRefIter& other) const { return !(*this == other); }
 
-void PagedVectorRefIter::setPos(Value<UInt64> newValue) { pos = newValue; }
+void PagedVectorRefIter::setPos(Nautilus::UInt64Val newValue) { pos = newValue; }
 }// namespace NES::Nautilus::Interface
