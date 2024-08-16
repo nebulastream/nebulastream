@@ -19,4 +19,6 @@ add_source_files(nes-execution
         EventTimeWatermarkAssignment.cpp
         IngestionTimeWatermarkAssignment.cpp
         TimeFunction.cpp
+        Map.cpp
+        Selection.cpp
         )

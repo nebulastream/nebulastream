@@ -16,10 +16,6 @@
 
 #include <utility>
 #include <vector>
-#include <Nautilus/Backends/CompilationBackend.hpp>
-#include <Nautilus/Backends/Executable.hpp>
-#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
-#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/TupleBuffer.hpp>
