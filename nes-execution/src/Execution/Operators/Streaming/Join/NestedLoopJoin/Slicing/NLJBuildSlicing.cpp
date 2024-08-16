@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
@@ -54,7 +54,7 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     // Get the local state
     auto localJoinState = dynamic_cast<LocalNestedLoopJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
-    UInt64Val timestampVal = timeFunction->getTs(ctx, record);
+    const auto timestampVal = timeFunction->getTs(ctx, record);
 
     if (!(localJoinState->sliceStart <= timestampVal && timestampVal < localJoinState->sliceEnd)) {
         // We have to get the slice for the current timestamp

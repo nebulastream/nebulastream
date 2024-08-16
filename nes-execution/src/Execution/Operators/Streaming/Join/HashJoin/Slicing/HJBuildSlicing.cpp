@@ -12,6 +12,7 @@
     limitations under the License.
 */
 #include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -98,7 +99,7 @@ HJBuildSlicing::HJBuildSlicing(const uint64_t operatorHandlerIndex,
 void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
-    UInt64Val tsValue = timeFunction->getTs(ctx, record);
+    const auto tsValue = timeFunction->getTs(ctx, record);
 
     //check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
@@ -106,7 +107,7 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         joinState->sliceReference =
             nautilus::invoke(getHJSliceProxy,
                              operatorHandlerMemRef,
-                             UInt64Val(tsValue),
+                             tsValue,
                              UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                              UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 

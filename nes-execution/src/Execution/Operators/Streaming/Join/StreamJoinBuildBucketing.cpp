@@ -43,29 +43,29 @@ uint64_t calcNumWindowsProxy(uint64_t ts, uint64_t windowSize, uint64_t windowSl
     return numWindows;
 }
 
-UInt64Val StreamJoinBuildBucketing::calcNumWindows(UInt64Val& ts) const {
+UInt64Val StreamJoinBuildBucketing::calcNumWindows(const UInt64Val& ts) const {
     return nautilus::invoke(calcNumWindowsProxy, ts, UInt64Val(windowSize), UInt64Val(windowSlide));
 }
 
-UInt64Val StreamJoinBuildBucketing::calcLastStartForTs(UInt64Val& ts) const {
+UInt64Val StreamJoinBuildBucketing::calcLastStartForTs(const UInt64Val& ts) const {
     auto remainder = (ts % windowSlide);
     UInt64Val lastStart(0_u64);
     lastStart = (ts - remainder);
     return lastStart;
 }
 
-UInt64Val StreamJoinBuildBucketing::getMinWindowStartForTs(UInt64Val& ts) const {
+UInt64Val StreamJoinBuildBucketing::getMinWindowStartForTs(const UInt64Val& ts) const {
     auto lastStart = calcLastStartForTs(ts);
     auto numWindows = calcNumWindows(ts);
     return (lastStart - (numWindows - 1_u64) * windowSlide);
 }
 
-UInt64Val StreamJoinBuildBucketing::getMaxWindowStartForTs(UInt64Val& ts) const {
+UInt64Val StreamJoinBuildBucketing::getMaxWindowStartForTs(const UInt64Val& ts) const {
     auto lastStart = calcLastStartForTs(ts);
     return (lastStart + windowSize);
 }
 
-BooleanVal StreamJoinBuildBucketing::checkIfLocalStateUpToDate(UInt64Val& ts, LocalStateBucketing* localStateBucketing) const {
+BooleanVal StreamJoinBuildBucketing::checkIfLocalStateUpToDate(const UInt64Val& ts, LocalStateBucketing* localStateBucketing) const {
     UInt64Val newMinWindowStart = getMinWindowStartForTs(ts);
     UInt64Val newMaxWindowEnd = getMaxWindowStartForTs(ts);
 
@@ -86,7 +86,7 @@ void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer& recordB
 
 void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = dynamic_cast<LocalStateBucketing*>(ctx.getLocalState(this));
-    UInt64Val timestampVal = timeFunction->getTs(ctx, record);
+    const auto timestampVal = timeFunction->getTs(ctx, record);
     UInt32Val workerThreadId = ctx.getWorkerThreadId();
 
     if (!checkIfLocalStateUpToDate(timestampVal, joinState)) {
@@ -102,9 +102,9 @@ void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) co
 }
 
 void StreamJoinBuildBucketing::updateLocalState(LocalStateBucketing* localStateBucketing,
-                                                MemRefVal& opHandlerMemRef,
-                                                UInt64Val& ts,
-                                                UInt32Val& workerThreadId) const {
+                                                const MemRefVal& opHandlerMemRef,
+                                                const UInt64Val& ts,
+                                                const UInt32Val& workerThreadId) const {
     localStateBucketing->numWindowsToFill = calcNumWindows(ts);
     localStateBucketing->allWindowsToFill =
         nautilus::invoke(getAllWindowsToFillProxy,

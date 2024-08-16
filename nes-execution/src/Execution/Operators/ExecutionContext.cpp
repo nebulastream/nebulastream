@@ -16,17 +16,17 @@
 #include <Execution/RecordBuffer.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Identifiers/NESStrongType.hpp>
-#include <nautilus/function.hpp>
-#include <nautilus/val_ptr.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/function.hpp>
+#include <nautilus/val_ptr.hpp>
 
 namespace NES::Runtime::Execution {
 
-ExecutionContext::ExecutionContext(const Nautilus::MemRefVal& workerContext,
-                                   const Nautilus::MemRefVal& pipelineContext)
+ExecutionContext::ExecutionContext(const Nautilus::MemRefVal& workerContext, const Nautilus::MemRefVal& pipelineContext)
     : workerContext(workerContext), pipelineContext(pipelineContext), origin(0_u64), statisticId(INVALID_STATISTIC_ID),
       watermarkTs(0_u64), currentTs(0_u64), sequenceNumber(0_u64), chunkNumber(0_u64), lastChunk(true) {}
 
@@ -75,9 +75,7 @@ uint32_t getWorkerThreadIdProxy(void* workerContext) {
     return wc->getId().getRawValue();
 }
 
-Nautilus::UInt32Val ExecutionContext::getWorkerThreadId() {
-    return invoke(getWorkerThreadIdProxy, workerContext);
-}
+Nautilus::UInt32Val ExecutionContext::getWorkerThreadId() { return invoke(getWorkerThreadIdProxy, workerContext); }
 
 Operators::OperatorState* ExecutionContext::getLocalState(const Operators::Operator* op) {
     auto stateEntry = localStateMap.find(op);
@@ -114,7 +112,7 @@ const Nautilus::MemRefVal& ExecutionContext::getPipelineContext() const { return
 
 const Nautilus::UInt64Val& ExecutionContext::getWatermarkTs() const { return watermarkTs; }
 
-void ExecutionContext::setWatermarkTs(Nautilus::UInt64Val watermarkTs) { this->watermarkTs = watermarkTs; }
+void ExecutionContext::setWatermarkTs(const Nautilus::UInt64Val& watermarkTs) { this->watermarkTs = watermarkTs; }
 
 const Nautilus::UInt64Val& ExecutionContext::getSequenceNumber() const { return sequenceNumber; }
 
@@ -130,7 +128,7 @@ void ExecutionContext::setCurrentStatisticId(Nautilus::UInt64Val statisticId) { 
 
 const Nautilus::UInt64Val& ExecutionContext::getCurrentTs() const { return currentTs; }
 
-void ExecutionContext::setCurrentTs(Nautilus::UInt64Val currentTs) { this->currentTs = currentTs; }
+void ExecutionContext::setCurrentTs(const Nautilus::UInt64Val& currentTs) { this->currentTs = currentTs; }
 
 const Nautilus::UInt64Val& ExecutionContext::getChunkNumber() const { return chunkNumber; }
 
@@ -159,28 +157,20 @@ void removeSequenceStateProxy(void* ptrPipelineCtx, uint64_t originId, uint64_t 
 }
 
 Nautilus::BooleanVal ExecutionContext::isLastChunk() const {
-    return invoke(
-                                  isLastChunkProxy,
-                                  this->getPipelineContext(),
-                                  this->getOriginId(),
-                                  this->getSequenceNumber(),
-                                  this->getChunkNumber(),
-                                  this->getLastChunk());
+    return invoke(isLastChunkProxy,
+                  this->getPipelineContext(),
+                  this->getOriginId(),
+                  this->getSequenceNumber(),
+                  this->getChunkNumber(),
+                  this->getLastChunk());
 }
 
 Nautilus::UInt64Val ExecutionContext::getNextChunkNr() const {
-    return invoke(getNextChunkNumberProxy,
-                                  this->getPipelineContext(),
-                                  this->getOriginId(),
-                                  this->getSequenceNumber());
+    return invoke(getNextChunkNumberProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
 }
 
 void ExecutionContext::removeSequenceState() const {
-    invoke(
-                           removeSequenceStateProxy,
-                           this->getPipelineContext(),
-                           this->getOriginId(),
-                           this->getSequenceNumber());
+    invoke(removeSequenceStateProxy, this->getPipelineContext(), this->getOriginId(), this->getSequenceNumber());
 }
 
 }// namespace NES::Runtime::Execution

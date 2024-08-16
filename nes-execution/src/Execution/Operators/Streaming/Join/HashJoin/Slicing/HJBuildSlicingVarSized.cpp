@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
@@ -89,11 +89,11 @@ HJBuildSlicingVarSized::HJBuildSlicingVarSized(const uint64_t operatorHandlerInd
 void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = static_cast<LocalHashJoinState*>(ctx.getLocalState(this));
     auto operatorHandlerMemRef = joinState->joinOperatorHandler;
-    UInt64Val tsValue = timeFunction->getTs(ctx, record);
+    const auto tsValue = timeFunction->getTs(ctx, record);
 
     //check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
-        joinState->sliceReference = nautilus::invoke(getHJSliceVarSizedProxy, operatorHandlerMemRef, UInt64Val(tsValue));
+        joinState->sliceReference = nautilus::invoke(getHJSliceVarSizedProxy, operatorHandlerMemRef, tsValue);
         joinState->sliceStart = nautilus::invoke(getSliceStartVarSizedProxy, joinState->sliceReference);
         joinState->sliceEnd = nautilus::invoke(getSliceEndVarSizedProxy, joinState->sliceReference);
 

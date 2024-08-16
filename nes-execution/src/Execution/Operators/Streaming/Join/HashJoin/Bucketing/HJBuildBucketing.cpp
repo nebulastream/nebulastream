@@ -33,10 +33,10 @@ void* getHashTableRefProxy(void* ptrWindowVector, uint64_t index, uint32_t worke
     return nljWindow->getHashTable(joinBuildSide, WorkerThreadId(workerThreadId));
 }
 
-void HJBuildBucketing::insertRecordForWindow(MemRefVal& allWindowsToFill,
-                                             UInt64Val& curIndex,
-                                             UInt32Val& workerThreadId,
-                                             Record& record) const {
+void HJBuildBucketing::insertRecordForWindow(const MemRefVal& allWindowsToFill,
+                                             const UInt64Val& curIndex,
+                                             const UInt32Val& workerThreadId,
+                                             const Record& record) const {
 
     auto hashTableReference =
         nautilus::invoke(getHashTableRefProxy, allWindowsToFill, curIndex, workerThreadId, UInt64Val(to_underlying(joinBuildSide)));

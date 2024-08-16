@@ -129,7 +129,7 @@ class ExecutionContext final {
      * @brief Sets the current valid watermark ts.
      * @param watermarkTs
      */
-    void setWatermarkTs(Nautilus::UInt64Val watermarkTs);
+    void setWatermarkTs(const Nautilus::UInt64Val& watermarkTs);
 
     /**
      * @brief Sets the current sequence number
@@ -194,7 +194,7 @@ class ExecutionContext final {
      * @brief Sets the current processing timestamp.
      * @param ts
      */
-    void setCurrentTs(Nautilus::UInt64Val ts);
+    void setCurrentTs(const Nautilus::UInt64Val& ts);
 
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;

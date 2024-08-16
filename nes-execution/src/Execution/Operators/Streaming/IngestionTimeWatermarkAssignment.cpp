@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
@@ -21,12 +21,6 @@
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
-
-class WatermarkState : public OperatorState {
-  public:
-    explicit WatermarkState() {}
-    UInt64Val currentWatermark = 0;
-};
 
 IngestionTimeWatermarkAssignment::IngestionTimeWatermarkAssignment(TimeFunctionPtr timeFunction)
     : timeFunction(std::move(timeFunction)){};

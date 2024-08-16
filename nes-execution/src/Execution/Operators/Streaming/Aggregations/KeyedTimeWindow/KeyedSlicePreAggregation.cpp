@@ -68,7 +68,7 @@ class LocalKeyedSliceStoreState : public Operators::OperatorState {
                                        const MemRefVal& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
 
-    auto findSliceStateByTs(UInt64Val& timestampValue) {
+    auto findSliceStateByTs(const UInt64Val& timestampValue) {
         auto htPtr = nautilus::invoke(findKeyedSliceStateByTsProxy, sliceStoreState, timestampValue);
         return Interface::ChainedHashMapRef(htPtr, keyDataTypes, keySize, valueSize);
     }

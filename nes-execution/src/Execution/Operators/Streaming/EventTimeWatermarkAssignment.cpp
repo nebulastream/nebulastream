@@ -17,6 +17,7 @@
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
 
