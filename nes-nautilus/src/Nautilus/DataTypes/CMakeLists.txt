@@ -11,7 +11,10 @@
 # limitations under the License.
 
 add_source_files(nes-nautilus
-        BCInterpreterBackend.cpp
-        BCInterpreter.cpp
-        BCLoweringProvider.cpp
-        )
+        AbstractDataType.cpp
+        FixedSizeExecutableDataType.cpp
+        VariableSizeExecutableDataType.cpp
+        Operations/ExecutableDataTypeArithmeticalOperations.cpp
+        Operations/ExecutableDataTypeLogicalOperations.cpp
+        Operations/ExecutableDataTypeBitwiseOperations.cpp
+)

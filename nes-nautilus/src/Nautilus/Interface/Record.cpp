@@ -12,40 +12,46 @@
     limitations under the License.
 */
 
-#include <Nautilus/Exceptions/InterpreterException.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <algorithm>
+#include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
 #include <sstream>
 
 namespace NES::Nautilus {
 
-Record::Record() {}
+Record::Record(std::unordered_map<RecordFieldIdentifier, ExecDataType>&& fields) : recordFields(fields) {}
 
-Record::Record(std::map<RecordFieldIdentifier, Value<>>&& fields) : fields(std::move(fields)) {}
-
-Value<Any>& Record::read(RecordFieldIdentifier fieldIdentifier) {
-    auto fieldsMapIterator = fields.find(fieldIdentifier);
-    if (fieldsMapIterator == fields.end()) {
-        std::stringstream ss;
-        std::for_each(fields.begin(), fields.end(), [&ss](const auto& entry) {
-            ss << entry.first;
-            ss << ", ";
-        });
-        throw InterpreterException("Could not find field: fieldIdentifier = " + fieldIdentifier + "; known fields = " + ss.str());
-    } else {
-        return fieldsMapIterator->second;
+bool Record::operator==(const Record& rhs) const {
+    if (recordFields.size() != rhs.recordFields.size()) {
+        return false;
     }
+
+    for (const auto& [fieldIdentifier, value] : nautilus::static_iterable(recordFields)) {
+        if (!rhs.hasField(fieldIdentifier)) {
+            return false;
+        }
+
+        if (value != rhs.recordFields.at(fieldIdentifier)) {
+            return false;
+        }
+    }
+
+    return true;
 }
 
-uint64_t Record::numberOfFields() { return fields.size(); }
+bool Record::operator!=(const Record& rhs) const { return !(*this == rhs); }
 
-void Record::write(RecordFieldIdentifier fieldIndex, const Value<Any>& value) { fields.insert_or_assign(fieldIndex, value); }
-
-bool Record::hasField(NES::Nautilus::Record::RecordFieldIdentifier fieldName) { return fields.contains(fieldName); }
+const ExecDataType& Record::read(const std::string& recordFieldIdentifier) const {
+    return recordFields.at(recordFieldIdentifier);
+}
+void Record::write(const Record::RecordFieldIdentifier& recordFieldIdentifier, const ExecDataType& dataType) {
+    recordFields[recordFieldIdentifier] = dataType;
+}
 
 std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
-    std::vector<Record::RecordFieldIdentifier> fieldIdentifierVec;
-    for (auto& [fieldIdentifier, value] : fields) {
+    std::vector<RecordFieldIdentifier> fieldIdentifierVec;
+    fieldIdentifierVec.reserve(recordFields.size());
+    for (auto& [fieldIdentifier, value] : recordFields) {
         fieldIdentifierVec.emplace_back(fieldIdentifier);
     }
 
@@ -53,18 +59,19 @@ std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
 }
 
 std::string Record::toString() {
-    std::ostringstream stringStream;
-    for (auto& [fieldIdentifier, value] : fields) {
-        stringStream << fieldIdentifier << ": " << value << ", ";
-    }
-    auto tmpStr = stringStream.str();
-    tmpStr.pop_back();
-    tmpStr.pop_back();
 
-    return tmpStr;
+    // Figure out later why this does not seem to work.
+    //    return fmt::format("{}", fmt::join(recordFields, ", "));
+//    std::ostringstream oss;
+//    for (const auto& [fieldIdentifier, value] : recordFields) {
+//        oss << fieldIdentifier << ": " << value << ", ";
+//    }
+//    return oss.str();
+    return "NOT IMPLEMENTED";
 }
 
-bool Record::operator==(const Record& rhs) const { return fields == rhs.fields; }
+uint64_t Record::numberOfFields() const { return recordFields.size(); }
 
-bool Record::operator!=(const Record& rhs) const { return !(rhs == *this); }
+bool Record::hasField(const Record::RecordFieldIdentifier& fieldName) const { return recordFields.contains(fieldName); }
+
 }// namespace NES::Nautilus

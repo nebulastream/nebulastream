@@ -23,7 +23,9 @@
 
 namespace NES::Runtime::Execution::Operators {
 
-Scan::Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
+
+
+Scan::Scan(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider, std::vector<Record::RecordFieldIdentifier> projections)
     : memoryProvider(std::move(memoryProvider)), projections(std::move(projections)) {}
 
 void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
@@ -40,7 +42,7 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     // iterate over records in buffer
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
-    for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64) {
+    for (UInt64Val i = 0_u64; i < numberOfRecords; i = i + 1) {
         auto record = memoryProvider->read(projections, bufferAddress, i);
         child->execute(ctx, record);
     }

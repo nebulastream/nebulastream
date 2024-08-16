@@ -15,34 +15,30 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_RECORD_HPP_
 
-#include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <map>
-#include <memory>
-#include <ostream>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
+#include <unordered_map>
 
 namespace NES::Nautilus {
 
-/**
- * @brief A record is the primitive abstraction of a single entry/tuple in a data set.
- * Operators receive records can read and write fields.
- */
 class Record {
   public:
     using RecordFieldIdentifier = std::string;
-    explicit Record();
-    explicit Record(std::map<RecordFieldIdentifier, Value<>>&& fields);
+    explicit Record() = default;
+    explicit Record(std::unordered_map<RecordFieldIdentifier, ExecDataType>&& fields);
     ~Record() = default;
-    Value<>& read(RecordFieldIdentifier fieldName);
-    void write(RecordFieldIdentifier fieldName, const Value<>& value);
-    uint64_t numberOfFields();
-    bool hasField(RecordFieldIdentifier fieldName);
+
+    const ExecDataType& read(const RecordFieldIdentifier& recordFieldIdentifier) const;
+    void write(const RecordFieldIdentifier& recordFieldIdentifier, const ExecDataType& dataType);
+    uint64_t numberOfFields() const;
+    bool hasField(const RecordFieldIdentifier& fieldName) const;
     std::vector<RecordFieldIdentifier> getAllFields();
+
+    // Get rid of this toString and override the << and the formatter
     std::string toString();
     bool operator==(const Record& rhs) const;
     bool operator!=(const Record& rhs) const;
-
   private:
-    std::map<RecordFieldIdentifier, Value<>> fields;
+    std::unordered_map<RecordFieldIdentifier, ExecDataType> recordFields;
 };
 
 }// namespace NES::Nautilus

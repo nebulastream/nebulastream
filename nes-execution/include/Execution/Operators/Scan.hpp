@@ -15,7 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_SCAN_HPP_
 
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Operator.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -31,13 +31,13 @@ class Scan : public Operator {
      * @param memoryLayout memory layout that describes the tuple buffer.
      * @param projections projection vector
      */
-    Scan(std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider,
+    Scan(std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider,
          std::vector<Nautilus::Record::RecordFieldIdentifier> projections = {});
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;
 
   private:
-    const std::unique_ptr<MemoryProvider::MemoryProvider> memoryProvider;
+    const std::unique_ptr<MemoryProvider::TupleBufferMemoryProvider> memoryProvider;
     const std::vector<Nautilus::Record::RecordFieldIdentifier> projections;
 };
 

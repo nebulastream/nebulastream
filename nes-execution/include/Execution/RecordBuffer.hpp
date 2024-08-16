@@ -15,20 +15,17 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_RECORDBUFFER_HPP_
 
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <nautilus/val.hpp>
+#include <nautilus/val_ptr.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <memory>
 #include <ostream>
 #include <vector>
 
-namespace NES::Nautilus {
-class Record;
-}
 
 namespace NES::Runtime::Execution {
-using namespace Nautilus;
+using namespace nautilus;
 
 /**
  * @brief The RecordBuffer is a representation of a set of records that are stored together.
@@ -40,136 +37,134 @@ class RecordBuffer {
      * @brief Creates a new record buffer with a reference to a tuple buffer
      * @param tupleBufferRef
      */
-    explicit RecordBuffer(const Value<MemRef>& tupleBufferRef);
+    explicit RecordBuffer(const Nautilus::MemRefVal& tupleBufferRef);
 
     /**
      * @brief Read number of record that are currently stored in the record buffer.
-     * @return Value<UInt64>
+     * @return Nautilus::UInt64Val
      */
-    Value<UInt64> getNumRecords();
+    Nautilus::UInt64Val getNumRecords();
 
     /**
      * @brief Retrieve the reference to the underling buffer from the record buffer.
-     * @return Value<MemRef>
+     * @return val<void*>
      */
-    Value<MemRef> getBuffer() const;
+    [[nodiscard]] Nautilus::MemRefVal getBuffer() const;
 
     /**
      * @brief Get the reference to the TupleBuffer
-     * @return Value<MemRef>
+     * @return val<void*>
      */
-    const Value<MemRef>& getReference() const;
+    [[nodiscard]] const Nautilus::MemRefVal& getReference() const;
 
     /**
      * @brief Set the number of records in the underlying tuple buffer.
-     * @param numRecordsValue Value<UInt64> containing the number of records
+     * @param numRecordsValue Nautilus::UInt64Val containing the number of records
      * to set in the tuple buffer.
      */
-    void setNumRecords(const Value<UInt64>& numRecordsValue);
+    void setNumRecords(const Nautilus::UInt64Val& numRecordsValue);
 
     /**
      * @brief Get the origin ID of the underlying tuple buffer.
-     * @return Value<UInt64> containing the origin ID of the tuple buffer.
+     * @return Nautilus::UInt64Val containing the origin ID of the tuple buffer.
      */
-    Value<UInt64> getOriginId();
+    Nautilus::UInt64Val getOriginId();
 
     /**
      * @brief Get the statistic ID of the underlying tuple buffer.
-     * @return Value<UInt64> containing the statistic ID of the tuple buffer.
+     * @return Nautilus::UInt64Val containing the statistic ID of the tuple buffer.
      */
-    Value<UInt64> getStatisticId();
+    Nautilus::UInt64Val getStatisticId();
 
     /**
      * @brief Set the origin ID of the underlying tuple buffer.
-     * @param originId Value<UInt64> containing the origin ID to set for the
+     * @param originId Nautilus::UInt64Val containing the origin ID to set for the
      * tuple buffer.
      */
-    void setOriginId(const Value<UInt64>& originId);
+    void setOriginId(const Nautilus::UInt64Val& originId);
 
     /**
      * @brief Set the origin ID of the underlying tuple buffer.
-     * @param originId Value<UInt64> containing the origin ID to set for the
+     * @param originId Nautilus::UInt64Val containing the origin ID to set for the
      * tuple buffer.
      */
-    void setStatisticId(const Value<UInt64>& statisticId);
+    void setStatisticId(const Nautilus::UInt64Val& statisticId);
 
     /**
      * @brief Get the sequence number of the underlying tuple buffer.
      * The sequence number is a monotonically increasing identifier for tuple buffers from the same origin.
-     * @return Value<UInt64> containing the sequence number of the tuple buffer.
+     * @return Nautilus::UInt64Val containing the sequence number of the tuple buffer.
      */
-    Value<UInt64> getSequenceNr();
+    Nautilus::UInt64Val getSequenceNr();
 
     /**
      * @brief Set the sequence number of the underlying tuple buffer.
-     * @param originId Value<UInt64> containing the sequence number to set for the
+     * @param originId Nautilus::UInt64Val containing the sequence number to set for the
      * tuple buffer.
      */
-    void setSequenceNr(const Value<UInt64>& seqNumber);
+    void setSequenceNr(const Nautilus::UInt64Val& seqNumber);
 
     /**
      * @brief Sets the chunk number for the tuple buffer
      * @param chunkNumber
      */
-    void setChunkNr(const Value<UInt64>& chunkNumber);
+    void setChunkNr(const Nautilus::UInt64Val& chunkNumber);
 
     /**
      * @brief Gets the chunk number of the underlying tuple buffer
-     * @return Value<UInt64>
+     * @return Nautilus::UInt64Val
      */
-    Value<UInt64> getChunkNr();
+    Nautilus::UInt64Val getChunkNr();
 
     /**
      * @brief Sets the last chunk for the tuple buffer
      * @param chunkNumber
      */
-    void setLastChunk(const Value<Boolean>& isLastChunk);
+    void setLastChunk(const Nautilus::BooleanVal& isLastChunk);
 
     /**
      * @brief Gets if this is the last chunk for a sequence number
-     * @return Value<Boolean>
+     * @return Nautilus::BooleanVal
      */
-    Value<Boolean> isLastChunk();
+    Nautilus::BooleanVal isLastChunk();
 
     /**
      * @brief Get the watermark timestamp of the underlying tuple buffer.
      * The watermark timestamp is a point in time that guarantees no records with
      * a lower timestamp will be received.
      *
-     * @return Value<UInt64> containing the watermark timestamp of the tuple buffer.
+     * @return Nautilus::UInt64Val containing the watermark timestamp of the tuple buffer.
      */
-    Value<UInt64> getWatermarkTs();
+    Nautilus::UInt64Val getWatermarkTs();
 
     /**
      * @brief Set the watermark timestamp of the underlying tuple buffer.
-     * @param watermarkTs Value<UInt64> containing the watermark timestamp to set
+     * @param watermarkTs Nautilus::UInt64Val containing the watermark timestamp to set
      * for the tuple buffer.
      */
-    void setWatermarkTs(const Value<UInt64>& watermarkTs);
+    void setWatermarkTs(const Nautilus::UInt64Val& watermarkTs);
 
     /**
      * @brief Get the creation timestamp of the underlying tuple buffer.
      * The creation timestamp is the point in time when the tuple buffer was
      * created.
      *
-     * @return Value<UInt64> containing the creation timestamp of the tuple buffer.
+     * @return Nautilus::UInt64Val containing the creation timestamp of the tuple buffer.
      */
-    Value<UInt64> getCreatingTs();
+    Nautilus::UInt64Val getCreatingTs();
 
     /**
      * @brief Set the creation timestamp of the underlying tuple buffer.
-     * @param creationTs Value<UInt64> containing the creation timestamp to set
+     * @param creationTs Nautilus::UInt64Val containing the creation timestamp to set
      * for the tuple buffer.
      */
-    void setCreationTs(const Value<UInt64>& creationTs);
+    void setCreationTs(const Nautilus::UInt64Val& creationTs);
 
     ~RecordBuffer() = default;
 
   private:
-    Value<MemRef> tupleBufferRef;
+    Nautilus::MemRefVal tupleBufferRef;
 };
-
-using RecordBufferPtr = std::shared_ptr<RecordBuffer>;
 
 }// namespace NES::Runtime::Execution
 

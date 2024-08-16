@@ -27,7 +27,7 @@
 #include <Execution/Expressions/LogicalExpressions/LessThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
@@ -100,7 +100,7 @@ class BenchmarkRunner {
     TPCH_Scale_Factor targetScaleFactor = TPCH_Scale_Factor::F1;
     std::string compiler;
     ExecutablePipelineProvider* provider;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<Runtime::BufferManager> table_bm;
     std::shared_ptr<WorkerContext> wc;
@@ -214,7 +214,7 @@ class Query3Runner : public BenchmarkRunner {
 
 int main(int, char**) {
     NES::TPCH_Scale_Factor targetScaleFactor = NES::TPCH_Scale_Factor::F0_01;
-    std::vector<std::string> compilers = {"PipelineCompiler", "CPPPipelineCompiler"};
+    std::vector<std::string> compilers = {"PipelineCompiler"};
     for (const auto& c : compilers) {
         NES::Runtime::Execution::Query6Runner(targetScaleFactor, c).run();
     }
