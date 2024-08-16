@@ -14,8 +14,8 @@
 
 #include <memory>
 #include <utility>
-#include <Sources/DataSource.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <DataSource.hpp>
+#include <SourceHandle.hpp>
 
 namespace NES
 {

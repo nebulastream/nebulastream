@@ -19,7 +19,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
-#include <Sources/SourceHandle.hpp>
+#include <SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution

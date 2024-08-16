@@ -24,8 +24,8 @@
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
-#include <Sources/TCPSource.hpp>
+#include <Parsers/CSVParser.hpp>
+#include <TCPSource.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 

@@ -18,8 +18,8 @@
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <Sources/CSVSource.hpp>
-#include <Sources/Parsers/CSVParser.hpp>
+#include <CSVSource.hpp>
+#include <Parsers/CSVParser.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 #include <Util/TestTupleBuffer.hpp>

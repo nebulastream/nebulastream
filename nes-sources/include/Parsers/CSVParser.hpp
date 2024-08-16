@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 #define NES_RUNTIME_INCLUDE_SOURCES_PARSERS_CSVPARSER_HPP_
 
-#include <Sources/Parsers/Parser.hpp>
+#include <Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES
