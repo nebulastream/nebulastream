@@ -20,7 +20,7 @@
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/LessEqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
@@ -71,7 +71,7 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
     ExecutablePipelineProvider* provider;
     BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     const uint64_t leftPageSize = 256;
     const uint64_t rightPageSize = 512;
 
@@ -127,9 +127,9 @@ class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public Abstract
         auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
         auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
 
-        auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
-        auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);
-        auto emitMemoryProviderSink = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutJoined);
+        auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutLeft);
+        auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutRight);
+        auto emitMemoryProviderSink = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutJoined);
 
         auto scanOperatorLeft = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderLeft));
         auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));
@@ -528,7 +528,7 @@ TEST_P(NestedLoopJoinPipelineTest, nljSimplePipelineDifferentNumberOfAttributes)
 
 INSTANTIATE_TEST_CASE_P(nestedLoopJoinPipelineTest,
                         NestedLoopJoinPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<NestedLoopJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

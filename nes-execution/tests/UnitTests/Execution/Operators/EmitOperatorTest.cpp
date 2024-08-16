@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -57,10 +57,10 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer) {
 
     auto pipelineContext = MockedPipelineExecutionContext();
     auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
-    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(rowMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
-    RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
+    auto ctx = ExecutionContext(MemRef((int8_t*) wc.get()), MemRef((int8_t*) &pipelineContext));
+    RecordBuffer recordBuffer = RecordBuffer(MemRef(nullptr));
     emitOperator.open(ctx, recordBuffer);
     for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++) {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
@@ -90,14 +90,14 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow) {
     auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
     auto pipelineContext = MockedPipelineExecutionContext();
-    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(rowMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
 
-    Value<UInt64> seqNumber(1_u64);
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    UInt64 seqNumber(1_u64);
+    auto ctx = ExecutionContext(MemRef((int8_t*) wc.get()), MemRef((int8_t*) &pipelineContext));
     ctx.setSequenceNumber(seqNumber);
 
-    RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
+    RecordBuffer recordBuffer = RecordBuffer(MemRef(nullptr));
     emitOperator.open(ctx, recordBuffer);
     for (uint64_t i = 0; i < rowMemoryLayout->getCapacity() * 2; i++) {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});
@@ -129,8 +129,8 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer) {
     auto pipelineContext = MockedPipelineExecutionContext();
     auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
-    auto ctx = ExecutionContext(Value<MemRef>((int8_t*) wc.get()), Value<MemRef>((int8_t*) &pipelineContext));
-    RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
+    auto ctx = ExecutionContext(MemRef((int8_t*) wc.get()), MemRef((int8_t*) &pipelineContext));
+    RecordBuffer recordBuffer = RecordBuffer(MemRef(nullptr));
     emitOperator.open(ctx, recordBuffer);
     for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++) {
         auto record = Record({{"f1", Value<>(i)}, {"f2", Value<>(10)}});

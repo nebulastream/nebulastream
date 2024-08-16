@@ -15,7 +15,7 @@
 #include <API/Schema.hpp>
 #include <BaseIntegrationTest.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
@@ -52,7 +52,7 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto memoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = Scan(std::move(memoryProviderPtr));
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
@@ -64,8 +64,8 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer) {
         testBuffer[i]["f2"].write(+1_s64);
         testBuffer.setNumberOfTuples(i + 1);
     }
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
-    RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
+    RecordBuffer recordBuffer = RecordBuffer(MemRef((int8_t*) std::addressof(buffer)));
     scanOperator.open(ctx, recordBuffer);
 
     ASSERT_EQ(collector->records.size(), testBuffer.getNumberOfTuples());
@@ -100,8 +100,8 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer) {
         testBuffer[i]["f2"].write(+1_s64);
         testBuffer.setNumberOfTuples(i + 1);
     }
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>(nullptr));
-    RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef(nullptr));
+    RecordBuffer recordBuffer = RecordBuffer(MemRef((int8_t*) std::addressof(buffer)));
     scanOperator.open(ctx, recordBuffer);
 
     ASSERT_EQ(collector->records.size(), testBuffer.getNumberOfTuples());

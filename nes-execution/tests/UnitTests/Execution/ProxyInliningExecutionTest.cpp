@@ -43,7 +43,7 @@ class ProxyFunctionInliningExecutionTest : public Testing::BaseUnitTest, public 
     static void TearDownTestCase() { NES_INFO("Tear down TraceTest test class."); }
 };
 
-Value<UInt64> getNumberOfTuples(Value<MemRef> tupleBufferRef) {
+UInt64 getNumberOfTuples(MemRefVal tupleBufferRef) {
     return FunctionCall<>("NES__Runtime__TupleBuffer__getNumberOfTuples",
                           NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples,
                           tupleBufferRef);
@@ -53,7 +53,7 @@ void executeFunctionWithOptions(const CompilationOptions& options, const DumpHel
     // Create TupleBuffer and generate execution trace.
     auto bufferManager = std::make_unique<Runtime::BufferManager>();
     auto tupleBuffer = bufferManager->getBufferNoBlocking();
-    Value<MemRef> tupleBufferPointer = Value<MemRef>((int8_t*) std::addressof(tupleBuffer));
+    MemRefVal tupleBufferPointer = MemRef((int8_t*) std::addressof(tupleBuffer));
     tupleBufferPointer.ref = Nautilus::Tracing::ValueRef(INT32_MAX, 0, IR::Types::StampFactory::createAddressStamp());
     auto executionTrace = Nautilus::Tracing::traceFunctionWithReturn([&]() {
         return getNumberOfTuples(tupleBufferPointer);

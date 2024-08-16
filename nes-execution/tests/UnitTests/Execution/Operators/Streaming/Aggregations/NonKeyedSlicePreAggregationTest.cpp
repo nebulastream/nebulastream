@@ -68,7 +68,7 @@ class NonKeyedSlicePreAggregationTest : public testing::Test {
         buffer.setWatermark(wts);
         buffer.setOriginId(originId);
         buffer.setSequenceNumber(sequenceNumber);
-        auto rb = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
+        auto rb = RecordBuffer(MemRef(reinterpret_cast<int8_t*>(std::addressof(buffer))));
         context.setWatermarkTs(wts);
         context.setOrigin(originId.getRawValue());
         slicePreAggregation.close(context, rb);
@@ -94,11 +94,11 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation) {
     auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto context = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())),
-                                    Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
+    auto context = ExecutionContext(MemRef(reinterpret_cast<int8_t*>(workerContext.get())),
+                                    MemRef(reinterpret_cast<int8_t*>(&pipelineContext)));
     auto buffer = bufferManager->getBufferBlocking();
 
-    auto recordBuffer = RecordBuffer(Value<MemRef>(reinterpret_cast<int8_t*>(std::addressof(buffer))));
+    auto recordBuffer = RecordBuffer(MemRef(reinterpret_cast<int8_t*>(std::addressof(buffer))));
     slicePreAggregation.setup(context);
     auto stateStore = handler->getThreadLocalSliceStore(workerContext->getId());
 
@@ -147,10 +147,10 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation) {
     auto handler = std::make_shared<NonKeyedSlicePreAggregationHandler>(10, 10, origins);
     auto pipelineContext = MockedPipelineExecutionContext({handler});
 
-    auto context = ExecutionContext(Value<MemRef>((int8_t*) workerContext.get()), Value<MemRef>((int8_t*) &pipelineContext));
+    auto context = ExecutionContext(MemRef((int8_t*) workerContext.get()), MemRef((int8_t*) &pipelineContext));
     auto buffer = bufferManager->getBufferBlocking();
 
-    auto recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(buffer)));
+    auto recordBuffer = RecordBuffer(MemRef((int8_t*) std::addressof(buffer)));
     slicePreAggregation.setup(context);
     auto stateStore = handler->getThreadLocalSliceStore(workerContext->getId());
 

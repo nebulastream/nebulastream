@@ -89,7 +89,7 @@ TEST_F(ModExpressionTest, evaluateModExpressionFloat) {
  */
 TEST_F(ModExpressionTest, evaluateModExpressionOnWrongType) {
     auto expression = BinaryExpressionWrapper<ModExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true), Boolean(false)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

@@ -65,7 +65,7 @@ void fillState(const std::shared_ptr<BatchSortOperatorHandler>& handler,
                const T max = std::numeric_limits<T>::max()) {
     auto state = handler->getState();
     auto entrySize = sizeof(T) * (numberOfFields + sortFieldIndexes.size() /*sort cols*/);
-    auto stateRef = Nautilus::Interface::PagedVectorRef(Value<MemRef>((int8_t*) state), entrySize);
+    auto stateRef = Nautilus::Interface::PagedVectorRef(MemRef((int8_t*) state), entrySize);
     std::mt19937 random(SEED);
     for (size_t j = 0; j < numberOfRecord; ++j) {
         // create random values
@@ -132,10 +132,10 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest) {
     auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortScanOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     sortScanOperator.setup(ctx);
     auto tupleBuffer = bm->getBufferBlocking();
-    auto record = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+    auto record = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
@@ -174,10 +174,10 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest) {
     auto sortScanOperator = BatchSortScan(0, {pType, pType}, {"f1", "f2"}, {"f2"});
     auto collector = std::make_shared<CollectOperator>();
     sortScanOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     sortScanOperator.setup(ctx);
     auto tupleBuffer = bm->getBufferBlocking();
-    auto record = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+    auto record = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
@@ -215,10 +215,10 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest) {
     auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortScanOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     sortScanOperator.setup(ctx);
     auto tupleBuffer = bm->getBufferBlocking();
-    auto record = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+    auto record = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
@@ -256,10 +256,10 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest) {
     auto sortScanOperator = BatchSortScan(0, {pType, pType}, {"f1", "f2"}, {"f2", "f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortScanOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     sortScanOperator.setup(ctx);
     auto tupleBuffer = bm->getBufferBlocking();
-    auto record = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+    auto record = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);
@@ -305,10 +305,10 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage) {
     auto sortScanOperator = BatchSortScan(0, {Util::getPhysicalTypePtr<NativeType>()}, {"f1"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortScanOperator.setChild(collector);
-    auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*) &pipelineContext));
+    auto ctx = ExecutionContext(MemRef(nullptr), MemRef((int8_t*) &pipelineContext));
     sortScanOperator.setup(ctx);
     auto tupleBuffer = bm->getBufferBlocking();
-    auto record = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+    auto record = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
     sortScanOperator.open(ctx, record);
 
     ASSERT_EQ(collector->records.size(), NUM_RECORDS);

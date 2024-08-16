@@ -83,7 +83,7 @@ TEST_F(SinExpressionTest, evaluateSinExpressionFloat) {
   */
 TEST_F(SinExpressionTest, evaluateSinExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<SinExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

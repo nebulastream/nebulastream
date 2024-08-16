@@ -33,7 +33,7 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregation.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>

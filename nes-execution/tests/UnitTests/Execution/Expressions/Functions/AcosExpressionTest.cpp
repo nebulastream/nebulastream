@@ -87,6 +87,6 @@ TEST_F(AcosExpressionTest, evaluateAcosExpressionFloat) {
 */
 TEST_F(AcosExpressionTest, evaluateAcosExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<AcosExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(false)););
 }
 }// namespace NES::Runtime::Execution::Expressions

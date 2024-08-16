@@ -22,7 +22,7 @@
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Expressions/WriteFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
@@ -56,7 +56,7 @@ class SequenceNumberPipelineTest : public Testing::BaseUnitTest, public Abstract
     ExecutablePipelineProvider* provider;
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("SequenceNumberPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -118,7 +118,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted) {
     schema->addField("f2", BasicType::INT64);
     auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ConstantInt64ValueExpression>(5);
@@ -127,7 +127,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted) {
     auto selectionOperator = std::make_shared<Operators::Selection>(equalsExpression);
     scanOperator->setChild(selectionOperator);
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     selectionOperator->setChild(emitOperator);
 
@@ -198,7 +198,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
     auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
     auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -208,7 +208,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
     auto mapOperator = std::make_shared<Operators::Map>(writeF3);
     scanOperator->setChild(mapOperator);
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutOutput);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutOutput);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     mapOperator->setChild(emitOperator);
 
@@ -218,7 +218,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataFullWithConstantFieldValues(bm, inputSchema)) {
+    for (auto buf : createDataFullWithConstantFieldValues(bm, inputSchema)) {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
     executablePipeline->stop(pipelineContext);
@@ -254,7 +254,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers) {
 
 std::shared_ptr<PhysicalOperatorPipeline> createFirstPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput,
                                                               const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput) {
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -264,7 +264,7 @@ std::shared_ptr<PhysicalOperatorPipeline> createFirstPipeline(const MemoryLayout
     auto mapOperator = std::make_shared<Operators::Map>(writeF3);
     scanOperator->setChild(mapOperator);
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutOutput);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutOutput);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     mapOperator->setChild(emitOperator);
 
@@ -275,7 +275,7 @@ std::shared_ptr<PhysicalOperatorPipeline> createFirstPipeline(const MemoryLayout
 
 std::shared_ptr<PhysicalOperatorPipeline> createSecondPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput,
                                                                Aggregation::AggregationFunctionPtr aggregationFunction) {
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     const auto readTsField = std::make_shared<Expressions::ReadFieldExpression>("ts");
@@ -300,7 +300,7 @@ std::shared_ptr<PhysicalOperatorPipeline> createThirdPipeline(const MemoryLayout
                                                                           aggregationFunctions,
                                                                           std::move(sliceMergingAction));
 
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutOutput);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutOutput);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     sliceMerging->setChild(emitOperator);
 
@@ -418,7 +418,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SequenceNumberPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "BCInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<SequenceNumberPipelineTest::ParamType>& info) {
                             return info.param;
                         });

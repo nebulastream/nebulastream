@@ -18,11 +18,11 @@
 #include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
-#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
@@ -69,7 +69,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
     ExecutablePipelineProvider* provider;
     BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("HashJoinPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -130,9 +130,9 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
         auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
 
-        auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
-        auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);
-        auto emitMemoryProviderSink = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutJoined);
+        auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutLeft);
+        auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutRight);
+        auto emitMemoryProviderSink = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(memoryLayoutJoined);
 
         auto scanOperatorLeft = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderLeft));
         auto scanOperatorRight = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderRight));
@@ -145,7 +145,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
         const auto leftEntrySize = leftSchema->getSchemaSizeInBytes();
         const auto rightEntrySize = rightSchema->getSchemaSizeInBytes();
 
-        auto joinBuildLeft = std::make_shared<Operators::HJBuildSlicing>(
+        auto joinBuildLeft = std::make_shared<Operators::HJBuildSlicingVarSized>(
             handlerIndex,
             leftSchema,
             joinFieldNameLeft,
@@ -154,7 +154,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldLeft,
                                                                                Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
-        auto joinBuildRight = std::make_shared<Operators::HJBuildSlicing>(
+        auto joinBuildRight = std::make_shared<Operators::HJBuildSlicingVarSized>(
             handlerIndex,
             rightSchema,
             joinFieldNameRight,
@@ -315,7 +315,7 @@ TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline) {
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         HashJoinPipelineTest,
                         ::testing::Values("PipelineInterpreter",
-                                          "PipelineCompiler"),//CPPPipelineCompiler is currently not working
+                                          "PipelineCompiler"),
                         [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

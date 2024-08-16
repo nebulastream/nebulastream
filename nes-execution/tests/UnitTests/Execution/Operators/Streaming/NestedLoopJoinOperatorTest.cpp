@@ -23,7 +23,8 @@
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/LogicalExpressions/GreaterThanExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/MemoryProvider/TupleBufferMemoryProvider.hpp>
+#include <Nautilus/Interface/Record.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
@@ -158,9 +159,9 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         auto thirdSchemaField = schema->get(2)->getName();
 
         for (auto i = 0_u64; i < numberOfRecords; ++i) {
-            retVector.emplace_back(Record({{firstSchemaField, Value<UInt64>(i)},
-                                           {secondSchemaField, Value<UInt64>(distribution(generator))},
-                                           {thirdSchemaField, Value<UInt64>(i)}}));
+            retVector.emplace_back(Record({{firstSchemaField, UInt64(i)},
+                                           {secondSchemaField, UInt64(distribution(generator))},
+                                           {thirdSchemaField, UInt64(i)}}));
         }
 
         return retVector;
@@ -196,12 +197,12 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
      * @param schema
      */
     void checkRecordsInBuild(uint64_t windowIdentifier,
-                             Value<MemRef>& pagedVectorRef,
+                             MemRef& pagedVectorRef,
                              uint64_t expectedNumberOfTuplesInWindow,
                              std::vector<Record>& allRecords,
                              SchemaPtr& schema) {
 
-        Nautilus::Value<UInt64> zeroVal(0_u64);
+        Nautilus::UInt64 zeroVal(0_u64);
         Nautilus::Interface::PagedVectorVarSizedRef pagedVector(pagedVectorRef, schema);
         auto windowStartPos = windowIdentifier - windowSize;
         auto windowEndPos = windowStartPos + expectedNumberOfTuplesInWindow;
@@ -246,8 +247,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
             auto nljWindow =
                 std::dynamic_pointer_cast<NLJSlice>(nljOperatorHandler->getSliceBySliceIdentifier(windowIdentifier).value());
-            Nautilus::Value<UInt64> zeroVal(static_cast<uint64_t>(0));
-            auto leftPagedVectorRef = Nautilus::Value<Nautilus::MemRef>(
+            Nautilus::UInt64 zeroVal(static_cast<uint64_t>(0));
+            auto leftPagedVectorRef = Nautilus::MemRef(
                 static_cast<int8_t*>(nljWindow->getPagedVectorRefLeft(INITIAL<WorkerThreadId>)));
             checkRecordsInBuild(windowIdentifier,
                                 leftPagedVectorRef,
@@ -255,7 +256,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                                 allLeftRecords,
                                 leftSchema);
 
-            auto rightPagedVectorRef = Nautilus::Value<Nautilus::MemRef>(
+            auto rightPagedVectorRef = Nautilus::MemRef(
                 static_cast<int8_t*>(nljWindow->getPagedVectorRefRight(INITIAL<WorkerThreadId>)));
             checkRecordsInBuild(windowIdentifier,
                                 rightPagedVectorRef,
@@ -309,14 +310,14 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
         NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
-        auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
-                                                 Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
+        auto executionContext = ExecutionContext(Nautilus::MemRef((int8_t*) workerContext.get()),
+                                                 Nautilus::MemRef((int8_t*) (&pipelineContext)));
 
         nljBuildLeft->setup(executionContext);
         nljBuildRight->setup(executionContext);
 
         // We do not care for the record buffer in the current NLJBuild::open() implementation
-        RecordBuffer recordBuffer(Value<MemRef>((int8_t*) nullptr));
+        RecordBuffer recordBuffer(MemRef((int8_t*) nullptr));
         nljBuildLeft->open(executionContext, recordBuffer);
         nljBuildRight->open(executionContext, recordBuffer);
 
@@ -364,7 +365,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                 auto timestampLeftVal = leftRecord.read(timestampFieldNameLeft).getValue().staticCast<UInt64>().getValue();
                 auto timestampRightVal = rightRecord.read(timestampFieldNameRight).getValue().staticCast<UInt64>().getValue();
                 Record joinedRecord;
-                Nautilus::Value<Boolean> validMatch = true;
+                Nautilus::Boolean validMatch = true;
                 if (windowStart <= timestampLeftVal && timestampLeftVal < windowEnd && windowStart <= timestampRightVal
                     && timestampRightVal < windowEnd) {
 
@@ -421,8 +422,8 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
 
         NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
-        auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
-                                                 Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
+        auto executionContext = ExecutionContext(Nautilus::MemRef((int8_t*) workerContext.get()),
+                                                 Nautilus::MemRef((int8_t*) (&pipelineContext)));
 
         auto collector = std::make_shared<Operators::CollectOperator>();
         nljProbe->setChild(collector);
@@ -450,7 +451,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
                 bufferMemory->windowInfo = WindowInfo(windowIdentifier - windowSize, windowIdentifier);
                 tupleBuffer.setNumberOfTuples(1);
 
-                RecordBuffer recordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+                RecordBuffer recordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
                 nljProbe->open(executionContext, recordBuffer);
             }
 
@@ -472,7 +473,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
         nljOperatorHandler->setBufferManager(bm);
 
         uint64_t maxTimestamp = 0;
-        Value<UInt64> zeroVal(0_u64);
+        UInt64 zeroVal(0_u64);
         for (auto& leftRecord : allLeftRecords) {
             auto timestamp = leftRecord.read(timestampFieldNameLeft).getValue().staticCast<UInt64>().getValue();
             maxTimestamp = std::max(timestamp, maxTimestamp);
@@ -480,7 +481,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             auto nljOpHandler = std::dynamic_pointer_cast<Operators::NLJOperatorHandlerSlicing>(nljOperatorHandler);
             auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp));
             auto leftPagedVectorRef =
-                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefLeft(INITIAL<WorkerThreadId>));
+                Nautilus::MemRef((int8_t*) nljWindow->getPagedVectorRefLeft(INITIAL<WorkerThreadId>));
             Nautilus::Interface::PagedVectorVarSizedRef leftPagedVector(leftPagedVectorRef, leftSchema);
             leftPagedVector.writeRecord(leftRecord);
         }
@@ -492,7 +493,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest {
             auto nljOpHandler = std::dynamic_pointer_cast<Operators::NLJOperatorHandlerSlicing>(nljOperatorHandler);
             auto nljWindow = std::dynamic_pointer_cast<NLJSlice>(nljOpHandler->getSliceByTimestampOrCreateIt(timestamp));
             auto rightPagedVectorRef =
-                Nautilus::Value<Nautilus::MemRef>((int8_t*) nljWindow->getPagedVectorRefRight(INITIAL<WorkerThreadId>));
+                Nautilus::MemRef((int8_t*) nljWindow->getPagedVectorRefRight(INITIAL<WorkerThreadId>));
             Nautilus::Interface::PagedVectorVarSizedRef rightPagedVector(rightPagedVectorRef, rightSchema);
             rightPagedVector.writeRecord(rightRecord);
         }

@@ -83,7 +83,7 @@ TEST_F(MaxExpressionTest, evaluateMaxExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(17_u64), Value<UInt64>(4_u64));
+        auto resultValue = expression.eval(UInt64(17_u64), UInt64(4_u64));
         ASSERT_EQ(resultValue, (float) 17);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -110,7 +110,7 @@ TEST_F(MaxExpressionTest, evaluateMaxExpressionFloat) {
  */
 TEST_F(MaxExpressionTest, evaluateMaxExpressionOnWrongType) {
     auto expression = BinaryExpressionWrapper<MaxExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true), Boolean(false)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

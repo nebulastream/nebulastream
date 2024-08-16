@@ -76,7 +76,7 @@ TEST_F(CosExpressionTest, evaluateCosExpressionFloat) {
  */
 TEST_F(CosExpressionTest, evaluateCosExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<CosExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(false)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

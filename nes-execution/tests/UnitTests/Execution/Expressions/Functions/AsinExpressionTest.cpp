@@ -54,7 +54,7 @@ TEST_F(AsinExpressionTest, evaluateSinExpressionFloat) {
 */
 TEST_F(AsinExpressionTest, evaluateAsinExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<AsinExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

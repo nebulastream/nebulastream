@@ -21,7 +21,7 @@
 #include <Execution/Aggregation/MinAggregation.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowTupleBufferMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMerging.hpp>
@@ -49,7 +49,7 @@ class NonKeyedTimeWindowPipelineTest : public Testing::BaseUnitTest, public Abst
     ExecutablePipelineProvider* provider{};
     std::shared_ptr<Runtime::BufferManager> bm;
     std::shared_ptr<WorkerContext> wc;
-    Nautilus::CompilationOptions options;
+    nautilus::engine::Options options;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase() {
         NES::Logger::setupLogging("NonKeyedTimeWindowPipelineTest.log", NES::LogLevel::LOG_DEBUG);
@@ -78,7 +78,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     scanSchema->addField("ts", BasicType::INT64);
     auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -104,7 +104,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithSum) {
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     sliceMerging->setChild(emitOperator);
     auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
@@ -165,7 +165,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
     scanSchema->addField("ts", BasicType::INT64);
     auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -201,7 +201,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregates) {
                      ->addField("test$max", BasicType::INT64)
                      ->addField("test$min", BasicType::INT64);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     sliceMerging->setChild(emitOperator);
     auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
@@ -268,7 +268,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     scanSchema->addField("ts", BasicType::INT64);
     auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
 
-    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
+    auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 
     auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -299,7 +299,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema = emitSchema->addField("test$min_i64", BasicType::INT64)->addField("test$min_f32", BasicType::FLOAT32);
     auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
-    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
+    auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     sliceMerging->setChild(emitOperator);
     auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
@@ -358,7 +358,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         NonKeyedTimeWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler", "CPPPipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
                         [](const testing::TestParamInfo<NonKeyedTimeWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

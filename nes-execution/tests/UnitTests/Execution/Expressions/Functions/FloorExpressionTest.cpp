@@ -53,7 +53,7 @@ TEST_F(FloorExpressionTest, evaluateFloorExpressionFloat) {
 */
 TEST_F(FloorExpressionTest, evaluateFloorExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<FloorExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

@@ -149,13 +149,13 @@ TEST_F(SignExpressionTest, evaluateSignExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(0_u64));
+        auto resultValue = expression.eval(UInt64(0_u64));
         ASSERT_EQ(resultValue, (float) 0);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(10_u64));
+        auto resultValue = expression.eval(UInt64(10_u64));
         ASSERT_EQ(resultValue, (float) 1);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -205,7 +205,7 @@ TEST_F(SignExpressionTest, evaluateSignExpressionFloat) {
  */
 TEST_F(SignExpressionTest, evaluateSignExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<SignExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(false)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

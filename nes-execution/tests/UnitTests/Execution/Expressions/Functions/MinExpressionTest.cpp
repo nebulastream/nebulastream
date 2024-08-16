@@ -78,7 +78,7 @@ TEST_F(MinExpressionTest, evaluateMinExpressionInteger) {
     }
     // UInt64
     {
-        auto resultValue = expression.eval(Value<UInt64>(17_u64), Value<UInt64>(4_u64));
+        auto resultValue = expression.eval(UInt64(17_u64), UInt64(4_u64));
         ASSERT_EQ(resultValue, (float) 4);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Double>());
     }
@@ -103,7 +103,7 @@ TEST_F(MinExpressionTest, evaluateModExpressionFloat) {
 */
 TEST_F(MinExpressionTest, evaluateModExpressionOnWrongType) {
     auto expression = BinaryExpressionWrapper<MinExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true), Value<Boolean>(false)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true), Boolean(false)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

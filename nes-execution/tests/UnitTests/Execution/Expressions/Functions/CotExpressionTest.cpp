@@ -90,7 +90,7 @@ TEST_F(CotExpressionTest, evaluateCotExpressionFloat) {
 */
 TEST_F(CotExpressionTest, evaluateCotExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<CotExpression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

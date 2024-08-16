@@ -83,7 +83,7 @@ TEST_F(Log2ExpressionTest, evaluateLog2ExpressionFloat) {
     */
 TEST_F(Log2ExpressionTest, evaluateAsinExpressionOnWrongType) {
     auto expression = UnaryExpressionWrapper<Log2Expression>();
-    ASSERT_ANY_THROW(expression.eval(Value<Boolean>(true)););
+    ASSERT_ANY_THROW(expression.eval(Boolean(true)););
 }
 
 }// namespace NES::Runtime::Execution::Expressions

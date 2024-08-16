@@ -127,20 +127,20 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper) {
         },
         {hashJoinOpHandler});
 
-    auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
-                                             Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
+    auto executionContext = ExecutionContext(Nautilus::MemRef((int8_t*) workerContext.get()),
+                                             Nautilus::MemRef((int8_t*) (&pipelineContext)));
 
     buildHelper.hashJoinBuild->setup(executionContext);
 
     // Execute record and thus fill the hash table
     for (auto i = 0UL; i < buildHelper.numberOfTuplesToProduce + 1; ++i) {
-        auto record = Nautilus::Record({{buildHelper.schema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
-                                        {buildHelper.schema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 1)},
-                                        {buildHelper.schema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+        auto record = Nautilus::Record({{buildHelper.schema->get(0)->getName(), UInt64((uint64_t) i)},
+                                        {buildHelper.schema->get(1)->getName(), UInt64((uint64_t) (i % 10) + 1)},
+                                        {buildHelper.schema->get(2)->getName(), UInt64((uint64_t) i)}});
 
         if (i == 0) {
             auto tupleBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
-            RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+            RecordBuffer recordBuffer = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
             buildHelper.hashJoinBuild->open(executionContext, recordBuffer);
         }
 
@@ -255,8 +255,8 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         },
         {hashJoinOpHandler});
 
-    auto executionContext = ExecutionContext(Nautilus::Value<Nautilus::MemRef>((int8_t*) workerContext.get()),
-                                             Nautilus::Value<Nautilus::MemRef>((int8_t*) (&pipelineContext)));
+    auto executionContext = ExecutionContext(Nautilus::MemRef((int8_t*) workerContext.get()),
+                                             Nautilus::MemRef((int8_t*) (&pipelineContext)));
 
     auto handlerIndex = 0_u64;
     auto readTsFieldLeft = std::make_shared<Expressions::ReadFieldExpression>(hashJoinProbeHelper.timeStampFieldLeft);
@@ -309,14 +309,14 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     //create buffers
     for (auto i = 0UL; i < hashJoinProbeHelper.numberOfTuplesToProduce + 1; ++i) {
         auto recordLeft =
-            Nautilus::Record({{hashJoinProbeHelper.leftSchema->get(0)->getName(), Value<UInt64>((uint64_t) i)},
-                              {hashJoinProbeHelper.leftSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
-                              {hashJoinProbeHelper.leftSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+            Nautilus::Record({{hashJoinProbeHelper.leftSchema->get(0)->getName(), UInt64((uint64_t) i)},
+                              {hashJoinProbeHelper.leftSchema->get(1)->getName(), UInt64((uint64_t) (i % 10) + 10)},
+                              {hashJoinProbeHelper.leftSchema->get(2)->getName(), UInt64((uint64_t) i)}});
         NES_DEBUG("Tuple left id={} key={} ts={}", i, (i % 10) + 10, i);
         auto recordRight =
-            Nautilus::Record({{hashJoinProbeHelper.rightSchema->get(0)->getName(), Value<UInt64>((uint64_t) i + 1000)},
-                              {hashJoinProbeHelper.rightSchema->get(1)->getName(), Value<UInt64>((uint64_t) (i % 10) + 10)},
-                              {hashJoinProbeHelper.rightSchema->get(2)->getName(), Value<UInt64>((uint64_t) i)}});
+            Nautilus::Record({{hashJoinProbeHelper.rightSchema->get(0)->getName(), UInt64((uint64_t) i + 1000)},
+                              {hashJoinProbeHelper.rightSchema->get(1)->getName(), UInt64((uint64_t) (i % 10) + 10)},
+                              {hashJoinProbeHelper.rightSchema->get(2)->getName(), UInt64((uint64_t) i)}});
         NES_DEBUG("Tuple right f1_left={} kef2_left(key)={} ts={}", i + 1000, (i % 10) + 10, i);
 
         if (recordRight.read(hashJoinProbeHelper.timeStampFieldRight) > lastTupleTimeStampWindow) {
@@ -341,7 +341,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     //for all record buffers
     for (auto i = 0UL; i < leftRecords.size(); i++) {
         auto tupleBuffer = hashJoinProbeHelper.bufferManager->getBufferBlocking();
-        RecordBuffer recordBufferLeft = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+        RecordBuffer recordBufferLeft = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
         if (i == 0) {
             hashJoinBuildLeft->open(executionContext, recordBufferLeft);
         }
@@ -366,7 +366,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     NES_DEBUG("filling right side with size = {}", rightRecords.size());
     for (auto i = 0UL; i < rightRecords.size(); i++) {
         auto tupleBuffer = hashJoinProbeHelper.bufferManager->getBufferBlocking();
-        RecordBuffer recordBufferRight = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+        RecordBuffer recordBufferRight = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
         if (i == 0) {
             hashJoinBuildRight->open(executionContext, recordBufferRight);
         }
@@ -392,7 +392,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
     NES_DEBUG("trigger Probe for numberOfEmittedBuffersBuild = {}", numberOfEmittedBuffersBuild);
     for (auto cnt = 0UL; cnt < numberOfEmittedBuffersBuild; ++cnt) {
         auto tupleBuffer = hashJoinOperatorTest->emittedBuffers[cnt];
-        RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*) std::addressof(tupleBuffer)));
+        RecordBuffer recordBuffer = RecordBuffer(MemRef((int8_t*) std::addressof(tupleBuffer)));
         hashJoinProbe->open(executionContext, recordBuffer);
     }
 
@@ -409,7 +409,7 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper) {
         //        return false;
     }
 
-    Value<UInt64> zeroValue((uint64_t) 0UL);
+    UInt64 zeroValue((uint64_t) 0UL);
     auto maxWindowIdentifier = std::ceil((double) hashJoinProbeHelper.numberOfTuplesToProduce / hashJoinProbeHelper.windowSize)
         * hashJoinProbeHelper.windowSize;
     for (auto windowIdentifier = hashJoinProbeHelper.windowSize; windowIdentifier < maxWindowIdentifier;

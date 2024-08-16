@@ -56,8 +56,8 @@ class MapJavaUdfOperatorTest : public NES::Testing::BaseUnitTest {
         auto collector = std::make_shared<CollectOperator>();
         map.setChild(collector);
         auto pipelineContext = MockedPipelineExecutionContext({handler});
-        auto ctx = ExecutionContext(Value<MemRef>(buffer), Value<MemRef>((int8_t*) &pipelineContext));
-        RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
+        auto ctx = ExecutionContext(MemRef(buffer), MemRef((int8_t*) &pipelineContext));
+        RecordBuffer recordBuffer = RecordBuffer(MemRef(nullptr));
         map.setup(ctx);
         map.open(ctx, recordBuffer);
         map.execute(ctx, record);
@@ -157,7 +157,7 @@ TEST_F(MapJavaUdfOperatorTest, LongUDFTest) {
 */
 TEST_F(MapJavaUdfOperatorTest, UnsignedLongUDFTest) {
     uint64_t initialValue = 64;
-    auto inputRecord = Record({{"id", Value<UInt64>(initialValue)}});
+    auto inputRecord = Record({{"id", UInt64(initialValue)}});
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder()
                                  .setClassName("stream.nebula.LongMapFunction")
                                  .setInputClassName("java.lang.Long")
@@ -219,7 +219,7 @@ TEST_F(MapJavaUdfOperatorTest, DoubleUDFTest) {
 */
 TEST_F(MapJavaUdfOperatorTest, BooleanUDFTest) {
     auto initialValue = true;
-    auto inputRecord = Record({{"id", Value<Boolean>(initialValue)}});
+    auto inputRecord = Record({{"id", Boolean(initialValue)}});
     auto javaUDFDescriptor =
         Catalogs::UDF::JavaUDFDescriptorBuilder()
             .setClassName("stream.nebula.BooleanMapFunction")
@@ -296,11 +296,11 @@ TEST_F(MapJavaUdfOperatorTest, ComplexPojoMapFunction) {
                                {"shortVariable", Value<Int16>(initialShort)},
                                {"intVariable", Value<Int32>(initialInt)},
                                {"longVariable", Value<Int64>(initialLong)},
-                               {"unsignedLongVariable", Value<UInt64>(initialUnsignedLong)},
+                               {"unsignedLongVariable", UInt64(initialUnsignedLong)},
                                {"floatVariable", Value<Float>(initialFloat)},
                                {"doubleVariable", Value<Double>(initialDouble)},
                                {"stringVariable", Value<Text>("testValue")},
-                               {"booleanVariable", Value<Boolean>(initialBool)}});
+                               {"booleanVariable", Boolean(initialBool)}});
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder()
                                  .setClassName("stream.nebula.ComplexPojoMapFunction")
                                  .setInputClassName("stream.nebula.ComplexPojo")

@@ -36,12 +36,12 @@ TEST_F(OrExpressionTest, baseBoolCases) {
     auto expression = UnaryExpressionWrapper<NegateExpression>();
 
     {
-        auto resultValue = expression.eval(Value<Boolean>(true));
+        auto resultValue = expression.eval(Boolean(true));
         ASSERT_EQ(resultValue, (bool) false);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
     {
-        auto resultValue = expression.eval(Value<Boolean>(false));
+        auto resultValue = expression.eval(Boolean(false));
         ASSERT_EQ(resultValue, (bool) true);
         ASSERT_TRUE(resultValue->getTypeIdentifier()->isType<Boolean>());
     }
