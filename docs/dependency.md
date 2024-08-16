@@ -50,7 +50,7 @@ initially resolved via vcpkg-managed dependencies. Running the initial CMake con
 options for how NebulaStream detects the dependencies.
 The developer passes a vcpkg toolchain file directly via
 `-DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake`
-The developer configures the CMake build in the developer container with the VCPKG_ROOT environment variable prepared.
+The developer configures the CMake build in the developer container with the NES_PREBUILT_VCPKG_ROOT environment variable prepared.
 If the developer does not specify a toolchain file and no environment is set, the build system will clone a new
 vcpkg-repository into the current working directory and set the toolchain file automatically.
 
