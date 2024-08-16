@@ -26,7 +26,7 @@
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>

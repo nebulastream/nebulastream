@@ -22,8 +22,8 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>

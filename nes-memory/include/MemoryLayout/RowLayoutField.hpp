@@ -16,8 +16,8 @@
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_ROWLAYOUTFIELD_HPP_
 
 #include <utility>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>

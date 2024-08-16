@@ -15,7 +15,7 @@
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_EMIT_HPP_
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

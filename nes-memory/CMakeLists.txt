@@ -6,6 +6,7 @@ add_library(nes-memory
         FixedSizeBufferPool.cpp
         LocalBufferPool.cpp
         TaggedPointer.cpp
+        TestTupleBuffer.cpp
 )
 
 target_include_directories(nes-memory
@@ -16,7 +17,7 @@ target_include_directories(nes-memory
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 find_package(folly REQUIRED)
-target_link_libraries(nes-memory PUBLIC nes-common PRIVATE folly::folly)
+target_link_libraries(nes-memory PUBLIC nes-common nes-data-types PRIVATE folly::folly)
 
 ### What I want:
 #

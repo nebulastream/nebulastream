@@ -23,6 +23,7 @@
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+#include <Runtime/BufferManager.hpp>
 
 
 namespace NES::Testing
@@ -94,7 +95,8 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     IntegrationTestUtil::startQuery(queryId, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
-    Runtime::BufferManagerPtr bufferManager = Runtime::BufferManager::create();
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager = std::make_shared<Runtime::BufferManager>();
+
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
     auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, *bufferManager, 0, "", true);
 

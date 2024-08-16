@@ -24,6 +24,7 @@
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Source.hpp>
 #include <SourceReturnType.hpp>
 
@@ -75,7 +76,7 @@ private:
     SchemaPtr schema;
     Runtime::BufferManagerPtr localBufferManager;
     SourceReturnType::EmitFunction emitFunction;
-    Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager{nullptr};
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t numSourceLocalBuffers;
     SourceType type;

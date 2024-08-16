@@ -25,7 +25,7 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <Util/JavaUDFDescriptorBuilder.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -12,8 +12,8 @@
     limitations under the License.
 */
 #include <API/AttributeField.hpp>
-#include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/BufferAccessException.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 

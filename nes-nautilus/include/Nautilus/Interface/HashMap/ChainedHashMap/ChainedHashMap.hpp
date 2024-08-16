@@ -14,6 +14,7 @@
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASHMAP_CHAINEDHASHMAP_CHAINEDHASHMAP_HPP_
 #include <cassert>
+#include <memory_resource>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 

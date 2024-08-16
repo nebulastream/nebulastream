@@ -21,9 +21,8 @@
 #include <ostream>
 #include <string>
 #include <variant>
-#include <Runtime/MemoryLayout/BufferAccessException.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <MemoryLayout/BufferAccessException.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/ExecutableType/NESType.hpp>
@@ -437,7 +436,7 @@ public:
      */
     template <typename... Types>
     requires(ContainsString<Types> || ...)
-    void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager)
+    void pushRecordToBuffer(std::tuple<Types...> record, AbstractBufferProvider* bufferManager)
     {
         pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), bufferManager);
     }

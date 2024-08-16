@@ -20,8 +20,8 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>

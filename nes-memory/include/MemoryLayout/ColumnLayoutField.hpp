@@ -15,8 +15,8 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUTFIELD_HPP_
 
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -24,7 +24,7 @@
 
 // Currently required
 #include <Runtime/BufferManager.hpp> // required: localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
-#include <Runtime/FixedSizeBufferPool.hpp> // required: localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
+#include <Runtime/AbstractBufferProvider.hpp> // required: localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES

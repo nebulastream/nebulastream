@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Runtime/MemoryLayout/BufferAccessException.hpp>
+#include <MemoryLayout/BufferAccessException.hpp>
 #include <Util/Logger/Logger.hpp>
 namespace NES
 {

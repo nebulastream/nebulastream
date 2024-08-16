@@ -26,7 +26,7 @@
 #include <SourceHandle.hpp>
 #include <TCPSource.hpp>
 
-namespace NES::QueryCompilation
+namespace NES
 {
 
 DataSourceProviderPtr SourceProvider::create()
@@ -52,7 +52,7 @@ SourceHandlePtr SourceProvider::lower(
             schema,
             bufferManager,
             std::move(emitFunction),
-            compilerOptions->getNumSourceLocalBuffers(),
+            64, //Todo: get value from configuration
             std::move(csvSource),
             csvSourceType->getNumberOfBuffersToProduce()->getValue());
     }
@@ -66,7 +66,7 @@ SourceHandlePtr SourceProvider::lower(
             schema,
             bufferManager,
             std::move(emitFunction),
-            compilerOptions->getNumSourceLocalBuffers(),
+            64, //Todo: get value from configuration
             std::move(tcpSource),
             0);
     }
@@ -74,4 +74,4 @@ SourceHandlePtr SourceProvider::lower(
     throw std::invalid_argument("Unknown Source Descriptor Type");
 }
 
-} /// namespace NES::QueryCompilation
+} /// namespace NES

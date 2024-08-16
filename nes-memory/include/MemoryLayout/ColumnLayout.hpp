@@ -15,7 +15,7 @@
 #ifndef NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUT_HPP_
 #define NES_RUNTIME_INCLUDE_RUNTIME_MEMORYLAYOUT_COLUMNLAYOUT_HPP_
 
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {

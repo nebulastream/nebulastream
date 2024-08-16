@@ -15,9 +15,9 @@
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Runtime/MemoryLayout/PhysicalField.hpp>
-#include <Runtime/MemoryLayout/PhysicalFieldUtil.hpp>
-#include <Runtime/MemoryLayout/PhysicalSchema.hpp>
+#include <MemoryLayout/PhysicalField.hpp>
+#include <MemoryLayout/PhysicalFieldUtil.hpp>
+#include <MemoryLayout/PhysicalSchema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>

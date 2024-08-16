@@ -21,7 +21,7 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Nautilus
 {

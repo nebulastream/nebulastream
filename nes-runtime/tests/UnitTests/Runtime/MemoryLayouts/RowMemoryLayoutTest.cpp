@@ -17,8 +17,8 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
+#include <MemoryLayout/RowLayout.hpp>
+#include <MemoryLayout/RowLayoutField.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
