@@ -14,7 +14,7 @@
 
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <limits>
 
@@ -26,67 +26,40 @@ MinAggregationFunction::MinAggregationFunction(const PhysicalTypePtr& inputType,
                                                const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
     : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
-template<class T>
-T min(T first, T second) {
-    return first < second ? first : second;
-}
-
-template<class T>
-Nautilus::Value<> callMinTyped(Nautilus::Value<> leftValue, Nautilus::Value<> rightValue) {
-    return FunctionCall<>("min", min<typename T::RawType>, leftValue.as<T>(), rightValue.as<T>());
-}
-
-Nautilus::Value<> callMin(const Nautilus::Value<>& leftValue, const Nautilus::Value<>& rightValue) {
-    if (leftValue->isType<Nautilus::Int8>()) {
-        return callMinTyped<Nautilus::Int8>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Int16>()) {
-        return callMinTyped<Nautilus::Int16>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Int32>()) {
-        return callMinTyped<Nautilus::Int32>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Int64>()) {
-        return callMinTyped<Nautilus::Int64>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::UInt8>()) {
-        return callMinTyped<Nautilus::UInt8>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::UInt16>()) {
-        return callMinTyped<Nautilus::UInt16>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::UInt32>()) {
-        return callMinTyped<Nautilus::UInt32>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::UInt64>()) {
-        return callMinTyped<Nautilus::UInt64>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Float>()) {
-        return callMinTyped<Nautilus::Float>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Double>()) {
-        return callMinTyped<Nautilus::Double>(leftValue, rightValue);
+void MinAggregationFunction::storeMin(const Nautilus::ExecDataType& leftValue,
+              const Nautilus::ExecDataType& rightValue,
+              const Nautilus::MemRefVal& state,
+              const PhysicalTypePtr& inputType) {
+    // we have to do this, as otherwise we do not check if the val<> is true bti if there exists a pointer
+    if (*(leftValue > rightValue)) {
+        // store the rightValue
+        AggregationFunction::storeToMemRef(state, rightValue, inputType);
+    } else if (*(leftValue < rightValue))  {
+        // store the leftValue
+        AggregationFunction::storeToMemRef(state, leftValue, inputType);
     }
-    throw Exceptions::NotImplementedException("Type not implemented");
 }
 
-void MinAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) {
-    // load
-    auto oldValue = AggregationFunction::loadFromMemref(state, inputType);
-    // compare
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto inputValue = inputExpression->execute(inputRecord);
-    auto result = callMin(inputValue, oldValue);
-    state.store(result);
+void MinAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& inputRecord) {
+    const auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
+    const auto inputValue = inputExpression->execute(inputRecord);
+    storeMin(inputValue, oldValue, state, inputType);
 }
 
-void MinAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
-    auto left = AggregationFunction::loadFromMemref(state1, inputType);
-    auto right = AggregationFunction::loadFromMemref(state2, inputType);
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto result = callMin(left, right);
-    state1.store(result);
+void MinAggregationFunction::combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) {
+    const auto left = AggregationFunction::loadFromMemRef(state1, inputType);
+    const auto right = AggregationFunction::loadFromMemRef(state2, inputType);
+    storeMin(left, right, state1, inputType);
 }
 
-void MinAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRecord) {
-    auto finalVal = AggregationFunction::loadFromMemref(state, resultType);
+void MinAggregationFunction::lower(Nautilus::MemRefVal state, Nautilus::Record& resultRecord) {
+    const auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
-void MinAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
-    auto minVal = createMaxValue(inputType);
-    memref.store(minVal);
+void MinAggregationFunction::reset(Nautilus::MemRefVal memRef) {
+    const auto minVal = createMaxValue(inputType);
+    AggregationFunction::storeToMemRef(memRef, minVal, inputType);
 }
 uint64_t MinAggregationFunction::getSize() { return inputType->size(); }
 

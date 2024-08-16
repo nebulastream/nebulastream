@@ -40,7 +40,7 @@ class State {
      */
     ~State();
     const uint64_t stateSize;
-    alignas(STATE_ALIGNMENT) void* ptr;
+    alignas(STATE_ALIGNMENT) int8_t* ptr;
 };
 
 /**

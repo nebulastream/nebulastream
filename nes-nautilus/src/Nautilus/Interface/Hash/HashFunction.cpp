@@ -14,20 +14,20 @@
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
 namespace NES::Nautilus::Interface {
-HashFunction::HashValue HashFunction::calculate(Value<> value) {
+HashFunction::HashValue HashFunction::calculate(const ExecDataType& value) {
     auto hash = init();
     return calculate(hash, value);
 };
 
-HashFunction::HashValue HashFunction::calculate(std::vector<Value<>>& values) {
+HashFunction::HashValue HashFunction::calculate(std::vector<ExecDataType>& values) {
     auto hash = init();
-    for (auto& value : values) {
+    for (auto& value : nautilus::static_iterable(values)) {
         hash = calculate(hash, value);
     }
     return hash;
 }
 
-HashFunction::HashValue HashFunction::calculateWithState(Value<> value, Value<MemRef> state) {
+HashFunction::HashValue HashFunction::calculateWithState(ExecDataType value, MemRefVal& state) {
     auto hash = init();
     return calculateWithState(hash, value, state);
 }

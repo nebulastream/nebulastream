@@ -19,9 +19,11 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/DataTypes/AbstractDataType.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
 #include <Util/StdInt.hpp>
+#include <nautilus/val.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -71,12 +73,11 @@ KeyedSliceMerging::KeyedSliceMerging(uint64_t operatorHandlerIndex,
 
 void KeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("setupSliceMergingHandler",
-                           setupKeyedSliceMergingHandler,
+    nautilus::invoke(setupKeyedSliceMergingHandler,
                            globalOperatorHandler,
                            executionCtx.getPipelineContext(),
-                           Value<UInt64>(keySize),
-                           Value<UInt64>(valueSize));
+                           UInt64Val(keySize),
+                           UInt64Val(valueSize));
     if (this->child != nullptr)
         this->child->setup(executionCtx);
 }
@@ -85,41 +86,48 @@ void KeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const 
     // Open is called once per pipeline invocation and enables us to initialize some local state, which exists inside pipeline invocation.
     // We use this here, to load the thread local slice store and store the pointer/memref to it in the execution context as the local slice store state.
     if (this->child != nullptr)
+    {
         this->child->open(ctx, buffer);
+    }
+
+//    ((void) buffer);
+//    ((void) ctx);
+
+//    NES_INFO("Received buffer...");
 
     // 1. get the operator handler and extract the slice information that should be combined.
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    auto startSliceTs = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, startSlice).load<UInt64>();
-    auto endSliceTs = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, endSlice).load<UInt64>();
-    auto sequenceNumber = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, sequenceNumber).load<UInt64>();
-    auto chunkNumber = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, chunkNumber).load<UInt64>();
-    auto lastChunk = getMember(sliceMergeTask, SliceMergeTask<KeyedSlice>, lastChunk).load<Boolean>();
+    auto startSliceTs = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, startSlice, uint64_t);
+    auto endSliceTs = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, endSlice, uint64_t);
+    auto sequenceNumber = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, sequenceNumber, uint64_t);
+    auto chunkNumber = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, chunkNumber, uint64_t);
+    auto lastChunk = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<KeyedSlice>, lastChunk, bool);
 
     // 2. initialize global slice state, which is represented by a chained hashtable
-    auto globalSlice = Nautilus::FunctionCall("createKeyedState", createKeyedState, globalOperatorHandler, sliceMergeTask);
-    auto globalSliceState = Nautilus::FunctionCall("getKeyedSliceState", getKeyedSliceState, globalSlice);
+    auto globalSlice = nautilus::invoke(createKeyedState, globalOperatorHandler, sliceMergeTask);
+    auto globalSliceState = nautilus::invoke(getKeyedSliceState, globalSlice);
     auto globalHashTable = Interface::ChainedHashMapRef(globalSliceState, keyDataTypes, keySize, valueSize);
 
     // 3. combine thread local slices and append them to the global slice store
     combineThreadLocalSlices(globalHashTable, sliceMergeTask);
-    FunctionCall("freeKeyedSliceMergeTask", freeKeyedSliceMergeTask, sliceMergeTask);
+    nautilus::invoke(freeKeyedSliceMergeTask, sliceMergeTask);
 
     // 4. emit global slice when we have a tumbling window.
     sliceMergingAction->emitSlice(ctx, child, startSliceTs, endSliceTs, sequenceNumber, chunkNumber, lastChunk, globalSlice);
 }
 
 void KeyedSliceMerging::combineThreadLocalSlices(Interface::ChainedHashMapRef& globalHashTable,
-                                                 Value<MemRef>& sliceMergeTask) const {
+                                                 MemRefVal& sliceMergeTask) const {
     // combine all thread local partitions into the global slice hash map
-    auto numberOfSlices =
-        Nautilus::FunctionCall("getKeyedNumberOfSlicesFromTask", getKeyedNumberOfSlicesFromTask, sliceMergeTask);
-    NES_DEBUG("combine {} slices", numberOfSlices->toString());
+    auto numberOfSlices = nautilus::invoke(getKeyedNumberOfSlicesFromTask, sliceMergeTask);
+    NES_DEBUG("combining slices");
 
-    for (Value<UInt64> i = 0_u64; i < numberOfSlices; i = i + 1_u64) {
-        auto partitionState = Nautilus::FunctionCall("getKeyedSliceStateFromTask", getKeyedSliceStateFromTask, sliceMergeTask, i);
+    for (UInt64Val i = 0_u64; i < numberOfSlices; i = i + UInt64Val(1)) {
+        auto partitionState = nautilus::invoke(getKeyedSliceStateFromTask, sliceMergeTask, i);
         auto partitionStateHashTable = Interface::ChainedHashMapRef(partitionState, keyDataTypes, keySize, valueSize);
         mergeHashTable(globalHashTable, partitionStateHashTable);
+        // ((void) globalHashTable);
     }
 }
 
@@ -127,23 +135,21 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
                                        Interface::ChainedHashMapRef& threadLocalSliceHashMap) const {
     // inserts all entries from the thread local hash map into the global hash map.
     // 1. iterate over all entries in thread local hash map.
+
+    NES_INFO("Merging hashtable!");
     for (const auto& threadLocalEntry : threadLocalSliceHashMap) {
         // 2. insert entry or update existing one with same key.
         globalSliceHashMap.insertEntryOrUpdate(threadLocalEntry, [&](auto& globalEntry) {
             // 2b. update aggregation if the entry was already existing in the global hash map
             auto key = threadLocalEntry.getKeyPtr();
             auto threadLocalValue = threadLocalEntry.getValuePtr();
-            Value<MemRef> globalValue = globalEntry.getValuePtr();
-            NES_TRACE("merge key {} th {} gb {}",
-                      key.load<UInt64>()->toString(),
-                      threadLocalValue.load<UInt64>()->toString(),
-                      globalValue.load<UInt64>()->toString())
+            MemRefVal globalValue = globalEntry.getValuePtr();
             // 2c. apply aggregation functions and combine the values
-            for (const auto& function : aggregationFunctions) {
+            for (const auto& function : static_iterable(aggregationFunctions)) {
                 function->combine(globalValue, threadLocalValue);
-                threadLocalValue = threadLocalValue + function->getSize();
-                NES_TRACE("result value {}", globalValue.load<UInt64>()->toString());
-                globalValue = globalValue + function->getSize();
+                threadLocalValue = threadLocalValue + nautilus::val<uint64_t>(function->getSize());
+//                NES_TRACE("result value {}", globalValue.load<UInt64>()->toString());
+                globalValue = globalValue + nautilus::val<uint64_t>(function->getSize());
             }
         });
     }

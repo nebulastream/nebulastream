@@ -14,7 +14,7 @@
 
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <limits>
 
@@ -25,68 +25,40 @@ MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType,
                                                const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
     : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
-template<class T>
-T max(T first, T second) {
-    return first > second ? first : second;
-}
 
-template<class T>
-Nautilus::Value<> callMaxTyped(Nautilus::Value<> leftValue, Nautilus::Value<> rightValue) {
-    return FunctionCall<>("max", max<typename T::RawType>, leftValue.as<T>(), rightValue.as<T>());
-}
-
-Nautilus::Value<> callMax(const Nautilus::Value<>& leftValue, const Nautilus::Value<>& rightValue) {
-    if (leftValue->isType<Nautilus::Int8>()) {
-        return callMaxTyped<Nautilus::Int8>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Int16>()) {
-        return callMaxTyped<Nautilus::Int16>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Int32>()) {
-        return callMaxTyped<Nautilus::Int32>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Int64>()) {
-        return callMaxTyped<Nautilus::Int64>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::UInt8>()) {
-        return callMaxTyped<Nautilus::UInt8>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::UInt16>()) {
-        return callMaxTyped<Nautilus::UInt16>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::UInt32>()) {
-        return callMaxTyped<Nautilus::UInt32>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::UInt64>()) {
-        return callMaxTyped<Nautilus::UInt64>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Float>()) {
-        return callMaxTyped<Nautilus::Float>(leftValue, rightValue);
-    } else if (leftValue->isType<Nautilus::Double>()) {
-        return callMaxTyped<Nautilus::Double>(leftValue, rightValue);
+void MaxAggregationFunction::storeMax(const Nautilus::ExecDataType& leftValue,
+              const Nautilus::ExecDataType& rightValue,
+              const Nautilus::MemRefVal& state,
+              const PhysicalTypePtr& inputType) {
+    // we have to do this, as otherwise we do not check if the val<> is true bti if there exists a pointer
+    if (*(leftValue < rightValue)) {
+        // store the rightValue
+        AggregationFunction::storeToMemRef(state, rightValue, inputType);
+    } else if (*(leftValue > rightValue)) {
+        // store the leftValue
+        AggregationFunction::storeToMemRef(state, leftValue, inputType);
     }
-    throw Exceptions::NotImplementedException("Type not implemented");
 }
 
-void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord) {
-    // load
-    auto oldValue = AggregationFunction::loadFromMemref(state, inputType);
-    // compare
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto inputValue = inputExpression->execute(inputRecord);
-    auto result = callMax(inputValue, oldValue);
-    // store
-    state.store(result);
+void MaxAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& inputRecord) {
+    const auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
+    const auto inputValue = inputExpression->execute(inputRecord);
+    storeMax(inputValue, oldValue, state, inputType);
 }
 
-void MaxAggregationFunction::combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) {
-    auto left = AggregationFunction::loadFromMemref(state1, inputType);
-    auto right = AggregationFunction::loadFromMemref(state2, inputType);
-    // TODO implement the function in nautilus if #3500 is fixed
-    auto result = callMax(left, right);
-    // store
-    state1.store(result);
+void MaxAggregationFunction::combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) {
+    const auto left = AggregationFunction::loadFromMemRef(state1, inputType);
+    const auto right = AggregationFunction::loadFromMemRef(state2, inputType);
+    storeMax(left, right, state1, inputType);
 }
 
-void MaxAggregationFunction::lower(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& resultRecord) {
-    auto finalVal = AggregationFunction::loadFromMemref(state, resultType);
+void MaxAggregationFunction::lower(Nautilus::MemRefVal state, Nautilus::Record& resultRecord) {
+    auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
-void MaxAggregationFunction::reset(Nautilus::Value<Nautilus::MemRef> memref) {
+void MaxAggregationFunction::reset(Nautilus::MemRefVal memRef) {
     auto maxVal = createMinValue(inputType);
-    memref.store(maxVal);
+    AggregationFunction::storeToMemRef(memRef, maxVal, inputType);
 }
 uint64_t MaxAggregationFunction::getSize() { return inputType->size(); }
 }// namespace NES::Runtime::Execution::Aggregation

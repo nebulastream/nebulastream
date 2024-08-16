@@ -26,11 +26,17 @@ class MinAggregationFunction : public AggregationFunction {
                            const Expressions::ExpressionPtr& inputExpression,
                            const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier);
 
-    void lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& record) override;
-    void combine(Nautilus::Value<Nautilus::MemRef> state1, Nautilus::Value<Nautilus::MemRef> state2) override;
-    void lower(Nautilus::Value<Nautilus::MemRef> memref, Nautilus::Record& record) override;
-    void reset(Nautilus::Value<Nautilus::MemRef> state) override;
+    void lift(Nautilus::MemRefVal state, Nautilus::Record& record) override;
+    void combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) override;
+    void lower(Nautilus::MemRefVal memref, Nautilus::Record& record) override;
+    void reset(Nautilus::MemRefVal state) override;
     uint64_t getSize() override;
+
+  private:
+    static void storeMin(const Nautilus::ExecDataType& leftValue,
+                  const Nautilus::ExecDataType& rightValue,
+                  const Nautilus::MemRefVal& state,
+                  const PhysicalTypePtr& inputType);
 };
 }// namespace NES::Runtime::Execution::Aggregation
 

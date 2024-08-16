@@ -19,16 +19,16 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
 
-void* getKeyedSliceStoreProxy(void* op, WorkerThreadId workerThreadId) {
+//void* getKeyedSliceStoreProxy(void* op, WorkerThreadId workerThreadId) {
+void* getKeyedSliceStoreProxy(void* op, uint32_t workerThreadId) {
     auto handler = static_cast<KeyedSlicePreAggregationHandler*>(op);
-    return handler->getThreadLocalSliceStore(workerThreadId);
+    return handler->getThreadLocalSliceStore(WorkerThreadId(workerThreadId));
 }
 
 void* findKeyedSliceStateByTsProxy(void* ss, uint64_t ts) {
@@ -65,18 +65,17 @@ class LocalKeyedSliceStoreState : public Operators::OperatorState {
     explicit LocalKeyedSliceStoreState(const std::vector<PhysicalTypePtr>& keyDataTypes,
                                        uint64_t keySize,
                                        uint64_t valueSize,
-                                       const Value<MemRef>& sliceStoreState)
+                                       const MemRefVal& sliceStoreState)
         : keyDataTypes(keyDataTypes), keySize(keySize), valueSize(valueSize), sliceStoreState(sliceStoreState){};
 
-    auto findSliceStateByTs(Value<UInt64>& timestampValue) {
-        auto htPtr =
-            Nautilus::FunctionCall("findKeyedSliceStateByTsProxy", findKeyedSliceStateByTsProxy, sliceStoreState, timestampValue);
+    auto findSliceStateByTs(const UInt64Val& timestampValue) {
+        auto htPtr = nautilus::invoke(findKeyedSliceStateByTsProxy, sliceStoreState, timestampValue);
         return Interface::ChainedHashMapRef(htPtr, keyDataTypes, keySize, valueSize);
     }
     const std::vector<PhysicalTypePtr> keyDataTypes;
     const uint64_t keySize;
     const uint64_t valueSize;
-    const Value<MemRef> sliceStoreState;
+    const MemRefVal sliceStoreState;
 };
 
 KeyedSlicePreAggregation::KeyedSlicePreAggregation(
@@ -99,12 +98,11 @@ KeyedSlicePreAggregation::KeyedSlicePreAggregation(
 
 void KeyedSlicePreAggregation::setup(ExecutionContext& executionCtx) const {
     auto globalOperatorHandler = executionCtx.getGlobalOperatorHandler(operatorHandlerIndex);
-    Nautilus::FunctionCall("setupWindowHandler",
-                           setupWindowHandler2,
-                           globalOperatorHandler,
-                           executionCtx.getPipelineContext(),
-                           Value<UInt64>(keySize),
-                           Value<UInt64>(valueSize));
+    nautilus::invoke(setupWindowHandler2,
+                     globalOperatorHandler,
+                     executionCtx.getPipelineContext(),
+                     UInt64Val(keySize),
+                     UInt64Val(valueSize));
 }
 
 void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) const {
@@ -113,10 +111,7 @@ void KeyedSlicePreAggregation::open(ExecutionContext& ctx, RecordBuffer& rb) con
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     // 2. load the thread local slice store according to the worker id.
-    auto sliceStore = Nautilus::FunctionCall("getKeyedSliceStoreProxy",
-                                             getKeyedSliceStoreProxy,
-                                             globalOperatorHandler,
-                                             ctx.getWorkerThreadId());
+    auto sliceStore = nautilus::invoke(getKeyedSliceStoreProxy, globalOperatorHandler, ctx.getWorkerThreadId());
     // 3. store the reference to the slice store in the local operator state.
     auto sliceStoreState = std::make_unique<LocalKeyedSliceStoreState>(keyDataTypes, keySize, valueSize, sliceStore);
     ctx.setLocalOperatorState(this, std::move(sliceStoreState));
@@ -130,8 +125,9 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     auto timestampValue = timeFunction->getTs(ctx, record);
 
     // 2. derive key values
-    std::vector<Value<>> keyValues;
-    for (const auto& exp : keyExpressions) {
+    std::vector<ExecDataType> keyValues;
+    keyValues.reserve(keyExpressions.size());
+    for (const auto& exp : nautilus::static_iterable(keyExpressions)) {
         keyValues.emplace_back(exp->execute(record));
     }
 
@@ -141,22 +137,23 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 4. calculate hash
     auto hash = hashFunction->calculate(keyValues);
+    NES_INFO("Calculated hash: {} from record {}", hash.toString(), record.toString());
 
     // 5. create entry in the slice hash map. If the entry is new set default values for aggregations.
     auto entry = sliceState.findOrCreate(hash, keyValues, [this](auto& entry) {
         // set aggregation values if a new entry was created
         auto valuePtr = entry.getValuePtr();
-        for (const auto& aggFunction : aggregationFunctions) {
+        for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions)) {
             aggFunction->reset(valuePtr);
-            valuePtr = valuePtr + aggFunction->getSize();
+            valuePtr = valuePtr + nautilus::val<uint64_t>(aggFunction->getSize());
         }
     });
 
     // 6. manipulate the current aggregate values
     auto valuePtr = entry.getValuePtr();
-    for (const auto& aggregationFunction : aggregationFunctions) {
+    for (const auto& aggregationFunction : nautilus::static_iterable(aggregationFunctions)) {
         aggregationFunction->lift(valuePtr, record);
-        valuePtr = valuePtr + aggregationFunction->getSize();
+        valuePtr = valuePtr + nautilus::val<uint64_t>(aggregationFunction->getSize());
     }
 }
 void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) const {
@@ -164,16 +161,15 @@ void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) const
 
     // After we processed all records in the record buffer we call triggerKeyedThreadLocalWindow
     // with the current watermark ts to check if we can trigger a window.
-    Nautilus::FunctionCall("triggerKeyedThreadLocalWindow",
-                           triggerKeyedThreadLocalWindow,
-                           globalOperatorHandler,
-                           ctx.getWorkerContext(),
-                           ctx.getPipelineContext(),
-                           ctx.getOriginId(),
-                           ctx.getSequenceNumber(),
-                           ctx.getChunkNumber(),
-                           ctx.getLastChunk(),
-                           ctx.getWatermarkTs());
+    nautilus::invoke(triggerKeyedThreadLocalWindow,
+                     globalOperatorHandler,
+                     ctx.getWorkerContext(),
+                     ctx.getPipelineContext(),
+                     ctx.getOriginId(),
+                     ctx.getSequenceNumber(),
+                     ctx.getChunkNumber(),
+                     ctx.getLastChunk(),
+                     ctx.getWatermarkTs());
 }
 
 }// namespace NES::Runtime::Execution::Operators
