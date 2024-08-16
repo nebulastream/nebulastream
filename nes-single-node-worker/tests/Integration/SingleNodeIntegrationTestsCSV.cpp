@@ -17,6 +17,7 @@
 #include <filesystem>
 #include <fstream>
 #include <numeric>
+#include <Runtime/BufferManager.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>

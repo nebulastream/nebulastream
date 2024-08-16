@@ -10,10 +10,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_source_files(nes-runtime
-        ColumnLayout.cpp
-        MemoryLayoutTupleBuffer.cpp
-        RowLayout.cpp
-        MemoryLayout.cpp
-        BufferAccessException.cpp
+set(MEMORY_LAYOUT_SOURCES
+        ${CMAKE_CURRENT_SOURCE_DIR}/ColumnLayout.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/MemoryLayoutTupleBuffer.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/RowLayout.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/MemoryLayout.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/BufferAccessException.cpp
+        CACHE INTERNAL "Memory Layout Source Files"
 )

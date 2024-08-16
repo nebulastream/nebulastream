@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>

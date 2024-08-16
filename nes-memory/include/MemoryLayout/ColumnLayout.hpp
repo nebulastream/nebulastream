@@ -14,51 +14,44 @@
 
 #pragma once
 
-#include <vector>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
+
+class ColumnLayout;
 /**
- * @brief Implements a row layout, that maps all tuples in a tuple buffer to a row-wise layout.
+ * @brief Implements a columnar layout, that maps all tuples in a tuple buffer to a column-wise layout.
  * For a schema with 3 fields (F1, F2, and F3) we retrieve the following layout.
  *
- * | F1, F2, F3 |
- * | F1, F2, F3 |
- * | F1, F2, F3 |
+ * | F1, F1, F1 |
+ * | F2, F2, F2 |
+ * | F3, F3, F3 |
  *
- * This may be beneficial for processing performance if all fields of the tuple are accessed.
+ * This may be beneficial for processing performance if only a subset fields of the tuple are accessed.
  */
-class RowLayout : public MemoryLayout, public std::enable_shared_from_this<RowLayout>
+class ColumnLayout : public MemoryLayout, public std::enable_shared_from_this<ColumnLayout>
 {
 public:
     /**
-     * @brief Constructor to create a RowLayout according to a specific schema and a buffer size.
+     * @brief Constructor to create a ColumnLayout according to a specific schema and a buffer size.
      * @param schema the underling schema of this memory layout.
      * @param bufferSize the expected buffer size.
      */
-    RowLayout(SchemaPtr schema, uint64_t bufferSize);
+    ColumnLayout(SchemaPtr schema, uint64_t bufferSize);
 
     /**
-     * @brief Factory to create a RowLayout
+     * @brief Factory to create a ColumnLayout
      * @param schema the underling schema of this memory layout.
      * @param bufferSize the expected buffer size.
-     * @return std::shared_ptr<RowLayout>
+     * @return ColumnLayoutPtr
      */
-    static std::shared_ptr<RowLayout> create(SchemaPtr schema, uint64_t bufferSize);
-
-    /**
-     * Gets the offset in bytes of all fields within a single tuple.
-     * For a single tuple with three int64 fields, the second field has a offset of 8 bytes.
-     * @return vector of field offsets.
-     */
-    const std::vector<uint64_t>& getFieldOffSets() const;
+    static std::shared_ptr<ColumnLayout> create(SchemaPtr schema, uint64_t bufferSize);
 
     /**
      * @brief Calculates the offset in the tuple buffer of a particular field for a specific tuple.
-     * For the row layout the field offset is calculated as follows:
-     * \f$ offSet = (recordIndex * recordSize) + fieldOffSets[fieldIndex] \f$
+     * For the column layout the field offset is calculated as follows:
+     * \f$ offSet = (recordIndex * physicalFieldSizes[fieldIndex]) + columnOffsets[fieldIndex] \f$
      * @param tupleIndex index of the tuple.
      * @param fieldIndex index of the field.
      * @throws BufferAccessException if the tuple index or the field index is out of bounds.
@@ -66,8 +59,14 @@ public:
      */
     [[nodiscard]] uint64_t getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) const override;
 
+    /**
+     * Get the column offset vector
+     * @return columnOffset
+     */
+    const std::vector<uint64_t>& getColumnOffsets() const;
+
 private:
-    std::vector<uint64_t> fieldOffSets;
+    std::vector<uint64_t> columnOffsets;
 };
 
 } /// namespace NES::Runtime::MemoryLayouts

@@ -15,7 +15,6 @@
 #pragma once
 
 #include <cstring>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::MemoryLayouts

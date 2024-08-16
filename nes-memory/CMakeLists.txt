@@ -10,6 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+add_subdirectory(MemoryLayout)
+
 add_library(nes-memory
         BufferManager.cpp
         TupleBufferImpl.cpp
@@ -18,6 +20,8 @@ add_library(nes-memory
         FixedSizeBufferPool.cpp
         LocalBufferPool.cpp
         TaggedPointer.cpp
+        TestTupleBuffer.cpp
+        ${MEMORY_LAYOUT_SOURCES}
 )
 
 target_include_directories(nes-memory
@@ -28,7 +32,7 @@ target_include_directories(nes-memory
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}>
 )
 find_package(folly REQUIRED)
-target_link_libraries(nes-memory PUBLIC nes-common PRIVATE folly::folly)
+target_link_libraries(nes-memory PUBLIC nes-common nes-data-types PRIVATE folly::folly)
 
 install(TARGETS nes-memory
         EXPORT NebulaStreamTargets

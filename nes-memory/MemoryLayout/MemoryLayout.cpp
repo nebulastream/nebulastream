@@ -16,8 +16,8 @@
 #include <memory>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>

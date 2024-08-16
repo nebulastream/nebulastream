@@ -38,6 +38,5 @@ add_subdirectory(Profiler)
 add_source_files(nes-runtime
         Allocator/NumaRegionMemoryAllocator.cpp
 )
-add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)
 add_subdirectory(detail)

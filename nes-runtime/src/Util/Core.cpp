@@ -18,13 +18,13 @@
 #include <iostream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Parsers/CSVParser.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
