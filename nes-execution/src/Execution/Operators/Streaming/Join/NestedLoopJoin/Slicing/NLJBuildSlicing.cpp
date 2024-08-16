@@ -56,11 +56,15 @@ void NLJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     auto operatorHandlerMemRef = localJoinState->joinOperatorHandler;
     const auto timestampVal = timeFunction->getTs(ctx, record);
 
-    if (*(!(localJoinState->sliceStart <= timestampVal && timestampVal < localJoinState->sliceEnd))) {
+    // With this version it does not work...
+    if (!(localJoinState->sliceStart <= timestampVal && timestampVal < localJoinState->sliceEnd)) {
         // We have to get the slice for the current timestamp
-        auto workerThreadId = ctx.getWorkerThreadId();
         updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
     }
+
+    // With this version, it works.
+    // updateLocalJoinState(localJoinState, operatorHandlerMemRef, timestampVal->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
+
 
     // Write record to the pagedVector
     auto nljPagedVectorMemRef = nautilus::invoke(getNLJPagedVectorProxy,
