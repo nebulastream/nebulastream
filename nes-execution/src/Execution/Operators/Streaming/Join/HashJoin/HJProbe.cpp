@@ -139,7 +139,7 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                                                      partitionId);
 
     //for every left page
-    for (UInt64Val leftPageNo(0_u64); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
+    for (UInt64Val leftPageNo = 0; leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
         //for every key in left page
         auto leftPageRef = nautilus::invoke(getPageFromBucketAtPosProxyForHashJoin,
                                             hashSliceRefLeft,

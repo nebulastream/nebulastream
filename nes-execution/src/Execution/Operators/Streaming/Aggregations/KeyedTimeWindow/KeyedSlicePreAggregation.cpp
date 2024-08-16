@@ -133,7 +133,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 3. load the reference to the slice store and find the correct slice.
     auto sliceStore = reinterpret_cast<LocalKeyedSliceStoreState*>(ctx.getLocalState(this));
-    auto sliceState = sliceStore->findSliceStateByTs(timestampValue);
+    auto sliceState = sliceStore->findSliceStateByTs(timestampValue->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
 
     // 4. calculate hash
     auto hash = hashFunction->calculate(keyValues);
@@ -169,7 +169,7 @@ void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) const
                      ctx.getSequenceNumber(),
                      ctx.getChunkNumber(),
                      ctx.getLastChunk(),
-                     ctx.getWatermarkTs());
+                     ctx.getWatermarkTs()->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
 }
 
 }// namespace NES::Runtime::Execution::Operators

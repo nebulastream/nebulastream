@@ -138,7 +138,7 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
     // 3. load the reference to the slice store and find the correct slice.
     auto state = reinterpret_cast<LocalKeyedBucketStoreState*>(ctx.getLocalState(this));
 
-    auto buckets = nautilus::invoke(findKeyedBucketsByTs, state->sliceStoreState, timestampValue);
+    auto buckets = nautilus::invoke(findKeyedBucketsByTs, state->sliceStoreState, timestampValue->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
     auto numberOfBuckets = nautilus::invoke(getKeyedBucketListSize, buckets);
     for (UInt64Val i = 0_u64; i < numberOfBuckets; i = i + 1_u64) {
         auto bucketState = nautilus::invoke(getKeyedBucket, buckets, i);
@@ -177,7 +177,7 @@ void KeyedBucketPreAggregation::close(ExecutionContext& ctx, RecordBuffer&) cons
                      ctx.getSequenceNumber(),
                      ctx.getChunkNumber(),
                      ctx.getLastChunk(),
-                     ctx.getWatermarkTs());
+                     ctx.getWatermarkTs()->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
 }
 
 }// namespace NES::Runtime::Execution::Operators

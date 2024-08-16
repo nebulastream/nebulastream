@@ -118,7 +118,7 @@ void NonKeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionCon
     auto timestampValue = timeFunction->getTs(ctx, record);
     // 2. load the reference to the slice store and find the correct slice.
     auto localState = static_cast<LocalBucketPreAggregationState*>(ctx.getLocalState(this));
-    auto buckets = nautilus::invoke(findBucketsByTs, localState->bucketStore, timestampValue);
+    auto buckets = nautilus::invoke(findBucketsByTs, localState->bucketStore, timestampValue->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
     // 3. manipulate the current aggregate values in each bucket
     auto numberOfBuckets = nautilus::invoke(getBucketListSize, buckets);
     for (UInt64Val i = 0_u64; i < numberOfBuckets; i = i + 1_u64) {
@@ -144,7 +144,7 @@ void NonKeyedBucketPreAggregation::close(ExecutionContext& ctx, RecordBuffer&) c
                      ctx.getSequenceNumber(),
                      ctx.getChunkNumber(),
                      ctx.getLastChunk(),
-                     ctx.getWatermarkTs());
+                     ctx.getWatermarkTs()->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
 }
 
 }// namespace NES::Runtime::Execution::Operators

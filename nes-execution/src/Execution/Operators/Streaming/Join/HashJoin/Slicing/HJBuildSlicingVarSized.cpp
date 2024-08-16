@@ -93,7 +93,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
 
     //check if we can reuse window
     if (!(joinState->sliceStart <= tsValue && tsValue < joinState->sliceEnd)) {
-        joinState->sliceReference = nautilus::invoke(getHJSliceVarSizedProxy, operatorHandlerMemRef, tsValue);
+        joinState->sliceReference = nautilus::invoke(getHJSliceVarSizedProxy, operatorHandlerMemRef, tsValue->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
         joinState->sliceStart = nautilus::invoke(getSliceStartVarSizedProxy, joinState->sliceReference);
         joinState->sliceEnd = nautilus::invoke(getSliceEndVarSizedProxy, joinState->sliceReference);
 

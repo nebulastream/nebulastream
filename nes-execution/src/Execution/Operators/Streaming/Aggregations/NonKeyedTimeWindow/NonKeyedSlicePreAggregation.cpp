@@ -110,7 +110,7 @@ void NonKeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionCont
     auto timestampValue = timeFunction->getTs(ctx, record);
     // 2. load the reference to the slice store and find the correct slice.
     auto sliceStore = dynamic_cast<LocalGlobalPreAggregationState*>(ctx.getLocalState(this));
-    auto sliceState = nautilus::invoke(findSliceStateByTsProxy, sliceStore->sliceStoreState, timestampValue);
+    auto sliceState = nautilus::invoke(findSliceStateByTsProxy, sliceStore->sliceStoreState, timestampValue->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
     // 3. manipulate the current aggregate values
     uint64_t stateOffset = 0;
     for (const auto& aggregationFunction : nautilus::static_iterable(aggregationFunctions)) {
@@ -133,7 +133,7 @@ void NonKeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) co
                      ctx.getSequenceNumber(),
                      ctx.getChunkNumber(),
                      ctx.getLastChunk(),
-                     ctx.getWatermarkTs());
+                     ctx.getWatermarkTs()->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
 }
 
 }// namespace NES::Runtime::Execution::Operators

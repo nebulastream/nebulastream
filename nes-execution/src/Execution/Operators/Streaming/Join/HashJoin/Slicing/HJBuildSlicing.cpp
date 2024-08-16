@@ -107,7 +107,7 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         joinState->sliceReference =
             nautilus::invoke(getHJSliceProxy,
                              operatorHandlerMemRef,
-                             tsValue,
+                             tsValue->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>(),
                              UInt64Val(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
                              UInt64Val(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
 

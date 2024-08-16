@@ -135,30 +135,30 @@ class RecordBuffer {
      *
      * @return Nautilus::UInt64Val containing the watermark timestamp of the tuple buffer.
      */
-    Nautilus::UInt64Val getWatermarkTs();
+    Nautilus::ExecDataType getWatermarkTs();
 
     /**
      * @brief Set the watermark timestamp of the underlying tuple buffer.
      * @param watermarkTs Nautilus::UInt64Val containing the watermark timestamp to set
      * for the tuple buffer.
      */
-    void setWatermarkTs(const Nautilus::UInt64Val& watermarkTs);
+    void setWatermarkTs(const Nautilus::ExecDataType& watermarkTs);
 
     /**
      * @brief Get the creation timestamp of the underlying tuple buffer.
      * The creation timestamp is the point in time when the tuple buffer was
      * created.
      *
-     * @return Nautilus::UInt64Val containing the creation timestamp of the tuple buffer.
+     * @return Nautilus::ExecDataType containing the creation timestamp of the tuple buffer.
      */
-    Nautilus::UInt64Val getCreatingTs();
+    Nautilus::ExecDataType getCreatingTs();
 
     /**
      * @brief Set the creation timestamp of the underlying tuple buffer.
      * @param creationTs Nautilus::UInt64Val containing the creation timestamp to set
      * for the tuple buffer.
      */
-    void setCreationTs(const Nautilus::UInt64Val& creationTs);
+    void setCreationTs(const Nautilus::ExecDataType& creationTs);
 
     ~RecordBuffer() = default;
 

@@ -86,7 +86,8 @@ void StreamJoinBuildBucketing::open(ExecutionContext& ctx, RecordBuffer& recordB
 
 void StreamJoinBuildBucketing::execute(ExecutionContext& ctx, Record& record) const {
     auto joinState = dynamic_cast<LocalStateBucketing*>(ctx.getLocalState(this));
-    const auto timestampVal = timeFunction->getTs(ctx, record);
+    const auto timestamp = timeFunction->getTs(ctx, record);
+    const auto timestampVal = timestamp->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>();
     UInt32Val workerThreadId = ctx.getWorkerThreadId();
 
     if (!checkIfLocalStateUpToDate(timestampVal, joinState)) {

@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution {
 
 ExecutionContext::ExecutionContext(const Nautilus::MemRefVal& workerContext, const Nautilus::MemRefVal& pipelineContext)
     : workerContext(workerContext), pipelineContext(pipelineContext), origin(0_u64), statisticId(INVALID_STATISTIC_ID),
-      watermarkTs(0_u64), currentTs(0_u64), sequenceNumber(0_u64), chunkNumber(0_u64), lastChunk(true) {}
+      watermarkTs(Nautilus::ExecDataUInt64::create(0)), currentTs(Nautilus::ExecDataUInt64::create(0)), sequenceNumber(0_u64), chunkNumber(0_u64), lastChunk(true) {}
 
 void* allocateBufferProxy(void* workerContextPtr) {
     if (workerContextPtr == nullptr) {
@@ -110,9 +110,9 @@ Nautilus::MemRefVal ExecutionContext::getGlobalOperatorHandler(uint64_t handlerI
 const Nautilus::MemRefVal& ExecutionContext::getWorkerContext() const { return workerContext; }
 const Nautilus::MemRefVal& ExecutionContext::getPipelineContext() const { return pipelineContext; }
 
-const Nautilus::UInt64Val& ExecutionContext::getWatermarkTs() const { return watermarkTs; }
+const Nautilus::ExecDataType& ExecutionContext::getWatermarkTs() const { return watermarkTs; }
 
-void ExecutionContext::setWatermarkTs(const Nautilus::UInt64Val& watermarkTs) { this->watermarkTs = watermarkTs; }
+void ExecutionContext::setWatermarkTs(const Nautilus::ExecDataType& watermarkTs) { this->watermarkTs = watermarkTs; }
 
 const Nautilus::UInt64Val& ExecutionContext::getSequenceNumber() const { return sequenceNumber; }
 
@@ -126,9 +126,9 @@ void ExecutionContext::setOrigin(Nautilus::UInt64Val origin) { this->origin = or
 
 void ExecutionContext::setCurrentStatisticId(Nautilus::UInt64Val statisticId) { this->statisticId = statisticId; }
 
-const Nautilus::UInt64Val& ExecutionContext::getCurrentTs() const { return currentTs; }
+const Nautilus::ExecDataType& ExecutionContext::getCurrentTs() const { return currentTs; }
 
-void ExecutionContext::setCurrentTs(const Nautilus::UInt64Val& currentTs) { this->currentTs = currentTs; }
+void ExecutionContext::setCurrentTs(const Nautilus::ExecDataType& currentTs) { this->currentTs = currentTs; }
 
 const Nautilus::UInt64Val& ExecutionContext::getChunkNumber() const { return chunkNumber; }
 

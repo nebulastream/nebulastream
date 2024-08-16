@@ -123,13 +123,13 @@ class ExecutionContext final {
      * @brief Returns the current watermark ts. This is set in the scan.
      * @return Nautilus::UInt64Val watermark ts
      */
-    const Nautilus::UInt64Val& getWatermarkTs() const;
+    const Nautilus::ExecDataType& getWatermarkTs() const;
 
     /**
      * @brief Sets the current valid watermark ts.
      * @param watermarkTs
      */
-    void setWatermarkTs(const Nautilus::UInt64Val& watermarkTs);
+    void setWatermarkTs(const Nautilus::ExecDataType& watermarkTs);
 
     /**
      * @brief Sets the current sequence number
@@ -188,13 +188,13 @@ class ExecutionContext final {
      * @brief Returns the current time stamp ts. This is set by a time function
      * @return Nautilus::UInt64Val timestamp ts
      */
-    const Nautilus::UInt64Val& getCurrentTs() const;
+    const Nautilus::ExecDataType& getCurrentTs() const;
 
     /**
      * @brief Sets the current processing timestamp.
      * @param ts
      */
-    void setCurrentTs(const Nautilus::UInt64Val& ts);
+    void setCurrentTs(const Nautilus::ExecDataType& ts);
 
   private:
     std::unordered_map<const Operators::Operator*, std::unique_ptr<Operators::OperatorState>> localStateMap;
@@ -202,8 +202,8 @@ class ExecutionContext final {
     Nautilus::MemRefVal pipelineContext;
     Nautilus::UInt64Val origin;
     Nautilus::UInt64Val statisticId;
-    Nautilus::UInt64Val watermarkTs;
-    Nautilus::UInt64Val currentTs;
+    Nautilus::ExecDataType watermarkTs;
+    Nautilus::ExecDataType currentTs;
     Nautilus::UInt64Val sequenceNumber;
     Nautilus::UInt64Val chunkNumber;
     Nautilus::BooleanVal lastChunk;

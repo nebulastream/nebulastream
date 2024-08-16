@@ -57,7 +57,7 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
         const auto operatorHandlerMemRef = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
         nautilus::invoke(deleteAllSlicesProxy,
                          operatorHandlerMemRef,
-                         ctx.getWatermarkTs(),
+                         ctx.getWatermarkTs()->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>(),
                          ctx.getSequenceNumber(),
                          ctx.getChunkNumber(),
                          ctx.getLastChunk(),

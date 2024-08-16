@@ -56,7 +56,7 @@ void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const {
                      operatorHandlerMemRef,
                      ctx.getPipelineContext(),
                      ctx.getWorkerContext(),
-                     ctx.getWatermarkTs(),
+                     ctx.getWatermarkTs()->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>(),
                      ctx.getSequenceNumber(),
                      ctx.getChunkNumber(),
                      ctx.getLastChunk(),

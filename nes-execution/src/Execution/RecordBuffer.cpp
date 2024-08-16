@@ -70,24 +70,24 @@ Nautilus::BooleanVal RecordBuffer::isLastChunk() {
     return invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__isLastChunk, tupleBufferRef);
 }
 
-Nautilus::UInt64Val RecordBuffer::getWatermarkTs() {
-    return invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark, tupleBufferRef);
+Nautilus::ExecDataType RecordBuffer::getWatermarkTs() {
+    return Nautilus::ExecDataUInt64::create(invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark, tupleBufferRef));
 }
 
-void RecordBuffer::setWatermarkTs(const Nautilus::UInt64Val& watermarkTs) {
-    invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setWatermark, tupleBufferRef, watermarkTs);
+void RecordBuffer::setWatermarkTs(const Nautilus::ExecDataType& watermarkTs) {
+    invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setWatermark, tupleBufferRef, watermarkTs->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
 }
 
 Nautilus::UInt64Val RecordBuffer::getSequenceNr() {
     return invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getSequenceNumber, tupleBufferRef);
 }
 
-Nautilus::UInt64Val RecordBuffer::getCreatingTs() {
-    return invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getCreationTimestampInMS, tupleBufferRef);
+Nautilus::ExecDataType RecordBuffer::getCreatingTs() {
+    return Nautilus::ExecDataUInt64::create(invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getCreationTimestampInMS, tupleBufferRef));
 }
 
-void RecordBuffer::setCreationTs(const Nautilus::UInt64Val& creationTs) {
-    invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setCreationTimestampInMS, tupleBufferRef, creationTs);
+void RecordBuffer::setCreationTs(const Nautilus::ExecDataType& creationTs) {
+    invoke(Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setCreationTimestampInMS, tupleBufferRef, creationTs->as<Nautilus::ExecDataUInt64>()->valueAsType<uint64_t>());
 }
 
 }// namespace NES::Runtime::Execution

@@ -36,7 +36,7 @@ void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                          ExecDataUInt64Ptr& chunkNumber,
                                          ExecDataBooleanPtr& lastChunk,
                                          ObjRefVal<void>& globalSlice) const {
-    ctx.setWatermarkTs(windowStart->valueAsType<uint64_t>());
+    ctx.setWatermarkTs(windowStart);
     ctx.setOrigin(resultOriginId.getRawValue());
     ctx.setSequenceNumber(sequenceNumber->valueAsType<uint64_t>());
     ctx.setChunkNumber(chunkNumber->valueAsType<uint64_t>());

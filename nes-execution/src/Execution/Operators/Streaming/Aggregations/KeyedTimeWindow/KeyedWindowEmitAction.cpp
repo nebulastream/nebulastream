@@ -46,20 +46,11 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                       ExecDataUInt64Ptr& chunkNumber,
                                       ExecDataBooleanPtr& lastChunk,
                                       ObjRefVal<void>& globalSlice) const {
-    ctx.setWatermarkTs(windowStart->valueAsType<uint64_t>());
+    ctx.setWatermarkTs(windowStart);
     ctx.setOrigin(resultOriginId.getRawValue());
     ctx.setSequenceNumber(sequenceNumber->valueAsType<uint64_t>());
     ctx.setChunkNumber(chunkNumber->valueAsType<uint64_t>());
     ctx.setLastChunk(lastChunk->valueAsType<bool>());
-
-    ((void) windowEnd);
-    ((void) globalSlice);
-    ((void) child);
-    ((void) ctx);
-    ((void) windowStart);
-    ((void) sequenceNumber);
-    ((void) chunkNumber);
-    ((void) lastChunk);
 
     NES_INFO("Emitting tuples...");
 
