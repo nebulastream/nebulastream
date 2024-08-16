@@ -10,12 +10,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Aggregation)
-add_subdirectory(Join)
-add_subdirectory(Sort)
 add_source_files(nes-execution
         Map.cpp
         Selection.cpp
-        Limit.cpp
         Project.cpp
-        )
+)

@@ -14,4 +14,5 @@ add_library(nes-execution-test-util
         "TestUtils/AbstractCompilationBackendTest.cpp"
         "TestUtils/MockedPipelineExecutionContext.cpp"
         "TestUtils/CollectOperator.cpp"
-        "TestUtils/UtilityFunctions.cpp")
+        "TestUtils/UtilityFunctions.cpp"
+)

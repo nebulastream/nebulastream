@@ -35,14 +35,6 @@ public:
     HashValue calculate(Value<> value);
 
     /**
-     * @brief This is only necessary as long as TODO #3648 is not merged
-     * @param value
-     * @param state
-     * @return HashValue
-     */
-    HashValue calculateWithState(Value<> value, Value<MemRef> state);
-
-    /**
      * @brief Calculates the hash across a set of values.
      * @param values vector of nautilus values.
      * @return the hash
@@ -63,13 +55,5 @@ protected:
      * @return HashValue
      */
     virtual HashValue calculate(HashValue& hash, Value<>& value) = 0;
-
-    /**
-     * @brief This is only necessary as long as TODO #3648 is not merged
-     * @param value
-     * @param state
-     * @return HashValue
-     */
-    virtual HashValue calculateWithState(HashValue& hash, Value<>& value, Value<MemRef>& state) = 0;
 };
 } /// namespace NES::Nautilus::Interface

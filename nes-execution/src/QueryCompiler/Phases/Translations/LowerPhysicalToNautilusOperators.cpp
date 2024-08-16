@@ -26,10 +26,6 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/Limit.hpp>
-#include <Execution/Operators/Relational/Map.hpp>
-#include <Execution/Operators/Relational/Project.hpp>
-#include <Execution/Operators/Relational/Selection.hpp>
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregation.hpp>
@@ -172,183 +168,11 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         parentOperator->setChild(filter);
         return filter;
     }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalLimitOperator>())
-    {
-        auto limit = lowerLimit(pipeline, operatorNode, operatorHandlers);
-        parentOperator->setChild(limit);
-        return limit;
-    }
     else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapOperator>())
     {
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>())
-    {
-        auto aggs = operatorNode->as<PhysicalOperators::PhysicalThresholdWindowOperator>()->getWindowDefinition()->getWindowAggregation();
-
-        std::vector<std::unique_ptr<Runtime::Execution::Aggregation::AggregationValue>> aggValues;
-        /// iterate over all aggregation functions
-        for (size_t i = 0; i < aggs.size(); ++i)
-        {
-            auto aggregationType = aggs[i]->getType();
-            /// collect aggValues for each aggType
-            aggValues.emplace_back(getAggregationValueForThresholdWindow(aggregationType, aggs[i]->getInputStamp()));
-        }
-        /// pass aggValues to ThresholdWindowHandler
-        auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
-        operatorHandlers.push_back(handler);
-        auto indexForThisHandler = operatorHandlers.size() - 1;
-        auto thresholdWindow = lowerThresholdWindow(pipeline, operatorNode, indexForThisHandler);
-        parentOperator->setChild(thresholdWindow);
-        return thresholdWindow;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSlicePreAggregationOperator>())
-    {
-        auto preAggregationOperator = lowerPreAggregationOperator(pipeline, operatorNode, operatorHandlers);
-        parentOperator->setChild(preAggregationOperator);
-        return preAggregationOperator;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalSliceMergingOperator>())
-    {
-        return lowerSliceMergingOperator(pipeline, operatorNode, operatorHandlers);
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWindowSinkOperator>())
-    {
-        return lowerWindowSinkOperator(pipeline, operatorNode, operatorHandlers);
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalWatermarkAssignmentOperator>())
-    {
-        auto watermarkOperator = lowerWatermarkAssignmentOperator(pipeline, operatorNode, operatorHandlers);
-        parentOperator->setChild(watermarkOperator);
-        return watermarkOperator;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalProjectOperator>())
-    {
-        auto projectOperator = operatorNode->as<PhysicalOperators::PhysicalProjectOperator>();
-        auto projection = std::make_shared<Runtime::Execution::Operators::Project>(
-            projectOperator->getInputSchema()->getFieldNames(), projectOperator->getOutputSchema()->getFieldNames());
-        parentOperator->setChild(projection);
-        return projection;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinProbeOperator>())
-    {
-        auto probeOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinProbeOperator>();
-        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
-        operatorHandlers.push_back(probeOperator->getJoinOperatorHandler());
-        auto handlerIndex = operatorHandlers.size() - 1;
-
-        auto keys = probeOperator->getJoinExpression();
-        auto joinExpression = expressionProvider->lowerExpression(keys);
-
-        Runtime::Execution::Operators::OperatorPtr joinProbeNautilus;
-        switch (probeOperator->getJoinStrategy())
-        {
-            case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::HJProbeVarSized>(
-                    handlerIndex,
-                    probeOperator->getJoinSchema(),
-                    joinExpression,
-                    probeOperator->getWindowMetaData(),
-                    probeOperator->getLeftInputSchema(),
-                    probeOperator->getRightInputSchema(),
-                    probeOperator->getJoinStrategy(),
-                    probeOperator->getWindowingStrategy());
-                break;
-            case StreamJoinStrategy::HASH_JOIN_LOCAL:
-            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
-            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE:
-                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::HJProbe>(
-                    handlerIndex,
-                    probeOperator->getJoinSchema(),
-                    joinExpression,
-                    probeOperator->getWindowMetaData(),
-                    probeOperator->getJoinStrategy(),
-                    probeOperator->getWindowingStrategy());
-                break;
-            case StreamJoinStrategy::NESTED_LOOP_JOIN:
-                const auto leftSchema = probeOperator->getLeftInputSchema();
-                const auto rightSchema = probeOperator->getRightInputSchema();
-                joinProbeNautilus = std::make_shared<Runtime::Execution::Operators::NLJProbe>(
-                    handlerIndex,
-                    probeOperator->getJoinSchema(),
-                    joinExpression,
-                    probeOperator->getWindowMetaData(),
-                    leftSchema,
-                    rightSchema,
-                    probeOperator->getJoinStrategy(),
-                    probeOperator->getWindowingStrategy());
-                break;
-        }
-        pipeline.setRootOperator(joinProbeNautilus);
-        return joinProbeNautilus;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalStreamJoinBuildOperator>())
-    {
-        using namespace Runtime::Execution;
-
-        auto buildOperator = operatorNode->as<PhysicalOperators::PhysicalStreamJoinBuildOperator>();
-        auto buildOperatorHandler = buildOperator->getJoinOperatorHandler();
-
-        NES_DEBUG("Added streamJoinOpHandler to operatorHandlers!");
-        operatorHandlers.push_back(buildOperator->getJoinOperatorHandler());
-        auto handlerIndex = operatorHandlers.size() - 1;
-        auto windowSize = buildOperatorHandler->getWindowSize();
-        auto windowSlide = buildOperatorHandler->getWindowSlide();
-
-        auto timeFunction = buildOperator->getTimeStampField().toTimeFunction();
-
-        Operators::ExecutableOperatorPtr joinBuildNautilus;
-        switch (buildOperator->getJoinStrategy())
-        {
-            case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-                switch (buildOperator->getWindowingStrategy())
-                {
-                    case WindowingStrategy::LEGACY:
-                        throw DeprecatedFeatureUsed();
-                    case WindowingStrategy::BUCKETING:
-                        throw FunctionNotImplemented();
-                    case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerHJSlicingVarSized(buildOperator, handlerIndex, std::move(timeFunction));
-                        break;
-                }
-                break;
-            case StreamJoinStrategy::HASH_JOIN_LOCAL:
-            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
-            case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE: {
-                switch (buildOperator->getWindowingStrategy())
-                {
-                    case WindowingStrategy::LEGACY:
-                        throw DeprecatedFeatureUsed();
-                    case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
-                        break;
-                    case WindowingStrategy::BUCKETING:
-                        joinBuildNautilus = lowerHJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
-                        break;
-                }
-                break;
-            };
-            case StreamJoinStrategy::NESTED_LOOP_JOIN: {
-                switch (buildOperator->getWindowingStrategy())
-                {
-                    case WindowingStrategy::LEGACY:
-                        throw DeprecatedFeatureUsed();
-                    case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
-                        break;
-                    case WindowingStrategy::BUCKETING:
-                        joinBuildNautilus
-                            = lowerNLJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
-                        break;
-                }
-                break;
-            };
-        }
-
-        parentOperator->setChild(joinBuildNautilus);
-        return joinBuildNautilus;
     }
 
     throw UnknownPhysicalOperator();
@@ -846,17 +670,6 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto filterOperator = operatorPtr->as<PhysicalOperators::PhysicalFilterOperator>();
     auto expression = expressionProvider->lowerExpression(filterOperator->getPredicate());
     return std::make_shared<Runtime::Execution::Operators::Selection>(expression);
-}
-
-std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerLimit(
-    Runtime::Execution::PhysicalOperatorPipeline&,
-    const PhysicalOperators::PhysicalOperatorPtr& operatorPtr,
-    std::vector<Runtime::Execution::OperatorHandlerPtr>& operatorHandlers)
-{
-    auto limitOperator = operatorPtr->as<PhysicalOperators::PhysicalLimitOperator>();
-    const auto handler = std::make_shared<Runtime::Execution::Operators::LimitOperatorHandler>(limitOperator->getLimit());
-    operatorHandlers.push_back(handler);
-    return std::make_shared<Runtime::Execution::Operators::Limit>(operatorHandlers.size() - 1);
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerMap(
