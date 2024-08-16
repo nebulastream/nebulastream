@@ -68,7 +68,7 @@ docker run
 
 ### Dependencies via VCPKG
 
-The development container has an environment variable `VCPKG_ROOT`, which, once detected by the CMake build system, will
+The development container has an environment variable `NES_PREBUILT_VCPKG_ROOT`, which, once detected by the CMake build system, will
 configure the correct toolchain to use.
 
 Since the development environment only provides a pre-built set of dependencies, changing the dependencies in the

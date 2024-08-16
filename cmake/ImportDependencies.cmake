@@ -13,23 +13,28 @@
 
 SET(VCPKG_OVERLAY_TRIPLETS "${CMAKE_SOURCE_DIR}/vcpkg/custom-triplets")
 SET(VCPKG_OVERLAY_PORTS "${CMAKE_SOURCE_DIR}/vcpkg/vcpkg-registry/ports")
+SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
 
 # Default Settings:
-# VCPKG_ROOT -> Docker Environment with pre-built sdk.
-# CMAKE_TOOLCHAIN_FILE -> Local VCPKG Repository. Will build dependencies locally
-# NONE -> Create new local VCPKG Repository in project. Will build dependencies locally
-if (DEFINED ENV{VCPKG_ROOT})
-    # If we detect the VCPKG_ROOT environment we assume we are running in an environment
-    # where an exported vcpkg sdk was prepared. This means we will not check if the current
-    # vcpkg.json manifest matches the pre-built dependencies.
-    message(STATUS "VCPKG_ROOT Environment is set: Assuming Docker Development Environment with pre-built dependencies at $ENV{VCPKG_ROOT}")
-    SET(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
-elseif (DEFINED CMAKE_TOOLCHAIN_FILE)
+# CMAKE_TOOLCHAIN_FILE    -> Local VCPKG Repository. Will build dependencies locally
+# NES_PREBUILT_VCPKG_ROOT -> Docker Environment with pre-built sdk.
+# VCPKG_ROOT              -> user-managed vcpkg install. Will build dependencies locally
+# NONE                    -> setup VCPKG Repository in project. Will build dependencies locally
+if (DEFINED CMAKE_TOOLCHAIN_FILE)
     # If the user supplies a custom CMAKE_TOOLCHAIN_FILE we assume we are running in manifest
     # mode and VCPKG will try to install or update dependencies based on the vcpkg.json
     # manifest. This requires a fully setup vcpkg installation, not just a pre-built sdk.
     message(STATUS "CMAKE_TOOLCHAIN_FILE was supplied: Assuming independent vcpkg-repository at ${CMAKE_TOOLCHAIN_FILE}")
-    SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
+elseif (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
+    # If we detect the NES_PREBUILT_VCPKG_ROOT environment we assume we are running in an environment
+    # where an exported vcpkg sdk was prepared. This means we will not run in manifest mode,
+    # i.e. we will neither check if the current vcpkg.json manifest matches the pre-built dependencies nor built dependencies.
+    message(STATUS "NES_PREBUILT_VCPKG_ROOT Environment is set: Assuming Docker Development Environment with pre-built dependencies at $ENV{NES_PREBUILT_VCPKG_ROOT}")
+    unset(VCPKG_MANIFEST_DIR) # prevents vcpkg from finding the vcpkg.json and building dependencies
+    SET(CMAKE_TOOLCHAIN_FILE $ENV{NES_PREBUILT_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
+elseif (DEFINED ENV{VCPKG_ROOT})
+    message(STATUS "VCPKG_ROOT Environment is set: Assuming user-managed vcpkg install at $ENV{VCPKG_ROOT}")
+    SET(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 else ()
     message(WARNING "Neither VCPKG_ROOT Environment nor CMAKE_TOOLCHAIN_FILE was supplied: Creating new internal vcpkg-repository and building dependencies. This might take a while. If possible, use the development container, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
     SET(CLONE_DIR ${CMAKE_SOURCE_DIR}/vcpkg-repository)
@@ -46,7 +51,6 @@ else ()
     else ()
         message(STATUS "Repository already cloned in ${CLONE_DIR}")
     endif ()
-    SET(VCPKG_MANIFEST_DIR "${CMAKE_SOURCE_DIR}/vcpkg")
     SET(CMAKE_TOOLCHAIN_FILE ${CLONE_DIR}/scripts/buildsystems/vcpkg.cmake)
 endif ()
 
