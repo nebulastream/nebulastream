@@ -95,7 +95,7 @@ TEST_P(SingleNodeIntegrationTest, TestQueryRegistration)
     IntegrationTestUtil::startQuery(queryId, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager = std::make_shared<Runtime::BufferManager>();
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager = Runtime::BufferManager::create();
 
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
     auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, *bufferManager, 0, "", true);
