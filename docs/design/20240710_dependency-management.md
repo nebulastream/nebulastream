@@ -164,7 +164,7 @@ Lastly, a docker image at `luukas/nebula stream:alpine` contains a set of prebui
 
 > docker pull docker pull luukas/nebulastream:alpine
 
-A new docker-based toolchain needs to be created in CLion. A CMake build inside the docker container will pick up the destination of the pre-installed VCPKG-registry based on the `VCPKG_ROOT` environment variable, so no further CMake configuration parameters are required.
+A new docker-based toolchain needs to be created in CLion. A CMake build inside the docker container will pick up the destination of the pre-installed VCPKG-registry based on the `NES_PREBUILT_VCPKG_ROOT` environment variable, so no further CMake configuration parameters are required.
 
 
 # Open Questions

@@ -16,4 +16,4 @@ RUN cd /vcpkg_input \
     && cp vcpkg_repository/scripts/vcpkgTools.xml /vcpkg/scripts/ \
     && rm -rf /vcpkg_input \
     && chmod -R g=u,o=u /vcpkg
-ENV VCPKG_ROOT=/vcpkg
+ENV NES_PREBUILT_VCPKG_ROOT=/vcpkg
