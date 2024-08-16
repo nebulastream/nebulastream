@@ -12,12 +12,13 @@
     limitations under the License.
 */
 
+#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
-#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <nautilus/val.hpp>
 #include <utility>
 
 namespace NES::Runtime::Execution::Operators {
@@ -29,10 +30,10 @@ void EventTimeFunction::open(Execution::ExecutionContext&, Execution::RecordBuff
 EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpression, Windowing::TimeUnit unit)
     : unit(unit), timestampExpression(std::move(timestampExpression)) {}
 
-Nautilus::Value<UInt64> EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
-    Value<UInt64> ts = this->timestampExpression->execute(record).as<UInt64>();
-    auto timeMultiplier = Value<UInt64>(unit.getMillisecondsConversionMultiplier());
-    auto tsInMs = (ts * timeMultiplier).as<UInt64>();
+UInt64Val EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
+    auto ts = this->timestampExpression->execute(record);
+    const auto timeMultiplier = unit.getMillisecondsConversionMultiplier();
+    auto tsInMs = castAndLoadValue<uint64_t>(ts * timeMultiplier);
     ctx.setCurrentTs(tsInMs);
     return tsInMs;
 }
@@ -41,7 +42,7 @@ void IngestionTimeFunction::open(Execution::ExecutionContext& ctx, Execution::Re
     ctx.setCurrentTs(buffer.getCreatingTs());
 }
 
-Nautilus::Value<UInt64> IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&) {
+UInt64Val IngestionTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record&) {
     return ctx.getCurrentTs();
 }
 

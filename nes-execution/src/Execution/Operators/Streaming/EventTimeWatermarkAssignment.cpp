@@ -17,6 +17,7 @@
 #include <Execution/Operators/Streaming/EventTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/RecordBuffer.hpp>
+#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
 
@@ -24,8 +25,8 @@ namespace NES::Runtime::Execution::Operators {
 
 class WatermarkState : public OperatorState {
   public:
-    explicit WatermarkState() {}
-    Value<> currentWatermark = Value<UInt64>(0_u64);
+    explicit WatermarkState() = default;
+    UInt64Val currentWatermark = 0;
 };
 
 EventTimeWatermarkAssignment::EventTimeWatermarkAssignment(TimeFunctionPtr timeFunction)
@@ -42,7 +43,7 @@ void EventTimeWatermarkAssignment::open(ExecutionContext& executionCtx, RecordBu
 
 void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record) const {
     auto state = (WatermarkState*) ctx.getLocalState(this);
-    Value<> tsField = timeFunction->getTs(ctx, record);
+    auto tsField = timeFunction->getTs(ctx, record);
     if (tsField > state->currentWatermark) {
         state->currentWatermark = tsField;
     }
@@ -51,7 +52,7 @@ void EventTimeWatermarkAssignment::execute(ExecutionContext& ctx, Record& record
 }
 void EventTimeWatermarkAssignment::close(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const {
     auto state = (WatermarkState*) executionCtx.getLocalState(this);
-    executionCtx.setWatermarkTs(state->currentWatermark.as<UInt64>());
+    executionCtx.setWatermarkTs(state->currentWatermark);
     Operator::close(executionCtx, recordBuffer);
 }
 
