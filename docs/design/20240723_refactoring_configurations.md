@@ -72,7 +72,7 @@ WorkerConfiguration.hpp
 - numaAwareness (-) // Can be addressed at the later stages
 - enableMonitoring (-) // Partially supported
 - monitoringWaitTime (-) // Partially supported
-- queryCompiler (-) // Only one compiler currently
+- queryCompiler (+) // General class of configurations related to the query compiler, e.g. CompilationStrategy or NautilusBackend
 - physicalSourceTypes (-) // Related to the new implementation of sources
 - locationCoordinates (-) // Partially supported
 - nodeSpatialType (-) // Partially supported
