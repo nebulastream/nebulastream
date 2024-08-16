@@ -30,10 +30,10 @@ void MaxAggregationFunction::storeMax(const Nautilus::ExecDataType& leftValue,
               const Nautilus::MemRefVal& state,
               const PhysicalTypePtr& inputType) {
     // we have to do this, as otherwise we do not check if the val<> is true bti if there exists a pointer
-    if ((leftValue < rightValue)->as<Nautilus::ExecDataBoolean>()->getRawValue()) {
+    if ((leftValue < rightValue)->as<Nautilus::ExecDataBoolean>()->valueAsType<bool>()) {
         // store the rightValue
         AggregationFunction::storeToMemRef(state, rightValue, inputType);
-    } else if ((leftValue > rightValue)->as<Nautilus::ExecDataBoolean>()->getRawValue()) {
+    } else if ((leftValue > rightValue)->as<Nautilus::ExecDataBoolean>()->valueAsType<bool>()) {
         // store the leftValue
         AggregationFunction::storeToMemRef(state, leftValue, inputType);
     }

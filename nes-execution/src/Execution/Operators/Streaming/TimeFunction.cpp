@@ -33,7 +33,7 @@ EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpress
 UInt64Val EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
     auto ts = this->timestampExpression->execute(record);
     const auto timeMultiplier = unit.getMillisecondsConversionMultiplier();
-    auto tsInMs = (ts * timeMultiplier)->as<ExecDataUInt64>()->getRawValue();
+    auto tsInMs = (ts * timeMultiplier)->as<ExecDataUInt64>()->valueAsType<uint64_t>();
     ctx.setCurrentTs(tsInMs);
     return tsInMs;
 }

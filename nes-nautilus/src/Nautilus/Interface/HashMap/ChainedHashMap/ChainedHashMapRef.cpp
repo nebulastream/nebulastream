@@ -155,11 +155,11 @@ BooleanVal ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<Exe
         keyPtr = keyPtr + nautilus::val<uint64_t>(keyDataTypes[i]->size());
     }
 
-    return equals->as<ExecDataBoolean>()->getRawValue();
+    return equals->as<ExecDataBoolean>()->valueAsType<bool>();
 //    We need to do one of the following but this is quite ugly
 //    if ((*equals->as<ExecDataBoolean>())()) {
 //    if (*equals) {
-//    if (equals->as<ExecDataBoolean>()->getRawValue()) {
+//    if (equals->as<ExecDataBoolean>()->valueAsType()) {
 //        return {true};
 //    } else {
 //        return {false};

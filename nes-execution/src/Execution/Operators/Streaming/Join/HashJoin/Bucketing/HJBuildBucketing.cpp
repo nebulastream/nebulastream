@@ -42,7 +42,7 @@ void HJBuildBucketing::insertRecordForWindow(const MemRefVal& allWindowsToFill,
         nautilus::invoke(getHashTableRefProxy, allWindowsToFill, curIndex, workerThreadId, UInt64Val(to_underlying(joinBuildSide)));
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = nautilus::invoke(insertFunctionProxy, hashTableReference, record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
+    auto entryMemRef = nautilus::invoke(insertFunctionProxy, hashTableReference, record.read(joinFieldName)->as<ExecDataUInt64>()->valueAsType<uint64_t>());
     //write data
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : schema->fields) {

@@ -127,7 +127,7 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     }
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = nautilus::invoke(insertFunctionProxy, joinState->hashTableReference, record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
+    auto entryMemRef = nautilus::invoke(insertFunctionProxy, joinState->hashTableReference, record.read(joinFieldName)->as<ExecDataUInt64>()->valueAsType<uint64_t>());
     //write data
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : nautilus::static_iterable(schema->fields)) {

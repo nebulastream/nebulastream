@@ -44,19 +44,15 @@ class FixedSizeExecutableDataType : public AbstractDataType {
     }
 
     template<typename CastedDataType>
-    bool isType() {
-        return std::is_same_v<ValueType, CastedDataType>;
-    }
-
-    template<typename CastedDataType>
     nautilus::val<CastedDataType> valueAsType() const {
-        return static_cast<nautilus::val<CastedDataType>>(rawValue);
+        if constexpr (std::is_same_v<CastedDataType, ValueType>) {
+            return rawValue;
+        } else {
+            return static_cast<nautilus::val<CastedDataType>>(rawValue);
+        }
     }
 
     nautilus::val<ValueType> operator()() const { return rawValue; }
-
-    /// We should get rid of this call here
-    const nautilus::val<ValueType>& getRawValue() const { return rawValue; }
 
     ~FixedSizeExecutableDataType() override = default;
 

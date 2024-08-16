@@ -35,9 +35,8 @@ template<typename ValueType>
 ExecDataType FixedSizeExecutableDataType<ValueType>::operator||(const ExecDataType& rightExp) const {
     if constexpr (std::is_same_v<ValueType, int8_t*>) {
         constexpr int8_t* nullPtr = nullptr;
-        const auto rawValueBool = static_cast<nautilus::val<bool>>(rawValue == nullPtr);
-        const auto otherRawValueBool = static_cast<nautilus::val<bool>>(
-            std::dynamic_pointer_cast<FixedSizeExecutableDataType<int8_t*>>(rightExp)->getRawValue() == nullPtr);
+        const auto rawValueBool = rawValue == nullPtr;
+        const auto otherRawValueBool = std::dynamic_pointer_cast<FixedSizeExecutableDataType<int8_t*>>(rightExp)->valueAsType<int8_t*>() == nullPtr;
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<bool>::create(rawValueBool || otherRawValueBool, resultIsNull);
     } else {
@@ -51,7 +50,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator||(const ExecDataTy
 
 template<typename ValueType>
 ExecDataType FixedSizeExecutableDataType<ValueType>::operator==(const ExecDataType& rightExp) const {
-    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
     const auto resultIsNull = null || rightExp->isNull();
     const auto result = rawValue == otherRawValue;
     return FixedSizeExecutableDataType<bool>::create(result, resultIsNull);
@@ -59,35 +58,35 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator==(const ExecDataTy
 
 template<typename ValueType>
 ExecDataType FixedSizeExecutableDataType<ValueType>::operator!=(const ExecDataType& rightExp) const {
-    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
     const auto resultIsNull = null || rightExp->isNull();
     return FixedSizeExecutableDataType<bool>::create(rawValue != otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
 ExecDataType FixedSizeExecutableDataType<ValueType>::operator<(const ExecDataType& rightExp) const {
-    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
     const auto resultIsNull = null || rightExp->isNull();
     return FixedSizeExecutableDataType<bool>::create(rawValue < otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
 ExecDataType FixedSizeExecutableDataType<ValueType>::operator>(const ExecDataType& rightExp) const {
-    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
     const auto resultIsNull = null || rightExp->isNull();
     return FixedSizeExecutableDataType<bool>::create(rawValue > otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
 ExecDataType FixedSizeExecutableDataType<ValueType>::operator<=(const ExecDataType& rightExp) const {
-    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
     const auto resultIsNull = null || rightExp->isNull();
     return FixedSizeExecutableDataType<bool>::create(rawValue <= otherRawValue, resultIsNull);
 }
 
 template<typename ValueType>
 ExecDataType FixedSizeExecutableDataType<ValueType>::operator>=(const ExecDataType& rightExp) const {
-    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+    const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
     const auto resultIsNull = null || rightExp->isNull();
     return FixedSizeExecutableDataType<bool>::create(rawValue >= otherRawValue, resultIsNull);
 }
@@ -101,7 +100,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator+(const ExecDataTyp
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<int64_t>::create(rawValueInt + otherRawValueInt, resultIsNull);
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<ValueType>::create(rawValue + otherRawValue, resultIsNull);
     }
@@ -118,7 +117,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator-(const ExecDataTyp
     } else if constexpr (std::is_same_v<ValueType, int8_t*>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<ValueType>::create(rawValue - otherRawValue, resultIsNull);
     }
@@ -129,7 +128,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator*(const ExecDataTyp
     if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<ValueType>::create(rawValue * otherRawValue, resultIsNull);
     }
@@ -140,7 +139,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator/(const ExecDataTyp
     if constexpr (std::is_same_v<ValueType, bool> || std::is_same_v<ValueType, int8_t*>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<ValueType>::create(rawValue / otherRawValue, resultIsNull);
     }
@@ -152,7 +151,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator%(const ExecDataTyp
                   || std::is_same_v<ValueType, double>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<ValueType>::create(rawValue % otherRawValue, resultIsNull);
     }
@@ -164,7 +163,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator&(const ExecDataTyp
                   || std::is_same_v<ValueType, double>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<ValueType>::create(rawValue & otherRawValue, resultIsNull);
     }
@@ -176,7 +175,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator|(const ExecDataTyp
                   || std::is_same_v<ValueType, double>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<ValueType>::create(rawValue | otherRawValue, resultIsNull);
     }
@@ -188,7 +187,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator^(const ExecDataTyp
                   || std::is_same_v<ValueType, double>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         return FixedSizeExecutableDataType<ValueType>::create(rawValue ^ otherRawValue, resultIsNull);
     }
@@ -201,7 +200,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator<<(const ExecDataTy
                   || std::is_same_v<ValueType, uint16_t> || std::is_same_v<ValueType, int16_t>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         auto ret = rawValue << otherRawValue;
         return FixedSizeExecutableDataType<ValueType>::create(ret, resultIsNull);
@@ -215,7 +214,7 @@ ExecDataType FixedSizeExecutableDataType<ValueType>::operator>>(const ExecDataTy
                   || std::is_same_v<ValueType, uint16_t> || std::is_same_v<ValueType, int16_t>) {
         NES_NOT_IMPLEMENTED();
     } else {
-        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->getRawValue();
+        const auto otherRawValue = rightExp->as<FixedSizeExecutableDataType<ValueType>>()->template valueAsType<ValueType>();
         const auto resultIsNull = null || rightExp->isNull();
         auto ret = rawValue >> otherRawValue;
         return FixedSizeExecutableDataType<ValueType>::create(ret, resultIsNull);
@@ -294,27 +293,27 @@ ExecDataType readExecDataTypeFromMemRef(MemRefVal& memRef, const PhysicalTypePtr
 
 void writeFixedExecDataTypeToMemRef(MemRefVal& memRef, const ExecDataType& execDataType) {
     if (execDataType->instanceOf<ExecDataInt8>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataInt8>()->getRawValue(), int8_t);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataInt8>()->valueAsType<int8_t>(), int8_t);
     } else if (execDataType->instanceOf<ExecDataInt16>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataInt16>()->getRawValue(), int16_t);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataInt16>()->valueAsType<int16_t>(), int16_t);
     } else if (execDataType->instanceOf<ExecDataInt32>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataInt32>()->getRawValue(), int32_t);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataInt32>()->valueAsType<int32_t>(), int32_t);
     } else if (execDataType->instanceOf<ExecDataInt64>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataInt64>()->getRawValue(), int64_t);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataInt64>()->valueAsType<int64_t>(), int64_t);
     } else if (execDataType->instanceOf<ExecDataUInt8>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt8>()->getRawValue(), uint8_t);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt8>()->valueAsType<uint8_t>(), uint8_t);
     } else if (execDataType->instanceOf<ExecDataUInt16>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt16>()->getRawValue(), uint16_t);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt16>()->valueAsType<uint16_t>(), uint16_t);
     } else if (execDataType->instanceOf<ExecDataUInt32>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt32>()->getRawValue(), uint32_t);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt32>()->valueAsType<uint32_t>(), uint32_t);
     } else if (execDataType->instanceOf<ExecDataUInt64>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt64>()->getRawValue(), uint64_t);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataUInt64>()->valueAsType<uint64_t>(), uint64_t);
     } else if (execDataType->instanceOf<ExecDataFloat>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataFloat>()->getRawValue(), float);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataFloat>()->valueAsType<float>(), float);
     } else if (execDataType->instanceOf<ExecDataDouble>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataDouble>()->getRawValue(), double);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataDouble>()->valueAsType<double>(), double);
     } else if (execDataType->instanceOf<ExecDataBoolean>()) {
-        writeValueToMemRef(memRef, execDataType->as<ExecDataBoolean>()->getRawValue(), bool);
+        writeValueToMemRef(memRef, execDataType->as<ExecDataBoolean>()->valueAsType<bool>(), bool);
     } else {
         NES_NOT_IMPLEMENTED();
     }

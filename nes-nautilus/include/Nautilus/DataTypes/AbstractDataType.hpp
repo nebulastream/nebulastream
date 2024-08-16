@@ -161,7 +161,7 @@ using Boolean = bool;
 #define readValueFromMemRef(memRef, dataType)                                                                                    \
     (static_cast<nautilus::val<dataType>>(*static_cast<nautilus::val<dataType*>>(memRef)))
 #define castToValue(executableDataType, dataType)                                                    \
-    (castTo<dataType>(value)->as<FixedSizeExecutableDataType<dataType>>()->getRawValue())
+    (castTo<dataType>(value)->as<FixedSizeExecutableDataType<dataType>>()->valueAsType<dataType>())
 
 
 BooleanVal memEquals(const MemRefVal& ptr1, const MemRefVal& ptr2, const nautilus::val<uint64_t>& size);

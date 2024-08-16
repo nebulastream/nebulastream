@@ -111,7 +111,7 @@ void NLJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
             auto rightRecord = rightPagedVector.readRecord(rightCnt);
             Record joinedRecord;
             createJoinedRecord(joinedRecord, leftRecord, rightRecord, ExecDataUInt64::create(windowStart)->as<ExecDataUInt64>(), ExecDataUInt64::create(windowEnd)->as<ExecDataUInt64>());
-            if (joinExpression->execute(joinedRecord)->as<ExecDataBoolean>()->getRawValue()) {
+            if (joinExpression->execute(joinedRecord)->as<ExecDataBoolean>()->valueAsType<bool>()) {
                 // Calling the child operator for this joinedRecord
                 child->execute(ctx, joinedRecord);
             }

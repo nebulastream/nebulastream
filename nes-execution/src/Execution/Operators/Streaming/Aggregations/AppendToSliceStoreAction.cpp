@@ -148,10 +148,10 @@ void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
                      actionHandler,
                      ctx.getWorkerContext(),
                      ctx.getPipelineContext(),
-                     sequenceNumber->getRawValue(),
-                     chunkNumber->getRawValue(),
-                     lastChunk->getRawValue(),
-                     sliceEnd->getRawValue());
+                     sequenceNumber->valueAsType<uint64_t>(),
+                     chunkNumber->valueAsType<uint64_t>(),
+                     lastChunk->valueAsType<uint64_t>(),
+                     sliceEnd->valueAsType<uint64_t>());
 }
 
 // Instantiate types

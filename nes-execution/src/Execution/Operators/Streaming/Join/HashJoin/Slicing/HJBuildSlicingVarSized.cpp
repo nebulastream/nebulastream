@@ -112,7 +112,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
                                                     joinState->sliceReference,
                                                     ctx.getWorkerThreadId(),
                                                     UInt64Val(to_underlying(joinBuildSide)),
-                                                    record.read(joinFieldName)->as<ExecDataInt64>()->valueAsType<uint64_t>());
+                                                    record.read(joinFieldName)->as<ExecDataInt64>()->valueAsType<int64_t>());
 
         Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
         pagedVectorVarSizedRef.writeRecord(record);
@@ -122,7 +122,7 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
                                                     joinState->sliceReference,
                                                     ctx.getWorkerThreadId(),
                                                     UInt64Val(to_underlying(joinBuildSide)),
-                                                    record.read(joinFieldName)->as<ExecDataUInt64>()->getRawValue());
+                                                    record.read(joinFieldName)->as<ExecDataUInt64>()->valueAsType<uint64_t>());
 
         Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
         pagedVectorVarSizedRef.writeRecord(record);
