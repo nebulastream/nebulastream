@@ -23,6 +23,7 @@
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Source.hpp>
 #include <SourceReturnType.hpp>
 

@@ -19,7 +19,6 @@
 #include <API/Schema.hpp>
 #include <Parsers/Parser.hpp>
 #include <Util/Common.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>

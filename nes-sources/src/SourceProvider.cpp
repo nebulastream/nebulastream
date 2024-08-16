@@ -29,10 +29,6 @@
 namespace NES::QueryCompilation
 {
 
-SourceProvider::SourceProvider() : compilerOptions()
-{
-}
-
 DataSourceProviderPtr SourceProvider::create()
 {
     return std::make_shared<SourceProvider>();

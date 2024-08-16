@@ -15,8 +15,9 @@
 #define NES_EXECUTION_INCLUDE_QUERYCOMPILER_PHASES_TRANSLATIONS_SOURCEPROVIDER_HPP_
 
 #include <Identifiers/Identifiers.hpp>
-#include <SourceReturnType.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <SourceHandle.hpp>
+#include <SourceReturnType.hpp>
 
 namespace NES
 {
@@ -27,7 +28,7 @@ namespace NES
 class SourceProvider
 {
 public:
-    explicit SourceProvider();
+    SourceProvider() = default;
     static std::shared_ptr<SourceProvider> create();
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
