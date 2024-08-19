@@ -103,7 +103,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

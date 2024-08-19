@@ -86,7 +86,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest)
         std::vector<PhysicalTypePtr>({nType, nType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
 
     auto sortOperator = BatchSort(0, {nType, nType}, {"f1", "f2"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
@@ -130,7 +130,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest)
         std::vector<PhysicalTypePtr>({nType, nType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f2"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
 
     auto sortOperator = BatchSort(0, {nType, nType}, {"f1", "f2"}, {"f2"});
     auto collector = std::make_shared<CollectOperator>();
@@ -174,7 +174,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest)
         std::vector<PhysicalTypePtr>({integerType, integerType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     auto sortOperator = BatchSort(0, {integerType, integerType}, {"f1", "f2"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);

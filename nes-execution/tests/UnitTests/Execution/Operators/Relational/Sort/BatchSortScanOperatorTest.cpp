@@ -141,7 +141,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest)
         std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ false);
 
@@ -186,7 +186,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest)
         std::vector<PhysicalTypePtr>({pType, pType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f2"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {1}, /* descending */ false);
 
@@ -229,7 +229,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest)
         std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ true);
 
@@ -273,7 +273,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest)
         std::vector<PhysicalTypePtr>({pType, pType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f2", "f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {1, 0}, /* descending */ false, 0, 5);
 
@@ -325,7 +325,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage)
         std::vector<PhysicalTypePtr>({Util::getPhysicalTypePtr<NativeType>()}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     handler->setup(pipelineContext);
     fillState<NativeType>(handler, NUM_RECORDS, NUM_FIELDS, {0}, /* descending */ false);
 

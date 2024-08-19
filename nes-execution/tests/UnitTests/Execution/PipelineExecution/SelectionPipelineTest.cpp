@@ -105,7 +105,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -184,7 +184,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, bm);
     executablePipeline->setup(pipelineContext);
     for (auto& buf : createDataAllSeqNumbersEmitted(*bm, schema))
     {

@@ -117,7 +117,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
 
     auto joinBuildExecutablePipeline = provider->create(pipeline, options);
     auto joinHandler = std::make_shared<Operators::BatchJoinHandler>();
-    auto pipeline1Context = MockedPipelineExecutionContext({joinHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({joinHandler}, false, bm);
     joinBuildExecutablePipeline->setup(pipeline1Context);
     joinBuildExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     joinBuildExecutablePipeline->stop(pipeline1Context);

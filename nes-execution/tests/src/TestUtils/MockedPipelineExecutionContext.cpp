@@ -17,20 +17,6 @@
 namespace NES::Runtime::Execution
 {
 
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler)
-    : MockedPipelineExecutionContext(std::move(handler), true)
-{
-}
-
-MockedPipelineExecutionContext::MockedPipelineExecutionContext() : MockedPipelineExecutionContext(true)
-{
-}
-
-MockedPipelineExecutionContext::MockedPipelineExecutionContext(bool logSeenSeqChunk)
-    : MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr>(), logSeenSeqChunk, nullptr)
-{
-}
-
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     std::vector<OperatorHandlerPtr> handler,
     bool logSeenSeqChunk,

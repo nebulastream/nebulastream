@@ -101,7 +101,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     auto executablePipeline = provider->create(pipeline, options);
 
     auto handler = std::make_shared<Operators::LimitOperatorHandler>(LIMIT);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

@@ -171,7 +171,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -202,7 +202,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineShortMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -233,7 +233,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineByteMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -264,7 +264,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -295,7 +295,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -332,7 +332,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -380,7 +380,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -443,7 +443,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
             .build());
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
