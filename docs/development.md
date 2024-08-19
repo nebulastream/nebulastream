@@ -125,7 +125,7 @@ The first time building NebulaStream, VCPKG will build all dependencies specifie
 subsequent builds can rely on the VCPKGs internal caching mechanisms even if you delete the build folder.
 
 To set the CMake configuration via CLion you have to add them to your CMake profile which can be found in the CMake
-settings. ![CMakeSettings](resources/SetupVCPKGToolchainClion.png)
+settings.
 
 ### Local VCPKG without DCMAKE_TOOLCHAIN_FILE
 
