@@ -56,7 +56,6 @@ public:
     {
         NES_INFO("Setup MapJavaUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
         options.setDumpToConsole(true);
     }
@@ -365,7 +364,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
-        testBuffer[i].writeVarSized("stringVariable", "X", bm.get());
+        testBuffer[i].writeVarSized("stringVariable", "X", bm);
         testBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -426,7 +425,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
         testBuffer[i]["floatVariable"].write((float)i);
         testBuffer[i]["doubleVariable"].write((double)i);
         testBuffer[i]["booleanVariable"].write(true);
-        testBuffer[i].writeVarSized("stringVariable", "X", bm.get());
+        testBuffer[i].writeVarSized("stringVariable", "X", bm);
         testBuffer.setNumberOfTuples(i + 1);
     }
 

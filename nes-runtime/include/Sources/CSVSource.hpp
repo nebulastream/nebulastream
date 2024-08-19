@@ -46,7 +46,7 @@ public:
    */
     explicit CSVSource(
         SchemaPtr schema,
-        Runtime::BufferManagerPtr bufferManager,
+        std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
         Runtime::QueryManagerPtr queryManager,
         CSVSourceTypePtr csvSourceType,
         OperatorId operatorId,

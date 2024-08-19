@@ -20,9 +20,9 @@
 #include <optional>
 #include <queue>
 #include <unordered_map>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <folly/ThreadLocal.h>
 
@@ -58,7 +58,7 @@ private:
 
 public:
     explicit WorkerContext(
-        WorkerThreadId workerId, const BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId = 0);
+        WorkerThreadId workerId, BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId = 0);
 
     ~WorkerContext();
 

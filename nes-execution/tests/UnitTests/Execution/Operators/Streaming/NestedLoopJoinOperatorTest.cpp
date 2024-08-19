@@ -57,7 +57,7 @@ public:
         : PipelineExecutionContext(
               INVALID_PIPELINE_ID, /// mock pipeline id
               INVALID_QUERY_ID, /// mock query id
-              bm,
+              std::move(bm),
               1,
               [](TupleBuffer&, Runtime::WorkerContextRef) {},
               [](TupleBuffer&) {},
@@ -74,7 +74,7 @@ public:
         : PipelineExecutionContext(
               INVALID_PIPELINE_ID, /// mock pipeline id
               INVALID_QUERY_ID, /// mock query id
-              bm,
+              std::move(bm),
               1,
               [](TupleBuffer&, Runtime::WorkerContextRef)
               {

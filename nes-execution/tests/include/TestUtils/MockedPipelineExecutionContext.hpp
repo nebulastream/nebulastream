@@ -27,7 +27,7 @@ class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecut
 {
 public:
     explicit MockedPipelineExecutionContext(
-        std::vector<OperatorHandlerPtr> handler, bool logSeenSeqChunk, BufferManagerPtr bufferManager = nullptr);
+        std::vector<OperatorHandlerPtr> handler, bool logSeenSeqChunk, std::shared_ptr<AbstractBufferProvider> bufferManager = nullptr);
     explicit MockedPipelineExecutionContext(std::vector<OperatorHandlerPtr> handler);
     explicit MockedPipelineExecutionContext(bool logSeenSeqChunk);
     explicit MockedPipelineExecutionContext();

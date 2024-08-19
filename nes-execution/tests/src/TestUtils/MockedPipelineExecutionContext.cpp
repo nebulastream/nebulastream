@@ -34,11 +34,11 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(bool logSeenSeqCh
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     std::vector<OperatorHandlerPtr> handler,
     bool logSeenSeqChunk,
-    BufferManagerPtr bufferManager)
+    std::shared_ptr<AbstractBufferProvider> bufferManager)
     : PipelineExecutionContext(
           INVALID_PIPELINE_ID, /// mock pipeline id
           INVALID_QUERY_ID, /// mock query id
-          bufferManager,
+          std::move(bufferManager),
           1,
           [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef)
           {

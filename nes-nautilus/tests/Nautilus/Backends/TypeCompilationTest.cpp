@@ -225,7 +225,7 @@ Value<> listLengthTest(Value<List>& list)
 /*
 TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
     BufferManagerPtr bm = BufferManager::create();
-    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, *bm, 100);
+    auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto list = RawList(10);
     auto listRef = TypedRef<RawList>(list);

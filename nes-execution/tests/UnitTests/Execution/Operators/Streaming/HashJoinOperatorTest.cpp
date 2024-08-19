@@ -106,7 +106,7 @@ struct HashJoinBuildHelper
         , windowSize(1000)
         , hashJoinBuild(hashJoinBuild)
         , joinFieldName(joinFieldName)
-        , bufferManager(bufferManager)
+        , bufferManager(std::move(bufferManager))
         , schema(schema)
         , timeStampField(timeStampField)
         , hashJoinOperatorTest(hashJoinOperatorTest)
@@ -137,7 +137,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
     auto pipelineContext = PipelineExecutionContext(
         INVALID_PIPELINE_ID, /// mock pipeline id
         INVALID_QUERY_ID, /// mock query id
-        nullptr,
+        buildHelper.bufferManager,
         buildHelper.noWorkerThreads,
         [&hashJoinOperatorTest](TupleBuffer& buffer, Runtime::WorkerContextRef)
         { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
@@ -159,7 +159,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
 
         if (i == 0)
         {
-            auto tupleBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
+            auto tupleBuffer = Util::getBufferFromRecord(record, buildHelper.schema, *buildHelper.bufferManager);
             RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>((int8_t*)std::addressof(tupleBuffer)));
             buildHelper.hashJoinBuild->open(executionContext, recordBuffer);
         }
@@ -182,8 +182,8 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
             for (auto k = 0UL; k < page->size(); ++k)
             {
                 uint8_t* recordPtr = page.get()->operator[](k);
-                auto bucketBuffer = Util::getBufferFromPointer(recordPtr, buildHelper.schema, buildHelper.bufferManager);
-                auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
+                auto bucketBuffer = Util::getBufferFromPointer(recordPtr, buildHelper.schema, *buildHelper.bufferManager);
+                auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, *buildHelper.bufferManager);
 
                 if (memcmp(bucketBuffer.getBuffer(), recordBuffer.getBuffer(), buildHelper.schema->getSchemaSizeInBytes()) == 0)
                 {
@@ -195,7 +195,7 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
 
         if (!correctlyInserted)
         {
-            auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, buildHelper.bufferManager);
+            auto recordBuffer = Util::getBufferFromRecord(record, buildHelper.schema, *buildHelper.bufferManager);
             NES_ERROR("Could not find record {} in bucket!", Util::printTupleBufferAsCSV(recordBuffer, buildHelper.schema));
             return false;
         }
@@ -240,7 +240,7 @@ struct HashJoinProbeHelper
         , windowSize(1000)
         , joinFieldNameLeft(joinFieldNameLeft)
         , joinFieldNameRight(joinFieldNameRight)
-        , bufferManager(bufferManager)
+        , bufferManager(std::move(bufferManager))
         , leftSchema(leftSchema)
         , rightSchema(rightSchema)
         , timeStampFieldLeft(timeStampFieldLeft)

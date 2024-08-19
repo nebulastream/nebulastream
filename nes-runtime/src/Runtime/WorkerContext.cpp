@@ -21,8 +21,7 @@ namespace NES::Runtime
 
 folly::ThreadLocalPtr<AbstractBufferProvider> WorkerContext::localBufferPoolTLS{};
 
-WorkerContext::WorkerContext(
-    WorkerThreadId workerId, const BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId)
+WorkerContext::WorkerContext(WorkerThreadId workerId, BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId)
     : workerId(workerId), queueId(queueId)
 {
     ///we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the parameter

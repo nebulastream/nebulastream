@@ -221,7 +221,7 @@ public:
      * @param value
      * @param bufferManager
      */
-    void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, BufferManager* bufferManager);
+    void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferManager);
 
     /**
      * @brief Reads variable sized data and returns it as a string
@@ -452,7 +452,7 @@ public:
      * @return true if the record was pushed successfully, false otherwise.
      */
     template <typename... Types>
-    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, BufferManager* bufferManager = nullptr)
+    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, AbstractBufferProvider* bufferManager = nullptr)
     {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
@@ -474,7 +474,7 @@ public:
                          if constexpr (IsString<decltype(fieldValue)>)
                          {
                              NES_ASSERT(bufferManager != nullptr, "BufferManager can not be null while using variable sized data!");
-                             (*this)[recordIndex].writeVarSized(fieldIndex++, fieldValue, bufferManager);
+                             (*this)[recordIndex].writeVarSized(fieldIndex++, fieldValue, *bufferManager);
                          }
                          else
                          {

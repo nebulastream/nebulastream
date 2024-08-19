@@ -76,7 +76,6 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 
@@ -87,14 +86,14 @@ public:
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(BufferManagerPtr bm, SchemaPtr schema)
+std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(AbstractBufferProvider& bm, SchemaPtr schema)
 {
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
-        auto buffer = bm->getBufferBlocking();
+        auto buffer = bm.getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (int64_t i = 0; i < 100; ++i)
         {
@@ -148,7 +147,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataAllSeqNumbersEmitted(bm, schema))
+    for (auto& buf : createDataAllSeqNumbersEmitted(*bm, schema))
     {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
@@ -179,14 +178,14 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataFullWithConstantFieldValues(BufferManagerPtr bm, SchemaPtr schema)
+std::vector<TupleBuffer> createDataFullWithConstantFieldValues(AbstractBufferProvider& bm, SchemaPtr schema)
 {
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
-        auto buffer = bm->getBufferBlocking();
+        auto buffer = bm.getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
         {
@@ -235,7 +234,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
 
     auto pipelineContext = MockedPipelineExecutionContext();
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataFullWithConstantFieldValues(bm, inputSchema))
+    for (auto& buf : createDataFullWithConstantFieldValues(*bm, inputSchema))
     {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }

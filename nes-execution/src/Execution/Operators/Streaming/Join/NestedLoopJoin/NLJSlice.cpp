@@ -24,7 +24,7 @@ NLJSlice::NLJSlice(
     uint64_t windowStart,
     uint64_t windowEnd,
     uint64_t numberOfWorker,
-    BufferManagerPtr& bufferManager,
+    std::shared_ptr<AbstractBufferProvider> bufferManager,
     SchemaPtr& leftSchema,
     uint64_t leftPageSize,
     SchemaPtr& rightSchema,
@@ -114,11 +114,11 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
-std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferManager)
+std::vector<Runtime::TupleBuffer> NLJSlice::serialize(AbstractBufferProvider& bufferManager)
 {
     auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
 
-    auto mainMetadata = bufferManager->getBufferBlocking();
+    auto mainMetadata = bufferManager.getBufferBlocking();
     buffersToTransfer.emplace(buffersToTransfer.begin(), mainMetadata);
     auto metadataBuffersCount = 1;
 
@@ -147,7 +147,7 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
         {
             /// if current buffer does not contain enough space then
             /// get new buffer and insert to vector of buffers
-            auto newBuffer = bufferManager->getBufferBlocking();
+            auto newBuffer = bufferManager.getBufferBlocking();
             /// add this buffer to vector of buffers
             buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
             /// reset pointer to point new buffer and reset index to 0
@@ -191,7 +191,7 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(BufferManagerPtr& bufferMa
 }
 
 StreamSlicePtr NLJSlice::deserialize(
-    BufferManagerPtr& bufferManager,
+    std::shared_ptr<AbstractBufferProvider> bufferManager,
     SchemaPtr& leftSchema,
     uint64_t leftPageSize,
     SchemaPtr& rightSchema,

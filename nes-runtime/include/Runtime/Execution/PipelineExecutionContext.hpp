@@ -21,8 +21,11 @@
 #include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
 
@@ -79,9 +82,9 @@ public:
     explicit PipelineExecutionContext(
         PipelineId pipelineId,
         QueryId queryId,
-        Runtime::BufferManagerPtr bufferProvider,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
         size_t numberOfWorkerThreads,
-        std::function<void(TupleBuffer&, WorkerContextRef)>&& emitFunctionHandler,
+        std::function<void(TupleBuffer&, WorkerContext&)>&& emitFunctionHandler,
         std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
         std::vector<OperatorHandlerPtr> operatorHandlers);
 
@@ -130,7 +133,7 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const;
 
-    [[nodiscard]] Runtime::BufferManagerPtr getBufferManager() const;
+    [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const;
 
     /// Returns the next chunk number belonging to a sequence number for emitting a buffer
     [[nodiscard]] uint64_t getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId);
@@ -164,7 +167,7 @@ private:
     folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;
     folly::Synchronized<std::map<SeqNumberOriginId, uint64_t>> seqNumberOriginIdToOutputChunkNumber;
 
-    const Runtime::BufferManagerPtr bufferProvider;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
     size_t numberOfWorkerThreads;
 
     std::vector<PredecessorExecutablePipeline> predecessors;

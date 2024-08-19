@@ -39,7 +39,6 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bm = Runtime::BufferManager::create();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
         NES_DEBUG("Setup MatchingRegexTest test case.")
     }
