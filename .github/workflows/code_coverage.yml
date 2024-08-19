@@ -116,3 +116,4 @@ jobs:
           base-lcov-file: ref-coverage.lcov
           send-summary-comment: true
           show-annotations: "warning"
+          github-token: '${{ secrets.GITHUB_TOKEN }}'
