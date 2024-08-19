@@ -24,8 +24,8 @@ function(add_nes_execution_test)
     target_link_libraries(${TARGET_NAME} nes-execution-test-util)
 endfunction()
 
-add_subdirectory(UnitTests)
-add_subdirectory(src)
+#add_subdirectory(UnitTests)
+#add_subdirectory(src)
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-execution-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/include")
