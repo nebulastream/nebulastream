@@ -86,4 +86,3 @@ jobs:
           base-lcov-file: /tmp/coverage/base_branch_coverage.lcov
           send-summary-comment: true
           show-annotations: "warning"
-          minimum-ratio: 0
