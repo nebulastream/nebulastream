@@ -10,8 +10,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+
+# This toolchain is used when a locally installed version of mlir is used.
+# Since we cannot control which c++ standard library is used, we use the default library of the system.
+# llvm will dynamically link to zstd which is why we override zstd to be built as a shared library
 set(VCPKG_TARGET_ARCHITECTURE x64)
 set(VCPKG_CRT_LINKAGE dynamic)
 set(VCPKG_LIBRARY_LINKAGE static)
 set(VCPKG_CMAKE_SYSTEM_NAME Linux)
-set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/libcxx-toolchain.cmake)
+
+set(VCPKG_CHAINLOAD_TOOLCHAIN_FILE ${CMAKE_CURRENT_LIST_DIR}/toolchain.cmake)
+
+if (PORT STREQUAL "zstd")
+    set(VCPKG_LIBRARY_LINKAGE dynamic)
+endif ()
