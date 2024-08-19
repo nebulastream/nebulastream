@@ -233,4 +233,10 @@ jobs:
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
       - name: Run Tests
-        run: ctest --test-dir build -j --output-on-failure
+        run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml
+      - name: Upload Test Summary
+        uses: actions/upload-artifact@v4
+        if: ${{ !cancelled() }}
+        with:
+          name: junit-${{ matrix.platform }}.xml
+          path: /junit.xml
