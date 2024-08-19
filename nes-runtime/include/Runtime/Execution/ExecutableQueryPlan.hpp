@@ -19,6 +19,7 @@
 #include <map>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>

@@ -23,6 +23,7 @@
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -265,7 +266,7 @@ public:
 protected:
     Runtime::QueryManagerPtr queryManager;
     Runtime::BufferManagerPtr localBufferManager;
-    Runtime::FixedSizeBufferPoolPtr bufferManager{nullptr};
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     OriginId originId;

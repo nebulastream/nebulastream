@@ -13,7 +13,7 @@
 */
 
 #pragma once
-#include <Runtime/Allocator/MemoryResource.hpp>
+#include <memory_resource>
 
 #include <cstdint>
 namespace NES::Nautilus::Interface

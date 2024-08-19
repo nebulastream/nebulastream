@@ -20,6 +20,7 @@
 #include <optional>
 #include <queue>
 #include <unordered_map>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
@@ -28,7 +29,6 @@
 namespace NES::Runtime
 {
 
-class AbstractBufferProvider;
 class BufferStorage;
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
@@ -40,7 +40,7 @@ using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 class WorkerContext
 {
 private:
-    using WorkerContextBufferProviderPtr = LocalBufferPoolPtr;
+    using WorkerContextBufferProviderPtr = std::shared_ptr<AbstractBufferProvider>;
     using WorkerContextBufferProvider = WorkerContextBufferProviderPtr::element_type;
     using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
 

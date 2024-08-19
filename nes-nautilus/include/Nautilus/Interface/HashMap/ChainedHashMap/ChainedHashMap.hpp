@@ -13,9 +13,9 @@
 */
 #pragma once
 #include <cassert>
+#include <memory_resource>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Runtime/Allocator/MemoryResource.hpp>
 
 namespace NES::Nautilus::Interface
 {

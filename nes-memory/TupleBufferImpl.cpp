@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include "TupleBufferImpl.hpp"
 #include <bitset>
 #include <Runtime/TupleBuffer.hpp>
-#include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
 

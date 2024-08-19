@@ -20,7 +20,6 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime::Execution::Operators

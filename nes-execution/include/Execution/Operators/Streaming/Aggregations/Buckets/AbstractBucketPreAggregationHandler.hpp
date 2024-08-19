@@ -27,7 +27,6 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 namespace NES::Runtime::Execution::Operators

@@ -15,6 +15,7 @@
 #pragma once
 #include <fstream>
 #include <optional>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>

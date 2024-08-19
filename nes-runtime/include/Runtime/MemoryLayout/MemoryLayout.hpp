@@ -17,6 +17,7 @@
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::MemoryLayouts

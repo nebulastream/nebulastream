@@ -14,14 +14,11 @@
 
 #pragma once
 
-#include <condition_variable>
 #include <deque>
 #include <memory>
 #include <mutex>
-#include <optional>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <folly/MPMCQueue.h>
 
 namespace NES::Runtime
@@ -34,24 +31,21 @@ namespace detail
 class MemorySegment;
 }
 
-const std::chrono::seconds DEFAULT_BUFFER_TIMEOUT = std::chrono::seconds(10);
-
 /**
  * @brief A local buffer pool that uses N exclusive buffers and then falls back to the global buffer manager
  */
-class FixedSizeBufferPool : public BufferRecycler, public AbstractBufferProvider
+class LocalBufferPool : public BufferRecycler, public AbstractBufferProvider
 {
 public:
     /**
      * @brief Construct a new LocalBufferPool
      * @param bufferManager the global buffer manager
      * @param availableBuffers deque of exclusive buffers
-     * @param numberOfReservedBuffers number of exclusive buffers
+     * @param numberOfReservedBuffers number of exclusive bufferss
      */
-    explicit FixedSizeBufferPool(
+    explicit LocalBufferPool(
         const BufferManagerPtr& bufferManager, std::deque<detail::MemorySegment*>&& availableBuffers, size_t numberOfReservedBuffers);
-
-    ~FixedSizeBufferPool() override;
+    ~LocalBufferPool() override;
 
     /**
      * @brief Destroys this buffer pool and returns own buffers to global pool
@@ -63,18 +57,11 @@ public:
     * @return a new buffer
     */
     TupleBuffer getBufferBlocking() override;
-
-    /**
-     * @brief Returns a new Buffer wrapped in an optional or an invalid option if there is no buffer available within
-     * timeout_ms.
-     * @param timeout_ms the amount of time to wait for a new buffer to be retuned
-     * @return a new buffer
-     */
-    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout) override;
     size_t getBufferSize() const override;
     size_t getNumOfPooledBuffers() const override;
     size_t getNumOfUnpooledBuffers() const override;
     std::optional<TupleBuffer> getBufferNoBlocking() override;
+    std::optional<TupleBuffer> getBufferWithTimeout(std::chrono::milliseconds timeout_ms) override;
     std::optional<TupleBuffer> getUnpooledBuffer(size_t bufferSize) override;
     /**
      * @brief provide number of available exclusive buffers
@@ -96,16 +83,16 @@ public:
 
     virtual BufferManagerType getBufferManagerType() const override;
 
-    BufferManagerPtr getParentBufferManager() const { return bufferManager; }
-
 private:
-    BufferManagerPtr bufferManager;
+    std::shared_ptr<BufferManager> bufferManager;
 
     folly::MPMCQueue<detail::MemorySegment*> exclusiveBuffers;
-    [[maybe_unused]] size_t numberOfReservedBuffers;
+    std::atomic<uint32_t> exclusiveBufferCount;
+#ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
+    std::vector<detail::MemorySegment*> allSegments;
+#endif
+    size_t numberOfReservedBuffers;
     mutable std::mutex mutex;
-    std::condition_variable cvar;
-    std::atomic<bool> isDestroyed;
 };
 
 } /// namespace NES::Runtime

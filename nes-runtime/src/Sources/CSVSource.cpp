@@ -18,7 +18,6 @@
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>

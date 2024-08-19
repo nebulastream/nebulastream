@@ -14,13 +14,8 @@
 add_source_files(nes-runtime
         apex_memmove.cpp
         BufferStorage.cpp
-        BufferManager.cpp
-        FixedSizeBufferPool.cpp
-        TupleBuffer.cpp
         WorkerContext.cpp
-        LocalBufferPool.cpp
         NesThread.cpp
-        TaggedPointer.cpp
 )
 
 
@@ -42,7 +37,6 @@ add_subdirectory(Profiler)
 
 add_source_files(nes-runtime
         Allocator/NumaRegionMemoryAllocator.cpp
-        Allocator/NesDefaultMemoryAllocator.cpp
 )
 add_subdirectory(MemoryLayout)
 add_subdirectory(Execution)

@@ -20,7 +20,7 @@
 #include <sstream>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TaggedPointer.hpp>
+#include "TaggedPointer.hpp"
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #    include <deque>
 #    include <mutex>

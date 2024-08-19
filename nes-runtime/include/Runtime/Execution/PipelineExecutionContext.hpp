@@ -21,6 +21,7 @@
 #include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>

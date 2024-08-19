@@ -16,7 +16,6 @@
 #include <string>
 #include <utility>
 #include <API/AttributeField.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>

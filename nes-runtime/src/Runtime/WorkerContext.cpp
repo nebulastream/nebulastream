@@ -14,14 +14,12 @@
 
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferStorage.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 
 namespace NES::Runtime
 {
 
-folly::ThreadLocalPtr<LocalBufferPool> WorkerContext::localBufferPoolTLS{};
+folly::ThreadLocalPtr<AbstractBufferProvider> WorkerContext::localBufferPoolTLS{};
 
 WorkerContext::WorkerContext(
     WorkerThreadId workerId, const BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId)
@@ -81,12 +79,12 @@ TupleBuffer WorkerContext::allocateTupleBuffer()
 }
 
 
-LocalBufferPool* WorkerContext::getBufferProviderTLS()
+AbstractBufferProvider* WorkerContext::getBufferProviderTLS()
 {
     return localBufferPoolTLS.get();
 }
 
-LocalBufferPoolPtr WorkerContext::getBufferProvider()
+std::shared_ptr<AbstractBufferProvider> WorkerContext::getBufferProvider()
 {
     return localBufferPool;
 }
