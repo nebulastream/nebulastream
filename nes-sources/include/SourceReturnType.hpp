@@ -24,7 +24,6 @@ namespace NES
 {
 namespace SourceReturnType
 {
-
 enum class TerminationType : uint8_t
 {
     STOP,

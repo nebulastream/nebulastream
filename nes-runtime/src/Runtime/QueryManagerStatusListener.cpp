@@ -129,11 +129,7 @@ void QueryManager::notifySourceCompletion(OriginId sourceId, QueryTerminationTyp
     ///THIS is now shutting down all
     for (auto& entry : sourceToQEPMapping[sourceId])
     {
-        NES_TRACE(
-            "notifySourceCompletion operator id={} plan id={} subplan={}",
-            sourceId,
-            entry->getSharedQueryId(),
-            entry->getDecomposedQueryPlanId());
+        NES_TRACE("notifySourceCompletion operator id={} plan id={}", sourceId, entry->getQueryId());
         entry->notifySourceCompletion(sourceId, terminationType);
         if (terminationType == QueryTerminationType::Graceful)
         {
