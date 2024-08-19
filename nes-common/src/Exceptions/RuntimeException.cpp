@@ -12,7 +12,9 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <source_location>
+#include <string>
 #include <Exceptions/RuntimeException.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/std.h>
