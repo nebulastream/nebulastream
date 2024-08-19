@@ -18,6 +18,7 @@
 #include <variant>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/QueryTerminationType.hpp>

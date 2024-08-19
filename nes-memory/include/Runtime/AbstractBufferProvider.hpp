@@ -17,7 +17,7 @@
 #include <cstddef>
 #include <optional>
 #include <vector>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 /**
  * This enum reflects the different types of buffer managers in the system
@@ -99,14 +99,14 @@ public:
      * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
      * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
      */
-    virtual LocalBufferPoolPtr createLocalBufferPool(size_t numberOfReservedBuffers) = 0;
+    virtual std::shared_ptr<AbstractBufferProvider> createLocalBufferPool(size_t numberOfReservedBuffers) = 0;
 
     /**
       * @brief Create a local buffer manager that is assigned to one pipeline or thread
       * @param numberOfReservedBuffers number of exclusive buffers to give to the pool
       * @return a local buffer manager with numberOfReservedBuffers exclusive buffer
       */
-    virtual FixedSizeBufferPoolPtr createFixedSizeBufferPool(size_t numberOfReservedBuffers) = 0;
+    virtual std::shared_ptr<AbstractBufferProvider> createFixedSizeBufferPool(size_t numberOfReservedBuffers) = 0;
 };
 
 /// free functions for buffer provider

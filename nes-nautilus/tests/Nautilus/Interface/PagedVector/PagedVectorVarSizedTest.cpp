@@ -20,6 +20,8 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <TestUtils/MockedPipelineExecutionContext.hpp>
+
 #include <BaseIntegrationTest.hpp>
 
 namespace NES::Nautilus::Interface
@@ -206,6 +208,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues)
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", DataTypeFactory::createText()))
                           ->addField(createField("value2", DataTypeFactory::createText()))
@@ -222,6 +225,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveVarSizeValues)
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveLargeVarSizedValues)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(createField("value1", DataTypeFactory::createText()));
     const auto entrySize = 1 * sizeof(uint64_t);
     const auto pageSize = 8_u64;
@@ -235,6 +239,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveLargeVarSizedValues)
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", DataTypeFactory::createText()))
@@ -251,6 +256,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveMixedValueTypes)
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::UINT64));
@@ -266,6 +272,7 @@ TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedValuesNonDefaultPageSize)
 
 TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", DataTypeFactory::createText()));
@@ -294,6 +301,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesTwoVectors)
 
 TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", DataTypeFactory::createText()))
@@ -323,6 +331,7 @@ TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectors)
 
 TEST_F(PagedVectorVarSizedTest, appendAllPagesMultipleVectorsWithDifferentPageSizes)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", DataTypeFactory::createText()))

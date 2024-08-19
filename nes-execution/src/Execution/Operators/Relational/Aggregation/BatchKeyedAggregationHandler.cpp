@@ -14,6 +14,7 @@
 
 #include <utility>
 #include <Execution/Operators/Relational/Aggregation/BatchKeyedAggregationHandler.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>

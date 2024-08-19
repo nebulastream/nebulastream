@@ -15,7 +15,6 @@
 #include <iostream>
 #include <string>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
-#include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 
