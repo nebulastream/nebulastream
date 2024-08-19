@@ -42,16 +42,16 @@ jobs:
         uses: styfle/cancel-workflow-action@0.12.1
         with:
           access_token: ${{ secrets.NES_CI_SECRET }}
-      - name: Configure NebulaStream with Code Coverage enabled
+      - name: Configure NebulaStream with Code Coverage enabled (PR Branch)
         run: cmake -DNES_COMPUTE_COVERAGE=ON -B build
-      - name: Build NebulaStream
+      - name: Build NebulaStream (PR Branch)
         run: cmake --build build -j -- -k 0
-      - name: Run Tests with Code Coverage
+      - name: Run Tests with Code Coverage (PR Branch)
         run: ctest --test-dir build -j --output-on-failure
-      - name: Combine llcov files
+      - name: Combine lcov files (PR Branch)
         run: cmake --build build --target llvm_cov_export_lcov
-      - name: Copy lcov file
-        run: mkdir -p coverage && cp build/default_coverage.lcov coverage/default_coverage.lcov
+      - name: Copy lcov file (PR Branch)
+        run: mkdir -p /tmp/coverage && cp build/default_coverage.lcov /tmp/coverage/default_coverage.lcov
 
       # Now we do the same for the provided base branch
       - name: Checkout Base Branch
@@ -62,16 +62,16 @@ jobs:
           #ref: ${{ github.event.pull_request.base.ref }}
           ref: 389c7ea2d16098fed58901dedfdc742ff764d9e0
           ssh-key: ${{ secrets.CI_SECRET }}
-      - name: Configure NebulaStream with Code Coverage enabled
+      - name: Configure NebulaStream with Code Coverage enabled (Base Branch)
         run: cmake -DNES_COMPUTE_COVERAGE=ON -B build
-      - name: Build NebulaStream
+      - name: Build NebulaStream (Base Branch)
         run: cmake --build build -j -- -k 0
-      - name: Run Tests with Code Coverage
+      - name: Run Tests with Code Coverage (Base Branch)
         run: ctest --test-dir build -j --output-on-failure
-      - name: Combine llcov files
+      - name: Combine lcov files (Base Branch)
         run: cmake --build build --target llvm_cov_export_lcov
-      - name: Copy lcov file
-        run: mkdir -p coverage && cp build/default_coverage.lcov coverage/base_branch_coverage.lcov
+      - name: Copy lcov file (Base Branch)
+        run: mkdir -p /tmp/coverage && cp build/default_coverage.lcov /tmp/coverage/base_branch_coverage.lcov
 
       # Comparing the code coverage from the current branch with the base branch
       - name: Generate Code Coverage report
@@ -79,7 +79,7 @@ jobs:
         uses: barecheck/code-coverage-action@v1
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
-          lcov-file: coverage/default_coverage.lcov
-#          base-lcov-file: coverage/base_branch_coverage.lcov
+          lcov-file: /tmp/coverage/default_coverage.lcov
+          base-lcov-file: /tmp/coverage/base_branch_coverage.lcov
           send-summary-comment: true
           show-annotations: "error"
