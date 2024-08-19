@@ -46,7 +46,14 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const
     for (Value<UInt64> i = 0_u64; i < numberOfRecords; i = i + 1_u64)
     {
         auto record = memoryProvider->read(projections, bufferAddress, i);
-        child->execute(ctx, record);
+        if (child != nullptr)
+        {
+            child->execute(ctx, record);
+        } else
+        {
+            NES_NOT_IMPLEMENTED();
+        }
+
     }
 }
 
