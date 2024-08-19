@@ -37,7 +37,7 @@ AbstractSlicePreAggregationHandler<SliceType, SliceStore>::AbstractSlicePreAggre
 template <class SliceType, typename SliceStore>
 void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::dispatchSliceMergingTasks(
     PipelineExecutionContext& ctx,
-    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    AbstractBufferProvider& bufferProvider,
     std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices)
 {
     /// for all slices that have been collected, emit a merge task to combine this slices.
@@ -46,7 +46,7 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::dispatchSliceMer
     /// Thus, we emit slice deployment tasks in increasing order.
     for (const auto& [metaData, slices] : collectedSlices)
     {
-        auto buffer = bufferProvider->getBufferBlocking();
+        auto buffer = bufferProvider.getBufferBlocking();
         /// allocate a slice merge task withing the buffer.
         auto task = allocateWithin<SliceMergeTask<SliceType>>(buffer);
         task->startSlice = std::get<0>(metaData);
@@ -101,7 +101,7 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::trigger(
         }
         threadLocalSliceStore->setLastWatermark(lastTriggerWatermark);
     }
-    dispatchSliceMergingTasks(ctx, wctx.getBufferProvider(), collectedSlices);
+    dispatchSliceMergingTasks(ctx, *wctx.getBufferProvider(), collectedSlices);
 };
 template <class SliceType, typename SliceStore>
 SliceStore* AbstractSlicePreAggregationHandler<SliceType, SliceStore>::getThreadLocalSliceStore(WorkerThreadId workerThreadId)
@@ -143,7 +143,7 @@ void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::stop(
                 collectedSlices.find(sliceData)->second.emplace_back(std::move(slice));
             }
         }
-        dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(), collectedSlices);
+        dispatchSliceMergingTasks(*ctx.get(), *ctx->getBufferManager(), collectedSlices);
     }
 }
 template <class SliceType, typename SliceStore>

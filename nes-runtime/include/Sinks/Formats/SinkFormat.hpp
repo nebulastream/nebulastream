@@ -15,8 +15,8 @@
 #pragma once
 #include <fstream>
 #include <optional>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
 /**
@@ -33,7 +33,7 @@ public:
      * @param schema
      * @param append
      */
-    SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+    SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
 
     /**
      * @brief constructor for a sink format
@@ -41,7 +41,7 @@ public:
      * @param append flag to append or not
      * @param addTimestamp flag to add a timestamp in getFormattedBuffer
      */
-    SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp);
+    SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, bool addTimestamp);
 
     virtual ~SinkFormat() noexcept = default;
 
@@ -76,15 +76,15 @@ public:
     SchemaPtr getSchemaPtr();
     void setSchemaPtr(SchemaPtr schema);
 
-    Runtime::BufferManagerPtr getBufferManager();
-    void setBufferManager(Runtime::BufferManagerPtr bufferManager);
+    std::shared_ptr<Runtime::AbstractBufferProvider> getBufferManager();
+    void setBufferManager(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
 
     bool getAddTimestamp();
     void setAddTimestamp(bool addTimestamp);
 
 protected:
     SchemaPtr schema;
-    Runtime::BufferManagerPtr bufferManager;
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;
     bool addTimestamp;
 };
 

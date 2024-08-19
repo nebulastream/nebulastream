@@ -32,7 +32,7 @@ namespace NES
 
 CSVSource::CSVSource(
     SchemaPtr schema,
-    Runtime::BufferManagerPtr bufferManager,
+    std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
     Runtime::QueryManagerPtr queryManager,
     CSVSourceTypePtr csvSourceType,
     OperatorId operatorId,
@@ -43,7 +43,7 @@ CSVSource::CSVSource(
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors)
     : DataSource(
           schema,
-          std::move(bufferManager),
+          std::move(poolProvider),
           std::move(queryManager),
           operatorId,
           originId,
@@ -178,7 +178,7 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         /// TODO: there will be a problem with non-printable characters (at least with null terminators). Check sources
 
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, localBufferManager);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, bufferManager);
         tupleCount++;
     } ///end of while
 

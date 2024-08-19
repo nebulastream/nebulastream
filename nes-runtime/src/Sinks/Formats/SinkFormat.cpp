@@ -19,11 +19,12 @@
 namespace NES
 {
 
-SinkFormat::SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager) : SinkFormat(schema, bufferManager, false)
+SinkFormat::SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
+    : SinkFormat(schema, bufferManager, false)
 {
 }
 
-SinkFormat::SinkFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager, bool addTimestamp)
+SinkFormat::SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, bool addTimestamp)
     : schema(std::move(schema)), bufferManager(std::move(bufferManager)), addTimestamp(addTimestamp)
 {
 }
@@ -38,12 +39,12 @@ void SinkFormat::setSchemaPtr(SchemaPtr schema)
     this->schema = std::move(schema);
 }
 
-Runtime::BufferManagerPtr SinkFormat::getBufferManager()
+std::shared_ptr<Runtime::AbstractBufferProvider> SinkFormat::getBufferManager()
 {
     return bufferManager;
 }
 
-void SinkFormat::setBufferManager(Runtime::BufferManagerPtr bufferManager)
+void SinkFormat::setBufferManager(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
 {
     this->bufferManager = std::move(bufferManager);
 }

@@ -33,7 +33,8 @@ public:
       * @param pageSize
       * @param schema
       */
-    explicit StreamJoinHashTableVarSized(size_t numPartitions, BufferManagerPtr& bufferManager, size_t pageSize, SchemaPtr& schema);
+    explicit StreamJoinHashTableVarSized(
+        size_t numPartitions, std::shared_ptr<AbstractBufferProvider> bufferManager, size_t pageSize, SchemaPtr& schema);
 
     StreamJoinHashTableVarSized(const StreamJoinHashTableVarSized&) = delete;
 

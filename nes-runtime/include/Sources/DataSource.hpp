@@ -23,7 +23,7 @@
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Execution/DataEmitter.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -57,7 +57,7 @@ public:
      * @Note the number of buffers to process is set to UINT64_MAX and the value is needed
      * by some test to produce a deterministic behavior
      * @param schema of the data that this source produces
-     * @param bufferManager pointer to the buffer manager
+     * @param poolProvider The DataSource will create a fixed size buffer pool once the source is started
      * @param queryManager pointer to the query manager
      * @param operatorId current operator id
      * @param originId represents the identifier of the upstream operator that represents the origin of the input stream
@@ -70,7 +70,7 @@ public:
      */
     explicit DataSource(
         SchemaPtr schema,
-        Runtime::BufferManagerPtr bufferManager,
+        std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
         Runtime::QueryManagerPtr queryManager,
         OperatorId operatorId,
         OriginId originId,
@@ -265,7 +265,7 @@ public:
 
 protected:
     Runtime::QueryManagerPtr queryManager;
-    Runtime::BufferManagerPtr localBufferManager;
+    std::shared_ptr<Runtime::AbstractPoolProvider> bufferPoolProvider;
     std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;

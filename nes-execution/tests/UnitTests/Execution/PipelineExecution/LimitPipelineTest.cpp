@@ -62,7 +62,6 @@ public:
         options.setDumpToConsole(true);
         options.setDumpToFile(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 

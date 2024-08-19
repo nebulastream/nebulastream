@@ -52,7 +52,6 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = BufferManager::create();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
     std::shared_ptr<NonKeyedSlice> createNonKeyedSlice(size_t start, size_t end, int64_t value)

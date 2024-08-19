@@ -57,7 +57,7 @@ public:
     void trigger(WorkerContext& wctx, PipelineExecutionContext& ctx, OriginId originId, SequenceData sequenceData, uint64_t watermarkTs);
     void dispatchSliceMergingTasks(
         PipelineExecutionContext& ctx,
-        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        AbstractBufferProvider& bufferProvider,
         std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices);
     ~AbstractBucketPreAggregationHandler();
 

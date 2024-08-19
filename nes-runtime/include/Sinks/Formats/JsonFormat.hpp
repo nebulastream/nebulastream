@@ -21,7 +21,7 @@ namespace NES
 class JsonFormat : public SinkFormat
 {
 public:
-    JsonFormat(SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+    JsonFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
 
     /**
      * @brief Returns the schema of formatted according to the specific SinkFormat represented as string.

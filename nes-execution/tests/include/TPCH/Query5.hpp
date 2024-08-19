@@ -57,8 +57,8 @@ using namespace Operators;
 class TPCH_Query5
 {
 public:
-    static PipelinePlan
-    getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, Runtime::BufferManagerPtr)
+    static PipelinePlan getPipelinePlan(
+        std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, std::shared_ptr<Runtime::AbstractBufferProvider>)
     {
         PipelinePlan plan;
         auto customerJoinHandler = createCustomerPipeline(plan, tables);

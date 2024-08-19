@@ -41,7 +41,7 @@ namespace NES::Runtime::Execution::Util
 * @param bufferManager
 * @return Filled tupleBuffer
 */
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, BufferManagerPtr bufferManager);
+Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, AbstractBufferProvider& bufferManager);
 
 /**
 * @brief Writes from the nautilusRecord to the record at index recordIndex
@@ -52,7 +52,7 @@ Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& s
 * @param bufferManager
 */
 void writeNautilusRecord(
-    uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
+    uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferManager);
 
 /**
 * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
@@ -63,7 +63,7 @@ void writeNautilusRecord(
 * @return merged TupleBuffer
 */
 Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, Runtime::BufferManagerPtr bufferManager);
+mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, AbstractBufferProvider& bufferManager);
 
 /**
 * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
@@ -78,7 +78,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
     std::vector<Runtime::TupleBuffer>& buffers,
     SchemaPtr schema,
     const std::string& timeStampFieldName,
-    BufferManagerPtr bufferManager,
+    AbstractBufferProvider& bufferManager,
     uint64_t windowSize);
 
 /**
@@ -90,7 +90,10 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
 * @return sorted buffers
 */
 std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
-    std::vector<Runtime::TupleBuffer>& buffersToSort, SchemaPtr schema, const std::string& sortFieldName, BufferManagerPtr bufferManager);
+    std::vector<Runtime::TupleBuffer>& buffersToSort,
+    SchemaPtr schema,
+    const std::string& sortFieldName,
+    AbstractBufferProvider& bufferManager);
 
 /**
 * @brief Creates a TupleBuffer from a Nautilus::Record
@@ -99,7 +102,7 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
 * @param bufferManager
 * @return Filled TupleBuffer
 */
-Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, BufferManagerPtr bufferManager);
+Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferManager);
 
 /**
 * @brief create CSV lines from the tuples
@@ -122,7 +125,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    Runtime::BufferManagerPtr bufferManager,
+    Runtime::AbstractBufferProvider& bufferManager,
     uint64_t originId = 0,
     const std::string& timestampFieldname = "ts",
     bool skipFirstLine = false);
@@ -144,7 +147,7 @@ void writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    const Runtime::BufferManagerPtr& bufferManager);
+    Runtime::AbstractBufferProvider& bufferManager);
 
 /**
 * @brief function to replace all string occurrences
