@@ -17,8 +17,8 @@
 #include <fstream>
 #include <iostream>
 #include <utility>
-#include <Runtime/BufferManager.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 namespace NES::Runtime
 {

@@ -12,17 +12,17 @@
     limitations under the License.
 */
 #include <utility>
-#include <Util/Logger/Logger.hpp>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <include/Runtime/BufferManager.hpp>
 #include <include/Runtime/TupleBuffer.hpp>
 #include <include/Util/TestTupleBuffer.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {
@@ -50,7 +50,7 @@ DynamicField DynamicTuple::operator[](std::string fieldName) const
     return this->operator[](memoryLayout->getFieldIndexFromName(fieldName).value());
 }
 
-DynamicTuple::DynamicTuple(const uint64_t tupleIndex, MemoryLayoutPtr memoryLayout, Memory::TupleBuffer buffer)
+DynamicTuple::DynamicTuple(const uint64_t tupleIndex, std::shared_ptr<MemoryLayout> memoryLayout, Memory::TupleBuffer buffer)
     : tupleIndex(tupleIndex), memoryLayout(std::move(memoryLayout)), buffer(std::move(buffer))
 {
 }
@@ -235,7 +235,7 @@ DynamicTuple TestTupleBuffer::operator[](std::size_t tupleIndex) const
     return {tupleIndex, memoryLayout, buffer};
 }
 
-TestTupleBuffer::TestTupleBuffer(const MemoryLayoutPtr& memoryLayout, Memory::TupleBuffer buffer)
+TestTupleBuffer::TestTupleBuffer(const std::shared_ptr<MemoryLayout>& memoryLayout, Memory::TupleBuffer buffer)
     : memoryLayout(memoryLayout), buffer(buffer)
 {
     NES_ASSERT(memoryLayout->getBufferSize() == buffer.getBufferSize(), "Buffer size of layout has to be same then from the buffer.");
@@ -349,7 +349,7 @@ DynamicTuple TestTupleBuffer::TupleIterator::operator*() const
     return buffer[currentIndex];
 }
 
-MemoryLayoutPtr TestTupleBuffer::getMemoryLayout() const
+std::shared_ptr<MemoryLayout> TestTupleBuffer::getMemoryLayout() const
 {
     return memoryLayout;
 }

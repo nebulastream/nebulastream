@@ -15,8 +15,8 @@
 #pragma once
 
 #include <API/Schema.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES::Runtime

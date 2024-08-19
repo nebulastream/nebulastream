@@ -22,8 +22,8 @@
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Source.hpp>
 #include <SourceReturnType.hpp>
 
@@ -43,6 +43,7 @@ class DataSource
 {
     static constexpr auto STOP_TIMEOUT_NOT_RUNNING = std::chrono::seconds(60);
     static constexpr auto STOP_TIMEOUT_RUNNING = std::chrono::seconds(300);
+
 public:
     explicit DataSource(
         OriginId originId,
@@ -68,7 +69,7 @@ public:
 
     [[nodiscard]] OriginId getOriginId() const;
 
-    friend std::ostream & operator<<(std::ostream& out, const DataSource& dataSource);
+    friend std::ostream& operator<<(std::ostream& out, const DataSource& dataSource);
 
 protected:
     OriginId originId;

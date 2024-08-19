@@ -44,9 +44,9 @@
 #include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
+#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <TPCH/PipelinePlan.hpp>
 #include <TPCH/TPCHTableGenerator.hpp>
 #include <Util/TestTupleBuffer.hpp>

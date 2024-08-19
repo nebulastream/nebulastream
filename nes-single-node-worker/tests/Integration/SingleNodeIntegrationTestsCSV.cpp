@@ -17,13 +17,13 @@
 #include <filesystem>
 #include <fstream>
 #include <numeric>
+#include <Runtime/BufferManager.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <fmt/core.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
-#include <Runtime/BufferManager.hpp>
 
 
 namespace NES::Testing

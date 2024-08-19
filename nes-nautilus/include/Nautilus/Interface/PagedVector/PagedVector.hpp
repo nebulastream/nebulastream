@@ -16,7 +16,6 @@
 #include <memory>
 #include <memory_resource>
 #include <vector>
-#include <memory_resource>
 #include <API/Schema.hpp>
 namespace NES::Nautilus::Interface
 {

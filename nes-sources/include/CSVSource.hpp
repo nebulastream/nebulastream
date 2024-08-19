@@ -34,8 +34,8 @@ public:
 
     bool fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) override;
 
-    void open() override{/* noop */};
-    void close() override{/* noop */};
+    void open() override { /* noop */ };
+    void close() override { /* noop */ };
 
     void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
 

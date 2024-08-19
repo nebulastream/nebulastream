@@ -25,8 +25,8 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Parsers/CSVParser.hpp>
-#include <TCPSource.hpp>
 #include <sys/socket.h> /// For socket functions
+#include <TCPSource.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 namespace NES

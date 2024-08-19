@@ -26,7 +26,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
-#include <SourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
@@ -35,6 +34,7 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <ErrorHandling.hpp>
 #include <SourceHandle.hpp>
+#include <SourceProvider.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::QueryCompilation

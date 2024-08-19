@@ -24,8 +24,12 @@ namespace NES
 {
 namespace SourceReturnType
 {
-
-enum class TerminationType : uint8_t { STOP, EOS, FAILURE };
+enum class TerminationType : uint8_t
+{
+    STOP,
+    EOS,
+    FAILURE
+};
 using SourceReturnType = std::variant<Runtime::TupleBuffer, TerminationType>;
 using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 

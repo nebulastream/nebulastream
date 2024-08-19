@@ -201,8 +201,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     }
     for (const auto& source : qep->getSources())
     {
-        NES_ASSERT2_FMT(
-            source->stop(), "Cannot fail source " << source->getSourceId() << " belonging to query plan=" << qep->getQueryId());
+        NES_ASSERT2_FMT(source->stop(), "Cannot fail source " << source->getSourceId() << " belonging to query plan=" << qep->getQueryId());
     }
 
     auto terminationFuture = qep->getTerminationFuture();
