@@ -192,6 +192,7 @@ public:
 
 TEST_F(PagedVectorVarSizedTest, storeAndRetrieveFixedSizeValues)
 {
+    Runtime::Execution::MockedPipelineExecutionContext context({}, false, bufferManager);
     auto testSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)
                           ->addField(createField("value1", BasicType::UINT64))
                           ->addField(createField("value2", BasicType::UINT64))

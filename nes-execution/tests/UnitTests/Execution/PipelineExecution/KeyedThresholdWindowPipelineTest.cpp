@@ -150,7 +150,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<Operators::KeyedThresholdWindowOperatorHandler>();
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -263,7 +263,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<Operators::KeyedThresholdWindowOperatorHandler>();
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

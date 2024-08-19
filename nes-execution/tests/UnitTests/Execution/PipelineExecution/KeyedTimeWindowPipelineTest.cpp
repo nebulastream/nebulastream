@@ -148,13 +148,13 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>();
 
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
     preAggExecutablePipeline->setup(pipeline1Context);
 
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     EXPECT_EQ(pipeline1Context.buffers.size(), 1);
 
-    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, bm);
     sliceMergingExecutablePipeline->setup(pipeline2Context);
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
     EXPECT_EQ(pipeline2Context.buffers.size(), 1);
@@ -253,13 +253,13 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>();
 
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
     preAggExecutablePipeline->setup(pipeline1Context);
 
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     EXPECT_EQ(pipeline1Context.buffers.size(), 1);
 
-    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, bm);
     sliceMergingExecutablePipeline->setup(pipeline2Context);
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
     EXPECT_EQ(pipeline2Context.buffers.size(), 1);

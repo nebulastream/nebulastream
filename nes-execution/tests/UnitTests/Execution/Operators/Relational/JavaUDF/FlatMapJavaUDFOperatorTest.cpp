@@ -57,7 +57,7 @@ public:
         auto map = FlatMapJavaUDF(0, javaUDFDescriptor->getInputSchema(), javaUDFDescriptor->getOutputSchema());
         auto collector = std::make_shared<CollectOperator>();
         map.setChild(collector);
-        auto pipelineContext = MockedPipelineExecutionContext({handler});
+        auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
         auto ctx = ExecutionContext(Value<MemRef>(buffer), Value<MemRef>((int8_t*)&pipelineContext));
         RecordBuffer recordBuffer = RecordBuffer(Value<MemRef>(nullptr));
         map.setup(ctx);

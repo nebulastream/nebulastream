@@ -140,7 +140,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -216,7 +216,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount)
     aggValues.emplace_back(std::move(countAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -291,7 +291,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin)
     aggValues.emplace_back(std::move(minAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -366,7 +366,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax)
     aggValues.emplace_back(std::move(maxAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -441,7 +441,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg)
     aggValues.emplace_back(std::move(avgAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -514,7 +514,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat)
     aggValues.emplace_back(std::move(avgAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -589,7 +589,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate)
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
