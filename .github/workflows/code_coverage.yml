@@ -52,21 +52,14 @@ jobs:
           #ref: ${{ github.event.pull_request.base.ref }}
           ref: 389c7ea2d16098fed58901dedfdc742ff764d9e0
           ssh-key: ${{ secrets.CI_SECRET }}
-      - name: Configure NebulaStream with Code Coverage enabled (Base Branch)
+      - name: Build base coverage if not in cache
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
-        run: cmake -DNES_COMPUTE_COVERAGE=ON -B build
-      - name: Build NebulaStream (Base Branch)
-        if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
-        run: cmake --build build -j -- -k 0
-      - name: Run Tests with Code Coverage (Base Branch)
-        if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
-        run: ctest --test-dir build -j --output-on-failure
-      - name: Combine lcov files (Base Branch)
-        if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
-        run: cmake --build build --target llvm_cov_export_lcov
-      - name: move into cache folder
-        if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
-        run: mkdir -p /tmp/cache/ && cp build/default_coverage.lcov /tmp/cache/ref-coverage.lcov
+        run: |
+          cmake -DNES_COMPUTE_COVERAGE=ON -B build
+          cmake --build build -j -- -k 0
+          ctest --test-dir build -j --output-on-failure
+          cmake --build build --target llvm_cov_export_lcov
+          mkdir -p /tmp/cache/ && cp build/default_coverage.lcov /tmp/cache/ref-coverage.lcov
       - name: Upload code coverage for ref branch
         uses: actions/upload-artifact@v4
         with:
@@ -116,7 +109,7 @@ jobs:
         run: cmake --build build --target llvm_cov_export_lcov
       - name: Generate Code Coverage report
         id: code-coverage
-        uses: "ls-1801/code-coverage-action@adb6de98cb4d6f0bf953fe9efa9b18eec71d1e19"
+        uses: "ls-1801/code-coverage-action@5b950b21e6e25059515f9d3d5f5adf113e20972f"
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
           lcov-file: build/default_coverage.lcov
