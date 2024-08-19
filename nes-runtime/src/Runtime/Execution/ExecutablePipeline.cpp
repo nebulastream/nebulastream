@@ -131,55 +131,6 @@ const std::vector<SuccessorExecutablePipeline>& ExecutablePipeline::getSuccessor
     return successorPipelines;
 }
 
-void ExecutablePipeline::onEvent(Runtime::BaseEvent& event)
-{
-    NES_DEBUG("ExecutablePipeline::onEvent(event) called. pipelineId:  {}", this->pipelineId);
-    if (event.getEventType() == EventType::kStartSourceEvent)
-    {
-        NES_DEBUG("ExecutablePipeline: Propagate startSourceEvent further upstream to predecessors, without workerContext.");
-
-        for (auto predecessor : this->pipelineContext->getPredecessors())
-        {
-            if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&predecessor))
-            {
-                NES_DEBUG("ExecutablePipeline: Found Source in predecessor. Start it with startSourceEvent, without workerContext.");
-                sourcePredecessor->lock()->onEvent(event);
-            }
-            else if (
-                const auto* pipelinePredecessor = std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&predecessor))
-            {
-                NES_DEBUG("ExecutablePipeline: Found Pipeline in Predecessors. Propagate startSourceEvent to it, without "
-                          "workerContext.");
-                pipelinePredecessor->lock()->onEvent(event);
-            }
-        }
-    }
-}
-
-void ExecutablePipeline::onEvent(Runtime::BaseEvent& event, WorkerContextRef workerContext)
-{
-    NES_DEBUG("ExecutablePipeline::onEvent(event, wrkContext) called. pipelineId:  {}", this->pipelineId);
-    if (event.getEventType() == EventType::kStartSourceEvent)
-    {
-        NES_DEBUG("ExecutablePipeline: Propagate startSourceEvent further upstream to predecessors, with workerContext.");
-
-        for (auto predecessor : this->pipelineContext->getPredecessors())
-        {
-            if (const auto* sourcePredecessor = std::get_if<std::weak_ptr<NES::DataSource>>(&predecessor))
-            {
-                NES_DEBUG("ExecutablePipeline: Found Source in predecessor. Start it with startSourceEvent, with workerContext.");
-                sourcePredecessor->lock()->onEvent(event, workerContext);
-            }
-            else if (
-                const auto* pipelinePredecessor = std::get_if<std::weak_ptr<NES::Runtime::Execution::ExecutablePipeline>>(&predecessor))
-            {
-                NES_DEBUG("ExecutablePipeline: Found Pipeline in Predecessors. Propagate startSourceEvent to it, with workerContext.");
-                pipelinePredecessor->lock()->onEvent(event, workerContext);
-            }
-        }
-    }
-}
-
 PipelineId ExecutablePipeline::getPipelineId() const
 {
     return pipelineId;

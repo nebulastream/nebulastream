@@ -13,27 +13,19 @@
 */
 #pragma once
 
-#include <map>
 #include <memory>
 #include <mutex>
-#include <shared_mutex>
-#include <thread>
 #include <unordered_map>
-#include <unordered_set>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationMessage.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/Task.hpp>
-#include <Sources/DataSource.hpp>
 #include <Util/AtomicCounter.hpp>
-#include <Util/ThreadBarrier.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
@@ -42,10 +34,12 @@
 #endif
 
 #include <folly/MPMCQueue.h>
-#include <folly/concurrency/UnboundedQueue.h>
 
 namespace NES
 {
+class DataSource;
+using DataSourcePtr = std::shared_ptr<DataSource>;
+
 class NesWorker;
 namespace Runtime
 {
@@ -147,7 +141,7 @@ public:
      */
     [[nodiscard]] Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QueryId id) const;
 
-    [[nodiscard]] bool canTriggerEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType);
+    [[nodiscard]] bool canTriggerEndOfStream(OriginId sourceId, Runtime::QueryTerminationType);
 
     /**
      * @brief method to start a query
@@ -245,7 +239,7 @@ public:
      * @param source the failed source
      * @param errorMessage the reason of the feature
      */
-    void notifySourceFailure(DataSourcePtr source, const std::string errorMessage);
+    void notifySourceFailure(OriginId failedSourceOriginId, const std::string errorMessage);
 
     /**
      * @brief Informs the query manager about a status change in a sub query plan
@@ -267,7 +261,10 @@ public:
      * @param graceful hard or soft termination
      * @return true if it went through
      */
-    bool addEndOfStream(DataSourcePtr source, Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
+    bool addEndOfStream(
+        OriginId sourceId,
+        const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors,
+        Runtime::QueryTerminationType graceful = Runtime::QueryTerminationType::Graceful);
 
     /**
      * @return true if thread pool is running
@@ -297,7 +294,7 @@ public:
      * @param source the completed source
      * @param terminationType the type of termination (e.g., failure, soft)
      */
-    void notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType);
+    void notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType);
 
     /**
      * @brief Notifies that a pipeline is done with its execution
@@ -358,21 +355,21 @@ protected:
      * @param source the source for which to trigger the soft end of stream
      * @return true if successful
      */
-    bool addSoftEndOfStream(DataSourcePtr source);
+    bool addSoftEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors);
 
     /**
      * @brief Triggers a hard end of stream for a source
      * @param source the source for which to trigger the hard end of stream
      * @return true if successful
      */
-    bool addHardEndOfStream(DataSourcePtr source);
+    bool addHardEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors);
 
     /**
      * @brief Triggers a failure end of stream for a source
      * @param source the source for which to trigger the failure end of stream
      * @return true if successful
      */
-    bool addFailureEndOfStream(DataSourcePtr source);
+    bool addFailureEndOfStream(OriginId sourceId, const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors);
 
     /**
      * @brief Returns the next free task id
@@ -410,7 +407,7 @@ protected:
 
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
 
-    std::unordered_map<OperatorId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
+    std::unordered_map<OriginId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
     uint64_t numberOfBuffersPerEpoch;
 #ifdef ENABLE_PAPI_PROFILER
