@@ -82,4 +82,4 @@ jobs:
           lcov-file: /tmp/coverage/default_coverage.lcov
           base-lcov-file: /tmp/coverage/base_branch_coverage.lcov
           send-summary-comment: true
-          show-annotations: "error"
+          show-annotations: "warning"
