@@ -11,19 +11,26 @@
 # limitations under the License.
 
 option(USE_LIBCXX_IF_AVAILABLE "Use Libc++ if supported by the system" ON)
-# Determine if libc++ is available by invoking the compiler with -std=libc++ and examine _LIBCPP_VERSION
-execute_process(
-        COMMAND ${CMAKE_COMMAND} -E echo "#include<ciso646> \n int main(){return 0;}"
-        COMMAND ${CMAKE_CXX_COMPILER} -E -stdlib=libc++ -x c++ -dM -
-        COMMAND grep "#define _LIBCPP_VERSION"
-        OUTPUT_STRIP_TRAILING_WHITESPACE
-        OUTPUT_VARIABLE LIBCXX_CHECK_OUTPUT
-        ERROR_VARIABLE LIBCXX_CHECK_ERROR
-        RESULT_VARIABLE LIBCXX_CHECK_RESULT
-)
 
-message(STATUS "LIBCXX_CHECK_RESULT: ${LIBCXX_CHECK_RESULT}")
-message(STATUS "USE_LIBCXX_IF_AVAILABLE: ${USE_LIBCXX_IF_AVAILABLE}")
+# We don't use libc++ if it is either explicitly forbidden via the `USE_LIBCXX_IF_AVAILABLE=OFF` or we are using
+# a local installation of mlir which is most-likley not compiled with libc++
+cmake_dependent_option(USE_LIBCXX "Uses Libc++" ON "USE_LIBCXX_IF_AVAILABLE; NOT USE_LOCAL_MLIR" OFF)
+
+if (USE_LIBCXX)
+    # Determine if libc++ is available by invoking the compiler with -std=libc++ and examine _LIBCPP_VERSION
+    execute_process(
+            COMMAND ${CMAKE_COMMAND} -E echo "#include<ciso646> \n int main(){return 0;}"
+            COMMAND ${CMAKE_CXX_COMPILER} -E -stdlib=libc++ -x c++ -dM -
+            COMMAND grep "#define _LIBCPP_VERSION"
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+            OUTPUT_VARIABLE LIBCXX_CHECK_OUTPUT
+            ERROR_VARIABLE LIBCXX_CHECK_ERROR
+            RESULT_VARIABLE LIBCXX_CHECK_RESULT
+    )
+endif ()
+
+message(DEBUG "LIBCXX_CHECK_RESULT: ${LIBCXX_CHECK_RESULT}")
+message(DEBUG "USE_LIBCXX_IF_AVAILABLE: ${USE_LIBCXX_IF_AVAILABLE}")
 if (LIBCXX_CHECK_RESULT EQUAL 0 AND ${USE_LIBCXX_IF_AVAILABLE})
     message(STATUS "Using Libc++")
     add_compile_options(-stdlib=libc++)
