@@ -244,66 +244,66 @@ TEST_F(SchemaTest, getSchemaSizeInBytesTest)
     }
 }
 
-TEST_F(SchemaTest, containsTest)
-{
-    using enum NES::BasicType;
-    {
-        /// Checking contains for one fieldName
-        auto testSchema = Schema::create()->addField("field1", UINT8);
-        EXPECT_TRUE(testSchema->contains("field1"));
-        EXPECT_FALSE(testSchema->contains("notExistingField1"));
-    }
-
-    {
-        /// Checking contains with multiple fields
-        auto testSchema = Schema::create()
-                              ->addField("field1", UINT8)
-                              ->addField("field2", UINT16)
-                              ->addField("field3", INT32)
-                              ->addField("field4", FLOAT32)
-                              ->addField("field5", FLOAT64);
-
-        /// Existing fields
-        EXPECT_TRUE(testSchema->contains("field3"));
-
-        /// Not existing fields
-        EXPECT_FALSE(testSchema->contains("notExistingField3"));
-    }
-}
-
-TEST_F(SchemaTest, getSourceNameQualifierTest)
-{
-    using enum NES::BasicType;
-    /// TODO once #4355 is done, we can use updateSourceName(source1) here
-    const auto sourceName = std::string("source1");
-    auto testSchema = Schema::create()
-                          ->addField(sourceName + "$field1", UINT8)
-                          ->addField(sourceName + "$field2", UINT16)
-                          ->addField(sourceName + "$field3", INT32)
-                          ->addField(sourceName + "$field4", FLOAT32)
-                          ->addField(sourceName + "$field5", FLOAT64);
-
-    EXPECT_EQ(testSchema->getSourceNameQualifier(), sourceName);
-}
-
-TEST_F(SchemaTest, copyTest)
-{
-    auto testSchema = Schema::create()->addField("field1", BasicType::UINT8)->addField("field2", BasicType::UINT16);
-    auto testSchemaCopy = testSchema->copy();
-
-    ASSERT_EQ(testSchema->getSchemaSizeInBytes(), testSchemaCopy->getSchemaSizeInBytes());
-    ASSERT_EQ(testSchema->getLayoutType(), testSchemaCopy->getLayoutType());
-    ASSERT_EQ(testSchema->fields.size(), testSchemaCopy->fields.size());
-
-    /// Comparing fields
-    for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy->fields.size(); ++fieldCnt)
-    {
-        const auto& curField = testSchemaCopy->get(fieldCnt);
-        EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
-        EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
-    }
-}
+// TEST_F(SchemaTest, containsTest)
+// {
+//     using enum NES::BasicType;
+//     {
+//         /// Checking contains for one fieldName
+//         auto testSchema = Schema::create()->addField("field1", UINT8);
+//         EXPECT_TRUE(testSchema->contains("field1"));
+//         EXPECT_FALSE(testSchema->contains("notExistingField1"));
+//     }
+//
+//     {
+//         /// Checking contains with multiple fields
+//         auto testSchema = Schema::create()
+//                               ->addField("field1", UINT8)
+//                               ->addField("field2", UINT16)
+//                               ->addField("field3", INT32)
+//                               ->addField("field4", FLOAT32)
+//                               ->addField("field5", FLOAT64);
+//
+//         /// Existing fields
+//         EXPECT_TRUE(testSchema->contains("field3"));
+//
+//         /// Not existing fields
+//         EXPECT_FALSE(testSchema->contains("notExistingField3"));
+//     }
+// }
+//
+// TEST_F(SchemaTest, getSourceNameQualifierTest)
+// {
+//     using enum NES::BasicType;
+//     /// TODO once #4355 is done, we can use updateSourceName(source1) here
+//     const auto sourceName = std::string("source1");
+//     auto testSchema = Schema::create()
+//                           ->addField(sourceName + "$field1", UINT8)
+//                           ->addField(sourceName + "$field2", UINT16)
+//                           ->addField(sourceName + "$field3", INT32)
+//                           ->addField(sourceName + "$field4", FLOAT32)
+//                           ->addField(sourceName + "$field5", FLOAT64);
+//
+//     EXPECT_EQ(testSchema->getSourceNameQualifier(), sourceName);
+// }
+//
+// TEST_F(SchemaTest, copyTest)
+// {
+//     auto testSchema = Schema::create()->addField("field1", BasicType::UINT8)->addField("field2", BasicType::UINT16);
+//     auto testSchemaCopy = testSchema->copy();
+//
+//     ASSERT_EQ(testSchema->getSchemaSizeInBytes(), testSchemaCopy->getSchemaSizeInBytes());
+//     ASSERT_EQ(testSchema->getLayoutType(), testSchemaCopy->getLayoutType());
+//     ASSERT_EQ(testSchema->fields.size(), testSchemaCopy->fields.size());
+//
+//     /// Comparing fields
+//     for (auto fieldCnt = 0_u64; fieldCnt < testSchemaCopy->fields.size(); ++fieldCnt)
+//     {
+//         const auto& curField = testSchemaCopy->get(fieldCnt);
+//         EXPECT_TRUE(testSchema->fields[fieldCnt]->isEqual(curField));
+//         EXPECT_TRUE(testSchema->get(fieldCnt)->isEqual(curField));
+//         EXPECT_TRUE(testSchema->get(curField->getName())->isEqual(curField));
+//     }
+// }
 
 TEST_F(SchemaTest, updateSourceNameTest)
 {

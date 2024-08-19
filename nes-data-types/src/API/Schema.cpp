@@ -272,7 +272,7 @@ uint64_t Schema::getIndex(const std::string& fieldName) const
     bool found = false;
     for (const auto& field : this->fields)
     {
-        if (startsWith(field->getName(), fieldName))
+        if (field->getName().rfind(fieldName, 0) == 0)
         {
             found = true;
             break;
