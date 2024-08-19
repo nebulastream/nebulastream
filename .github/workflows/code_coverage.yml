@@ -54,6 +54,9 @@ jobs:
         run: mkdir -p /tmp/coverage && cp build/default_coverage.lcov /tmp/coverage/default_coverage.lcov
 
       # Now we do the same for the provided base branch
+      - if: ${{ !env.ACT }}
+        uses:
+          AutoModality/action-clean@v1
       - name: Checkout Base Branch
         uses: actions/checkout@v4
         with:
