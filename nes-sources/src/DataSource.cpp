@@ -19,8 +19,8 @@
 #include <utility>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <Util/magicenum/magic_enum.hpp>
 #include <DataSource.hpp>
+#include <magic_enum.hpp>
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>

@@ -22,10 +22,14 @@ execute_process(
         RESULT_VARIABLE LIBCXX_CHECK_RESULT
 )
 
+message(STATUS "LIBCXX_CHECK_RESULT: ${LIBCXX_CHECK_RESULT}")
+message(STATUS "USE_LIBCXX_IF_AVAILABLE: ${USE_LIBCXX_IF_AVAILABLE}")
 if (LIBCXX_CHECK_RESULT EQUAL 0 AND ${USE_LIBCXX_IF_AVAILABLE})
     message(STATUS "Using Libc++")
     add_compile_options(-stdlib=libc++)
     # Currently C++20 threading features are hidden behind the feature flag
     add_compile_options(-fexperimental-library)
     add_link_options(-lc++)
+else ()
+    message(STATUS "Not Using Libc++")
 endif ()
