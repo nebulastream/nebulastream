@@ -76,15 +76,6 @@ class TupleBuffer;
 class OpenCLManager;
 using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
 
-class BufferManager;
-using BufferManagerPtr = std::shared_ptr<BufferManager>;
-
-class LocalBufferPool;
-using LocalBufferPoolPtr = std::shared_ptr<LocalBufferPool>;
-
-class FixedSizeBufferPool;
-using FixedSizeBufferPoolPtr = std::shared_ptr<FixedSizeBufferPool>;
-
 class WorkerContext;
 using WorkerContextRef = WorkerContext&;
 
