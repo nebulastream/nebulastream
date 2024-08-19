@@ -54,8 +54,8 @@ using namespace Operators;
 class TPCH_Query6
 {
 public:
-    static PipelinePlan
-    getPipelinePlan(std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, Runtime::BufferManagerPtr bm)
+    static PipelinePlan getPipelinePlan(
+        std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, std::shared_ptr<Runtime::AbstractBufferProvider> bm)
     {
         PipelinePlan plan;
         auto& lineitems = tables[TPCHTable::LineItem];
@@ -120,7 +120,7 @@ public:
         /// emit operator
         auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         resultSchema->addField("revenue", BasicType::FLOAT32);
-        auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
+        auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm.getBufferSize());
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(resultLayout);
         auto emit = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
         aggScan->setChild(emit);

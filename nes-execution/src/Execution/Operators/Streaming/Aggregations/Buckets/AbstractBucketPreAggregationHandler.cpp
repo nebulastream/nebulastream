@@ -69,12 +69,12 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::trigger(
         }
         bucketStore->setLastWatermark(lastTriggerWatermark);
     }
-    dispatchSliceMergingTasks(ctx, wctx.getBufferProvider(), collectedBuckets);
+    dispatchSliceMergingTasks(ctx, *wctx.getBufferProvider(), collectedBuckets);
 };
 template <class SliceType, typename SliceStore>
 void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::dispatchSliceMergingTasks(
     PipelineExecutionContext& ctx,
-    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    AbstractBufferProvider& bufferProvider,
     std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices)
 {
     /// for all thread local buckets that have been collected, emit a merge task to combine this buckets.
@@ -83,7 +83,7 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::dispatchSliceMe
     /// Thus, we emit slice deployment tasks in increasing order.
     for (const auto& [metaData, slices] : collectedSlices)
     {
-        auto buffer = bufferProvider->getBufferBlocking();
+        auto buffer = bufferProvider.getBufferBlocking();
         buffer.setSequenceNumber(resultSequenceNumber);
         buffer.setChunkNumber(1);
         buffer.setLastChunk(true);
@@ -132,7 +132,7 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::stop(
                 collectedSlices.find(sliceData)->second.emplace_back(std::move(slice));
             }
         }
-        dispatchSliceMergingTasks(*ctx.get(), ctx->getBufferManager(), collectedSlices);
+        dispatchSliceMergingTasks(*ctx.get(), *ctx->getBufferManager(), collectedSlices);
     }
 }
 template <class SliceType, typename SliceStore>

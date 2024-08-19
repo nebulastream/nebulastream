@@ -85,7 +85,6 @@ public:
      * uint64_t | uint64_t | uint64_t | ... | uint64_t
      *-----------------------------------------
      * all other buffers are: 1st buffer of 1st slice | .... | m_0 buffer of 1 slice | ... | 1 buffer of n-th slice | m_n buffer of n-th slice
-     * @param buffers
      */
     void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
 
@@ -204,7 +203,7 @@ public:
      */
     uint64_t getWindowSize() const;
 
-    void setBufferManager(const BufferManagerPtr& bufManager);
+    void setBufferManager(std::shared_ptr<AbstractBufferProvider> bufManager);
 
 private:
     /**
@@ -232,6 +231,6 @@ protected:
     size_t sizeOfRecordRight;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
-    BufferManagerPtr bufferManager;
+    std::shared_ptr<AbstractBufferProvider> bufferManager;
 };
 } /// namespace NES::Runtime::Execution::Operators

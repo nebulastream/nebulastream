@@ -62,7 +62,6 @@ public:
     {
         std::cout << "Setup GlobalTimeWindowPipelineTest test case." << std::endl;
         provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
-        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 

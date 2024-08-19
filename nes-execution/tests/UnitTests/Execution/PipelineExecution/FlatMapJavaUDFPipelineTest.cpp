@@ -56,7 +56,6 @@ public:
         NES_INFO("Setup FlatMapJavaUDFPipelineTest test case.");
         options.setDumpToConsole(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 };
@@ -164,7 +163,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
-        testBuffer[i].writeVarSized("stringVariable", "X Y Z", bm.get());
+        testBuffer[i].writeVarSized("stringVariable", "X Y Z", bm);
         testBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -236,7 +235,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
         testBuffer[i]["longVariable"].write((int64_t)i);
         testBuffer[i]["floatVariable"].write((float)i);
         testBuffer[i]["doubleVariable"].write((double)i);
-        testBuffer[i].writeVarSized("stringVariable", "X", bm.get());
+        testBuffer[i].writeVarSized("stringVariable", "X", bm);
         testBuffer.setNumberOfTuples(i + 1);
     }
 

@@ -49,7 +49,7 @@ public:
         uint64_t sliceStart,
         uint64_t sliceEnd,
         uint64_t numWorkerThreads,
-        BufferManagerPtr& bufferManager,
+        std::shared_ptr<AbstractBufferProvider> bufferManager,
         SchemaPtr& leftSchema,
         uint64_t leftPageSize,
         SchemaPtr& rightSchema,
@@ -107,7 +107,7 @@ public:
      * @param bufferManager for getting new tuple buffers
      * @return list of pages that store records and metadata
      */
-    std::vector<Runtime::TupleBuffer> serialize(BufferManagerPtr& bufferManager) override;
+    std::vector<Runtime::TupleBuffer> serialize(AbstractBufferProvider& bufferManager) override;
 
     /**
      * @brief Recreates the slice from tuple buffers [Not implemented for variable sized pages right now
@@ -126,7 +126,7 @@ public:
      * @param buffers List of tuple buffers to recreate the state of slice
      */
     static StreamSlicePtr deserialize(
-        BufferManagerPtr& bufferManager,
+        std::shared_ptr<AbstractBufferProvider> bufferManager,
         SchemaPtr& leftSchema,
         uint64_t leftPageSize,
         SchemaPtr& rightSchema,

@@ -38,7 +38,7 @@ void Parser::writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    const Runtime::BufferManagerPtr& bufferManager)
+    const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
 {
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
@@ -146,7 +146,7 @@ void Parser::writeFieldValueToTupleBuffer(
                 "Parser::writeFieldValueToTupleBuffer(): trying to write the variable length input string: {}"
                 "to tuple buffer",
                 inputString);
-            tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, bufferManager.get());
+            tupleBuffer[tupleCount].writeVarSized(schemaFieldIndex, inputString, *bufferManager);
         }
         else
         { /// char array(string) case

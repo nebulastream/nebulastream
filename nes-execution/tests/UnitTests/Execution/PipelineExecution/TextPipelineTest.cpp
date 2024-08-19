@@ -61,7 +61,6 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 
@@ -98,7 +97,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++)
     {
-        testBuffer[i].writeVarSized("f1", "test", bm.get());
+        testBuffer[i].writeVarSized("f1", "test", *bm);
         testBuffer.setNumberOfTuples(i + 1);
     }
 
