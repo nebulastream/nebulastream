@@ -79,7 +79,7 @@ jobs:
       # Comparing the code coverage from the current branch with the base branch
       - name: Generate Code Coverage report
         id: code-coverage
-        uses: barecheck/code-coverage-action@v1
+        uses: ls-1801/code-coverage-action@v1
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
           lcov-file: /tmp/coverage/default_coverage.lcov
