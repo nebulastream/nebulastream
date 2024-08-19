@@ -393,17 +393,6 @@ endif ()
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
 set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
 
-###########################################################################################
-
-# Cross compilation
-if (CMAKE_CROSSCOMPILING)
-    set(QEMU_EMULATOR_PATH /usr/bin/qemu-aarch64)
-    message(STATUS "Current Qemu Executable: ${QEMU_EMULATOR_PATH}")
-    add_definitions(-D 'QEMU_EMULATOR_PATH=\"${QEMU_EMULATOR_PATH}\"')
-endif ()
-
-###########################################################################################
-
 # Add tests with command
 include(cmake/NebulaStreamTest.cmake)
 if (NES_ENABLES_TESTS)
@@ -527,7 +516,4 @@ INCLUDE(CPack)
 project_enable_clang_format()
 project_enable_check_comment_format()
 project_enable_check_preamble()
-if (CMAKE_CROSSCOMPILING)
-    project_enable_emulated_tests()
-endif ()
 instrument_codebase()
