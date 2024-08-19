@@ -65,6 +65,7 @@ jobs:
         if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         run: cmake --build build --target llvm_cov_export_lcov
       - name: move into cache folder
+        if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         run: mkdir -p /tmp/cache/ && cp build/default_coverage.lcov /tmp/cache/ref-coverage.lcov
       - name: Upload code coverage for ref branch
         uses: actions/upload-artifact@v4
@@ -115,7 +116,7 @@ jobs:
         run: cmake --build build --target llvm_cov_export_lcov
       - name: Generate Code Coverage report
         id: code-coverage
-        uses: "ls-1801/code-coverage-action@v1"
+        uses: "ls-1801/code-coverage-action@adb6de98cb4d6f0bf953fe9efa9b18eec71d1e19"
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
           lcov-file: build/default_coverage.lcov
