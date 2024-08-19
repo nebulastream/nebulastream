@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <chrono>
 #include <iomanip>
 #include <sstream>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
@@ -20,6 +19,7 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sources/SourceHandle.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution
@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution
 
 ExecutableQueryPlan::ExecutableQueryPlan(
     QueryId queryId,
-    std::vector<DataSourcePtr>&& sources,
+    std::vector<SourceHandlePtr>&& sources,
     std::vector<DataSinkPtr>&& sinks,
     std::vector<ExecutablePipelinePtr>&& pipelines,
     QueryManagerPtr&& queryManager,
@@ -47,7 +47,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(
 
 ExecutableQueryPlanPtr ExecutableQueryPlan::create(
     QueryId queryId,
-    std::vector<DataSourcePtr> sources,
+    std::vector<SourceHandlePtr> sources,
     std::vector<DataSinkPtr> sinks,
     std::vector<ExecutablePipelinePtr> pipelines,
     QueryManagerPtr queryManager,
@@ -173,7 +173,7 @@ Memory::BufferManagerPtr ExecutableQueryPlan::getBufferManager()
     return bufferManager;
 }
 
-const std::vector<DataSourcePtr>& ExecutableQueryPlan::getSources() const
+const std::vector<SourceHandlePtr>& ExecutableQueryPlan::getSources() const
 {
     return sources;
 }
@@ -293,34 +293,29 @@ void ExecutableQueryPlan::destroy()
     NES_ASSERT2_FMT(
         numOfTerminationTokens.compare_exchange_strong(expected, uint32_t(-1)),
         "Destroying still active query plan, tokens left=" << expected);
-    for (const auto& source : sources)
-    {
-        NES_ASSERT(!source->isRunning(), "Source " << source->getOperatorId() << " is still running");
-    }
     for (const auto& pipeline : pipelines)
     {
         NES_ASSERT(!pipeline->isRunning(), "Pipeline " << pipeline->getPipelineId() << " is still running");
     }
-    sources.clear();
+    sources.clear(); /// ~DataSource() asserts that the DataSource is not 'running' anymore.
     pipelines.clear();
     sinks.clear();
     bufferManager.reset();
 }
 
-void ExecutableQueryPlan::onEvent(BaseEvent&)
+void ExecutableQueryPlan::notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType)
 {
-    /// nop :: left on purpose -> fill this in when you want to support events
-}
-void ExecutableQueryPlan::notifySourceCompletion(DataSourcePtr source, QueryTerminationType terminationType)
-{
-    NES_DEBUG("QEP {} Source {} is notifying completion: {}", queryId, source->getOperatorId(), terminationType);
+    NES_DEBUG("QEP {} Source {} is notifying completion: {}", queryId, 0, terminationType);
     NES_ASSERT2_FMT(
         qepStatus.load() == ExecutableQueryPlanStatus::Running, "Cannot complete source on non running query plan id=" << queryId);
-    auto it = std::find(sources.begin(), sources.end(), source);
-    NES_ASSERT2_FMT(it != sources.end(), "Cannot find source " << source->getOperatorId() << " in query plan " << queryId);
+    auto it = std::find_if(
+        sources.begin(),
+        sources.end(),
+        [sourceId](const SourceHandlePtr& sourceHandle) { return sourceHandle->getSourceId() == sourceId; });
+    NES_ASSERT2_FMT(it != sources.end(), "Cannot find source " << sourceId << " in query plan " << queryId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << queryId << " = " << terminationType);
-    NES_DEBUG("QEP {} Source {} is terminated; tokens left = {}", queryId, source->getOperatorId(), (tokensLeft - 1));
+    NES_DEBUG("QEP {} Source {} is terminated; tokens left = {}", queryId, 0, (tokensLeft - 1));
     /// the following check is necessary because a data sources first emits an EoS marker and then calls this method.
     /// However, it might happen that the marker is so fast that one possible execution is as follows:
     /// 1) Data Source emits EoS marker
