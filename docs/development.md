@@ -132,3 +132,25 @@ settings.
 If you omit the toolchain file, the CMake system will create a local vcpkg-repository inside the project directory
 and pursue building the dependencies in there. If you later wish to migrate the vcpkg-repository you can move it
 elsewhere on your system and specify the `-DCMAKE_TOOLCHAIN_FILE` flag.
+
+### Using a local installation of MLIR
+
+Building LLVM and `MLIR` locally can be both time and disk-space consuming. The cmake option `-DUSE_LOCAL_MLIR=ON` will
+remove the vcpkg feature responsible for building `MLIR`. Unless the `MLIR` backend is also disabled via
+`-DNES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR=OFF`,
+CMake expects to be able to locate `MLIR` somewhere on the system.
+
+The current recommendation is to use the
+legacy [pre-built llvm archive](https://github.com/nebulastream/clang-binaries/releases/tag/v18_11)
+and pass the `-DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-ubuntu-22.04-X64/clang`
+
+```bash
+cmake -B build \
+  -DCMAKE_TOOLCHAIN_FILE=/path/to/vcpkg/scripts/buildsystems/vcpkg.cmake \
+  -DUSE_LOCAL_MLIR=ON \
+  -DCMAKE_PREFIX_PATH=/path/to/nes-clang-18-ubuntu-22.04-X64/clang
+```
+
+It is impossible to use `Libc++` while using a locally installed version of `MLIR` not built with libc++. Some
+sanitizers
+also require llvm to be built with sanitization enabled which is not the case for the pre-built version.
