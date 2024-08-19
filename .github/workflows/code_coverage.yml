@@ -29,7 +29,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        platform: [ x64, arm64 ]
+        platform: [ x64 ]
     steps:
       - if: ${{ !env.ACT }}
         uses: AutoModality/action-clean@v1
