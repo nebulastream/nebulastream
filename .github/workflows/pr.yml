@@ -25,6 +25,11 @@ on:
     # not use the ready_for_review the ci would not be triggered and appear to have passed.
     types: [ ready_for_review, synchronize, opened, reopened ]
 
+# cancel previous runs of same PR / branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   validateTrigger:
     # This ensures we won't run the CI if it is in draft mode, or we called it via act.
@@ -37,10 +42,6 @@ jobs:
         with:
           gh-token: ${{ secrets.NES_CI_SECRET }}
           comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
-      - name: Cancel Previous Runs
-        uses: styfle/cancel-workflow-action@0.12.1
-        with:
-          access_token: ${{ secrets.NES_CI_SECRET }}
 
   detect-dependency-changes:
     # This job detects changes to files relevant for our dependency management
