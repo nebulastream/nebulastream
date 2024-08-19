@@ -14,38 +14,31 @@
 #pragma once
 
 #include <vector>
+#include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::QueryCompilation
 {
 
-/**
- * @brief Provider to transform a source descriptor to executable DataSource.
- */
+/// Transform a source descriptor to a SourceHandle that handles a 'DataSource' and a 'Source'
+/// The DataSource spawns an independent thread for data ingestion and it manages the pipeline and task logic.
+/// The Source is owned by the DataSource. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class DefaultDataSourceProvider
 {
 public:
     explicit DefaultDataSourceProvider(QueryCompilerOptionsPtr compilerOptions);
     static DataSourceProviderPtr create(const QueryCompilerOptionsPtr& compilerOptions);
-    /**
-     * @brief Lowers a source descriptor to a executable data source.
-     * @param sourceId id of the data source
-     * @param sourceDescriptor
-     * @param nodeEngine
-     * @param successors
-     * @return DataSourcePtr
-     */
-    virtual DataSourcePtr lower(
-        OperatorId operatorId,
+
+    virtual SourceHandlPtr lower(
         OriginId originId,
-        SourceDescriptorPtr sourceDescriptor,
-        Runtime::NodeEnginePtr nodeEngine,
-        std::vector<Runtime::Execution::SuccessorExecutablePipeline> successors);
+        const SourceDescriptorPtr& sourceDescriptor,
+        const Runtime::NodeEnginePtr& nodeEngine,
+        const std::vector<Runtime::Execution::SuccessorExecutablePipeline>& successors);
 
     virtual ~DefaultDataSourceProvider() = default;
 
-protected:
+private:
     QueryCompilerOptionsPtr compilerOptions;
 };
 } /// namespace NES::QueryCompilation
