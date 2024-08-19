@@ -25,9 +25,9 @@ class AbstractQueryStatusListener
 public:
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
-    virtual bool canTriggerEndOfStream(QueryId queryId, OperatorId sourceId, Runtime::QueryTerminationType) = 0;
+    virtual bool canTriggerEndOfStream(QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifySourceTermination(QueryId queryId, OperatorId sourceId, Runtime::QueryTerminationType) = 0;
+    virtual bool notifySourceTermination(QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType) = 0;
 
     virtual bool notifyQueryFailure(QueryId queryId, std::string errorMsg) = 0;
 

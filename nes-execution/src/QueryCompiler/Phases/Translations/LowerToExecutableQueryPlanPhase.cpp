@@ -33,6 +33,7 @@
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <ErrorHandling.hpp>
+#include <Sources/SourceHandle.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::QueryCompilation
@@ -49,7 +50,7 @@ LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider,
 Runtime::Execution::ExecutableQueryPlanPtr
 LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan, const Runtime::NodeEnginePtr& nodeEngine)
 {
-    std::vector<DataSourcePtr> sources;
+    std::vector<SourceHandlePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
@@ -70,7 +71,7 @@ LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQuery
 }
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSuccessor(
     const OperatorPipelinePtr& pipeline,
-    std::vector<DataSourcePtr>& sources,
+    std::vector<SourceHandlePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
@@ -102,7 +103,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
 void LowerToExecutableQueryPlanPhase::processSource(
     const OperatorPipelinePtr& pipeline,
-    std::vector<DataSourcePtr>& sources,
+    std::vector<SourceHandlePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
@@ -125,29 +126,14 @@ void LowerToExecutableQueryPlanPhase::processSource(
         executableSuccessorPipelines.emplace_back(executableSuccessor);
     }
 
-    auto source = sourceProvider->lower(
-        sourceOperator->getId(), sourceOperator->getOriginId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
-
-    /// Add this source as a predecessor to the pipeline execution context's of all its children.
-    /// This way you can navigate upstream.
-    for (auto executableSuccessor : executableSuccessorPipelines)
-    {
-        if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
-        {
-            NES_DEBUG(
-                "Adding current source operator: {} as a predecessor to its child pipeline: {}",
-                source->getOperatorId(),
-                (*nextExecutablePipeline)->getPipelineId());
-            (*nextExecutablePipeline)->getContext()->addPredecessor(source);
-        }
-        /// note: we do not register predecessors for DataSinks.
-    }
+    /// Todo: lower here should directly lower
+    auto source = sourceProvider->lower(sourceOperator->getOriginId(), sourceDescriptor, nodeEngine, executableSuccessorPipelines);
     sources.emplace_back(source);
 }
 
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSink(
     const OperatorPipelinePtr& pipeline,
-    std::vector<DataSourcePtr>&,
+    std::vector<SourceHandlePtr>&,
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>&,
     Runtime::NodeEnginePtr nodeEngine,
@@ -169,7 +155,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processOperatorPipeline(
     const OperatorPipelinePtr& pipeline,
-    std::vector<DataSourcePtr>& sources,
+    std::vector<SourceHandlePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
@@ -234,21 +220,6 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         pipeline->getPredecessors().size(),
         executableSuccessorPipelines);
 
-    /// Add this pipeline as a predecessor to the pipeline execution context's of all its children.
-    /// This way you can navigate upstream.
-    for (auto executableSuccessor : executableSuccessorPipelines)
-    {
-        if (const auto* nextExecutablePipeline = std::get_if<Runtime::Execution::ExecutablePipelinePtr>(&executableSuccessor))
-        {
-            NES_DEBUG(
-                "Adding current pipeline: {} as a predecessor to its child pipeline: {}",
-                executablePipeline->getPipelineId(),
-                (*nextExecutablePipeline)->getPipelineId());
-            (*nextExecutablePipeline)->getContext()->addPredecessor(executablePipeline);
-        }
-        /// note: we do not register predecessors for DataSinks.
-    }
-
     executablePipelines.emplace_back(executablePipeline);
     return executablePipeline;
 }
@@ -267,7 +238,7 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     {
         case SourceType::CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            return CsvSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
+            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
         }
         case SourceType::TCP_SOURCE: {
             auto tcpSourceType = physicalSourceType->as<TCPSourceType>();

@@ -174,7 +174,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
         if (value.details().Is<SerializableOperator_SourceDetails>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            auto descriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor()->as_if<CsvSourceDescriptor>();
+            auto descriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor()->as_if<CSVSourceDescriptor>();
             if (descriptor)
             {
                 /// Set socket port and serialize again.
