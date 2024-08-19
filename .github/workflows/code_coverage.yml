@@ -100,8 +100,6 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: ref-lcov.info
-      - name: ls
-        run: ls -lah
       - if: ${{ !env.ACT }}
         name: Cancel Previous Runs
         uses: styfle/cancel-workflow-action@0.12.1
@@ -121,6 +119,6 @@ jobs:
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
           lcov-file: build/default_coverage.lcov
-          base-lcov-file: ref-lcov.info/ref-coverage.lcov
+          base-lcov-file: ref-coverage.lcov
           send-summary-comment: true
           show-annotations: "warning"
