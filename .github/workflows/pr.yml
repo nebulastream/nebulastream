@@ -228,7 +228,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Configure NebulaStream
-        run: cmake -GNinja -B build -DNES_USE_CCACHE=ON
+        run: cmake -GNinja -B build
       - name: Build NebulaStream
         run: cmake --build build -j -- -k 0
       - name: Run Tests
