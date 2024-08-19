@@ -16,3 +16,4 @@ jitify
 .idea
 gen
 .cache
+vcpkg-repository

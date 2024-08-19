@@ -179,8 +179,12 @@ jobs:
       - name: Configure CMake
         run: cmake -B build
       - name: check-preamble
-          run: |
-            docker run --name ${{ github.run_id }}_check-preamble -v $GITHUB_WORKSPACE:/nebulastream --privileged --cap-add SYS_NICE --entrypoint /nebulastream/docker/buildImage/entrypoint-nes-build-check-preamble.sh nes_build_ubuntu
+        run: |
+          cmake --build build --target check-preamble
+          if [ $? -ne 0 ]; then
+            echo "'check-preamble' (available as a local target) failed. There are files that miss the license preamble and/or '#pragma once'."
+            exit 1
+          fi
       - name: check-format
         run: |
           cmake --build build --target check-format

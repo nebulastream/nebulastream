@@ -83,7 +83,7 @@ endmacro(get_nes_folders)
 function(project_enable_clang_format)
     find_program(CLANG_FORMAT_EXECUTABLE NAMES clang-format-${CLANG_FORMAT_MAJOR_VERSION} clang-format)
     if (NOT CLANG_FORMAT_EXECUTABLE)
-        message(WARNING "Clang-Format not found. Disabling format target")
+        message(WARNING "Clang-Format not found, but can be installed with 'sudo apt install clang-format'. Disabling format target.")
         return()
     endif ()
 
