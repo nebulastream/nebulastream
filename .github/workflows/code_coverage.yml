@@ -38,7 +38,7 @@ jobs:
         env:
           cache-name: ref-cov-cache
         with:
-          path: /tmp/ref-coverage.lcov
+          path: /tmp/cache/ref-coverage.lcov
           key: 389c7ea2d16098fed58901dedfdc742ff764d9e0
       - if: ${{ steps.ref-cov-cache.outputs.cache-hit != 'true' }}
         uses:
@@ -121,6 +121,6 @@ jobs:
         with:
           barecheck-github-app-token: ${{ secrets.BARECHECK_GITHUB_APP_TOKEN }}
           lcov-file: build/default_coverage.lcov
-          base-lcov-file: ref-lcov.info
+          base-lcov-file: ref-lcov.info/ref-coverage.lcov
           send-summary-comment: true
           show-annotations: "warning"
