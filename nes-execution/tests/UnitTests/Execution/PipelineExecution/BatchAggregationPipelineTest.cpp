@@ -114,14 +114,14 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline)
 
     auto preAggExecutablePipeline = provider->create(pipeline, options);
     auto preAggregationHandler = std::make_shared<Operators::BatchAggregationHandler>();
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
 
     auto aggScan = std::make_shared<Operators::BatchAggregationScan>(0 /*handler index*/, aggregationFunctions);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     aggScan->setChild(emitOperator);
     auto pipeline2 = std::make_shared<PhysicalOperatorPipeline>();
     pipeline2->setRootOperator(aggScan);
-    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
     auto aggExecutablePipeline = provider->create(pipeline2, options);
 
     preAggExecutablePipeline->setup(pipeline1Context);
@@ -188,7 +188,7 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline)
 
     auto preAggExecutablePipeline = provider->create(pipeline, options);
     auto preAggregationHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     preAggExecutablePipeline->stop(pipeline1Context);

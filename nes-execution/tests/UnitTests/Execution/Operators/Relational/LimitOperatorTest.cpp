@@ -55,7 +55,7 @@ TEST_F(LimitOperatorTest, TestLimit)
     schema->addField("f1", BasicType::INT64);
 
     auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     auto ctx
         = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
@@ -85,7 +85,7 @@ TEST_F(LimitOperatorTest, TestLimitZero)
     schema->addField("f1", BasicType::INT64);
 
     auto handler = std::make_shared<LimitOperatorHandler>(LIMIT);
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     auto ctx
         = ExecutionContext(Value<MemRef>(reinterpret_cast<int8_t*>(wc.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 

@@ -179,7 +179,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -256,7 +256,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

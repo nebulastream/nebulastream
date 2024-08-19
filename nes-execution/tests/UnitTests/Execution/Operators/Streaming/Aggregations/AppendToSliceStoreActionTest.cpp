@@ -90,7 +90,7 @@ TEST_F(AppendToSliceStoreActionTest, NonKeyedSlice)
 
     auto handler = std::make_shared<AppendToSliceStoreHandler<NonKeyedSlice>>(600, 200);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto context = ExecutionContext(
         Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 
@@ -147,7 +147,7 @@ TEST_F(AppendToSliceStoreActionTest, KeyedSlice)
     using namespace std::literals;
     auto handler = std::make_shared<AppendToSliceStoreHandler<KeyedSlice>>(600, 200);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto ctx = ExecutionContext(
         Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));
 

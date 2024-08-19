@@ -164,7 +164,7 @@ TEST_F(KeyedSliceMergingTest, aggregate)
         8);
 
     auto handler = std::make_shared<KeyedSliceMergingHandler>();
-    auto pipelineContext = MockedPipelineExecutionContext({handler});
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto ctx = ExecutionContext(
         Value<MemRef>(reinterpret_cast<int8_t*>(workerContext.get())), Value<MemRef>(reinterpret_cast<int8_t*>(&pipelineContext)));

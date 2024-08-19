@@ -145,7 +145,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, bm);
     executablePipeline->setup(pipelineContext);
     for (auto& buf : createDataAllSeqNumbersEmitted(*bm, schema))
     {
@@ -232,7 +232,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext();
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, bm);
     executablePipeline->setup(pipelineContext);
     for (auto& buf : createDataFullWithConstantFieldValues(*bm, inputSchema))
     {
@@ -375,9 +375,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
     /// Creating pipeline execution contexts
-    auto pipeline1Context = MockedPipelineExecutionContext();
-    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false);
-    auto pipeline3Context = MockedPipelineExecutionContext({sliceMergingHandler});
+    auto pipeline1Context = MockedPipelineExecutionContext({}, true, bm);
+    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
+    auto pipeline3Context = MockedPipelineExecutionContext({sliceMergingHandler}, true, bm);
 
     /// Setting up all pipelines
     pipeline1->setup(pipeline1Context);
