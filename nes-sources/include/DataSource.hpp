@@ -76,7 +76,7 @@ protected:
     SchemaPtr schema;
     std::shared_ptr<Runtime::AbstractPoolProvider> localBufferManager;
     SourceReturnType::EmitFunction emitFunction;
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager{nullptr};
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider{nullptr};
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t numSourceLocalBuffers;
     SourceType type;
