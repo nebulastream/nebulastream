@@ -1,4 +1,4 @@
-# NebulaStream ![NES CI](https://github.com/nebulastream/nebulastream/workflows/NES%20CI/badge.svg)
+# NebulaStream
 
 NebulaStream is our attempt to develop a general purpose, end-to-end data management system for the IoT.
 It provides an out-of-the box experience with rich data processing functionalities and a high ease-of-use.
