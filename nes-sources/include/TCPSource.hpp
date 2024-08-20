@@ -36,9 +36,11 @@ class TCPSource : public Source
 public:
     explicit TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
 
-    bool fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer) override;
+    bool fillTupleBuffer(
+        Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
 
-    bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&);
+    bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager);
 
     std::string toString() const override;
 

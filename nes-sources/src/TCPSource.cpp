@@ -131,13 +131,14 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-bool TCPSource::fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
+bool TCPSource::fillTupleBuffer(
+    Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
 {
     NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
     NES_DEBUG("TCPSource buffer allocated ");
     try
     {
-        while (fillBuffer(tupleBuffer))
+        while (fillBuffer(tupleBuffer, bufferManager))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
@@ -182,7 +183,8 @@ size_t TCPSource::parseBufferSize(SPAN_TYPE<const char> data) const
     return asciiBufferSize(data);
 }
 
-bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
+bool TCPSource::fillBuffer(
+    Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
 {
     /// determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();
@@ -298,7 +300,7 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
             {
                 std::string_view buf(tupleData.data(), tupleData.size());
                 NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, nullptr);
+                inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferManager);
                 tupleCount++;
             }
         }
