@@ -80,25 +80,13 @@ CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
 }
 
-bool CSVSource::fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
-{
-    fillBuffer(tupleBuffer);
-    return true;
-    NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", tupleBuffer.getNumberOfTuples());
-}
-
-std::string CSVSource::toString() const
-{
-    return fmt::format("CSV_SOURCE(SCHEMA({}), FILE={} numBuff={})", schema->toString(), filePath, this->numberOfTuplesToProducePerBuffer);
-}
-
-void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
+bool CSVSource::fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)
     {
         NES_WARNING("CSVSource::fillBuffer: but file has already ended");
-        return;
+        return false;
     }
 
     input.seekg(currentPositionInFile, std::ifstream::beg);
@@ -107,12 +95,12 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
     ///fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0)
     {
-        generatedTuplesThisPass = buffer.getCapacity();
+        generatedTuplesThisPass = tupleBuffer.getCapacity();
     }
     else
     {
         generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < buffer.getBuffer().getBufferSize(), "Wrong parameters");
+        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < tupleBuffer.getBuffer().getBufferSize(), "Wrong parameters");
     }
     NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
@@ -140,16 +128,22 @@ void CSVSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& buffer)
         std::getline(input, line);
         NES_TRACE("CSVSource line={} val={}", tupleCount, line);
         /// TODO #74: there will be a problem with non-printable characters (at least with null terminators). Check sources
-
-        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, buffer, schema, nullptr);
+        inputParser->writeInputTupleToTupleBuffer(line, tupleCount, tupleBuffer, schema, bufferManager);
         tupleCount++;
     } ///end of while
 
     currentPositionInFile = input.tellg();
-    buffer.setNumberOfTuples(tupleCount);
+    tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
+    NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", tupleBuffer.getNumberOfTuples());
     NES_TRACE("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
+    return true;
+}
+
+std::string CSVSource::toString() const
+{
+    return fmt::format("CSV_SOURCE(SCHEMA({}), FILE={} numBuff={})", schema->toString(), filePath, this->numberOfTuplesToProducePerBuffer);
 }
 
 SourceType CSVSource::getType() const
