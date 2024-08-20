@@ -18,18 +18,15 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <Util/TestTupleBuffer.hpp>
+
+namespace NES
+{
+class PhysicalType;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
+}
 
 namespace NES::Sources
 {
-
-namespace Memory::MemoryLayouts
-{
-class TestTupleBuffer;
-}
-
-class PhysicalType;
-using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 
 /// Base class for all input data parsers in NES
 class Parser
@@ -43,7 +40,7 @@ public:
     virtual bool writeInputTupleToTupleBuffer(
         std::string_view inputTuple,
         uint64_t tupleCount,
-        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Memory::TupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
         const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
         = 0;
@@ -52,7 +49,7 @@ public:
     void writeFieldValueToTupleBuffer(
         std::string value,
         uint64_t schemaFieldIndex,
-        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Memory::TupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
         uint64_t tupleCount,
         const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager);

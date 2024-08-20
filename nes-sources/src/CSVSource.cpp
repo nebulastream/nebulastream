@@ -21,7 +21,6 @@
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <fmt/std.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -88,7 +87,7 @@ void CSVSource::close()
 }
 
 bool CSVSource::fillTupleBuffer(
-    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+    NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)
@@ -103,12 +102,12 @@ bool CSVSource::fillTupleBuffer(
     ///fill buffer maximally
     if (numberOfTuplesToProducePerBuffer == 0)
     {
-        generatedTuplesThisPass = tupleBuffer.getCapacity();
+        generatedTuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
     }
     else
     {
         generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < tupleBuffer.getBuffer().getBufferSize(), "Wrong parameters");
+        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < tupleBuffer.getBufferSize(), "Wrong parameters");
     }
     NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 

@@ -26,11 +26,6 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 
-namespace NES::Memory::MemoryLayouts
-{
-class TestTupleBuffer;
-}
-
 namespace NES::Sources
 {
 
@@ -92,7 +87,6 @@ protected:
     void runningRoutine();
     void emitWork(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
     [[nodiscard]] std::string toString() const;
-    NES::Memory::MemoryLayouts::TestTupleBuffer allocateBuffer() const;
 };
 
 }

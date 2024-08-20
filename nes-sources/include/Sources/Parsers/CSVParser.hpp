@@ -15,7 +15,6 @@
 #pragma once
 
 #include <Sources/Parsers/Parser.hpp>
-#include <Util/TestTupleBuffer.hpp>
 
 namespace NES::Sources
 {
@@ -29,7 +28,7 @@ public:
     bool writeInputTupleToTupleBuffer(
         std::string_view csvInput,
         uint64_t tupleCount,
-        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Memory::TupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
         const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
 
