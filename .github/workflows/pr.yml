@@ -187,27 +187,11 @@ jobs:
       - name: Configure CMake
         run: cmake -B build
       - name: check-preamble
-        run: |
-          cmake --build build --target check-preamble
-          if [ $? -ne 0 ]; then
-            echo "'check-preamble' (available as a local target) failed. There are files that miss the license preamble and/or '#pragma once'."
-            exit 1
-          fi
+        run: cmake --build build --target check-preamble
       - name: check-format
-        run: |
-          cmake --build build --target check-format
-          if ! git diff --quiet; then
-            git status  # print unformatted files
-            echo "Please build 'check-format' target locally before shipping your changes on remote"
-            exit 1
-          fi
+        run: cmake --build build --target check-format
       - name: check-comment-format
-        run: |
-          cmake --build build --target check-comment-format
-          if [ $? -ne 0 ]; then
-            echo "Please build 'check-comment-format' target locally before shipping your changes on remote"
-            exit 1
-          fi
+        run: cmake --build build --target check-comment-format
 
   build-linux:
     name: "Build ${{matrix.platform}}"
