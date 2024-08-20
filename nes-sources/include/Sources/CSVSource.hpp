@@ -20,7 +20,6 @@
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sources
@@ -35,8 +34,7 @@ public:
     explicit CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
 
     bool fillTupleBuffer(
-        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
+        NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
 
     void open() override;
     void close() override;

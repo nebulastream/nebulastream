@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <charconv>
 #include <chrono>
 #include <cstring>
 #include <sstream>
@@ -24,10 +23,10 @@
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/TCPSource.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -155,7 +154,7 @@ void TCPSource::open()
 }
 
 bool TCPSource::fillTupleBuffer(
-    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+    NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
     NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
     NES_DEBUG("TCPSource buffer allocated ");
@@ -206,11 +205,10 @@ size_t TCPSource::parseBufferSize(std::span<const char> data) const
     return asciiBufferSize(data);
 }
 
-bool TCPSource::fillBuffer(
-    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
+bool TCPSource::fillBuffer(NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
     /// determine how many tuples fit into the buffer
-    tuplesThisPass = tupleBuffer.getCapacity();
+    const auto tuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
     NES_DEBUG("TCPSource::fillBuffer: Fill buffer with #tuples= {}  of size= {}", tuplesThisPass, tupleSize);
     /// init tuple count for buffer
     uint64_t tupleCount = 0;

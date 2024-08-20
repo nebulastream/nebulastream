@@ -20,7 +20,15 @@
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/Util/MMapCircularBuffer.hpp>
-#include <Util/TestTupleBuffer.hpp>
+
+namespace NES
+{
+class Schema;
+using SchemaPtr = std::shared_ptr<Schema>;
+
+class PhysicalType;
+using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
+}
 
 namespace NES::Sources
 {
@@ -37,8 +45,7 @@ public:
     explicit TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
 
     bool fillTupleBuffer(
-        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
+        NES::Memory::TupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
 
     std::string toString() const override;
 
@@ -50,8 +57,7 @@ public:
     void close() override;
 
 private:
-    bool
-    fillBuffer(NES::Memory::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager);
+    bool fillBuffer(NES::Memory::TupleBuffer&, const std::shared_ptr<NES::Memory::AbstractBufferProvider>&);
 
     /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize
@@ -61,7 +67,6 @@ private:
     ParserPtr inputParser;
     int connection = -1;
     uint64_t tupleSize;
-    uint64_t tuplesThisPass;
     int sockfd = -1;
     MMapCircularBuffer circularBuffer;
 

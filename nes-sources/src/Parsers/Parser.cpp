@@ -20,6 +20,7 @@
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
@@ -33,7 +34,7 @@ Parser::Parser(std::vector<NES::PhysicalTypePtr> physicalTypes) : physicalTypes(
 void Parser::writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
-    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    NES::Memory::TupleBuffer& tb,
     const SchemaPtr& schema,
     uint64_t tupleCount,
     const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
@@ -41,6 +42,9 @@ void Parser::writeFieldValueToTupleBuffer(
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
+
+    /// TODO #72-public: Don't rely on TestTupleBuffer here
+    auto tupleBuffer = NES::Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tb, schema);
 
     if (inputString.empty())
     {
