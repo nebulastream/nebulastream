@@ -213,7 +213,7 @@ void DataSource::runningRoutine()
             NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
         }
         /// open
-        bufferManager = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
+        bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
         sourceImplementation->open();
 
         uint64_t numberOfBuffersProduced = 0;
@@ -223,7 +223,7 @@ void DataSource::runningRoutine()
             if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce)
             {
                 auto tupleBuffer = allocateBuffer();
-                auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer); /// note that receiveData might block
+                auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, bufferProvider); /// note that receiveData might block
                 NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuplez: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
 
                 ///this checks we received a valid output buffer
@@ -299,7 +299,7 @@ void DataSource::runningRoutine()
 
 Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() const
 {
-    const auto buffer = bufferManager->getBufferBlocking();
+    const auto buffer = bufferProvider->getBufferBlocking();
     return Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
 }
 
