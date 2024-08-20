@@ -106,20 +106,5 @@ std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> createMemoryLayout(Sch
  */
 bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector<std::map<std::string, std::any>> properties);
 
-/**
- * @brief Creates multiple TupleBuffers from the csv file until the lastTimeStamp has been read
- * @param csvFile
- * @param schema
- * @param timeStampFieldName
- * @param lastTimeStamp
- * @param bufferProvider
- * @return Vector of TupleBuffers
- */
-[[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
-    const std::string& csvFile,
-    const SchemaPtr& schema,
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
-    const std::string& timeStampFieldName,
-    uint64_t lastTimeStamp);
 } /// namespace Util
 } /// namespace NES

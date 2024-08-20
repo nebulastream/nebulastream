@@ -21,8 +21,6 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include "Sources/Parsers/Parser.hpp"
 
-#include <Util/TestTupleBuffer.hpp>
-
 namespace NES::Sources
 {
 using namespace std::string_literals;
@@ -38,7 +36,7 @@ CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTyp
 bool CSVParser::writeInputTupleToTupleBuffer(
     std::string_view csvInputLine,
     uint64_t tupleCount,
-    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    NES::Memory::TupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {

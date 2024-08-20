@@ -24,7 +24,6 @@
 
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Sources
@@ -212,7 +211,7 @@ void DataSource::runningRoutine()
         uint64_t numberOfBuffersProduced = 0;
         while (running)
         {
-            auto tupleBuffer = allocateBuffer();
+            auto tupleBuffer = bufferProvider->getBufferBlocking();
             auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, bufferProvider); /// note that receiveData might block
             NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuplez: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
 
@@ -228,8 +227,7 @@ void DataSource::runningRoutine()
                     tupleBuffer.getNumberOfTuples(),
                     this->originId);
 
-                auto buffer = tupleBuffer.getBuffer();
-                emitWork(buffer);
+                emitWork(tupleBuffer);
                 ++numberOfBuffersProduced;
             }
             else
@@ -278,12 +276,6 @@ void DataSource::runningRoutine()
         }
     }
     NES_DEBUG("DataSource {} end runningRoutine", originId);
-}
-
-Memory::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() const
-{
-    const auto buffer = bufferProvider->getBufferBlocking();
-    return Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
 }
 
 std::string DataSource::toString() const

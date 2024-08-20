@@ -145,61 +145,6 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
     return true;
 }
 
-std::vector<Memory::TupleBuffer> Util::createBuffersFromCSVFile(
-    const std::string& csvFile,
-    const SchemaPtr& schema,
-    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
-    const std::string& timeStampFieldName,
-    uint64_t lastTimeStamp)
-{
-    std::vector<Memory::TupleBuffer> recordBuffers;
-    NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
-
-    /// Creating everything for the csv parser
-    std::ifstream file(csvFile);
-    std::istream_iterator<std::string> beginIt(file);
-    std::istream_iterator<std::string> endIt;
-    const std::string delimiter = ",";
-    auto parser = std::make_shared<Sources::CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
-
-    /// Do-while loop for checking, if we have another line to parse from the inputFile
-    const auto maxTuplesPerBuffer = bufferProvider->getBufferSize() / schema->getSchemaSizeInBytes();
-    auto it = beginIt;
-    auto tupleCount = 0UL;
-    auto buffer = bufferProvider->getBufferBlocking();
-    do
-    {
-        std::string line = *it;
-        auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferProvider);
-        ++tupleCount;
-
-        /// If we have read enough tuples from the csv file, then stop iterating over it
-        auto curTimeStamp = testTupleBuffer[tupleCount - 1][timeStampFieldName].read<uint64_t>();
-        if (curTimeStamp >= lastTimeStamp)
-        {
-            break;
-        }
-
-        if (tupleCount >= maxTuplesPerBuffer)
-        {
-            buffer.setNumberOfTuples(tupleCount);
-            recordBuffers.emplace_back(buffer);
-            buffer = bufferProvider->getBufferBlocking();
-            tupleCount = 0UL;
-        }
-        ++it;
-    } while (it != endIt);
-
-    if (tupleCount > 0)
-    {
-        buffer.setNumberOfTuples(tupleCount);
-        recordBuffers.emplace_back(buffer);
-    }
-
-    return recordBuffers;
-}
-
 std::vector<PhysicalTypePtr> Util::getPhysicalTypes(SchemaPtr schema)
 {
     std::vector<PhysicalTypePtr> retVector;
