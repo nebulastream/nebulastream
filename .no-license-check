@@ -10,7 +10,6 @@ digestible.h
 cmake-build.*
 build
 yaml
-jitify
 .idea
 gen
 .cache
