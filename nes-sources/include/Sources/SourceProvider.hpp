@@ -22,7 +22,7 @@
 namespace NES::Sources
 {
 
-/// Transform a source descriptor to a SourceHandle that handles a 'DataSource' and a 'Source'
+/// Takes a SourceDescriptor and in exchange returns a SourceHandle.
 /// The DataSource spawns an independent thread for data ingestion and it manages the pipeline and task logic.
 /// The Source is owned by the DataSource. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class SourceProvider
@@ -37,7 +37,7 @@ public:
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     SourceHandlePtr lower(
         OriginId originId,
-        const SourceDescriptorPtr& sourceDescriptor,
+        SourceDescriptorPtr&& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
         std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 

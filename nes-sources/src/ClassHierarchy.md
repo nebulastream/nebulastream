@@ -55,7 +55,7 @@ classDiagram
         }
     }
 ```
-TODO (G3): FileSource/TCPSource should implement a common 'SourceInterface' to reside in the same registry
+(G3): FileSource/TCPSource should implement a common 'SourceInterface' to reside in the same registry
 ---
 # Version 2
 ```mermaid
@@ -170,7 +170,7 @@ classDiagram
         }
     }
 ```
-TODO: Still uses old threading logic.
+TODO #237: Still uses old threading logic.
 ---
 # Version (Vision) 3
 ```mermaid

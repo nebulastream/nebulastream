@@ -141,8 +141,6 @@ public:
      */
     [[nodiscard]] Execution::ExecutableQueryPlanPtr getQueryExecutionPlan(QueryId id) const;
 
-    [[nodiscard]] bool canTriggerEndOfStream(OriginId sourceId, Runtime::QueryTerminationType);
-
     /**
      * @brief method to start a query
      * @param qep of the query to start
@@ -242,12 +240,8 @@ public:
      */
     [[nodiscard]] uint64_t getNumberOfBuffersPerEpoch() const;
 
-    /**
-     * @brief This method informs the QueryManager that a source has failed
-     * @param source the failed source
-     * @param errorMessage the reason of the feature
-     */
-    void notifySourceFailure(OriginId failedSourceOriginId, const std::string errorMessage);
+    /// This method informs the QueryManager that a source has failed
+    void notifySourceFailure(OriginId failedSourceOriginId, std::string errorMessage);
 
     /**
      * @brief Informs the query manager about a status change in a sub query plan
@@ -263,12 +257,8 @@ public:
      */
     [[nodiscard]] QueryId getQueryId(QueryId queryId) const;
 
-    /**
-     * @brief introduces end of stream to all QEPs connected to this source
-     * @param source the source
-     * @param graceful hard or soft termination
-     * @return true if it went through
-     */
+    /// introduces end of stream to all QEPs connected to this source
+    /// stop types are either graceful, hard or soft
     bool addEndOfStream(
         OriginId sourceId,
         const std::vector<Execution::SuccessorExecutablePipeline>& pipelineSuccessors,

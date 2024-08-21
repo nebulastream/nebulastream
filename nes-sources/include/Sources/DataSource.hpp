@@ -62,7 +62,7 @@ public:
     /// if not already running, start new thread with runningRoutine (finishes, when runningRoutine finishes)
     [[nodiscard]] bool start();
 
-    /// check if bool running is false, if false return, if not stop source
+    /// check if bool running is false. If running is false return, otherwise stops the source.
     [[nodiscard]] bool stop();
 
     /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
