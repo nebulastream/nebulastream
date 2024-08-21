@@ -20,9 +20,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES
-{
-namespace SourceReturnType
+namespace NES::Sources::SourceReturnType
 {
 /// Todo #237: Improve error handling in sources
 enum class TerminationType : uint8_t
@@ -36,8 +34,7 @@ struct SourceTermination
     TerminationType type;
     std::optional<Exception> exception;
 };
-using SourceReturnType = std::variant<Runtime::TupleBuffer, SourceTermination>;
+using SourceReturnType = std::variant<NES::Runtime::TupleBuffer, SourceTermination>;
 using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 
-}
 }

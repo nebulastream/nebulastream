@@ -17,7 +17,8 @@
 #include <memory>
 #include <Sources/DataSource.hpp>
 #include <Sources/SourceReturnType.hpp>
-namespace NES
+
+namespace NES::Sources
 {
 
 /// Interface class to handle sources.
@@ -31,7 +32,7 @@ public:
     explicit SourceHandle(
         OriginId originId,
         SchemaPtr schema,
-        std::shared_ptr<Runtime::AbstractPoolProvider> bufferPool,
+        std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation);
@@ -53,4 +54,4 @@ private:
 
 using SourceHandlePtr = std::shared_ptr<SourceHandle>;
 
-} /// namespace NES
+}

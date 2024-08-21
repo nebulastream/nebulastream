@@ -27,7 +27,7 @@
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 DataSource::DataSource(
@@ -298,4 +298,5 @@ std::ostream& operator<<(std::ostream& out, const DataSource& dataSource)
 {
     return out << dataSource.toString();
 }
-} /// namespace NES
+
+}

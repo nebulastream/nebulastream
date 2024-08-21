@@ -17,10 +17,12 @@
 #include <cstdint>
 #include <memory>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/Util/MMapCircularBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 class Parser;
@@ -35,10 +37,11 @@ public:
     explicit TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
 
     bool fillTupleBuffer(
-        Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
+        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager) override;
 
-    bool fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager);
+    bool
+    fillBuffer(NES::Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager);
 
     std::string toString() const override;
 
@@ -56,7 +59,7 @@ private:
     /// takes 'data', which is a data memory segment which contains the buffersize
     [[nodiscard]] size_t parseBufferSize(SPAN_TYPE<const char> data) const;
 
-    std::vector<PhysicalTypePtr> physicalTypes;
+    std::vector<NES::PhysicalTypePtr> physicalTypes;
     ParserPtr inputParser;
     int connection = -1;
     uint64_t tupleSize;
@@ -70,5 +73,7 @@ private:
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
 };
+
 using TCPSourcePtr = std::shared_ptr<TCPSource>;
-} /// namespace NES
+
+}

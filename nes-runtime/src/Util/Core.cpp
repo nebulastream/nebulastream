@@ -160,7 +160,7 @@ std::vector<Memory::TupleBuffer> Util::createBuffersFromCSVFile(
     std::istream_iterator<std::string> beginIt(file);
     std::istream_iterator<std::string> endIt;
     const std::string delimiter = ",";
-    auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
+    auto parser = std::make_shared<Sources::CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
 
     /// Do-while loop for checking, if we have another line to parse from the inputFile
     const auto maxTuplesPerBuffer = bufferProvider->getBufferSize() / schema->getSchemaSizeInBytes();

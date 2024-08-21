@@ -19,7 +19,7 @@
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 /// Transform a source descriptor to a SourceHandle that handles a 'DataSource' and a 'Source'
@@ -38,11 +38,11 @@ public:
     SourceHandlePtr lower(
         OriginId originId,
         const SourceDescriptorPtr& sourceDescriptor,
-        std::shared_ptr<Runtime::AbstractPoolProvider> bufferManager,
+        std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 
     ~SourceProvider() = default;
 };
 using DataSourceProviderPtr = std::shared_ptr<SourceProvider>;
 
-} /// namespace NES::QueryCompilation
+}

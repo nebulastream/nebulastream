@@ -15,9 +15,10 @@
 #pragma once
 
 #include <string>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 /// Source is the interface for all sources that read data into TupleBuffers.
@@ -31,7 +32,8 @@ public:
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     virtual bool fillTupleBuffer(
-        Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
+        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager)
         = 0;
 
     virtual void open() = 0;
@@ -42,4 +44,4 @@ public:
     [[nodiscard]] virtual std::string toString() const = 0;
 };
 
-} /// namespace NES
+}

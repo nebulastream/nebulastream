@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution
 
 ExecutableQueryPlan::ExecutableQueryPlan(
     QueryId queryId,
-    std::vector<SourceHandlePtr>&& sources,
+    std::vector<Sources::SourceHandlePtr>&& sources,
     std::vector<DataSinkPtr>&& sinks,
     std::vector<ExecutablePipelinePtr>&& pipelines,
     QueryManagerPtr&& queryManager,
@@ -47,7 +47,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(
 
 ExecutableQueryPlanPtr ExecutableQueryPlan::create(
     QueryId queryId,
-    std::vector<SourceHandlePtr> sources,
+    std::vector<Sources::SourceHandlePtr> sources,
     std::vector<DataSinkPtr> sinks,
     std::vector<ExecutablePipelinePtr> pipelines,
     QueryManagerPtr queryManager,
@@ -173,7 +173,7 @@ Memory::BufferManagerPtr ExecutableQueryPlan::getBufferManager()
     return bufferManager;
 }
 
-const std::vector<SourceHandlePtr>& ExecutableQueryPlan::getSources() const
+const std::vector<Sources::SourceHandlePtr>& ExecutableQueryPlan::getSources() const
 {
     return sources;
 }
@@ -311,7 +311,7 @@ void ExecutableQueryPlan::notifySourceCompletion(OriginId sourceId, QueryTermina
     auto it = std::find_if(
         sources.begin(),
         sources.end(),
-        [sourceId](const SourceHandlePtr& sourceHandle) { return sourceHandle->getSourceId() == sourceId; });
+        [sourceId](const Sources::SourceHandlePtr& sourceHandle) { return sourceHandle->getSourceId() == sourceId; });
     NES_ASSERT2_FMT(it != sources.end(), "Cannot find source " << sourceId << " in query plan " << queryId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
     NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << queryId << " = " << terminationType);
