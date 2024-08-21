@@ -45,7 +45,7 @@ class DataSource
 
 public:
     explicit DataSource(
-        OriginId originId,
+        OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SchemaPtr schema,
         std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&&,
@@ -65,6 +65,7 @@ public:
     /// check if bool running is false, if false return, if not stop source
     [[nodiscard]] bool stop();
 
+    /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getOriginId() const;
 
     friend std::ostream& operator<<(std::ostream& out, const DataSource& dataSource);
