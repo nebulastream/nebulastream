@@ -237,7 +237,7 @@ int main(int argc, char** argv)
             GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
 
             /// Get from input the filename without the extension
-            auto testname = std::filesystem::path(testFile).filename().string();            /// A SqlLogicTest format file might have >=1 tests
+            auto testname = std::filesystem::path(testFile).filename().string(); /// A SqlLogicTest format file might have >=1 tests
 
             auto decomposedQueryPlans = NES::CLI::loadFromSLTFile(testFile, testname);
             for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)

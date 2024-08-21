@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#ifndef NES_COMMON_SLTParser_HPP_
-#define NES_COMMON_SLTParser_HPP_
+#pragma once
 
 #include <fstream>
 #include <string>
@@ -98,4 +97,3 @@ private:
 };
 
 } /// namespace NES
-#endif /// NES_COMMON_SLTParser_HPP_

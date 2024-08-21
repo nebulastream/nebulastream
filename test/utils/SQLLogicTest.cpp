@@ -12,9 +12,9 @@
     limitations under the License.
 */
 
+#include <filesystem>
 #include <regex>
 #include <string>
-#include <filesystem>
 //#include <BaseIntegrationTest.hpp>
 #include <gtest/gtest.h>
 #include <IntegrationTestUtil.hpp>
@@ -43,7 +43,10 @@ std::unique_ptr<GRPCServer> SystemTestFactory::uut = nullptr;
 class SystemTest : public SystemTestFactory
 {
 public:
-    explicit SystemTest(std::string cachedQueryPlanFile, std::string testFile, uint64_t testId) : cachedQueryPlanFile(std::move(cachedQueryPlanFile)), testFile(std::move(testFile)),  testId(testId){}
+    explicit SystemTest(std::string cachedQueryPlanFile, std::string testFile, uint64_t testId)
+        : cachedQueryPlanFile(std::move(cachedQueryPlanFile)), testFile(std::move(testFile)), testId(testId)
+    {
+    }
 
     void TestBody() override
     {
@@ -72,21 +75,29 @@ private:
     uint64_t testId;
 };
 
-int main(int argc, char** argv) {
+int main(int argc, char** argv)
+{
     testing::InitGoogleTest(&argc, argv);
 
-    for(int64_t i = 0;; ++i) {
-        auto cacheFilePath = CACHE_DIR  SYSTEM_TEST_NAME  "_" + std::to_string(i) + ".pb";
+    for (int64_t i = 0;; ++i)
+    {
+        auto cacheFilePath = CACHE_DIR SYSTEM_TEST_NAME "_" + std::to_string(i) + ".pb";
         std::filesystem::path const file = std::filesystem::path(cacheFilePath);
 
-        if (!std::filesystem::is_regular_file(file)) {
+        if (!std::filesystem::is_regular_file(file))
+        {
             break;
         }
 
         /// We register our value-parameterized tests programmatically
         /// Reference: https://google.github.io/googletest/advanced.html#registering-tests-programmatically
         testing::RegisterTest(
-            "SystemTest", (SYSTEM_TEST_NAME + std::to_string(i)).c_str(), nullptr, nullptr, __FILE__, __LINE__,
+            "SystemTest",
+            (SYSTEM_TEST_NAME + std::to_string(i)).c_str(),
+            nullptr,
+            nullptr,
+            __FILE__,
+            __LINE__,
             [=]() -> SystemTestFactory* { return new SystemTest(cacheFilePath, SYSTEM_TEST_FILE_PATH, i); });
     }
 
