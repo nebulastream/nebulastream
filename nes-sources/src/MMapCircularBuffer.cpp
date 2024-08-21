@@ -22,6 +22,8 @@
 static std::mutex anonymousFileLock;
 #endif
 
+namespace NES::Sources
+{
 /**
  * Quick check to verify that the mmapped region of memory has the desired effect.
  */
@@ -176,4 +178,6 @@ bool MMapCircularBuffer::full() const
 bool MMapCircularBuffer::empty() const
 {
     return size() == 0;
+}
+
 }

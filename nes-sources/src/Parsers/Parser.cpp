@@ -23,19 +23,17 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-#include <Util/TestTupleBuffer.hpp>
-
-namespace NES
+namespace NES::Sources
 {
 
-Parser::Parser(std::vector<PhysicalTypePtr> physicalTypes) : physicalTypes(std::move(physicalTypes))
+Parser::Parser(std::vector<NES::PhysicalTypePtr> physicalTypes) : physicalTypes(std::move(physicalTypes))
 {
 }
 
 void Parser::writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
-    Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
     const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
@@ -164,4 +162,4 @@ void Parser::writeFieldValueToTupleBuffer(
     }
 }
 
-} ///namespace NES
+}

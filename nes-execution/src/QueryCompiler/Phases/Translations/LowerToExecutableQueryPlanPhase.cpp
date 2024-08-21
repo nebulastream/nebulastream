@@ -39,11 +39,12 @@
 
 namespace NES::QueryCompilation
 {
-LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(DataSinkProviderPtr sinkProvider, DataSourceProviderPtr sourceProvider)
+LowerToExecutableQueryPlanPhase::LowerToExecutableQueryPlanPhase(
+    DataSinkProviderPtr sinkProvider, Sources::DataSourceProviderPtr sourceProvider)
     : sinkProvider(std::move(sinkProvider)), sourceProvider(std::move(sourceProvider)) {};
 
 LowerToExecutableQueryPlanPhasePtr
-LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider, const DataSourceProviderPtr& sourceProvider)
+LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider, const Sources::DataSourceProviderPtr& sourceProvider)
 {
     return std::make_shared<LowerToExecutableQueryPlanPhase>(sinkProvider, sourceProvider);
 }
@@ -51,7 +52,7 @@ LowerToExecutableQueryPlanPhase::create(const DataSinkProviderPtr& sinkProvider,
 Runtime::Execution::ExecutableQueryPlanPtr
 LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQueryPlan, const Runtime::NodeEnginePtr& nodeEngine)
 {
-    std::vector<SourceHandlePtr> sources;
+    std::vector<Sources::SourceHandlePtr> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<Runtime::Execution::ExecutablePipelinePtr> executablePipelines;
     std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline> pipelineToExecutableMap;
@@ -72,7 +73,7 @@ LowerToExecutableQueryPlanPhase::apply(const PipelineQueryPlanPtr& pipelineQuery
 }
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSuccessor(
     const OperatorPipelinePtr& pipeline,
-    std::vector<SourceHandlePtr>& sources,
+    std::vector<Sources::SourceHandlePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
@@ -104,7 +105,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
 void LowerToExecutableQueryPlanPhase::processSource(
     const OperatorPipelinePtr& pipeline,
-    std::vector<SourceHandlePtr>& sources,
+    std::vector<Sources::SourceHandlePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,
@@ -135,7 +136,7 @@ void LowerToExecutableQueryPlanPhase::processSource(
 
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processSink(
     const OperatorPipelinePtr& pipeline,
-    std::vector<SourceHandlePtr>&,
+    std::vector<Sources::SourceHandlePtr>&,
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>&,
     Runtime::NodeEnginePtr nodeEngine,
@@ -157,7 +158,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
 Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase::processOperatorPipeline(
     const OperatorPipelinePtr& pipeline,
-    std::vector<SourceHandlePtr>& sources,
+    std::vector<Sources::SourceHandlePtr>& sources,
     std::vector<DataSinkPtr>& sinks,
     std::vector<Runtime::Execution::ExecutablePipelinePtr>& executablePipelines,
     const Runtime::NodeEnginePtr& nodeEngine,

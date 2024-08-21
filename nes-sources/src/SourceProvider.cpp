@@ -27,7 +27,7 @@
 #include <Sources/SourceProvider.hpp>
 #include <Sources/TCPSource.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 DataSourceProviderPtr SourceProvider::create()
@@ -38,7 +38,7 @@ DataSourceProviderPtr SourceProvider::create()
 SourceHandlePtr SourceProvider::lower(
     OriginId originId,
     const SourceDescriptorPtr& sourceDescriptor,
-    std::shared_ptr<Runtime::AbstractPoolProvider> bufferPool,
+    std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
     auto schema = sourceDescriptor->getSchema();
@@ -63,4 +63,4 @@ SourceHandlePtr SourceProvider::lower(
     throw std::invalid_argument("Unknown Source Descriptor Type");
 }
 
-} /// namespace NES
+}
