@@ -13,8 +13,9 @@
 */
 #pragma once
 
+#include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/BufferManager.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <SourceHandle.hpp>
 #include <SourceReturnType.hpp>
 
@@ -26,6 +27,9 @@ namespace NES
 /// The Source is owned by the DataSource. The Source ingests bytes from an interface (TCP, CSV, ..) and writes the bytes to a TupleBuffer.
 class SourceProvider
 {
+    /// Todo #237: reevaluate whether we still need num source local buffers, and potentially use new configuration approach.
+    static constexpr int NUM_SOURCE_LOCAL_BUFFERS = 64;
+
 public:
     SourceProvider() = default;
     static std::shared_ptr<SourceProvider> create();
