@@ -63,11 +63,11 @@ AddScanAndEmitPhasePtr DefaultPhaseFactory::createAddScanAndEmitPhase(QueryCompi
     return AddScanAndEmitPhase::create();
 }
 
-LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase(QueryCompilerOptionsPtr options)
+LowerToExecutableQueryPlanPhasePtr DefaultPhaseFactory::createLowerToExecutableQueryPlanPhase()
 {
     NES_DEBUG("Create lower to executable query plan phase");
     DataSourceProviderPtr sourceProvider;
-    sourceProvider = DefaultDataSourceProvider::create(options);
+    sourceProvider = DefaultDataSourceProvider::create();
 
     auto sinkProvider = DataSinkProvider::create();
     return LowerToExecutableQueryPlanPhase::create(sinkProvider, sourceProvider);
