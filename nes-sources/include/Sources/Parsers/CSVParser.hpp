@@ -17,7 +17,7 @@
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 class CSVParser : public Parser
@@ -29,7 +29,7 @@ public:
     bool writeInputTupleToTupleBuffer(
         std::string_view csvInput,
         uint64_t tupleCount,
-        Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
         const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager) override;
 
@@ -39,4 +39,4 @@ private:
     std::string delimiter;
 };
 
-} /// namespace NES
+}

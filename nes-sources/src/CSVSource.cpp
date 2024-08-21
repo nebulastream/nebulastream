@@ -25,7 +25,7 @@
 #include <fmt/std.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
@@ -81,7 +81,7 @@ CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
 }
 
 bool CSVSource::fillTupleBuffer(
-    Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
+    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)
@@ -156,4 +156,5 @@ const CSVSourceTypePtr& CSVSource::getSourceConfig() const
 {
     return csvSourceType;
 }
-} /// namespace NES
+
+}

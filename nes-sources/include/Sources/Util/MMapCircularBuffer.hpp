@@ -24,6 +24,9 @@
 #endif
 #include <Util/Logger/Logger.hpp>
 
+namespace NES::Sources
+{
+
 /**
  * A CircularBuffer which efficiently allows a writer to append data to the buffer which a reader can consume from the Buffer,
  * after the writer commits its changes, during destruction.
@@ -133,3 +136,5 @@ private:
     bool acive_read = false;
     bool acive_write = false;
 };
+
+}
