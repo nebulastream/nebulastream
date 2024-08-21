@@ -35,8 +35,7 @@ namespace NES::Sources
 {
 
 TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
-    : Source()
-    , tupleSize(schema->getSchemaSizeInBytes())
+    : tupleSize(schema->getSchemaSizeInBytes())
     , sourceConfig(std::move(tcpSourceType))
     , timeout(TCP_SOCKET_DEFAULT_TIMEOUT)
     , circularBuffer(getpagesize() * 2)
@@ -52,7 +51,7 @@ TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
     {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
-        std::string fieldName = field->getName();
+        auto fieldName = field->getName();
         NES_TRACE("TCPSOURCE:: Schema keys are:  {}", fieldName);
         schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
     }
