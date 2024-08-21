@@ -415,6 +415,7 @@ protected:
 
     std::shared_ptr<AbstractQueryStatusListener> queryStatusListener;
 
+    /// Todo #241: In #241, we introduce a way to uniquely identify sources globally, which we should use here to map from identifiers to sources
     std::unordered_map<OriginId, std::vector<Execution::ExecutableQueryPlanPtr>> sourceToQEPMapping;
 
     uint64_t numberOfBuffersPerEpoch;

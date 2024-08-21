@@ -55,7 +55,7 @@ public:
     void close() override;
 
 private:
-    /// Oonverts buffersize in either binary (NES Format) or ASCII (Json and CSV)
+    /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize
     [[nodiscard]] size_t parseBufferSize(SPAN_TYPE<const char> data) const;
 

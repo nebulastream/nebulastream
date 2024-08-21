@@ -42,6 +42,7 @@ SourceHandlePtr SourceProvider::lower(
     SourceReturnType::EmitFunction&& emitFunction)
 {
     auto schema = sourceDescriptor->getSchema();
+    /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
     if (sourceDescriptor->instanceOf<CSVSourceDescriptor>())
     {
         NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
