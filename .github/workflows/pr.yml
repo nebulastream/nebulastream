@@ -20,8 +20,8 @@ on:
 
 jobs:
   validateTrigger:
-    # This ensures we won't run the CI if it is in draft mode, or we called it via act.
-    if: ${{ !github.event.pull_request.draft && !env.ACT }}
+    # This ensures we won't run the CI if it is in draft mode.
+    if: ${{ !github.event.pull_request.draft }}
     runs-on: [ self-hosted, linux, Build ]
     steps:
       - uses: actions/checkout@v4
