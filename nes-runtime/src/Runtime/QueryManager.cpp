@@ -18,9 +18,6 @@
  */
 
 #include <iostream>
-#include <memory>
-#include <stack>
-#include <utility>
 #include <variant>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
@@ -29,10 +26,12 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <SourceReturnType.hpp>
+
 namespace NES::Runtime
 {
 
@@ -69,7 +68,7 @@ uint64_t QueryManager::getNumberOfTasksInWorkerQueues() const
     return taskQueue.size();
 }
 
-uint64_t QueryManager::getCurrentTaskSum()
+uint64_t QueryManager::getCurrentTaskSum() const
 {
     size_t sum = 0;
     for (auto& val : tempCounterTasksCompleted)
@@ -195,36 +194,37 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QueryId queryId)
 SourceReturnType::EmitFunction
 QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutablePipeline>&& executableSuccessorPipelines)
 {
-    return [lambdaQuerymanager = inherited0::shared_from_this(),
-            successors = std::move(executableSuccessorPipelines)](const OriginId originId, SourceReturnType::SourceReturnType returntype)
+    return
+        [this, successors = std::move(executableSuccessorPipelines)](const OriginId originId, SourceReturnType::SourceReturnType returntype)
     {
         if (std::holds_alternative<TupleBuffer>(returntype))
         {
             for (const auto& successorPipeline : successors)
             {
                 /// Using a const taskQueueId of 0
-                lambdaQuerymanager->addWorkForNextPipeline(std::get<TupleBuffer>(returntype), successorPipeline, 0);
+                this->addWorkForNextPipeline(std::get<TupleBuffer>(returntype), successorPipeline, 0);
             }
         }
         else
         {
-            const auto terminationType = std::get<SourceReturnType::TerminationType>(returntype);
-            switch (terminationType)
+            const auto terminationType = std::get<SourceReturnType::SourceTermination>(returntype);
+            switch (terminationType.type)
             {
+                /// Todo #237: Improve error handling in sources
                 /// ReSharper disable once CppDFAUnreachableCode (the code below is reachable)
                 case SourceReturnType::TerminationType::EOS:
                     NES_DEBUG("DataSource {} : End of stream.", originId);
-                    lambdaQuerymanager->addEndOfStream(originId, successors, Runtime::QueryTerminationType::Graceful);
-                    lambdaQuerymanager->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
+                    this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::Graceful);
+                    this->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
                     break;
                 case SourceReturnType::TerminationType::STOP:
                     NES_DEBUG("DataSource {} : Stopping.", originId);
-                    lambdaQuerymanager->addEndOfStream(originId, successors, Runtime::QueryTerminationType::HardStop);
-                    lambdaQuerymanager->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
+                    this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::HardStop);
+                    this->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
                     break;
                 case SourceReturnType::TerminationType::FAILURE:
                     NES_DEBUG("DataSource {} : Failure.", originId);
-                    lambdaQuerymanager->notifySourceFailure(originId, "TODO: create error message");
+                    this->notifySourceFailure(originId, terminationType.exception->what());
                     break;
             }
         }

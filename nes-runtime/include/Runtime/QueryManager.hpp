@@ -290,7 +290,7 @@ public:
      * Return the current occupation of the task queue
      * @return number of tasks in the queue
      */
-    [[nodiscard]] uint64_t getCurrentTaskSum();
+    [[nodiscard]] uint64_t getCurrentTaskSum() const;
 
     /**
      * Returns the current number of worker threads

@@ -23,9 +23,9 @@
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
-#include "FixedSizeBufferPool.hpp"
-#include "LocalBufferPool.hpp"
-#include "TupleBufferImpl.hpp"
+#include <FixedSizeBufferPool.hpp>
+#include <LocalBufferPool.hpp>
+#include <TupleBufferImpl.hpp>
 
 namespace NES::Memory
 {
@@ -193,12 +193,10 @@ TupleBuffer BufferManager::getBufferBlocking()
     {
         return buffer.value();
     }
-    else
-    {
-        auto exp = CannotAllocateBuffer();
-        exp.what() += "Global buffer pool could not allocate buffer before timeout";
-        throw exp;
-    }
+    /// Throw exception if no buffer was returned allocated after timeout.
+    auto exception = CannotAllocateBuffer();
+    exception.what() += "Global buffer pool could not allocate buffer before timeout";
+    throw exception;
 }
 
 std::optional<TupleBuffer> BufferManager::getBufferNoBlocking()
