@@ -12,11 +12,6 @@
     limitations under the License.
 */
 
-/* TODO
- * add to Reconfig... constructors:
- -1, /// any query ID
- */
-
 #include <iostream>
 #include <variant>
 #include <Runtime/AsyncTaskExecutor.hpp>
