@@ -27,17 +27,10 @@ SourceHandle::SourceHandle(
     std::shared_ptr<Runtime::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation,
-    uint64_t numberOfBuffersToProduce)
+    std::unique_ptr<Source> sourceImplementation)
 {
     this->dataSource = std::make_unique<DataSource>(
-        originId,
-        schema,
-        std::move(bufferPool),
-        std::move(emitFunction),
-        numSourceLocalBuffers,
-        std::move(sourceImplementation),
-        numberOfBuffersToProduce);
+        originId, schema, std::move(bufferPool), std::move(emitFunction), numSourceLocalBuffers, std::move(sourceImplementation));
 }
 
 bool SourceHandle::start() const

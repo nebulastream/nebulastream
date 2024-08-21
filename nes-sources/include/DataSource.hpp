@@ -51,8 +51,7 @@ public:
         std::shared_ptr<Memory::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation,
-        uint64_t numberOfBuffersToProduce);
+        std::unique_ptr<Source> sourceImplementation);
 
     DataSource() = delete;
 
@@ -77,7 +76,6 @@ protected:
     std::shared_ptr<Runtime::AbstractPoolProvider> localBufferManager;
     SourceReturnType::EmitFunction emitFunction;
     std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider{nullptr};
-    uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t numSourceLocalBuffers;
     SourceType type;
     std::atomic_bool wasStarted{false};
