@@ -16,8 +16,8 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <SourceHandle.hpp>
-#include <SourceReturnType.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceReturnType.hpp>
 
 namespace NES
 {

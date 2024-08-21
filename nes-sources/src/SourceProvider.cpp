@@ -21,10 +21,11 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
-#include <CSVSource.hpp>
-#include <SourceHandle.hpp>
-#include <SourceProvider.hpp>
-#include <TCPSource.hpp>
+#include <Sources/CSVSource.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceProvider.hpp>
+#include <Sources/TCPSource.hpp>
 
 namespace NES
 {

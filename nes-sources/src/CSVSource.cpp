@@ -18,10 +18,10 @@
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <Parsers/CSVParser.hpp>
+#include <Sources/CSVSource.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/std.h>
-#include <CSVSource.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
 #include <Util/TestTupleBuffer.hpp>

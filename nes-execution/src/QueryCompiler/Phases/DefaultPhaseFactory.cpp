@@ -22,8 +22,8 @@
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Sources/SourceProvider.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <SourceProvider.hpp>
 
 namespace NES::QueryCompilation::Phases
 {
