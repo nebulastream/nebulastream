@@ -28,7 +28,7 @@
 #include <Sources/SourceReturnType.hpp>
 #include <Util/AtomicCounter.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
-#include <Util/libcuckoo/cuckoohash_map.hh>
+#include <libcuckoo/cuckoohash_map.hh>
 
 #ifdef ENABLE_PAPI_PROFILER
 #    include <Runtime/Profiler/PAPIProfiler.hpp>
@@ -389,7 +389,7 @@ protected:
 
     ///TODO:check if it would be better to put it in the thread context
     mutable std::mutex statisticsMutex;
-    cuckoohash_map<QueryId, QueryStatisticsPtr> queryToStatisticsMap;
+    libcuckoo::cuckoohash_map<QueryId, QueryStatisticsPtr> queryToStatisticsMap;
 
     mutable std::mutex reconfigurationMutex;
 
