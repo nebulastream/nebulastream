@@ -80,7 +80,8 @@ CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
 }
 
-bool CSVSource::fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
+bool CSVSource::fillTupleBuffer(
+    Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)
