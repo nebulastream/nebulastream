@@ -20,10 +20,10 @@
 #include <string>
 #include <typeinfo>
 #include <utility>
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/yaml/Yaml.hpp>
 #include <magic_enum.hpp>
-#include "Configurations/ConfigurationsNames.hpp"
-#include "Util/Logger/Logger.hpp"
-#include "Util/yaml/Yaml.hpp"
 
 namespace NES::Configurations
 {

@@ -30,7 +30,7 @@ class SourceHandle
 {
 public:
     explicit SourceHandle(
-        OriginId originId,
+        OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SchemaPtr schema,
         std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&&,
@@ -44,6 +44,7 @@ public:
 
     friend std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle);
 
+    /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
     [[nodiscard]] OriginId getSourceId() const;
 
 private:
