@@ -21,17 +21,17 @@
     }
   },
   "dependencies": [
-    "grpc",
-    "fmt",
-    "gtest",
+    "argparse",
     "benchmark",
-    "spdlog",
-    "nlohmann-json",
-    "magic-enum",
-    "cpptrace",
-    "folly",
     "boost-asio",
-    "yaml-cpp",
-    "argparse"
+    "cpptrace",
+    "fmt",
+    "folly",
+    "grpc",
+    "gtest",
+    "magic-enum",
+    "nlohmann-json",
+    "spdlog",
+    "yaml-cpp"
   ]
 }
