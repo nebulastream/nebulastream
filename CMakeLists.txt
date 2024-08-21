@@ -27,7 +27,6 @@ option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
-option(CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE "Build using folly and lock-free MPMC queue" ON)
 option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(CMAKE_NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
@@ -54,10 +53,6 @@ set(NES_LOG_LEVEL "TRACE" CACHE STRING "LogLevel")
 
 if (NOT NES_TEST_PARALLELISM MATCHES "^[0-9]+$")
     set(NES_TEST_PARALLELISM "1")
-endif ()
-
-if (NOT CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    message(FATAL_ERROR "Disabling CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE is not supported for now, please enable it")
 endif ()
 
 set(CMAKE_THREAD_LIBS_INIT "-lpthread")
@@ -104,45 +99,6 @@ endif ()
 #if(NES_COMPUTE_COVERAGE)
 #    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
 #endif
-
-#if the flag is set we create one queue per query
-if (NES_USE_ONE_QUEUE_PER_QUERY)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_QUERY=1")
-    if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-        message(STATUS "use NES_USE_ONE_QUEUE_PER_QUERY and unset CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
-    endif ()
-endif ()
-
-if (NES_USE_ONE_QUEUE_PER_QUERY)
-    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_QUERY=1")
-    if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-        message(STATUS "use NES_USE_ONE_QUEUE_PER_QUERY and unset CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
-    endif ()
-endif ()
-
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    if (NOT NES_USE_ONE_QUEUE_PER_QUERY)
-        message(STATUS "use CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE")
-        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_MPMC_BLOCKING_CONCURRENT_QUEUE=1")
-    endif ()
-endif ()
-
-if (CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE)
-    message(STATUS "ENABLE CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE")
-    if (NOT NES_USE_ONE_QUEUE_PER_QUERY)
-        set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -DNES_USE_ONE_QUEUE_PER_NUMA_NODE=1")
-    endif ()
-
-    # Numa awareness
-    find_package(NUMA)
-    if (NUMA_FOUND)
-        set(LIBRARIES ${LIBRARIES} -lnuma)
-        message(STATUS "Using Numa")
-    endif ()
-    find_package(folly CONFIG REQUIRED)
-    set(LIBRARIES ${LIBRARIES} folly::folly folly::folly_deps)
-    include_directories(${FOLLY_INCLUDE_DIR})
-endif ()
 
 # enables tracing of stack traces if operator / expression nodes are created
 if (CMAKE_NES_TRACE_NODE_CREATION)
