@@ -18,7 +18,7 @@
 #include <Sources/DataSource.hpp>
 #include <Sources/SourceHandle.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 SourceHandle::SourceHandle(
     OriginId originId,
@@ -55,4 +55,5 @@ std::ostream& operator<<(std::ostream& out, const SourceHandle& sourceHandle)
 {
     return out << sourceHandle.getDataSource();
 }
-} /// namespace NES
+
+}

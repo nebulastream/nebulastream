@@ -18,10 +18,12 @@
 #include <string>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 class CSVParser;
@@ -33,13 +35,14 @@ public:
     explicit CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
 
     bool fillTupleBuffer(
-        Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
 
     void open() override { /* noop */ };
     void close() override { /* noop */ };
 
-    void fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager);
+    void
+    fillBuffer(NES::Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager);
 
     std::string toString() const override;
 
@@ -70,4 +73,5 @@ private:
 };
 
 using CSVSourcePtr = std::shared_ptr<CSVSource>;
-} /// namespace NES
+
+}

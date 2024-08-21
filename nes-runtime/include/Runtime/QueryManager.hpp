@@ -195,7 +195,7 @@ public:
     /// 2. EOS: the source encountered an end of stream (EOS). The QM initiates a soft end of stream and registers the source's completion.
     /// 3. STOP: the source was told to stop. The QM initiates a hard EOS and registers the source's completion.
     /// 4. FAILURE: the source failed. The QM stops all decomposed query plans that are using the source.
-    SourceReturnType::EmitFunction
+    Sources::SourceReturnType::EmitFunction
     createSourceEmitFunction(std::vector<Execution::SuccessorExecutablePipeline>&& executableSuccessorPipelines);
 
     /**

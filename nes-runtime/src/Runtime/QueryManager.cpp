@@ -186,11 +186,11 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QueryId queryId)
     return nullptr;
 }
 
-SourceReturnType::EmitFunction
+Sources::SourceReturnType::EmitFunction
 QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutablePipeline>&& executableSuccessorPipelines)
 {
-    return
-        [this, successors = std::move(executableSuccessorPipelines)](const OriginId originId, SourceReturnType::SourceReturnType returntype)
+    return [this, successors = std::move(executableSuccessorPipelines)](
+               const OriginId originId, Sources::SourceReturnType::SourceReturnType returntype)
     {
         if (std::holds_alternative<TupleBuffer>(returntype))
         {
@@ -202,22 +202,22 @@ QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutabl
         }
         else
         {
-            const auto terminationType = std::get<SourceReturnType::SourceTermination>(returntype);
+            const auto terminationType = std::get<Sources::SourceReturnType::SourceTermination>(returntype);
             switch (terminationType.type)
             {
                 /// Todo #237: Improve error handling in sources
                 /// ReSharper disable once CppDFAUnreachableCode (the code below is reachable)
-                case SourceReturnType::TerminationType::EOS:
+                case Sources::SourceReturnType::TerminationType::EOS:
                     NES_DEBUG("DataSource {} : End of stream.", originId);
                     this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::Graceful);
                     this->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
                     break;
-                case SourceReturnType::TerminationType::STOP:
+                case Sources::SourceReturnType::TerminationType::STOP:
                     NES_DEBUG("DataSource {} : Stopping.", originId);
                     this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::HardStop);
                     this->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
                     break;
-                case SourceReturnType::TerminationType::FAILURE:
+                case Sources::SourceReturnType::TerminationType::FAILURE:
                     NES_DEBUG("DataSource {} : Failure.", originId);
                     this->notifySourceFailure(originId, terminationType.exception->what());
                     break;
