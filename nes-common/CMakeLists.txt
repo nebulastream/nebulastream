@@ -65,9 +65,10 @@ add_library(nes-common ${NES_COMMON_SOURCE_FILES})
 
 find_package(cpptrace   CONFIG REQUIRED)
 find_package(fmt        CONFIG REQUIRED)
+find_package(libcuckoo  CONFIG REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 find_package(spdlog     CONFIG REQUIRED)
-target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt magic_enum::magic_enum spdlog::spdlog)
+target_link_libraries(nes-common PUBLIC nes-grpc cpptrace::cpptrace fmt::fmt libcuckoo::libcuckoo magic_enum::magic_enum spdlog::spdlog)
 
 target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
