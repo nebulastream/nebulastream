@@ -189,6 +189,7 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QueryId queryId)
 Sources::SourceReturnType::EmitFunction
 QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutablePipeline>&& executableSuccessorPipelines)
 {
+    /// Todo #241: Pass the new unique source identifier to the emit function for correct source 'callback-event' handling.
     return [this, successors = std::move(executableSuccessorPipelines)](
                const OriginId originId, Sources::SourceReturnType::SourceReturnType returntype)
     {

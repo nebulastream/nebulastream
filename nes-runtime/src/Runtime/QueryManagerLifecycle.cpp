@@ -40,6 +40,7 @@ bool QueryManager::registerQuery(const Execution::ExecutableQueryPlanPtr& qep)
         /// test if elements already exist
         NES_DEBUG("QueryManager: resolving sources for query  {}  with sources= {}", qep->getQueryId(), qep->getSources().size());
 
+        /// Todo #241: Use the new unique source identifier to identify sources.
         for (const auto& source : qep->getSources())
         {
             /// source already exists, add qep to source set if not there
