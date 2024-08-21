@@ -34,8 +34,7 @@ public:
         std::shared_ptr<Runtime::AbstractPoolProvider> bufferPool,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
-        std::unique_ptr<Source> sourceImplementation,
-        uint64_t numberOfBuffersToProduce);
+        std::unique_ptr<Source> sourceImplementation);
 
     ~SourceHandle() = default;
 

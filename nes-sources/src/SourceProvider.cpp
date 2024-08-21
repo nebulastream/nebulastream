@@ -48,13 +48,7 @@ SourceHandlePtr SourceProvider::lower(
 
         auto csvSource = std::make_unique<CSVSource>(schema, csvSourceType);
         return std::make_shared<SourceHandle>(
-            originId,
-            schema,
-            std::move(bufferPool),
-            std::move(emitFunction),
-            NUM_SOURCE_LOCAL_BUFFERS,
-            std::move(csvSource),
-            csvSourceType->getNumberOfBuffersToProduce()->getValue());
+            originId, schema, std::move(bufferPool), std::move(emitFunction), NUM_SOURCE_LOCAL_BUFFERS, std::move(csvSource));
     }
     if (sourceDescriptor->instanceOf<TCPSourceDescriptor>())
     {
@@ -62,7 +56,7 @@ SourceHandlePtr SourceProvider::lower(
         const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
         auto tcpSource = std::make_unique<TCPSource>(schema, tcpSourceType);
         return std::make_shared<SourceHandle>(
-            originId, schema, std::move(bufferPool), std::move(emitFunction), NUM_SOURCE_LOCAL_BUFFERS, std::move(tcpSource), 0);
+            originId, schema, std::move(bufferPool), std::move(emitFunction), NUM_SOURCE_LOCAL_BUFFERS, std::move(tcpSource));
     }
     NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
     throw std::invalid_argument("Unknown Source Descriptor Type");
