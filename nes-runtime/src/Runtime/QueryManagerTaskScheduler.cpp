@@ -162,9 +162,8 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext)
     return ExecutionResult::Finished;
 }
 
-void QueryManager::addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId)
+void QueryManager::addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable)
 {
-    NES_TRACE("Add Work for executable for queue={}", queueId);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline)
     {
         if (!(*nextPipeline)->isRunning())
@@ -181,7 +180,7 @@ void QueryManager::addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution
         std::stringstream s;
         s << buffer;
         std::string bufferString = s.str();
-        NES_TRACE("QueryManager: added Task for Sink {} inputBuffer {} queueId={}", sink->get()->toString(), bufferString, queueId);
+        NES_TRACE("QueryManager: added Task for Sink {} inputBuffer {}", sink->get()->toString(), bufferString);
 
         taskQueue.blockingWrite(Task(executable, buffer, getNextTaskId()));
     }
