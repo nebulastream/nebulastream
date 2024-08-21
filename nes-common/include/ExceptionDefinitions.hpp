@@ -59,6 +59,8 @@ EXCEPTION(CannotStopNodeEngine, 3004, "cannot stop node engine")
 EXCEPTION(CannotOpenSourceFile, 4000, "cannot open source file")
 EXCEPTION(CannotFormatSourceData, 4001, "cannot format source data")
 EXCEPTION(MalformatedTuple, 4002, "malformed tuple")
+EXCEPTION(RunningRoutineFailure, 4003, "error during data ingestion") ///Todo #237: Improve error handling in sources
+EXCEPTION(StopBeforeStartFailure, 4003, "source was stopped before it was started") ///Todo #237: Improve error handling in sources
 
 /// 5XXX Network errors
 EXCEPTION(CannotConnectToCoordinator, 5000, "cannot connect to coordinator")

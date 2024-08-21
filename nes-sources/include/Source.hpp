@@ -30,7 +30,9 @@ public:
     virtual ~Source() = default;
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
-    virtual bool fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) = 0;
+    virtual bool fillTupleBuffer(
+        Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
+        = 0;
 
     virtual void open() = 0;
     virtual void close() = 0;

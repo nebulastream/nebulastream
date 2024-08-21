@@ -22,6 +22,7 @@
 #include <DataSource.hpp>
 #include <magic_enum.hpp>
 
+#include <Exceptions/Exception.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -170,7 +171,10 @@ bool DataSource::stop()
             /// if the DataSource thread was not started, it cannot call notifySourceFailure, so we need to do it here instead.
             if (!wasStarted)
             {
-                emitFunction(originId, SourceReturnType::TerminationType::FAILURE);
+                /// Todo #237: Improve error handling in sources
+                auto ingestionException = StopBeforeStartFailure();
+                ingestionException.what() += e.what();
+                emitFunction(originId, SourceReturnType::SourceTermination{SourceReturnType::TerminationType::FAILURE, ingestionException});
             }
             isStopped = true;
         }
@@ -184,7 +188,7 @@ void DataSource::close()
     sourceImplementation->close();
     std::unique_lock lock(startStopMutex);
     {
-        emitFunction(originId, SourceReturnType::TerminationType::STOP);
+        emitFunction(originId, SourceReturnType::SourceTermination{SourceReturnType::TerminationType::STOP, std::nullopt});
         bufferProvider->destroy();
     }
 }
@@ -223,7 +227,8 @@ void DataSource::runningRoutine()
             if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce)
             {
                 auto tupleBuffer = allocateBuffer();
-                auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, bufferProvider); /// note that receiveData might block
+                auto isReceivedData
+                    = sourceImplementation->fillTupleBuffer(tupleBuffer, bufferProvider); /// note that receiveData might block
                 NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuplez: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
 
                 ///this checks we received a valid output buffer
@@ -273,10 +278,13 @@ void DataSource::runningRoutine()
         completedPromise.set_value(true);
         NES_DEBUG("DataSource {} end running", originId);
     }
-    catch (std::exception const& exception)
+    catch (std::exception const& e)
     {
-        emitFunction(originId, SourceReturnType::TerminationType::FAILURE);
-        completedPromise.set_exception(std::make_exception_ptr(exception));
+        /// Todo #237: Improve error handling in sources
+        auto ingestionException = RunningRoutineFailure();
+        ingestionException.what() += e.what();
+        emitFunction(originId, SourceReturnType::SourceTermination{SourceReturnType::TerminationType::FAILURE, ingestionException});
+        completedPromise.set_exception(std::make_exception_ptr(ingestionException));
     }
     catch (...)
     {
@@ -289,9 +297,12 @@ void DataSource::runningRoutine()
                 std::rethrow_exception(expPtr);
             }
         }
-        catch (std::exception const& exception)
+        catch (std::exception const& e)
         {
-            emitFunction(originId, SourceReturnType::TerminationType::FAILURE);
+            /// Todo #237: Improve error handling in sources
+            auto ingestionException = RunningRoutineFailure();
+            ingestionException.what() += e.what();
+            emitFunction(originId, SourceReturnType::SourceTermination{SourceReturnType::TerminationType::FAILURE, ingestionException});
         }
     }
     NES_DEBUG("DataSource {} end runningRoutine", originId);
