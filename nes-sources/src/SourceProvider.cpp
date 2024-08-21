@@ -37,7 +37,7 @@ DataSourceProviderPtr SourceProvider::create()
 
 SourceHandlePtr SourceProvider::lower(
     OriginId originId,
-    const SourceDescriptorPtr& sourceDescriptor,
+    SourceDescriptorPtr&& sourceDescriptor,
     std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
@@ -50,7 +50,12 @@ SourceHandlePtr SourceProvider::lower(
 
         auto csvSource = std::make_unique<CSVSource>(schema, csvSourceType);
         return std::make_shared<SourceHandle>(
-            originId, schema, std::move(bufferPool), std::move(emitFunction), NUM_SOURCE_LOCAL_BUFFERS, std::move(csvSource));
+            std::move(originId),
+            std::move(schema),
+            std::move(bufferPool),
+            std::move(emitFunction),
+            NUM_SOURCE_LOCAL_BUFFERS,
+            std::move(csvSource));
     }
     if (sourceDescriptor->instanceOf<TCPSourceDescriptor>())
     {
@@ -58,7 +63,12 @@ SourceHandlePtr SourceProvider::lower(
         const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
         auto tcpSource = std::make_unique<TCPSource>(schema, tcpSourceType);
         return std::make_shared<SourceHandle>(
-            originId, schema, std::move(bufferPool), std::move(emitFunction), NUM_SOURCE_LOCAL_BUFFERS, std::move(tcpSource));
+            std::move(originId),
+            std::move(schema),
+            std::move(bufferPool),
+            std::move(emitFunction),
+            NUM_SOURCE_LOCAL_BUFFERS,
+            std::move(tcpSource));
     }
     NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
     throw std::invalid_argument("Unknown Source Descriptor Type");

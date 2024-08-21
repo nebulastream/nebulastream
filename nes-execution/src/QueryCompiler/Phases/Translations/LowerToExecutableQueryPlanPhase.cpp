@@ -129,8 +129,8 @@ void LowerToExecutableQueryPlanPhase::processSource(
     }
 
     auto emitFunction = nodeEngine->getQueryManager()->createSourceEmitFunction(std::move(executableSuccessorPipelines));
-    auto source
-        = sourceProvider->lower(sourceOperator->getOriginId(), sourceDescriptor, nodeEngine->getBufferManager(), std::move(emitFunction));
+    auto source = sourceProvider->lower(
+        sourceOperator->getOriginId(), std::move(sourceDescriptor), nodeEngine->getBufferManager(), std::move(emitFunction));
     sources.emplace_back(source);
 }
 

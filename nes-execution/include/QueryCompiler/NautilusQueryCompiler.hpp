@@ -30,11 +30,9 @@ class NautilusQueryCompiler : public QueryCompilation::QueryCompiler
 public:
     QueryCompilation::QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override;
 
-    NautilusQueryCompiler(
-        QueryCompilation::QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
+    NautilusQueryCompiler(QueryCompilation::QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
 
-    static QueryCompilerPtr
-    create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
+    static QueryCompilerPtr create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
 
 protected:
     QueryCompilation::LowerLogicalToPhysicalOperatorsPtr lowerLogicalToPhysicalOperatorsPhase;

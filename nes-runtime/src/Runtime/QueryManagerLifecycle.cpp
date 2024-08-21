@@ -161,27 +161,6 @@ bool QueryManager::deregisterQuery(const Execution::ExecutableQueryPlanPtr& qep)
     return true;
 }
 
-bool QueryManager::canTriggerEndOfStream(OriginId sourceId, Runtime::QueryTerminationType terminationType)
-{
-    std::unique_lock lock(queryMutex);
-    NES_ASSERT2_FMT(
-        sourceToQEPMapping.contains(sourceId), "source=" << sourceId << " wants to terminate but is not part of the mapping process");
-
-    bool overallResult = true;
-    ///we have to check for each query on this source if we can terminate and return a common answer
-    for (auto qep : sourceToQEPMapping[sourceId])
-    {
-        bool ret = queryStatusListener->canTriggerEndOfStream(qep->getQueryId(), sourceId, terminationType);
-        if (!ret)
-        {
-            NES_ERROR("Query cannot trigger EOS for query manager for query ={}", qep->getQueryId());
-            NES_THROW_RUNTIME_ERROR("cannot trigger EOS in canTriggerEndOfStream()");
-        }
-        overallResult &= ret;
-    }
-    return overallResult;
-}
-
 bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
 {
     bool ret = true;

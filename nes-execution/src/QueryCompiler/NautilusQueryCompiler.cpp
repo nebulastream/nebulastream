@@ -45,8 +45,7 @@ NautilusQueryCompiler::NautilusQueryCompiler(
 {
 }
 
-QueryCompilerPtr
-NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory)
+QueryCompilerPtr NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory)
 {
     return std::make_shared<NautilusQueryCompiler>(NautilusQueryCompiler(options, phaseFactory));
 }
