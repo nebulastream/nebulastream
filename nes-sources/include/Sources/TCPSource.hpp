@@ -40,9 +40,6 @@ public:
         NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager) override;
 
-    bool
-    fillBuffer(NES::Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager);
-
     std::string toString() const override;
 
     SourceType getType() const override;
@@ -55,6 +52,9 @@ public:
     void close() override;
 
 private:
+    bool
+    fillBuffer(NES::Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager);
+
     /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize
     [[nodiscard]] size_t parseBufferSize(SPAN_TYPE<const char> data) const;

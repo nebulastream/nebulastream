@@ -220,14 +220,12 @@ void DataSource::runningRoutine()
             ///this checks we received a valid output buffer
             if (isReceivedData)
             {
-                std::stringstream sourceStringStream;
-                sourceStringStream << this;
                 NES_TRACE(
-                    "DataSource produced buffer {} type= {} string={}: Received Data: {} "
+                    "DataSource produced buffer {} type= {} string={}: Received Data: {}"
                     "originId={}",
                     numberOfBuffersProduced,
                     magic_enum::enum_name(sourceImplementation->getType()),
-                    sourceStringStream.str(),
+                    this->toString(),
                     tupleBuffer.getNumberOfTuples(),
                     this->originId);
 

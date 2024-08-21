@@ -137,7 +137,6 @@ bool CSVSource::fillTupleBuffer(
     tupleBuffer.setNumberOfTuples(tupleCount);
     generatedTuples += tupleCount;
     generatedBuffers++;
-    NES_TRACE("CSVSource::receiveData filled buffer with tuples= {}", tupleBuffer.getNumberOfTuples());
     NES_TRACE("CSVSource::fillBuffer: reading finished read {} tuples at posInFile={}", tupleCount, currentPositionInFile);
     return true;
 }

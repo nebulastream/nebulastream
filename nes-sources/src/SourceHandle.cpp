@@ -29,7 +29,12 @@ SourceHandle::SourceHandle(
     std::unique_ptr<Source> sourceImplementation)
 {
     this->dataSource = std::make_unique<DataSource>(
-        originId, schema, std::move(bufferPool), std::move(emitFunction), numSourceLocalBuffers, std::move(sourceImplementation));
+        std::move(originId),
+        std::move(schema),
+        std::move(bufferPool),
+        std::move(emitFunction),
+        numSourceLocalBuffers,
+        std::move(sourceImplementation));
 }
 
 bool SourceHandle::start() const
