@@ -19,10 +19,7 @@
 function(add_system_test_file SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
     # Check if a system cache file exists and if not create it. In general more than one cache file is created _0, _1, _2, ...
     # but it is enough to check if the first one exists.
-    if (NOT EXISTS "${CMAKE_BINARY_DIR}/nes-nebuli/nebuli")
-        message(ERROR "nes-nebuli not found. Please build the project once and reload the cmake to create system test targets.")
-    endif()
-    set(set RESULT 0)
+    set(RESULT 0)
     file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/cache/)
     file(GLOB CACHE_FILE "${CMAKE_BINARY_DIR}/cache/${SYSTEM_TEST_NAME}_0.pb")
     if (NOT EXISTS ${CACHE_FILE})
