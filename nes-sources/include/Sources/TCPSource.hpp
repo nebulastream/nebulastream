@@ -17,10 +17,8 @@
 #include <cstdint>
 #include <memory>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Source.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
-
-#include <MMapCircularBuffer.hpp>
+#include <Sources/Source.hpp>
+#include <Sources/Util/MMapCircularBuffer.hpp>
 
 namespace NES
 {

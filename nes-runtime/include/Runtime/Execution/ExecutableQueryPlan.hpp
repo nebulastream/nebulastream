@@ -24,7 +24,7 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
-#include <SourceHandle.hpp>
+#include <Sources/SourceHandle.hpp>
 
 namespace NES::Runtime
 {

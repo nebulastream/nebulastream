@@ -23,9 +23,9 @@
 #include <Runtime/ThreadPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <Sources/SourceReturnType.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <SourceReturnType.hpp>
 
 namespace NES::Runtime
 {

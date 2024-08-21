@@ -15,9 +15,9 @@
 #include <numeric>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Sources/Util/MMapCircularBuffer.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <BaseIntegrationTest.hpp>
-#include <MMapCircularBuffer.hpp>
 #include <magic_enum.hpp>
 #include <Common/ExecutableType/Array.hpp>
 namespace NES
@@ -37,7 +37,7 @@ public:
 
 TEST_F(MMapCircularBufferTest, TestConstruction)
 {
-    MMapCircularBuffer buffer(pageSize);
+    Sources::MMapCircularBuffer buffer(pageSize);
     EXPECT_EQ(buffer.capacity(), pageSize);
     EXPECT_EQ(buffer.size(), 0);
     EXPECT_TRUE(buffer.empty());
@@ -46,7 +46,7 @@ TEST_F(MMapCircularBufferTest, TestConstruction)
 
 TEST_F(MMapCircularBufferTest, TestWrite)
 {
-    MMapCircularBuffer buffer(pageSize);
+    Sources::MMapCircularBuffer buffer(pageSize);
 
     {
         auto writer = buffer.write();
@@ -70,7 +70,7 @@ TEST_F(MMapCircularBufferTest, TestWrite)
 
 TEST_F(MMapCircularBufferTest, TestRead)
 {
-    MMapCircularBuffer buffer(pageSize);
+    Sources::MMapCircularBuffer buffer(pageSize);
     {
         auto writer = buffer.write();
         std::memcpy(writer.data(), "SOME_DATA_HERE", 14);
@@ -94,7 +94,7 @@ TEST_F(MMapCircularBufferTest, TestRead)
 
 TEST_F(MMapCircularBufferTest, TestWrapAround)
 {
-    MMapCircularBuffer buffer(pageSize);
+    Sources::MMapCircularBuffer buffer(pageSize);
     {
         /// write pagesize - 2 bytes
         auto writer = buffer.write();

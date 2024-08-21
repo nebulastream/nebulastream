@@ -13,11 +13,10 @@
 */
 
 #include <memory>
-#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
-#include <DataSource.hpp>
-#include <SourceHandle.hpp>
+#include <Sources/DataSource.hpp>
+#include <Sources/SourceHandle.hpp>
 
 namespace NES
 {

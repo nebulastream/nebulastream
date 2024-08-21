@@ -13,9 +13,9 @@
 */
 
 #include <unistd.h>
+#include <Sources/Util/MMapCircularBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <sys/mman.h>
-#include <MMapCircularBuffer.hpp>
 
 #ifdef __APPLE__
 #    include <fcntl.h>

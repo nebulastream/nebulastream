@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <Parsers/Parser.hpp>
+#include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
 namespace NES

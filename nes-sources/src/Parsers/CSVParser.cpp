@@ -15,7 +15,7 @@
 #include <string>
 #include <API/Schema.hpp>
 #include <Exceptions/RuntimeException.hpp>
-#include <Parsers/CSVParser.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
