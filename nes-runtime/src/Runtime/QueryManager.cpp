@@ -197,7 +197,7 @@ QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutabl
             for (const auto& successorPipeline : successors)
             {
                 /// Using a const taskQueueId of 0
-                this->addWorkForNextPipeline(std::get<TupleBuffer>(returntype), successorPipeline, 0);
+                this->addWorkForNextPipeline(std::get<TupleBuffer>(returntype), successorPipeline);
             }
         }
         else

@@ -114,7 +114,7 @@ public:
      * @param Pointer to the pipeline stage that will be executed next
      * @param id of the queue where to put the task (only necessary if multiple queues are used, default is 0)
      */
-    void addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0);
+    void addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable);
 
     /**
      * This method posts a reconfig callback task
