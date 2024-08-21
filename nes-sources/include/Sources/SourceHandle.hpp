@@ -15,8 +15,8 @@
 #pragma once
 
 #include <memory>
-#include <DataSource.hpp>
-#include <SourceReturnType.hpp>
+#include <Sources/DataSource.hpp>
+#include <Sources/SourceReturnType.hpp>
 namespace NES
 {
 

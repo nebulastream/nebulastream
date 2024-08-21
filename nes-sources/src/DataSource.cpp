@@ -17,9 +17,9 @@
 #include <iostream>
 #include <thread>
 #include <utility>
+#include <Sources/DataSource.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
-#include <DataSource.hpp>
 #include <magic_enum.hpp>
 
 #include <Exceptions/Exception.hpp>
