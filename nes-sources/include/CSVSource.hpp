@@ -32,7 +32,9 @@ class CSVSource : public Source
 public:
     explicit CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
 
-    bool fillTupleBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
+    bool fillTupleBuffer(
+        Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
 
     void open() override { /* noop */ };
     void close() override { /* noop */ };
