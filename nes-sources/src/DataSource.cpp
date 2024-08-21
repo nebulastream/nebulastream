@@ -36,13 +36,11 @@ DataSource::DataSource(
     std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     SourceReturnType::EmitFunction&& emitFunction,
     size_t numSourceLocalBuffers,
-    std::unique_ptr<Source> sourceImplementation,
-    uint64_t numberOfBuffersToProduce)
+    std::unique_ptr<Source> sourceImplementation)
     : originId(originId)
     , schema(schema)
     , localBufferManager(std::move(poolProvider))
     , emitFunction(std::move(emitFunction))
-    , numberOfBuffersToProduce(numberOfBuffersToProduce)
     , numSourceLocalBuffers(numSourceLocalBuffers)
     , sourceImplementation(std::move(sourceImplementation))
 {
@@ -207,15 +205,7 @@ void DataSource::runningRoutine()
         setThreadName(thName.c_str());
 
         NES_DEBUG("DataSource {}: Running Data Source of type={}", originId, magic_enum::enum_name(sourceImplementation->getType()));
-        if (numberOfBuffersToProduce == 0)
-        {
-            NES_DEBUG("DataSource: the user does not specify the number of buffers to produce therefore we will produce buffer until "
-                      "the source is empty");
-        }
-        else
-        {
-            NES_DEBUG("DataSource: the user specify to produce {} buffers", numberOfBuffersToProduce);
-        }
+
         /// open
         bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
         sourceImplementation->open();
@@ -223,53 +213,38 @@ void DataSource::runningRoutine()
         uint64_t numberOfBuffersProduced = 0;
         while (running)
         {
-            ///check if already produced enough buffer
-            if (numberOfBuffersToProduce == 0 || numberOfBuffersProduced < numberOfBuffersToProduce)
+            auto tupleBuffer = allocateBuffer();
+            auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, bufferProvider); /// note that receiveData might block
+            NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuplez: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
+
+            ///this checks we received a valid output buffer
+            if (isReceivedData)
             {
-                auto tupleBuffer = allocateBuffer();
-                auto isReceivedData
-                    = sourceImplementation->fillTupleBuffer(tupleBuffer, bufferProvider); /// note that receiveData might block
-                NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuplez: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
+                std::stringstream sourceStringStream;
+                sourceStringStream << this;
+                NES_TRACE(
+                    "DataSource produced buffer {} type= {} string={}: Received Data: {} "
+                    "originId={}",
+                    numberOfBuffersProduced,
+                    magic_enum::enum_name(sourceImplementation->getType()),
+                    sourceStringStream.str(),
+                    tupleBuffer.getNumberOfTuples(),
+                    this->originId);
 
-                ///this checks we received a valid output buffer
-                if (isReceivedData)
-                {
-                    std::stringstream sourceStringStream;
-                    sourceStringStream << this;
-                    NES_TRACE(
-                        "DataSource produced buffer {} type= {} string={}: Received Data: {} "
-                        "originId={}",
-                        numberOfBuffersProduced,
-                        magic_enum::enum_name(sourceImplementation->getType()),
-                        sourceStringStream.str(),
-                        tupleBuffer.getNumberOfTuples(),
-                        this->originId);
-
-                    auto buffer = tupleBuffer.getBuffer();
-                    emitWork(buffer);
-                    ++numberOfBuffersProduced;
-                }
-                else
-                {
-                    NES_DEBUG("DataSource {}: stopping cause of invalid buffer", originId);
-                    running = false;
-                    NES_DEBUG("DataSource {}: Thread going to terminating with graceful exit.", originId);
-                }
-                if (!running)
-                { /// necessary if source stops while receiveData is called due to stricter shutdown logic
-                    NES_DEBUG("Source is not running anymore.")
-                    break;
-                }
+                auto buffer = tupleBuffer.getBuffer();
+                emitWork(buffer);
+                ++numberOfBuffersProduced;
             }
             else
             {
-                NES_DEBUG(
-                    "DataSource {}: Receiving thread terminated ... stopping because cnt={} smaller than "
-                    "numBuffersToProcess={} now return",
-                    originId,
-                    numberOfBuffersProduced,
-                    numberOfBuffersToProduce);
+                NES_DEBUG("DataSource {}: stopping cause of invalid buffer", originId);
                 running = false;
+                NES_DEBUG("DataSource {}: Thread going to terminating with graceful exit.", originId);
+            }
+            if (!running)
+            { /// necessary if source stops while receiveData is called due to stricter shutdown logic
+                NES_DEBUG("Source is not running anymore.")
+                break;
             }
             NES_TRACE("DataSource {} : Data Source finished processing iteration {}", originId, numberOfBuffersProduced);
         }
