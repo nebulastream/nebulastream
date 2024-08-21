@@ -32,9 +32,9 @@
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceProvider.hpp>
 #include <ErrorHandling.hpp>
-#include <SourceHandle.hpp>
-#include <SourceProvider.hpp>
 #include <magic_enum.hpp>
 
 namespace NES::QueryCompilation

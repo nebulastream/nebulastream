@@ -17,8 +17,8 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <SourceHandle.hpp>
-#include <SourceProvider.hpp>
+#include <Sources/SourceHandle.hpp>
+#include <Sources/SourceProvider.hpp>
 
 namespace NES
 {

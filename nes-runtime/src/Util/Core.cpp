@@ -21,11 +21,11 @@
 #include <MemoryLayout/ColumnLayout.hpp>
 #include <MemoryLayout/RowLayout.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Parsers/CSVParser.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
+#include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
