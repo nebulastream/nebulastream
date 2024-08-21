@@ -1,4 +1,3 @@
 */nes-common/include/Util/Backward/*
 */nes-common/include/Util/libcuckoo/*
-*/nes-coordinator/include/Util/jitify/*
 **/backward.hpp
