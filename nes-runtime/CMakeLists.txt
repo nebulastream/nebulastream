@@ -26,12 +26,10 @@ target_include_directories(nes-runtime PUBLIC
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
 # folly
-if (CMAKE_USE_MPMC_BLOCKING_CONCURRENT_QUEUE)
-    include(CMakeFindDependencyMacro)
-    find_package(folly CONFIG REQUIRED)
-    target_link_libraries(nes-runtime PRIVATE folly::folly)
-    target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
-endif ()
+include(CMakeFindDependencyMacro)
+find_package(folly CONFIG REQUIRED)
+target_link_libraries(nes-runtime PRIVATE folly::folly)
+target_include_directories(nes-runtime PRIVATE ${FOLLY_INCLUDE_DIR})
 
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
