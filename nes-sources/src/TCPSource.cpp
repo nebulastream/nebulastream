@@ -43,8 +43,9 @@ void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
     registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
 }
 
-void TCPSource::configure(const Schema& schema, TCPSourceTypePtr tcpSourceType)
+void TCPSource::configure(const Schema& schema, PhysicalSourceTypePtr&& sourceType)
 {
+    auto tcpSourceType = sourceType->as<TCPSourceType>();
     this->sourceConfig = std::move(tcpSourceType);
     this->tupleSize = schema.getSchemaSizeInBytes();
 

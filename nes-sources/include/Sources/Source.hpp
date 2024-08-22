@@ -39,6 +39,10 @@ public:
         const Schema& schema)
         = 0;
 
+    virtual void configure(const Schema& schema, PhysicalSourceTypePtr&& sourceType) = 0;
+
+    ///-Todo: validate function
+
     virtual void open() = 0;
     virtual void close() = 0;
 

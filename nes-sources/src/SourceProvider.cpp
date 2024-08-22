@@ -49,6 +49,8 @@ SourceHandlePtr SourceProvider::lower(
     ///-todo: create purely virtual configure function in SourceRegistry
     ///-todo: decide on name: plugin/extension?
     auto sourceRegistry = SourceRegistry();
+
+    ///-todo We need the source name to access the registry
     if (sourceDescriptor->instanceOf<CSVSourceDescriptor>())
     {
         if (sourceRegistry.tryCreate(CSVSource::PLUGIN_NAME).has_value())

@@ -41,8 +41,9 @@ void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
 
 ///-Todo: improve
 /// Todo #72: remove schema from CSVSource (only required by parser).
-void CSVSource::configure(const Schema& schema, CSVSourceTypePtr&& csvSourceType)
+void CSVSource::configure(const Schema& schema, PhysicalSourceTypePtr&& sourceType)
 {
+    auto csvSourceType = sourceType->as<CSVSourceType>();
     this->csvSourceType = std::move(csvSourceType);
     this->fileEnded = false;
     this->filePath = this->csvSourceType->getFilePath()->getValue();

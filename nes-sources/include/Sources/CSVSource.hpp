@@ -34,7 +34,7 @@ public:
     static inline const std::string PLUGIN_NAME = "CSV";
     ///-Todo: improve
     CSVSource() = default;
-    void configure(const Schema& schema, CSVSourceTypePtr&& csvSourceType);
+    void configure(const Schema& schema, PhysicalSourceTypePtr&& csvSourceType);
 
     bool fillTupleBuffer(
         NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
