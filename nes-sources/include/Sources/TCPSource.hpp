@@ -37,7 +37,7 @@ public:
     static inline const std::string PLUGIN_NAME = "TCP";
     ///-Todo: improve
     TCPSource() : tupleSize(0), tuplesThisPass(0), timeout(TCP_SOCKET_DEFAULT_TIMEOUT), circularBuffer(getpagesize() * 2) {};
-    void configure(const Schema& schema, PhysicalSourceTypePtr&& sourceType) override;
+    void configure(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) override;
 
     bool fillTupleBuffer(
         NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,

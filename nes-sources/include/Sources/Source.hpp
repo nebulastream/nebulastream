@@ -16,6 +16,7 @@
 
 #include <string>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
@@ -39,7 +40,7 @@ public:
         const Schema& schema)
         = 0;
 
-    virtual void configure(const Schema& schema, PhysicalSourceTypePtr&& sourceType) = 0;
+    virtual void configure(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) = 0;
 
     ///-Todo: validate function
 

@@ -18,8 +18,9 @@
 namespace NES
 {
 
+///-Todo: use name from CSVSource, or at least one file (configurations?)
 CSVSourceDescriptor::CSVSourceDescriptor(SchemaPtr schema, CSVSourceTypePtr sourceConfig, const std::string& logicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName), csvSourceType(std::move(sourceConfig))
+    : SourceDescriptor(std::move(schema), logicalSourceName, "CSV"), csvSourceType(std::move(sourceConfig))
 {
 }
 
@@ -55,7 +56,7 @@ std::string CSVSourceDescriptor::toString() const
 
 SourceDescriptorPtr CSVSourceDescriptor::copy()
 {
-    auto copy = CSVSourceDescriptor::create(schema->copy(), csvSourceType, logicalSourceName);
+    auto copy = CSVSourceDescriptor::create(getSchema()->copy(), csvSourceType, getSourceName());
     return copy;
 }
 

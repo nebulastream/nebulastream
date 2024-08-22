@@ -21,6 +21,7 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Registry/GeneratedSourceRegistrar.hpp>
@@ -41,9 +42,9 @@ void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
 
 ///-Todo: improve
 /// Todo #72: remove schema from CSVSource (only required by parser).
-void CSVSource::configure(const Schema& schema, PhysicalSourceTypePtr&& sourceType)
+void CSVSource::configure(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)
 {
-    auto csvSourceType = sourceType->as<CSVSourceType>();
+    auto csvSourceType = sourceDescriptor->as<CSVSourceDescriptor>()->getSourceConfig();
     this->csvSourceType = std::move(csvSourceType);
     this->fileEnded = false;
     this->filePath = this->csvSourceType->getFilePath()->getValue();

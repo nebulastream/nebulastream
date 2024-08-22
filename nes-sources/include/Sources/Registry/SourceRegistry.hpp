@@ -28,7 +28,6 @@ namespace NES::Sources
 class SourceRegistry final
 {
 public:
-    SourceRegistry();
     virtual ~SourceRegistry() = default;
 
     template <bool update = false>
@@ -70,6 +69,7 @@ public:
     static SourceRegistry& instance();
 
 private:
+    SourceRegistry();
     std::unordered_map<std::string, std::function<std::unique_ptr<Source>()>> registry;
 };
 

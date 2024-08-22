@@ -964,6 +964,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         auto logicalSourceDescriptor = sourceDescriptor.as<const LogicalSourceDescriptor>();
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         logicalSourceSerializedSourceDescriptor.set_logicalsourcename(logicalSourceDescriptor->getLogicalSourceName());
+        logicalSourceSerializedSourceDescriptor.set_sourcename(logicalSourceDescriptor->getSourceName());
 
         if (!isClientOriginated)
         {
@@ -1038,8 +1039,8 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const
         serializedSourceDescriptor.UnpackTo(&logicalSourceSerializedSourceDescriptor);
 
         /// de-serialize source schema
-        SourceDescriptorPtr logicalSourceDescriptor
-            = LogicalSourceDescriptor::create(logicalSourceSerializedSourceDescriptor.logicalsourcename());
+        SourceDescriptorPtr logicalSourceDescriptor = LogicalSourceDescriptor::create(
+            logicalSourceSerializedSourceDescriptor.logicalsourcename(), logicalSourceSerializedSourceDescriptor.sourcename());
         /// check if the schema is set
         if (logicalSourceSerializedSourceDescriptor.has_sourceschema())
         {

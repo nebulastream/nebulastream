@@ -25,6 +25,7 @@
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Registry/GeneratedSourceRegistrar.hpp>
@@ -43,9 +44,9 @@ void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
     registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
 }
 
-void TCPSource::configure(const Schema& schema, PhysicalSourceTypePtr&& sourceType)
+void TCPSource::configure(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)
 {
-    auto tcpSourceType = sourceType->as<TCPSourceType>();
+    auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
     this->sourceConfig = std::move(tcpSourceType);
     this->tupleSize = schema.getSchemaSizeInBytes();
 

@@ -25,12 +25,7 @@ namespace NES
 class LogicalSourceDescriptor : public SourceDescriptor
 {
 public:
-    /**
-     * @brief Factory method to create a new logical source descriptor.
-     * @param logicalSourceName Name of this source
-     * @return SourceDescriptorPtr
-     */
-    static SourceDescriptorPtr create(std::string logicalSourceName);
+    static SourceDescriptorPtr create(std::string logicalSourceName, std::string sourceName);
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
 
@@ -38,7 +33,7 @@ public:
     SourceDescriptorPtr copy() override;
 
 private:
-    explicit LogicalSourceDescriptor(std::string logicalSourceName);
+    explicit LogicalSourceDescriptor(std::string logicalSourceName, std::string sourceName);
 };
 
 using LogicalSourceDescriptorPtr = std::shared_ptr<LogicalSourceDescriptor>;

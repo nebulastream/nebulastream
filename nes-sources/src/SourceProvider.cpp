@@ -44,50 +44,16 @@ SourceHandlePtr SourceProvider::lower(
 {
     auto schema = sourceDescriptor->getSchema();
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-
-    ///-todo: use general descriptor -> add name to descriptor, make source registry functions static?
-    ///-todo: create purely virtual configure function in SourceRegistry
-    ///-todo: decide on name: plugin/extension?
-    auto sourceRegistry = SourceRegistry();
-
-    ///-todo We need the source name to access the registry
-    if (sourceDescriptor->instanceOf<CSVSourceDescriptor>())
+    if (auto source = SourceRegistry::instance().tryCreate(sourceDescriptor->getSourceName()); source.has_value())
     {
-        if (sourceRegistry.tryCreate(CSVSource::PLUGIN_NAME).has_value())
-        {
-            NES_INFO("ConvertLogicalToPhysicalSource: Creating CSV file source");
-            auto csvSourceType = sourceDescriptor->as<CSVSourceDescriptor>()->getSourceConfig();
-            auto csvSource = sourceRegistry.tryCreateAs<CSVSource>("CSV").value();
-            csvSource->configure(*schema, std::move(csvSourceType));
-
-            return std::make_shared<SourceHandle>(
-                std::move(originId),
-                std::move(schema),
-                std::move(bufferPool),
-                std::move(emitFunction),
-                NUM_SOURCE_LOCAL_BUFFERS,
-                std::move(csvSource));
-        }
-        return nullptr; ///-Todo: error handling
-    }
-    if (sourceDescriptor->instanceOf<TCPSourceDescriptor>())
-    {
-        if (sourceRegistry.tryCreate(TCPSource::PLUGIN_NAME).has_value())
-        {
-            NES_INFO("ConvertLogicalToPhysicalSource: Creating TCP source");
-            const auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
-            auto tcpSource = sourceRegistry.tryCreateAs<TCPSource>("TCP").value();
-            tcpSource->configure(*schema, tcpSourceType);
-
-            return std::make_shared<SourceHandle>(
-                std::move(originId),
-                std::move(schema),
-                std::move(bufferPool),
-                std::move(emitFunction),
-                NUM_SOURCE_LOCAL_BUFFERS,
-                std::move(tcpSource));
-        }
-        return nullptr; /// Todo: error handling
+        source.value()->configure(schema, std::move(sourceDescriptor));
+        return std::make_shared<SourceHandle>(
+            std::move(originId),
+            std::move(schema),
+            std::move(bufferPool),
+            std::move(emitFunction),
+            NUM_SOURCE_LOCAL_BUFFERS,
+            std::move(source.value()));
     }
     NES_ERROR("ConvertLogicalToPhysicalSource: Unknown Source Descriptor Type {}", schema->toString());
     throw std::invalid_argument("Unknown Source Descriptor Type");
