@@ -12,12 +12,23 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <stdint.h>
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArray.hpp>
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/StdInt.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <gtest/gtest.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Nautilus::Interface
 {

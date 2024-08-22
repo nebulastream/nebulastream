@@ -14,9 +14,22 @@
 
 #pragma once
 
+#include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/OperatorHandlerInterfaces/JoinOperatorHandlerInterfaceSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class StreamSlice;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

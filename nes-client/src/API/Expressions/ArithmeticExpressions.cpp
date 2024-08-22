@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 #include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
@@ -28,6 +31,8 @@
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
 
 namespace NES
 {

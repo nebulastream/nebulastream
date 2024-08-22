@@ -13,8 +13,12 @@
 */
 
 #include <utility>
+#include <vector>
 #include <Expressions/ExpressionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
+
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 ExpressionNode::ExpressionNode(DataTypePtr stamp) : stamp(std::move(stamp))

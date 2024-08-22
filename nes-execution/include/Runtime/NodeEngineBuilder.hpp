@@ -14,7 +14,19 @@
 
 #pragma once
 
+#include <memory>
+#include <vector>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+#include <Runtime/NodeEngine.hpp>
+
+namespace NES
+{
+namespace Configurations
+{
+class WorkerConfiguration;
+} /// namespace Configurations
+} /// namespace NES
 
 namespace NES::Runtime
 {

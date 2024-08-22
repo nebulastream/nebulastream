@@ -15,6 +15,11 @@
 #include <utility>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

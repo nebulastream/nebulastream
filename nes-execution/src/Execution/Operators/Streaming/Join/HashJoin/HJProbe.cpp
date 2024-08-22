@@ -11,22 +11,43 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
+#include <vector>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbe.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <magic_enum.hpp>
-#include <Common/DataTypes/DataType.hpp>
+
+#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/MergingHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Common.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class WindowingStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

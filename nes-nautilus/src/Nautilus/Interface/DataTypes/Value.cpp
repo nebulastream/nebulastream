@@ -11,13 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <functional>
+#include <list>
+#include <optional>
+#include <ostream>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Util/PluginRegistry.hpp>
+
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Nautilus/Tracing/TraceUtil.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus
 {

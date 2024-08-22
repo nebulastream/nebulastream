@@ -13,11 +13,14 @@
 */
 
 #include <set>
+#include <string>
+#include <utility>
 #include <vector>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 

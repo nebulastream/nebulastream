@@ -11,8 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdlib>
+#include <cstring>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class ReconfigurationMessage;
+enum class QueryTerminationType : uint8_t;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

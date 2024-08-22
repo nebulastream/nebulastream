@@ -14,11 +14,26 @@
 
 #pragma once
 #include <list>
+#include <memory>
+#include <string>
+#include <typeinfo>
+#include <vector>
+#include <stdint.h>
 #include <Exceptions/RuntimeException.hpp>
 #include <Runtime/Execution/MigratableStateInterface.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

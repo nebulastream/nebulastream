@@ -11,15 +11,32 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <optional>
+#include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+#include <magic_enum.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <API/Schema.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinBuildBucketing.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

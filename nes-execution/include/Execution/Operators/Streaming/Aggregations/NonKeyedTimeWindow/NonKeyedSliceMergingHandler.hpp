@@ -12,16 +12,39 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+namespace Operators
+{
+template <typename SliceType>
+struct SliceMergeTask;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {
 class State;
 class NonKeyedSlice;
+
 using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 class MultiOriginWatermarkProcessor;
+
 /**
  * @brief The NonKeyedSliceMergingHandler merges thread local pre-aggregated slices for non-keyed
  * tumbling and sliding window aggregations.

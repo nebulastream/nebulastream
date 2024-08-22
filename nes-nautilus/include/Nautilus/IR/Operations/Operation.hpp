@@ -15,13 +15,16 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
+#include <stdint.h>
 #include <Nautilus/IR/Types/BasicTypes.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
 
 namespace NES::Nautilus::IR::Types
 {
 class Stamp;
+
 using StampPtr = std::shared_ptr<Stamp>;
 } /// namespace NES::Nautilus::IR::Types
 

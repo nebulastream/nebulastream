@@ -12,10 +12,16 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {

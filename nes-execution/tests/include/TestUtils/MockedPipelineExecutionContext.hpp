@@ -21,6 +21,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
 
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sequencing/SequenceData.hpp>
+
 namespace NES::Runtime::Execution
 {
 class MockedPipelineExecutionContext : public Runtime::Execution::PipelineExecutionContext

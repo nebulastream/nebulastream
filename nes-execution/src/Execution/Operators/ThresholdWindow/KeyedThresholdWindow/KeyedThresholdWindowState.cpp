@@ -14,6 +14,8 @@
 
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowState.hpp>
 
+#include <Execution/Aggregation/AggregationValue.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 

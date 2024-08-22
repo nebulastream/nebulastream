@@ -17,8 +17,12 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
+#include <__fwd/sstream.h>
+
+#include <API/Schema.hpp>
 
 namespace NES::jni
 {
@@ -35,6 +39,7 @@ namespace NES::Catalogs::UDF
 {
 
 class JavaUDFDescriptor;
+
 using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
 
 /**

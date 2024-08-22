@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdlib>
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArray.hpp>
 #include <Util/Logger/Logger.hpp>
 

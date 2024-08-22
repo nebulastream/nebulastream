@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
 
 namespace NES::Join::Experimental

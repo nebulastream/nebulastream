@@ -12,11 +12,17 @@
     limitations under the License.
 */
 
-#include <cmath>
+#include <limits>
+#include <memory>
+#include <sstream>
+#include <utility>
+#include <vector>
 #include <Expressions/ArithmeticalExpressions/ExpExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
 
 namespace NES
 {

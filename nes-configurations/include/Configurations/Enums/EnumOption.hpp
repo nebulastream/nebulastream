@@ -14,8 +14,8 @@
 #pragma once
 #include <string>
 #include <type_traits>
-#include "Configurations/TypedBaseOption.hpp"
-#include "Util/yaml/Yaml.hpp"
+#include <Configurations/TypedBaseOption.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::Configurations
 {

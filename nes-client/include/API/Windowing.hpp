@@ -15,12 +15,14 @@
 #pragma once
 
 #include <memory>
+#include <stdint.h>
 #include <API/TimeUnit.hpp>
 
 namespace NES
 {
 
 class ExpressionNode;
+
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class ExpressionItem;
@@ -29,16 +31,20 @@ namespace Windowing
 {
 
 class WindowType;
+
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class WindowAggregationDescriptor;
+
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
 class TimeMeasure;
 class TimeCharacteristic;
+
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
 class WatermarkStrategyDescriptor;
+
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 } /// namespace Windowing
 } /// namespace NES
@@ -49,6 +55,7 @@ namespace NES::API
 {
 
 class WindowAggregation;
+
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
 class WindowAggregation
 {

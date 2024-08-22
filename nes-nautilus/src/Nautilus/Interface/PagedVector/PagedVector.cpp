@@ -13,6 +13,7 @@
 */
 
 #include <cstring>
+#include <utility>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>

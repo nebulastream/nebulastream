@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstring>
+#include <deque>
 #include <iostream>
-#include <thread>
+#include <string>
+#include <utility>
 #include <unistd.h>
 #include <Exceptions/Exception.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -25,6 +28,10 @@
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
+
+#include <Runtime/BufferRecycler.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TaggedPointer.hpp>
 
 namespace NES::Runtime
 {

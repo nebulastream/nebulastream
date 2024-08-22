@@ -14,6 +14,9 @@
 
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+
 namespace NES::Nautilus
 {
 

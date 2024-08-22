@@ -12,9 +12,13 @@
     limitations under the License.
 */
 #pragma once
+#include <string>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

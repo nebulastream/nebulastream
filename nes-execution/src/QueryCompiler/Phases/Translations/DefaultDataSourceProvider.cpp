@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::QueryCompilation
 {

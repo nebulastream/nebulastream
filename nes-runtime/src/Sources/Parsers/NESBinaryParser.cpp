@@ -12,16 +12,14 @@
     limitations under the License.
 */
 
-#include <string>
-#include <utility>
-#include <Runtime/BufferManager.hpp>
-#include <Sinks/Formats/NesFormat.hpp>
+#include <cstring>
+#include <string_view>
+#include <vector>
 #include <Sources/Parsers/NESBinaryParser.hpp>
-#include <Util/Common.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <absl/numeric/bits.h>
-#include <absl/types/span.h>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/Parsers/Parser.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES
 {

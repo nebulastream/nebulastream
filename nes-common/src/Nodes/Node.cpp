@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include <queue>
+#include <algorithm>
+#include <ostream>
 #include <utility>
+#include <stdint.h>
 #include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
 

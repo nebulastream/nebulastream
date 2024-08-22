@@ -15,7 +15,10 @@
 #pragma once
 
 #include <any>
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 
@@ -23,9 +26,11 @@ namespace NES
 {
 
 class Schema;
+
 using SchemaPtr = std::shared_ptr<Schema>;
 
 class Operator;
+
 using OperatorPtr = std::shared_ptr<Operator>;
 using OperatorProperties = std::unordered_map<std::string, std::any>;
 

@@ -12,12 +12,23 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cmath>
+#include <memory>
 #include <sstream>
+#include <utility>
+#include <vector>
+#include <stdint.h>
+#include <stdlib.h>
 #include <Expressions/ArithmeticalExpressions/ModExpressionNode.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>
 #include <Common/DataTypes/Integer.hpp>
+
+#include <Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
+
 namespace NES
 {
 

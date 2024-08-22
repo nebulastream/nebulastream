@@ -14,8 +14,21 @@
 
 #pragma once
 #include <cinttypes>
+#include <memory>
 #include <ostream>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Interface
+{
+class ChainedHashMap;
+} /// namespace Interface
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 

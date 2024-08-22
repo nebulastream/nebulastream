@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <string>
 #include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::IR::Operations

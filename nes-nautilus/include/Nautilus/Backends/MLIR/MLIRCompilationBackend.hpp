@@ -12,8 +12,22 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
+
+#include <Nautilus/Backends/Executable.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+
+namespace NES
+{
+class DumpHelper;
+namespace Nautilus
+{
+class CompilationOptions;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::Backends::MLIR
 {
 

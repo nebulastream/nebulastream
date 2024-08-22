@@ -15,6 +15,7 @@
 #pragma once
 
 #include <vector>
+#include <stdint.h>
 #include <Util/QueryState.hpp>
 #include <nlohmann/json_fwd.hpp>
 
@@ -22,6 +23,7 @@ namespace NES
 {
 
 class QueryStateHistoryEntry;
+enum class QueryState : uint8_t;
 
 /** @brief Track a timestamped history of query status changes. */
 using QueryStateHistory = std::vector<QueryStateHistoryEntry>;

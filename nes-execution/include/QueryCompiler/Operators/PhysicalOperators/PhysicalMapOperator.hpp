@@ -13,7 +13,12 @@
 */
 #pragma once
 
+#include <string>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

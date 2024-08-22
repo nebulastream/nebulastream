@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
-#include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
 
 namespace NES
 {

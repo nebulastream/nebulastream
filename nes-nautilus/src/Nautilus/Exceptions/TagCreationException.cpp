@@ -12,6 +12,10 @@
     limitations under the License.
 */
 #include <Nautilus/Exceptions/TagCreationException.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
+#include <Util/StacktraceLoader.hpp>
+
 namespace NES::Nautilus
 {
 

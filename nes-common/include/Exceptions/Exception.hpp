@@ -118,4 +118,4 @@ inline uint64_t getCurrentExceptionCode()
     }
 }
 
-} /// Namespace NES
+} /// namespace NES

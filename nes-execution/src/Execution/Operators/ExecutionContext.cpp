@@ -12,6 +12,10 @@
     limitations under the License.
 */
 
+#include <ostream>
+#include <string>
+#include <utility>
+#include <vector>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -19,6 +23,13 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Execution/Operators/OperatorState.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
 
 namespace NES::Runtime::Execution
 {

@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <source_location>
+#include <utility>
 #include <Exceptions/RuntimeException.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fmt/std.h>
+
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 
 namespace NES::Exceptions
 {

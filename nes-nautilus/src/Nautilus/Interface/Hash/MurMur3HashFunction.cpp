@@ -11,9 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
+#include <stddef.h>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/List/List.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Nautilus/Interface/DataTypes/TypedRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::Interface
 {

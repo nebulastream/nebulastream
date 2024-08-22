@@ -12,10 +12,22 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/LocalHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

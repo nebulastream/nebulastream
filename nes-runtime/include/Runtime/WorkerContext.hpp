@@ -25,11 +25,16 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <folly/ThreadLocal.h>
 
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/LocalBufferPool.hpp>
+
 namespace NES::Runtime
 {
 
 class AbstractBufferProvider;
 class BufferStorage;
+
 using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 
 /**

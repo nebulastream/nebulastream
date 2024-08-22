@@ -14,8 +14,32 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
+
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+class RecordBuffer;
+namespace Operators
+{
+struct JoinSchema;
+struct WindowMetaData;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

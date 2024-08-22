@@ -12,10 +12,15 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <string>
+#include <vector>
 #include <execinfo.h>
+#include <stdint.h>
 #include <Nautilus/Exceptions/TagCreationException.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
-#include <Util/Logger/Logger.hpp>
+
+#include <Nautilus/Tracing/Tag/Tag.hpp>
 
 namespace NES::Nautilus::Tracing
 {

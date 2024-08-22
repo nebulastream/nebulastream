@@ -12,18 +12,35 @@
     limitations under the License.
 */
 
+#include <functional>
+#include <list>
 #include <memory>
+#include <stack>
+#include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Nautilus
 {

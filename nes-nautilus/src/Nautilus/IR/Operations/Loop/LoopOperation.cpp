@@ -12,9 +12,15 @@
     limitations under the License.
 */
 
+#include <vector>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+
 namespace NES::Nautilus::IR::Operations
 {
 LoopOperation::LoopOperation(LoopType loopType)

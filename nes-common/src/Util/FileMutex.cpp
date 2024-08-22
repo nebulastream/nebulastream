@@ -13,6 +13,7 @@
 */
 
 #include <cstring>
+#include <ostream>
 #include <errno.h>
 #include <unistd.h>
 #include <Util/FileMutex.hpp>

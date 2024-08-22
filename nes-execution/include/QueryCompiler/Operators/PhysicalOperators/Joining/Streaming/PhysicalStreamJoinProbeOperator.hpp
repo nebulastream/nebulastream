@@ -14,11 +14,24 @@
 
 #pragma once
 
+#include <string>
 #include <Execution/Expressions/Expression.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Identifiers/Identifiers.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

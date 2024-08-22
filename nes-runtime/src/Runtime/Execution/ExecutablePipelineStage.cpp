@@ -14,6 +14,19 @@
 
 #include <string>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class WorkerContext;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution
 {
 

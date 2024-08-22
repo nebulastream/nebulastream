@@ -13,6 +13,7 @@
 */
 #pragma once
 #include <memory>
+#include <type_traits>
 #include <typeinfo>
 
 /**
@@ -62,6 +63,7 @@ template <typename T, typename U>
 concept IsSame = std::is_same<T, U>::value;
 
 class Typed;
+
 template <typename T>
 concept IsTyped = requires(T&) { IsBase<Typed, T> == true; };
 

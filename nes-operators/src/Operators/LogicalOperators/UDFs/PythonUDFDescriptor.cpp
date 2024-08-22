@@ -16,6 +16,8 @@
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
+
 namespace NES::Catalogs::UDF
 {
 

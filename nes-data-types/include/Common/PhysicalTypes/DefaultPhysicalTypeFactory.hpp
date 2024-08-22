@@ -14,24 +14,30 @@
 
 #pragma once
 
+#include <memory>
 #include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES
 {
 
 class Integer;
+
 using IntegerPtr = std::shared_ptr<Integer>;
 
 class ArrayType;
+
 using ArrayPtr = std::shared_ptr<ArrayType>;
 
 class Float;
+
 using FloatPtr = std::shared_ptr<Float>;
 
 class Char;
+
 using CharPtr = std::shared_ptr<Char>;
 
 class TextType;
+
 using TextPtr = std::shared_ptr<TextType>;
 
 /**

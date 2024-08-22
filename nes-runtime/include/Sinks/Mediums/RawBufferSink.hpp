@@ -14,12 +14,22 @@
 #pragma once
 
 #include <cstdint>
+#include <fstream>
 #include <memory>
 #include <string>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <__fwd/fstream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES
 {
+namespace Runtime
+{
+class TupleBuffer;
+} /// namespace Runtime
 
 /*
 Sink to write raw tuple buffers to the file in format:

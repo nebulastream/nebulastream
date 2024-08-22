@@ -11,13 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <sstream>
+#include <string>
+#include <tuple>
 #include <utility>
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <vector>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/TraceTerminationException.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
+
 namespace NES::Nautilus::Tracing
 {
 

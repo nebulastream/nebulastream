@@ -11,10 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/TupleBufferProxyFunctions.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Record.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

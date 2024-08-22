@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <atomic>
 #include <chrono>
 #include <condition_variable>
 #include <deque>
@@ -20,9 +21,12 @@
 #include <memory>
 #include <mutex>
 #include <shared_mutex>
+#include <string>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
+#include <vector>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -40,6 +44,12 @@
 #include <Util/VirtualEnableSharedFromThis.hpp>
 #include <Util/libcuckoo/cuckoohash_map.hh>
 
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/ExecutionResult.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Sinks/SinksForwaredRefs.hpp>
+
 #ifdef ENABLE_PAPI_PROFILER
 #    include <Runtime/Profiler/PAPIProfiler.hpp>
 #endif
@@ -50,13 +60,19 @@
 namespace NES
 {
 class NesWorker;
+
 namespace Runtime
 {
 
 class ThreadPool;
+class ReconfigurationMessage;
+class TupleBuffer;
+class WorkerContext;
+
 using ThreadPoolPtr = std::shared_ptr<ThreadPool>; /// TODO consider moving this atomic in c++20
 
 class AsyncTaskExecutor;
+
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
 class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable

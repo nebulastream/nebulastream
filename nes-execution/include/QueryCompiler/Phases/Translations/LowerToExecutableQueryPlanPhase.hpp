@@ -13,16 +13,23 @@
 */
 #pragma once
 
+#include <map>
+#include <memory>
+#include <vector>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
 
-#include <vector>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sinks/SinksForwaredRefs.hpp>
+#include <Sources/SourcesForwardedRefs.hpp>
 
 namespace NES
 {
 
 class PhysicalSourceType;
+
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
 namespace QueryCompilation

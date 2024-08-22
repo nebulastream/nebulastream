@@ -14,15 +14,24 @@
 
 #pragma once
 
-#include <Identifiers/Identifiers.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
-
 #include <cstdint>
+#include <fstream>
 #include <memory>
 #include <string>
+#include <Identifiers/Identifiers.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
+#include <__fwd/fstream.h>
+
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sinks/Formats/SinkFormat.hpp>
 
 namespace NES
 {
+namespace Runtime
+{
+class TupleBuffer;
+} /// namespace Runtime
 
 /**
  * @brief The file sink writes the stream result to a text file, in CSV or JSON format.

@@ -14,6 +14,10 @@
 #pragma once
 #include <memory>
 #include <ostream>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <stdint.h>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/Util/CastUtils.hpp>
 #include <Nautilus/Util/Casting.hpp>
@@ -22,6 +26,7 @@ namespace NES::Nautilus
 {
 
 class Any;
+
 typedef std::shared_ptr<Any> AnyPtr;
 
 /**
@@ -76,7 +81,6 @@ class UInt64;
 class Double;
 class Float;
 class Boolean;
-
 template <class T>
 struct RawTypeToNautilusType;
 

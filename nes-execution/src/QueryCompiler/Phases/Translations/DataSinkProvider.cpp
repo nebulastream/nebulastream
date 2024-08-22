@@ -11,9 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::QueryCompilation
 {

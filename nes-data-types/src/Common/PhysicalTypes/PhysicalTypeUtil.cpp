@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>

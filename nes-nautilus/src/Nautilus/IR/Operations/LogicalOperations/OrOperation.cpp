@@ -12,8 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
+
 namespace NES::Nautilus::IR::Operations
 {
 

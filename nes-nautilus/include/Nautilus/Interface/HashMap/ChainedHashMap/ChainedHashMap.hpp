@@ -13,6 +13,12 @@
 */
 #pragma once
 #include <cassert>
+#include <memory>
+#include <memory_resource>
+#include <new>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Runtime/Allocator/MemoryResource.hpp>

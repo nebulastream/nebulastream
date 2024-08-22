@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <utility>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/OperatorState.hpp>
@@ -24,9 +27,29 @@
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
 
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class JoinBuildSideType : uint8_t;
+} /// namespace QueryCompilation
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 class TimeFunction;
+
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 
 /**

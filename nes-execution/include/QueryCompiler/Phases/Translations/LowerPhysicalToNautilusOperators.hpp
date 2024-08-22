@@ -16,6 +16,7 @@
 #include <cstddef>
 #include <memory>
 #include <vector>
+#include <stdint.h>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Expressions/Expression.hpp>
@@ -32,6 +33,20 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class PhysicalOperatorPipeline;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::QueryCompilation
 {

@@ -14,14 +14,21 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES
 {
 
 class SinkLogicalOperator;
+
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 
 /**

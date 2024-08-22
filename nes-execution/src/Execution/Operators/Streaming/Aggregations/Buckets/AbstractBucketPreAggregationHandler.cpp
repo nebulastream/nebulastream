@@ -12,11 +12,39 @@
     limitations under the License.
 */
 
+#include <string>
+#include <utility>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/AbstractBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <fmt/base.h>
+
+#include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketStore.hpp>
+#include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketStore.hpp>
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+namespace Operators
+{
+template <typename SliceType>
+struct SliceMergeTask;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

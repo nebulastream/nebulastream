@@ -11,7 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <Nautilus/IR/Operations/CastOperation.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
 
 namespace NES::Nautilus::IR::Operations
 {

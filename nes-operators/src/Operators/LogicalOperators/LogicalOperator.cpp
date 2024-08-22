@@ -13,11 +13,17 @@
 */
 
 #include <utility>
+#include <vector>
 #include <Operators/Exceptions/InvalidOperatorStateException.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/OperatorState.hpp>
 #include <Util/QuerySignatureContext.hpp>
+
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/Operator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES
 {

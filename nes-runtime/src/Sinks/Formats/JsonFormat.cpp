@@ -12,12 +12,12 @@
     limitations under the License.
 */
 
-#include <iostream>
 #include <utility>
-#include <API/Schema.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Sinks/Formats/SinkFormat.hpp>
 
 namespace NES
 {

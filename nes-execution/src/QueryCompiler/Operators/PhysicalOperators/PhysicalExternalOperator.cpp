@@ -11,10 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <sstream>
 #include <utility>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalExternalOperator.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <__fwd/sstream.h>
+
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

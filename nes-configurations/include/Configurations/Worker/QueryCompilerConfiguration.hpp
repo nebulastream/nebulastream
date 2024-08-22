@@ -15,20 +15,20 @@
 #pragma once
 
 #include <string>
-#include "Configurations/BaseConfiguration.hpp"
-#include "Configurations/ConfigurationOption.hpp"
-#include "Configurations/Enums/CompilationStrategy.hpp"
-#include "Configurations/Enums/DumpMode.hpp"
-#include "Configurations/Enums/MemoryLayoutPolicy.hpp"
-#include "Configurations/Enums/NautilusBackend.hpp"
-#include "Configurations/Enums/OutputBufferOptimizationLevel.hpp"
-#include "Configurations/Enums/PipeliningStrategy.hpp"
-#include "Configurations/Enums/QueryCompilerType.hpp"
-#include "Configurations/Enums/QueryExecutionMode.hpp"
-#include "Configurations/Enums/WindowingStrategy.hpp"
-#include "Configurations/Validation/BooleanValidation.hpp"
-#include "Configurations/Validation/NumberValidation.hpp"
-#include "Util/Common.hpp"
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
+#include <Configurations/Enums/PipeliningStrategy.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
+#include <Configurations/Enums/QueryExecutionMode.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Configurations/Validation/BooleanValidation.hpp>
+#include <Configurations/Validation/NumberValidation.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::Configurations
 {

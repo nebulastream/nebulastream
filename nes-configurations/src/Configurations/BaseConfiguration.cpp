@@ -12,11 +12,23 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <exception>
 #include <filesystem>
 #include <fstream>
+#include <sstream>
+#include <utility>
+#include <ctype.h>
+#include <stddef.h>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/fstream.h>
+#include <__fwd/ios.h>
+#include <__fwd/sstream.h>
+
+#include <Configurations/ConfigurationException.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::Configurations
 {

@@ -14,6 +14,8 @@
 #pragma once
 #include <memory>
 #include <string>
+#include <__fwd/string_view.h>
+
 namespace NES
 {
 

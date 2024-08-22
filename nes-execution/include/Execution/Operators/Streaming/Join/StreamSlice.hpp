@@ -19,8 +19,19 @@
 #include <mutex>
 #include <ostream>
 #include <span>
+#include <string>
 #include <vector>
 #include <Runtime/Execution/StreamSliceInterface.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class BufferManager;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

@@ -16,6 +16,10 @@
 #include <sstream>
 #include <utility>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/ContentBasedWindow/PhysicalThresholdWindowOperator.hpp>
+#include <__fwd/sstream.h>
+
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

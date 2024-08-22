@@ -13,8 +13,13 @@
 */
 
 #include <algorithm>
+#include <ostream>
+#include <variant>
+#include <stddef.h>
 #include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
+
+#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
 
 namespace NES::Nautilus::Tracing
 {

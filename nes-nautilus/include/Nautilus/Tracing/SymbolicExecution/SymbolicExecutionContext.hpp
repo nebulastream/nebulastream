@@ -14,8 +14,10 @@
 #pragma once
 #include <list>
 #include <unordered_map>
+#include <stdint.h>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
 #include <Nautilus/Tracing/Tag/Tag.hpp>
+
 namespace NES::Nautilus::Tracing
 {
 class TagRecorder;

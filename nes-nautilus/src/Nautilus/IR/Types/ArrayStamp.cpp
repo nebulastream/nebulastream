@@ -11,7 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Nautilus/IR/Types/ArrayStamp.hpp>
+
+#include <Nautilus/IR/Types/Stamp.hpp>
 
 namespace NES::Nautilus::IR::Types
 {

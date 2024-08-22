@@ -14,9 +14,22 @@
 
 #pragma once
 
+#include <atomic>
+#include <mutex>
+#include <string>
 #include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class FixedPagesAllocator;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

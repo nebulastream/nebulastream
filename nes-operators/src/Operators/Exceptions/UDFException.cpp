@@ -15,6 +15,8 @@
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include <Exceptions/RequestExecutionException.hpp>
+
 namespace NES
 {
 

@@ -13,6 +13,7 @@
 */
 
 #include <regex>
+#include <stddef.h>
 #include <Configurations/Validation/IpValidation.hpp>
 
 namespace NES::Configurations

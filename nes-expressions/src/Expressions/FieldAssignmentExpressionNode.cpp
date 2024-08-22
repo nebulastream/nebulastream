@@ -14,11 +14,15 @@
 #include <memory>
 #include <sstream>
 #include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
+
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
 
 namespace NES
 {

@@ -12,16 +12,39 @@
     limitations under the License.
 */
 
+#include <string>
 #include <utility>
+#include <stddef.h>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinBuild.hpp>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Operators/OperatorState.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+namespace Runtime
+{
+namespace Execution
+{
+class PipelineExecutionContext;
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

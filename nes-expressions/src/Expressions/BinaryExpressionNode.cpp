@@ -12,9 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <utility>
+#include <vector>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES
 {

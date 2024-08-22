@@ -14,9 +14,28 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+
+#include <Execution/Operators/Operator.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

@@ -15,23 +15,30 @@
 #pragma once
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <deque>
 #include <map>
 #include <memory>
+#include <memory_resource>
 #include <mutex>
 #include <optional>
 #include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <folly/MPMCQueue.h>
 
+#include <Runtime/detail/TupleBufferImpl.hpp>
+
 namespace NES::Runtime
 {
 
 class TupleBuffer;
+
 namespace detail
 {
 class MemorySegment;

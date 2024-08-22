@@ -15,8 +15,16 @@
 #pragma once
 
 #include <vector>
+#include <stdint.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
+
+namespace mlir
+{
+class ModuleOp;
+template <typename OpTy>
+class OwningOpRef;
+} /// namespace mlir
 
 namespace NES::Nautilus::Backends::MLIR
 {

@@ -14,15 +14,27 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
+#include <string>
+#include <stdint.h>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
 #include <sys/socket.h>
 
+#include <Configurations/ConfigurationsNames.hpp>
+
+namespace Yaml
+{
+class Node;
+} /// namespace Yaml
+
 namespace NES
 {
 
 class TCPSourceType;
+
 using TCPSourceTypePtr = std::shared_ptr<TCPSourceType>;
 
 class TCPSourceType : public PhysicalSourceType

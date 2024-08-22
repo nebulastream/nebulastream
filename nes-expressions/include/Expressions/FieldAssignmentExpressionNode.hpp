@@ -13,12 +13,19 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 
 class FieldAssignmentExpressionNode;
+
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 /**
  * @brief A FieldAssignmentExpression represents the assignment of an expression result to a specific field.

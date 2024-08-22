@@ -13,10 +13,14 @@
 */
 
 #include <atomic>
+#include <sstream>
+#include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>

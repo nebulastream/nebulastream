@@ -13,6 +13,8 @@
 */
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Record.hpp>

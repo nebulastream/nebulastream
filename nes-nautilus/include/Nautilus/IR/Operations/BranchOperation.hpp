@@ -14,8 +14,11 @@
 
 #pragma once
 
+#include <string>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::IR::Operations
 {

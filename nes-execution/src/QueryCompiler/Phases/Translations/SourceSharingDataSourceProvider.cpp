@@ -11,10 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
 #include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
+
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation
 {

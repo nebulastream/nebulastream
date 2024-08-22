@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <API/Schema.hpp>
+#include <utility>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
@@ -20,8 +20,17 @@
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/ReconfigurationType.hpp>
+#include <Sinks/Formats/SinkFormat.hpp>
+
 namespace NES
 {
+namespace Runtime
+{
+class WorkerContext;
+} /// namespace Runtime
 
 SinkMedium::SinkMedium(SinkFormatPtr sinkFormat, Runtime::NodeEnginePtr nodeEngine, uint32_t numOfProducers, QueryId QueryId)
     : SinkMedium(sinkFormat, nodeEngine, numOfProducers, QueryId, 1)

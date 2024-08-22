@@ -11,9 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <algorithm>
 #include <sstream>
+#include <stddef.h>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+#include <Sequencing/SequenceData.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

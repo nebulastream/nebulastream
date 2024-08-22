@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include <iostream>
-#include <API/Query.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 #include <Expressions/LogicalExpressions/LessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
@@ -25,7 +26,14 @@
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <API/Expressions/Expressions.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 using namespace NES;
 

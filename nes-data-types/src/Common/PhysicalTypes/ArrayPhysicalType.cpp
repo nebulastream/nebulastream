@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
-#include <iostream>
 #include <sstream>
+#include <__fwd/sstream.h>
 #include <Common/PhysicalTypes/ArrayPhysicalType.hpp>
+
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {

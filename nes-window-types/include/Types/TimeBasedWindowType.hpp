@@ -14,14 +14,19 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/WindowType.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES::Windowing
 {
 
 class TimeBasedWindowType;
+
 using TimeBasedWindowTypePtr = std::shared_ptr<TimeBasedWindowType>;
 
 class TimeBasedWindowType : public WindowType

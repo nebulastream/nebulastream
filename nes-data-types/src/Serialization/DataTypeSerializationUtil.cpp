@@ -12,9 +12,15 @@
     limitations under the License.
 */
 
+#include <ostream>
+#include <string>
+#include <utility>
 #include <vector>
+#include <assert.h>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <google/protobuf/any.pb.h>
+#include <google/protobuf/repeated_ptr_field.h>
 #include <SerializableDataType.pb.h>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
@@ -24,6 +30,9 @@
 #include <Common/DataTypes/TextType.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+
+#include <Common/ValueTypes/ValueType.hpp>
+
 namespace NES
 {
 

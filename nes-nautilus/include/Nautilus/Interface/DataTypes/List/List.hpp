@@ -21,6 +21,21 @@
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Tracing/Trace/ConstantValue.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Double;
+class Float;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus
 {
 

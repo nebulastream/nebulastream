@@ -15,9 +15,16 @@
 #pragma once
 #include <memory>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+
 namespace NES
 {
 class PhysicalType;
+namespace Nautilus
+{
+class MemRef;
+class UInt64;
+} /// namespace Nautilus
+
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 } /// namespace NES
 

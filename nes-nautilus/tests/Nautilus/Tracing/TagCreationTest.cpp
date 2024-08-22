@@ -12,13 +12,20 @@
     limitations under the License.
 */
 
+#include <sstream>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <Nautilus/Exceptions/TagCreationException.hpp>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Nautilus/Tracing/Tag/Tag.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Nautilus::Tracing
 {

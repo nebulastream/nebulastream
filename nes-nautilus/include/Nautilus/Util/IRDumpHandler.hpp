@@ -15,9 +15,15 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <unordered_set>
+#include <stdint.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
+#include <__fwd/ostream.h>
+
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::IR
 {

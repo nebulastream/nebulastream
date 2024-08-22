@@ -12,12 +12,16 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <Exceptions/Exception.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/TaggedPointer.hpp>
 
 namespace NES::Runtime
 {

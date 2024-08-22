@@ -14,6 +14,8 @@
 
 #include <Exceptions/RequestExecutionException.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+
 namespace NES::Exceptions
 {
 RequestExecutionException::RequestExecutionException(const std::string& message) : std::runtime_error(message), queryId(INVALID_QUERY_ID)

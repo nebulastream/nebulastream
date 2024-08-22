@@ -13,10 +13,17 @@
 */
 
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/BufferStorage.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace folly
+{
+enum class TLPDestructionMode;
+} /// namespace folly
 
 namespace NES::Runtime
 {

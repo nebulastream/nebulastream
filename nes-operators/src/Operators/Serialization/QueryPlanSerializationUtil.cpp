@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <map>
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/QueryPlanSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
@@ -21,6 +23,10 @@
 #include <Util/Logger/Logger.hpp>
 #include <SerializableOperator.pb.h>
 #include <SerializableQueryPlan.pb.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {

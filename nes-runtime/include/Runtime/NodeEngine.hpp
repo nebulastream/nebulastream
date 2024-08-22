@@ -14,12 +14,15 @@
 
 #pragma once
 
+#include <memory>
 #include <unordered_map>
 #include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryTerminationType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
 
 namespace NES::Runtime
 {

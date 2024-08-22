@@ -14,6 +14,8 @@
 #pragma once
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
 
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 /**

@@ -14,9 +14,15 @@
 #pragma once
 
 #include <map>
+#include <string>
+#include <utility>
+#include <vector>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES::QueryCompilation
 {

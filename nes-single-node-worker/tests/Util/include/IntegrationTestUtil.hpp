@@ -15,10 +15,21 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <stdint.h>
+#include <__fwd/string_view.h>
 #include <GrpcService.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/Serialization/SchemaSerializationUtil.hpp>
+
+enum QueryTerminationType : int;
 
 namespace NES
 {
+class GRPCServer;
+class SerializableDecomposedQueryPlan;
+
 namespace IntegrationTestUtil
 {
 inline static const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";

@@ -12,12 +12,38 @@
     limitations under the License.
 */
 
+#include <functional>
+#include <optional>
+#include <string_view>
+#include <unordered_set>
+#include <utility>
+#include <assert.h>
+#include <stddef.h>
 #include <Nautilus/Backends/MLIR/JITCompiler.hpp>
-#include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <llvm-c/Target.h>
+#include <llvm/ADT/DenseMap.h>
+#include <llvm/ADT/STLFunctionalExtras.h>
+#include <llvm/ExecutionEngine/JITSymbol.h>
+#include <llvm/ExecutionEngine/Orc/Core.h>
+#include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
+#include <llvm/ExecutionEngine/Orc/Mangling.h>
+#include <llvm/ExecutionEngine/Orc/Shared/ExecutorAddress.h>
+#include <llvm/ExecutionEngine/Orc/Shared/ExecutorSymbolDef.h>
+#include <llvm/IR/LLVMContext.h>
+#include <llvm/IR/Module.h>
+#include <llvm/Support/CodeGen.h>
+#include <llvm/Support/Error.h>
+#include <llvm/Support/raw_ostream.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
+#include <mlir/IR/OwningOpRef.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Export.h>
+
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/DumpHelper.hpp>
+#include <mlir/IR/BuiltinOps.h>
+
 namespace NES::Nautilus::Backends::MLIR
 {
 

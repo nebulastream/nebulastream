@@ -12,9 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
+#include <vector>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <__fwd/sstream.h>
+
+#include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
+
 namespace NES
 {
 

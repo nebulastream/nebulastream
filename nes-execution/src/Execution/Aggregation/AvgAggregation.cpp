@@ -12,10 +12,15 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {

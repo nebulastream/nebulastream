@@ -11,7 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <ostream>
 #include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::IR::Operations
 {

@@ -12,11 +12,14 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/AbstractBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+
+#include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketStore.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

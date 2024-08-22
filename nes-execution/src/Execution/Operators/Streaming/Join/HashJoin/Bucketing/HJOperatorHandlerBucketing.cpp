@@ -12,7 +12,19 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
+
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

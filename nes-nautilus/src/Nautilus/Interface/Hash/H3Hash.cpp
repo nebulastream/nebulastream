@@ -12,11 +12,21 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
+#include <cstring>
+#include <string>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Hash/HashFunction.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Nautilus::Interface
 {

@@ -13,6 +13,11 @@
 */
 #include <sstream>
 #include <Util/TopologyLinkInformation.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+
 namespace NES
 {
 std::string TopologyLinkInformation::toString() const

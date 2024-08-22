@@ -20,6 +20,7 @@
 
 namespace NES
 {
+class JavaUdfDescriptorMessage;
 
 /**
  * Utility class to serialize/deserialize a Java UDF descriptor.

@@ -13,8 +13,17 @@
 */
 #pragma once
 #include <type_traits>
+#include <stdint.h>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Expressions
 {

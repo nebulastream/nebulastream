@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
+#include <vector>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/AppendToSliceStoreAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
@@ -22,6 +24,15 @@
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
+#include <fmt/base.h>
+
+#include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

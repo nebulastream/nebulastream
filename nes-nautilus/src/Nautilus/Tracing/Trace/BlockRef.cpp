@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
+
+#include <Nautilus/Tracing/ValueRef.hpp>
 
 namespace NES::Nautilus::Tracing
 {

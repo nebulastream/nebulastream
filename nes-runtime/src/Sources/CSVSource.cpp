@@ -12,24 +12,31 @@
     limitations under the License.
 */
 #include <chrono>
-#include <cstring>
+#include <cstdlib>
 #include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
 #include <API/AttributeField.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/DataSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <fmt/std.h>
+#include <__fwd/sstream.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Exceptions/RuntimeException.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Sources/Parsers/Parser.hpp>
+#include <Util/TestTupleBuffer.hpp>
 
 namespace NES
 {
+enum class GatheringMode : uint8_t;
 
 CSVSource::CSVSource(
     SchemaPtr schema,

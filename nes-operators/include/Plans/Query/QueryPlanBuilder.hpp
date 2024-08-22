@@ -14,9 +14,19 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <vector>
+#include <stdint.h>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES
 {

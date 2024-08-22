@@ -17,6 +17,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
+#include <Nautilus/IR/Types/StampFactory.hpp>
+
 namespace NES::Runtime::Execution
 {
 class ExecutionContext;
@@ -26,9 +28,11 @@ namespace NES::Runtime::Execution::Operators
 {
 using namespace Nautilus;
 class ExecutableOperator;
+
 using ExecuteOperatorPtr = std::shared_ptr<const ExecutableOperator>;
 
 class Operator;
+
 using OperatorPtr = std::shared_ptr<Operators::Operator>;
 
 /**

@@ -15,14 +15,21 @@
 #pragma once
 #include <map>
 #include <string>
-#include "Configurations/BaseOption.hpp"
-#include "Configurations/ConfigurationException.hpp"
-#include "Configurations/Enums/EnumOption.hpp"
-#include "Configurations/ScalarOption.hpp"
-#include "Configurations/SequenceOption.hpp"
-#include "Configurations/WrapOption.hpp"
-#include "Identifiers/Identifiers.hpp"
-#include "Util/yaml/Yaml.hpp"
+#include <vector>
+
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/ScalarOption.hpp>
+#include <Configurations/SequenceOption.hpp>
+#include <Configurations/WrapOption.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/yaml/Yaml.hpp>
+
+namespace Yaml
+{
+class Node;
+} /// namespace Yaml
 
 namespace NES::Configurations
 {

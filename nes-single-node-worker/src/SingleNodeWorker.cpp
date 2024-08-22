@@ -11,20 +11,35 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <SingleNodeWorker.hpp>
-
+#include <ostream>
+#include <string>
+#include <utility>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Exceptions/Exception.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/QueryCompilationRequest.hpp>
 #include <QueryCompiler/QueryCompilationResult.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
+#include <SingleNodeWorker.hpp>
+
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Configuration.hpp>
 
 namespace NES
 {
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+} /// namespace Runtime
 
 /// TODO(#122): Refactor QueryCompilerConfiguration
 static QueryCompilation::QueryCompilerOptionsPtr
@@ -96,14 +111,16 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 
 QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
 {
-    auto compilationResult = qc->compileQuery(QueryCompilation::QueryCompilationRequest::create(std::move(plan), nodeEngine));
-
-    if (compilationResult->hasError())
+    try
     {
-        NES_THROW_RUNTIME_ERROR("Compilation Failed :)");
+        auto compilationResult = qc->compileQuery(QueryCompilation::QueryCompilationRequest::create(std::move(plan), nodeEngine));
+        return nodeEngine->registerExecutableQueryPlan(compilationResult->getExecutableQueryPlan());
     }
-
-    return nodeEngine->registerExecutableQueryPlan(compilationResult->getExecutableQueryPlan());
+    catch (Exception& e)
+    {
+        tryLogCurrentException();
+        return INVALID_QUERY_ID;
+    }
 }
 void SingleNodeWorker::startQuery(QueryId queryId)
 {

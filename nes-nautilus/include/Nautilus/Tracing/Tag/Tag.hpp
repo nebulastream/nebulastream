@@ -17,7 +17,9 @@
 #include <memory>
 #include <ostream>
 #include <vector>
+#include <stdint.h>
 #include <Nautilus/Util/Trie.hpp>
+#include <__fwd/ostream.h>
 
 namespace NES::Nautilus::Tracing
 {

@@ -12,10 +12,27 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <sstream>
+#include <utility>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
+#include <__fwd/sstream.h>
 #include <magic_enum.hpp>
+
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class WindowingStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

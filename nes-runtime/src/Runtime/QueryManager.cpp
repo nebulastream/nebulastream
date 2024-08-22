@@ -19,20 +19,36 @@
 
 #include <iostream>
 #include <memory>
-#include <stack>
 #include <utility>
+#include <stddef.h>
 #include <Runtime/AsyncTaskExecutor.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Runtime/ThreadPool.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/QueryStatistics.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/ReconfigurationType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/Task.hpp>
+#include <Util/AtomicCounter.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
+#include <Util/libcuckoo/cuckoohash_map.hh>
+
+namespace NES
+{
+class AbstractQueryStatusListener;
+namespace Runtime
+{
+class WorkerContext;
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime
 {
 

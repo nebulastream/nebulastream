@@ -12,17 +12,37 @@
     limitations under the License.
 */
 
+#include <exception>
 #include <memory>
+#include <string>
+#include <string_view>
 #include <utility>
+#include <stdint.h>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
-#include <Exceptions/SignalHandling.hpp>
-#include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/NodeEngineBuilder.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Listeners/QueryStatusListener.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/StacktraceLoader.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+enum class ExecutableQueryPlanStatus : uint8_t;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime
 {

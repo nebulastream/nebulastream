@@ -13,7 +13,12 @@
 */
 
 #pragma once
+#include <string>
+#include <vector>
 #include <Expressions/ExpressionNode.hpp>
+
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 /**

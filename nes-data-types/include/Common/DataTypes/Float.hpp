@@ -14,7 +14,11 @@
 
 #pragma once
 
+#include <string>
+#include <stdint.h>
 #include <Common/DataTypes/Numeric.hpp>
+
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES
 {

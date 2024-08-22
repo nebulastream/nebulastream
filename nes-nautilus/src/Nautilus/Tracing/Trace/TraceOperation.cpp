@@ -12,9 +12,28 @@
     limitations under the License.
 */
 
+#include <ostream>
+#include <utility>
+#include <variant>
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
 #include <Nautilus/Tracing/Trace/TraceOperation.hpp>
 #include <magic_enum.hpp>
+
+#include <Nautilus/Tracing/Trace/ConstantValue.hpp>
+#include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
+#include <Nautilus/Tracing/Trace/InputVariant.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Tracing
+{
+enum class OpCode : uint8_t;
+} /// namespace Tracing
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::Tracing
 {

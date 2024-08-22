@@ -11,10 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <sstream>
 #include <utility>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinBuildOperator.hpp>
+#include <__fwd/sstream.h>
 #include <magic_enum.hpp>
+
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class JoinBuildSideType : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

@@ -13,8 +13,14 @@
 */
 
 #pragma once
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Nautilus::Interface
 {
 

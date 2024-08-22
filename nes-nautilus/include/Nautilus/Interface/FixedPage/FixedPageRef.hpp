@@ -17,6 +17,10 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Nautilus::Interface
 {
 /// Forward declaration

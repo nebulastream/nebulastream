@@ -12,20 +12,27 @@
     limitations under the License.
 */
 
-#include <API/QueryAPI.hpp>
+#include <memory>
+#include <string>
+#include <vector>
 #include <Expressions/ConstantValueExpressionNode.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 using namespace std;
 

@@ -13,13 +13,34 @@
 */
 
 #include <array>
+#include <cstring>
+#include <memory>
+#include <random>
+#include <string>
 #include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/H3Hash.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <gtest/gtest.h>
+
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::Interface
 {

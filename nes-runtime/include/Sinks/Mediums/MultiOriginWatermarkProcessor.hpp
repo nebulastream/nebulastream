@@ -17,7 +17,10 @@
 #include <map>
 #include <memory>
 #include <mutex>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
+
+#include <Sinks/Mediums/WatermarkProcessor.hpp>
 
 namespace NES
 {

@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <string>
 #include <utility>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/Operator.hpp>
@@ -24,6 +26,30 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

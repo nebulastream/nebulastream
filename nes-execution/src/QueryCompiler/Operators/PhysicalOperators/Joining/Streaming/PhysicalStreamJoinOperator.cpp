@@ -14,6 +14,9 @@
 
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
 
+#include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

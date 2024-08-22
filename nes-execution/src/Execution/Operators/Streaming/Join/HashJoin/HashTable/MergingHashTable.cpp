@@ -13,8 +13,16 @@
 */
 
 #include <atomic>
+#include <memory>
+#include <sstream>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/MergingHashTable.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

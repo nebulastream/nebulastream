@@ -13,11 +13,31 @@
 */
 
 #include <cstring>
+#include <sstream>
+#include <string>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::MemRefUtils
 {
 

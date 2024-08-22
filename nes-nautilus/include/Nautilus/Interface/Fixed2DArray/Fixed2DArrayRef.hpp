@@ -14,9 +14,11 @@
 
 #pragma once
 
+#include <cstdint>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
-#include <cstdint>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+
 namespace NES::Nautilus::Interface
 {
 

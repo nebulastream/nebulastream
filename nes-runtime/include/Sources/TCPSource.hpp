@@ -16,15 +16,37 @@
 
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <string>
+#include <vector>
+#include <stddef.h>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/DataSource.hpp>
 #include <Util/MMapCircularBuffer.hpp>
+#include <sys/time.h>
+
+#include <API/Schema.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/Parsers/Parser.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
 
 class Parser;
+enum class GatheringMode : uint8_t;
+namespace Runtime
+{
+namespace MemoryLayouts
+{
+class TestTupleBuffer;
+} /// namespace MemoryLayouts
+} /// namespace Runtime
+
 using ParserPtr = std::shared_ptr<Parser>;
 
 /**

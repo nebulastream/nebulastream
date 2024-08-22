@@ -13,14 +13,42 @@
 */
 
 #pragma once
+#include <memory>
+#include <vector>
+#include <stdint.h>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
+
+#include <Execution/Operators/Operator.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 namespace NES
 {
 class PhysicalType;
+namespace Nautilus
+{
+class MemRef;
+namespace Interface
+{
+class ChainedHashMapRef;
+} /// namespace Interface
+} /// namespace Nautilus
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+class RecordBuffer;
+namespace Aggregation
+{
+class AggregationFunction;
+} /// namespace Aggregation
+} /// namespace Execution
+} /// namespace Runtime
+
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 } /// namespace NES
 namespace NES::Runtime::Execution::Operators

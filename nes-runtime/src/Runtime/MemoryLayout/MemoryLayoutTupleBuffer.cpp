@@ -15,6 +15,8 @@
 #include <utility>
 #include <Runtime/MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 
+#include <Runtime/TupleBuffer.hpp>
+
 namespace NES::Runtime::MemoryLayouts
 {
 MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(TupleBuffer tupleBuffer, uint64_t capacity)

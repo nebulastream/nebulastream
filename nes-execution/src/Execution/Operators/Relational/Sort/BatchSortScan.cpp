@@ -37,17 +37,36 @@
  * SOFTWARE.
  */
 
+#include <algorithm>
+#include <cstring>
+#include <memory>
 #include <queue>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortScan.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

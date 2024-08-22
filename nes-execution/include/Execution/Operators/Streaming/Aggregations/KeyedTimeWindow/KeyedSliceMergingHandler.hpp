@@ -12,13 +12,35 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+namespace Operators
+{
+template <typename SliceType>
+struct SliceMergeTask;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {
 class State;
 class KeyedSlice;
+
 using KeyedSlicePtr = std::unique_ptr<KeyedSlice>;
 
 /**

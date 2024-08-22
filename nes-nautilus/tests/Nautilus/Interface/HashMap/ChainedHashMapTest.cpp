@@ -12,7 +12,15 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <functional>
+#include <initializer_list>
 #include <memory>
+#include <memory_resource>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
@@ -22,10 +30,23 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::Interface
 {
 

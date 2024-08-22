@@ -19,6 +19,8 @@
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <Nautilus/IR/Types/VoidStamp.hpp>
 
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Nautilus::IR::Types
 {
 

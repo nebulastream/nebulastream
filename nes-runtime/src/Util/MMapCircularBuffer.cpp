@@ -12,13 +12,17 @@
     limitations under the License.
 */
 
+#include <cstring>
+#include <errno.h>
 #include <unistd.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/MMapCircularBuffer.hpp>
+#include <fmt/format.h>
 #include <sys/mman.h>
 
 #ifdef __APPLE__
 #    include <fcntl.h>
+
 static std::mutex anonymousFileLock;
 #endif
 

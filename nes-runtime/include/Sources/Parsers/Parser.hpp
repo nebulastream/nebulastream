@@ -13,10 +13,15 @@
 */
 #pragma once
 
+#include <memory>
 #include <string>
 #include <string_view>
 #include <vector>
+#include <stdint.h>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <__fwd/string_view.h>
+
+#include <API/Schema.hpp>
 
 namespace NES
 {
@@ -29,10 +34,12 @@ class TestTupleBuffer;
 namespace Runtime
 {
 class BufferManager;
+
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 } /// namespace Runtime
 
 class PhysicalType;
+
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 /**
  * @brief Base class for all input data parsers in NES

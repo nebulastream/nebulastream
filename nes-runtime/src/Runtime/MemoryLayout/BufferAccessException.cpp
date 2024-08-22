@@ -14,6 +14,10 @@
 
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
+#include <Util/StacktraceLoader.hpp>
+
 namespace NES
 {
 

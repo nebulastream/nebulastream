@@ -12,11 +12,15 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigurationOption.hpp>
+#include <vector>
+#include <stdint.h>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::Configurations
 {

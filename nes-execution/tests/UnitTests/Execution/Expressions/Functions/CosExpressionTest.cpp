@@ -11,12 +11,25 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <memory>
+#include <cmath>
+#include <string>
 #include <Execution/Expressions/Functions/CosExpression.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__math/trigonometric_functions.h>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {

@@ -17,6 +17,7 @@
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/Util/IRDumpHandler.hpp>
+#include <__fwd/sstream.h>
 
 namespace NES::Nautilus::IR
 {

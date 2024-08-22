@@ -16,6 +16,8 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include <Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp>
+
 namespace NES::Join::Experimental
 {
 

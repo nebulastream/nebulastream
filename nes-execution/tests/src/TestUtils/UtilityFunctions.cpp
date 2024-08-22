@@ -12,20 +12,48 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cstring>
+#include <exception>
 #include <filesystem>
 #include <fstream>
-#include <random>
+#include <memory>
 #include <set>
-#include <Execution/Operators/Streaming/SliceAssigner.hpp>
-#include <Nautilus/Interface/Hash/H3Hash.hpp>
-#include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
+#include <sstream>
+#include <stdexcept>
+#include <string_view>
+#include <utility>
+#include <variant>
+#include <strings.h>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
-#include <Util/StdInt.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <__fwd/fstream.h>
+#include <__fwd/sstream.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <Exceptions/RuntimeException.hpp>
+#include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
+#include <Execution/MemoryProvider/RowMemoryProvider.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Util
 {

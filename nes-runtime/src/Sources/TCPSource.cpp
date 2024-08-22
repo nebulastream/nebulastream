@@ -12,29 +12,44 @@
     limitations under the License.
 */
 
-#include <charconv>
+#include <algorithm>
+#include <bit>
 #include <chrono>
 #include <cstring>
+#include <exception>
+#include <iterator>
+#include <span>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include <errno.h> /// For socket error
 #include <netdb.h>
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Sources/Parsers/NESBinaryParser.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+#include <__fwd/string_view.h>
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sources/DataSource.hpp>
+#include <Util/MMapCircularBuffer.hpp>
+#include <Util/TestTupleBuffer.hpp>
+
 namespace NES
 {
+enum class GatheringMode : uint8_t;
 
 TCPSource::TCPSource(
     SchemaPtr schema,

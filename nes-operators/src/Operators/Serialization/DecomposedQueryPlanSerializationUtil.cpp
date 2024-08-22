@@ -12,14 +12,22 @@
     limitations under the License.
 */
 
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <map>
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <SerializableDecomposedQueryPlan.pb.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/Operator.hpp>
+#include <Util/QueryState.hpp>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {

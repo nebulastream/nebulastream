@@ -14,7 +14,12 @@
 
 #pragma once
 
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

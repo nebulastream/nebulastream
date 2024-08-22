@@ -12,7 +12,10 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
@@ -24,6 +27,11 @@
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorFusionPolicy.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation
 {

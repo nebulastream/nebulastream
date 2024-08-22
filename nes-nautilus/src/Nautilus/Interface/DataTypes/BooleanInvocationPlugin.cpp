@@ -11,9 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <memory>
+#include <optional>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 namespace NES::Nautilus
 {
 

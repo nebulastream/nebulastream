@@ -11,8 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <string>
+#include <vector>
+#include <Exceptions/Exception.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
@@ -22,6 +25,12 @@
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
+
+#include <Nodes/Node.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
 {

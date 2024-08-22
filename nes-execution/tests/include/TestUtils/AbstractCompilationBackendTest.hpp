@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/Phases/LoopDetectionPhase.hpp>
@@ -23,6 +25,10 @@
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <gtest/gtest-param-test.h>
 #include <gtest/gtest.h>
+
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/DumpHelper.hpp>
 
 namespace NES::Nautilus
 {

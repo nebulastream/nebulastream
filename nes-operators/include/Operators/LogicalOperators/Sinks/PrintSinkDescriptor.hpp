@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <stdint.h>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES

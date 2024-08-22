@@ -13,7 +13,6 @@
 */
 
 #include <Util/Logger/Logger.hpp>
-#include <fmt/core.h>
 #include <Common/PhysicalTypes/TextPhysicalType.hpp>
 
 namespace NES

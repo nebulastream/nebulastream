@@ -14,8 +14,28 @@
 
 #pragma once
 
+#include <memory>
+#include <span>
+#include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Identifiers/Identifiers.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class TupleBuffer;
+namespace Execution
+{
+class PipelineExecutionContext;
+class StreamSlice;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -31,6 +51,7 @@ struct EmittedNLJWindowTriggerTask
 };
 
 class NLJOperatorHandler;
+
 using NLJOperatorHandlerPtr = std::shared_ptr<NLJOperatorHandler>;
 
 class NLJOperatorHandler : public virtual StreamJoinOperatorHandler

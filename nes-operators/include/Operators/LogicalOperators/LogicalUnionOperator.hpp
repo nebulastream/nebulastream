@@ -14,8 +14,13 @@
 
 #pragma once
 
+#include <string>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 
 namespace NES
 {

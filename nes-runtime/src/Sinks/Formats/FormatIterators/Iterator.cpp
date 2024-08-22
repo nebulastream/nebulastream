@@ -12,11 +12,17 @@
     limitations under the License.
 */
 
-#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <map>
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
+#include <nlohmann/json_fwd.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
 namespace NES
 {
 

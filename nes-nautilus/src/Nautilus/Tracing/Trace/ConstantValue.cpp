@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <ostream>
 #include <Nautilus/Tracing/Trace/ConstantValue.hpp>
 
 namespace NES::Nautilus::Tracing

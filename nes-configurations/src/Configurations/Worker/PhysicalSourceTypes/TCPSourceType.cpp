@@ -12,10 +12,18 @@
     limitations under the License.
 */
 
-#include <cstring>
+#include <sstream>
 #include <utility>
+#include <strings.h>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+#include <fmt/base.h>
+#include <sys/socket.h>
+
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES
 {

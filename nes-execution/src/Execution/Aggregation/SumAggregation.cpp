@@ -11,9 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
 #include <Execution/Aggregation/SumAggregation.hpp>
-#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Runtime::Execution::Aggregation
 {
 

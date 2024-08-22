@@ -13,6 +13,9 @@
 */
 
 #include <Nautilus/Interface/DataTypes/Identifier.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+
 namespace NES::Nautilus
 {
 bool Identifier::isIdentifier(const Any& val)

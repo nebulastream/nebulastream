@@ -13,13 +13,28 @@
 */
 #pragma once
 
+#include <memory>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+class UInt64;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::MemoryProvider
 {
 
 class MemoryProvider;
+
 using MemoryProviderPtr = std::unique_ptr<MemoryProvider>;
 
 /**

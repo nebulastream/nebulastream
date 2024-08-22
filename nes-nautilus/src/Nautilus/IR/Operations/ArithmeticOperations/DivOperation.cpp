@@ -12,8 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <string>
+#include <utility>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
+
 namespace NES::Nautilus::IR::Operations
 {
 DivOperation::DivOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)

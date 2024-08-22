@@ -12,14 +12,30 @@
     limitations under the License.
 */
 
+#include <any>
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 #include <fmt/format.h>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES::Experimental
 {

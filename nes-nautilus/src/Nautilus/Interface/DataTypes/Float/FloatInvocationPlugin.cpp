@@ -11,12 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/IR/Types/FloatStamp.hpp>
+#include <functional>
+#include <memory>
+#include <optional>
+#include <utility>
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 #include <Nautilus/Interface/DataTypes/Float/Float.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
-#include <Nautilus/Tracing/TraceContext.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus
 {

@@ -13,23 +13,39 @@
 */
 
 #include <cstdint>
+#include <functional>
+#include <iostream>
+#include <list>
 #include <memory>
+#include <stack>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
+#include <utility>
+#include <vector>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
-#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
+
+#include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
+#include <Nautilus/IR/Phases/LoopDetectionPhase.hpp>
+#include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
+#include <Nautilus/IR/Phases/StructuredControlFlowPhase.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 
 namespace NES::Nautilus
 {

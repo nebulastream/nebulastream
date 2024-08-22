@@ -13,7 +13,12 @@
 */
 
 #pragma once
+#include <string>
 #include <Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 

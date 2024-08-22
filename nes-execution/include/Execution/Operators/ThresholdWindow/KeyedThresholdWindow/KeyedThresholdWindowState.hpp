@@ -17,6 +17,7 @@
 #include <memory>
 #include <mutex>
 #include <vector>
+#include <stdint.h>
 #include <Execution/Aggregation/AggregationValue.hpp>
 
 namespace NES::Runtime::Execution::Operators

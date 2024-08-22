@@ -11,9 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <map>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
+#include <stdint.h>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -25,16 +28,31 @@
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

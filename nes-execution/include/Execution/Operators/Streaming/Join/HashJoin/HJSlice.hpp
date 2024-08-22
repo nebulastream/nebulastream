@@ -13,7 +13,13 @@
 */
 
 #pragma once
+#include <atomic>
+#include <memory>
+#include <mutex>
+#include <string>
 #include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLockFree.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLocking.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/LocalHashTable.hpp>
@@ -23,6 +29,16 @@
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Common.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class JoinBuildSideType : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

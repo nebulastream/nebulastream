@@ -15,7 +15,11 @@
 #pragma once
 
 #include <cstdint>
+#include <type_traits>
+#include <utility>
 #include <Common/ExecutableType/NESType.hpp>
+
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::PhysicalTypes
 {

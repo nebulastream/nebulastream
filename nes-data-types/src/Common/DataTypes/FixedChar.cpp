@@ -15,6 +15,8 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/FixedChar.hpp>
 
+#include <Common/DataTypes/ArrayType.hpp>
+
 namespace NES
 {
 

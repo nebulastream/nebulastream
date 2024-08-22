@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <Configurations/Enums/WindowingStrategy.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
@@ -23,6 +24,25 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Util/Common.hpp>
 #include <magic_enum.hpp>
+
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+namespace Operators
+{
+class HJOperatorHandlerBucketing;
+class HJOperatorHandlerSlicing;
+class NLJOperatorHandlerBucketing;
+class NLJOperatorHandlerSlicing;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

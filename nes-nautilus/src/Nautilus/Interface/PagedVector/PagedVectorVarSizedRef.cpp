@@ -12,14 +12,27 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/AttributeField.hpp>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <API/Schema.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Nautilus/Interface/DataTypes/TypedRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/StdInt.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Nautilus::Interface
 {

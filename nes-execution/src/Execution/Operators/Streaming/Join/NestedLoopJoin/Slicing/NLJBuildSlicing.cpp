@@ -11,19 +11,34 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
-#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <memory>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJBuildSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <magic_enum.hpp>
-#include <Common/DataTypes/DataType.hpp>
+
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

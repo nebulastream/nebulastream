@@ -14,12 +14,18 @@
 
 #pragma once
 
+#include <functional>
+#include <memory>
 #include <mutex>
 #include <optional>
 #include <queue>
 #include <unordered_map>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Runtime/AbstractBufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
+
 namespace NES::Runtime
 {
 

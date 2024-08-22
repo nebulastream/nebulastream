@@ -22,6 +22,8 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include <Identifiers/NESStrongType.hpp>
+
 /// Turn this on to have Thread::current_num_threads_ keep a count of currently-active threads.
 #undef COUNT_ACTIVE_THREADS
 

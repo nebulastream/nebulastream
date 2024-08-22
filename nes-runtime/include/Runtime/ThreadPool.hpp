@@ -14,10 +14,25 @@
 
 #pragma once
 
+#include <atomic>
 #include <iostream>
+#include <memory>
+#include <mutex>
 #include <thread>
 #include <vector>
+#include <stdint.h>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/QueryManager.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class WorkerContext;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime
 {

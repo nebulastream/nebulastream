@@ -15,14 +15,19 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <Exceptions/RuntimeException.hpp>
+#include <__fwd/string_view.h>
+
 namespace NES
 {
 
 class SourceDescriptor;
+
 using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
 
 class Schema;
+
 using SchemaPtr = std::shared_ptr<Schema>;
 
 class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>

@@ -20,6 +20,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataType.hpp>
 
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES
 {
 FieldRenameExpressionNode::FieldRenameExpressionNode(const FieldAccessExpressionNodePtr& originalField, std::string newFieldName)

@@ -13,9 +13,31 @@
 */
 #pragma once
 
+#include <atomic>
+#include <stdint.h>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class ExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

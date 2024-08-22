@@ -14,7 +14,9 @@
 
 #pragma once
 #include <sstream>
+#include <string>
 #include <Identifiers/Identifiers.hpp>
+#include <__fwd/ostream.h>
 
 namespace NES
 {

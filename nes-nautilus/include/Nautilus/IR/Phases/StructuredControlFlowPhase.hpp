@@ -15,13 +15,29 @@
 
 #include <memory>
 #include <stack>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
+#include <stdint.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace IR
+{
+namespace Operations
+{
+class IfOperation;
+} /// namespace Operations
+} /// namespace IR
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::IR
 {

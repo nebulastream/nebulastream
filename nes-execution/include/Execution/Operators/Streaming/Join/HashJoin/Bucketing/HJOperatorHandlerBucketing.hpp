@@ -14,8 +14,21 @@
 
 #pragma once
 
+#include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerBucketing.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Identifiers/Identifiers.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

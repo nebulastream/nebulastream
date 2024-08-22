@@ -15,7 +15,7 @@
 #include <memory>
 #include <stack>
 #include <string>
-#include <unordered_map>
+#include <vector>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/ConstIntOperation.hpp>
@@ -28,6 +28,12 @@
 #include <Nautilus/IR/Phases/LoopDetectionPhase.hpp>
 #include <Nautilus/Util/IRDumpHandler.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
 
 namespace NES::Nautilus::IR
 {

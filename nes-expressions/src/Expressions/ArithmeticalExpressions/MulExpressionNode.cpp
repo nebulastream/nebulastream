@@ -12,10 +12,16 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
 #include <utility>
+#include <vector>
 #include <Expressions/ArithmeticalExpressions/MulExpressionNode.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
+
+#include <Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
+
 namespace NES
 {
 

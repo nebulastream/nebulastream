@@ -13,7 +13,9 @@
 */
 
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingException.hpp>
-#include <Util/Logger/Logger.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
+#include <Util/StacktraceLoader.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

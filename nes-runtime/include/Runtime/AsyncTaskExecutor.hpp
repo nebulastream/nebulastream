@@ -14,15 +14,26 @@
 
 #pragma once
 
+#include <atomic>
 #include <condition_variable>
 #include <deque>
+#include <exception>
+#include <functional>
 #include <future>
 #include <memory>
 #include <mutex>
+#include <new>
+#include <string>
 #include <thread>
+#include <type_traits>
+#include <utility>
 #include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
 
 namespace NES::Runtime
 {

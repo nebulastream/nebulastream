@@ -11,17 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
+#include <memory>
+#include <string>
 #include <utility>
-#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
-#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
-#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
+#include <vector>
+#include <Exceptions/Exception.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/NautilusCompilationPase.hpp>
+#include <fmt/format.h>
+
+#include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <QueryCompiler/QueryCompilerOptions.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation
 {

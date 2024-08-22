@@ -13,6 +13,8 @@
 */
 #include <Nautilus/IR/Types/VoidStamp.hpp>
 
+#include <Nautilus/IR/Types/Stamp.hpp>
+
 namespace NES::Nautilus::IR::Types
 {
 VoidStamp::VoidStamp() : Stamp(&type)

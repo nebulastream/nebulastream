@@ -12,8 +12,26 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <sstream>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Phases/Translations/ExpressionProvider.hpp>
+#include <__fwd/sstream.h>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

@@ -12,13 +12,30 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/OperatorState.hpp>
 #include <Execution/Operators/Streaming/IngestionTimeWatermarkAssignment.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Operator.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

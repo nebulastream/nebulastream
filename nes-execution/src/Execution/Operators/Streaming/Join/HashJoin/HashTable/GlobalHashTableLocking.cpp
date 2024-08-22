@@ -12,9 +12,22 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <vector>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/GlobalHashTableLocking.hpp>
 #include <Util/Common.hpp>
+
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class FixedPagesAllocator;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

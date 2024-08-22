@@ -12,16 +12,23 @@
     limitations under the License.
 */
 
-#include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
-
-#include <iostream>
-#include <API/Query.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <gtest/gtest.h>
+
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 using namespace NES;
 

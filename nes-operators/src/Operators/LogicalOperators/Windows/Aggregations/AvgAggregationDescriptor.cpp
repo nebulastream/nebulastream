@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Expressions/ExpressionNode.hpp>
@@ -19,6 +21,8 @@
 #include <Operators/LogicalOperators/Windows/Aggregations/AvgAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Windowing
 {

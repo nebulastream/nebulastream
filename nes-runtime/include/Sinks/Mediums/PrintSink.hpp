@@ -15,16 +15,23 @@
 #pragma once
 
 #include <cstdint>
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <string>
-
-#include <iostream>
 #include <Identifiers/Identifiers.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
+#include <__fwd/ostream.h>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sinks/Formats/SinkFormat.hpp>
 
 namespace NES
 {
+namespace Runtime
+{
+class TupleBuffer;
+} /// namespace Runtime
 
 /**
  * @brief this class provides a print sink

@@ -14,16 +14,36 @@
 
 #pragma once
 
+#include <compare>
+#include <cstddef>
 #include <cstdint>
 #include <functional>
 #include <map>
 #include <memory>
+#include <sstream>
+#include <string>
 #include <vector>
 #include <Exceptions/RuntimeException.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Common.hpp>
+#include <__fwd/sstream.h>
 #include <folly/Synchronized.h>
+
+#include <Identifiers/NESStrongType.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class TupleBuffer;
+class WorkerContext;
+namespace Execution
+{
+class OperatorHandler;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

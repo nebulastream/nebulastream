@@ -37,7 +37,13 @@ https://www.codeproject.com/Articles/28720/YAML-Parser-in-C
 #include <iostream>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
+#include <utility>
+#include <ctype.h>
+#include <stddef.h>
+#include <__fwd/istream.h>
+#include <__fwd/sstream.h>
 
 /**
  * @brief Namespace wrapping mini-yaml classes.

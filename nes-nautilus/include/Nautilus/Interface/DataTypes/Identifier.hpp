@@ -14,11 +14,18 @@
 
 #pragma once
 
+#include <concepts>
+#include <memory>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Nautilus
 {

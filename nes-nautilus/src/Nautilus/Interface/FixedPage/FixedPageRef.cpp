@@ -15,7 +15,9 @@
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
-#include <Nautilus/Interface/FunctionCall.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Nautilus::Interface
 {

@@ -12,10 +12,16 @@
     limitations under the License.
 */
 #include <algorithm>
+#include <iterator>
+#include <memory>
 #include <sstream>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
 {

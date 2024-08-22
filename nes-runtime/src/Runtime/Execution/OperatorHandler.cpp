@@ -14,6 +14,8 @@
 
 #include <Runtime/Execution/OperatorHandler.hpp>
 
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime::Execution
 {
 std::vector<Runtime::TupleBuffer> OperatorHandler::getStateToMigrate(uint64_t, uint64_t)

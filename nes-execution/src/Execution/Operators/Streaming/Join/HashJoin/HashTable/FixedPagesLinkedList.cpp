@@ -12,10 +12,15 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <sstream>
 #include <thread>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
-#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
+#include <Runtime/Allocator/FixedPagesAllocator.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

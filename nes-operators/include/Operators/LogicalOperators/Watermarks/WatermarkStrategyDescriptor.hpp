@@ -15,10 +15,13 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <typeinfo>
 
 namespace NES
 {
 class Schema;
+
 using SchemaPtr = std::shared_ptr<Schema>;
 
 } /// namespace NES
@@ -27,6 +30,7 @@ namespace NES::Windowing
 {
 
 class WatermarkStrategyDescriptor;
+
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 
 class WatermarkStrategyDescriptor : public std::enable_shared_from_this<WatermarkStrategyDescriptor>

@@ -19,6 +19,7 @@
 
 namespace NES
 {
+enum class FormatTypes : uint8_t;
 
 FormatIterator::FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer, FormatTypes formatType)
     : schema(std::move(schema)), buffer(std::move(buffer)), sinkFormatType(formatType) {};

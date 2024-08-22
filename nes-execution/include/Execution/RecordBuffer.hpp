@@ -22,6 +22,9 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+
 namespace NES::Nautilus
 {
 class Record;

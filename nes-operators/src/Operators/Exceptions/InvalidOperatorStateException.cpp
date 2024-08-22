@@ -13,10 +13,21 @@
 */
 
 #include <sstream>
-#include <Identifiers/NESStrongTypeFormat.hpp>
+#include <string_view>
 #include <Operators/Exceptions/InvalidOperatorStateException.hpp>
-#include <fmt/core.h>
+#include <__fwd/sstream.h>
+#include <fmt/format.h>
 #include <magic_enum.hpp>
+
+#include <Exceptions/RequestExecutionException.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Identifiers/NESStrongTypeFormat.hpp>
+
+namespace NES
+{
+enum class OperatorState : uint8_t;
+} /// namespace NES
 
 namespace NES::Exceptions
 {

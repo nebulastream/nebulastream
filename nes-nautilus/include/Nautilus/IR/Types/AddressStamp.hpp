@@ -12,7 +12,11 @@
     limitations under the License.
 */
 #pragma once
+#include <string>
 #include <Nautilus/IR/Types/Stamp.hpp>
+
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Nautilus::IR::Types
 {
 

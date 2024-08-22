@@ -12,11 +12,15 @@
     limitations under the License.
 */
 
-#include <bitset>
-#include <Runtime/TupleBuffer.hpp>
+#include <new>
+#include <sstream>
+#include <utility>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/TaggedPointer.hpp>
 
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS
 #    include <mutex>

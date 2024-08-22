@@ -18,10 +18,16 @@
 #include <memory>
 #include <string>
 
+namespace Yaml
+{
+class Node;
+} /// namespace Yaml
+
 namespace NES
 {
 
 class PhysicalSourceType;
+
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
 namespace Configurations

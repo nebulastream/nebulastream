@@ -13,11 +13,36 @@
 */
 
 #pragma once
+#include <memory>
+#include <vector>
+#include <stdint.h>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+class RecordBuffer;
+namespace Aggregation
+{
+class AggregationFunction;
+} /// namespace Aggregation
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

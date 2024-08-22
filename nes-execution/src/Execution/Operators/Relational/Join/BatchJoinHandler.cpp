@@ -11,10 +11,24 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
+#include <stddef.h>
 #include <Execution/Operators/Relational/Join/BatchJoinHandler.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class ReconfigurationMessage;
+enum class QueryTerminationType : uint8_t;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

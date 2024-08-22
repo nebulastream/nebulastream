@@ -12,6 +12,13 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <stdint.h>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -21,10 +28,30 @@
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
-#include <Common/DataTypes/Integer.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Nautilus/IR/Types/Stamp.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Expressions
 {

@@ -13,6 +13,9 @@
 */
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+
 namespace NES::Runtime::Execution::Expressions
 {
 

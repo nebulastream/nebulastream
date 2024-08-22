@@ -13,10 +13,14 @@
 */
 
 #include <algorithm>
+#include <cstddef>
+#include <functional>
 #include <numeric>
 #include <sstream>
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 
 namespace NES::Catalogs::UDF
 {

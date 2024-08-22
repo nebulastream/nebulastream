@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
+#include <stdint.h>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 

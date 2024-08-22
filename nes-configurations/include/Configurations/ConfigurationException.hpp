@@ -14,8 +14,12 @@
 
 #pragma once
 
+#include <source_location>
 #include <string>
-#include "Exceptions/RuntimeException.hpp"
+
+#include <Exceptions/RuntimeException.hpp>
+#include <Util/StacktraceLoader.hpp>
+
 namespace NES::Configurations
 {
 

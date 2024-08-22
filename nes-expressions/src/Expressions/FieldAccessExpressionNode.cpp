@@ -11,12 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <stdexcept>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES
 {
 FieldAccessExpressionNode::FieldAccessExpressionNode(DataTypePtr stamp, std::string fieldName)

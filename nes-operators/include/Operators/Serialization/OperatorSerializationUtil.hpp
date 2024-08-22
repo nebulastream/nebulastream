@@ -15,6 +15,7 @@
 #pragma once
 
 #include <memory>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
@@ -22,6 +23,9 @@
 #include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <SerializableOperator.pb.h>
+
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES
 {
@@ -44,6 +48,29 @@ class SerializableOperator_ProjectionDetails;
 class SerializableOperator_FilterDetails;
 class SerializableOperator_UnionDetails;
 class SerializableOperator_BroadcastDetails;
+class LogicalFilterOperator;
+class LogicalJoinOperator;
+class LogicalLimitOperator;
+class LogicalMapOperator;
+class LogicalOpenCLOperator;
+class LogicalProjectionOperator;
+class SinkLogicalOperator;
+class SourceDescriptor;
+class SourceLogicalOperator;
+class WatermarkAssignerLogicalOperator;
+class WindowOperator;
+namespace Experimental
+{
+class LogicalBatchJoinOperator;
+} /// namespace Experimental
+namespace InferModel
+{
+class LogicalInferModelOperator;
+} /// namespace InferModel
+namespace Windowing
+{
+class WatermarkStrategyDescriptor;
+} /// namespace Windowing
 
 /**
  * @brief The OperatorSerializationUtil offers functionality to serialize and deserialize logical operator trees to a

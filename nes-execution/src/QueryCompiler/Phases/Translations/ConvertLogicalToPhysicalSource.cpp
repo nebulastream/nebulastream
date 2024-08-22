@@ -12,6 +12,9 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <Exceptions/Exception.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSource.hpp>
@@ -19,6 +22,10 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Sources/DataSource.hpp>
 
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #    if defined(__linux__)

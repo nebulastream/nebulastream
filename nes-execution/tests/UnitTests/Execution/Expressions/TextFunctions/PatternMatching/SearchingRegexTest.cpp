@@ -13,14 +13,29 @@
 */
 
 #include <memory>
+#include <string>
 #include <Execution/Expressions/TextFunctions/PatternMatching/SearchingRegex.hpp>
-#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/ExpressionWrapper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Text;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Expressions
 {

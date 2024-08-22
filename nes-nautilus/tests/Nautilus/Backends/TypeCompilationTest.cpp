@@ -13,10 +13,12 @@
 */
 
 #include <cstdint>
+#include <list>
 #include <memory>
+#include <optional>
+#include <string>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -25,7 +27,31 @@
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/Backends/Executable.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class TextValue;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus
 {

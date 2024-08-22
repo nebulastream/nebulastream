@@ -13,10 +13,14 @@
 */
 #pragma once
 
+#include <string>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/PhysicalJoinOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 #include <Util/Common.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

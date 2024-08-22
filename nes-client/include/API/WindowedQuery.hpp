@@ -14,25 +14,34 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
+
+#include <API/Query.hpp>
+
 namespace NES
 {
 
 class Query;
 class Operator;
+
 using OperatorPtr = std::shared_ptr<Operator>;
 
 class ExpressionItem;
-
 class ExpressionNode;
+
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class FieldAssignmentExpressionNode;
+
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
 namespace API
 {
 class WindowAggregation;
+
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
 } /// namespace API
 

@@ -15,15 +15,25 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <string>
+#include <stdint.h>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Util/yaml/Yaml.hpp>
+
+#include <Util/GatheringMode.hpp>
+
+namespace Yaml
+{
+class Node;
+} /// namespace Yaml
 
 namespace NES
 {
 
 class CSVSourceType;
+
 using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
 
 /**

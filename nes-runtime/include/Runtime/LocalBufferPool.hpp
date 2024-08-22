@@ -14,19 +14,28 @@
 
 #pragma once
 
+#include <atomic>
+#include <chrono>
 #include <deque>
 #include <memory>
 #include <mutex>
+#include <optional>
+#include <stddef.h>
+#include <stdint.h>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <folly/MPMCQueue.h>
 
+#include <Runtime/detail/TupleBufferImpl.hpp>
+
 namespace NES::Runtime
 {
 class BufferManager;
+
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 class TupleBuffer;
+
 namespace detail
 {
 class MemorySegment;

@@ -13,7 +13,10 @@
 */
 
 #include <algorithm>
-#include <queue>
+#include <deque>
+#include <map>
+#include <sstream>
+#include <utility>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -21,9 +24,14 @@
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {
+enum class QueryState : uint8_t;
 
 DecomposedQueryPlanPtr DecomposedQueryPlan::create(QueryId queryId, WorkerId workerId)
 {

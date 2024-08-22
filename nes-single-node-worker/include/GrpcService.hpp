@@ -13,8 +13,29 @@
 */
 
 #pragma once
+#include <utility>
+#include <grpcpp/support/status.h>
 #include <SingleNodeWorker.hpp>
 #include <SingleNodeWorkerRPCService.grpc.pb.h>
+
+class QueryStatusReply;
+class QueryStatusRequest;
+class RegisterQueryReply;
+class RegisterQueryRequest;
+class StartQueryRequest;
+class StopQueryRequest;
+class UnregisterQueryRequest;
+namespace google
+{
+namespace protobuf
+{
+class Empty;
+} /// namespace protobuf
+} /// namespace google
+namespace grpc
+{
+class ServerContext;
+} /// namespace grpc
 
 namespace NES
 {

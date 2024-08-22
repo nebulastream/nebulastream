@@ -11,19 +11,33 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <optional>
+#include <string_view>
 #include <utility>
-#include <API/AttributeField.hpp>
-#include <Execution/Operators/ExecutionContext.hpp>
+#include <vector>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJBuildBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinBuildBucketing.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Common.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

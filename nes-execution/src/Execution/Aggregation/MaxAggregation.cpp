@@ -12,11 +12,18 @@
     limitations under the License.
 */
 
-#include <limits>
+#include <string>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {

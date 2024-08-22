@@ -13,7 +13,16 @@
 */
 
 #pragma once
+#include <atomic>
 #include <list>
+#include <map>
+#include <memory>
+#include <optional>
+#include <span>
+#include <unordered_map>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
@@ -23,10 +32,33 @@
 #include <Util/Common.hpp>
 #include <folly/Synchronized.h>
 
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class JoinBuildSideType : uint8_t;
+} /// namespace QueryCompilation
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+class StreamSlice;
+struct BufferMetaData;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 
 class StreamJoinOperatorHandler;
+
 using StreamJoinOperatorHandlerPtr = std::shared_ptr<StreamJoinOperatorHandler>;
 
 using WLockedSlices = folly::Synchronized<std::list<StreamSlicePtr>>::WLockedPtr;

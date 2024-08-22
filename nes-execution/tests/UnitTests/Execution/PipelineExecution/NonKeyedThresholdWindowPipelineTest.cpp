@@ -13,6 +13,10 @@
 */
 
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
@@ -27,7 +31,6 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/NonKeyedThresholdWindow/NonKeyedThresholdWindowOperatorHandler.hpp>
-#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -38,9 +41,24 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES::Runtime::Execution
 {

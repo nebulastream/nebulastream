@@ -12,9 +12,15 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <ostream>
 #include <Sinks/Mediums/MultiOriginWatermarkProcessor.hpp>
 #include <Sinks/Mediums/WatermarkProcessor.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+
 namespace NES::Windowing
 {
 

@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <stack>
+#include <string>
 #include <unordered_map>
 #include <unordered_set>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>

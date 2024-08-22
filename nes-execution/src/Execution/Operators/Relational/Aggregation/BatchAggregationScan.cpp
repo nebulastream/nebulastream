@@ -11,11 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationHandler.hpp>
 #include <Execution/Operators/Relational/Aggregation/BatchAggregationScan.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

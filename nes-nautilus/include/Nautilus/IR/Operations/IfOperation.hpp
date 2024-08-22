@@ -14,10 +14,14 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopInfo.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::IR::Operations
 {

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <string>
+#include <vector>
 #include <Expressions/ArithmeticalExpressions/AbsExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/AddExpressionNode.hpp>
 #include <Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
@@ -43,7 +45,13 @@
 #include <Expressions/WhenExpressionNode.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <google/protobuf/any.pb.h>
+#include <google/protobuf/repeated_ptr_field.h>
 #include <SerializableExpression.pb.h>
+
+#include <Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
+#include <Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES
 {

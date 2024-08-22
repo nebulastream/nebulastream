@@ -17,11 +17,14 @@
 #include <cstdint>
 #if __has_include(<span> )
 #    include <span>
+
 #    define SPAN_TYPE std::span
 #else
 #    include <absl/types/span.h>
+
 #    define SPAN_TYPE absl::Span
 #endif
+#include <stddef.h>
 #include <Util/Logger/Logger.hpp>
 
 /**

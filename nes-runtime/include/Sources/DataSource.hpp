@@ -17,9 +17,15 @@
 #include <atomic>
 #include <chrono>
 #include <future>
+#include <limits>
+#include <memory>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <thread>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
@@ -29,6 +35,11 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/GatheringMode.hpp>
 
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/RuntimeEventListener.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
+
 namespace NES::Runtime::MemoryLayouts
 {
 class TestTupleBuffer;
@@ -37,6 +48,11 @@ class TestTupleBuffer;
 namespace NES
 {
 class KalmanFilter;
+enum class GatheringMode : uint8_t;
+namespace Runtime
+{
+class BaseEvent;
+} /// namespace Runtime
 
 /**
 * @brief Base class for all data sources in NES

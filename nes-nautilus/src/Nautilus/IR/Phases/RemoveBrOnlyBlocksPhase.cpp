@@ -14,16 +14,21 @@
 
 #include <memory>
 #include <stack>
+#include <string_view>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
-#include <Nautilus/Tracing/Trace/Block.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
+
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
 
 namespace NES::Nautilus::IR
 {

@@ -13,7 +13,12 @@
 */
 
 #pragma once
+#include <string>
 #include <Expressions/ArithmeticalExpressions/ArithmeticalBinaryExpressionNode.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 

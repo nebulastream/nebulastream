@@ -14,6 +14,22 @@
 #pragma once
 
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+
+#include <Runtime/ExecutionResult.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class TupleBuffer;
+class WorkerContext;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution
 {
 

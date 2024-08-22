@@ -17,6 +17,9 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Util/Common.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

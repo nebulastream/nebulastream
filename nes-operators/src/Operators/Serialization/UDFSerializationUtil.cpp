@@ -12,10 +12,17 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <vector>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Operators/Serialization/UDFSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <google/protobuf/repeated_ptr_field.h>
+
+#include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+#include <JavaUdfDescriptorMessage.pb.h>
 
 namespace NES
 {

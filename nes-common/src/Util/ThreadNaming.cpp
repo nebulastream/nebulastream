@@ -12,10 +12,12 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstdarg>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <__stdarg_va_arg.h>
 #include <unistd.h>
 #include <Util/ThreadNaming.hpp>
 #ifdef _POSIX_THREADS

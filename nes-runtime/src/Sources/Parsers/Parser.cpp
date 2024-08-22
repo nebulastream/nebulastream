@@ -13,11 +13,13 @@
 */
 
 #include <cstring>
+#include <exception>
+#include <stdexcept>
 #include <string>
 #include <utility>
+#include <variant>
+#include <strings.h>
 #include <API/AttributeField.hpp>
-#include <Runtime/FixedSizeBufferPool.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -25,6 +27,9 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES
 {

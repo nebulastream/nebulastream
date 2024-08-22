@@ -16,8 +16,12 @@
 #include <utility>
 #include <Sinks/Formats/FormatIterators/Iterator.hpp>
 
+#include <API/Schema.hpp>
+#include <Runtime/TupleBuffer.hpp>
+
 namespace NES
 {
+enum class FormatTypes : uint8_t;
 
 /**
  * @brief this class is used for iterating over a single buffer and extracting out the tuples

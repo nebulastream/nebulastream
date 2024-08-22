@@ -12,12 +12,15 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
-#include <Util/OperatorsUtil.hpp>
 #include <fmt/format.h>
 #include <fmt/ranges.h>
+
+#include <Operators/Operator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES
 {

@@ -13,10 +13,14 @@
 */
 
 #include <memory>
+#include <utility>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
+
+#include <Execution/Operators/Streaming/Aggregations/ThreadLocalSliceStore.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

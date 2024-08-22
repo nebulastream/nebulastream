@@ -13,6 +13,10 @@
 */
 #pragma once
 #include <memory>
+#include <string>
+#include <unordered_map>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -28,6 +32,28 @@
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 #include <Nautilus/Util/Frame.hpp>
+
+#include <Nautilus/Tracing/Trace/InputVariant.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace IR
+{
+namespace Operations
+{
+class BasicBlockInvocation;
+} /// namespace Operations
+} /// namespace IR
+namespace Tracing
+{
+class Block;
+class TraceOperation;
+} /// namespace Tracing
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::Tracing
 {
 

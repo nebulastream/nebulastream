@@ -17,6 +17,9 @@
 #include <atomic>
 #include <mutex>
 #include <queue>
+#include <tuple>
+#include <vector>
+#include <stdint.h>
 
 namespace NES
 {

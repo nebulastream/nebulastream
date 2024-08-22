@@ -12,6 +12,14 @@
     limitations under the License.
 */
 
+#include <cmath>
+#include <cstring>
+#include <memory>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <API/AttributeField.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
@@ -20,7 +28,30 @@
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <__fwd/sstream.h>
+#include <gtest/gtest.h>
+
+#include <API/Schema.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/TypedRef.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::Interface
 {

@@ -12,10 +12,15 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <limits>
 #include <memory>
 #include <random>
-#include <tuple>
-#include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
@@ -29,7 +34,22 @@
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

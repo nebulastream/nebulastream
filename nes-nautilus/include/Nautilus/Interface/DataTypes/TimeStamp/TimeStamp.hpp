@@ -12,10 +12,18 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <string>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Tracing/Trace/ConstantValue.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Nautilus
 {

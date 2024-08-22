@@ -11,9 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdint>
+#include <memory>
+#include <type_traits>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
+#include <Nautilus/Interface/DataTypes/TypedRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus
 {

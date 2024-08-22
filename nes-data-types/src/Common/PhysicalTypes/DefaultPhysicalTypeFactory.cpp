@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/Char.hpp>
@@ -24,6 +25,9 @@
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/TextPhysicalType.hpp>
+
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+
 namespace NES
 {
 

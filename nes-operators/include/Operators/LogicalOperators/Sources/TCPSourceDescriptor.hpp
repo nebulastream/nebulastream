@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 

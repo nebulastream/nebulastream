@@ -21,6 +21,14 @@
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 
+namespace NES
+{
+namespace Windowing
+{
+class TimeBasedWindowType;
+} /// namespace Windowing
+} /// namespace NES
+
 namespace NES::QueryCompilation::Util
 {
 

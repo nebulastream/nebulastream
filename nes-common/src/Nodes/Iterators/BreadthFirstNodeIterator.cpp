@@ -13,9 +13,11 @@
 */
 
 #include <utility>
+#include <vector>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES
 {
 

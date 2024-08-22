@@ -12,12 +12,23 @@
     limitations under the License.
 */
 #pragma once
+#include <map>
 #include <memory>
+#include <string>
 #include <typeinfo>
 #include <vector>
-#include "Configurations/BaseOption.hpp"
-#include "Configurations/ConfigurationException.hpp"
-#include "Configurations/Validation/ConfigurationValidation.hpp"
+
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
+#include <Configurations/Validation/ConfigurationValidation.hpp>
+
+namespace NES
+{
+namespace Configurations
+{
+class ConfigurationValidation;
+} /// namespace Configurations
+} /// namespace NES
 
 namespace NES::Configurations
 {

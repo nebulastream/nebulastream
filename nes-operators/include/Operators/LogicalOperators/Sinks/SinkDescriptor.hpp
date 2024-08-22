@@ -15,11 +15,15 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <typeinfo>
+#include <stdint.h>
 
 namespace NES
 {
 
 class SinkDescriptor;
+
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
 /**

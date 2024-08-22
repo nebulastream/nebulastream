@@ -14,11 +14,26 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <__fwd/string_view.h>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {
+namespace Runtime
+{
+namespace MemoryLayouts
+{
+class TestTupleBuffer;
+} /// namespace MemoryLayouts
+} /// namespace Runtime
+
 class JSONParser : public Parser
 {
 public:

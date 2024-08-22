@@ -15,10 +15,16 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Util/Common.hpp>
+
+namespace NES
+{
+class SequenceData;
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

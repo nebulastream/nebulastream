@@ -13,14 +13,17 @@
 */
 
 #pragma once
-
+#include <memory>
+#include <stddef.h>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
 namespace NES
 {
 
 class Schema;
+
 using SchemaPtr = std::shared_ptr<Schema>;
 
 /**

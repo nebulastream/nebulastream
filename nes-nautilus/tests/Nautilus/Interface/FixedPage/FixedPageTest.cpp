@@ -12,11 +12,26 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cstring>
+#include <iterator>
+#include <memory>
+#include <memory_resource>
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-#include <Util/Common.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <gtest/gtest.h>
+
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Nautilus::Interface
 {

@@ -11,10 +11,30 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <limits>
+#include <sstream>
 #include <utility>
+#include <math.h>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+
+#include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Aggregation
 {

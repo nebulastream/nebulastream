@@ -12,13 +12,18 @@
     limitations under the License.
 */
 
-#include <Configurations/ConfigurationOption.hpp>
+#include <optional>
+#include <ostream>
+#include <vector>
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/PluginRegistry.hpp>
+#include <magic_enum.hpp>
+
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::Configurations
 {

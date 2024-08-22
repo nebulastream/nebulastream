@@ -11,11 +11,18 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstddef>
+#include <memory>
+#include <sstream>
 #include <utility>
 #include <Expressions/CaseExpressionNode.hpp>
 #include <Expressions/WhenExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES
 {
 CaseExpressionNode::CaseExpressionNode(DataTypePtr stamp) : ExpressionNode(std::move(stamp))

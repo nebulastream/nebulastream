@@ -11,11 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
+#include <string>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {

@@ -17,12 +17,15 @@
 #include <memory>
 #include <mutex>
 #include <set>
+#include <tuple>
 #include <vector>
+#include <stdint.h>
 
 namespace NES::Runtime::Execution::Operators
 {
 
 class NonKeyedSlice;
+
 using GlobalSlicePtr = std::unique_ptr<NonKeyedSlice>;
 
 /**

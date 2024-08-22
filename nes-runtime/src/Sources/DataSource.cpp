@@ -12,14 +12,13 @@
     limitations under the License.
 */
 #include <chrono>
-#include <functional>
+#include <exception>
 #include <future>
 #include <iostream>
+#include <string_view>
 #include <thread>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <pthread.h>
+#include <sched.h>
 #include <Runtime/FixedSizeBufferPool.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -28,6 +27,8 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <Util/ThreadNaming.hpp>
+#include <fmt/format.h>
+#include <magic_enum.hpp>
 
 #ifdef NES_USE_ONE_QUEUE_PER_NUMA_NODE
 #    if defined(__linux__)
@@ -36,6 +37,28 @@
 #    endif
 #endif
 #include <utility>
+
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/Execution/DataEmitter.hpp>
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/GatheringMode.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class BaseEvent;
+} /// namespace Runtime
+} /// namespace NES
+
 using namespace std::string_literals;
 namespace NES
 {

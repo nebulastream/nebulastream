@@ -12,11 +12,26 @@
     limitations under the License.
 */
 
+#include <any>
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <unordered_map>
 #include <utility>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {

@@ -14,9 +14,28 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
 #include <Nautilus/Tracing/Trace/Block.hpp>
+#include <__fwd/ostream.h>
+
+#include <Nautilus/Tracing/Trace/OperationRef.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Tracing
+{
+class TraceOperation;
+} /// namespace Tracing
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::Tracing
 {
 

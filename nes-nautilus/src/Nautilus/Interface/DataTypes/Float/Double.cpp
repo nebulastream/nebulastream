@@ -13,6 +13,10 @@
 */
 #include <Nautilus/Interface/DataTypes/Float/Double.hpp>
 
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+
 namespace NES::Nautilus
 {
 

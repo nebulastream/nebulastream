@@ -17,15 +17,23 @@
 #include <map>
 #include <memory>
 #include <string>
-#include "Util/yaml/Yaml.hpp"
+
+#include <Util/yaml/Yaml.hpp>
+
+namespace Yaml
+{
+class Node;
+} /// namespace Yaml
 
 namespace NES::Configurations
 {
 
 class LogicalSourceType;
+
 using LogicalSourceTypePtr = std::shared_ptr<LogicalSourceType>;
 
 class SchemaType;
+
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
 
 class LogicalSourceTypeFactory

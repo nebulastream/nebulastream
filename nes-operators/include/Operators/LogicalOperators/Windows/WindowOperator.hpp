@@ -14,15 +14,20 @@
 
 #pragma once
 
+#include <memory>
+#include <vector>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+
 namespace NES
 {
 
 class WindowOperator;
+
 using WindowOperatorPtr = std::shared_ptr<WindowOperator>;
 
 /**

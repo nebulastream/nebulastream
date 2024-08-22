@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <string>
+#include <stdint.h>
 #include <Common/DataTypes/BasicTypes.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
@@ -23,9 +24,11 @@ namespace NES
 {
 
 class DataType;
+
 using DataTypePtr = std::shared_ptr<DataType>;
 
 class AttributeField;
+
 using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 /**

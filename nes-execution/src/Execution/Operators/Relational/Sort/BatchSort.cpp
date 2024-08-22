@@ -12,15 +12,37 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSort.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortEncode.hpp>
 #include <Execution/Operators/Relational/Sort/BatchSortOperatorHandler.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Exceptions/NotImplementedException.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

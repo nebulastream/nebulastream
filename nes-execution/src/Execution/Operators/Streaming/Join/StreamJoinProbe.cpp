@@ -11,7 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <utility>
+#include <memory>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
@@ -19,8 +20,32 @@
 #include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Common/DataTypes/DataType.hpp>
+
+#include <API/Schema.hpp>
+#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class WindowingStrategy : uint8_t;
+} /// namespace QueryCompilation
+namespace Runtime
+{
+namespace Execution
+{
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

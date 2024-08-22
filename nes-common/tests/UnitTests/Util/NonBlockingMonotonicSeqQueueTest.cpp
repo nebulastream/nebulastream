@@ -13,13 +13,24 @@
 */
 #include <algorithm>
 #include <atomic>
+#include <map>
 #include <random>
+#include <string>
 #include <thread>
+#include <tuple>
+#include <vector>
+#include <stdint.h>
+#include <stdlib.h>
 #include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 
 using namespace std;
 namespace NES

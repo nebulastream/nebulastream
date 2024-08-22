@@ -13,6 +13,7 @@
 */
 
 #include <algorithm>
+#include <cctype>
 #include <Configurations/Validation/BooleanValidation.hpp>
 
 namespace NES::Configurations

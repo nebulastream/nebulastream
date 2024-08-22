@@ -13,8 +13,11 @@
 */
 
 #include <cstdlib>
-#include <iostream>
+#include <memory>
+#include <string>
+#include <tuple>
 #include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -22,8 +25,14 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
-#include <Common/ExecutableType/Array.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {

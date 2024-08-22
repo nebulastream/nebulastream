@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <stdint.h>
 #include <API/AttributeField.hpp>
 #include <API/TimeUnit.hpp>
 #include <Expressions/ExpressionNode.hpp>
@@ -22,6 +25,7 @@ namespace NES::Windowing
 {
 
 class TimeCharacteristic;
+
 using TimeCharacteristicPtr = std::shared_ptr<TimeCharacteristic>;
 
 /**

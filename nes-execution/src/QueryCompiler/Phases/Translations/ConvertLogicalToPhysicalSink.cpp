@@ -12,15 +12,24 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <string>
+#include <Exceptions/Exception.hpp>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/SinkCreator.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+
 
 namespace NES
 {

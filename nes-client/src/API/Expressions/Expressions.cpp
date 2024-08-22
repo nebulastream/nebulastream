@@ -14,7 +14,6 @@
 
 #include <utility>
 #include <vector>
-#include <API/Expressions/ArithmeticalExpressions.hpp>
 #include <API/Expressions/Expressions.hpp>
 #include <Expressions/CaseExpressionNode.hpp>
 #include <Expressions/ConstantValueExpressionNode.hpp>
@@ -25,8 +24,12 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 
+#include <Exceptions/RuntimeException.hpp>
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES
 {
+enum class BasicType : uint8_t;
 
 ExpressionItem::ExpressionItem(int8_t value)
     : ExpressionItem(DataTypeFactory::createBasicValue(DataTypeFactory::createInt8(), std::to_string(value)))

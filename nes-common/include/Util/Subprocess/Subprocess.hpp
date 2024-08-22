@@ -16,9 +16,13 @@
 #include <atomic>
 #include <cstdio>
 #include <iostream>
+#include <string>
 #include <thread>
 #include <vector>
+#include <stdint.h>
 #include <unistd.h>
+#include <__fwd/ostream.h>
+#include <sys/types.h>
 
 namespace NES::Util
 {

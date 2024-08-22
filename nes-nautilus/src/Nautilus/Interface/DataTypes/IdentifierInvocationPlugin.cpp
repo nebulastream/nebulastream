@@ -12,7 +12,18 @@
     limitations under the License.
 */
 #include <functional>
+#include <memory>
+#include <optional>
+#include <typeinfo>
+#include <utility>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Identifier.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Nautilus
 {
 

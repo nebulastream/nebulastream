@@ -15,6 +15,8 @@
 #pragma once
 
 #include <chrono>
+#include <memory>
+#include <string>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 

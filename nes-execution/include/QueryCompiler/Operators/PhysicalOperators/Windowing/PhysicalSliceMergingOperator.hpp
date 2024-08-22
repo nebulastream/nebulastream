@@ -12,9 +12,13 @@
     limitations under the License.
 */
 #pragma once
+#include <string>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

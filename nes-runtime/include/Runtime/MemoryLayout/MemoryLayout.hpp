@@ -15,9 +15,21 @@
 #pragma once
 
 #include <optional>
+#include <string>
 #include <unordered_map>
 #include <vector>
+#include <stdint.h>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <__fwd/string_view.h>
+
+namespace NES
+{
+namespace Runtime
+{
+class BufferManager;
+class TupleBuffer;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::MemoryLayouts
 {

@@ -13,8 +13,11 @@
 */
 #pragma once
 
+#include <vector>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

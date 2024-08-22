@@ -15,12 +15,19 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <mutex>
 #include <ostream>
 #include <span>
+#include <string>
 #include <vector>
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
+
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Runtime::Execution
 {

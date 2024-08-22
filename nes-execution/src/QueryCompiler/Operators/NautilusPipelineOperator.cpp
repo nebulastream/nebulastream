@@ -14,6 +14,21 @@
 #include <utility>
 #include <QueryCompiler/Operators/NautilusPipelineOperator.hpp>
 
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class PhysicalOperatorPipeline;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::QueryCompilation
 {
 

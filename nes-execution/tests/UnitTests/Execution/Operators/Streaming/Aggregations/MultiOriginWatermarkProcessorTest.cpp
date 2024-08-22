@@ -11,15 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <algorithm>
 #include <atomic>
-#include <iostream>
+#include <memory>
+#include <string>
 #include <thread>
+#include <tuple>
+#include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
 
 using namespace std;
 namespace NES::Runtime::Execution::Operators

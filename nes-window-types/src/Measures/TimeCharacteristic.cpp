@@ -12,12 +12,17 @@
     limitations under the License.
 */
 
+#include <functional>
+#include <sstream>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <API/TimeUnit.hpp>
 
 namespace NES::Windowing
 {

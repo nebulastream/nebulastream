@@ -11,7 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
+
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

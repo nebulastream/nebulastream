@@ -12,17 +12,41 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <filesystem>
 #include <fstream>
-#include <iostream>
+#include <map>
+#include <memory>
+#include <optional>
 #include <string>
+#include <string_view>
+#include <utility>
 #include <vector>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/fstream.h>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
+#include <magic_enum.hpp>
+
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/Coordinator/ElegantConfigurations.hpp>
+#include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
+#include <Configurations/Coordinator/OptimizerConfiguration.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/Enums/EnumOptionDetails.hpp>
+#include <Configurations/SequenceOption.hpp>
+#include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Configurations/WrapOption.hpp>
+#include <Util/GatheringMode.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 
 namespace NES
 {

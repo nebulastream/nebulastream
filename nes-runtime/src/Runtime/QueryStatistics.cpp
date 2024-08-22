@@ -16,6 +16,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 
 namespace NES::Runtime
 {

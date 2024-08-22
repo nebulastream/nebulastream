@@ -20,6 +20,10 @@
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+
 namespace NES::Runtime::Execution
 {
 using namespace Nautilus;

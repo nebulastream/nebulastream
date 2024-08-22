@@ -15,7 +15,11 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <utility>
 #include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 

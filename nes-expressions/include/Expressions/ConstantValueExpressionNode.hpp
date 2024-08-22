@@ -14,11 +14,17 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Expressions/ExpressionNode.hpp>
+
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 
 class ValueType;
+
 using ValueTypePtr = std::shared_ptr<ValueType>;
 
 /**

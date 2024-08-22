@@ -12,10 +12,18 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
+#include <any>
+#include <map>
+#include <memory>
+#include <set>
+#include <unordered_map>
 #include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {

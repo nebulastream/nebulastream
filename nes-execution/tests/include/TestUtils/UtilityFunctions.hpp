@@ -13,7 +13,11 @@
 */
 #pragma once
 
+#include <string>
+#include <typeinfo>
 #include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
@@ -30,6 +34,26 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+namespace Runtime
+{
+namespace MemoryLayouts
+{
+class TestTupleBuffer;
+} /// namespace MemoryLayouts
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Util
 {

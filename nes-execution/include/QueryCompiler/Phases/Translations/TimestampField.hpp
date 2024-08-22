@@ -20,6 +20,7 @@
 #include <API/TimeUnit.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <__fwd/ostream.h>
 
 namespace NES::QueryCompilation
 {

@@ -17,18 +17,21 @@
 #include <atomic>
 #include <cstddef>
 #include <memory>
+#include <string>
+#include <stdint.h>
 
 namespace NES
 {
 class Schema;
+
 using SchemaPtr = std::shared_ptr<Schema>;
 } /// namespace NES
 
 namespace NES::Nautilus::Interface
 {
 class FixedPageRef;
-
 class FixedPage;
+
 using FixedPagePtr = std::shared_ptr<FixedPage>;
 
 /**

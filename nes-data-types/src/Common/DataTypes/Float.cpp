@@ -14,6 +14,7 @@
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
 #include <fmt/format.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/DataTypes/Float.hpp>

@@ -13,6 +13,7 @@
 */
 
 #include <utility>
+#include <vector>
 #include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Util/Logger/Logger.hpp>

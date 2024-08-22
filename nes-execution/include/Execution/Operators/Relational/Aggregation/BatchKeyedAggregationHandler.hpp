@@ -13,15 +13,36 @@
 */
 
 #pragma once
+#include <memory>
 #include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class ReconfigurationMessage;
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 
 class MultiOriginWatermarkProcessor;
 class KeyedThreadLocalSliceStore;
 class State;
+
 /**
  * @brief The BatchKeyedAggregationHandler provides an operator handler to perform keyed aggregations.
  * This operator handler, maintains a hash-map for each worker thread and provides them for the aggregation.

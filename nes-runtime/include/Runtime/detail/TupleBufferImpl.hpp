@@ -19,6 +19,7 @@
 #include <functional>
 #include <sstream>
 #include <vector>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/TaggedPointer.hpp>
 #ifdef NES_DEBUG_TUPLE_BUFFER_LEAKS

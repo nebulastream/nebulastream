@@ -15,7 +15,13 @@
 #pragma once
 
 #include <ostream>
+#include <tuple>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Tracing/Tag/TagRecorder.hpp>
+#include <__fwd/ostream.h>
+
+#include <Nautilus/Tracing/Tag/Tag.hpp>
 
 namespace NES::Nautilus::Tracing
 {

@@ -33,6 +33,7 @@
 namespace NES
 {
 class Schema;
+
 using SchemaPtr = std::shared_ptr<Schema>;
 } /// namespace NES
 

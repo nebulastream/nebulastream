@@ -13,11 +13,17 @@
 */
 #pragma once
 
+#include <atomic>
+#include <exception>
 #include <filesystem>
+#include <memory>
+#include <string>
 #include <Exceptions/ErrorListener.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <BaseUnitTest.hpp>
+
+#include <gtest/gtest.h>
 
 #define ASSERT_INSTANCE_OF(node, instance) \
     if (!(node)->instanceOf<instance>()) \

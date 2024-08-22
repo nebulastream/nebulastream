@@ -15,6 +15,9 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <stdint.h>
+#include <__fwd/ostream.h>
 
 namespace NES
 {
@@ -22,13 +25,16 @@ namespace NES
 namespace QueryCompilation
 {
 class PipelineQueryPlan;
+
 using PipelineQueryPlanPtr = std::shared_ptr<PipelineQueryPlan>;
 } /// namespace QueryCompilation
 
 class Node;
+
 using NodePtr = std::shared_ptr<Node>;
 
 class DecomposedQueryPlan;
+
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 /**

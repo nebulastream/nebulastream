@@ -14,8 +14,13 @@
 
 #pragma once
 
+#include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerBucketing.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

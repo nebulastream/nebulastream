@@ -13,8 +13,12 @@
 */
 #include <sstream>
 #include <utility>
-#include <API/Schema.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <__fwd/sstream.h>
+
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

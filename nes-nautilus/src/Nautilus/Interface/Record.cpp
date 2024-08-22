@@ -13,9 +13,23 @@
 */
 
 #include <algorithm>
+#include <memory>
+#include <ostream>
 #include <sstream>
+#include <utility>
 #include <Nautilus/Exceptions/InterpreterException.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <__fwd/sstream.h>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Any;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus
 {

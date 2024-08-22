@@ -15,7 +15,10 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <typeinfo>
+#include <stdint.h>
 
 namespace NES
 {
@@ -27,6 +30,7 @@ enum class SourceType : uint8_t
 };
 
 class PhysicalSourceType;
+
 using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 
 /**

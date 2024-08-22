@@ -14,6 +14,8 @@
 
 #include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
 
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
 namespace NES::QueryCompilation
 {
 

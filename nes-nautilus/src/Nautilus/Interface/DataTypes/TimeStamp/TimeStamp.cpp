@@ -12,13 +12,22 @@
     limitations under the License.
 */
 #include <chrono>
+#include <cstdio>
 #include <ctime>
-#include <iomanip>
+#include <ratio>
+#include <sstream>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/TimeStamp/TimeStamp.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/TypedRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
 using namespace std::chrono_literals;
 namespace NES::Nautilus
 {

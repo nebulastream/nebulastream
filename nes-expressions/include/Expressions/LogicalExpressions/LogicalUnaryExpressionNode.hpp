@@ -15,6 +15,10 @@
 #pragma once
 #include <Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
 #include <Expressions/UnaryExpressionNode.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 /**

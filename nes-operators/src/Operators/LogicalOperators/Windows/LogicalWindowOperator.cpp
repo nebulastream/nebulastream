@@ -12,7 +12,12 @@
     limitations under the License.
 */
 
+#include <any>
+#include <map>
+#include <memory>
+#include <set>
 #include <sstream>
+#include <unordered_map>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
@@ -24,6 +29,18 @@
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <Types/WindowType.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+
 namespace NES
 {
 

@@ -16,6 +16,8 @@
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+
 namespace NES
 {
 

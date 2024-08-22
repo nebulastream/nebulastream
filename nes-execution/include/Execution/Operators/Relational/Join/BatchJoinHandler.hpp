@@ -13,10 +13,37 @@
 */
 
 #pragma once
+#include <memory>
 #include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Interface
+{
+class ChainedHashMap;
+} /// namespace Interface
+} /// namespace Nautilus
+namespace Runtime
+{
+class ReconfigurationMessage;
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 

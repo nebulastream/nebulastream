@@ -16,6 +16,9 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Runtime/TaggedPointer.hpp>
+
 namespace NES::Runtime
 {
 

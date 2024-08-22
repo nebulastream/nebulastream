@@ -16,9 +16,11 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
 #include <thread>
 #include <fcntl.h>
 #include <unistd.h>
+#include <Util/Logger/Logger.hpp>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/types.h>

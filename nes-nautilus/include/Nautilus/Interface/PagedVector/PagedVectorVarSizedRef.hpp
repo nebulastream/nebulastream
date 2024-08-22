@@ -18,9 +18,15 @@
 #include <Nautilus/Interface/Record.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Nautilus::Interface
 {
 class PagedVectorVarSizedRefIter;
+
 class PagedVectorVarSizedRef
 {
 public:

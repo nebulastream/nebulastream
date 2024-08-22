@@ -12,8 +12,17 @@
     limitations under the License.
 */
 #pragma once
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::Interface
 {

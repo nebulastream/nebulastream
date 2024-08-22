@@ -12,7 +12,10 @@
     limitations under the License.
 */
 #include <Nautilus/Exceptions/InterpreterException.hpp>
-#include <Util/Logger/Logger.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
+#include <Util/StacktraceLoader.hpp>
+
 namespace NES::Nautilus
 {
 

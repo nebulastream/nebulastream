@@ -16,9 +16,20 @@
 
 #include <limits>
 #include <memory>
+#include <string>
+#include <stdint.h>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class WorkerContext;
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime
 {
 

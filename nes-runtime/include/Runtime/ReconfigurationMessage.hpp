@@ -17,15 +17,27 @@
 #include <any>
 #include <atomic>
 #include <memory>
+#include <utility>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/ReconfigurationType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadBarrier.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+enum class ReconfigurationType : uint8_t;
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime
 {
 
 class Reconfigurable;
+
 using ReconfigurablePtr = std::shared_ptr<Reconfigurable>;
 
 /// This class contains the description of the reconfiguration that must be carried out

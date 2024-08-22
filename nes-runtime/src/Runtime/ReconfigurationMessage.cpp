@@ -14,6 +14,9 @@
 
 #include <Runtime/ReconfigurationMessage.hpp>
 
+#include <Runtime/Reconfigurable.hpp>
+#include <Util/ThreadBarrier.hpp>
+
 namespace NES::Runtime
 {
 

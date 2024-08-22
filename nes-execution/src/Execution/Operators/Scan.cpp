@@ -18,8 +18,12 @@
 #include <Execution/Operators/Scan.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

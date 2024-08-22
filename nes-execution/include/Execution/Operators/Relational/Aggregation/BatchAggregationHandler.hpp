@@ -14,8 +14,26 @@
 
 #pragma once
 #include <vector>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/VirtualEnableSharedFromThis.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class ReconfigurationMessage;
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 

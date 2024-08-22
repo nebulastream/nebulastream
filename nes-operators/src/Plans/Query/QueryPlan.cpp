@@ -13,9 +13,14 @@
 */
 
 #include <algorithm>
+#include <deque>
+#include <map>
 #include <set>
+#include <sstream>
 #include <stack>
+#include <string_view>
 #include <utility>
+#include <stddef.h>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Nodes/Node.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
@@ -23,10 +28,18 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
-#include <magic_enum.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {
+enum class QueryState : uint8_t;
+namespace Optimizer
+{
+enum class PlacementStrategy : uint8_t;
+} /// namespace Optimizer
 
 QueryPlanPtr QueryPlan::create(QueryId queryId, std::vector<OperatorPtr> rootOperators)
 {

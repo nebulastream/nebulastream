@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string_view>
 #include <utility>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <magic_enum.hpp>

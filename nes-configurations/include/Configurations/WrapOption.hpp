@@ -13,7 +13,7 @@
 */
 #pragma once
 
-#include "Configurations/TypedBaseOption.hpp"
+#include <Configurations/TypedBaseOption.hpp>
 
 namespace NES::Configurations
 {

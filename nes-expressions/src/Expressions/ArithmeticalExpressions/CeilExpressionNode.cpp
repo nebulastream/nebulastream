@@ -12,10 +12,17 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <sstream>
+#include <utility>
+#include <vector>
 #include <Expressions/ArithmeticalExpressions/CeilExpressionNode.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Expressions/ArithmeticalExpressions/ArithmeticalUnaryExpressionNode.hpp>
+
 namespace NES
 {
 

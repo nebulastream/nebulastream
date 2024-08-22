@@ -24,13 +24,21 @@
 */
 
 #include <fstream>
+#include <iostream>
 #include <list>
+#include <map>
 #include <memory>
 #include <sstream>
 #include <utility>
 #include <vector>
 #include <Util/Logger/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <__fwd/fstream.h>
+
+namespace Yaml
+{
+class NodeImp;
+} /// namespace Yaml
 
 /// TODO: Refactor this, move to a different library..
 /// Implementation access definitions.

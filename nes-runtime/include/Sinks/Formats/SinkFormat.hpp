@@ -14,15 +14,24 @@
 
 #pragma once
 #include <fstream>
+#include <memory>
 #include <optional>
+#include <string>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
+
+#include <Sinks/Formats/FormatType.hpp>
+
 /**
  * @brief this class covers the different output formats that we offer in NES
  */
 namespace NES
 {
+namespace Runtime
+{
+class TupleBuffer;
+} /// namespace Runtime
 
 class SinkFormat
 {

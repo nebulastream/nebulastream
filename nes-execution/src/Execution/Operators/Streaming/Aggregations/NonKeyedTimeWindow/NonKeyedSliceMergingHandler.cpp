@@ -14,14 +14,22 @@
 
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
-#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
-#include <Runtime/BufferManager.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
-#include <Runtime/Execution/PipelineExecutionContext.hpp>
-#include <Runtime/LocalBufferPool.hpp>
-#include <Runtime/WorkerContext.hpp>
-#include <Sequencing/NonBlockingMonotonicSeqQueue.hpp>
+
+#include <Execution/Operators/Streaming/Aggregations/ThreadLocalSliceStore.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

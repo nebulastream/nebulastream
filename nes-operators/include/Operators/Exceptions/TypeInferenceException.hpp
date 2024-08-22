@@ -18,6 +18,8 @@
 #include <string>
 #include <Exceptions/RequestExecutionException.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+
 namespace NES
 {
 /**

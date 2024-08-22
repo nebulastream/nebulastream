@@ -12,12 +12,18 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <sstream>
 #include <utility>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Windowing
 {

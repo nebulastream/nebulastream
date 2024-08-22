@@ -14,14 +14,22 @@
 
 #pragma once
 
+#include <memory>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+
 namespace NES
 {
+class Schema;
+
 namespace Catalogs::UDF
 {
 class UDFDescriptor;
+
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 } /// namespace Catalogs::UDF
 

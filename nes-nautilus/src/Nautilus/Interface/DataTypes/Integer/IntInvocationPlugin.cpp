@@ -12,9 +12,19 @@
     limitations under the License.
 */
 #include <functional>
-#include <Nautilus/IR/Types/IntegerStamp.hpp>
+#include <memory>
+#include <optional>
+#include <utility>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/TraceUtil.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Nautilus
 {
 

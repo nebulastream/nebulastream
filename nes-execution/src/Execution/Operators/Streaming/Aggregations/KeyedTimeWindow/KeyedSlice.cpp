@@ -11,8 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <utility>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

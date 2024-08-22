@@ -11,9 +11,13 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <utility>
 #include <Operators/Operator.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
+
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
 {

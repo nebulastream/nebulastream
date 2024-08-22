@@ -16,6 +16,9 @@
 #include <map>
 #include <QueryCompiler/Phases/Pipelining/PipeliningPhase.hpp>
 
+#include <Operators/OperatorForwardDeclaration.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
 namespace NES::QueryCompilation
 {
 

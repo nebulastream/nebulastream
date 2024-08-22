@@ -12,11 +12,19 @@
     limitations under the License.
 */
 #include <csignal>
+#include <exception>
 #include <memory>
-#include <Exceptions/RuntimeException.hpp>
+#include <new>
+#include <stdexcept>
+#include <string>
+#include <utility>
 #include <Exceptions/SignalHandling.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StacktraceLoader.hpp>
+#include <bits/signum-arch.h>
+
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 
 namespace NES::Runtime
 {

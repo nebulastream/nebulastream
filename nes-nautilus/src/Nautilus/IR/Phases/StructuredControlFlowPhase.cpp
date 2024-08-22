@@ -16,22 +16,19 @@
 #include <memory>
 #include <stack>
 #include <unordered_map>
+#include <utility>
+#include <vector>
+#include <assert.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
-#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
-#include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
-#include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
-#include <Nautilus/IR/Operations/ArithmeticOperations/SubOperation.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
-#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 #include <Nautilus/IR/Operations/IfOperation.hpp>
-#include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Phases/StructuredControlFlowPhase.hpp>
-#include <Nautilus/Tracing/Trace/Block.hpp>
-#include <Nautilus/Util/IRDumpHandler.hpp>
-#include <Util/Logger/Logger.hpp>
+
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
 
 using namespace NES::Nautilus::IR::Operations;
 namespace NES::Nautilus::IR

@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
 #include <Nautilus/IR/Operations/Operation.hpp>
 

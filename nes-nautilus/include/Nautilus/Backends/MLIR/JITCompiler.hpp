@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <vector>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
@@ -22,6 +24,28 @@
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
+
+namespace NES
+{
+class DumpHelper;
+namespace Nautilus
+{
+class CompilationOptions;
+} /// namespace Nautilus
+} /// namespace NES
+namespace llvm
+{
+class Error;
+class Module;
+template <typename Fn>
+class function_ref;
+} /// namespace llvm
+namespace mlir
+{
+class ModuleOp;
+template <typename OpTy>
+class OwningOpRef;
+} /// namespace mlir
 
 namespace NES::Nautilus::Backends::MLIR
 {

@@ -12,26 +12,34 @@
     limitations under the License.
 */
 
-#include <iostream>
-#include <utility>
+#include <unordered_set>
 #include <API/AttributeField.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Expressions/FieldRenameExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Windows/LogicalWindowDescriptor.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/Operator.hpp>
+#include <Plans/Query/QueryPlan.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES
 {

@@ -16,23 +16,40 @@
 
 #include <cstdint>
 #include <cstring>
+#include <iterator>
 #include <memory>
 #include <ostream>
 #include <string>
+#include <tuple>
+#include <type_traits>
+#include <typeinfo>
 #include <variant>
+#include <vector>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/ostream.h>
 #include <Common/ExecutableType/NESType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class BufferManager;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::MemoryLayouts
 {
 
 class MemoryLayoutTupleBuffer;
+
 using MemoryLayoutBufferPtr = std::shared_ptr<MemoryLayoutTupleBuffer>;
 
 /**

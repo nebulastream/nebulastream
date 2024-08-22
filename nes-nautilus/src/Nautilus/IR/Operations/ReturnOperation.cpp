@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
-#include <cstdint>
+#include <memory>
 #include <string>
 #include <Nautilus/IR/Operations/ReturnOperation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
+
 namespace NES::Nautilus::IR::Operations
 {
 ReturnOperation::ReturnOperation() : Operation(Operation::OperationType::ReturnOp, Types::StampFactory::createVoidStamp())

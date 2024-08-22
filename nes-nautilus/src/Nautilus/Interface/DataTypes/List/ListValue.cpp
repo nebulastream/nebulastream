@@ -11,13 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <algorithm>
 #include <cstring>
-#include <iostream>
-#include <string>
+#include <new>
+#include <optional>
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Nautilus
 {

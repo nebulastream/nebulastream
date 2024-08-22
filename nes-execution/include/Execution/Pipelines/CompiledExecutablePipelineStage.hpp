@@ -13,14 +13,29 @@
 */
 #pragma once
 #include <future>
+#include <memory>
+#include <string>
+#include <stdint.h>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
 #include <Nautilus/Backends/Executable.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <Util/Timer.hpp>
+
+#include <Runtime/ExecutionResult.hpp>
+
 namespace NES
 {
 class DumpHelper;
+namespace Runtime
+{
+class TupleBuffer;
+class WorkerContext;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
 }
 namespace NES::Nautilus::Backends
 {

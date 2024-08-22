@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/ArrayValue.hpp>
+
+#include <Common/ValueTypes/ValueType.hpp>
 
 namespace NES
 {

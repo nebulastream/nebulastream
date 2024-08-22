@@ -16,6 +16,8 @@
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+
 namespace NES
 {
 

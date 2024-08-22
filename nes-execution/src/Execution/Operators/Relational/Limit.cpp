@@ -12,11 +12,25 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Relational/Limit.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

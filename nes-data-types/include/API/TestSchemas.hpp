@@ -15,6 +15,7 @@
 #pragma once
 
 #include <stdexcept>
+#include <string>
 #include <unordered_map>
 #include <API/Schema.hpp>
 

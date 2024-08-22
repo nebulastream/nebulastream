@@ -14,7 +14,14 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <Execution/Aggregation/AggregationFunction.hpp>
+
+#include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {

@@ -22,6 +22,7 @@ namespace NES
 {
 
 class QueryPlan;
+
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class SerializableQueryPlan;

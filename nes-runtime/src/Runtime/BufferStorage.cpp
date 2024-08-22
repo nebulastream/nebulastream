@@ -12,7 +12,6 @@
     limitations under the License.
 */
 
-#include <mutex>
 #include <Runtime/BufferStorage.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>

@@ -12,8 +12,16 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Util/StdInt.hpp>
+#include <__fwd/sstream.h>
+
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/MergingHashTableVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTableVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution
 {

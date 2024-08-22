@@ -11,16 +11,14 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
 #include <utility>
+#include <stdint.h>
 #include <API/AttributeField.hpp>
-#include <API/Expressions/Expressions.hpp>
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -28,6 +26,15 @@
 #include <Plans/Query/QueryPlan.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES
 {

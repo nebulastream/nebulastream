@@ -16,13 +16,37 @@
 
 #include <chrono>
 #include <fstream>
+#include <memory>
+#include <optional>
 #include <string>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <__fwd/fstream.h>
+
+#include <API/Schema.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/FixedSizeBufferPool.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES
 {
 
 class CSVParser;
+enum class GatheringMode : uint8_t;
+namespace Runtime
+{
+namespace MemoryLayouts
+{
+class TestTupleBuffer;
+} /// namespace MemoryLayouts
+} /// namespace Runtime
+
 using CSVParserPtr = std::shared_ptr<CSVParser>;
 /**
  * @brief this class implement the CSV as an input source

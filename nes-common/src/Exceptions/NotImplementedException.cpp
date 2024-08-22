@@ -15,6 +15,8 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Util/StacktraceLoader.hpp>
 
+#include <Exceptions/RuntimeException.hpp>
+
 namespace NES::Exceptions
 {
 

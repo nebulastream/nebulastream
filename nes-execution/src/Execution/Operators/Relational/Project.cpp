@@ -12,8 +12,25 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <stddef.h>
 #include <Execution/Operators/Relational/Project.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 

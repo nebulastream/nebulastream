@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
+#include <any>
+#include <ostream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketPreAggregationHandler.hpp>
+#include <Exceptions/Exception.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Bucketing/HJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Bucketing/NLJOperatorHandlerBucketing.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/Slicing/NLJOperatorHandlerSlicing.hpp>
-#include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -40,7 +40,6 @@
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinBuildOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
@@ -63,12 +62,27 @@
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/ContentBasedWindowType.hpp>
 #include <Types/SlidingWindow.hpp>
-#include <Types/ThresholdWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
-#include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/UtilityFunction.hpp>
+
+#include <API/AttributeField.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
+#include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
+#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
+#include <Types/WindowType.hpp>
+#include <Util/Common.hpp>
 
 namespace NES::QueryCompilation
 {

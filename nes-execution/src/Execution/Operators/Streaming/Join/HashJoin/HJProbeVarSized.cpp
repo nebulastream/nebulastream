@@ -12,12 +12,42 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <optional>
+#include <string>
+#include <string_view>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJProbeVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
+#include <magic_enum.hpp>
+
+#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/MergingHashTableVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinProbe.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/StdInt.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class WindowingStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

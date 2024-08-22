@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <string>
+#include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMerging.hpp>
@@ -21,6 +23,27 @@
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Boolean;
+} /// namespace Nautilus
+namespace Runtime
+{
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

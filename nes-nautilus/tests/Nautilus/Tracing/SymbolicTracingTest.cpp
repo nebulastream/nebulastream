@@ -12,14 +12,30 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <memory>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <variant>
+#include <vector>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <TestUtils/BasicTraceFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/Trace/Block.hpp>
+#include <Nautilus/Tracing/Trace/BlockRef.hpp>
+#include <Nautilus/Tracing/Trace/OpCode.hpp>
+#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Nautilus::Tracing
 {

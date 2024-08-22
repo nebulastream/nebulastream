@@ -14,10 +14,27 @@
 
 #pragma once
 
+#include <memory>
+#include <mutex>
+#include <string>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/MergingHashTableVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTableVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
 #include <Util/Common.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class JoinBuildSideType : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

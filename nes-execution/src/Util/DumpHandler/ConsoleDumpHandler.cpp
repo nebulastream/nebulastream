@@ -13,12 +13,11 @@
 */
 
 #include <iostream>
+#include <vector>
 #include <Nodes/Node.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
-#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {

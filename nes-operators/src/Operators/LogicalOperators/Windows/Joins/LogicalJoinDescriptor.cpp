@@ -12,16 +12,16 @@
     limitations under the License.
 */
 
-#include <unordered_set>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Expressions/BinaryExpressionNode.hpp>
-#include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
-#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::Join
 {

@@ -17,6 +17,7 @@
 #include <memory>
 #include <variant>
 #include <vector>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/ExecutionResult.hpp>
@@ -24,6 +25,20 @@
 #include <Runtime/Reconfigurable.hpp>
 #include <Runtime/RuntimeEventListener.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+#include <Runtime/Execution/ExecutablePipeline.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class BaseEvent;
+class ReconfigurationMessage;
+class TupleBuffer;
+class WorkerContext;
+enum class QueryTerminationType : uint8_t;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

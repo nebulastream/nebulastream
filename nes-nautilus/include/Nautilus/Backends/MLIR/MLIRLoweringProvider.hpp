@@ -14,7 +14,12 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <unordered_set>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Backends/MLIR/ProxyFunctions.hpp>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/IRGraph.hpp>
@@ -49,7 +54,36 @@
 #include <llvm/ADT/StringMap.h>
 #include <llvm/ADT/StringSet.h>
 #include <llvm/ExecutionEngine/JITSymbol.h>
+#include <llvm/Support/AllocatorBase.h>
+#include <mlir/IR/BuiltinAttributes.h>
+#include <mlir/IR/Location.h>
+#include <mlir/IR/OwningOpRef.h>
 #include <mlir/IR/PatternMatch.h>
+#include <mlir/IR/Types.h>
+#include <mlir/IR/Value.h>
+
+#include <mlir/IR/BuiltinOps.h>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace IR
+{
+namespace Operations
+{
+class BasicBlockInvocation;
+enum class PrimitiveStamp : uint8_t;
+} /// namespace Operations
+} /// namespace IR
+} /// namespace Nautilus
+} /// namespace NES
+namespace mlir
+{
+class Block;
+class MLIRContext;
+class OpBuilder;
+} /// namespace mlir
 
 namespace NES::Nautilus::Backends::MLIR
 {

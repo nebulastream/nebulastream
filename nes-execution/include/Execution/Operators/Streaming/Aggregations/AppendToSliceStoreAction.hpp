@@ -13,13 +13,46 @@
 */
 
 #pragma once
+#include <atomic>
 #include <memory>
+#include <mutex>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Execution/Operators/Streaming/Aggregations/SlidingWindowSliceStore.hpp>
 #include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sequencing/SequenceData.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+class SequenceData;
+namespace Nautilus
+{
+class Boolean;
+class MemRef;
+class UInt64;
+} /// namespace Nautilus
+namespace Runtime
+{
+class WorkerContext;
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class ExecutionContext;
+class PipelineExecutionContext;
+namespace Operators
+{
+template <class SliceType>
+class SlidingWindowSliceStore;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 class MultiOriginWatermarkProcessor;
@@ -72,9 +105,11 @@ private:
     const uint64_t operatorHandlerIndex;
 };
 class NonKeyedSlice;
+
 using NonKeyedAppendToSliceStoreAction = AppendToSliceStoreAction<NonKeyedSlice>;
 using NonKeyedAppendToSliceStoreHandler = AppendToSliceStoreHandler<NonKeyedSlice>;
 class KeyedSlice;
+
 using KeyedAppendToSliceStoreAction = AppendToSliceStoreAction<KeyedSlice>;
 using KeyedAppendToSliceStoreHandler = AppendToSliceStoreHandler<KeyedSlice>;
 } /// namespace NES::Runtime::Execution::Operators

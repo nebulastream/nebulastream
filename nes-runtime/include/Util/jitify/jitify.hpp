@@ -3020,7 +3020,7 @@ inline void load_program(
                 is_included_with_quotes))
         {
 #if JITIFY_PRINT_HEADER_PATHS
-            std::cout << "Found #include " << include_name << " from " << include_parent << ":" << line_num << " ["
+            std::cout << "Found #include < << include_name << > from " << include_parent << ":" << line_num << " ["
                       << include_parent_fullpath << "]"
                       << " at:\n  " << header_fullpaths[include_name] << std::endl;
 #endif

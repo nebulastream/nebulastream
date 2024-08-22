@@ -11,12 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <sstream>
+#include <string>
+#include <variant>
 #include <Nautilus/Tracing/SymbolicExecution/TraceTerminationException.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Nautilus/IR/Types/Stamp.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
+#include <Nautilus/Tracing/Tag/Tag.hpp>
+#include <Nautilus/Tracing/Tag/TagRecorder.hpp>
+#include <Nautilus/Tracing/Trace/Block.hpp>
+#include <Nautilus/Tracing/Trace/BlockRef.hpp>
+#include <Nautilus/Tracing/Trace/InputVariant.hpp>
+#include <Nautilus/Tracing/Trace/OpCode.hpp>
+#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
 
 namespace NES::Nautilus::Tracing
 {

@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Runtime/BufferManager.hpp>
+#include <memory>
 #include <Runtime/NodeEngine.hpp>
 #include <Sinks/Formats/CsvFormat.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
@@ -21,6 +21,8 @@
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Sinks/Mediums/RawBufferSink.hpp>
 #include <Sinks/SinkCreator.hpp>
+
+#include <Sinks/Formats/SinkFormat.hpp>
 
 namespace NES
 {

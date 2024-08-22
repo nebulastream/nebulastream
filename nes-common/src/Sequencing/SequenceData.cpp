@@ -13,6 +13,9 @@
 */
 
 #include <Sequencing/SequenceData.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

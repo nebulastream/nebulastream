@@ -13,10 +13,15 @@
 */
 
 #include <algorithm>
-#include <utility>
-#include <API/Schema.hpp>
+#include <atomic>
+#include <sstream>
 #include <Operators/Operator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES
 {

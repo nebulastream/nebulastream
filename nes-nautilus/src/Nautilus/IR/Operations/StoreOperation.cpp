@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <vector>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/IR/Types/VoidStamp.hpp>

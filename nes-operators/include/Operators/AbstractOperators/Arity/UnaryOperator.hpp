@@ -14,9 +14,13 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
 #include <API/Schema.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

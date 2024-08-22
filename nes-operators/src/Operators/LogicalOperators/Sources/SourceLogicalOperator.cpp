@@ -12,10 +12,21 @@
     limitations under the License.
 */
 
+#include <any>
+#include <map>
+#include <set>
 #include <sstream>
+#include <unordered_map>
 #include <utility>
-#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {

@@ -13,9 +13,16 @@
 */
 #pragma once
 
+#include <map>
+#include <sstream>
+#include <string>
+#include <__fwd/sstream.h>
 #include <magic_enum.hpp>
-#include "Configurations/Enums/EnumOption.hpp"
-#include "Util/yaml/Yaml.hpp"
+
+#include <Configurations/ConfigurationException.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/TypedBaseOption.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES::Configurations
 {

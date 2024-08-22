@@ -11,9 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 #include <Expressions/Functions/FunctionExpressionNode.hpp>
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES
 {

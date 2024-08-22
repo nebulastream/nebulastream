@@ -14,11 +14,24 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Sinks/Formats/SinkFormat.hpp>
+
+#include <API/Schema.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
+#include <Sinks/Formats/FormatType.hpp>
+
 namespace NES
 {
 
 class SerializableSchema;
+namespace Runtime
+{
+class TupleBuffer;
+} /// namespace Runtime
+
 using SerializableSchemaPtr = std::shared_ptr<SerializableSchema>;
 
 class NesFormat : public SinkFormat

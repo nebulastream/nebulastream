@@ -12,14 +12,14 @@
     limitations under the License.
 */
 
-#include <iostream>
 #include <utility>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/NesFormat.hpp>
 #include <Util/Logger/Logger.hpp>
-#include "SerializableOperator.pb.h"
+
+#include <Sinks/Formats/SinkFormat.hpp>
+#include <SerializableSchema.pb.h>
 
 namespace NES
 {

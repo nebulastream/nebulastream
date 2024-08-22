@@ -14,12 +14,37 @@
 
 #pragma once
 
+#include <memory>
+#include <span>
+#include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Identifiers/Identifiers.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+namespace Runtime
+{
+class TupleBuffer;
+namespace Execution
+{
+class PipelineExecutionContext;
+class StreamSlice;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {
 
 class HJOperatorHandler;
+
 using HJOperatorHandlerPtr = std::shared_ptr<HJOperatorHandler>;
 
 /**

@@ -14,9 +14,27 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

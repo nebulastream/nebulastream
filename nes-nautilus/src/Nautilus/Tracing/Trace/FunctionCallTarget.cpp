@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <string>
 #include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
 

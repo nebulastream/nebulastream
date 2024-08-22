@@ -13,6 +13,10 @@
 */
 #include <sstream>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <__fwd/sstream.h>
+
+#include <Operators/Operator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

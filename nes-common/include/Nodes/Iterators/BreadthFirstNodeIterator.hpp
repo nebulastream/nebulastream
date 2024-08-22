@@ -13,12 +13,15 @@
 */
 
 #pragma once
+#include <iterator>
 #include <memory>
 #include <queue>
+
 namespace NES
 {
 
 class Node;
+
 using NodePtr = std::shared_ptr<Node>;
 
 /**

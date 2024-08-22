@@ -15,8 +15,13 @@
 #include <algorithm>
 #include <csignal>
 #include <cstdio>
+#include <iostream>
+#include <iterator>
+#include <system_error>
 #include <thread>
 #include <vector>
+#include <errno.h>
+#include <unistd.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Subprocess/Subprocess.hpp>
 #include <magic_enum.hpp>

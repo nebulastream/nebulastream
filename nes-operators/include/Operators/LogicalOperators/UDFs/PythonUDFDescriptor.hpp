@@ -17,12 +17,16 @@
 #include <memory>
 #include <string>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
+
+#include <API/Schema.hpp>
 
 namespace NES::Catalogs::UDF
 {
 
 class PythonUDFDescriptor;
+
 using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 
 class PythonUDFDescriptor : public UDFDescriptor

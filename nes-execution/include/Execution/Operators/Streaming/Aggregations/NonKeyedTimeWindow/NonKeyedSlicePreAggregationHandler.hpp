@@ -13,17 +13,36 @@
 */
 
 #pragma once
+#include <memory>
 #include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedThreadLocalSliceStore.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class PipelineExecutionContext;
+namespace Operators
+{
+class NonKeyedSlice;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 
 class MultiOriginWatermarkProcessor;
 class State;
+
 /**
  * @brief The GlobalThreadLocalPreAggregationOperatorHandler provides an operator handler to perform slice-based pre-aggregation
  * of global non-keyed tumbling and sliding windows.

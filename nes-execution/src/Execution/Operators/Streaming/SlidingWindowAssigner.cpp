@@ -12,8 +12,10 @@
     limitations under the License.
 */
 
+#include <stdint.h>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 

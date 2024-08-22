@@ -13,8 +13,14 @@
 */
 
 #pragma once
+#include <atomic>
+#include <map>
+#include <memory>
+#include <mutex>
 #include <set>
+#include <tuple>
 #include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/KeyedBucketStore.hpp>
@@ -30,11 +36,30 @@
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+
+#include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+class SequenceData;
+namespace Runtime
+{
+class WorkerContext;
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 
 class MultiOriginWatermarkProcessor;
 class State;
+
 /**
  * @brief The AbstractBucketPreAggregationHandler provides an operator handler to perform bucket-based pre-aggregation
  * of tumbling and sliding windows.

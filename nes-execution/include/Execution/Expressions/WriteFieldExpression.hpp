@@ -14,8 +14,11 @@
 
 #pragma once
 
+#include <string>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/Record.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Runtime::Execution::Expressions
 {

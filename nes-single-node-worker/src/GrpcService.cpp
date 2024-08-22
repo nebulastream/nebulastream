@@ -12,8 +12,32 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Operators/Serialization/DecomposedQueryPlanSerializationUtil.hpp>
 #include <GrpcService.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <SingleNodeWorker.hpp>
+#include <SingleNodeWorkerRPCService.pb.h>
+
+namespace NES
+{
+namespace Runtime
+{
+enum class QueryTerminationType : uint8_t;
+} /// namespace Runtime
+} /// namespace NES
+namespace google
+{
+namespace protobuf
+{
+class Empty;
+} /// namespace protobuf
+} /// namespace google
+namespace grpc
+{
+class ServerContext;
+} /// namespace grpc
 
 grpc::Status NES::GRPCServer::RegisterQuery(grpc::ServerContext*, const RegisterQueryRequest* request, RegisterQueryReply* response)
 {

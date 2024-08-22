@@ -14,17 +14,31 @@
 
 #pragma once
 
+#include <map>
+#include <memory>
 #include <span>
+#include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class TextValue;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::Interface
 {
 class PagedVectorVarSizedRef;
-
 class PagedVectorVarSized;
+
 using PagedVectorVarSizedPtr = std::shared_ptr<PagedVectorVarSized>;
 
 struct VarSizedDataEntryMapValue

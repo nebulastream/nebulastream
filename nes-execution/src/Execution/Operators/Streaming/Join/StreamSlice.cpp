@@ -12,8 +12,18 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <sstream>
 #include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <__fwd/sstream.h>
+
+namespace NES
+{
+namespace Runtime
+{
+class BufferManager;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

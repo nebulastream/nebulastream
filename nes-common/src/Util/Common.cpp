@@ -14,10 +14,14 @@
 #include <algorithm>
 #include <fstream>
 #include <iomanip>
+#include <iterator>
 #include <numeric>
 #include <sstream>
 #include <string>
+#include <ctype.h>
 #include <Util/Common.hpp>
+#include <__fwd/fstream.h>
+#include <__fwd/ios.h>
 
 namespace NES::Util
 {

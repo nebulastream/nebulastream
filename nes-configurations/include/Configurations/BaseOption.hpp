@@ -12,8 +12,16 @@
     limitations under the License.
 */
 #pragma once
+#include <map>
 #include <string>
-#include "Util/yaml/Yaml.hpp"
+
+#include <Util/yaml/Yaml.hpp>
+
+namespace Yaml
+{
+class Node;
+} /// namespace Yaml
+
 namespace NES::Configurations
 {
 

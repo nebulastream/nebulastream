@@ -12,13 +12,16 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <optional>
+#include <vector>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/PluginRegistry.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 class ExecutableOperator;
+
 using ExecutableOperatorPtr = std::shared_ptr<ExecutableOperator>;
 } /// namespace NES::Runtime::Execution::Operators
 

@@ -15,6 +15,17 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 
+namespace NES
+{
+namespace Nautilus
+{
+namespace Tracing
+{
+class ValueRef;
+} /// namespace Tracing
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus
 {
 

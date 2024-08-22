@@ -12,6 +12,21 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cmath>
+#include <exception>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
@@ -24,7 +39,47 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <__fwd/sstream.h>
+#include <gtest/gtest.h>
+
+#include <API/AttributeField.hpp>
+#include <API/Schema.hpp>
+#include <API/TimeUnit.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Exceptions/ErrorListener.hpp>
+#include <Exceptions/SignalHandling.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTableVarSized.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

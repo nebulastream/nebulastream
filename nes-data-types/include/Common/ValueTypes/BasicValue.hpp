@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>
+#include <utility>
 #include <Common/ValueTypes/ValueType.hpp>
 
 namespace NES

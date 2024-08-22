@@ -14,11 +14,18 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {

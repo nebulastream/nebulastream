@@ -18,12 +18,17 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <stdint.h>
 #include <folly/Synchronized.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
 
 namespace NES::Runtime
 {
 
 class QueryStatistics;
+
 using QueryStatisticsPtr = std::shared_ptr<QueryStatistics>;
 
 class QueryStatistics

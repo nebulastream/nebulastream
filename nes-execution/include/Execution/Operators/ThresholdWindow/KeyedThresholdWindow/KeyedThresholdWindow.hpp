@@ -13,11 +13,33 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
+#include <stdint.h>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
+
+#include <Nautilus/Interface/Record.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+namespace Aggregation
+{
+class AggregationFunction;
+} /// namespace Aggregation
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 

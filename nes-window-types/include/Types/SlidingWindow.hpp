@@ -13,8 +13,14 @@
 */
 
 #pragma once
+#include <string>
+#include <stdint.h>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+
+#include <Measures/TimeCharacteristic.hpp>
+#include <Types/WindowType.hpp>
+
 namespace NES::Windowing
 {
 /**

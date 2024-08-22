@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <string_view>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>

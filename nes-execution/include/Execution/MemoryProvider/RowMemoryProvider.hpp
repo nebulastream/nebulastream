@@ -13,7 +13,22 @@
 */
 #pragma once
 
+#include <vector>
+#include <stdint.h>
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class UInt64;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::MemoryProvider
 {

@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <cstdlib>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 

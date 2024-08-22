@@ -14,6 +14,8 @@
 
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 
+#include <Execution/Operators/Operator.hpp>
+
 namespace NES::Runtime::Execution
 {
 Operators::OperatorPtr PhysicalOperatorPipeline::getRootOperator() const

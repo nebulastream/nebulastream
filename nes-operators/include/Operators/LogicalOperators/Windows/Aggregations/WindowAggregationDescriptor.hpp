@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <string>
+#include <stdint.h>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 #include <Common/DataTypes/DataType.hpp>
 

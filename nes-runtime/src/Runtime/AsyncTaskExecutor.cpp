@@ -14,9 +14,11 @@
 
 #include <exception>
 #include <numeric>
-#include <string>
+#include <stdlib.h>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Util/ThreadNaming.hpp>
+
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime
 {

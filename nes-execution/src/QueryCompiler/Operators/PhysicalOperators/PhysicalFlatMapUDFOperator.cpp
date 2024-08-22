@@ -13,8 +13,15 @@
 */
 
 #include <sstream>
+#include <utility>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
+#include <__fwd/sstream.h>
+
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 PhysicalFlatMapUDFOperator::PhysicalFlatMapUDFOperator(

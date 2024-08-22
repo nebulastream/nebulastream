@@ -11,11 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <ostream>
+#include <string>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/Boolean.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Tracing
+{
+enum class OpCode : uint8_t;
+} /// namespace Tracing
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::Tracing::TraceUtil
 {

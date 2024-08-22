@@ -12,13 +12,16 @@
     limitations under the License.
 */
 
+#include <ostream>
+#include <sstream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <__fwd/sstream.h>
 
-#include <fstream>
+#include <Util/StdInt.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Runtime::Execution
 {

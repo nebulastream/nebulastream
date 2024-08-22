@@ -14,6 +14,9 @@
 #include <utility>
 #include <QueryCompiler/Operators/PhysicalOperators/Windowing/PhysicalWindowOperator.hpp>
 
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+
 namespace NES::QueryCompilation::PhysicalOperators
 {
 

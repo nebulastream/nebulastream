@@ -15,10 +15,16 @@
 #pragma once
 
 #include <stdexcept>
+#include <string>
 #include <vector>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/OperatorState.hpp>
+
+namespace NES
+{
+enum class OperatorState : uint8_t;
+} /// namespace NES
 
 namespace NES::Exceptions
 {

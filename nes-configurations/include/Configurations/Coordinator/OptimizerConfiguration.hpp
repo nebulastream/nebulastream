@@ -15,14 +15,14 @@
 #pragma once
 
 #include <string>
-#include "Configurations/BaseConfiguration.hpp"
-#include "Configurations/ConfigurationsNames.hpp"
-#include "Configurations/Enums/DistributedJoinOptimizationMode.hpp"
-#include "Configurations/Enums/MemoryLayoutPolicy.hpp"
-#include "Configurations/Enums/PlacementAmendmentMode.hpp"
-#include "Configurations/Enums/QueryMergerRule.hpp"
-#include "Configurations/Validation/BooleanValidation.hpp"
-#include "Configurations/Validation/NumberValidation.hpp"
+#include <Configurations/BaseConfiguration.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Enums/DistributedJoinOptimizationMode.hpp>
+#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
+#include <Configurations/Enums/PlacementAmendmentMode.hpp>
+#include <Configurations/Enums/QueryMergerRule.hpp>
+#include <Configurations/Validation/BooleanValidation.hpp>
+#include <Configurations/Validation/NumberValidation.hpp>
 
 namespace NES::Configurations
 {

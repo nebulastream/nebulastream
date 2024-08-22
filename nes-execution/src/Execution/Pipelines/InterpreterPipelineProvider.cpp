@@ -12,8 +12,19 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Execution/Pipelines/InterpreterPipelineProvider.hpp>
 #include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class CompilationOptions;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

@@ -17,14 +17,17 @@
 namespace NES
 {
 class DumpHelper;
+
 namespace Nautilus
 {
 class CompilationOptions;
 }
 } /// namespace NES
 
+#include <functional>
 #include <vector>
 #include <llvm/IR/Module.h>
+#include <llvm/Support/Error.h>
 #include <mlir/IR/BuiltinOps.h>
 #include <mlir/Pass/Pass.h>
 

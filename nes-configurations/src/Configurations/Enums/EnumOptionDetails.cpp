@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/DistributedJoinOptimizationMode.hpp>
 #include <Configurations/Enums/DumpMode.hpp>

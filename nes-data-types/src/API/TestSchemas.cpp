@@ -12,9 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {

@@ -51,7 +51,7 @@ endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
-    target_link_libraries(nes-runtime PRIVATE nes-compiler)
+    #target_link_libraries(nes-runtime PRIVATE nes-compiler)
 endif ()
 
 if (NES_ENABLES_TESTS)

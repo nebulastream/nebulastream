@@ -14,13 +14,19 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <API/TimeUnit.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES::Windowing
 {
 
 class EventTimeWatermarkStrategyDescriptor;
+
 using EventTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<EventTimeWatermarkStrategyDescriptor>;
 
 class EventTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor

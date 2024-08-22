@@ -14,6 +14,10 @@
 
 #pragma once
 
+#include <atomic>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <folly/Synchronized.h>
 

@@ -14,7 +14,14 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Iterators/DepthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES
 {

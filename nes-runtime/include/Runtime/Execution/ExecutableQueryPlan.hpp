@@ -17,7 +17,9 @@
 #include <atomic>
 #include <future>
 #include <map>
+#include <memory>
 #include <vector>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryTerminationType.hpp>
@@ -26,6 +28,15 @@
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/SinksForwaredRefs.hpp>
 #include <Sources/SourcesForwardedRefs.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class BaseEvent;
+enum class QueryTerminationType : uint8_t;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime
 {

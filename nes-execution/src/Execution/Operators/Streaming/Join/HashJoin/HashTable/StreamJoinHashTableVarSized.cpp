@@ -12,8 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTableVarSized.hpp>
 #include <Util/Common.hpp>
+
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

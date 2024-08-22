@@ -13,12 +13,20 @@
 */
 #pragma once
 
+#include <memory>
 #include <Nautilus/Interface/DataTypes/Any.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/DataTypes/TypedRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/FunctionCall.hpp>
+#include <Nautilus/Tracing/Trace/ConstantValue.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Nautilus
 {

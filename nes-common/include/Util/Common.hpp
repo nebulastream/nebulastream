@@ -13,16 +13,26 @@
 */
 
 #pragma once
+#include <algorithm>
+#include <atomic>
 #include <charconv>
 #include <functional>
 #include <memory>
 #include <sstream>
 #include <string>
 #include <string_view>
+#include <system_error>
 #include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Sequencing/SequenceData.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/istream.h>
+#include <__fwd/sstream.h>
+#include <__fwd/string_view.h>
+
+#include <Identifiers/NESStrongType.hpp>
 
 namespace NES
 {

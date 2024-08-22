@@ -13,8 +13,12 @@
 */
 
 #pragma once
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
+
 namespace NES::Nautilus::IR::Operations
 {
 

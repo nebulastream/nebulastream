@@ -14,7 +14,9 @@
 
 #pragma once
 
+#include <string>
 #include <vector>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 

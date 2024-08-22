@@ -12,11 +12,20 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <chrono>
+#include <ctime>
 #include <filesystem>
 #include <fstream>
+#include <iomanip>
+#include <memory>
+#include <sstream>
+#include <string_view>
 #include <utility>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/fstream.h>
+#include <__fwd/sstream.h>
 
 namespace NES
 {

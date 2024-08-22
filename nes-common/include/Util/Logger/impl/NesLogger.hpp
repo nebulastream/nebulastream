@@ -14,8 +14,15 @@
 
 #pragma once
 
+#include <atomic>
+#include <memory>
+#include <string>
+#include <utility>
 #include <Util/Logger/LogLevel.hpp>
+#include <fmt/base.h>
 #include <fmt/core.h>
+#include <spdlog/common.h>
+#include <spdlog/details/periodic_worker.h>
 #include <spdlog/fwd.h>
 #include <spdlog/logger.h>
 

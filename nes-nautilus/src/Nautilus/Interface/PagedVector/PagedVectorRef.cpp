@@ -11,12 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
+#include <vector>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus::Interface
 {

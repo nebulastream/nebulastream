@@ -12,8 +12,13 @@
     limitations under the License.
 */
 #include <fstream>
+#include <iterator>
+#include <memory>
+#include <stdexcept>
+#include <string>
+#include <string_view>
+#include <vector>
 #include <API/AttributeField.hpp>
-#include <API/Schema.hpp>
 #include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -56,6 +61,38 @@
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
+#include <__fwd/fstream.h>
+#include <__fwd/ios.h>
+#include <google/protobuf/any.pb.h>
+#include <google/protobuf/repeated_ptr_field.h>
+
+#include <API/TimeUnit.hpp>
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Expressions/FieldAccessExpressionNode.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
+#include <Types/ContentBasedWindowType.hpp>
+#include <Types/TimeBasedWindowType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <SerializableExpression.pb.h>
+#include <SerializableOperator.pb.h>
 
 namespace NES
 {

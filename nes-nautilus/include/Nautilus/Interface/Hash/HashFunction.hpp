@@ -13,7 +13,11 @@
 */
 
 #pragma once
+#include <vector>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
 
 namespace NES::Nautilus::Interface
 {

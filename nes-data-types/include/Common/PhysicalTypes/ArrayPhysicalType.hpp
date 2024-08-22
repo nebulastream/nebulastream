@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <utility>
+#include <stdint.h>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES

@@ -23,6 +23,8 @@
 #include <Expressions/LogicalExpressions/NegateExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/OrExpressionNode.hpp>
 
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES
 {
 

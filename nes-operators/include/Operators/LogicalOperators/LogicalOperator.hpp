@@ -15,17 +15,24 @@
 #pragma once
 
 #include <map>
+#include <memory>
 #include <set>
+#include <string>
+#include <stddef.h>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/Operator.hpp>
 #include <Util/OperatorState.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+
 namespace z3
 {
 class expr;
+
 using ExprPtr = std::shared_ptr<expr>;
 class context;
+
 using ContextPtr = std::shared_ptr<context>;
 } /// namespace z3
 
@@ -33,6 +40,7 @@ namespace NES::Optimizer
 {
 class QuerySignatureContext;
 class QuerySignature;
+
 using QuerySignaturePtr = std::shared_ptr<QuerySignature>;
 } /// namespace NES::Optimizer
 

@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <string>
 #include <utility>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <QueryCompiler/NautilusQueryCompiler.hpp>
@@ -29,6 +31,14 @@
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/format.h>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
+#include <QueryCompiler/QueryCompiler.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Timer.hpp>
 
 namespace NES::QueryCompilation
 {

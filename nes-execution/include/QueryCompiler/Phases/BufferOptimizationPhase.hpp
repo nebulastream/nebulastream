@@ -20,6 +20,14 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class OutputBufferOptimizationLevel : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
+
 namespace NES::QueryCompilation
 {
 

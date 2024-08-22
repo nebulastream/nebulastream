@@ -17,6 +17,9 @@
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+#include <Sources/DataSource.hpp>
+
 namespace NES::QueryCompilation
 {
 

@@ -12,15 +12,34 @@
     limitations under the License.
 */
 
-#include <chrono>
-#include <iomanip>
+#include <algorithm>
 #include <sstream>
+#include <string>
+#include <utility>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
-#include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/ReconfigurationType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sources/DataSource.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class BaseEvent;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

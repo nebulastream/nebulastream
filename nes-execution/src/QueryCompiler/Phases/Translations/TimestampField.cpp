@@ -12,8 +12,16 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <ostream>
+#include <utility>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <fmt/format.h>
+
+#include <API/TimeUnit.hpp>
+#include <Execution/Expressions/ReadFieldExpression.hpp>
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
+
 const NES::QueryCompilation::TimestampField::TimeFunctionType& NES::QueryCompilation::TimestampField::getTimeFunctionType() const
 {
     return timeFunctionType;

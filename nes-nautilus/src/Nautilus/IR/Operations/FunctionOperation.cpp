@@ -15,6 +15,23 @@
 #include <utility>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
 
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace IR
+{
+namespace Operations
+{
+enum class PrimitiveStamp : uint8_t;
+} /// namespace Operations
+} /// namespace IR
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::IR::Operations
 {
 

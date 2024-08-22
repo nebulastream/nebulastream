@@ -12,9 +12,11 @@
     limitations under the License.
 */
 
-#include <cstdlib>
 #include <filesystem>
 #include <fstream>
+#include <memory>
+#include <string_view>
+#include <utility>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
@@ -22,12 +24,26 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
-#include <fmt/core.h>
+#include <__fwd/fstream.h>
+#include <fmt/format.h>
+#include <google/protobuf/any.pb.h>
+#include <google/protobuf/empty.pb.h>
+#include <google/protobuf/stubs/port.h>
+#include <grpcpp/server_context.h>
+#include <grpcpp/support/status.h>
 #include <gtest/gtest.h>
-
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
+
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/Operator.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <SerializableDecomposedQueryPlan.pb.h>
+#include <SerializableOperator.pb.h>
 
 namespace NES::IntegrationTestUtil
 {

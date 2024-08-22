@@ -11,8 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
 #include <Exceptions/RuntimeException.hpp>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {

@@ -12,11 +12,18 @@
     limitations under the License.
 */
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <fmt/format.h>
+
+#include <Nodes/Node.hpp>
+#include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {

@@ -11,6 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <optional>
+#include <sstream>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
@@ -21,8 +23,14 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {

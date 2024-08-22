@@ -12,14 +12,18 @@
     limitations under the License.
 */
 
+#include <list>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
 #include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Scan.hpp>
-#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
@@ -28,9 +32,17 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 
-#include <memory>
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Runtime::Execution
 {

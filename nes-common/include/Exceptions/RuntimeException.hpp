@@ -15,6 +15,7 @@
 #pragma once
 
 #include <exception>
+#include <source_location>
 #include <stdexcept>
 #include <string>
 #include <Util/SourceLocation.hpp>

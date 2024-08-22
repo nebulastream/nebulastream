@@ -11,11 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/Schema.hpp>
-#include <Plans/Query/QueryPlan.hpp>
-#include <Plans/Utils/PlanIterator.hpp>
+#include <memory>
+#include <vector>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class OutputBufferOptimizationLevel : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::QueryCompilation
 {

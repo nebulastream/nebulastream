@@ -15,13 +15,17 @@
 #pragma once
 
 #include <memory>
+#include <stdexcept>
 #include <string>
+#include <typeinfo>
 #include <vector>
+#include <__fwd/ostream.h>
 
 namespace NES
 {
 
 class Node;
+
 using NodePtr = std::shared_ptr<Node>;
 
 class Node : public std::enable_shared_from_this<Node>

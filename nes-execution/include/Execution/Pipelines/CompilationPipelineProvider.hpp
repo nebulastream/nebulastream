@@ -12,8 +12,21 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
+
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class CompilationOptions;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Runtime::Execution
 {
 

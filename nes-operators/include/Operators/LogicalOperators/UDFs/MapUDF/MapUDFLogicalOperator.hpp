@@ -14,7 +14,12 @@
 
 #pragma once
 
+#include <string>
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 
 namespace NES
 {

@@ -13,9 +13,12 @@
 */
 #pragma once
 #include <memory>
+#include <__fwd/ostream.h>
+
 namespace NES::Nautilus
 {
 class Any;
+
 typedef std::shared_ptr<Any> AnyPtr;
 } /// namespace NES::Nautilus
 namespace NES::Nautilus::Tracing

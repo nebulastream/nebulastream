@@ -13,8 +13,10 @@
 */
 
 #pragma once
+#include <memory>
 #include <set>
 #include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/AbstractBucketPreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketStore.hpp>
@@ -31,11 +33,24 @@
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/VirtualEnableSharedFromThis.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 
 class MultiOriginWatermarkProcessor;
 class State;
+
 /**
  * @brief The GlobalThreadLocalPreAggregationOperatorHandler provides an operator handler to perform slice-based pre-aggregation
  * of global non-keyed tumbling and sliding windows.

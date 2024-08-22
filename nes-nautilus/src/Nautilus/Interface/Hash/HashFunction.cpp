@@ -13,6 +13,9 @@
 */
 #include <Nautilus/Interface/Hash/HashFunction.hpp>
 
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Nautilus::Interface
 {
 HashFunction::HashValue HashFunction::calculate(Value<> value)

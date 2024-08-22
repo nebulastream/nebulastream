@@ -12,15 +12,16 @@
     limitations under the License.
 */
 
-#include <Configurations/Coordinator/SchemaType.hpp>
-
-#include <iostream>
+#include <sstream>
 #include <stdexcept>
-#include <utility>
+#include <string_view>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Configurations/Coordinator/SchemaType.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+#include <__fwd/string_view.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -28,6 +29,7 @@
 
 namespace NES
 {
+enum class BasicType : uint8_t;
 
 /// TODO REMOVE THIS FUNCTION AFTER REFACTORING
 bool startsWith(const std::string& fullString, std::string_view ending)

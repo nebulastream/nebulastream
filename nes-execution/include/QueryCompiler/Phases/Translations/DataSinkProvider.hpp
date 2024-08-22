@@ -14,9 +14,12 @@
 
 #pragma once
 
+#include <stddef.h>
 #include <Identifiers/Identifiers.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+
+#include <QueryCompiler/Phases/Translations/ConvertLogicalToPhysicalSink.hpp>
 
 namespace NES::QueryCompilation
 {

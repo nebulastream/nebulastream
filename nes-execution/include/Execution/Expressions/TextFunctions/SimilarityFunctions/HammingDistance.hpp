@@ -18,6 +18,14 @@
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Expressions
 {
 

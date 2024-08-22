@@ -14,10 +14,9 @@
 
 #pragma once
 
+#include <string>
 #include <Exceptions/RequestExecutionException.hpp>
 #include <Exceptions/RuntimeException.hpp>
-
-#include <string>
 
 namespace NES
 {

@@ -11,14 +11,17 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Serialization/DataTypeSerializationUtil.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <SerializableOperator.pb.h>
-#include <Common/DataTypes/DataType.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
+#include <google/protobuf/repeated_ptr_field.h>
+
+#include <SerializableExpression.pb.h>
+#include <SerializableSchema.pb.h>
 
 namespace NES
 {

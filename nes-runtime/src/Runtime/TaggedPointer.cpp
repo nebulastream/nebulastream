@@ -13,11 +13,17 @@
 */
 
 #include <Runtime/TaggedPointer.hpp>
-#include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
+namespace Runtime
+{
+namespace detail
+{
+class BufferControlBlock;
+} /// namespace detail
+} /// namespace Runtime
 
 template <typename T>
 TaggedPointer<T>::TaggedPointer(T* ptr, uint16_t tag)

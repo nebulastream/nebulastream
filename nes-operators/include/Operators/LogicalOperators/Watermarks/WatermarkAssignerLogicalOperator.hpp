@@ -14,9 +14,15 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES
 {

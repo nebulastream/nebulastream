@@ -14,12 +14,26 @@
 
 #pragma once
 
+#include <atomic>
+#include <memory>
 #include <mutex>
+#include <string>
+#include <stdint.h>
 #include <Runtime/Reconfigurable.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+
 namespace NES
 {
+namespace Runtime
+{
+class ReconfigurationMessage;
+class TupleBuffer;
+class WorkerContext;
+} /// namespace Runtime
 
 enum class SinkMediumTypes : uint8_t
 {

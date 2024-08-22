@@ -12,11 +12,19 @@
     limitations under the License.
 */
 
+#include <any>
+#include <map>
+#include <memory>
+#include <set>
 #include <sstream>
-#include <API/AttributeField.hpp>
+#include <unordered_map>
 #include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
+#include <Operators/Operator.hpp>
 
 namespace NES
 {

@@ -14,6 +14,12 @@
 #pragma once
 #include <cstdio>
 #include <memory>
+#include <string>
+#include <type_traits>
+#include <utility>
+#include <variant>
+#include <vector>
+#include <stdint.h>
 #include <unistd.h>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Interface/DataTypes/BaseTypedRef.hpp>
@@ -24,6 +30,36 @@
 #include <Nautilus/Tracing/Trace/TraceOperation.hpp>
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
+#include <Nautilus/Tracing/Trace/InputVariant.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class BaseTypedRef;
+class Boolean;
+class Double;
+class Float;
+class Int16;
+class Int32;
+class Int64;
+class Int8;
+class UInt16;
+class UInt32;
+class UInt64;
+class UInt8;
+namespace Tracing
+{
+class ValueRef;
+} /// namespace Tracing
+template <NESIdentifier T>
+class IdentifierImpl;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus
 {
 
@@ -184,11 +220,13 @@ auto transformReturnValues(Arg argument)
 }
 
 class TextValue;
+
 template <typename T>
 requires std::is_same_v<TextValue*, T>
 auto createDefault();
 
 class BaseListValue;
+
 template <typename T>
 requires std::is_base_of<BaseListValue, typename std::remove_pointer<T>::type>::value
 auto createDefault();

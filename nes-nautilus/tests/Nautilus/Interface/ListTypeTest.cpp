@@ -13,6 +13,8 @@
 */
 
 #include <memory>
+#include <string>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
 #include <Nautilus/Interface/DataTypes/List/ListValue.hpp>
@@ -22,7 +24,16 @@
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+
 namespace NES::Nautilus
 {
 

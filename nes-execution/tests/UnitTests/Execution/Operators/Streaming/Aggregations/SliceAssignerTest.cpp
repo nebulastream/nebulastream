@@ -12,11 +12,14 @@
     limitations under the License.
 */
 
-#include <iostream>
+#include <string>
 #include <Execution/Operators/Streaming/SliceAssigner.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

@@ -13,9 +13,9 @@
 */
 
 #include <iostream>
+#include <vector>
 #include <Nodes/Node.hpp>
 #include <Plans/Query/QueryPlan.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/QueryConsoleDumpHandler.hpp>
 
 namespace NES

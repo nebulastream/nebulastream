@@ -11,8 +11,12 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 #include <Nautilus/IR/Types/StampFactory.hpp>
+
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::IR::Operations
 {

@@ -12,13 +12,18 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <string>
 #include <unordered_set>
+#include <utility>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Node.hpp>
 
 namespace NES
 {

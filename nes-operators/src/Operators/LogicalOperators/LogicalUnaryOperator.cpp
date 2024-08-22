@@ -11,10 +11,19 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <string>
+#include <vector>
 #include <API/Schema.hpp>
-#include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Nodes/Node.hpp>
+#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/Operator.hpp>
+
 namespace NES
 {
 

@@ -13,7 +13,9 @@
 */
 
 #pragma once
+#include <stdint.h>
 #include <Common/DataTypes/DataType.hpp>
+
 namespace NES
 {
 

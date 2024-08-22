@@ -13,6 +13,7 @@
 */
 
 #include <iostream>
+#include <vector>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
 #include <Nautilus/IR/Operations/FunctionOperation.hpp>
@@ -20,7 +21,10 @@
 #include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/Util/IRDumpHandler.hpp>
-#include <Util/Logger/Logger.hpp>
+
+#include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
 
 namespace NES::Nautilus::IR
 {

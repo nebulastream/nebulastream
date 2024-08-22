@@ -15,6 +15,8 @@
 #include <Expressions/ConstantValueExpressionNode.hpp>
 #include <Common/ValueTypes/ValueType.hpp>
 
+#include <Expressions/ExpressionNode.hpp>
+
 namespace NES
 {
 ConstantValueExpressionNode::ConstantValueExpressionNode(ValueTypePtr const& constantValue)

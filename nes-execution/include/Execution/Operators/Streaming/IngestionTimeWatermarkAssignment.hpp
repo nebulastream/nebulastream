@@ -12,12 +12,32 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutableOperator.hpp>
+
+#include <Execution/Operators/Streaming/TimeFunction.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {
 class TimeFunction;
+
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 /**
  * @brief Watermark assignment operator.

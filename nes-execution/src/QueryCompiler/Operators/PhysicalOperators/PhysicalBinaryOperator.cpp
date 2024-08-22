@@ -14,6 +14,11 @@
 #include <sstream>
 #include <utility>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalBinaryOperator.hpp>
+#include <__fwd/sstream.h>
+
+#include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {

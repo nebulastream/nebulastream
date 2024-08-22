@@ -12,8 +12,35 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <string>
+#include <vector>
 #include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
 #include <Identifiers/Identifiers.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Boolean;
+class MemRef;
+class UInt64;
+} /// namespace Nautilus
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+namespace Aggregation
+{
+class AggregationFunction;
+} /// namespace Aggregation
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 

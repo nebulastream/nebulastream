@@ -12,13 +12,29 @@
     limitations under the License.
 */
 
-#include <tuple>
-#include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
+#include <memory>
+#include <utility>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
-#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
-#include <Runtime/Execution/ExecutablePipelineStage.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
+
+#include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+namespace Operators
+{
+class KeyedSlice;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

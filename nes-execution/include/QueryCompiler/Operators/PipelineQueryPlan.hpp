@@ -13,11 +13,11 @@
 */
 #pragma once
 
-#include <Nodes/Node.hpp>
-
 #include <memory>
+#include <string>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation

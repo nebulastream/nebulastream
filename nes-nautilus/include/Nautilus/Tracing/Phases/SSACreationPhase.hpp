@@ -15,6 +15,7 @@
 
 #include <memory>
 #include <set>
+#include <stdint.h>
 
 namespace NES::Nautilus::Tracing
 {

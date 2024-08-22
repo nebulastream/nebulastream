@@ -15,8 +15,16 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <vector>
 #include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <__fwd/string_view.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES
 {

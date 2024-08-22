@@ -12,8 +12,17 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <functional>
+#include <string>
 #include <utility>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/Execution/PipelineExecutionContext.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime::Execution
 {
 

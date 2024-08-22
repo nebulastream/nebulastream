@@ -12,9 +12,17 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <iterator>
+#include <list>
 #include <memory>
+#include <numeric>
 #include <random>
+#include <set>
+#include <string>
 #include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Expressions/ArithmeticalExpressions/AddExpression.hpp>
@@ -33,21 +41,35 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <Util/Core.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <API/TimeUnit.hpp>
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <gmock/gmock.h>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
 
 namespace NES::Runtime::Execution
 {

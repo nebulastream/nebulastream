@@ -14,12 +14,38 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+namespace QueryCompilation
+{
+enum class JoinBuildSideType : uint8_t;
+} /// namespace QueryCompilation
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+class RecordBuffer;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {
 
 class HJBuildSlicing;
+
 using HJBuildSlicingPtr = std::shared_ptr<HJBuildSlicing>;
 
 /**

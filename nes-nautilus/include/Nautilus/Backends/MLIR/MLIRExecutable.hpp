@@ -12,8 +12,15 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <string>
 #include <Nautilus/Backends/Executable.hpp>
 #include <mlir/ExecutionEngine/ExecutionEngine.h>
+
+namespace mlir
+{
+class ExecutionEngine;
+} /// namespace mlir
 
 namespace NES::Nautilus::Backends::MLIR
 {

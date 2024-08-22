@@ -12,12 +12,19 @@
     limitations under the License.
 */
 
+#include <mutex>
 #include <sstream>
 #include <string>
 #include <utility>
-#include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/PrintSink.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <API/Schema.hpp>
+#include <Exceptions/RuntimeException.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES
 {

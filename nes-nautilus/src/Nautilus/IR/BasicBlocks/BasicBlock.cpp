@@ -15,6 +15,7 @@
 #include <algorithm>
 #include <cstdint>
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
 #include <Nautilus/IR/Operations/BranchOperation.hpp>
@@ -23,6 +24,9 @@
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
+
+#include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
 
 namespace NES::Nautilus::IR
 {

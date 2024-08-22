@@ -12,14 +12,31 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <variant>
+#include <vector>
+#include <math.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <API/Schema.hpp>
 #include <Exceptions/Exception.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <gtest/gtest.h>
 #include <magic_enum.hpp>
-#include "Common/DataTypes/DataTypeFactory.hpp"
-#include <Common/ExecutableType/Array.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {

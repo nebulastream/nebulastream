@@ -14,6 +14,7 @@
 
 #include <cstdint>
 #include <filesystem>
+#include <ostream>
 #include <string>
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <Util/Logger/Logger.hpp>

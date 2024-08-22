@@ -18,12 +18,14 @@
 #include <string>
 #include <utility>
 #include <API/Schema.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Catalogs::UDF
 {
 
 class UDFDescriptor;
+
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 
 class UDFDescriptor

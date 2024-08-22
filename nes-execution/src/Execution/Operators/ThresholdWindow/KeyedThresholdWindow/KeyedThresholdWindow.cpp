@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <mutex>
+#include <unordered_map>
 #include <utility>
 #include <Execution/Aggregation/AggregationValue.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
@@ -26,6 +28,15 @@
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowState.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

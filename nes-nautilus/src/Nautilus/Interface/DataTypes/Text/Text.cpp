@@ -13,13 +13,20 @@
 */
 
 #include <cstring>
-#include <iostream>
 #include <memory>
 #include <regex>
 #include <string>
+#include <ctype.h>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Util/Common.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Nautilus/Interface/DataTypes/TypedRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Nautilus
 {

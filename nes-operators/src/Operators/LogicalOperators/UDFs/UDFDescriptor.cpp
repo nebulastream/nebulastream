@@ -15,6 +15,8 @@
 #include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 
+#include <API/Schema.hpp>
+
 namespace NES::Catalogs::UDF
 {
 

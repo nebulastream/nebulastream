@@ -12,7 +12,13 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <list>
 #include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/Aggregation/SumAggregation.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
@@ -25,7 +31,6 @@
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedWindowEmitAction.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
-#include <Execution/Pipelines/CompilationPipelineProvider.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -33,12 +38,38 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <API/TimeUnit.hpp>
+#include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+namespace Aggregation
+{
+class AggregationFunction;
+} /// namespace Aggregation
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

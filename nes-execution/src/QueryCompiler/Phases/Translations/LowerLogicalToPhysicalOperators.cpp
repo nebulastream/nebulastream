@@ -11,14 +11,20 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
-#include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
 #include <QueryCompiler/Phases/Translations/LowerLogicalToPhysicalOperators.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Node.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
 {

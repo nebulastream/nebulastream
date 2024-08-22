@@ -12,12 +12,17 @@
     limitations under the License.
 */
 
+#include <functional>
+#include <memory>
+#include <sstream>
 #include <utility>
-#include <vector>
-#include <API/AttributeField.hpp>
+#include <stddef.h>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TumblingWindow.hpp>
-#include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Measures/TimeMeasure.hpp>
+#include <Types/TimeBasedWindowType.hpp>
 
 namespace NES::Windowing
 {

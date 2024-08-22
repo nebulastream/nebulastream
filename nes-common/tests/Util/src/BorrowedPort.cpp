@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <memory>
-#include <Util/Logger/Logger.hpp>
 #include <detail/PortDispatcher.hpp>
 #include <BorrowedPort.hpp>
 

@@ -17,6 +17,9 @@
 #include <map>
 #include <memory>
 #include <ostream>
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus

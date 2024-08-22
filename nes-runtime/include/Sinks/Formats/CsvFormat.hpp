@@ -14,9 +14,19 @@
 
 #pragma once
 
+#include <string>
 #include <Sinks/Formats/SinkFormat.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
+#include <Sinks/Formats/FormatType.hpp>
+
 namespace NES
 {
+namespace Runtime
+{
+class TupleBuffer;
+} /// namespace Runtime
 
 class CsvFormat : public SinkFormat
 {

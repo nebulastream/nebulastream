@@ -12,6 +12,13 @@
     limitations under the License.
 */
 #pragma once
+#include <cstddef>
+#include <iterator>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/NotImplementedException.hpp>

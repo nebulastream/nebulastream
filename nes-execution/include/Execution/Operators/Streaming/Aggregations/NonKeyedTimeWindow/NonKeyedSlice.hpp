@@ -16,6 +16,7 @@
 #include <cstdlib>
 #include <memory>
 #include <ostream>
+
 namespace NES::Runtime::Execution::Operators
 {
 

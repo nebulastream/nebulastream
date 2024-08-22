@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <Nautilus/IR/Types/AddressStamp.hpp>
-#include <Nautilus/IR/Types/ArrayStamp.hpp>
 #include <Nautilus/IR/Types/BooleanStamp.hpp>
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>

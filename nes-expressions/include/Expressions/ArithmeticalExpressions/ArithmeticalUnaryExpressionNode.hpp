@@ -13,8 +13,13 @@
 */
 
 #pragma once
+#include <string>
 #include <Expressions/ArithmeticalExpressions/ArithmeticalExpressionNode.hpp>
 #include <Expressions/UnaryExpressionNode.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 /**

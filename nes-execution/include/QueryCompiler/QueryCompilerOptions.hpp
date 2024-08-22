@@ -14,6 +14,7 @@
 #pragma once
 
 #include <cstdint>
+#include <memory>
 #include <string>
 #include <Configurations/Enums/CompilationStrategy.hpp>
 #include <Configurations/Enums/DumpMode.hpp>
@@ -25,6 +26,14 @@
 #include <QueryCompiler/Phases/OutputBufferAllocationStrategies.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Util/Common.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class DumpMode : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::QueryCompilation
 {

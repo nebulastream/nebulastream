@@ -12,8 +12,9 @@
     limitations under the License.
 */
 
-#include <iostream>
+#include <ostream>
 #include <Nautilus/Tracing/Tag/Tag.hpp>
+
 namespace NES::Nautilus::Tracing
 {
 TagVector::TagVector(const std::vector<TagAddress>& addresses) : addresses(addresses)

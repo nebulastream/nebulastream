@@ -12,20 +12,44 @@
     limitations under the License.
 */
 
+#include <string>
+#include <string_view>
+#include <utility>
+#include <vector>
 #include <Nautilus/Backends/MLIR/JITCompiler.hpp>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Nautilus/Backends/MLIR/MLIRCompilationBackend.hpp>
 #include <Nautilus/Backends/MLIR/MLIRExecutable.hpp>
 #include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
 #include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
-#include <Nautilus/IR/IRGraph.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/Timer.hpp>
+#include <llvm/ADT/STLFunctionalExtras.h>
+#include <llvm/Support/Error.h>
+#include <llvm/Support/raw_ostream.h>
 #include <mlir/Dialect/Func/Extensions/AllExtensions.h>
-#include <mlir/Dialect/Func/IR/FuncOps.h>
+#include <mlir/IR/DialectRegistry.h>
 #include <mlir/IR/MLIRContext.h>
+#include <mlir/IR/OperationSupport.h>
+#include <mlir/IR/OwningOpRef.h>
 #include <mlir/Target/LLVMIR/Dialect/Builtin/BuiltinToLLVMIRTranslation.h>
 #include <mlir/Target/LLVMIR/Dialect/LLVMIR/LLVMToLLVMIRTranslation.h>
+
+#include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/DumpHelper.hpp>
+#include <mlir/IR/BuiltinOps.h>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace IR
+{
+class IRGraph;
+} /// namespace IR
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::Backends::MLIR
 {

@@ -12,9 +12,25 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <iterator>
+#include <string>
+#include <string_view>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <magic_enum.hpp>
+
+#include <API/Schema.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Execution/Operators/Streaming/MultiOriginWatermarkProcessor.hpp>
+#include <Execution/Operators/Streaming/SliceAssigner.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

@@ -12,9 +12,12 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Expressions/Functions/LogicalFunctionRegistry.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {

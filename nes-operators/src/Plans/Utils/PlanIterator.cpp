@@ -12,10 +12,13 @@
     limitations under the License.
 */
 
+#include <stdint.h>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Utils/PlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Nodes/Node.hpp>
 
 namespace NES
 {

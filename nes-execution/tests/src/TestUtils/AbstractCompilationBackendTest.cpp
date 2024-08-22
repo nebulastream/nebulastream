@@ -12,7 +12,25 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
+
+#include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
+#include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Backends
+{
+class Executable;
+} /// namespace Backends
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus
 {

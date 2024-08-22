@@ -12,24 +12,39 @@
     limitations under the License.
 */
 
-#include <filesystem>
+#include <chrono>
 #include <fstream>
-#include <iostream>
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <stddef.h>
+#include <stdint.h>
 #include <TestUtils/UtilityFunctions.hpp>
+#include <__fwd/ostream.h>
+#include <boost/asio.hpp>
+#include <boost/system/detail/error_code.hpp>
 #include <detail/PortDispatcher.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <BorrowedPort.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
-#include <boost/asio.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/Enums/EnumOptionDetails.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Configuration.hpp>
+#include <SerializableDecomposedQueryPlan.pb.h>
+#include <SingleNodeWorker.hpp>
 
 namespace NES::Testing
 {

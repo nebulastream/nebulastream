@@ -11,10 +11,27 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <stdint.h>
 #include <Execution/Aggregation/AggregationFunction.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedWindowEmitAction.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Boolean;
+class UInt64;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

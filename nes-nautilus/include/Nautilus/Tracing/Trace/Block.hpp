@@ -16,6 +16,10 @@
 #include <ostream>
 #include <vector>
 #include <Nautilus/Tracing/Trace/TraceOperation.hpp>
+#include <__fwd/ostream.h>
+
+#include <Nautilus/Tracing/ValueRef.hpp>
+
 namespace NES::Nautilus::Tracing
 {
 

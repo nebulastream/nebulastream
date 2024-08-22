@@ -12,14 +12,27 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
+#include <string_view>
+#include <tuple>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/MemoryLayout/ColumnLayoutField.hpp>
-#include <Runtime/MemoryLayout/RowLayoutField.hpp>
 #include <Util/TestTupleBuffer.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <gtest/gtest.h>
 #include <magic_enum.hpp>
-#include <Common/ExecutableType/Array.hpp>
+
+#include <Runtime/MemoryLayout/ColumnLayout.hpp>
+#include <Runtime/MemoryLayout/RowLayout.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+
 namespace NES::Runtime::MemoryLayouts
 {
 

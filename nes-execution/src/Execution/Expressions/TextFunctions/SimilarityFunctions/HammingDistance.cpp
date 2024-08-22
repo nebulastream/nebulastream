@@ -11,11 +11,29 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <stdexcept>
 #include <string>
+#include <stdint.h>
 #include <Execution/Expressions/TextFunctions/SimilarityFunctions/HammingDistance.hpp>
 #include <Nautilus/Interface/DataTypes/Text/Text.hpp>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+
+#include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/TypedRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Expressions
 {

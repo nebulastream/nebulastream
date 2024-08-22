@@ -13,6 +13,10 @@
 */
 #include <chrono>
 #include <memory>
+#include <optional>
+#include <sstream>
+#include <string>
+#include <stdint.h>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
@@ -20,8 +24,21 @@
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
+#include <__fwd/sstream.h>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Text/Text.hpp>
+#include <Nautilus/Tracing/Trace/ConstantValue.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/WorkerContext.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Nautilus
 {

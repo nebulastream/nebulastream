@@ -14,6 +14,8 @@
 #pragma once
 #include <ostream>
 #include <string>
+#include <__fwd/ostream.h>
+
 namespace NES::Nautilus::Tracing
 {
 

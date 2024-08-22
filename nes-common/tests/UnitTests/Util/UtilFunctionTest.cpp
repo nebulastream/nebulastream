@@ -11,10 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
+#include <string_view>
+#include <vector>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES
 {

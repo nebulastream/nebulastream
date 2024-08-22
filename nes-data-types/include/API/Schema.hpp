@@ -17,24 +17,30 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <stdint.h>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {
+enum class BasicType : uint8_t;
 
 namespace Configurations
 {
 class SchemaType;
+
 using SchemaTypePtr = std::shared_ptr<SchemaType>;
 } /// namespace Configurations
 
 class Schema;
+
 using SchemaPtr = std::shared_ptr<Schema>;
 
 class DataType;
+
 using DataTypePtr = std::shared_ptr<DataType>;
 
 class AttributeField;
+
 using AttributeFieldPtr = std::shared_ptr<AttributeField>;
 
 class Schema

@@ -15,6 +15,7 @@
 #include <sstream>
 #include <utility>
 #include <API/AttributeField.hpp>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES

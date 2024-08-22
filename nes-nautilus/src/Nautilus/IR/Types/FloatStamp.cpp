@@ -13,6 +13,8 @@
 */
 #include <Nautilus/IR/Types/FloatStamp.hpp>
 
+#include <Nautilus/IR/Types/Stamp.hpp>
+
 namespace NES::Nautilus::IR::Types
 {
 

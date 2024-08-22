@@ -14,8 +14,11 @@
 #pragma once
 
 #include <string>
+#include <stddef.h>
+#include <stdint.h>
 #include <Runtime/TupleBuffer.hpp>
 #include <Common/ExecutableType/BaseVariableSizeType.hpp>
+
 namespace NES::Nautilus
 {
 

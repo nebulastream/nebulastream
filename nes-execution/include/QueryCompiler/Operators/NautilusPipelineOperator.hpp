@@ -12,10 +12,16 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <string>
+#include <vector>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::QueryCompilation
 {

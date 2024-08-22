@@ -12,10 +12,13 @@
     limitations under the License.
 */
 
+#include <ostream>
 #include <utility>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
 
 namespace NES::Nautilus::Tracing
 {

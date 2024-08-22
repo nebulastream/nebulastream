@@ -18,6 +18,7 @@
 #include <mutex>
 #include <unordered_map>
 #include <vector>
+#include <stddef.h>
 #include <Runtime/AbstractLineageManager.hpp>
 #include <Util/BufferSequenceNumber.hpp>
 

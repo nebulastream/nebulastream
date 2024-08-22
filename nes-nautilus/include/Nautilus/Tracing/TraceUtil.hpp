@@ -14,6 +14,20 @@
 
 #pragma once
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
+
+#include <Nautilus/Tracing/TraceContext.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Tracing
+{
+enum class OpCode : uint8_t;
+} /// namespace Tracing
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::Tracing
 {
 class ValueRef;

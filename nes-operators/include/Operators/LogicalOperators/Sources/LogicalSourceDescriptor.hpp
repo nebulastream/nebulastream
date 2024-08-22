@@ -14,6 +14,8 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES

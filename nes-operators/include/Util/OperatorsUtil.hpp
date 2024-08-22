@@ -15,8 +15,11 @@
 #pragma once
 
 #include <sstream>
+#include <string>
 #include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
+#include <__fwd/sstream.h>
 
 namespace Util
 {

@@ -13,13 +13,15 @@
 */
 
 #include <chrono>
+#include <ctime>
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <Plans/Query/QueryPlan.hpp>
+#include <utility>
 #include <Util/DumpHandler/ConsoleDumpHandler.hpp>
 #include <Util/DumpHandler/DumpContext.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 
 namespace NES
 {

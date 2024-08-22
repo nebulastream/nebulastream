@@ -13,14 +13,27 @@
 */
 
 #include <algorithm>
+#include <iterator>
+#include <map>
+#include <set>
+#include <sstream>
+#include <string>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
-#include <Operators/Exceptions/UDFException.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
-#include <Operators/OperatorForwardDeclaration.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+#include <fmt/format.h>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/Operator.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {

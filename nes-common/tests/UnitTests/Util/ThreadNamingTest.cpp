@@ -13,11 +13,16 @@
 */
 
 #include <cstring>
+#include <string>
+#include <features.h>
 #include <unistd.h>
 #include <Util/Logger/Logger.hpp>
 #include <Util/ThreadNaming.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
 #ifdef _POSIX_THREADS
 #    define HAS_POSIX_THREAD
 #    include <pthread.h>

@@ -14,10 +14,14 @@
 
 #pragma once
 
+#include <memory>
 #include <string>
+#include <stdint.h>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <__fwd/string_view.h>
 
 class SinkMedium;
+
 namespace NES
 {
 

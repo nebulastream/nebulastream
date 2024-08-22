@@ -11,8 +11,22 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <optional>
 #include <Nautilus/Interface/DataTypes/InvocationPlugin.hpp>
 #include <Nautilus/Interface/DataTypes/List/List.hpp>
+
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class UInt32;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus
 {
 

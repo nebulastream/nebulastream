@@ -16,6 +16,9 @@
 #include <Execution/Operators/Streaming/Aggregations/Buckets/NonKeyedBucketStore.hpp>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 
+#include <Execution/Operators/Streaming/Aggregations/Buckets/BucketStore.hpp>
+#include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 

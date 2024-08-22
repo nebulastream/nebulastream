@@ -14,6 +14,8 @@
 
 #include <Runtime/NesThread.hpp>
 
+#include <Identifiers/Identifiers.hpp>
+
 namespace NES::Runtime
 {
 

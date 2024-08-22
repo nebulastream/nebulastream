@@ -12,10 +12,15 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Execution/MemoryProvider/ColumnMemoryProvider.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
+
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {

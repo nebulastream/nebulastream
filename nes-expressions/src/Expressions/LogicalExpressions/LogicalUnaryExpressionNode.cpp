@@ -12,9 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <vector>
 #include <Expressions/LogicalExpressions/LogicalUnaryExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
+
+#include <Expressions/LogicalExpressions/LogicalExpressionNode.hpp>
+#include <Expressions/UnaryExpressionNode.hpp>
 
 namespace NES
 {

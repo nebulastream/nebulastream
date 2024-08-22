@@ -14,7 +14,9 @@
 #pragma once
 
 #include <memory>
+#include <string>
 #include <vector>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Nodes/Node.hpp>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>

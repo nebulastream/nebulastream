@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <unordered_set>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Expressions/Expressions.hpp>
@@ -19,17 +20,26 @@
 #include <API/Query.hpp>
 #include <API/WindowedQuery.hpp>
 #include <API/Windowing.hpp>
-#include <Expressions/FieldAssignmentExpressionNode.hpp>
-#include <Expressions/FieldRenameExpressionNode.hpp>
 #include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
-#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
-#include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Plans/Query/QueryPlanBuilder.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Expressions/BinaryExpressionNode.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+#include <Operators/Operator.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES
 {

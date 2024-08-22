@@ -12,11 +12,14 @@
     limitations under the License.
 */
 
-#include <cstring>
+#include <functional>
+#include <memory>
 #include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
-#include <Exceptions/ErrorListener.hpp>
 #include <Execution/Expressions/LogicalExpressions/EqualsExpression.hpp>
 #include <Execution/Expressions/ReadFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
@@ -27,7 +30,6 @@
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJOperatorHandlerSlicing.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
 #include <Execution/Pipelines/ExecutablePipelineProvider.hpp>
-#include <Execution/RecordBuffer.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
@@ -35,9 +37,26 @@
 #include <TestUtils/AbstractPipelineExecutionTest.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Util/TestTupleBuffer.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
+
+#include <API/AttributeField.hpp>
+#include <API/TimeUnit.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Runtime/Execution/ExecutablePipelineStage.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES::Runtime::Execution
 {

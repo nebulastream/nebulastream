@@ -12,17 +12,33 @@
     limitations under the License.
 */
 
-/// nes-runtime tests has no include directory
-#include <variant>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Sinks/Formats/JsonFormat.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <fmt/base.h>
 #include <gtest/gtest.h>
 #include <nlohmann/json.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/ExecutableType/Array.hpp>
+#include <nlohmann/json_fwd.hpp>
+/// nes-runtime tests has no include directory
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <variant>
+#include <vector>
+
+#include <Sinks/Formats/FormatIterators/FormatIterator.hpp>
+#include <Sinks/Formats/FormatIterators/Iterator.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 #include "FormatIteratorTestUtil.hpp"
 
 namespace NES::Runtime

@@ -12,8 +12,18 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cmath>
+#include <functional>
+#include <map>
+#include <memory>
+#include <optional>
 #include <random>
-#include <ranges>
+#include <string>
+#include <tuple>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <API/TestSchemas.hpp>
@@ -37,10 +47,37 @@
 #include <Runtime/WorkerContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <Util/Common.hpp>
-#include <Util/TestTupleBuffer.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/BasicTypes.hpp>
+#include <gtest/gtest.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Execution/Expressions/Expression.hpp>
+#include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

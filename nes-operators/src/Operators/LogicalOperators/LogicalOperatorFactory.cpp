@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <any>
 #include <Operators/LogicalOperators/LogicalBatchJoinOperator.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
@@ -31,6 +32,13 @@
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Util/Placement/PlacementConstants.hpp>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFLogicalOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Operators/OperatorForwardDeclaration.hpp>
 
 namespace NES
 {

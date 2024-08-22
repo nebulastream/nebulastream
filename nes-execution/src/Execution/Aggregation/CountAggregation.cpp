@@ -12,10 +12,14 @@
     limitations under the License.
 */
 
+#include <string>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/StdInt.hpp>
+
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {

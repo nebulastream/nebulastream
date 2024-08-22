@@ -14,12 +14,27 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
+#include <stdint.h>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
+
+#include <Runtime/ExecutionResult.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class TupleBuffer;
+class WorkerContext;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {
 class PhysicalOperatorPipeline;
 class PipelineExecutionContext;
+
 /**
  * @brief This is an adopt to the legacy pipeline stage to the nautilus operators.
  * TODO After finishing the migration the nautilus based we can replace the interface.

@@ -12,10 +12,10 @@
     limitations under the License.
 */
 
-#include <sstream>
 #include <utility>
-#include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES
 {

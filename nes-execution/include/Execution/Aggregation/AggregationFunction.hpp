@@ -13,6 +13,9 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
+#include <stdint.h>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/DataTypes/MemRef.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>

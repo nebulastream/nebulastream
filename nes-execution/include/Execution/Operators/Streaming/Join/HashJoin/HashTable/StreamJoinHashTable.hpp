@@ -15,12 +15,25 @@
 #pragma once
 
 #include <atomic>
+#include <memory>
+#include <string>
+#include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/Allocator/FixedPagesAllocator.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class FixedPagesAllocator;
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

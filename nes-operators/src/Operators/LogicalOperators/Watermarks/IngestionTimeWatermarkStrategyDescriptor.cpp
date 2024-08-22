@@ -15,6 +15,8 @@
 #include <string>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+
 namespace NES::Windowing
 {
 

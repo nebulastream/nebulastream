@@ -12,7 +12,22 @@
     limitations under the License.
 */
 #pragma once
+#include <string>
+#include <vector>
 #include <Execution/Operators/ExecutableOperator.hpp>
+
+#include <Nautilus/Interface/Record.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class ExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

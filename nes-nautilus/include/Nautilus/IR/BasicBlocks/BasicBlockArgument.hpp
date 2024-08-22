@@ -15,7 +15,10 @@
 #pragma once
 
 #include <ostream>
+#include <string>
 #include <Nautilus/IR/Operations/Operation.hpp>
+#include <__fwd/ostream.h>
+
 namespace NES::Nautilus::IR::Operations
 {
 

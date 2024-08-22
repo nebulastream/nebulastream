@@ -14,6 +14,8 @@
 
 #include <Operators/Exceptions/InvalidLogicalOperatorException.hpp>
 
+#include <Exceptions/RequestExecutionException.hpp>
+
 namespace NES::Exceptions
 {
 InvalidLogicalOperatorException::InvalidLogicalOperatorException(const std::string& message)

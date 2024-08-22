@@ -16,6 +16,17 @@
 #include <Nautilus/IR/Types/Stamp.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Util/PluginRegistry.hpp>
+
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class TypeIdentifier;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus
 {
 

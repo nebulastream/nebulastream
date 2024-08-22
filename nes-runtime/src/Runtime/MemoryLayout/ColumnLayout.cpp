@@ -11,11 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <API/AttributeField.hpp>
+#include <string>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/ColumnLayout.hpp>
-#include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Runtime/MemoryLayout/MemoryLayout.hpp>
 
 namespace NES::Runtime::MemoryLayouts
 {

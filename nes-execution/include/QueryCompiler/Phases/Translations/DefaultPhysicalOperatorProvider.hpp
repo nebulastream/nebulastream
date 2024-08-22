@@ -12,13 +12,32 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
+#include <string>
+#include <tuple>
+#include <utility>
 #include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <QueryCompiler/Phases/Translations/PhysicalOperatorProvider.hpp>
 #include <QueryCompiler/Phases/Translations/TimestampField.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Types/TimeBasedWindowType.hpp>
+
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
+#include <Operators/LogicalOperators/Windows/WindowOperator.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
+
 namespace NES::QueryCompilation
 {
 

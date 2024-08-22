@@ -12,11 +12,16 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/SumAggregationDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
 namespace NES::Windowing
 {

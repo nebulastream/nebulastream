@@ -14,13 +14,26 @@
 
 #pragma once
 
+#include <memory>
+#include <stdint.h>
 #include <Sources/Parsers/Parser.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <__fwd/string_view.h>
+
+#include <API/Schema.hpp>
 
 namespace NES
 {
 
 class NESBinaryParser;
+namespace Runtime
+{
+namespace MemoryLayouts
+{
+class TestTupleBuffer;
+} /// namespace MemoryLayouts
+} /// namespace Runtime
+
 using NESParserPtr = std::shared_ptr<NESBinaryParser>;
 /**
  * Parser for NebulasSteram

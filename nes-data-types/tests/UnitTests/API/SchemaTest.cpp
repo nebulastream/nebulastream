@@ -11,17 +11,28 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <array>
+#include <memory>
 #include <random>
+#include <string>
+#include <vector>
+#include <stdlib.h>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/StdInt.hpp>
-#include <fmt/core.h>
+#include <fmt/format.h>
+#include <gtest/gtest.h>
 #include <BaseUnitTest.hpp>
 #include <magic_enum.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataTypeFactory.hpp>
 
 namespace NES
 {

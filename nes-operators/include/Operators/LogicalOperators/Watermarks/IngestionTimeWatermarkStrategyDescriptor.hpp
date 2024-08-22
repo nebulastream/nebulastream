@@ -14,12 +14,15 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing
 {
 
 class IngestionTimeWatermarkStrategyDescriptor;
+
 using IngestionTimeWatermarkStrategyDescriptorPtr = std::shared_ptr<IngestionTimeWatermarkStrategyDescriptor>;
 
 class IngestionTimeWatermarkStrategyDescriptor : public WatermarkStrategyDescriptor

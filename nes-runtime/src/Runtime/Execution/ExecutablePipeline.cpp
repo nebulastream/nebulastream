@@ -12,9 +12,14 @@
     limitations under the License.
 */
 
+#include <any>
 #include <atomic>
 #include <chrono>
-#include <Exceptions/Exception.hpp>
+#include <memory>
+#include <ostream>
+#include <string>
+#include <utility>
+#include <variant>
 #include <Runtime/Events.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -25,6 +30,16 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/ExecutionResult.hpp>
+#include <Runtime/QueryTerminationType.hpp>
+#include <Runtime/Reconfigurable.hpp>
+#include <Runtime/ReconfigurationMessage.hpp>
+#include <Runtime/ReconfigurationType.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sources/DataSource.hpp>
 
 using namespace std::chrono_literals;
 namespace NES::Runtime::Execution

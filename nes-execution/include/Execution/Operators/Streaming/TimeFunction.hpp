@@ -13,6 +13,7 @@
 */
 #pragma once
 
+#include <memory>
 #include <API/TimeUnit.hpp>
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
@@ -32,6 +33,7 @@ class ExecutionContext;
 namespace NES::Runtime::Execution::Expressions
 {
 class Expression;
+
 using ExpressionPtr = std::shared_ptr<Expression>;
 } /// namespace NES::Runtime::Execution::Expressions
 
@@ -40,6 +42,7 @@ namespace NES::Runtime::Execution::Operators
 using namespace Nautilus;
 
 class TimeFunction;
+
 using TimeFunctionPtr = std::unique_ptr<TimeFunction>;
 /**
  * @brief A time function, infers the timestamp of an record.

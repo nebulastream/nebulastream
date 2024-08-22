@@ -13,8 +13,13 @@
 */
 #pragma once
 
+#include <vector>
 #include <Operators/AbstractOperators/Arity/BinaryOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperator.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES
 {

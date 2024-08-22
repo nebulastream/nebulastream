@@ -12,16 +12,32 @@
     limitations under the License.
 */
 
+#include <exception>
+#include <map>
+#include <memory>
+#include <ostream>
 #include <string>
+#include <string_view>
 #include <utility>
+#include <errno.h>
+#include <string.h>
 #include <Sources/Parsers/JSONParser.hpp>
 #include <Util/Common.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <nlohmann/json.hpp>
-#include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+#include <nlohmann/json_fwd.hpp>
+
+#include <Sources/Parsers/Parser.hpp>
 
 namespace NES
 {
+namespace Runtime
+{
+namespace MemoryLayouts
+{
+class TestTupleBuffer;
+} /// namespace MemoryLayouts
+} /// namespace Runtime
 
 JSONParser::JSONParser(uint64_t numberOfSchemaFields, std::vector<std::string> schemaKeys, std::vector<NES::PhysicalTypePtr> physicalTypes)
     : Parser(physicalTypes)

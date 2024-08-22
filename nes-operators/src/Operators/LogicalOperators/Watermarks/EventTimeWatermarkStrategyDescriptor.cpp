@@ -12,16 +12,20 @@
     limitations under the License.
 */
 
-#include <API/AttributeField.hpp>
-
 #include <sstream>
 #include <utility>
+#include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <API/TimeUnit.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing
 {

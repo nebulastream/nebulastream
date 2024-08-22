@@ -14,6 +14,19 @@
 
 #include <Runtime/Execution/DiscardingExecutablePipelineStage.hpp>
 
+namespace NES
+{
+namespace Runtime
+{
+class TupleBuffer;
+class WorkerContext;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
+
 NES::ExecutionResult NES::Runtime::Execution::DiscardingExecutablePipelineStage::execute(
     NES::Runtime::TupleBuffer&, NES::Runtime::Execution::PipelineExecutionContext&, NES::Runtime::WorkerContext&)
 {

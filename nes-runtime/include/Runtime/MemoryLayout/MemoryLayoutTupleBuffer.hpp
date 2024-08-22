@@ -15,6 +15,7 @@
 #pragma once
 
 #include <cstring>
+#include <stdint.h>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Runtime/TupleBuffer.hpp>
 

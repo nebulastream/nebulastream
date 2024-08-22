@@ -11,7 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <utility>
+#include <__bit_reference>
+#include <ostream>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionPath.hpp>
 
 namespace NES::Nautilus::Tracing

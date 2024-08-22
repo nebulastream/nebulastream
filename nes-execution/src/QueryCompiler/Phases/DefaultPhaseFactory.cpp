@@ -11,10 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <memory>
 #include <QueryCompiler/Phases/AddScanAndEmitPhase.hpp>
 #include <QueryCompiler/Phases/BufferOptimizationPhase.hpp>
 #include <QueryCompiler/Phases/DefaultPhaseFactory.hpp>
-#include <QueryCompiler/Phases/PhaseFactory.hpp>
 #include <QueryCompiler/Phases/Pipelining/DefaultPipeliningPhase.hpp>
 #include <QueryCompiler/Phases/Pipelining/FuseNonPipelineBreakerPolicy.hpp>
 #include <QueryCompiler/Phases/Pipelining/OperatorAtATimePolicy.hpp>
@@ -26,6 +26,9 @@
 #include <QueryCompiler/Phases/Translations/SourceSharingDataSourceProvider.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Configurations/Enums/PipeliningStrategy.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::QueryCompilation::Phases
 {

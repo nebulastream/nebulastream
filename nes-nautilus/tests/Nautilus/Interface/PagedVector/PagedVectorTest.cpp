@@ -13,17 +13,29 @@
 */
 
 #include <algorithm>
+#include <cmath>
+#include <cstring>
+#include <iterator>
 #include <memory>
+#include <memory_resource>
+#include <string>
+#include <utility>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+
 namespace NES::Nautilus::Interface
 {
 

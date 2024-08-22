@@ -13,16 +13,24 @@
 */
 
 #pragma once
-#include <Configuration.hpp>
-
+#include <memory>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
 #include <Runtime/QueryTerminationType.hpp>
+#include <Configuration.hpp>
+
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
+namespace Configuration
+{
+class SingleNodeWorkerConfiguration;
+} /// namespace Configuration
+
 namespace Runtime
 {
 class NodeEngine;
+enum class QueryTerminationType : uint8_t;
 }
 namespace QueryCompilation
 {

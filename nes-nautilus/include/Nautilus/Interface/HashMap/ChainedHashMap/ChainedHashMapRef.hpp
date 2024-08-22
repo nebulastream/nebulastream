@@ -12,11 +12,22 @@
     limitations under the License.
 */
 #pragma once
+#include <cstddef>
 #include <functional>
+#include <memory>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
+
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES
 {
 class PhysicalType;
+
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 } /// namespace NES
 

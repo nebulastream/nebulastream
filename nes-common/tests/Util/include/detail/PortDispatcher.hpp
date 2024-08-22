@@ -15,11 +15,15 @@
 #pragma once
 #include <atomic>
 #include <memory>
+#include <stddef.h>
+#include <stdint.h>
 #include <Util/FileMutex.hpp>
 #include <detail/SharedMemoryFixedVector.hpp>
+
 namespace NES::Testing
 {
 class BorrowedPort;
+
 using BorrowedPortPtr = std::shared_ptr<BorrowedPort>;
 namespace detail
 {

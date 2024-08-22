@@ -13,6 +13,9 @@
 */
 
 #include <cstdint>
+#include <sstream>
+#include <utility>
+#include <variant>
 #include <vector>
 #include <Nautilus/IR/Operations/ArithmeticOperations/DivOperation.hpp>
 #include <Nautilus/IR/Operations/ArithmeticOperations/ModOperation.hpp>
@@ -30,7 +33,6 @@
 #include <Nautilus/IR/Operations/LogicalOperations/CompareOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/NegateOperation.hpp>
 #include <Nautilus/IR/Operations/LogicalOperations/OrOperation.hpp>
-#include <Nautilus/IR/Operations/Loop/LoopOperation.hpp>
 #include <Nautilus/IR/Operations/ProxyCallOperation.hpp>
 #include <Nautilus/IR/Operations/StoreOperation.hpp>
 #include <Nautilus/IR/Types/IntegerStamp.hpp>
@@ -40,6 +42,47 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+
+#include <Nautilus/IR/BasicBlocks/BasicBlock.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockArgument.hpp>
+#include <Nautilus/IR/BasicBlocks/BasicBlockInvocation.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
+#include <Nautilus/IR/Operations/ConstFloatOperation.hpp>
+#include <Nautilus/IR/Operations/ConstIntOperation.hpp>
+#include <Nautilus/IR/Operations/FunctionOperation.hpp>
+#include <Nautilus/IR/Operations/IfOperation.hpp>
+#include <Nautilus/IR/Operations/Operation.hpp>
+#include <Nautilus/IR/Operations/ReturnOperation.hpp>
+#include <Nautilus/IR/Types/Stamp.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Boolean.hpp>
+#include <Nautilus/Tracing/Trace/Block.hpp>
+#include <Nautilus/Tracing/Trace/BlockRef.hpp>
+#include <Nautilus/Tracing/Trace/ConstantValue.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/Trace/FunctionCallTarget.hpp>
+#include <Nautilus/Tracing/Trace/OpCode.hpp>
+#include <Nautilus/Tracing/Trace/OperationRef.hpp>
+#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace IR
+{
+namespace Operations
+{
+enum class PrimitiveStamp : uint8_t;
+} /// namespace Operations
+} /// namespace IR
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Nautilus::Tracing
 {

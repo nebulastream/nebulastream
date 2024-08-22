@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <memory>
 #include <variant>
 #include <vector>
 #include <Nautilus/Tracing/Trace/BlockRef.hpp>
@@ -21,10 +22,25 @@
 #include <Nautilus/Tracing/Trace/InputVariant.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
+#include <__fwd/ostream.h>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Tracing
+{
+class ValueRef;
+enum class OpCode : uint8_t;
+} /// namespace Tracing
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus::Tracing
 {
 
 class OperationRef;
+
 /**
  * @brief Represents an individual operation in a trace.
  */

@@ -13,11 +13,34 @@
 */
 #pragma once
 
+#include <exception>
+#include <map>
+#include <memory>
 #include <ostream>
-#include "Configurations/ConfigurationException.hpp"
-#include "Configurations/TypedBaseOption.hpp"
-#include "Configurations/Validation/ConfigurationValidation.hpp"
-#include "Util/Logger/Logger.hpp"
+#include <sstream>
+#include <stdexcept>
+#include <string>
+#include <type_traits>
+#include <vector>
+#include <stdint.h>
+#include <__fwd/ostream.h>
+#include <__fwd/sstream.h>
+
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
+#include <Configurations/TypedBaseOption.hpp>
+#include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/yaml/Yaml.hpp>
+
+namespace NES
+{
+namespace Configurations
+{
+class ConfigurationValidation;
+} /// namespace Configurations
+} /// namespace NES
 
 namespace NES::Configurations
 {

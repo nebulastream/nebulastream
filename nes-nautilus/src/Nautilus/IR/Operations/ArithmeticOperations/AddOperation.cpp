@@ -12,7 +12,12 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <utility>
 #include <Nautilus/IR/Operations/ArithmeticOperations/AddOperation.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
+
 namespace NES::Nautilus::IR::Operations
 {
 

@@ -17,13 +17,26 @@
 #include <atomic>
 #include <cstddef>
 #include <cstdint>
+#include <forward_list>
 #include <functional>
 #include <memory>
+#include <new>
 #include <ostream>
 #include <sstream>
 #include <utility>
 #include <Runtime/detail/TupleBufferImpl.hpp>
 #include <Sequencing/SequenceData.hpp>
+#include <__fwd/ostream.h>
+
+#include <Identifiers/Identifiers.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class BufferRecycler;
+} /// namespace Runtime
+} /// namespace NES
 
 /// Check: not zero and `v` has got no 1 in common with `v - 1`.
 /// Making use of short-circuit evaluation here because otherwise v-1 might be an underflow.

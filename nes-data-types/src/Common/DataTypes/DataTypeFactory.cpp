@@ -31,6 +31,10 @@
 #include <Common/ValueTypes/ArrayValue.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
 
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/DataTypes/DataType.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
+
 namespace NES
 {
 

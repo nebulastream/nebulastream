@@ -13,9 +13,10 @@
 */
 
 #include <Exceptions/TaskExecutionException.hpp>
-#include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
-#include <Sinks/Mediums/SinkMedium.hpp>
+
+#include <Exceptions/RuntimeException.hpp>
+
 namespace NES
 {
 

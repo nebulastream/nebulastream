@@ -13,6 +13,7 @@
 */
 
 #pragma once
+#include <stddef.h>
 #include <Nautilus/Tracing/Tag/Tag.hpp>
 
 namespace NES::Nautilus::Tracing

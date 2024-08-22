@@ -15,7 +15,10 @@
 #pragma once
 
 #include <memory>
+#include <memory_resource>
+#include <stddef.h>
 #include <Runtime/Allocator/MemoryResource.hpp>
+
 namespace NES::Runtime
 {
 /**

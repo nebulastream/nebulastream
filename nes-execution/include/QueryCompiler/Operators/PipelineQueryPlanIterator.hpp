@@ -16,6 +16,7 @@
 
 #include <iterator>
 #include <stack>
+#include <vector>
 #include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation

@@ -12,9 +12,14 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <sstream>
+#include <vector>
 #include <Expressions/LogicalExpressions/GreaterExpressionNode.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <__fwd/sstream.h>
+
+#include <Expressions/LogicalExpressions/LogicalBinaryExpressionNode.hpp>
+
 namespace NES
 {
 GreaterExpressionNode::GreaterExpressionNode(GreaterExpressionNode* other) : LogicalBinaryExpressionNode(other)

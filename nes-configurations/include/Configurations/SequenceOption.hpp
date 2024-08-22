@@ -14,9 +14,9 @@
 #pragma once
 
 #include <vector>
-#include "Configurations/BaseOption.hpp"
-#include "Configurations/ConfigurationException.hpp"
-#include "Configurations/TypedBaseOption.hpp"
+#include <Configurations/BaseOption.hpp>
+#include <Configurations/ConfigurationException.hpp>
+#include <Configurations/TypedBaseOption.hpp>
 
 namespace NES::Configurations
 {

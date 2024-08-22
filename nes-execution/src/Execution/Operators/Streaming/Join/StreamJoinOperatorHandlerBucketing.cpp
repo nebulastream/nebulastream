@@ -12,7 +12,16 @@
     limitations under the License.
 */
 
+#include <list>
+#include <map>
+#include <memory>
+#include <optional>
 #include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandlerBucketing.hpp>
+#include <folly/Synchronized.h>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

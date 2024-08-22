@@ -12,6 +12,21 @@
     limitations under the License.
 */
 
+#include <algorithm>
+#include <cmath>
+#include <exception>
+#include <functional>
+#include <iostream>
+#include <map>
+#include <memory>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+#include <errno.h>
+#include <stdint.h>
+#include <stdlib.h>
+#include <string.h>
 #include <API/Schema.hpp>
 #include <API/TimeUnit.hpp>
 #include <Exceptions/ErrorListener.hpp>
@@ -31,10 +46,42 @@
 #include <TestUtils/RecordCollectOperator.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <Util/Common.hpp>
-#include <Util/TestTupleBuffer.hpp>
-#include <BaseIntegrationTest.hpp>
-#include <Common/DataTypes/DataType.hpp>
+#include <__fwd/sstream.h>
+#include <gtest/gtest.h>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
+
+#include <API/AttributeField.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Exceptions/SignalHandling.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HJOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
+#include <Execution/Operators/Streaming/Join/HashJoin/HashTable/StreamJoinHashTable.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Interface/FixedPage/FixedPage.hpp>
+#include <Nautilus/Interface/Record.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

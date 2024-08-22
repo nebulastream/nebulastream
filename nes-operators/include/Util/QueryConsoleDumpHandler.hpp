@@ -15,14 +15,19 @@
 #pragma once
 
 #include <memory>
+#include <string>
+#include <stdint.h>
+#include <__fwd/ostream.h>
 
 namespace NES
 {
 
 class QueryPlan;
+
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Node;
+
 using NodePtr = std::shared_ptr<Node>;
 /**
  * @brief Converts query plans and pipeline plans to the .nesviz format and dumps them to a file.m

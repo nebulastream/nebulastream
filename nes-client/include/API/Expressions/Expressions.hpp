@@ -17,6 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
+#include <stdint.h>
 #include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
@@ -27,12 +28,16 @@ namespace NES
  */
 
 class ExpressionNode;
+enum class BasicType : uint8_t;
+
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class ValueType;
+
 using ValueTypePtr = std::shared_ptr<ValueType>;
 
 class FieldAssignmentExpressionNode;
+
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
 /**

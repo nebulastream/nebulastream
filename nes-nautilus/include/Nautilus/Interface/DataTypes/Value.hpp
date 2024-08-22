@@ -14,6 +14,7 @@
 #pragma once
 #include <cstdint>
 #include <memory>
+#include <string>
 #include <type_traits>
 #include <utility>
 #include <Identifiers/Identifiers.hpp>
@@ -28,6 +29,21 @@
 #include <Nautilus/Tracing/TraceUtil.hpp>
 #include <Nautilus/Tracing/ValueRef.hpp>
 #include <Nautilus/Util/Casting.hpp>
+#include <__fwd/ostream.h>
+
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Tracing/Trace/OpCode.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Boolean;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus
 {
 

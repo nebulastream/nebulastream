@@ -14,7 +14,10 @@
 
 #pragma once
 
+#include <memory>
+#include <ostream>
 #include <string>
+#include <vector>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/Coordinator/ElegantConfigurations.hpp>
 #include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
@@ -23,10 +26,28 @@
 #include <Configurations/Validation/IpValidation.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/Enums/EnumOptionDetails.hpp>
+#include <Configurations/ScalarOption.hpp>
+#include <Configurations/SequenceOption.hpp>
+#include <Configurations/Validation/NumberValidation.hpp>
+#include <Configurations/WrapOption.hpp>
+#include <Util/Logger/LogLevel.hpp>
+
+namespace NES
+{
+namespace Configurations
+{
+class BaseOption;
+} /// namespace Configurations
+} /// namespace NES
+
 namespace NES::Configurations
 {
 
 class CoordinatorConfiguration;
+
 using CoordinatorConfigurationPtr = std::shared_ptr<CoordinatorConfiguration>;
 
 /**

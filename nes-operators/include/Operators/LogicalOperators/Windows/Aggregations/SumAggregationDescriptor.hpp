@@ -16,6 +16,9 @@
 
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
 
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
+#include <Common/DataTypes/DataType.hpp>
+
 namespace NES::Windowing
 {
 /**

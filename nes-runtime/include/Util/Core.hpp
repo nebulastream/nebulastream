@@ -18,13 +18,20 @@
 #include <any>
 #include <functional>
 #include <map>
+#include <memory>
 #include <set>
 #include <string>
+#include <vector>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
+#include <Sources/Parsers/Parser.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
 /**
  * @brief a collection of shared utility functions
@@ -33,18 +40,23 @@ namespace NES
 {
 
 class QueryPlan;
+
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class Query;
+
 using QueryPtr = std::shared_ptr<Query>;
 
 class TopologyNode;
+
 using TopologyNodePtr = std::shared_ptr<TopologyNode>;
 
 class Operator;
+
 using OperatorPtr = std::shared_ptr<Operator>;
 
 class GlobalExecutionPlan;
+
 using GlobalExecutionPlanPtr = std::shared_ptr<GlobalExecutionPlan>;
 
 namespace Catalogs
@@ -53,12 +65,14 @@ namespace Catalogs
 namespace Source
 {
 class SourceCatalog;
+
 using SourceCatalogPtr = std::shared_ptr<SourceCatalog>;
 } /// namespace Source
 
 namespace Query
 {
 class QueryCatalog;
+
 using QueryCatalogPtr = std::shared_ptr<QueryCatalog>;
 } /// namespace Query
 

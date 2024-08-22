@@ -13,12 +13,18 @@
 */
 
 #pragma once
+#include <memory>
+#include <string>
 #include <Expressions/ExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
+
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 
 class FieldRenameExpressionNode;
+
 using FieldRenameExpressionNodePtr = std::shared_ptr<FieldRenameExpressionNode>;
 
 /**

@@ -14,47 +14,63 @@
 
 #pragma once
 
+#include <initializer_list>
 #include <memory>
 #include <string>
+#include <type_traits>
+#include <utility>
 #include <vector>
+#include <stdint.h>
 #include <API/Expressions/Expressions.hpp>
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
+
+#include <Identifiers/Identifiers.hpp>
 
 namespace NES
 {
 
 class Query;
 class Operator;
+class ExpressionItem;
+
 using OperatorPtr = std::shared_ptr<Operator>;
 
 class ExpressionNode;
+
 using ExpressionNodePtr = std::shared_ptr<ExpressionNode>;
 
 class FieldAssignmentExpressionNode;
+
 using FieldAssignmentExpressionNodePtr = std::shared_ptr<FieldAssignmentExpressionNode>;
 
 class SourceLogicalOperator;
+
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
 class SinkLogicalOperator;
+
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 
 class SinkDescriptor;
+
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
 class QueryPlan;
+
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 namespace API
 {
 class WindowAggregation;
+
 using WindowAggregationPtr = std::shared_ptr<WindowAggregation>;
 } /// namespace API
 
 namespace Catalogs::UDF
 {
 class UDFDescriptor;
+
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 } /// namespace Catalogs::UDF
 
@@ -68,12 +84,15 @@ class KeyedWindowedQuery;
 namespace Windowing
 {
 class WindowType;
+
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class WindowAggregationDescriptor;
+
 using WindowAggregationDescriptorPtr = std::shared_ptr<WindowAggregationDescriptor>;
 
 class WatermarkStrategyDescriptor;
+
 using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
 } /// namespace Windowing
 

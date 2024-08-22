@@ -12,18 +12,25 @@
     limitations under the License.
 */
 
-#include <filesystem>
-#include <fstream>
+#include <memory>
+#include <string>
+#include <system_error>
+#include <utility>
 #include <Nautilus/Backends/MLIR/LLVMIROptimizer.hpp>
 #include <Nautilus/Util/CompilationOptions.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <llvm/ExecutionEngine/Orc/JITTargetMachineBuilder.h>
 #include <llvm/IR/Attributes.h>
+#include <llvm/IR/Function.h>
 #include <llvm/IRReader/IRReader.h>
 #include <llvm/Linker/Linker.h>
-#include <llvm/Support/FileCollector.h>
+#include <llvm/Support/CodeGen.h>
+#include <llvm/Support/SourceMgr.h>
+#include <llvm/Support/raw_ostream.h>
+#include <llvm/Target/TargetMachine.h>
 #include <mlir/ExecutionEngine/OptUtils.h>
+
 namespace NES::Nautilus::Backends::MLIR
 {
 

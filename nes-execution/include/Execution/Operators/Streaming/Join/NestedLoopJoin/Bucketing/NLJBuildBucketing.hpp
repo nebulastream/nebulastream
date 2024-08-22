@@ -14,7 +14,28 @@
 
 #pragma once
 
+#include <string>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Join/StreamJoinBuildBucketing.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinBuild.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class MemRef;
+class Record;
+class UInt64;
+} /// namespace Nautilus
+namespace QueryCompilation
+{
+enum class JoinBuildSideType : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

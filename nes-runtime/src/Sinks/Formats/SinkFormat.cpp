@@ -13,8 +13,9 @@
 */
 
 #include <utility>
-#include <API/Schema.hpp>
 #include <Sinks/Formats/SinkFormat.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES
 {

@@ -11,9 +11,11 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <cstdlib>
 #include <cstring>
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 

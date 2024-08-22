@@ -14,6 +14,14 @@
 
 #include <Execution/Operators/Streaming/Join/StreamJoinOperator.hpp>
 
+namespace NES
+{
+namespace QueryCompilation
+{
+enum class StreamJoinStrategy : uint8_t;
+} /// namespace QueryCompilation
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Operators
 {
 

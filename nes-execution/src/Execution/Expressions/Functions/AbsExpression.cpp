@@ -12,11 +12,29 @@
     limitations under the License.
 */
 
-#include <cmath>
+#include <cstdlib>
+#include <string>
+#include <stdint.h>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AbsExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+
+#include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Double.hpp>
+#include <Nautilus/Interface/DataTypes/Float/Float.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Expressions
 {

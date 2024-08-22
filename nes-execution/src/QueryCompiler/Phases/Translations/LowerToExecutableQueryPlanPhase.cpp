@@ -12,14 +12,17 @@
     limitations under the License.
 */
 
+#include <string>
+#include <string_view>
+#include <utility>
+#include <variant>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
-#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Exceptions/Exception.hpp>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
-#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
 #include <QueryCompiler/Operators/ExecutableOperator.hpp>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
@@ -28,12 +31,22 @@
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/DefaultDataSourceProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
-#include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <magic_enum.hpp>
+
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Exceptions/QueryCompilationException.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Runtime/Execution/ExecutablePipeline.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Sources/DataSource.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::QueryCompilation
 {

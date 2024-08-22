@@ -14,15 +14,19 @@
 
 #pragma once
 
+#include <memory>
 #include <vector>
+#include <stdint.h>
 #include <Types/WindowType.hpp>
 
 namespace NES::Windowing
 {
 
 class ContentBasedWindowType;
+
 using ContentBasedWindowTypePtr = std::shared_ptr<ContentBasedWindowType>;
 class ThresholdWindow;
+
 using ThresholdWindowPtr = std::shared_ptr<ThresholdWindow>;
 
 class ContentBasedWindowType : public WindowType

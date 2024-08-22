@@ -13,6 +13,8 @@
 */
 #include <Nautilus/IR/Types/BooleanStamp.hpp>
 
+#include <Nautilus/IR/Types/Stamp.hpp>
+
 namespace NES::Nautilus::IR::Types
 {
 

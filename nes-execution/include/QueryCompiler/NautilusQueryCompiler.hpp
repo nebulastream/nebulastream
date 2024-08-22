@@ -12,14 +12,19 @@
     limitations under the License.
 */
 #pragma once
+#include <memory>
 #include <QueryCompiler/QueryCompiler.hpp>
+
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
 {
 
 class LowerPhysicalToNautilusOperators;
+
 using LowerPhysicalToNautilusOperatorsPtr = std::shared_ptr<LowerPhysicalToNautilusOperators>;
 class NautilusCompilationPhase;
+
 using NautilusCompilationPhasePtr = std::shared_ptr<NautilusCompilationPhase>;
 
 /**

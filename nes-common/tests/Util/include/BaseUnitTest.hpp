@@ -14,11 +14,16 @@
 
 #pragma once
 #include <atomic>
+#include <exception>
 #include <future>
+#include <memory>
+#include <string>
 #include <thread>
+#include <stdint.h>
 #include <Exceptions/ErrorListener.hpp>
 #include <gmock/gmock-matchers.h>
 #include <gtest/gtest.h>
+
 namespace NES::Testing
 {
 

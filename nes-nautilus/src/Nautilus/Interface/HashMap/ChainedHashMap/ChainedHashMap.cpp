@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include <cstring>
+#include <utility>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Util/Logger/Logger.hpp>
+
 namespace NES::Nautilus::Interface
 {
 

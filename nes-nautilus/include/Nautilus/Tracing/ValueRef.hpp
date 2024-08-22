@@ -12,9 +12,14 @@
     limitations under the License.
 */
 #pragma once
+#include <cstddef>
+#include <functional>
 #include <memory>
+#include <stdint.h>
 #include <Nautilus/IR/Operations/Operation.hpp>
 #include <Nautilus/IR/Types/Stamp.hpp>
+#include <__fwd/ostream.h>
+
 namespace NES::Nautilus::Tracing
 {
 

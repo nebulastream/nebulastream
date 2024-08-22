@@ -14,7 +14,18 @@
 #pragma once
 
 #include <string>
+#include <stddef.h>
+#include <stdint.h>
 #include <Runtime/TupleBuffer.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class TupleBuffer;
+} /// namespace Runtime
+} /// namespace NES
+
 namespace NES::Nautilus
 {
 

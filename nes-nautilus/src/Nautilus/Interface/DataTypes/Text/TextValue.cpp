@@ -12,12 +12,16 @@
     limitations under the License.
 */
 #include <cstring>
-#include <iostream>
+#include <new>
+#include <optional>
 #include <string>
+#include <stdlib.h>
 #include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
 #include <Runtime/LocalBufferPool.hpp>
 #include <Runtime/WorkerContext.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Nautilus
 {

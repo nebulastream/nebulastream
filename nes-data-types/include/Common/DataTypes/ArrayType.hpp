@@ -14,6 +14,9 @@
 
 #pragma once
 
+#include <string>
+#include <utility>
+#include <stdint.h>
 #include <Common/DataTypes/DataType.hpp>
 
 namespace NES

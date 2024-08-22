@@ -14,6 +14,16 @@
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 
+#include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Enums/OutputBufferOptimizationLevel.hpp>
+#include <Configurations/Enums/PipeliningStrategy.hpp>
+#include <Configurations/Enums/QueryCompilerType.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Util/Common.hpp>
+
 namespace NES::QueryCompilation
 {
 OutputBufferOptimizationLevel QueryCompilerOptions::getOutputBufferOptimizationLevel() const

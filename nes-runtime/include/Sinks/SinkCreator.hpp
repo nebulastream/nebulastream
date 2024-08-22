@@ -13,7 +13,15 @@
 */
 
 #pragma once
+#include <string>
+#include <stdint.h>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <__fwd/ostream.h>
+
+#include <API/Schema.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Runtime/NodeEngine.hpp>
+#include <Sinks/Mediums/SinkMedium.hpp>
 
 namespace NES
 {

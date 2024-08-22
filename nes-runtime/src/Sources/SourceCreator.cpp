@@ -12,11 +12,13 @@
     limitations under the License.
 */
 
-#include <chrono>
+#include <memory>
 #include <Runtime/QueryManager.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/SourceCreator.hpp>
 #include <Sources/TCPSource.hpp>
+
+#include <Util/GatheringMode.hpp>
 
 namespace NES
 {

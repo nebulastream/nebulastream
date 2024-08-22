@@ -12,10 +12,20 @@
     limitations under the License.
 */
 
+#include <optional>
+#include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+#include <magic_enum.hpp>
+
+#include <Configurations/ConfigurationOption.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Util/yaml/Yaml.hpp>
 
 namespace NES
 {

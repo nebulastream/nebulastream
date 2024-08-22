@@ -12,8 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <string>
+#include <utility>
 #include <Nautilus/IR/Operations/ArithmeticOperations/MulOperation.hpp>
+
+#include <Nautilus/IR/Operations/Operation.hpp>
+
 namespace NES::Nautilus::IR::Operations
 {
 MulOperation::MulOperation(OperationIdentifier identifier, OperationPtr leftInput, OperationPtr rightInput)

@@ -14,13 +14,17 @@
 
 #pragma once
 #include <memory>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Aggregations/ThreadLocalSliceStore.hpp>
+
+#include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSlice.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {
 
 class State;
 class NonKeyedSlice;
+
 using NonKeyedSlicePtr = std::unique_ptr<NonKeyedSlice>;
 
 /**

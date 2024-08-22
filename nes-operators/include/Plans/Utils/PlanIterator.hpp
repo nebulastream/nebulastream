@@ -15,15 +15,22 @@
 #pragma once
 
 #include <iterator>
+#include <memory>
 #include <stack>
+#include <vector>
+
+#include <Plans/DecomposedQueryPlan/DecomposedQueryPlan.hpp>
+#include <Plans/Query/QueryPlan.hpp>
 
 namespace NES
 {
 
 class QueryPlan;
+
 using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 
 class DecomposedQueryPlan;
+
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 /**

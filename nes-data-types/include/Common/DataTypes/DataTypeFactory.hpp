@@ -14,21 +14,29 @@
 
 #pragma once
 #include <memory>
+#include <string>
 #include <vector>
+#include <stdint.h>
 #include <Common/DataTypes/BasicTypes.hpp>
+
 namespace NES
 {
 
 class DataType;
+enum class BasicType : uint8_t;
+
 using DataTypePtr = std::shared_ptr<DataType>;
 
 class ArrayType;
+
 using ArrayTypePtr = std::shared_ptr<ArrayType>;
 
 class TextType;
+
 using TextTypePtr = std::shared_ptr<TextType>;
 
 class ValueType;
+
 using ValueTypePtr = std::shared_ptr<ValueType>;
 
 /**

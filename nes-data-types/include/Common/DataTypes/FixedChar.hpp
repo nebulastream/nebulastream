@@ -14,6 +14,7 @@
 
 #pragma once
 
+#include <stdint.h>
 #include <Common/DataTypes/ArrayType.hpp>
 #include <Common/DataTypes/DataType.hpp>
 

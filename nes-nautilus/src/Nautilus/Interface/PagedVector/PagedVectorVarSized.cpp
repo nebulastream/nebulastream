@@ -12,6 +12,8 @@
     limitations under the License.
 */
 
+#include <cstring>
+#include <optional>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
@@ -19,6 +21,11 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <API/Schema.hpp>
+#include <Nautilus/Interface/DataTypes/Text/TextValue.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
 
 namespace NES::Nautilus::Interface
 {

@@ -14,9 +14,14 @@
 
 #pragma once
 
+#include <string>
+#include <stdint.h>
 #include <Expressions/ExpressionNode.hpp>
 #include <Measures/TimeMeasure.hpp>
 #include <Types/ContentBasedWindowType.hpp>
+
+#include <API/Schema.hpp>
+#include <Types/WindowType.hpp>
 
 namespace NES::Windowing
 {

@@ -11,12 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <string>
 #include <Nautilus/Interface/DataTypes/MemRefUtils.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMap.hpp>
 #include <Nautilus/Interface/HashMap/ChainedHashMap/ChainedHashMapRef.hpp>
 #include <Util/StdInt.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
+
+#include <Nautilus/Interface/DataTypes/Value.hpp>
 
 namespace NES::Nautilus::Interface
 {

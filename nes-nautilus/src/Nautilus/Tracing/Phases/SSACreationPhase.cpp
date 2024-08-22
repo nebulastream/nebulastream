@@ -11,10 +11,21 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <algorithm>
+#include <unordered_map>
+#include <utility>
+#include <variant>
+#include <vector>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/Trace/OperationRef.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <Nautilus/Tracing/Trace/Block.hpp>
+#include <Nautilus/Tracing/Trace/BlockRef.hpp>
+#include <Nautilus/Tracing/Trace/OpCode.hpp>
+#include <Nautilus/Tracing/Trace/TraceOperation.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
 
 namespace NES::Nautilus::Tracing
 {

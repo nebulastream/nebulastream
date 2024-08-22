@@ -16,6 +16,7 @@
 
 #include <memory>
 #include <set>
+#include <string>
 #include <unordered_set>
 #include <vector>
 #include <Identifiers/Identifiers.hpp>
@@ -23,22 +24,30 @@
 #include <Operators/Operator.hpp>
 #include <Util/QueryState.hpp>
 
+#include <Identifiers/NESStrongType.hpp>
+#include <Nodes/Node.hpp>
+
 namespace NES
 {
 
 class Operator;
+
 using OperatorPtr = std::shared_ptr<Operator>;
 
 class SourceLogicalOperator;
+
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
 class SinkLogicalOperator;
+
 using SinkLogicalOperatorPtr = std::shared_ptr<SinkLogicalOperator>;
 
 class Node;
+
 using NodePtr = std::shared_ptr<Node>;
 
 class DecomposedQueryPlan;
+
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
 /**

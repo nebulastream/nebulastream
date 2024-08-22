@@ -12,8 +12,12 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
+
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 
 namespace NES
 {

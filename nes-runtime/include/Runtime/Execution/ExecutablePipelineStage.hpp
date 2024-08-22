@@ -14,10 +14,28 @@
 
 #pragma once
 
+#include <string>
+#include <string_view>
+#include <stdint.h>
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <fmt/base.h>
+#include <fmt/format.h>
 #include <magic_enum.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class TupleBuffer;
+class WorkerContext;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

@@ -13,14 +13,17 @@
 */
 
 #include <filesystem>
-#include <iostream>
+#include <memory>
+#include <mutex>
+#include <sstream>
+#include <system_error>
 #include <utility>
 #include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Mediums/RawBufferSink.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
 
 namespace NES
 {

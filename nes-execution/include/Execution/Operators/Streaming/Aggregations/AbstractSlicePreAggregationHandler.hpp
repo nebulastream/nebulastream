@@ -13,12 +13,32 @@
 */
 
 #pragma once
+#include <atomic>
 #include <map>
+#include <memory>
+#include <mutex>
 #include <tuple>
 #include <vector>
+#include <stdint.h>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
+
+#include <Runtime/RuntimeForwardRefs.hpp>
+
+namespace NES
+{
+class SequenceData;
+namespace Runtime
+{
+class WorkerContext;
+enum class QueryTerminationType : uint8_t;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime
 {

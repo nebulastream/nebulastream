@@ -11,11 +11,15 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <ostream>
 #include <sstream>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <magic_enum.hpp>
+#include <__fwd/sstream.h>
+
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
+#include <Runtime/BufferManager.hpp>
 
 namespace NES::Runtime::Execution
 {

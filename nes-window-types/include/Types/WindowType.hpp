@@ -13,15 +13,19 @@
 */
 
 #pragma once
-#include <API/Schema.hpp>
-
 #include <memory>
+#include <stdexcept>
+#include <string>
+#include <typeinfo>
 #include <vector>
+#include <stdint.h>
+#include <API/Schema.hpp>
 
 namespace NES::Windowing
 {
 
 class WindowType;
+
 using WindowTypePtr = std::shared_ptr<WindowType>;
 
 class WindowType : public std::enable_shared_from_this<WindowType>

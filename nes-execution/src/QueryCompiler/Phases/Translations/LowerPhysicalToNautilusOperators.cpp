@@ -12,11 +12,16 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <cstddef>
-#include <string_view>
+#include <iterator>
+#include <list>
+#include <optional>
+#include <string>
 #include <utility>
+#include <math.h>
 #include <API/Schema.hpp>
-#include <API/TimeUnit.hpp>
+#include <Exceptions/Exception.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
 #include <Execution/Aggregation/CountAggregation.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
@@ -26,9 +31,6 @@
 #include <Execution/Expressions/WriteFieldExpression.hpp>
 #include <Execution/MemoryProvider/RowMemoryProvider.hpp>
 #include <Execution/Operators/Emit.hpp>
-#include <Execution/Operators/Relational/JavaUDF/FlatMapJavaUDF.hpp>
-#include <Execution/Operators/Relational/JavaUDF/JavaUDFOperatorHandler.hpp>
-#include <Execution/Operators/Relational/JavaUDF/MapJavaUDF.hpp>
 #include <Execution/Operators/Relational/Limit.hpp>
 #include <Execution/Operators/Relational/Map.hpp>
 #include <Execution/Operators/Relational/Project.hpp>
@@ -66,7 +68,6 @@
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/UDFs/JavaUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
@@ -79,8 +80,6 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
@@ -95,18 +94,42 @@
 #include <QueryCompiler/Phases/Translations/LowerPhysicalToNautilusOperators.hpp>
 #include <QueryCompiler/QueryCompilerOptions.hpp>
 #include <Runtime/MemoryLayout/RowLayout.hpp>
-#include <Runtime/NodeEngine.hpp>
-#include <Runtime/QueryManager.hpp>
 #include <Types/ContentBasedWindowType.hpp>
-#include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Types/TumblingWindow.hpp>
-#include <Util/Core.hpp>
 #include <Util/Execution.hpp>
 #include <Common/PhysicalTypes/BasicPhysicalType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
-#include <Common/ValueTypes/BasicValue.hpp>
+
+#include <API/AttributeField.hpp>
+#include <Configurations/Enums/WindowingStrategy.hpp>
+#include <Execution/Aggregation/AggregationFunction.hpp>
+#include <Execution/Aggregation/AggregationValue.hpp>
+#include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <Execution/Operators/ExecutableOperator.hpp>
+#include <Execution/Operators/Operator.hpp>
+#include <Execution/Operators/Streaming/Aggregations/SliceMergingAction.hpp>
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
+#include <Expressions/ExpressionNode.hpp>
+#include <Measures/TimeMeasure.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/Operator.hpp>
+#include <QueryCompiler/Operators/OperatorPipeline.hpp>
+#include <QueryCompiler/Operators/PhysicalOperators/PhysicalOperator.hpp>
+#include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
+#include <QueryCompiler/Phases/Translations/NautilusOperatorLoweringPlugin.hpp>
+#include <QueryCompiler/Phases/Translations/TimestampField.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
+#include <Types/WindowType.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
+#include <Common/PhysicalTypes/PhysicalTypeFactory.hpp>
+#include <Common/ValueTypes/ValueType.hpp>
 
 namespace NES::QueryCompilation
 {

@@ -14,6 +14,8 @@
 
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 
+#include <Exceptions/RequestExecutionException.hpp>
+
 namespace NES
 {
 TypeInferenceException::TypeInferenceException(const std::string& message) : Exceptions::RequestExecutionException(message)

@@ -14,12 +14,29 @@
 #pragma once
 
 #include <atomic>
+#include <string>
 #include <vector>
+#include <stddef.h>
+#include <stdint.h>
 #include <API/Schema.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HashTable/FixedPagesLinkedList.hpp>
 #include <Execution/Operators/Streaming/Join/StreamJoinUtil.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <folly/Synchronized.h>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+namespace Operators
+{
+class FixedPagesLinkedList;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {

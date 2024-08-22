@@ -11,18 +11,45 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <sstream>
+#include <string_view>
+#include <utility>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Pipelines/CompiledExecutablePipelineStage.hpp>
 #include <Execution/Pipelines/PhysicalOperatorPipeline.hpp>
 #include <Execution/RecordBuffer.hpp>
 #include <Nautilus/Backends/CompilationBackend.hpp>
 #include <Nautilus/Backends/Executable.hpp>
-#include <Nautilus/IR/Phases/RemoveBrOnlyBlocksPhase.hpp>
 #include <Nautilus/Tracing/Phases/SSACreationPhase.hpp>
 #include <Nautilus/Tracing/Phases/TraceToIRConversionPhase.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
 #include <Util/DumpHelper.hpp>
 #include <Util/Timer.hpp>
+#include <__fwd/sstream.h>
+
+#include <Execution/Operators/Operator.hpp>
+#include <Execution/Pipelines/NautilusExecutablePipelineStage.hpp>
+#include <Nautilus/IR/IRGraph.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
+#include <Nautilus/Util/CompilationOptions.hpp>
+#include <Util/Logger/Logger.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+class TupleBuffer;
+class WorkerContext;
+namespace Execution
+{
+class PipelineExecutionContext;
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution
 {

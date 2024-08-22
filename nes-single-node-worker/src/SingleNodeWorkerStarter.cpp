@@ -12,11 +12,19 @@
     limitations under the License.
 */
 
+#include <memory>
+#include <string>
 #include <Exceptions/Exception.hpp>
+#include <grpcpp/security/server_credentials.h>
+#include <grpcpp/server.h>
 #include <grpcpp/server_builder.h>
 #include <Configuration.hpp>
 #include <GrpcService.hpp>
 #include <SingleNodeWorker.hpp>
+
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
 
 int main(const int argc, const char* argv[])
 {

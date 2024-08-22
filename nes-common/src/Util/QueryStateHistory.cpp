@@ -12,12 +12,14 @@
     limitations under the License.
 */
 
+#include <string_view>
 #include <Util/QueryStateHistory.hpp>
 #include <nlohmann/json.hpp>
 #include <magic_enum.hpp>
 
 namespace NES
 {
+enum class QueryState : uint8_t;
 
 void to_json(nlohmann::json& json, const QueryStateHistoryEntry& queryState)
 {

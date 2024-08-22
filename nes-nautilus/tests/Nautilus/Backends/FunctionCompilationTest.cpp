@@ -12,17 +12,30 @@
     limitations under the License.
 */
 
+#include <list>
 #include <memory>
-#include <Nautilus/Backends/BCInterpreter/ByteCode.hpp>
-#include <Nautilus/Interface/DataTypes/MemRef.hpp>
+#include <string>
+#include <stdint.h>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
-#include <Nautilus/Tracing/Trace/ExecutionTrace.hpp>
 #include <Nautilus/Tracing/TraceContext.hpp>
-#include <Runtime/BufferManager.hpp>
 #include <TestUtils/AbstractCompilationBackendTest.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <BaseIntegrationTest.hpp>
+#include <gtest/gtest.h>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nautilus/Backends/CompilationBackend.hpp>
+#include <Nautilus/Backends/Executable.hpp>
+#include <Nautilus/IR/Types/StampFactory.hpp>
+#include <Nautilus/Interface/DataTypes/Identifier.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Tracing/ValueRef.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Util/StdInt.hpp>
+#include <BaseUnitTest.hpp>
 
 namespace NES::Nautilus
 {

@@ -12,11 +12,11 @@
     limitations under the License.
 */
 
+#include <utility>
 #include <Nautilus/Backends/MLIR/MLIRExecutable.hpp>
-#include <Nautilus/Backends/MLIR/MLIRLoweringProvider.hpp>
-#include <Nautilus/Backends/MLIR/MLIRPassManager.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <mlir/IR/MLIRContext.h>
+#include <llvm/Support/Error.h>
+#include <mlir/ExecutionEngine/ExecutionEngine.h>
 
 namespace NES::Nautilus::Backends::MLIR
 {

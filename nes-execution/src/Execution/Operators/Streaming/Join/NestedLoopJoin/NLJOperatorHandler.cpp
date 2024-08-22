@@ -11,11 +11,23 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+#include <algorithm>
+#include <optional>
 #include <span>
+#include <string>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJOperatorHandler.hpp>
 #include <Execution/Operators/Streaming/Join/NestedLoopJoin/NLJSlice.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <magic_enum.hpp>
+
+#include <Execution/Operators/Streaming/Join/StreamJoinOperatorHandler.hpp>
+#include <Execution/Operators/Streaming/Join/StreamSlice.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Sequencing/SequenceData.hpp>
+#include <Util/Common.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES::Runtime::Execution::Operators
 {

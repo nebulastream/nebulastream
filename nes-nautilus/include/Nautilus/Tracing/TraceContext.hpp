@@ -15,6 +15,9 @@
 #pragma once
 #include <functional>
 #include <memory>
+#include <unordered_map>
+#include <vector>
+#include <stdint.h>
 #include <Nautilus/IR/Types/StampFactory.hpp>
 #include <Nautilus/Tracing/SymbolicExecution/SymbolicExecutionContext.hpp>
 #include <Nautilus/Tracing/Tag/Tag.hpp>
@@ -22,9 +25,23 @@
 #include <Nautilus/Tracing/Trace/InputVariant.hpp>
 #include <Nautilus/Tracing/Trace/OpCode.hpp>
 
+#include <Nautilus/Tracing/ValueRef.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+namespace Tracing
+{
+enum class OpCode : uint8_t;
+} /// namespace Tracing
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Nautilus
 {
 class Any;
+
 typedef std::shared_ptr<Any> AnyPtr;
 } /// namespace NES::Nautilus
 

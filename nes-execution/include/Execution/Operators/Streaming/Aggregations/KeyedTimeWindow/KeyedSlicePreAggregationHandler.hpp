@@ -15,11 +15,27 @@
 #pragma once
 
 #include <vector>
+#include <stdint.h>
 #include <Execution/Operators/Streaming/Aggregations/AbstractSlicePreAggregationHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedSlice.hpp>
 #include <Execution/Operators/Streaming/Aggregations/KeyedTimeWindow/KeyedThreadLocalSliceStore.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
+
+namespace NES
+{
+namespace Runtime
+{
+namespace Execution
+{
+class PipelineExecutionContext;
+namespace Operators
+{
+class KeyedSlice;
+} /// namespace Operators
+} /// namespace Execution
+} /// namespace Runtime
+} /// namespace NES
 
 namespace NES::Runtime::Execution::Operators
 {
@@ -27,6 +43,7 @@ namespace NES::Runtime::Execution::Operators
 class MultiOriginWatermarkProcessor;
 class KeyedThreadLocalSliceStore;
 class State;
+
 /**
  * @brief The KeyedSlicePreAggregationHandler provides an operator handler to perform slice-based pre-aggregation of keyed tumbling windows.
  * @note sliding windows will be added later.

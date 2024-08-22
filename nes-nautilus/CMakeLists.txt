@@ -176,7 +176,7 @@ endif ()
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
-    target_link_libraries(nes-execution PRIVATE nes-compiler)
+    #target_link_libraries(nes-execution PRIVATE nes-compiler)
 endif ()
 
 #Add the nes common and headers to cpack

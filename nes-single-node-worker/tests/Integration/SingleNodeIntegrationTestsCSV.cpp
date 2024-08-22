@@ -14,15 +14,31 @@
 
 
 #include <cstdlib>
-#include <filesystem>
 #include <fstream>
-#include <numeric>
+#include <memory>
+#include <string>
+#include <vector>
+#include <stdint.h>
 #include <TestUtils/UtilityFunctions.hpp>
-#include <fmt/core.h>
+#include <__fwd/ostream.h>
+#include <fmt/format.h>
+#include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
 #include <GrpcService.hpp>
 #include <IntegrationTestUtil.hpp>
-#include <SingleNodeWorkerRPCService.pb.h>
+
+#include <Configurations/Enums/EnumOption.hpp>
+#include <Configurations/Enums/EnumOptionDetails.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Worker/QueryCompilerConfiguration.hpp>
+#include <Runtime/BufferManager.hpp>
+#include <Runtime/TupleBuffer.hpp>
+#include <Util/Logger/LogLevel.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/Logger/impl/NesLogger.hpp>
+#include <Configuration.hpp>
+#include <SerializableDecomposedQueryPlan.pb.h>
+#include <SingleNodeWorker.hpp>
 
 
 namespace NES::Testing

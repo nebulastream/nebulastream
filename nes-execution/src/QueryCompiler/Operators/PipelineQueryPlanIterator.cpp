@@ -11,11 +11,16 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Plans/Query/QueryPlan.hpp>
+#include <memory>
+#include <string>
+#include <utility>
+#include <stdint.h>
 #include <QueryCompiler/Operators/OperatorPipeline.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Operators/PipelineQueryPlanIterator.hpp>
 #include <Util/Logger/Logger.hpp>
+
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES::QueryCompilation
 {

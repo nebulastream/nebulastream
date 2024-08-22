@@ -18,6 +18,9 @@
 #include <Nautilus/Interface/Fixed2DArray/Fixed2DArrayRef.hpp>
 #include <Util/Logger/Logger.hpp>
 
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Nautilus::Interface
 {
 

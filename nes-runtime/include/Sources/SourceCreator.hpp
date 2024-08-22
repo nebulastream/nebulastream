@@ -15,8 +15,19 @@
 #pragma once
 
 #include <chrono>
+#include <string>
+#include <vector>
+#include <stddef.h>
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Sources/TCPSource.hpp>
+
+#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
+#include <Identifiers/Identifiers.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Runtime/QueryManager.hpp>
+#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Sources/DataSource.hpp>
 
 namespace NES
 {

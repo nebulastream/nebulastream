@@ -12,9 +12,13 @@
     limitations under the License.
 */
 
+#include <memory>
 #include <sstream>
+#include <__fwd/sstream.h>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/ValueTypes/BasicValue.hpp>
+
+#include <Common/ValueTypes/ValueType.hpp>
 
 namespace NES
 {

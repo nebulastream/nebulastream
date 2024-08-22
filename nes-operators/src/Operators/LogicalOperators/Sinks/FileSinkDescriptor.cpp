@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include <string_view>
 #include <utility>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
+
+#include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 
 namespace NES
 {

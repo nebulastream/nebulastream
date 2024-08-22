@@ -14,13 +14,19 @@
 
 #pragma once
 
+#include <memory>
+#include <string>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 
 namespace NES
 {
 namespace Catalogs::UDF
 {
 class UDFDescriptor;
+
 using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
 } /// namespace Catalogs::UDF
 namespace QueryCompilation::PhysicalOperators

@@ -13,10 +13,27 @@
 */
 
 #include <bit>
+#include <string>
+#include <stdint.h>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/BitcounterExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
+
+#include <Execution/Expressions/Expression.hpp>
+#include <Nautilus/Interface/DataTypes/Any.hpp>
+#include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
+#include <Nautilus/Interface/DataTypes/Value.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
+namespace NES
+{
+namespace Nautilus
+{
+class Record;
+} /// namespace Nautilus
+} /// namespace NES
+
 namespace NES::Runtime::Execution::Expressions
 {
 

@@ -16,6 +16,8 @@
 #include <string>
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+
 namespace NES::Configurations
 {
 

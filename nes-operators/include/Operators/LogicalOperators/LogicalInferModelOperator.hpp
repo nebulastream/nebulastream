@@ -14,9 +14,16 @@
 
 #pragma once
 
+#include <string>
+#include <vector>
 #include <Expressions/FieldAccessExpressionNode.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
+
+#include <Identifiers/Identifiers.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
+#include <Operators/LogicalOperators/Windows/WindowingForwardRefs.hpp>
 
 namespace NES::InferModel
 {

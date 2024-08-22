@@ -12,19 +12,39 @@
     limitations under the License.
 */
 
+#include <any>
+#include <map>
+#include <memory>
+#include <set>
+#include <sstream>
+#include <string_view>
+#include <unordered_map>
 #include <unordered_set>
 #include <utility>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Expressions/BinaryExpressionNode.hpp>
 #include <Expressions/FieldAccessExpressionNode.hpp>
-#include <Expressions/LogicalExpressions/EqualsExpressionNode.hpp>
 #include <Nodes/Iterators/BreadthFirstNodeIterator.hpp>
 #include <Operators/Exceptions/TypeInferenceException.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <__fwd/sstream.h>
+#include <fmt/format.h>
+
+#include <Expressions/ExpressionNode.hpp>
+#include <Identifiers/NESStrongType.hpp>
+#include <Nodes/Node.hpp>
+#include <Operators/AbstractOperators/OriginIdAssignmentOperator.hpp>
+#include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperator.hpp>
+#include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
+#include <Operators/Operator.hpp>
+#include <Types/WindowType.hpp>
+#include <Common/DataTypes/BasicTypes.hpp>
 
 namespace NES
 {

@@ -14,7 +14,9 @@
 
 #pragma once
 #include <cstdint>
+#include <string>
 #include <Measures/WindowMeasure.hpp>
+
 namespace NES::Windowing
 {
 

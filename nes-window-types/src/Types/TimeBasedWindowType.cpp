@@ -12,13 +12,17 @@
     limitations under the License.
 */
 
+#include <string>
+#include <utility>
+#include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Exceptions/InvalidFieldException.hpp>
 #include <Measures/TimeCharacteristic.hpp>
 #include <Types/TimeBasedWindowType.hpp>
 #include <Util/Logger/Logger.hpp>
-#include <Common/DataTypes/Integer.hpp>
+
+#include <Common/DataTypes/DataType.hpp>
 
 namespace NES::Windowing
 {

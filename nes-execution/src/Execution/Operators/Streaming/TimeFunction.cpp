@@ -20,6 +20,9 @@
 #include <Nautilus/Interface/DataTypes/Integer/Int.hpp>
 #include <Nautilus/Interface/DataTypes/Value.hpp>
 
+#include <API/TimeUnit.hpp>
+#include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Runtime::Execution::Operators
 {
 

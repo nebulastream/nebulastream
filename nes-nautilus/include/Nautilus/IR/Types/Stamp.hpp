@@ -14,8 +14,10 @@
 #pragma once
 #include <memory>
 #include <ostream>
+#include <string>
 #include <typeinfo>
 #include <Nautilus/Util/CastUtils.hpp>
+
 namespace NES::Nautilus::IR::Types
 {
 
