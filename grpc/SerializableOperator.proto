@@ -83,7 +83,6 @@ message SerializablePhysicalSourceType{
 
   string sourceType = 1;
   string logicalSourceName = 2;
-  string physicalSourceName = 3;
   google.protobuf.Any specificPhysicalSourceType = 4;
 }
 
@@ -104,7 +103,7 @@ message SerializableOperator{
 
     message SerializableLogicalSourceDescriptor {
       string logicalSourceName = 1;
-      string physicalSourceName = 2;
+      string sourceName = 2;
       optional SerializableSchema sourceSchema = 3;
     }
 

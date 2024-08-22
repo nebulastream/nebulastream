@@ -31,8 +31,10 @@ namespace NES::Sources
 {
 
 /// Todo #72: remove schema from CSVSource (only required by parser).
-CSVSource::CSVSource(const Schema& schema, CSVSourceTypePtr&& csvSourceType) : fileEnded(false), tupleSize(schema.getSchemaSizeInBytes())
+CSVSource::CSVSource(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)
+    : fileEnded(false), tupleSize(schema.getSchemaSizeInBytes())
 {
+    auto csvSourceType = sourceDescriptor->as<CSVSourceDescriptor>()->getSourceConfig();
     this->filePath = csvSourceType->getFilePath()->getValue();
     this->numberOfTuplesToProducePerBuffer = csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
     this->delimiter = csvSourceType->getDelimiter()->getValue();

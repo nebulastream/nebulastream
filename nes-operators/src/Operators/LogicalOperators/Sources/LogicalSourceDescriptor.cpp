@@ -20,7 +20,7 @@ namespace NES
 {
 
 LogicalSourceDescriptor::LogicalSourceDescriptor(std::string logicalSourceName)
-    : SourceDescriptor(Schema::create(), std::move(logicalSourceName))
+    : SourceDescriptor(Schema::create(), std::move(logicalSourceName), "LOGICAL")
 {
 }
 
@@ -41,13 +41,13 @@ bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) const
 
 std::string LogicalSourceDescriptor::toString() const
 {
-    return "LogicalSourceDescriptor(" + logicalSourceName + ")";
+    return "LogicalSourceDescriptor(" + getLogicalSourceName() + ")";
 }
 
 SourceDescriptorPtr LogicalSourceDescriptor::copy()
 {
-    auto copy = LogicalSourceDescriptor::create(logicalSourceName);
-    copy->setSchema(schema->copy());
+    auto copy = LogicalSourceDescriptor::create(getLogicalSourceName());
+    copy->setSchema(getSchema()->copy());
     return copy;
 }
 

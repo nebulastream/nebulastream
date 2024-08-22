@@ -23,6 +23,7 @@
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
@@ -34,9 +35,16 @@
 namespace NES::Sources
 {
 
-TCPSource::TCPSource(const Schema& schema, TCPSourceTypePtr&& tcpSourceType)
+void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
+{
+    const auto constructorFunc = []() -> std::unique_ptr<Source> { return std::make_unique<TCPSource>(); };
+    registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
+}
+
+TCPSource::TCPSource(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)
     : tupleSize(schema.getSchemaSizeInBytes()), circularBuffer(getpagesize() * 2)
 {
+    auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
     this->inputFormat = tcpSourceType->getInputFormat()->getValue();
     this->socketHost = tcpSourceType->getSocketHost()->getValue();
     this->socketPort = std::to_string(static_cast<int>(tcpSourceType->getSocketPort()->getValue()));
