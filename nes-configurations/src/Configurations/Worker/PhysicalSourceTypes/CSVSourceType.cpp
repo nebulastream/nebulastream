@@ -20,24 +20,23 @@
 namespace NES
 {
 
-CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName)
+CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName)
 {
-    return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, physicalSourceName));
+    return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName));
 }
 
-CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, Yaml::Node yamlConfig)
 {
-    return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, physicalSourceName, yamlConfig));
+    return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, yamlConfig));
 }
 
-CSVSourceTypePtr CSVSourceType::create(
-    const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap)
+CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, std::map<std::string, std::string> sourceConfigMap)
 {
-    return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
+    return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, std::move(sourceConfigMap)));
 }
 
-CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
-    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::CSV_SOURCE)
+CSVSourceType::CSVSourceType(const std::string& logicalSourceName)
+    : PhysicalSourceType(logicalSourceName, SourceType::CSV_SOURCE)
     , filePath(Configurations::ConfigurationOption<std::string>::create(
           Configurations::FILE_PATH_CONFIG, "", "file path, needed for: CSVSource, BinarySource"))
     , skipHeader(
@@ -52,9 +51,8 @@ CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::st
     NES_INFO("CSVSourceTypeConfig: Init source config object with default values.");
 }
 
-CSVSourceType::CSVSourceType(
-    const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap)
-    : CSVSourceType(logicalSourceName, physicalSourceName)
+CSVSourceType::CSVSourceType(const std::string& logicalSourceName, std::map<std::string, std::string> sourceConfigMap)
+    : CSVSourceType(logicalSourceName)
 {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from command line.");
     if (sourceConfigMap.find(Configurations::FILE_PATH_CONFIG) != sourceConfigMap.end())
@@ -86,8 +84,7 @@ CSVSourceType::CSVSourceType(
     }
 }
 
-CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
-    : CSVSourceType(logicalSourceName, physicalSourceName)
+CSVSourceType::CSVSourceType(const std::string& logicalSourceName, Yaml::Node yamlConfig) : CSVSourceType(logicalSourceName)
 {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML file.");
     if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()

@@ -41,13 +41,12 @@ bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) const
 
 std::string LogicalSourceDescriptor::toString() const
 {
-    return "LogicalSourceDescriptor(" + logicalSourceName + ", " + physicalSourceName + ")";
+    return "LogicalSourceDescriptor(" + logicalSourceName + ")";
 }
 
 SourceDescriptorPtr LogicalSourceDescriptor::copy()
 {
     auto copy = LogicalSourceDescriptor::create(logicalSourceName);
-    copy->setPhysicalSourceName(physicalSourceName);
     copy->setSchema(schema->copy());
     return copy;
 }

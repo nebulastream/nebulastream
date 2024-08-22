@@ -25,16 +25,12 @@ namespace NES::Configurations
 
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string, std::map<std::string, std::string>& commandLineParams)
 {
-    std::string sourceType, logicalSourceName, physicalSourceName;
+    std::string sourceType, logicalSourceName;
     for (auto it = commandLineParams.begin(); it != commandLineParams.end(); ++it)
     {
         if (it->first == SOURCE_TYPE_CONFIG && !it->second.empty())
         {
             sourceType = it->second;
-        }
-        else if (it->first == PHYSICAL_SOURCE_NAME_CONFIG && !it->second.empty())
-        {
-            physicalSourceName = it->second;
         }
         else if (it->first == LOGICAL_SOURCE_NAME_CONFIG && !it->second.empty())
         {
@@ -50,27 +46,20 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string, s
             LOGICAL_SOURCE_NAME_CONFIG);
         return nullptr;
     }
-    else if (physicalSourceName.empty())
-    {
-        NES_WARNING(
-            "No physical source name supplied for creating the physical source. Please supply physical source name using --{}",
-            PHYSICAL_SOURCE_NAME_CONFIG);
-        return nullptr;
-    }
     else if (sourceType.empty())
     {
         NES_WARNING("No source type supplied for creating the physical source. Please supply source type using --{}", SOURCE_TYPE_CONFIG);
         return nullptr;
     }
 
-    return createPhysicalSourceType(logicalSourceName, physicalSourceName, sourceType, commandLineParams);
+    return createPhysicalSourceType(logicalSourceName, sourceType, commandLineParams);
 }
 
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlConfig)
 {
     std::vector<PhysicalSourceTypePtr> physicalSources;
     ///Iterate over all physical sources defined in the yaml file
-    std::string logicalSourceName, physicalSourceName, sourceType;
+    std::string logicalSourceName, sourceType;
     if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
         && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
     {
@@ -79,16 +68,6 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yaml
     else
     {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
-    }
-
-    if (!yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
-        && yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
-    {
-        physicalSourceName = yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>();
-    }
-    else
-    {
-        NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Physical Source Name.");
     }
 
     if (!yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>().empty() && yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>() != "\n")
@@ -103,7 +82,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yaml
     if (yamlConfig[PHYSICAL_SOURCE_TYPE_CONFIGURATION].IsMap())
     {
         auto physicalSourceTypeConfiguration = yamlConfig[PHYSICAL_SOURCE_TYPE_CONFIGURATION];
-        return createPhysicalSourceType(logicalSourceName, physicalSourceName, sourceType, physicalSourceTypeConfiguration);
+        return createPhysicalSourceType(logicalSourceName, sourceType, physicalSourceTypeConfiguration);
     }
     else
     {
@@ -112,24 +91,21 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yaml
 }
 
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
-    std::string logicalSourceName,
-    std::string physicalSourceName,
-    std::string sourceType,
-    const std::map<std::string, std::string>& commandLineParams)
+    std::string logicalSourceName, std::string sourceType, const std::map<std::string, std::string>& commandLineParams)
 {
     switch (magic_enum::enum_cast<SourceType>(sourceType).value())
     {
         case SourceType::CSV_SOURCE:
-            return CSVSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+            return CSVSourceType::create(logicalSourceName, commandLineParams);
         case SourceType::TCP_SOURCE:
-            return TCPSourceType::create(logicalSourceName, physicalSourceName, commandLineParams);
+            return TCPSourceType::create(logicalSourceName, commandLineParams);
         default:
             NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }
 }
 
-PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
-    std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, Yaml::Node& yamlConfig)
+PhysicalSourceTypePtr
+PhysicalSourceTypeFactory::createPhysicalSourceType(std::string logicalSourceName, std::string sourceType, Yaml::Node& yamlConfig)
 {
     if (!magic_enum::enum_cast<SourceType>(sourceType).has_value())
     {
@@ -139,9 +115,9 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
     switch (magic_enum::enum_cast<SourceType>(sourceType).value())
     {
         case SourceType::CSV_SOURCE:
-            return CSVSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+            return CSVSourceType::create(logicalSourceName, yamlConfig);
         case SourceType::TCP_SOURCE:
-            return TCPSourceType::create(logicalSourceName, physicalSourceName, yamlConfig);
+            return TCPSourceType::create(logicalSourceName, yamlConfig);
         default:
             NES_THROW_RUNTIME_ERROR("SourceConfigFactory:: source type " << sourceType << " not supported");
     }

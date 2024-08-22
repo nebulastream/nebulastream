@@ -20,24 +20,23 @@
 namespace NES
 {
 
-TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName, Yaml::Node yamlConfig)
 {
-    return std::make_shared<TCPSourceType>(TCPSourceType(logicalSourceName, physicalSourceName, std::move(yamlConfig)));
+    return std::make_shared<TCPSourceType>(TCPSourceType(logicalSourceName, std::move(yamlConfig)));
 }
 
-TCPSourceTypePtr TCPSourceType::create(
-    const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap)
+TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName, std::map<std::string, std::string> sourceConfigMap)
 {
-    return std::make_shared<TCPSourceType>(TCPSourceType(logicalSourceName, physicalSourceName, std::move(sourceConfigMap)));
+    return std::make_shared<TCPSourceType>(TCPSourceType(logicalSourceName, std::move(sourceConfigMap)));
 }
 
-TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName)
+TCPSourceTypePtr TCPSourceType::create(const std::string& logicalSourceName)
 {
-    return std::make_shared<TCPSourceType>(TCPSourceType(logicalSourceName, physicalSourceName));
+    return std::make_shared<TCPSourceType>(TCPSourceType(logicalSourceName));
 }
 
-TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName)
-    : PhysicalSourceType(logicalSourceName, physicalSourceName, SourceType::TCP_SOURCE)
+TCPSourceType::TCPSourceType(const std::string& logicalSourceName)
+    : PhysicalSourceType(logicalSourceName, SourceType::TCP_SOURCE)
     , socketHost(
           Configurations::ConfigurationOption<std::string>::create(Configurations::SOCKET_HOST_CONFIG, "127.0.0.1", "host to connect to"))
     , socketPort(Configurations::ConfigurationOption<uint32_t>::create(Configurations::SOCKET_PORT_CONFIG, 3000, "port to connect to"))
@@ -84,9 +83,8 @@ TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::st
     NES_INFO("NesSourceConfig: Init source config object with default values.");
 }
 
-TCPSourceType::TCPSourceType(
-    const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap)
-    : TCPSourceType(logicalSourceName, physicalSourceName)
+TCPSourceType::TCPSourceType(const std::string& logicalSourceName, std::map<std::string, std::string> sourceConfigMap)
+    : TCPSourceType(logicalSourceName)
 {
     NES_INFO("TCPSourceType: Init default TCP source config object with values from command line args.");
 
@@ -171,8 +169,7 @@ TCPSourceType::TCPSourceType(
     }
 }
 
-TCPSourceType::TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
-    : TCPSourceType(logicalSourceName, physicalSourceName)
+TCPSourceType::TCPSourceType(const std::string& logicalSourceName, Yaml::Node yamlConfig) : TCPSourceType(logicalSourceName)
 {
     NES_INFO("TCPSourceType: Init default TCP source config object with values from YAML file.");
 
