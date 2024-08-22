@@ -18,22 +18,19 @@
 namespace NES
 {
 
-CSVSourceDescriptor::CSVSourceDescriptor(
-    SchemaPtr schema, CSVSourceTypePtr sourceConfig, const std::string& logicalSourceName, const std::string& physicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), csvSourceType(std::move(sourceConfig))
+CSVSourceDescriptor::CSVSourceDescriptor(SchemaPtr schema, CSVSourceTypePtr sourceConfig, const std::string& logicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName), csvSourceType(std::move(sourceConfig))
 {
 }
 
-SourceDescriptorPtr CSVSourceDescriptor::create(
-    SchemaPtr schema, CSVSourceTypePtr csvSourceType, const std::string& logicalSourceName, const std::string& physicalSourceName)
+SourceDescriptorPtr CSVSourceDescriptor::create(SchemaPtr schema, CSVSourceTypePtr csvSourceType, const std::string& logicalSourceName)
 {
-    return std::make_shared<CSVSourceDescriptor>(
-        CSVSourceDescriptor(std::move(schema), std::move(csvSourceType), logicalSourceName, physicalSourceName));
+    return std::make_shared<CSVSourceDescriptor>(CSVSourceDescriptor(std::move(schema), std::move(csvSourceType), logicalSourceName));
 }
 
 SourceDescriptorPtr CSVSourceDescriptor::create(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
 {
-    return std::make_shared<CSVSourceDescriptor>(CSVSourceDescriptor(std::move(schema), std::move(csvSourceType), "", ""));
+    return std::make_shared<CSVSourceDescriptor>(CSVSourceDescriptor(std::move(schema), std::move(csvSourceType), ""));
 }
 
 CSVSourceTypePtr CSVSourceDescriptor::getSourceConfig() const
@@ -58,8 +55,7 @@ std::string CSVSourceDescriptor::toString() const
 
 SourceDescriptorPtr CSVSourceDescriptor::copy()
 {
-    auto copy = CSVSourceDescriptor::create(schema->copy(), csvSourceType, logicalSourceName, physicalSourceName);
-    copy->setPhysicalSourceName(physicalSourceName);
+    auto copy = CSVSourceDescriptor::create(schema->copy(), csvSourceType, logicalSourceName);
     return copy;
 }
 

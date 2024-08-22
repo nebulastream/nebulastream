@@ -26,123 +26,51 @@ namespace NES
 class CSVSourceType;
 using CSVSourceTypePtr = std::shared_ptr<CSVSourceType>;
 
-/**
- * @brief Configuration object for csv source config
- * define configurations for a csv source, i.e. this source reads from data from a csv file
- */
+/// Configuration object for csv source config
+/// define configurations for a csv source, i.e. this source reads from data from a csv file
 class CSVSourceType : public PhysicalSourceType
 {
 public:
     ~CSVSourceType() noexcept override = default;
 
-    /**
-     * @brief create a CSVSourceTypePtr object.
-     * @param sourceConfigMap inputted config options.
-     * @param logicalSourceName: Name of the logical source that represents this CSV source.
-     * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
-     * @return CSVSourceTypePtr
-     */
-    static CSVSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    static CSVSourceTypePtr create(const std::string& logicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
-    /**
-     * @brief create a CSVSourceTypePtr object.
-     * @param sourceConfigMap inputted config options.
-     * @param logicalSourceName: Name of the logical source that represents this CSV source.
-     * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
-     * @return CSVSourceTypePtr
-     */
-    static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig);
+    static CSVSourceTypePtr create(const std::string& logicalSourceName, YAML::Node yamlConfig);
 
-    /**
-     * @brief create a default CSVSourceTypePtr object.
-     * @param logicalSourceName: Name of the logical source that represents this CSV source.
-     * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
-     * @return CSVSourceTypePtr
-     */
-    static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static CSVSourceTypePtr create(const std::string& logicalSourceName);
 
-    /**
-     * @brief creates a string representation of the source
-     * @return
-     */
     std::string toString() override;
 
-    /**
-     * Checks equality
-     * @param other sourceType to check equality for
-     * @return true if equal, false otherwise
-     */
     bool equal(PhysicalSourceTypePtr const& other) override;
 
     void reset() override;
 
-    /**
-     * @brief Get file path, needed for: CSVSource, BinarySource
-     */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getFilePath() const;
 
-    /**
-     * @brief Set file path, needed for: CSVSource, BinarySource
-     */
     void setFilePath(const std::string& filePath);
 
-    /**
-     * @brief gets a ConfigurationOption object with skipHeader
-     */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<bool>> getSkipHeader() const;
 
-    /**
-     * @brief set the value for skipHeader with the appropriate data format
-     */
     void setSkipHeader(bool skipHeader);
 
-    /**
-     * @brief gets a ConfigurationOption object with skipHeader
-     */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<std::string>> getDelimiter() const;
 
-    /**
-     * @brief set the value for skipHeader with the appropriate data format
-     */
     void setDelimiter(const std::string& delimiter);
 
-    /**
-     * @brief gets a ConfigurationOption object with numberOfBuffersToProduce
-     */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfBuffersToProduce() const;
 
-    /**
-     * @brief set the value for numberOfBuffersToProduce with the appropriate data format
-     */
     void setNumberOfBuffersToProduce(uint32_t numberOfBuffersToProduce);
 
-    /**
-     * @brief gets a ConfigurationOption object with numberOfTuplesToProducePerBuffer
-     */
     [[nodiscard]] std::shared_ptr<Configurations::ConfigurationOption<uint32_t>> getNumberOfTuplesToProducePerBuffer() const;
 
-    /**
-     * @brief set the value for numberOfTuplesToProducePerBuffer with the appropriate data format
-     */
     void setNumberOfTuplesToProducePerBuffer(uint32_t numberOfTuplesToProducePerBuffer);
 
 private:
-    /**
-     * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
-     */
-    explicit CSVSourceType(
-        const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    explicit CSVSourceType(const std::string& logicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
-    /**
-     * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
-     */
-    explicit CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig);
+    explicit CSVSourceType(const std::string& logicalSourceName, YAML::Node yamlConfig);
 
-    /**
-     * @brief constructor to create a new CSV source config object initialized with default values
-     */
-    CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    CSVSourceType(const std::string& logicalSourceName);
 
     Configurations::StringConfigOption filePath;
     Configurations::BoolConfigOption skipHeader;
