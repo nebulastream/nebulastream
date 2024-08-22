@@ -124,7 +124,6 @@ namespace NES::CLI
 SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
 {
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
     auto sourceType = physicalSourceType->getSourceType();
     /// TODO(#74) We removed almost all sources this needs to be updated
     NES_DEBUG(
@@ -136,11 +135,11 @@ SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypeP
     {
         case SourceType::CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
+            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
         }
         case SourceType::TCP_SOURCE: {
             auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
+            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
         }
         default: {
             NES_THROW_RUNTIME_ERROR("PhysicalSourceConfig:: source type " + physicalSourceType->getSourceTypeAsString() + " not supported");
@@ -148,8 +147,8 @@ SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypeP
     }
 }
 
-PhysicalSourceTypePtr createPhysicalSourceType(
-    const std::string& logicalName, const std::string& physicalName, const std::map<std::string, std::string>& sourceConfiguration)
+PhysicalSourceTypePtr
+createPhysicalSourceType(const std::string& logicalName, const std::map<std::string, std::string>& sourceConfiguration)
 {
     if (!sourceConfiguration.contains(Configurations::SOURCE_TYPE_CONFIG))
     {
@@ -157,7 +156,6 @@ PhysicalSourceTypePtr createPhysicalSourceType(
     }
 
     auto modifiedSourceConfiguration = sourceConfiguration;
-    modifiedSourceConfiguration[Configurations::PHYSICAL_SOURCE_NAME_CONFIG] = physicalName;
     modifiedSourceConfiguration[Configurations::LOGICAL_SOURCE_NAME_CONFIG] = logicalName;
 
     return Configurations::PhysicalSourceTypeFactory::createFromString("", modifiedSourceConfiguration);
@@ -181,7 +179,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     for (size_t i = 0; const auto& [logicalName, config] : config.physical)
     {
-        auto sourceType = createPhysicalSourceType(logicalName, fmt::format("{}_phy{}", logicalName, i++), config);
+        auto sourceType = createPhysicalSourceType(logicalName, config);
         sourceCatalog->addPhysicalSource(
             logicalName,
             Catalogs::Source::SourceCatalogEntry::create(
@@ -213,13 +211,12 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
         {
             /// Fetch logical and physical source name in the descriptor
             auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
-            auto physicalSourceName = sourceDescriptor->getPhysicalSourceName();
             /// Iterate over all available physical sources
             bool foundPhysicalSource = false;
             for (const auto& entry : sourceCatalog->getPhysicalSources(logicalSourceName))
             {
-                NES_DEBUG("Replacing LogicalSourceDescriptor {} - {}", logicalSourceName, physicalSourceName);
-                if (auto physicalSourceType = entry->getPhysicalSource(); physicalSourceType->getPhysicalSourceName() == physicalSourceName)
+                NES_DEBUG("Replacing LogicalSourceDescriptor {}", logicalSourceName);
+                if (auto physicalSourceType = entry->getPhysicalSource())
                 {
                     auto physicalDescriptor
                         = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSourceType->getPhysicalSourceType());
@@ -229,9 +226,7 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
                     break;
                 }
             }
-            NES_ASSERT(
-                foundPhysicalSource,
-                "Logical source descriptor could not be replaced with the physical source descriptor: " + physicalSourceName);
+            NES_ASSERT(foundPhysicalSource, "Logical source descriptor could not be replaced with the physical source descriptor.");
         }
     }
 

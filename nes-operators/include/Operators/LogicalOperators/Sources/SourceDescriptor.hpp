@@ -34,20 +34,7 @@ public:
      */
     explicit SourceDescriptor(SchemaPtr schema);
 
-    /**
-     * @brief Creates a new source descriptor with a logicalSourceName.
-     * @param schema the source schema
-     * @param logicalSourceName the logical source name
-     */
     SourceDescriptor(SchemaPtr schema, std::string logicalSourceName);
-
-    /**
-     * @brief Creates a new source descriptor with a logicalSourceName.
-     * @param schema the source schema
-     * @param logicalSourceName the logical source name
-     * @param physicalSourceName the physical source name
-     */
-    SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string physicalSourceName);
 
     /**
      * @brief Returns the schema, which is produced by this source descriptor
@@ -103,18 +90,6 @@ public:
     std::string getLogicalSourceName() const;
 
     /**
-     * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
-     * @return logicalSourceName
-     */
-    std::string getPhysicalSourceName() const;
-
-    /**
-     * @brief Set physical source name
-     * @param physicalSourceName : name of the physical source
-     */
-    void setPhysicalSourceName(std::string_view physicalSourceName);
-
-    /**
      * @brief Set schema of the source
      * @param schema the schema
      */
@@ -143,7 +118,6 @@ public:
 protected:
     SchemaPtr schema;
     std::string logicalSourceName;
-    std::string physicalSourceName;
 };
 
 } /// namespace NES
