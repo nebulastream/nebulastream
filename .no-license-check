@@ -1,6 +1,5 @@
 # Files
 apex_memmove.hpp
-rte_memory.h
 JNI.hpp
 JNI.cpp
 apex_memmove.cpp
