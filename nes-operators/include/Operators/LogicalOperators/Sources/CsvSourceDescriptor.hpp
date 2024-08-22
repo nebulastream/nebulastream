@@ -24,8 +24,7 @@ namespace NES
 class CSVSourceDescriptor : public SourceDescriptor
 {
 public:
-    static SourceDescriptorPtr
-    create(SchemaPtr schema, CSVSourceTypePtr csvSourceType, const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static SourceDescriptorPtr create(SchemaPtr schema, CSVSourceTypePtr csvSourceType, const std::string& logicalSourceName);
 
     static SourceDescriptorPtr create(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
 
@@ -39,8 +38,7 @@ public:
     SourceDescriptorPtr copy() override;
 
 private:
-    explicit CSVSourceDescriptor(
-        SchemaPtr schema, CSVSourceTypePtr sourceConfig, const std::string& logicalSourceName, const std::string& physicalSourceName);
+    explicit CSVSourceDescriptor(SchemaPtr schema, CSVSourceTypePtr sourceConfig, const std::string& logicalSourceName);
 
     CSVSourceTypePtr csvSourceType;
 };

@@ -29,11 +29,6 @@ SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceNa
 {
 }
 
-SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string physicalSourceName)
-    : schema(std::move(schema)), logicalSourceName(std::move(logicalSourceName)), physicalSourceName(std::move(physicalSourceName))
-{
-}
-
 SchemaPtr SourceDescriptor::getSchema() const
 {
     return schema;
@@ -44,19 +39,9 @@ std::string SourceDescriptor::getLogicalSourceName() const
     return logicalSourceName;
 }
 
-std::string SourceDescriptor::getPhysicalSourceName() const
-{
-    return physicalSourceName;
-}
-
 void SourceDescriptor::setSchema(const SchemaPtr& schema)
 {
     this->schema = schema;
-}
-
-void SourceDescriptor::setPhysicalSourceName(std::string_view physicalSourceName)
-{
-    this->physicalSourceName = physicalSourceName;
 }
 
 } /// namespace NES

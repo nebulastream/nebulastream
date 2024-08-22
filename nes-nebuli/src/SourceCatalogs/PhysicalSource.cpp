@@ -21,29 +21,25 @@
 namespace NES
 {
 
-PhysicalSource::PhysicalSource(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType)
-    : logicalSourceName(std::move(logicalSourceName))
-    , physicalSourceName(std::move(physicalSourceName))
-    , physicalSourceType(std::move(physicalSourceType))
+PhysicalSource::PhysicalSource(std::string logicalSourceName, PhysicalSourceTypePtr physicalSourceType)
+    : logicalSourceName(std::move(logicalSourceName)), physicalSourceType(std::move(physicalSourceType))
 {
 }
 
 PhysicalSourcePtr PhysicalSource::create(PhysicalSourceTypePtr physicalSourceType)
 {
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
-    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, physicalSourceName, std::move(physicalSourceType)));
+    return std::make_shared<PhysicalSource>(PhysicalSource(logicalSourceName, std::move(physicalSourceType)));
 }
 
-PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName, std::string physicalSourceName)
+PhysicalSourcePtr PhysicalSource::create(std::string logicalSourceName)
 {
-    return std::make_shared<PhysicalSource>(PhysicalSource(std::move(logicalSourceName), std::move(physicalSourceName), nullptr));
+    return std::make_shared<PhysicalSource>(PhysicalSource(std::move(logicalSourceName), nullptr));
 }
 
 std::string PhysicalSource::toString()
 {
     std::stringstream ss;
-    ss << "PhysicalSource Name: " << physicalSourceName;
     ss << "LogicalSource Name" << logicalSourceName;
     ss << "Source Type" << physicalSourceType->toString();
     return ss.str();
@@ -52,11 +48,6 @@ std::string PhysicalSource::toString()
 const std::string& PhysicalSource::getLogicalSourceName() const
 {
     return logicalSourceName;
-}
-
-const std::string& PhysicalSource::getPhysicalSourceName() const
-{
-    return physicalSourceName;
 }
 
 const PhysicalSourceTypePtr& PhysicalSource::getPhysicalSourceType() const
