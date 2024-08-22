@@ -15,6 +15,7 @@
 #include <charconv>
 #include <chrono>
 #include <cstring>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -26,6 +27,8 @@
 #include <API/Schema.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
+#include <Sources/Registry/SourceRegistry.hpp>
 #include <Sources/TCPSource.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <sys/socket.h> /// For socket functions
@@ -34,6 +37,45 @@
 namespace NES::Sources
 {
 
+void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
+{
+    const auto constructorFunc = []() -> std::unique_ptr<Source> { return std::make_unique<TCPSource>(); };
+    registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
+}
+
+void TCPSource::configure(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
+{
+    this->schema = std::move(schema);
+    this->sourceConfig = std::move(tcpSourceType);
+    this->tupleSize = this->schema->getSchemaSizeInBytes();
+
+    /// init physical types
+    std::vector<std::string> schemaKeys;
+    const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
+
+    /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
+    /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
+    for (const auto& field : this->schema->fields)
+    {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+        auto fieldName = field->getName();
+        NES_TRACE("TCPSOURCE:: Schema keys are:  {}", fieldName);
+        schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
+    }
+
+    switch (sourceConfig->getInputFormat()->getValue())
+    {
+        case Configurations::InputFormat::CSV:
+            inputParser = std::make_unique<CSVParser>(this->schema->getSize(), physicalTypes, ",");
+            break;
+        default:
+            NES_ERROR("InputFormat not supported.")
+            NES_NOT_IMPLEMENTED();
+    }
+
+    NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
+}
 TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
     : tupleSize(schema->getSchemaSizeInBytes())
     , sourceConfig(std::move(tcpSourceType))

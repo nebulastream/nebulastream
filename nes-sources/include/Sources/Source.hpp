@@ -15,6 +15,7 @@
 #pragma once
 
 #include <string>
+#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/TestTupleBuffer.hpp>
 
@@ -40,7 +41,7 @@ public:
     virtual void open() = 0;
     virtual void close() = 0;
 
-    [[nodiscard]] virtual SourceType getType() const = 0;
+    [[nodiscard]] virtual SourceType getType() const = 0; ///Todo: get rid of SourceType
 
     [[nodiscard]] virtual std::string toString() const = 0;
 };

@@ -11,8 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <chrono>
 #include <cstring>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -20,6 +22,8 @@
 #include <API/AttributeField.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
+#include <Sources/Registry/SourceRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <fmt/std.h>
@@ -27,6 +31,66 @@
 
 namespace NES::Sources
 {
+
+void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
+{
+    const auto constructorFunc = []() -> std::unique_ptr<Source> { return std::make_unique<CSVSource>(); };
+    registry.registerPlugin((CSVSource::PLUGIN_NAME), constructorFunc);
+}
+
+///-Todo: improve
+void CSVSource::configure(SchemaPtr schema, CSVSourceTypePtr&& csvSourceType)
+{
+    this->schema = std::move(schema);
+    this->csvSourceType = std::move(csvSourceType);
+    this->fileEnded = false;
+    this->filePath = this->csvSourceType->getFilePath()->getValue();
+    this->delimiter = this->csvSourceType->getDelimiter()->getValue();
+    this->skipHeader = this->csvSourceType->getSkipHeader()->getValue();
+
+    this->numberOfBuffersToProduce = this->csvSourceType->getNumberOfBuffersToProduce()->getValue();
+    this->numberOfTuplesToProducePerBuffer = this->csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
+    this->tupleSize = this->schema->getSchemaSizeInBytes();
+
+    struct Deleter
+    {
+        void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
+    };
+    const auto realCSVPath = realpath(filePath.c_str(), nullptr); /// realpath: canonical absolute name of file
+    const auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realCSVPath));
+    if (path == nullptr)
+    {
+        NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());
+    }
+
+    input.open(path.get());
+    if (!(input.is_open() && input.good()))
+    {
+        throw Exceptions::RuntimeException("Cannot open file: " + std::string(path.get()));
+    }
+
+    NES_DEBUG("CSVSource: Opening path {}", path.get());
+    input.seekg(0, std::ifstream::end);
+    if (auto const reportedFileSize = input.tellg(); reportedFileSize == -1)
+    {
+        throw Exceptions::RuntimeException("CSVSource::CSVSource File " + filePath + " is corrupted");
+    }
+    else
+    {
+        this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
+    }
+
+    NES_DEBUG("CSVSource: tupleSize={} numBuff={}", this->tupleSize, this->numberOfTuplesToProducePerBuffer);
+
+    DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
+    for (const AttributeFieldPtr& field : this->schema->fields)
+    {
+        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
+        physicalTypes.push_back(physicalField);
+    }
+
+    this->inputParser = std::make_shared<CSVParser>(this->schema->getSize(), physicalTypes, delimiter);
+}
 
 CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
     : fileEnded(false)

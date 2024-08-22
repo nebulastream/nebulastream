@@ -34,6 +34,11 @@ class TCPSource : public Source
     constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
 
 public:
+    static inline const std::string PLUGIN_NAME = "TCP";
+    ///-Todo: improve
+    TCPSource() : tupleSize(0), tuplesThisPass(0), timeout(TCP_SOCKET_DEFAULT_TIMEOUT), circularBuffer(getpagesize() * 2) {};
+    void configure(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
+
     explicit TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
 
     bool fillTupleBuffer(

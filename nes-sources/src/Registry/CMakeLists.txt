@@ -11,12 +11,5 @@
 # limitations under the License.
 
 add_source_files(nes-sources
-        CSVSource.cpp
-        DataSource.cpp
-        MMapCircularBuffer.cpp
-        SourceProvider.cpp
-        SourceHandle.cpp
-        TCPSource.cpp
+        SourceRegistry.cpp
 )
-add_subdirectory(Parsers)
-add_subdirectory(Registry)
