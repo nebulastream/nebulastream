@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -27,6 +28,7 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Registry/SourceRegistry.hpp>
 #include <Sources/TCPSource.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -34,9 +36,17 @@
 namespace NES::Sources
 {
 
-TCPSource::TCPSource(const Schema& schema, TCPSourceTypePtr&& tcpSourceType)
+void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
+{
+    const auto constructorFunc = [](const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) -> std::unique_ptr<Source>
+    { return std::make_unique<TCPSource>(schema, std::move(sourceDescriptor)); };
+    registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
+}
+
+TCPSource::TCPSource(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)
     : tupleSize(schema.getSchemaSizeInBytes()), circularBuffer(getpagesize() * 2)
 {
+    auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
     this->inputFormat = tcpSourceType->getInputFormat()->getValue();
     this->socketHost = tcpSourceType->getSocketHost()->getValue();
     this->socketPort = std::to_string(static_cast<int>(tcpSourceType->getSocketPort()->getValue()));
@@ -363,4 +373,10 @@ SourceType TCPSource::getType() const
 {
     return SourceType::TCP_SOURCE;
 }
+
+std::unique_ptr<Source> GeneratedSourceRegistrar::RegisterSourceTCP(const Schema& schema, const SourceDescriptor& sourceDescriptor)
+{
+    return std::make_unique<TCPSource>(schema, sourceDescriptor);
+}
+
 }

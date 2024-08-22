@@ -42,9 +42,7 @@ class TCPSource : public Source
     constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
 
 public:
-    static inline const std::string PLUGIN_NAME = "TCP";
-    ///-Todo: improve
-    TCPSource(const Schema& schema, TCPSourceTypePtr&& tcpSourceType);
+    TCPSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
 
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer,

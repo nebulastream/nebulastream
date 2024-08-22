@@ -14,28 +14,21 @@
 
 #pragma once
 
+#include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Sources/Source.hpp>
+#include <Util/PluginRegistry.hpp>
 
-namespace NES
+
+namespace NES::Sources
 {
 
-/**
- * @brief Descriptor defining referencing a logical source.
- */
-class LogicalSourceDescriptor : public SourceDescriptor
+class SourceRegistry : public BaseRegistry<SourceRegistry, std::string, Source, const Schema&, const SourceDescriptor&>
 {
-public:
-    static SourceDescriptorPtr create(std::string logicalSourceName);
-
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
-
-    std::string toString() const override;
-    SourceDescriptorPtr copy() override;
-
-private:
-    explicit LogicalSourceDescriptor(std::string logicalSourceName);
 };
 
-using LogicalSourceDescriptorPtr = std::shared_ptr<LogicalSourceDescriptor>;
+}
 
-} /// namespace NES
+#define INCLUDED_FROM_SOURCE_REGISTRY
+#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
+#undef INCLUDED_FROM_SOURCE_REGISTRY
