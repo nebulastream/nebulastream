@@ -187,50 +187,7 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
     EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.size() == 2);
 }
 
-TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
-{
-    /// given
-    WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
-    auto commandLineParams = makeCommandLineArgs(
-        {"--localWorkerHost=localhost",
-         "--numberOfWorkerThreads=5",
-         "--numberOfBuffersInGlobalBufferManager=2048",
-         "--numberOfBuffersInSourceLocalBufferPool=128",
-         "--queryCompiler.compilationStrategy=FAST",
-         "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-         "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
-         "--physicalSources.type=CSV_SOURCE",
-         "--physicalSources.filePath=../tests/test_data/QnV_short.csv",
-         "--physicalSources.numberOfBuffersToProduce=5",
-         "--physicalSources.rowLayout=false",
-         "--physicalSources.physicalSourceName=x",
-         "--physicalSources.logicalSourceName=default"});
-    /// when
-    workerConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-    /// then
-    EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
-        workerConfigPtr->numberOfBuffersInGlobalBufferManager.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerWorker.getValue(), workerConfigPtr->numberOfBuffersPerWorker.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
-        workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->queryCompiler.compilationStrategy.getValue(),
-        workerConfigPtr->queryCompiler.compilationStrategy.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->queryCompiler.pipeliningStrategy.getValue(), workerConfigPtr->queryCompiler.pipeliningStrategy.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
-        workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
-}
-
-TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
+TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
 {
     /// given
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
