@@ -34,8 +34,7 @@ class TCPSource : public Source
     constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
 
 public:
-    TCPSource() : tupleSize(0), tuplesThisPass(0), timeout(TCP_SOCKET_DEFAULT_TIMEOUT), circularBuffer(getpagesize() * 2) {};
-    void configure(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) override;
+    explicit TCPSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
 
     bool fillTupleBuffer(
         NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,

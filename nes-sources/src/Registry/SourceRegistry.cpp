@@ -23,11 +23,12 @@ SourceRegistry::SourceRegistry()
     GeneratedSourceRegistrar::registerAllPlugins(*this);
 }
 
-std::optional<std::unique_ptr<Source>> SourceRegistry::tryCreate(const std::string& name) const
+std::optional<std::unique_ptr<Source>>
+SourceRegistry::tryCreate(const std::string& name, const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) const
 {
     if (registry.contains(name))
     {
-        return {registry.at(name)()};
+        return {registry.at(name)(schema, std::move(sourceDescriptor))};
     }
     std::cerr << "Data source " << name << " not found.\n";
     return std::nullopt;

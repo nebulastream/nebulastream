@@ -40,8 +40,6 @@ public:
         const Schema& schema)
         = 0;
 
-    virtual void configure(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) = 0;
-
     virtual void open() = 0;
     virtual void close() = 0;
 

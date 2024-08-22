@@ -42,9 +42,9 @@ SourceHandlePtr SourceProvider::lower(
 {
     auto schema = sourceDescriptor->getSchema();
     /// Todo #241: Get the new source identfier from the source descriptor and pass it to SourceHandle.
-    if (auto source = SourceRegistry::instance().tryCreate(sourceDescriptor->getSourceName()); source.has_value())
+    if (auto source = SourceRegistry::instance().tryCreate(sourceDescriptor->getSourceName(), schema, std::move(sourceDescriptor));
+        source.has_value())
     {
-        source.value()->configure(schema, std::move(sourceDescriptor));
         return std::make_shared<SourceHandle>(
             std::move(originId),
             std::move(schema),

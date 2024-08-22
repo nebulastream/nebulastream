@@ -36,12 +36,13 @@ namespace NES::Sources
 
 void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
 {
-    const auto constructorFunc = []() -> std::unique_ptr<Source> { return std::make_unique<CSVSource>(); };
+    const auto constructorFunc = [](const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) -> std::unique_ptr<Source>
+    { return std::make_unique<CSVSource>(schema, std::move(sourceDescriptor)); };
     registry.registerPlugin((SourceDescriptor::PLUGIN_NAME_CSV), constructorFunc);
 }
 
 /// Todo #72: remove schema from CSVSource (only required by parser).
-void CSVSource::configure(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
 {
     auto csvSourceType = dynamic_cast<CSVSourceDescriptor*>(sourceDescriptor.get())->getSourceConfig();
     this->csvSourceType = std::move(csvSourceType);
