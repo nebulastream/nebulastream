@@ -27,52 +27,25 @@ using PhysicalSourceTypePtr = std::shared_ptr<PhysicalSourceType>;
 class PhysicalSource;
 using PhysicalSourcePtr = std::shared_ptr<PhysicalSource>;
 
-/**
- * @brief Container for storing all configurations for physical source
- */
+
+/// Container for storing all configurations for physical source
 class PhysicalSource
 {
 public:
-    /**
-     * @brief create method to construct physical Source
-     * @param physicalSourceType : physical source type
-     * @return shared pointer to a physical source
-     */
     static PhysicalSourcePtr create(PhysicalSourceTypePtr physicalSourceType);
 
-    /**
-     * @brief Create physical source without physical source type
-     * @param logicalSourceName : logical source name
-     * @param physicalSourceName : physical source name
-     * @return shared pointer to a physical source
-     */
-    static PhysicalSourcePtr create(std::string logicalSourceName, std::string physicalSourceName);
+    static PhysicalSourcePtr create(std::string logicalSourceName);
 
-    /**
-     * @brief Get logical source name
-     * @return logical source name
-     */
     const std::string& getLogicalSourceName() const;
 
-    /**
-     * @brief Get physical source name
-     * @return physical source name
-     */
-    const std::string& getPhysicalSourceName() const;
-
-    /**
-     * @brief Get physical source type
-     * @return physical source type
-     */
     const PhysicalSourceTypePtr& getPhysicalSourceType() const;
 
     std::string toString();
 
 private:
-    explicit PhysicalSource(std::string logicalSourceName, std::string physicalSourceName, PhysicalSourceTypePtr physicalSourceType);
+    explicit PhysicalSource(std::string logicalSourceName, PhysicalSourceTypePtr physicalSourceType);
 
     std::string logicalSourceName;
-    std::string physicalSourceName;
     PhysicalSourceTypePtr physicalSourceType;
 };
 

@@ -964,7 +964,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         auto logicalSourceDescriptor = sourceDescriptor.as<const LogicalSourceDescriptor>();
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         logicalSourceSerializedSourceDescriptor.set_logicalsourcename(logicalSourceDescriptor->getLogicalSourceName());
-        logicalSourceSerializedSourceDescriptor.set_physicalsourcename(logicalSourceDescriptor->getPhysicalSourceName());
 
         if (!isClientOriginated)
         {
@@ -995,7 +994,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const
         /// de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(tcpSerializedSourceDescriptor->sourceschema());
         SerializablePhysicalSourceType physicalSourceType = tcpSerializedSourceDescriptor->physicalsourcetype();
-        auto sourceConfig = TCPSourceType::create(physicalSourceType.logicalsourcename(), physicalSourceType.physicalsourcename());
+        auto sourceConfig = TCPSourceType::create(physicalSourceType.logicalsourcename());
         auto tcpSourceConfig = new SerializablePhysicalSourceType_SerializableTCPSourceType();
         tcpSerializedSourceDescriptor->physicalsourcetype().specificphysicalsourcetype().UnpackTo(tcpSourceConfig);
         sourceConfig->setSocketHost(tcpSourceConfig->sockethost());
@@ -1020,7 +1019,7 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const
         /// de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.sourceschema());
         auto physicalSourceType = csvSerializedSourceDescriptor.physicalsourcetype();
-        auto sourceConfig = CSVSourceType::create(physicalSourceType.logicalsourcename(), physicalSourceType.physicalsourcename());
+        auto sourceConfig = CSVSourceType::create(physicalSourceType.logicalsourcename());
         auto csvSourceConfig = new SerializablePhysicalSourceType_SerializableCSVSourceType();
         physicalSourceType.specificphysicalsourcetype().UnpackTo(csvSourceConfig);
         sourceConfig->setFilePath(csvSourceConfig->filepath());
@@ -1041,7 +1040,6 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const
         /// de-serialize source schema
         SourceDescriptorPtr logicalSourceDescriptor
             = LogicalSourceDescriptor::create(logicalSourceSerializedSourceDescriptor.logicalsourcename());
-        logicalSourceDescriptor->setPhysicalSourceName(logicalSourceSerializedSourceDescriptor.physicalsourcename());
         /// check if the schema is set
         if (logicalSourceSerializedSourceDescriptor.has_sourceschema())
         {

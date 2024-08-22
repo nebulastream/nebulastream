@@ -33,21 +33,20 @@ public:
      * @param sourceConfigMap inputted config options
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr
-    create(const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    static TCPSourceTypePtr create(const std::string& logicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief create a TCPSourceTypePtr object
      * @param yamlConfig inputted config options
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig);
+    static TCPSourceTypePtr create(const std::string& logicalSourceName, YAML::Node yamlConfig);
 
     /**
      * @brief create a TCPSourceTypePtr object with default values
      * @return TCPSourceTypePtr
      */
-    static TCPSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    static TCPSourceTypePtr create(const std::string& logicalSourceName);
 
     /**
      * @brief converts configs to string
@@ -214,19 +213,18 @@ private:
      * @brief constructor to create a new TCP source type object initialized with values from sourceConfigMap
      * @param sourceConfigMap inputted config options
      */
-    explicit TCPSourceType(
-        const std::string& logicalSourceName, const std::string& physicalSourceName, std::map<std::string, std::string> sourceConfigMap);
+    explicit TCPSourceType(const std::string& logicalSourceName, std::map<std::string, std::string> sourceConfigMap);
 
     /**
      * @brief constructor to create a new TCP source type object initialized with values from yamlConfig
      * @param yamlConfig inputted config options
      */
-    explicit TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig);
+    explicit TCPSourceType(const std::string& logicalSourceName, YAML::Node yamlConfig);
 
     /**
      * @brief constructor to create a new TCP source type object initialized with default values
      */
-    TCPSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName);
+    TCPSourceType(const std::string& logicalSourceName);
 
     Configurations::StringConfigOption socketHost;
     Configurations::IntConfigOption socketPort;

@@ -133,7 +133,6 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
             duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());
             /// Add Physical Source Name to the source descriptor
             auto duplicateSourceDescriptor = sourceDescriptor->copy();
-            duplicateSourceDescriptor->setPhysicalSourceName(sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
             duplicateSourceOperator->setSourceDescriptor(duplicateSourceDescriptor);
 
             /// Flatten the graph to duplicate and find operators that need to be connected to blocking parents.

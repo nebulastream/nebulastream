@@ -230,7 +230,6 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
 {
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto physicalSourceName = physicalSourceType->getPhysicalSourceName();
     auto sourceType = physicalSourceType->getSourceType();
     NES_DEBUG(
         "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
@@ -241,11 +240,11 @@ SourceDescriptorPtr LowerToExecutableQueryPlanPhase::createSourceDescriptor(Sche
     {
         case SourceType::CSV_SOURCE: {
             auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName, physicalSourceName);
+            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
         }
         case SourceType::TCP_SOURCE: {
             auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName, physicalSourceName);
+            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
         }
         default: {
             throw UnknownSourceType(physicalSourceType->getSourceTypeAsString());

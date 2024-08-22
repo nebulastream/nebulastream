@@ -140,7 +140,6 @@ const std::string DEFAULT_SOURCE_CONFIG = "DefaultSource";
 const std::string TCP_SOURCE_CONFIG = "TCPSource";
 const std::string ARROW_SOURCE_CONFIG = "ArrowSource";
 
-const std::string PHYSICAL_SOURCE_NAME_CONFIG = "physicalSourceName";
 const std::string LOGICAL_SOURCE_NAME_CONFIG = "logicalSourceName";
 
 ///Configuration names for source types
