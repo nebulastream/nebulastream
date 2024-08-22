@@ -1,7 +1,6 @@
-#include <xmmintrin.h>
 #include <Runtime/internal/apex_memmove.hpp>
 
-#include <Runtime/internal/apex_memmove.hpp>
+#include <cstring> ///	std::memmove, std::memcpy
 
 #if defined(__x86_64__) || defined(_M_X64) || defined(__i386) || defined(_M_IX86) ///	Test for Intel/AMD architecture
 #    include <emmintrin.h> ///	Intel/AMD SSE intrinsics
