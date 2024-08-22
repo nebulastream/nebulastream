@@ -43,11 +43,10 @@ void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
     registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
 }
 
-void TCPSource::configure(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
+void TCPSource::configure(const Schema& schema, TCPSourceTypePtr tcpSourceType)
 {
-    this->schema = std::move(schema);
     this->sourceConfig = std::move(tcpSourceType);
-    this->tupleSize = this->schema->getSchemaSizeInBytes();
+    this->tupleSize = schema.getSchemaSizeInBytes();
 
     /// init physical types
     std::vector<std::string> schemaKeys;
@@ -55,7 +54,7 @@ void TCPSource::configure(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
 
     /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
     /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
-    for (const auto& field : this->schema->fields)
+    for (const auto& field : schema.fields)
     {
         auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
         physicalTypes.push_back(physicalField);
@@ -67,41 +66,7 @@ void TCPSource::configure(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
     switch (sourceConfig->getInputFormat()->getValue())
     {
         case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<CSVParser>(this->schema->getSize(), physicalTypes, ",");
-            break;
-        default:
-            NES_ERROR("InputFormat not supported.")
-            NES_NOT_IMPLEMENTED();
-    }
-
-    NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
-}
-TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
-    : tupleSize(schema->getSchemaSizeInBytes())
-    , sourceConfig(std::move(tcpSourceType))
-    , timeout(TCP_SOCKET_DEFAULT_TIMEOUT)
-    , circularBuffer(getpagesize() * 2)
-    , schema(schema)
-{
-    /// init physical types
-    std::vector<std::string> schemaKeys;
-    const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
-
-    /// Extracting the schema keys in order to parse incoming data correctly (e.g. use as keys for JSON objects)
-    /// Also, extracting the field types in order to parse and cast the values of incoming data to the correct types
-    for (const auto& field : schema->fields)
-    {
-        auto physicalField = defaultPhysicalTypeFactory.getPhysicalType(field->getDataType());
-        physicalTypes.push_back(physicalField);
-        auto fieldName = field->getName();
-        NES_TRACE("TCPSOURCE:: Schema keys are:  {}", fieldName);
-        schemaKeys.push_back(fieldName.substr(fieldName.find('$') + 1, fieldName.size()));
-    }
-
-    switch (sourceConfig->getInputFormat()->getValue())
-    {
-        case Configurations::InputFormat::CSV:
-            inputParser = std::make_unique<CSVParser>(schema->getSize(), physicalTypes, ",");
+            inputParser = std::make_unique<CSVParser>(schema.getSize(), physicalTypes, ",");
             break;
         default:
             NES_ERROR("InputFormat not supported.")
@@ -115,7 +80,6 @@ std::string TCPSource::toString() const
 {
     std::stringstream ss;
     ss << "TCPSOURCE(";
-    ss << "SCHEMA(" << schema->toString() << "), ";
     ss << sourceConfig->toString();
     return ss.str();
 }
@@ -175,13 +139,15 @@ void TCPSource::open()
 }
 
 bool TCPSource::fillTupleBuffer(
-    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager)
+    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+    const Schema& schema)
 {
     NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
     NES_DEBUG("TCPSource buffer allocated ");
     try
     {
-        while (fillBuffer(tupleBuffer, bufferManager))
+        while (fillBuffer(tupleBuffer, bufferManager, schema))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };
@@ -227,7 +193,9 @@ size_t TCPSource::parseBufferSize(SPAN_TYPE<const char> data) const
 }
 
 bool TCPSource::fillBuffer(
-    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager)
+    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+    const Schema& schema)
 {
     /// determine how many tuples fit into the buffer
     tuplesThisPass = tupleBuffer.getCapacity();

@@ -16,7 +16,6 @@
 
 #include <fstream>
 #include <string>
-#include <API/Schema.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
@@ -35,19 +34,15 @@ public:
     static inline const std::string PLUGIN_NAME = "CSV";
     ///-Todo: improve
     CSVSource() = default;
-    void configure(SchemaPtr schema, CSVSourceTypePtr&& csvSourceType);
-
-    explicit CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
+    void configure(const Schema& schema, CSVSourceTypePtr&& csvSourceType);
 
     bool fillTupleBuffer(
         NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
+        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager,
+        const Schema& schema) override;
 
     void open() override { /* noop */ };
     void close() override { /* noop */ };
-
-    void
-    fillBuffer(NES::Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager);
 
     std::string toString() const override;
 
@@ -72,7 +67,6 @@ private:
     CSVParserPtr inputParser;
 
     uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
-    SchemaPtr schema;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
 };

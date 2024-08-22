@@ -37,16 +37,17 @@ public:
     static inline const std::string PLUGIN_NAME = "TCP";
     ///-Todo: improve
     TCPSource() : tupleSize(0), tuplesThisPass(0), timeout(TCP_SOCKET_DEFAULT_TIMEOUT), circularBuffer(getpagesize() * 2) {};
-    void configure(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
-
-    explicit TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
+    void configure(const Schema& schema, TCPSourceTypePtr tcpSourceType);
 
     bool fillTupleBuffer(
         NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager) override;
+        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+        const Schema& schema) override;
 
-    bool
-    fillBuffer(NES::Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager);
+    bool fillBuffer(
+        NES::Runtime::MemoryLayouts::TestTupleBuffer&,
+        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+        const Schema& schema);
 
     std::string toString() const override;
 
@@ -74,7 +75,6 @@ private:
     timeval timeout;
     MMapCircularBuffer circularBuffer;
 
-    SchemaPtr schema;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
 };

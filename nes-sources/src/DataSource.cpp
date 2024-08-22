@@ -214,7 +214,8 @@ void DataSource::runningRoutine()
         while (running)
         {
             auto tupleBuffer = allocateBuffer();
-            auto isReceivedData = sourceImplementation->fillTupleBuffer(tupleBuffer, bufferProvider); /// note that receiveData might block
+            auto isReceivedData
+                = sourceImplementation->fillTupleBuffer(tupleBuffer, bufferProvider, *schema); /// note that receiveData might block
             NES_DEBUG("receivedData: {}, tupleBuffer.getNumberOfTuplez: {}", isReceivedData, tupleBuffer.getNumberOfTuples());
 
             ///this checks we received a valid output buffer

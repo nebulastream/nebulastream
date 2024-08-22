@@ -44,7 +44,7 @@ public:
         std::string_view inputTuple,
         uint64_t tupleCount,
         NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const SchemaPtr& schema,
+        const Schema& schema,
         const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
         = 0;
 
@@ -53,7 +53,7 @@ public:
         std::string value,
         uint64_t schemaFieldIndex,
         NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const SchemaPtr& schema,
+        const Schema& schema,
         uint64_t tupleCount,
         const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager);
 

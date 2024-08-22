@@ -34,11 +34,11 @@ void Parser::writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
     NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const SchemaPtr& schema,
+    const Schema& schema,
     uint64_t tupleCount,
     const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
 {
-    auto fields = schema->fields;
+    auto fields = schema.fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
     auto physicalType = DefaultPhysicalTypeFactory().getPhysicalType(dataType);
 

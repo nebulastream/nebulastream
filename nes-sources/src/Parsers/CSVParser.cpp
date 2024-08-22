@@ -39,7 +39,7 @@ bool CSVParser::writeInputTupleToTupleBuffer(
     std::string_view csvInputLine,
     uint64_t tupleCount,
     NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const SchemaPtr& schema,
+    const Schema& schema,
     const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount:  {}", tupleCount);
@@ -55,15 +55,15 @@ bool CSVParser::writeInputTupleToTupleBuffer(
             "CSVParser::writeInputTupleToTupleBuffer: An error occurred while splitting delimiter. ERROR: " << strerror(errno));
     }
 
-    if (values.size() != schema->getSize())
+    if (values.size() != schema.getSize())
     {
         NES_THROW_RUNTIME_ERROR(fmt::format(
             "CSVParser: The input line does not contain the right number of delimited fields. Fields in schema: {}"
             " Fields in line: {}"
             " Schema: {} Line: {}",
-            std::to_string(schema->getSize()),
+            std::to_string(schema.getSize()),
             std::to_string(values.size()),
-            schema->toString(),
+            schema.toString(),
             csvInputLine));
     }
     /// iterate over fields of schema and cast string values to correct type
