@@ -78,7 +78,7 @@ public:
      * @param queryPlan : the input query plan
      * @return updated query plan
      */
-    QueryPlanPtr execute(const QueryPlanPtr& queryPlan);
+    QueryPlanPtr execute(QueryPlanPtr& queryPlan) const;
 
 private:
     explicit QueryRewritePhase();

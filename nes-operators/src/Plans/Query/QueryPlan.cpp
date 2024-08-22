@@ -282,7 +282,7 @@ QueryPlanPtr QueryPlan::copy()
         else
         {
             NES_TRACE("QueryPlan: Adding the operator into map");
-            operatorIdToOperatorMap[operatorId] = operatorNode->copy();
+            operatorIdToOperatorMap[operatorId] = operatorNode;
         }
 
         /// 4. We then check the parent operators of the current operator by looking into the map and add them as the parent of the current operator.

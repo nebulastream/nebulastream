@@ -18,7 +18,6 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/Registry/SourceRegistry.hpp>
 #include <Sources/SourceHandle.hpp>
@@ -35,7 +34,7 @@ DataSourceProviderPtr SourceProvider::create()
 
 SourceHandlePtr SourceProvider::lower(
     OriginId originId,
-    SourceDescriptorPtr&& sourceDescriptor,
+    std::unique_ptr<SourceDescriptor>&& sourceDescriptor,
     std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {

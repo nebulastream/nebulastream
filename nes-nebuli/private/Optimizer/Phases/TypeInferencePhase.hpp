@@ -25,9 +25,6 @@ using QueryPlanPtr = std::shared_ptr<QueryPlan>;
 class Node;
 using NodePtr = std::shared_ptr<Node>;
 
-class SourceDescriptor;
-using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
-
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 

@@ -121,7 +121,7 @@ struct convert<NES::CLI::QueryConfig>
 namespace NES::CLI
 {
 
-SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
+std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
 {
     auto logicalSourceName = physicalSourceType->getLogicalSourceName();
     auto sourceType = physicalSourceType->getSourceType();
@@ -207,10 +207,11 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
 
     for (auto& sourceOperator : query->getSourceOperators())
     {
-        if (auto sourceDescriptor = sourceOperator->getSourceDescriptor(); sourceDescriptor->instanceOf<LogicalSourceDescriptor>())
+        auto& sourceDescriptor = sourceOperator->getSourceDescriptorRef();
+        if (dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor))
         {
             /// Fetch logical and physical source name in the descriptor
-            auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
+            auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
             /// Iterate over all available physical sources
             bool foundPhysicalSource = false;
             for (const auto& entry : sourceCatalog->getPhysicalSources(logicalSourceName))
@@ -219,9 +220,9 @@ DecomposedQueryPlanPtr createFullySpecifiedQueryPlan(const QueryConfig& config)
                 if (auto physicalSourceType = entry->getPhysicalSource())
                 {
                     auto physicalDescriptor
-                        = createSourceDescriptor(sourceDescriptor->getSchema(), physicalSourceType->getPhysicalSourceType());
+                        = createSourceDescriptor(sourceDescriptor.getSchema(), physicalSourceType->getPhysicalSourceType());
                     NES_DEBUG("Replacement with: {}", physicalDescriptor->toString());
-                    sourceOperator->setSourceDescriptor(physicalDescriptor);
+                    sourceOperator->setSourceDescriptor(std::move(physicalDescriptor));
                     foundPhysicalSource = true;
                     break;
                 }

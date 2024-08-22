@@ -346,13 +346,13 @@ OperatorPtr OperatorSerializationUtil::deserializeOperator(SerializableOperator 
 }
 
 void OperatorSerializationUtil::serializeSourceOperator(
-    const SourceLogicalOperator& sourceOperator, SerializableOperator& serializedOperator, bool isClientOriginated)
+    SourceLogicalOperator& sourceOperator, SerializableOperator& serializedOperator, bool isClientOriginated)
 {
     NES_TRACE("OperatorSerializationUtil:: serialize to SourceLogicalOperator");
 
     auto sourceDetails = SerializableOperator_SourceDetails();
-    auto sourceDescriptor = sourceOperator.getSourceDescriptor();
-    serializeSourceDescriptor(*sourceDescriptor, sourceDetails, isClientOriginated);
+    auto& sourceDescriptor = sourceOperator.getSourceDescriptorRef();
+    serializeSourceDescriptor(sourceDescriptor, sourceDetails, isClientOriginated);
     sourceDetails.set_sourceoriginid(sourceOperator.getOriginId().getRawValue());
 
     serializedOperator.mutable_details()->PackFrom(sourceDetails);
@@ -361,7 +361,8 @@ void OperatorSerializationUtil::serializeSourceOperator(
 LogicalUnaryOperatorPtr OperatorSerializationUtil::deserializeSourceOperator(const SerializableOperator_SourceDetails& sourceDetails)
 {
     auto sourceDescriptor = deserializeSourceDescriptor(sourceDetails);
-    return LogicalOperatorFactory::createSourceOperator(sourceDescriptor, getNextOperatorId(), OriginId(sourceDetails.sourceoriginid()));
+    return LogicalOperatorFactory::createSourceOperator(
+        std::move(sourceDescriptor), getNextOperatorId(), OriginId(sourceDetails.sourceoriginid()));
 }
 
 void OperatorSerializationUtil::serializeFilterOperator(
@@ -866,17 +867,16 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
 }
 
 void OperatorSerializationUtil::serializeSourceDescriptor(
-    const SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDetails& sourceDetails, bool isClientOriginated)
+    SourceDescriptor& sourceDescriptor, SerializableOperator_SourceDetails& sourceDetails, bool isClientOriginated)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize to SourceDescriptor");
     NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with ={}", sourceDescriptor.toString());
 
-    if (sourceDescriptor.instanceOf<const TCPSourceDescriptor>())
+    if (dynamic_cast<TCPSourceDescriptor*>(&sourceDescriptor))
     {
         /// serialize TCP source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor");
-        auto tcpSourceDescriptor = sourceDescriptor.as<const TCPSourceDescriptor>();
+        auto tcpSourceDescriptor = dynamic_cast<TCPSourceDescriptor*>(&sourceDescriptor);
         ///init serializable source config
         auto serializedPhysicalSourceType = new SerializablePhysicalSourceType();
         serializedPhysicalSourceType->set_sourcetype(tcpSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
@@ -930,12 +930,12 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         SchemaSerializationUtil::serializeSchema(tcpSourceDescriptor->getSchema(), tcpSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(tcpSerializedSourceDescriptor);
     }
-    else if (sourceDescriptor.instanceOf<const CSVSourceDescriptor>())
+    else if (dynamic_cast<CSVSourceDescriptor*>(&sourceDescriptor))
     {
         /// serialize csv source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
-        auto csvSourceDescriptor = sourceDescriptor.as<const CSVSourceDescriptor>();
+        auto csvSourceDescriptor = dynamic_cast<CSVSourceDescriptor*>(&sourceDescriptor);
         /// init serializable source config
         auto serializedSourceConfig = new SerializablePhysicalSourceType();
         serializedSourceConfig->set_sourcetype(csvSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
@@ -956,12 +956,12 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(), csvSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(csvSerializedSourceDescriptor);
     }
-    else if (sourceDescriptor.instanceOf<const LogicalSourceDescriptor>())
+    else if (dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor))
     {
         /// serialize logical source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor");
-        auto logicalSourceDescriptor = sourceDescriptor.as<const LogicalSourceDescriptor>();
+        auto logicalSourceDescriptor = dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor);
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         logicalSourceSerializedSourceDescriptor.set_logicalsourcename(logicalSourceDescriptor->getLogicalSourceName());
         logicalSourceSerializedSourceDescriptor.set_sourcename(logicalSourceDescriptor->getSourceName());
@@ -981,7 +981,8 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     }
 }
 
-SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperator_SourceDetails& sourceDetails)
+std::unique_ptr<SourceDescriptor>
+OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperator_SourceDetails& sourceDetails)
 {
     NES_TRACE("OperatorSerializationUtil:: de-serialized SourceDescriptor id={}", sourceDetails.DebugString());
     const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
@@ -1039,8 +1040,8 @@ SourceDescriptorPtr OperatorSerializationUtil::deserializeSourceDescriptor(const
         serializedSourceDescriptor.UnpackTo(&logicalSourceSerializedSourceDescriptor);
 
         /// de-serialize source schema
-        SourceDescriptorPtr logicalSourceDescriptor = LogicalSourceDescriptor::create(
-            logicalSourceSerializedSourceDescriptor.logicalsourcename());
+        std::unique_ptr<SourceDescriptor> logicalSourceDescriptor
+            = LogicalSourceDescriptor::create(logicalSourceSerializedSourceDescriptor.logicalsourcename());
         /// check if the schema is set
         if (logicalSourceSerializedSourceDescriptor.has_sourceschema())
         {
