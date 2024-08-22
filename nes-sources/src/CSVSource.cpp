@@ -11,8 +11,10 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
+
 #include <chrono>
 #include <cstring>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -22,6 +24,8 @@
 #include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
+#include <Sources/Registry/SourceRegistry.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
 #include <fmt/std.h>
@@ -29,6 +33,13 @@
 
 namespace NES::Sources
 {
+
+void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
+{
+    const auto constructorFunc = [](const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) -> std::unique_ptr<Source>
+    { return std::make_unique<CSVSource>(schema, std::move(sourceDescriptor)); };
+    registry.registerPlugin((CSVSource::PLUGIN_NAME), constructorFunc);
+}
 
 /// Todo #72: remove schema from CSVSource (only required by parser).
 CSVSource::CSVSource(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)

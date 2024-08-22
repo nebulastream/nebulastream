@@ -14,6 +14,7 @@
 
 #include <chrono>
 #include <cstring>
+#include <memory>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -23,11 +24,12 @@
 #include <unistd.h> /// For read
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
+#include <Sources/Registry/GeneratedSourceRegistrar.hpp>
+#include <Sources/Registry/SourceRegistry.hpp>
 #include <Sources/TCPSource.hpp>
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
@@ -37,7 +39,8 @@ namespace NES::Sources
 
 void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
 {
-    const auto constructorFunc = []() -> std::unique_ptr<Source> { return std::make_unique<TCPSource>(); };
+    const auto constructorFunc = [](const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) -> std::unique_ptr<Source>
+    { return std::make_unique<TCPSource>(schema, std::move(sourceDescriptor)); };
     registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
 }
 
