@@ -186,11 +186,11 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure CMake
         run: cmake -B build
-      - name: check-preamble
+      - name: Check preamble
         run: cmake --build build --target check-preamble
-      - name: check-format
+      - name: Check format
         run: cmake --build build --target check-format
-      - name: check-comment-format
+      - name: Check comment format
         run: cmake --build build --target check-comment-format
 
   build-linux:
