@@ -50,7 +50,7 @@ std::unique_ptr<Expression> RegisterSinExpression(const std::vector<ExpressionPt
 std::unique_ptr<Expression> RegisterSqrtExpression(const std::vector<ExpressionPtr>&);
 std::unique_ptr<Expression> RegisterTanExpression(const std::vector<ExpressionPtr>&);
 std::unique_ptr<Expression> RegisterTruncExpression(const std::vector<ExpressionPtr>&);
-} /// namespace NES::Runtime::Execution::Expressions
+}
 
 namespace NES
 {
