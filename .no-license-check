@@ -1,7 +1,6 @@
 # Files
 JNI.hpp
 JNI.cpp
-digestible.h
 
 # Folders
 cmake-build.*
