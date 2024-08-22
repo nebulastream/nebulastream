@@ -23,6 +23,7 @@
 #include <Configurations/ConfigurationsNames.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Util/yaml/Yaml.hpp>
+#include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
 
 namespace NES::Configurations
@@ -105,11 +106,11 @@ public:
      * @brief sets the value if it is defined
      * @param yamlNode: the yaml field name to be used
      */
-    void setValueIfDefined(Yaml::Node yamlNode)
+    void setValueIfDefined(YAML::Node yamlNode)
     {
-        if (!yamlNode.IsNone())
+        if (!yamlNode.IsNull())
         {
-            this->value = yamlNode.As<T>();
+            this->value = yamlNode.as<T>();
         }
     }
 

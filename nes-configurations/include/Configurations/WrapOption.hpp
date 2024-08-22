@@ -19,7 +19,7 @@ namespace NES::Configurations
 {
 
 template <class Type, class Factory>
-concept IsFactory = requires(std::string identifier, std::map<std::string, std::string>& inputParams, Yaml::Node node) {
+concept IsFactory = requires(std::string identifier, std::map<std::string, std::string>& inputParams, YAML::Node node) {
     { Factory::createFromString(identifier, inputParams) };
     { Factory::createFromYaml(node) };
 };
@@ -48,7 +48,7 @@ public:
     std::string toString() override;
 
 protected:
-    virtual void parseFromYAMLNode(Yaml::Node node) override;
+    virtual void parseFromYAMLNode(YAML::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
 private:
@@ -72,7 +72,7 @@ void WrapOption<Type, Factory>::parseFromString(std::string identifier, std::map
 
 template <class Type, class Factory>
 requires IsFactory<Type, Factory>
-void WrapOption<Type, Factory>::parseFromYAMLNode(Yaml::Node node)
+void WrapOption<Type, Factory>::parseFromYAMLNode(YAML::Node node)
 {
     this->value = Factory::createFromYaml(node);
 }

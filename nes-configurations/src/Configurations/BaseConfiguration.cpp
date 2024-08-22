@@ -17,6 +17,8 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <yaml-cpp/node/parse.h>
+#include <yaml-cpp/yaml.h>
 
 namespace NES::Configurations
 {
@@ -25,17 +27,17 @@ BaseConfiguration::BaseConfiguration() : BaseOption() {};
 
 BaseConfiguration::BaseConfiguration(const std::string& name, const std::string& description) : BaseOption(name, description) {};
 
-void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config)
+void BaseConfiguration::parseFromYAMLNode(const YAML::Node config)
 {
     auto optionMap = getOptionMap();
     if (!config.IsMap())
     {
         throw ConfigurationException("Malformed YAML configuration file");
     }
-    for (auto entry = config.Begin(); entry != config.End(); entry++)
+    for (auto entry : config)
     {
-        auto identifier = (*entry).first;
-        auto node = (*entry).second;
+        auto identifier = entry.first.as<std::string>();
+        auto node = entry.second;
         if (!optionMap.contains(identifier))
         {
             throw ConfigurationException("Identifier: " + identifier + " is not known. Check if it exposed in the getOptions function.");
@@ -43,13 +45,13 @@ void BaseConfiguration::parseFromYAMLNode(const Yaml::Node config)
         /// check if config is empty
         if (node.IsScalar())
         {
-            std::string value = node.As<std::string>();
+            std::string value = node.as<std::string>();
             if (value.empty() || std::all_of(value.begin(), value.end(), ::isspace))
             {
                 throw ConfigurationException("Value for " + identifier + " is empty.");
             }
         }
-        else if ((node.IsSequence() || node.IsMap()) && node.Size() == 0)
+        else if ((node.IsSequence() || node.IsMap()) && node.size() == 0)
         {
             /// if the node is a sequence or map and has no elements
             throw ConfigurationException("Value for " + identifier + " is empty.");
@@ -97,9 +99,8 @@ void BaseConfiguration::overwriteConfigWithYAMLFileInput(const std::string& file
 {
     try
     {
-        Yaml::Node config;
-        Yaml::Parse(config, filePath.c_str());
-        if (config.IsNone())
+        YAML::Node config = YAML::LoadFile(filePath);
+        if (config.IsNull())
         {
             return;
         }
