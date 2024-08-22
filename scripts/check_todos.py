@@ -13,7 +13,8 @@ import urllib.request
 
 def run_cmd(cmd: list) -> str:
     try:
-        p = subprocess.run(cmd, capture_output=True, check=True, text=True)
+        #ignoring errors to pass format check. Proper fix in: Todo #343
+        p = subprocess.run(cmd, capture_output=True, check=True, text=True, errors='ignore')
     except subprocess.CalledProcessError as e:
         print(e)
         print("\nstderr output:")

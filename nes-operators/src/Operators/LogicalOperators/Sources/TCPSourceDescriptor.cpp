@@ -18,8 +18,9 @@
 namespace NES
 {
 
+///-Todo: use name from CSVSource, or at least one file (configurations?)
 TCPSourceDescriptor::TCPSourceDescriptor(SchemaPtr schema, TCPSourceTypePtr tcpSourceType, const std::string& logicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName), tcpSourceType(std::move(tcpSourceType))
+    : SourceDescriptor(std::move(schema), logicalSourceName, "TCP"), tcpSourceType(std::move(tcpSourceType))
 {
 }
 
@@ -55,7 +56,7 @@ bool TCPSourceDescriptor::equal(SourceDescriptorPtr const& other) const
 
 SourceDescriptorPtr TCPSourceDescriptor::copy()
 {
-    auto copy = TCPSourceDescriptor::create(schema->copy(), tcpSourceType);
+    auto copy = TCPSourceDescriptor::create(getSchema()->copy(), tcpSourceType);
     return copy;
 }
 

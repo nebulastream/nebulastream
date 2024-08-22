@@ -26,7 +26,7 @@ class ExecutableFunctionRegistry
 {
 };
 
-} /// namespace NES::Runtime::Execution::Expressions
+}
 
 #define INCLUDED_FROM_EXECUTABLE_FUNCTION_REGISTRY
 #include <Execution/Expressions/Functions/GeneratedExecutableFunctionRegistrar.hpp>

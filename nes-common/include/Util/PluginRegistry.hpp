@@ -37,9 +37,9 @@ public:
     [[nodiscard]] bool contains(const typename Registrar::Key& key) const { return registryImpl.contains(key); }
 
     template <typename... Args>
-    [[nodiscard]] typename Registrar::Type create(const typename Registrar::Key& key, Args... args) const
+    [[nodiscard]] typename Registrar::Type create(const typename Registrar::Key& key, Args&&... args) const
     {
-        return registryImpl.at(key)(args...);
+        return registryImpl.at(key)(std::forward<Args>(args)...);
     }
 
     [[nodiscard]] std::vector<typename Registrar::Key> getRegisteredNames() const

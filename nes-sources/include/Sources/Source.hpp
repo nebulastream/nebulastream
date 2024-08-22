@@ -16,6 +16,7 @@
 
 #include <string>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/TupleBuffer.hpp>
 
@@ -45,7 +46,7 @@ public:
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
 
-    [[nodiscard]] virtual SourceType getType() const = 0;
+    [[nodiscard]] virtual SourceType getType() const = 0; ///Todo: get rid of SourceType
 
     [[nodiscard]] virtual std::string toString() const = 0;
 };
