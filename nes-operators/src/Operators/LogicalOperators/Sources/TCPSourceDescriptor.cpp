@@ -18,20 +18,20 @@
 namespace NES
 {
 
-///-Todo: use name from CSVSource, or at least one file (configurations?)
 TCPSourceDescriptor::TCPSourceDescriptor(SchemaPtr schema, TCPSourceTypePtr tcpSourceType, const std::string& logicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName, "TCP"), tcpSourceType(std::move(tcpSourceType))
+    : SourceDescriptor(std::move(schema), logicalSourceName, PLUGIN_NAME_TCP), tcpSourceType(std::move(tcpSourceType))
 {
 }
 
-SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig, const std::string& logicalSourceName)
+std::unique_ptr<SourceDescriptor>
+TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig, const std::string& logicalSourceName)
 {
-    return std::make_shared<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), logicalSourceName));
+    return std::make_unique<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), logicalSourceName));
 }
 
-SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig)
+std::unique_ptr<SourceDescriptor> TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig)
 {
-    return std::make_shared<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), ""));
+    return std::make_unique<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), ""));
 }
 
 TCPSourceTypePtr TCPSourceDescriptor::getSourceConfig() const
@@ -44,20 +44,14 @@ std::string TCPSourceDescriptor::toString() const
     return "TCPSourceDescriptor(" + tcpSourceType->toString() + ")";
 }
 
-bool TCPSourceDescriptor::equal(SourceDescriptorPtr const& other) const
+bool TCPSourceDescriptor::equal(SourceDescriptor& other) const
 {
-    if (!other->instanceOf<TCPSourceDescriptor>())
+    if (!dynamic_cast<TCPSourceDescriptor*>(&other))
     {
         return false;
     }
-    auto otherTCPSource = other->as<TCPSourceDescriptor>();
-    return tcpSourceType->equal(otherTCPSource->tcpSourceType);
-}
-
-SourceDescriptorPtr TCPSourceDescriptor::copy()
-{
-    auto copy = TCPSourceDescriptor::create(getSchema()->copy(), tcpSourceType);
-    return copy;
+    const auto otherLogicalSourceName = dynamic_cast<TCPSourceDescriptor*>(&other)->getLogicalSourceName();
+    return getLogicalSourceName() == otherLogicalSourceName;
 }
 
 } /// namespace NES
