@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <exception>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
@@ -50,17 +51,16 @@ LogicalSourceTypePtr LogicalSourceTypeFactory::createFromString(std::string, std
     return LogicalSourceType::create(logicalSourceName, SchemaType::create(schemaFieldDetails));
 }
 
-LogicalSourceTypePtr LogicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlConfig)
+LogicalSourceTypePtr LogicalSourceTypeFactory::createFromYaml(YAML::Node& yamlConfig)
 {
     std::vector<LogicalSourceTypePtr> logicalSourceTypes;
     std::string logicalSourceName;
 
     std::vector<SchemaFieldDetail> schemaFieldDetails;
 
-    if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
-        && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[LOGICAL_SOURCE_NAME_CONFIG])
     {
-        logicalSourceName = yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>();
+        logicalSourceName = yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].as<std::string>();
     }
     else
     {
@@ -69,24 +69,33 @@ LogicalSourceTypePtr LogicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlCo
 
     if (yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].IsSequence())
     {
-        auto sequenceSize = yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].Size();
+        auto sequenceSize = yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG].size();
         for (uint64_t index = 0; index < sequenceSize; ++index)
         {
             auto currentFieldNode = yamlConfig[LOGICAL_SOURCE_SCHEMA_FIELDS_CONFIG][index];
 
-            auto fieldNodeName = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG].As<std::string>();
-            if (fieldNodeName.empty() || fieldNodeName == "\n")
+            std::string fieldNodeName, fieldNodeType, fieldNodeLength;
+
+            try
+            {
+                fieldNodeName = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_NAME_CONFIG].as<std::string>();
+            }
+            catch (std::exception& e)
             {
                 NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Name.");
             }
 
-            auto fieldNodeType = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG].As<std::string>();
-            if (fieldNodeType.empty() || fieldNodeType == "\n")
+            try
+            {
+                fieldNodeType = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_CONFIG].as<std::string>();
+            }
+            catch (std::exception& e)
             {
                 NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Schema Field Type.");
             }
 
-            auto fieldNodeLength = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH].As<std::string>();
+            if (currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH])
+                fieldNodeLength = currentFieldNode[LOGICAL_SOURCE_SCHEMA_FIELD_TYPE_LENGTH].as<std::string>();
 
             schemaFieldDetails.emplace_back(fieldNodeName, fieldNodeType, fieldNodeLength);
         }

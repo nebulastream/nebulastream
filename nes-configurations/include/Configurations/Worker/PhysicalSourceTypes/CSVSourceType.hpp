@@ -18,7 +18,7 @@
 #include <string>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Util/yaml/Yaml.hpp>
+#include <yaml-cpp/yaml.h>
 
 namespace NES
 {
@@ -52,7 +52,7 @@ public:
      * @param physicalSourceName:: Name of the physical source, that is attached to the logical source.
      * @return CSVSourceTypePtr
      */
-    static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    static CSVSourceTypePtr create(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig);
 
     /**
      * @brief create a default CSVSourceTypePtr object.
@@ -137,7 +137,7 @@ private:
     /**
      * @brief constructor to create a new CSV source config object initialized with values from sourceConfigMap
      */
-    explicit CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig);
+    explicit CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig);
 
     /**
      * @brief constructor to create a new CSV source config object initialized with default values

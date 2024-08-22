@@ -16,6 +16,7 @@
 #include <utility>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <yaml-cpp/yaml.h>
 
 namespace NES
 {
@@ -25,7 +26,7 @@ CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, con
     return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, physicalSourceName));
 }
 
-CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+CSVSourceTypePtr CSVSourceType::create(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig)
 {
     return std::make_shared<CSVSourceType>(CSVSourceType(logicalSourceName, physicalSourceName, yamlConfig));
 }
@@ -86,14 +87,13 @@ CSVSourceType::CSVSourceType(
     }
 }
 
-CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, Yaml::Node yamlConfig)
+CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::string& physicalSourceName, YAML::Node yamlConfig)
     : CSVSourceType(logicalSourceName, physicalSourceName)
 {
     NES_INFO("CSVSourceType: Init default CSV source config object with values from YAML file.");
-    if (!yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::FILE_PATH_CONFIG] && yamlConfig[Configurations::FILE_PATH_CONFIG].as<std::string>() != "\n")
     {
-        filePath->setValue(yamlConfig[Configurations::FILE_PATH_CONFIG].As<std::string>());
+        filePath->setValue(yamlConfig[Configurations::FILE_PATH_CONFIG].as<std::string>());
     }
     else
     {
@@ -101,26 +101,22 @@ CSVSourceType::CSVSourceType(const std::string& logicalSourceName, const std::st
             "CSVSourceType:: no filePath defined! Please define a filePath using " << Configurations::FILE_PATH_CONFIG
                                                                                    << " configuration.");
     }
-    if (!yamlConfig[Configurations::DELIMITER_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::DELIMITER_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::DELIMITER_CONFIG] && yamlConfig[Configurations::DELIMITER_CONFIG].as<std::string>() != "\n")
     {
-        delimiter->setValue(yamlConfig[Configurations::DELIMITER_CONFIG].As<std::string>());
+        delimiter->setValue(yamlConfig[Configurations::DELIMITER_CONFIG].as<std::string>());
     }
-    if (!yamlConfig[Configurations::SKIP_HEADER_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::SKIP_HEADER_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::SKIP_HEADER_CONFIG])
     {
-        skipHeader->setValue(yamlConfig[Configurations::SKIP_HEADER_CONFIG].As<bool>());
+        skipHeader->setValue(yamlConfig[Configurations::SKIP_HEADER_CONFIG].as<bool>());
     }
-    if (!yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG])
     {
-        numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].As<uint32_t>());
+        numberOfBuffersToProduce->setValue(yamlConfig[Configurations::NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG].as<uint32_t>());
     }
-    if (!yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>().empty()
-        && yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG])
     {
         numberOfTuplesToProducePerBuffer->setValue(
-            yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].As<uint32_t>());
+            yamlConfig[Configurations::NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG].as<uint32_t>());
     }
 }
 

@@ -15,6 +15,7 @@
 #pragma once
 #include <map>
 #include <string>
+#include <yaml-cpp/yaml.h>
 #include "Configurations/BaseOption.hpp"
 #include "Configurations/ConfigurationException.hpp"
 #include "Configurations/Enums/EnumOption.hpp"
@@ -22,7 +23,6 @@
 #include "Configurations/SequenceOption.hpp"
 #include "Configurations/WrapOption.hpp"
 #include "Identifiers/Identifiers.hpp"
-#include "Util/yaml/Yaml.hpp"
 
 namespace NES::Configurations
 {
@@ -80,7 +80,7 @@ public:
     std::string toString() override;
 
 protected:
-    void parseFromYAMLNode(const Yaml::Node config) override;
+    void parseFromYAMLNode(const YAML::Node config) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
     virtual std::vector<Configurations::BaseOption*> getOptions() = 0;
     std::map<std::string, Configurations::BaseOption*> getOptionMap();
