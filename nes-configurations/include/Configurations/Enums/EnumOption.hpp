@@ -14,8 +14,8 @@
 #pragma once
 #include <string>
 #include <type_traits>
+#include <yaml-cpp/yaml.h>
 #include "Configurations/TypedBaseOption.hpp"
-#include "Util/yaml/Yaml.hpp"
 
 namespace NES::Configurations
 {
@@ -47,7 +47,7 @@ public:
     std::string toString() override;
 
 protected:
-    void parseFromYAMLNode(Yaml::Node node) override;
+    void parseFromYAMLNode(YAML::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 };
 

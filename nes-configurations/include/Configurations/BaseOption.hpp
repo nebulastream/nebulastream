@@ -13,7 +13,7 @@
 */
 #pragma once
 #include <string>
-#include "Util/yaml/Yaml.hpp"
+#include <yaml-cpp/yaml.h>
 namespace NES::Configurations
 {
 
@@ -71,7 +71,7 @@ protected:
      * @brief ParseFromYamlNode fills the content of this option with the value of the YAML node.
      * @param node
      */
-    virtual void parseFromYAMLNode(Yaml::Node node) = 0;
+    virtual void parseFromYAMLNode(YAML::Node node) = 0;
 
     /**
      * @brief ParseFromString fills the content of this option with a specific string value.

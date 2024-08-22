@@ -14,6 +14,7 @@
 #pragma once
 
 #include <ostream>
+#include <yaml-cpp/yaml.h>
 #include "Configurations/ConfigurationException.hpp"
 #include "Configurations/TypedBaseOption.hpp"
 #include "Configurations/Validation/ConfigurationValidation.hpp"
@@ -80,7 +81,7 @@ public:
     std::string toString() override;
 
 protected:
-    virtual void parseFromYAMLNode(Yaml::Node node) override;
+    virtual void parseFromYAMLNode(YAML::Node node) override;
     void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
 
 private:
@@ -187,10 +188,10 @@ bool ScalarOption<T>::operator==(const T& other)
 }
 
 template <class T>
-void ScalarOption<T>::parseFromYAMLNode(Yaml::Node node)
+void ScalarOption<T>::parseFromYAMLNode(YAML::Node node)
 {
-    this->isValid(node.As<std::string>());
-    this->value = node.As<T>();
+    this->isValid(node.as<std::string>());
+    this->value = node.as<T>();
 }
 
 template <class T>
@@ -200,7 +201,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::stri
     {
         throw ConfigurationException("Identifier " + identifier + " is not known.");
     }
-    auto value = inputParams[this->getName()];
+    std::string value = inputParams[this->getName()];
     if (value.empty())
     {
         throw ConfigurationException("Identifier " + identifier + " is not known.");
@@ -208,7 +209,7 @@ void ScalarOption<T>::parseFromString(std::string identifier, std::map<std::stri
     this->isValid(value);
     try
     {
-        this->value = Yaml::impl::StringConverter<T>::Get(value);
+        this->value = YAML::Load(value).as<T>();
     }
     catch (const std::exception& e)
     {

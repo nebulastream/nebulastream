@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <Configurations/ConfigurationOption.hpp>
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
@@ -66,34 +67,33 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromString(std::string, s
     return createPhysicalSourceType(logicalSourceName, physicalSourceName, sourceType, commandLineParams);
 }
 
-PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(Yaml::Node& yamlConfig)
+PhysicalSourceTypePtr PhysicalSourceTypeFactory::createFromYaml(YAML::Node& yamlConfig)
 {
     std::vector<PhysicalSourceTypePtr> physicalSources;
     ///Iterate over all physical sources defined in the yaml file
     std::string logicalSourceName, physicalSourceName, sourceType;
-    if (!yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
-        && yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
+    std::stringstream ss;
+    if (yamlConfig[LOGICAL_SOURCE_NAME_CONFIG])
     {
-        logicalSourceName = yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].As<std::string>();
+        logicalSourceName = yamlConfig[LOGICAL_SOURCE_NAME_CONFIG].as<std::string>();
     }
     else
     {
         NES_THROW_RUNTIME_ERROR("Found Invalid Logical Source Configuration. Please define Logical Source Name.");
     }
 
-    if (!yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>().empty()
-        && yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG])
     {
-        physicalSourceName = yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].As<std::string>();
+        physicalSourceName = yamlConfig[PHYSICAL_SOURCE_NAME_CONFIG].as<std::string>();
     }
     else
     {
         NES_THROW_RUNTIME_ERROR("Found Invalid Physical Source Configuration. Please define Physical Source Name.");
     }
 
-    if (!yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>().empty() && yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>() != "\n")
+    if (yamlConfig[SOURCE_TYPE_CONFIG])
     {
-        sourceType = yamlConfig[SOURCE_TYPE_CONFIG].As<std::string>();
+        sourceType = yamlConfig[SOURCE_TYPE_CONFIG].as<std::string>();
     }
     else
     {
@@ -129,7 +129,7 @@ PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
 }
 
 PhysicalSourceTypePtr PhysicalSourceTypeFactory::createPhysicalSourceType(
-    std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, Yaml::Node& yamlConfig)
+    std::string logicalSourceName, std::string physicalSourceName, std::string sourceType, YAML::Node& yamlConfig)
 {
     if (!magic_enum::enum_cast<SourceType>(sourceType).has_value())
     {

@@ -17,7 +17,7 @@
 #include <map>
 #include <memory>
 #include <string>
-#include "Util/yaml/Yaml.hpp"
+#include <yaml-cpp/yaml.h>
 
 namespace NES::Configurations
 {
@@ -43,6 +43,6 @@ public:
      * @param logicalStreamConfig yaml elements from yaml file
      * @return physical stream config object
      */
-    static LogicalSourceTypePtr createFromYaml(Yaml::Node& yamlConfig);
+    static LogicalSourceTypePtr createFromYaml(YAML::Node& yamlConfig);
 };
 } /// namespace NES::Configurations

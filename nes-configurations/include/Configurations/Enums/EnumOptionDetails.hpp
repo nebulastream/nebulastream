@@ -13,9 +13,9 @@
 */
 #pragma once
 
+#include <yaml-cpp/yaml.h>
 #include <magic_enum.hpp>
 #include "Configurations/Enums/EnumOption.hpp"
-#include "Util/yaml/Yaml.hpp"
 
 namespace NES::Configurations
 {
@@ -32,18 +32,18 @@ EnumOption<T>& EnumOption<T>::operator=(const T& value)
 }
 
 template <IsEnum T>
-void EnumOption<T>::parseFromYAMLNode(Yaml::Node node)
+void EnumOption<T>::parseFromYAMLNode(YAML::Node node)
 {
-    if (!magic_enum::enum_contains<T>(node.As<std::string>()))
+    if (!magic_enum::enum_contains<T>(node.as<std::string>()))
     {
         std::stringstream ss;
         for (const auto& name : magic_enum::enum_names<T>())
         {
             ss << name;
         }
-        throw ConfigurationException("Enum for " + node.As<std::string>() + " was not found. Valid options are " + ss.str());
+        throw ConfigurationException("Enum for " + node.as<std::string>() + " was not found. Valid options are " + ss.str());
     }
-    this->value = magic_enum::enum_cast<T>(node.As<std::string>()).value();
+    this->value = magic_enum::enum_cast<T>(node.as<std::string>()).value();
 }
 
 template <IsEnum T>
