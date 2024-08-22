@@ -37,7 +37,7 @@ public:
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     SourceHandlePtr lower(
         OriginId originId,
-        SourceDescriptorPtr&& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
+        std::unique_ptr<SourceDescriptor>&& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
         std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 

@@ -118,8 +118,9 @@ void LowerToExecutableQueryPlanPhase::processSource(
     auto rootOperator = pipeline->getDecomposedQueryPlan()->getRootOperators()[0];
     auto sourceOperator = rootOperator->as<PhysicalOperators::PhysicalSourceOperator>();
     auto sourceDescriptor = sourceOperator->getSourceDescriptor();
-    PRECONDITION(!sourceDescriptor->instanceOf<LogicalSourceDescriptor>(), "logical source name lookup is not supported");
+    PRECONDITION(!dynamic_cast<LogicalSourceDescriptor*>(sourceDescriptor.get()), "Logical source name lookup is not supported");
 
+    /// ReSharper disable once CppDFAUnreachableCode
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessorPipelines;
     for (const auto& successor : pipeline->getSuccessors())
     {

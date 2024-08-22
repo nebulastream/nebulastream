@@ -107,9 +107,6 @@ using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLog
 class CentralWindowOperator;
 using CentralWindowOperatorPtr = std::shared_ptr<CentralWindowOperator>;
 
-class SourceDescriptor;
-using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
-
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 

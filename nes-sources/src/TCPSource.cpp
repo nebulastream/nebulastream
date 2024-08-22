@@ -41,12 +41,12 @@ namespace NES::Sources
 void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
 {
     const auto constructorFunc = []() -> std::unique_ptr<Source> { return std::make_unique<TCPSource>(); };
-    registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
+    registry.registerPlugin((SourceDescriptor::PLUGIN_NAME_TCP), constructorFunc);
 }
 
-void TCPSource::configure(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)
+void TCPSource::configure(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
 {
-    auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
+    auto tcpSourceType = dynamic_cast<TCPSourceDescriptor*>(sourceDescriptor.get())->getSourceConfig();
     this->sourceConfig = std::move(tcpSourceType);
     this->tupleSize = schema.getSchemaSizeInBytes();
 

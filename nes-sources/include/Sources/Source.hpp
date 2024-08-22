@@ -40,14 +40,12 @@ public:
         const Schema& schema)
         = 0;
 
-    virtual void configure(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) = 0;
-
-    ///-Todo: validate function
+    virtual void configure(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) = 0;
 
     virtual void open() = 0;
     virtual void close() = 0;
 
-    [[nodiscard]] virtual SourceType getType() const = 0; ///Todo: get rid of SourceType
+    [[nodiscard]] virtual SourceType getType() const = 0;
 
     [[nodiscard]] virtual std::string toString() const = 0;
 };

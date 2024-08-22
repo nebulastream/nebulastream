@@ -15,18 +15,21 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
+#include <Exceptions/Exception.hpp>
+#include <Exceptions/ExceptionDefinitions.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
 
-SourceLogicalOperator::SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(sourceDescriptor)
+SourceLogicalOperator::SourceLogicalOperator(std::unique_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
-SourceLogicalOperator::SourceLogicalOperator(SourceDescriptorPtr const& sourceDescriptor, OperatorId id, OriginId originId)
-    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(sourceDescriptor)
+SourceLogicalOperator::SourceLogicalOperator(std::unique_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
+    : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
@@ -40,7 +43,7 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const
     if (rhs->instanceOf<SourceLogicalOperator>())
     {
         auto sourceOperator = rhs->as<SourceLogicalOperator>();
-        return sourceOperator->getSourceDescriptor()->equal(sourceDescriptor);
+        return sourceOperator->getSourceDescriptor()->equal(*sourceDescriptor);
     }
     return false;
 }
@@ -48,14 +51,19 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const
 std::string SourceLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << sourceDescriptor->getLogicalSourceName() << ","
-       << sourceDescriptor->toString() << ")";
+    ss << "SOURCE(opId: " << id << ": originid: " << originId;
+    if (sourceDescriptor)
+    {
+        ss << ", " << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString();
+    }
+    ss << ")";
+
     return ss.str();
 }
 
-SourceDescriptorPtr SourceLogicalOperator::getSourceDescriptor() const
+std::unique_ptr<SourceDescriptor> SourceLogicalOperator::getSourceDescriptor()
 {
-    return sourceDescriptor;
+    return std::move(sourceDescriptor);
 }
 
 bool SourceLogicalOperator::inferSchema()
@@ -65,7 +73,7 @@ bool SourceLogicalOperator::inferSchema()
     return true;
 }
 
-void SourceLogicalOperator::setSourceDescriptor(SourceDescriptorPtr sourceDescriptor)
+void SourceLogicalOperator::setSourceDescriptor(std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
 {
     this->sourceDescriptor = std::move(sourceDescriptor);
 }
@@ -77,21 +85,9 @@ void SourceLogicalOperator::setProjectSchema(SchemaPtr schema)
 
 OperatorPtr SourceLogicalOperator::copy()
 {
-    auto copy = LogicalOperatorFactory::createSourceOperator(sourceDescriptor, id, originId);
-    copy->setInputSchema(inputSchema);
-    copy->setOutputSchema(outputSchema);
-    copy->setHashBasedSignature(hashBasedSignature);
-    copy->setZ3Signature(z3Signature);
-    copy->setOperatorState(operatorState);
-    if (copy->instanceOf<SourceLogicalOperator>())
-    {
-        copy->as<SourceLogicalOperator>()->setProjectSchema(projectSchema);
-    }
-    for (const auto& pair : properties)
-    {
-        copy->addProperty(pair.first, pair.second);
-    }
-    return copy;
+    auto exception = InvalidUseOfOperatorFunction();
+    exception.what() += "SourceLogicalOperator does not support copy, because holds a unique pointer to a SourceDescriptor.";
+    throw exception;
 }
 
 void SourceLogicalOperator::inferStringSignature()
