@@ -18,22 +18,19 @@
 namespace NES
 {
 
-TCPSourceDescriptor::TCPSourceDescriptor(
-    SchemaPtr schema, TCPSourceTypePtr tcpSourceType, const std::string& logicalSourceName, const std::string& physicalSourceName)
-    : SourceDescriptor(std::move(schema), logicalSourceName, physicalSourceName), tcpSourceType(std::move(tcpSourceType))
+TCPSourceDescriptor::TCPSourceDescriptor(SchemaPtr schema, TCPSourceTypePtr tcpSourceType, const std::string& logicalSourceName)
+    : SourceDescriptor(std::move(schema), logicalSourceName), tcpSourceType(std::move(tcpSourceType))
 {
 }
 
-SourceDescriptorPtr TCPSourceDescriptor::create(
-    SchemaPtr schema, TCPSourceTypePtr sourceConfig, const std::string& logicalSourceName, const std::string& physicalSourceName)
+SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig, const std::string& logicalSourceName)
 {
-    return std::make_shared<TCPSourceDescriptor>(
-        TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), logicalSourceName, physicalSourceName));
+    return std::make_shared<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), logicalSourceName));
 }
 
 SourceDescriptorPtr TCPSourceDescriptor::create(SchemaPtr schema, TCPSourceTypePtr sourceConfig)
 {
-    return std::make_shared<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), "", ""));
+    return std::make_shared<TCPSourceDescriptor>(TCPSourceDescriptor(std::move(schema), std::move(sourceConfig), ""));
 }
 
 TCPSourceTypePtr TCPSourceDescriptor::getSourceConfig() const
@@ -59,7 +56,6 @@ bool TCPSourceDescriptor::equal(SourceDescriptorPtr const& other) const
 SourceDescriptorPtr TCPSourceDescriptor::copy()
 {
     auto copy = TCPSourceDescriptor::create(schema->copy(), tcpSourceType);
-    copy->setPhysicalSourceName(physicalSourceName);
     return copy;
 }
 

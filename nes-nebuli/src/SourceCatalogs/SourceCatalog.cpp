@@ -90,42 +90,16 @@ bool SourceCatalog::addPhysicalSource(const std::string& logicalSourceName, cons
     /// check if logical source exists
     if (!containsLogicalSource(logicalSourceName))
     {
-        NES_ERROR(
-            "SourceCatalog: logical source {} does not exists when inserting physical source {} ",
-            logicalSourceName,
-            sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
+        NES_ERROR("SourceCatalog: logical source {} does not exists.", logicalSourceName);
         return false;
     }
-    else
-    {
-        NES_DEBUG(
-            "SourceCatalog: logical source {} exists try to add physical source {}",
-            logicalSourceName,
-            sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
+    NES_DEBUG("SourceCatalog: logical source {} exists.", logicalSourceName);
 
-        /// get current physical source for this logical source
-        std::vector<SourceCatalogEntryPtr> existingSCEs = logicalToPhysicalSourceMapping[logicalSourceName];
+    /// get current physical source for this logical source
+    std::vector<SourceCatalogEntryPtr> existingSCEs = logicalToPhysicalSourceMapping[logicalSourceName];
 
-        /// check if physical source does not exist yet
-        for (const SourceCatalogEntryPtr& existingSCE : existingSCEs)
-        {
-            if (existingSCE->getPhysicalSource()->getPhysicalSourceName()
-                    == sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName()
-                && existingSCE->getTopologyNodeId() == sourceCatalogEntry->getTopologyNodeId())
-            {
-                NES_ERROR(
-                    "SourceCatalog: node with id={} name={} already exists",
-                    sourceCatalogEntry->getTopologyNodeId(),
-                    sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
-                return false;
-            }
-        }
-    }
+    /// Todo 241: check if physical source does not exist yet
 
-    NES_DEBUG(
-        "SourceCatalog: physical source  {} does not exist, try to add", sourceCatalogEntry->getPhysicalSource()->getPhysicalSourceName());
-
-    /// if first one
     if (testIfLogicalSourceExistsInLogicalToPhysicalMapping(logicalSourceName))
     {
         NES_DEBUG("SourceCatalog: Logical source already exists, add new physical entry");
@@ -167,20 +141,16 @@ bool SourceCatalog::removePhysicalSource(
          entry != logicalToPhysicalSourceMapping[logicalSourceName].cend();
          entry++)
     {
-        NES_DEBUG(
-            "test node id={} phyStr={}", entry->get()->getTopologyNodeId(), entry->get()->getPhysicalSource()->getPhysicalSourceName());
-        NES_DEBUG("test to be deleted id={} phyStr={}", topologyNodeId, physicalSourceName);
-        if (entry->get()->getPhysicalSource()->getPhysicalSourceName() == physicalSourceName)
-        {
-            NES_DEBUG("SourceCatalog: node with name={} exists try match hashId {}", physicalSourceName, topologyNodeId);
+        /// Todo 241: check if physical source does not exist yet
 
-            if (entry->get()->getTopologyNodeId() == topologyNodeId)
-            {
-                NES_DEBUG("SourceCatalog: node with id={} name={} exists try to erase", topologyNodeId, physicalSourceName);
-                logicalToPhysicalSourceMapping[logicalSourceName].erase(entry);
-                NES_DEBUG("SourceCatalog: number of entries afterwards {}", logicalToPhysicalSourceMapping[logicalSourceName].size());
-                return true;
-            }
+        NES_DEBUG("SourceCatalog: node with name={} exists try match hashId {}", physicalSourceName, topologyNodeId);
+
+        if (entry->get()->getTopologyNodeId() == topologyNodeId)
+        {
+            NES_DEBUG("SourceCatalog: node with id={} name={} exists try to erase", topologyNodeId, physicalSourceName);
+            logicalToPhysicalSourceMapping[logicalSourceName].erase(entry);
+            NES_DEBUG("SourceCatalog: number of entries afterwards {}", logicalToPhysicalSourceMapping[logicalSourceName].size());
+            return true;
         }
     }
     NES_DEBUG(
