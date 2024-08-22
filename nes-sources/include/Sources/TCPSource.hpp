@@ -44,7 +44,7 @@ class TCPSource : public Source
 public:
     static inline const std::string PLUGIN_NAME = "TCP";
     ///-Todo: improve
-    TCPSource(const Schema& schema, TCPSourceTypePtr&& tcpSourceType);
+    TCPSource(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor);
 
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer,

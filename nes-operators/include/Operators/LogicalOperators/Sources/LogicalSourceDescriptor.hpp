@@ -25,11 +25,6 @@ namespace NES
 class LogicalSourceDescriptor : public SourceDescriptor
 {
 public:
-    /**
-     * @brief Factory method to create a new logical source descriptor.
-     * @param logicalSourceName Name of this source
-     * @return SourceDescriptorPtr
-     */
     static SourceDescriptorPtr create(std::string logicalSourceName);
 
     [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;

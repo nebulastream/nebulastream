@@ -28,25 +28,14 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>
 {
 public:
-    /**
-     * @brief Creates a new source descriptor with a logicalSourceName.
-     * @param schema the source schema
-     */
     explicit SourceDescriptor(SchemaPtr schema);
 
-    SourceDescriptor(SchemaPtr schema, std::string logicalSourceName);
+    explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName);
 
-    /**
-     * @brief Returns the schema, which is produced by this source descriptor
-     * @return SchemaPtr
-     */
+    explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceName);
+
     SchemaPtr getSchema() const;
 
-    /**
-    * @brief Checks if the source descriptor is of type SourceType
-    * @tparam SourceType
-    * @return bool true if source descriptor is of SourceType
-    */
     template <class SourceType>
     bool instanceOf() const
     {
@@ -57,11 +46,6 @@ public:
         return false;
     };
 
-    /**
-    * @brief Dynamically casts the source descriptor to a SourceType
-    * @tparam SourceType
-    * @return returns a shared pointer of the SourceType
-    */
     template <class SourceType>
     std::shared_ptr<SourceType> as() const
     {
@@ -83,41 +67,26 @@ public:
         return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
     }
 
-    /**
-     * @brief Returns the logicalSourceName. If no logicalSourceName is defined it returns the empty string.
-     * @return logicalSourceName
-     */
     std::string getLogicalSourceName() const;
 
-    /**
-     * @brief Set schema of the source
-     * @param schema the schema
-     */
     void setSchema(const SchemaPtr& schema);
 
-    /**
-     * @brief Returns the string representation of the source descriptor.
-     * @return string
-     */
     virtual std::string toString() const = 0;
 
-    /**
-     * @brief Checks if two source descriptors are the same.
-     * @param other source descriptor.
-     * @return true if both are the same.
-     */
     [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) const = 0;
 
     virtual SourceDescriptorPtr copy() = 0;
 
-    /**
-     * @brief Destructor
-     */
     virtual ~SourceDescriptor() = default;
 
-protected:
+    [[nodiscard]] std::string getSourceName() const;
+
+    void setSourceName(std::string sourceName);
+
+private:
     SchemaPtr schema;
     std::string logicalSourceName;
+    std::string sourceName;
 };
 
 } /// namespace NES

@@ -21,8 +21,8 @@ namespace NES
 {
 namespace IntegrationTestUtil
 {
-inline static const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
-inline static const std::string INPUT_CSV_FILES = "inputCSVFiles";
+static inline const std::string SERRIALIZED_QUERIES_DIRECTORY = "queriesSerialized";
+static inline const std::string INPUT_CSV_FILES = "inputCSVFiles";
 
 /// Loads the output @link Schema of the SinkOperator in the @link SerializableDecomposedQueryPlan. This requieres the plan to only
 /// have a single root operator, which is the SinkOperator
