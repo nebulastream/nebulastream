@@ -31,8 +31,7 @@ class CSVSource : public Source
 {
 public:
     static inline const std::string PLUGIN_NAME = "CSV";
-    ///-Todo: improve
-    CSVSource(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor);
+    CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
 
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer,

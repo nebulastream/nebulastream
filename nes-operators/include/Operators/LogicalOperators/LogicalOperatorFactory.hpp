@@ -104,7 +104,7 @@ public:
      * @return UnaryOperatorPtr
      */
     static LogicalUnaryOperatorPtr createSourceOperator(
-        SourceDescriptorPtr const& sourceDescriptor, OperatorId id = getNextOperatorId(), OriginId originId = INVALID_ORIGIN_ID);
+        std::unique_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id = getNextOperatorId(), OriginId originId = INVALID_ORIGIN_ID);
 
     /**
     * @brief Create a specialized watermark assigner operator.

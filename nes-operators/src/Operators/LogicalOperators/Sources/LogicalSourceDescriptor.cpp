@@ -24,19 +24,19 @@ LogicalSourceDescriptor::LogicalSourceDescriptor(std::string logicalSourceName)
 {
 }
 
-SourceDescriptorPtr LogicalSourceDescriptor::create(std::string logicalSourceName)
+std::unique_ptr<SourceDescriptor> LogicalSourceDescriptor::create(std::string logicalSourceName)
 {
-    return std::make_shared<LogicalSourceDescriptor>(LogicalSourceDescriptor(std::move(logicalSourceName)));
+    return std::make_unique<LogicalSourceDescriptor>(LogicalSourceDescriptor(std::move(logicalSourceName)));
 }
 
-bool LogicalSourceDescriptor::equal(SourceDescriptorPtr const& other) const
+bool LogicalSourceDescriptor::equal(SourceDescriptor& other) const
 {
-    if (!other->instanceOf<LogicalSourceDescriptor>())
+    if (!dynamic_cast<LogicalSourceDescriptor*>(&other))
     {
         return false;
     }
-    auto otherLogicalSource = other->as<LogicalSourceDescriptor>();
-    return getLogicalSourceName() == otherLogicalSource->getLogicalSourceName();
+    const auto otherLogicalSourceName = dynamic_cast<LogicalSourceDescriptor*>(&other)->getLogicalSourceName();
+    return getLogicalSourceName() == otherLogicalSourceName;
 }
 
 std::string LogicalSourceDescriptor::toString() const
@@ -44,11 +44,4 @@ std::string LogicalSourceDescriptor::toString() const
     return "LogicalSourceDescriptor(" + getLogicalSourceName() + ")";
 }
 
-SourceDescriptorPtr LogicalSourceDescriptor::copy()
-{
-    auto copy = LogicalSourceDescriptor::create(getLogicalSourceName());
-    copy->setSchema(getSchema()->copy());
-    return copy;
 }
-
-} /// namespace NES

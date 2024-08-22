@@ -24,7 +24,7 @@ SourceRegistry::SourceRegistry()
 }
 
 std::optional<std::unique_ptr<Source>>
-SourceRegistry::tryCreate(const std::string& name, const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) const
+SourceRegistry::tryCreate(const std::string& name, const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) const
 {
     if (registry.contains(name))
     {

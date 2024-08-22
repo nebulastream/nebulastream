@@ -12,50 +12,43 @@
     limitations under the License.
 */
 #pragma once
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
-/**
- * @brief Physical Source operator.
- */
+
 class PhysicalSourceOperator : public PhysicalUnaryOperator, public AbstractScanOperator
 {
 public:
     PhysicalSourceOperator(
-        OperatorId id, OriginId originId, SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+        OperatorId id,
+        OriginId originId,
+        SchemaPtr inputSchema,
+        SchemaPtr outputSchema,
+        std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+
     static std::shared_ptr<PhysicalSourceOperator> create(
         OperatorId id,
         OriginId originId,
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
-        const SourceDescriptorPtr& sourceDescriptor);
+        std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+
     static std::shared_ptr<PhysicalSourceOperator>
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, SourceDescriptorPtr sourceDescriptor);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
 
-    /**
-     * @brief Gets the source descriptor for this source operator
-     * @return SourceDescriptorPtr
-     */
-    SourceDescriptorPtr getSourceDescriptor();
+    std::unique_ptr<SourceDescriptor> getSourceDescriptor();
 
-    /**
-     * @brief Sets the origin id for this source operator
-     * @param originId
-     */
     void setOriginId(OriginId originId);
 
-    /**
-     * @brief Gets the origin id
-     * @return OriginId
-     */
     OriginId getOriginId();
     std::string toString() const override;
     OperatorPtr copy() override;
 
 private:
-    SourceDescriptorPtr sourceDescriptor;
+    std::unique_ptr<SourceDescriptor> sourceDescriptor;
     OriginId originId;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators

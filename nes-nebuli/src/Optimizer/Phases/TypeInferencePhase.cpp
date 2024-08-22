@@ -83,13 +83,12 @@ void TypeInferencePhase::performTypeInference(
     /// first we have to check if all source operators have a correct source descriptors
     for (const auto& source : sourceOperators)
     {
-        auto sourceDescriptor = source->getSourceDescriptor();
-
         /// if the source descriptor has no schema set and is only a logical source we replace it with the correct
         /// source descriptor form the catalog.
-        if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>() && sourceDescriptor->getSchema()->empty())
+        auto& sourceDescriptor = source->getSourceDescriptorRef();
+        if (dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor) && sourceDescriptor.getSchema()->empty())
         {
-            auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
+            auto logicalSourceName = sourceDescriptor.getLogicalSourceName();
             SchemaPtr schema = Schema::create();
             if (!sourceCatalog->containsLogicalSource(logicalSourceName))
             {
@@ -110,7 +109,8 @@ void TypeInferencePhase::performTypeInference(
                     field->setName(qualifierName + field->getName());
                 }
             }
-            sourceDescriptor->setSchema(schema);
+            /// Todo: is not persisted (get returns copy)
+            sourceDescriptor.setSchema(schema);
             NES_DEBUG("TypeInferencePhase: update source descriptor for source {} with schema: {}", logicalSourceName, schema->toString());
         }
     }

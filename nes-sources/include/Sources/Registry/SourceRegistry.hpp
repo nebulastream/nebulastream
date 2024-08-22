@@ -16,7 +16,6 @@
 
 #include <functional>
 #include <iostream>
-#include <memory>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -36,7 +35,7 @@ public:
     template <bool update = false>
     void registerPlugin(
         const std::string& name,
-        const std::function<std::unique_ptr<Source>(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)>& creator)
+        const std::function<std::unique_ptr<Source>(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)>& creator)
     {
         if (!update && registry.contains(name))
         {
@@ -69,7 +68,7 @@ public:
     }
 
     std::optional<std::unique_ptr<Source>>
-    tryCreate(const std::string& name, const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) const;
+    tryCreate(const std::string& name, const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) const;
 
     [[nodiscard]] bool contains(const std::string& name) const;
 
@@ -78,7 +77,7 @@ public:
 private:
     std::unordered_map<
         std::string,
-        std::function<std::unique_ptr<Source>(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)>>
+        std::function<std::unique_ptr<Source>(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)>>
         registry;
 };
 
