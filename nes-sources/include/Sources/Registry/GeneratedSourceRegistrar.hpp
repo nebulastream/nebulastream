@@ -14,11 +14,10 @@
 
 #pragma once
 
+#include <Sources/Registry/SourceRegistry.hpp>
+
 namespace NES::Sources
 {
-
-///-todo: explain why forward ref
-class SourceRegistry;
 
 /// Auto generated, injects all plugins into the SourceRegistry
 class GeneratedSourceRegistrar
@@ -30,7 +29,7 @@ public:
     static void registerAllPlugins(SourceRegistry& registry)
     {
         /// External register functions
-        ///-todo
+        /// no external plugins yet
 
         /// Internal register functions
         RegisterTCPSource(registry);
@@ -39,7 +38,7 @@ public:
 
 private:
     /// External Registry Header Functions
-    ///-todo
+    /// no external plugins yet
 
     /// Internal Registry Header Functions
     static void RegisterTCPSource(SourceRegistry& registry);

@@ -56,30 +56,27 @@ QueryRewritePhase::QueryRewritePhase(bool applyRulesImprovingSharingIdentificati
     renameSourceToProjectOperatorRule = RenameSourceToProjectOperatorRule::create();
 }
 
-QueryPlanPtr QueryRewritePhase::execute(const QueryPlanPtr& queryPlan)
+QueryPlanPtr QueryRewritePhase::execute(QueryPlanPtr& queryPlan) const
 {
-    /// Duplicate query plan
-    auto duplicateQueryPlan = queryPlan->copy();
-
     /// Apply rules necessary for improving sharing identification
     if (applyRulesImprovingSharingIdentification)
     {
-        duplicateQueryPlan = attributeSortRule->apply(duplicateQueryPlan);
-        duplicateQueryPlan = binaryOperatorSortRule->apply(duplicateQueryPlan);
+        queryPlan = attributeSortRule->apply(queryPlan);
+        queryPlan = binaryOperatorSortRule->apply(queryPlan);
     }
 
     /// Apply rules necessary for enabling query execution when stream alias or union operators are involved
-    duplicateQueryPlan = renameSourceToProjectOperatorRule->apply(duplicateQueryPlan);
-    duplicateQueryPlan = projectBeforeUnionOperatorRule->apply(duplicateQueryPlan);
+    queryPlan = renameSourceToProjectOperatorRule->apply(queryPlan);
+    queryPlan = projectBeforeUnionOperatorRule->apply(queryPlan);
 
     /// Apply rule for filter split up
-    duplicateQueryPlan = filterSplitUpRule->apply(duplicateQueryPlan);
+    queryPlan = filterSplitUpRule->apply(queryPlan);
     /// Apply rule for filter push down optimization
-    duplicateQueryPlan = filterPushDownRule->apply(duplicateQueryPlan);
+    queryPlan = filterPushDownRule->apply(queryPlan);
     /// Apply rule for filter merge
-    duplicateQueryPlan = filterMergeRule->apply(duplicateQueryPlan);
+    queryPlan = filterMergeRule->apply(queryPlan);
     /// Apply rule for filter reordering optimization
-    return predicateReorderingRule->apply(duplicateQueryPlan);
+    return predicateReorderingRule->apply(queryPlan);
 }
 
 } /// namespace NES::Optimizer

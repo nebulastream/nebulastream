@@ -174,11 +174,12 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
         if (value.details().Is<SerializableOperator_SourceDetails>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            auto descriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor()->as_if<CSVSourceDescriptor>();
-            if (descriptor)
+            auto sourceDescriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor();
+            if (auto csvSourceDescriptor = dynamic_cast<CSVSourceDescriptor*>(sourceDescriptor.get()))
             {
                 /// Set socket port and serialize again.
-                descriptor->getSourceConfig()->setFilePath(std::move(newInputFileName));
+                csvSourceDescriptor->getSourceConfig()->setFilePath(std::move(newInputFileName));
+                deserializedSourceOperator->as<SourceLogicalOperator>()->setSourceDescriptor(std::move(sourceDescriptor));
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 
                 /// Reconfigure the original operator id, because deserialization/serialization changes them.
@@ -199,13 +200,14 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
         if (value.details().Is<SerializableOperator_SourceDetails>())
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
-            auto descriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor()->as_if<TCPSourceDescriptor>();
-            if (descriptor)
+            auto sourceDescriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor();
+            if (auto tcpSourceDescriptor = dynamic_cast<TCPSourceDescriptor*>(sourceDescriptor.get()))
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// Set socket port and serialize again.
-                    descriptor->getSourceConfig()->setSocketPort(mockTcpServerPort);
+                    tcpSourceDescriptor->getSourceConfig()->setSocketPort(mockTcpServerPort);
+                    deserializedSourceOperator->as<SourceLogicalOperator>()->setSourceDescriptor(std::move(sourceDescriptor));
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 
                     /// Reconfigure the original operator id, because deserialization/serialization changes them.

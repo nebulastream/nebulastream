@@ -39,15 +39,15 @@ namespace NES::Sources
 
 void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
 {
-    const auto constructorFunc = [](const Schema& schema, SourceDescriptorPtr&& sourceDescriptor) -> std::unique_ptr<Source>
+    const auto constructorFunc = [](const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) -> std::unique_ptr<Source>
     { return std::make_unique<TCPSource>(schema, std::move(sourceDescriptor)); };
     registry.registerPlugin((TCPSource::PLUGIN_NAME), constructorFunc);
 }
 
-TCPSource::TCPSource(const Schema& schema, SourceDescriptorPtr&& sourceDescriptor)
+TCPSource::TCPSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
     : tupleSize(schema.getSchemaSizeInBytes()), circularBuffer(getpagesize() * 2)
 {
-    auto tcpSourceType = sourceDescriptor->as<TCPSourceDescriptor>()->getSourceConfig();
+    auto tcpSourceType = dynamic_cast<TCPSourceDescriptor*>(sourceDescriptor.get())->getSourceConfig();
     this->inputFormat = tcpSourceType->getInputFormat()->getValue();
     this->socketHost = tcpSourceType->getSocketHost()->getValue();
     this->socketPort = std::to_string(static_cast<int>(tcpSourceType->getSocketPort()->getValue()));
@@ -172,7 +172,7 @@ bool TCPSource::fillTupleBuffer(
     NES_DEBUG("TCPSource buffer allocated ");
     try
     {
-        while (fillBuffer(tupleBuffer, bufferManager, std::move(schema)))
+        while (fillBuffer(tupleBuffer, bufferManager, schema))
         {
             /// Fill the buffer until EoS reached or the number of tuples in the buffer is not equals to 0.
         };

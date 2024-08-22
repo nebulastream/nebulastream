@@ -246,8 +246,6 @@ int main(int argc, char** argv)
             }
             output = &file;
         }
-        SerializableDecomposedQueryPlan serialized;
-        DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, &serialized);
         if (!serialized.SerializeToOstream(output))
         {
             NES_FATAL_ERROR("Failed to write message to file.");

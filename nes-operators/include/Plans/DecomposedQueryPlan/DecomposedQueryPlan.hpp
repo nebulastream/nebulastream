@@ -124,6 +124,6 @@ private:
     QueryId queryId;
     WorkerId workerId;
     QueryState currentState = QueryState::MARKED_FOR_DEPLOYMENT;
-    std::vector<OperatorPtr> rootOperators;
+    std::vector<OperatorPtr> rootOperators; /// Using a shared_ptr, because there are back-references from child to parent(root) operators.
 };
 } /// namespace NES

@@ -109,12 +109,12 @@ void SemanticQueryValidation::logicalSourceValidityCheck(
 
     for (const auto& source : sourceOperators)
     {
-        auto sourceDescriptor = source->getSourceDescriptor();
+        auto& sourceDescriptor = source->getSourceDescriptorRef();
 
         /// Filtering for logical sources
-        if (sourceDescriptor->instanceOf<LogicalSourceDescriptor>())
+        if (dynamic_cast<LogicalSourceDescriptor*>(&sourceDescriptor))
         {
-            auto sourceName = sourceDescriptor->getLogicalSourceName();
+            auto sourceName = sourceDescriptor.getLogicalSourceName();
 
             /// Making sure that all logical sources are present in the source catalog
             if (!sourceCatalog->containsLogicalSource(sourceName))
@@ -133,7 +133,8 @@ void SemanticQueryValidation::physicalSourceValidityCheck(
     std::vector<std::string> invalidLogicalSourceNames;
     for (auto sourceOperator : sourceOperators)
     {
-        auto logicalSourceName = sourceOperator->getSourceDescriptor()->getLogicalSourceName();
+        ;
+        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().getLogicalSourceName();
         if (sourceCatalog->getPhysicalSources(logicalSourceName).empty())
         {
             invalidLogicalSourceNames.emplace_back(logicalSourceName);

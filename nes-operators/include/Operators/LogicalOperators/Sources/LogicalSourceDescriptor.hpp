@@ -19,18 +19,15 @@
 namespace NES
 {
 
-/**
- * @brief Descriptor defining referencing a logical source.
- */
+/// Representation of SourceDescriptor in query plan.
 class LogicalSourceDescriptor : public SourceDescriptor
 {
 public:
-    static SourceDescriptorPtr create(std::string logicalSourceName);
+    static std::unique_ptr<SourceDescriptor> create(std::string logicalSourceName);
 
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    [[nodiscard]] bool equal(SourceDescriptor& other) const override;
 
     std::string toString() const override;
-    SourceDescriptorPtr copy() override;
 
 private:
     explicit LogicalSourceDescriptor(std::string logicalSourceName);
