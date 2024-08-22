@@ -23,9 +23,9 @@ namespace NES
 class TCPSourceDescriptor : public SourceDescriptor
 {
 public:
-    static SourceDescriptorPtr create(SchemaPtr schema, TCPSourceTypePtr tcpSourceType, const std::string& logicalSourceName);
+    static std::unique_ptr<SourceDescriptor> create(SchemaPtr schema, TCPSourceTypePtr tcpSourceType, const std::string& logicalSourceName);
 
-    static SourceDescriptorPtr create(SchemaPtr schema, TCPSourceTypePtr sourceConfig);
+    static std::unique_ptr<SourceDescriptor> create(SchemaPtr schema, TCPSourceTypePtr sourceConfig);
     /**
      * @brief get TCP source config
      * @return tcp source config
@@ -37,18 +37,14 @@ public:
      * @param other
      * @return true if they are the same
      */
-    [[nodiscard]] bool equal(SourceDescriptorPtr const& other) const override;
+    [[nodiscard]] bool equal(SourceDescriptor& other) const override;
 
     std::string toString() const override;
-
-    SourceDescriptorPtr copy() override;
 
 private:
     explicit TCPSourceDescriptor(SchemaPtr schema, TCPSourceTypePtr tcpSourceType, const std::string& logicalSourceName);
 
     TCPSourceTypePtr tcpSourceType;
 };
-
-using TCPSourceDescriptorPtr = std::shared_ptr<TCPSourceDescriptor>;
 
 } /// namespace NES

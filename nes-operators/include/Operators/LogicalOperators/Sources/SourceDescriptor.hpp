@@ -19,15 +19,15 @@
 namespace NES
 {
 
-class SourceDescriptor;
-using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
-
 class Schema;
 using SchemaPtr = std::shared_ptr<Schema>;
 
-class SourceDescriptor : public std::enable_shared_from_this<SourceDescriptor>
+class SourceDescriptor
 {
 public:
+    static inline const std::string PLUGIN_NAME_CSV = "CSV";
+    static inline const std::string PLUGIN_NAME_TCP = "TCP";
+
     explicit SourceDescriptor(SchemaPtr schema);
 
     explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName);
@@ -36,46 +36,13 @@ public:
 
     SchemaPtr getSchema() const;
 
-    template <class SourceType>
-    bool instanceOf() const
-    {
-        if (dynamic_cast<const SourceType*>(this))
-        {
-            return true;
-        }
-        return false;
-    };
-
-    template <class SourceType>
-    std::shared_ptr<SourceType> as() const
-    {
-        if (instanceOf<SourceType>())
-        {
-            return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
-        }
-        throw Exceptions::RuntimeException("SourceDescriptor: We performed an invalid cast");
-    }
-    template <class SourceType>
-    std::shared_ptr<SourceType> as()
-    {
-        return std::const_pointer_cast<SourceType>(const_cast<const SourceDescriptor*>(this)->as<const SourceType>());
-    }
-
-    template <class SourceType>
-    std::shared_ptr<SourceType> as_if()
-    {
-        return std::dynamic_pointer_cast<SourceType>(this->shared_from_this());
-    }
-
     std::string getLogicalSourceName() const;
 
     void setSchema(const SchemaPtr& schema);
 
     virtual std::string toString() const = 0;
 
-    [[nodiscard]] virtual bool equal(SourceDescriptorPtr const& other) const = 0;
-
-    virtual SourceDescriptorPtr copy() = 0;
+    [[nodiscard]] virtual bool equal(SourceDescriptor& other) const = 0;
 
     virtual ~SourceDescriptor() = default;
 

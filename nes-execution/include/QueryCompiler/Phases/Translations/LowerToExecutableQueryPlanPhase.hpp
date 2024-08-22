@@ -77,13 +77,7 @@ private:
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
-    /**
-     * @brief Create Actual Source descriptor from default source descriptor and Physical source properties
-     * @param defaultSourceDescriptor: the default source descriptor
-     * @param physicalSourceType : the physical source
-     * @return Shared pointer for actual source descriptor
-     */
-    SourceDescriptorPtr createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType);
+    static std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType);
 };
 } /// namespace QueryCompilation
 } /// namespace NES

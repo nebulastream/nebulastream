@@ -77,19 +77,12 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
         }
     }
 
-    /// After we duplicate all non-blocking logical operators, we have the same statistic id for multiple operators.
-    /// Furthermore, we require to know all statistic ids that belong to one non-duplicated logical operator.
-    /// Therefore, we do the following two steps:
-    ///      1. First, we create new statistic id so that the statistic id is unique across the whole system
-    ///      2. We store for the old statistic ids, all sibling statistic ids in the property. This way, we can still
-    ///         deduce the new statistic ids from an old one.
-
     /// Iterate over all source operators
     for (const auto& sourceOperator : sourceOperators)
     {
-        SourceDescriptorPtr sourceDescriptor = sourceOperator->getSourceDescriptor();
         NES_TRACE("LogicalSourceExpansionRule: Get the number of physical source locations in the topology.");
-        auto logicalSourceName = sourceDescriptor->getLogicalSourceName();
+        auto logicalSourceName = sourceOperator->getSourceDescriptorRef().getLogicalSourceName();
+
         std::vector<Catalogs::Source::SourceCatalogEntryPtr> sourceCatalogEntries = sourceCatalog->getPhysicalSources(logicalSourceName);
         NES_TRACE("LogicalSourceExpansionRule: Found {} physical source locations in the topology.", sourceCatalogEntries.size());
         if (sourceCatalogEntries.empty())
@@ -125,18 +118,8 @@ QueryPlanPtr LogicalSourceExpansionRule::apply(QueryPlanPtr queryPlan)
         /// Create one duplicate operator for each physical source
         for (const auto& sourceCatalogEntry : sourceCatalogEntries)
         {
-            NES_TRACE("LogicalSourceExpansionRule: Create duplicated logical sub-graph");
-            auto duplicateSourceOperator = sourceOperator->duplicate()->as<SourceLogicalOperator>();
-            /// Add to the source operator the id of the physical node where we have to pin the operator
-            /// NOTE: This is required at the time of placement to know where the source operator is pinned
-            /// TODO(#74): Aljoscha wants me to remind him of this to remind me of the correct spelling of his name.
-            duplicateSourceOperator->addProperty(PINNED_WORKER_ID, sourceCatalogEntry->getTopologyNodeId());
-            /// Add Physical Source Name to the source descriptor
-            auto duplicateSourceDescriptor = sourceDescriptor->copy();
-            duplicateSourceOperator->setSourceDescriptor(duplicateSourceDescriptor);
-
             /// Flatten the graph to duplicate and find operators that need to be connected to blocking parents.
-            const std::vector<NodePtr>& allOperators = duplicateSourceOperator->getAndFlattenAllAncestors();
+            const std::vector<NodePtr>& allOperators = sourceOperator->getAndFlattenAllAncestors();
 
             std::unordered_set<OperatorId> visitedOperators;
             for (const auto& node : allOperators)

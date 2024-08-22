@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
@@ -21,7 +22,7 @@ namespace NES
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema)
 {
-    this->schema = schema->copy();
+    this->schema = schema;
 }
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema, std::string logicalSourceName)
