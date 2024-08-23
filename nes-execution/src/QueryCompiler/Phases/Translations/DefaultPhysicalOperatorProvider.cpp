@@ -31,8 +31,6 @@
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -44,11 +42,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalDemultiplexOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSinkOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
@@ -185,14 +181,6 @@ void DefaultPhysicalOperatorProvider::lowerUnaryOperator(
     {
         lowerProjectOperator(operatorNode);
     }
-    else if (operatorNode->instanceOf<MapUDFLogicalOperator>())
-    {
-        lowerUDFMapOperator(operatorNode);
-    }
-    else if (operatorNode->instanceOf<FlatMapUDFLogicalOperator>())
-    {
-        lowerUDFFlatMapOperator(operatorNode);
-    }
     else if (operatorNode->instanceOf<LogicalLimitOperator>())
     {
         auto limitOperator = operatorNode->as<LogicalLimitOperator>();
@@ -260,24 +248,6 @@ void DefaultPhysicalOperatorProvider::lowerMapOperator(const LogicalOperatorPtr&
     auto mapOperator = operatorNode->as<LogicalMapOperator>();
     auto physicalMapOperator = PhysicalOperators::PhysicalMapOperator::create(
         mapOperator->getInputSchema(), mapOperator->getOutputSchema(), mapOperator->getMapExpression());
-    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-    operatorNode->replace(physicalMapOperator);
-}
-
-void DefaultPhysicalOperatorProvider::lowerUDFMapOperator(const LogicalOperatorPtr& operatorNode)
-{
-    auto mapUDFOperator = operatorNode->as<MapUDFLogicalOperator>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalMapUDFOperator::create(
-        mapUDFOperator->getInputSchema(), mapUDFOperator->getOutputSchema(), mapUDFOperator->getUDFDescriptor());
-    physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
-    operatorNode->replace(physicalMapOperator);
-}
-
-void DefaultPhysicalOperatorProvider::lowerUDFFlatMapOperator(const LogicalOperatorPtr& operatorNode)
-{
-    auto flatMapUDFOperator = operatorNode->as<FlatMapUDFLogicalOperator>();
-    auto physicalMapOperator = PhysicalOperators::PhysicalFlatMapUDFOperator::create(
-        flatMapUDFOperator->getInputSchema(), flatMapUDFOperator->getOutputSchema(), flatMapUDFOperator->getUDFDescriptor());
     physicalMapOperator->addProperty("LogicalOperatorId", operatorNode->getId());
     operatorNode->replace(physicalMapOperator);
 }

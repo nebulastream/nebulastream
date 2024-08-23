@@ -17,7 +17,6 @@
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
 #include <Operators/LogicalOperators/Windows/LogicalWindowOperator.hpp>
 #include <Optimizer/QueryRewrite/LogicalSourceExpansionRule.hpp>
@@ -249,7 +248,7 @@ bool LogicalSourceExpansionRule::isBlockingOperator(const NodePtr& operatorNode)
     return (
         operatorNode->instanceOf<SinkLogicalOperator>() || operatorNode->instanceOf<LogicalWindowOperator>()
         || operatorNode->instanceOf<LogicalUnionOperator>() || operatorNode->instanceOf<LogicalJoinOperator>()
-        || operatorNode->instanceOf<FlatMapUDFLogicalOperator>() || operatorNode->instanceOf<Experimental::LogicalBatchJoinOperator>());
+        || operatorNode->instanceOf<Experimental::LogicalBatchJoinOperator>());
 }
 
 } /// namespace NES::Optimizer

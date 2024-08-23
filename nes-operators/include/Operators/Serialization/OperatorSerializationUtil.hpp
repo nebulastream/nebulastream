@@ -17,8 +17,6 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/OperatorForwardDeclaration.hpp>
 #include <SerializableOperator.pb.h>
 

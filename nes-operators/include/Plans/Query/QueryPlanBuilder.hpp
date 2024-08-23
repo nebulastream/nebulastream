@@ -78,22 +78,6 @@ public:
     static QueryPlanPtr addMap(FieldAssignmentExpressionNodePtr const& mapExpression, QueryPlanPtr queryPlan);
 
     /**
-     * @brief: Map java udf according to the java method given in the descriptor.
-     * @param descriptor as java udf descriptor
-     * @param queryPlan the queryPlan the map is added to
-     * @return the updated queryPlanPtr
-     */
-    static QueryPlanPtr addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan);
-
-    /**
-     * @brief: FlatMap java udf according to the java method given in the descriptor.
-     * @param descriptor as java udf descriptor
-     * @param queryPlan the queryPlan the map is added to
-     * @return the updated queryPlanPtr
-     */
-    static QueryPlanPtr addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan);
-
-    /**
     * @brief UnionOperator to combine two query plans
     * @param leftQueryPlan the left query plan to combine by the union
     * @param rightQueryPlan the right query plan to combine by the union
