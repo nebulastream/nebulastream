@@ -90,7 +90,7 @@ jobs:
     # The Dependency Image contains a pre-built sdk based on the vcpkg manifest
     # The Development Image contains the dependencies and additional tooling like clang-format.
     name: "Build Development Images"
-    needs: [ validateTrigger, detect-dependency-changes ]
+    needs: [ detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.change == 'true'
     runs-on: [ self-hosted, linux, Build, "${{ matrix.platform }}" ]
     strategy:
