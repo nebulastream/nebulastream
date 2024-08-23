@@ -231,8 +231,7 @@ TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
 
 TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions)
 {
-    std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs
-        = {{"--enableStatisticOuput", {"not_a_bool", "2", "-1"}}, {"--isJavaUDFSupported", {"not_a_bool", "2", "-1"}}};
+    std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {{"--enableStatisticOuput", {"not_a_bool", "2", "-1"}}};
     for (const auto& optionPair : commandLineArgs)
     {
         for (const auto& value : optionPair.second)
@@ -307,7 +306,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForIpOptions)
 TEST_F(ConfigTest, invalidBooleanYamlInputs)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidBooleanConfigs
-        = {{"enableStatisticOutput", {"not_a_bool", "2", "-1"}}, {"isJavaUDFSupported", {"not_a_bool", "2", "-1"}}};
+        = {{"enableStatisticOutput", {"not_a_bool", "2", "-1"}}};
     for (const auto& [optionName, invalidValues] : invalidBooleanConfigs)
     {
         for (const auto& value : invalidValues)

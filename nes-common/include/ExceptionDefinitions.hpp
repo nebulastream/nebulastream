@@ -58,7 +58,6 @@ EXCEPTION(OperatorNotFound, 2205, "Operator not found")
 
 /// 3XXX Errors during query runtime
 EXCEPTION(BufferAllocationFailure, 3000, "buffer allocation failure")
-EXCEPTION(JavaUDFExcecutionFailure, 3001, "java UDF execution failure")
 EXCEPTION(PythonUDFExcecutionFailure, 3002, "python UDF execution failure")
 EXCEPTION(CannotStartNodeEngine, 3003, "cannot start node engine")
 EXCEPTION(CannotStopNodeEngine, 3004, "cannot stop node engine")

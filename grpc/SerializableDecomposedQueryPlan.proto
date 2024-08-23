@@ -16,9 +16,6 @@ syntax = "proto3";
 import "SerializableOperator.proto";
 package NES;
 
-option java_package = "stream.nebula.protobuf";
-option java_multiple_files = true;
-
 /*
 The serializable wrapper definition for query plan
  */
