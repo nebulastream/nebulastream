@@ -10,9 +10,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_subdirectory(JavaUDF)
-endif ()
 add_subdirectory(Sort)
 
 add_nes_execution_test(execution-map-operator-test "MapOperatorTest.cpp")

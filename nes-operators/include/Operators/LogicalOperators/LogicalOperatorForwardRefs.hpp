@@ -92,12 +92,6 @@ using ConstantValueExpressionNodePtr = std::shared_ptr<ConstantValueExpressionNo
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 
-namespace Catalogs::UDF
-{
-class JavaUDFDescriptor;
-using JavaUDFDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
-} /// namespace Catalogs::UDF
-
 class BroadcastLogicalOperator;
 using BroadcastLogicalOperatorPtr = std::shared_ptr<BroadcastLogicalOperator>;
 

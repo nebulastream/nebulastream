@@ -164,15 +164,6 @@ public:
      */
     static LogicalUnaryOperatorPtr
     createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id = getNextOperatorId());
-
-    /**
-     * @brief Create a new OpenCL logical operator
-     * @param javaUdfDescriptor : the java UDF descriptor
-     * @param id : the id of the operator
-     * @return a logical operator of type OpenCL logical operator
-     */
-    static LogicalUnaryOperatorPtr
-    createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id = getNextOperatorId());
 };
 
 } /// namespace NES

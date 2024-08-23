@@ -97,7 +97,6 @@ const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
 ///Elegant Configurations
 const auto ELEGANT = "elegant"s; /// elegant configurations are initialize with this constant
-const auto ACCELERATE_JAVA_UDFS = "accelerateJavaUDFs"s; /// accelerate java udfs supplied in Map UDF operator
 const auto PLANNER_SERVICE_URL = "plannerServiceURL"s; /// URL for ELEGANT planner
 const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; /// URL for acceleration service
 const auto TRANSFER_RATE = "transferRate"s; /// Fake transfer rate between two workers

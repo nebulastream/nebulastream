@@ -65,9 +65,6 @@ using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
 namespace Catalogs::UDF
 {
-class JavaUDFDescriptor;
-using JavaUdfDescriptorPtr = std::shared_ptr<JavaUDFDescriptor>;
-
 class PythonUDFDescriptor;
 using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
 

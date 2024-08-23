@@ -11,7 +11,6 @@
 # limitations under the License.
 
 add_source_files(nes-operators
-        JavaUDFDescriptor.cpp
         PythonUDFDescriptor.cpp
         UDFDescriptor.cpp
         UDFLogicalOperator.cpp

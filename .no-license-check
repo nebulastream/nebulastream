@@ -1,7 +1,3 @@
-# Files
-JNI.hpp
-JNI.cpp
-
 # Folders
 cmake-build.*
 build
