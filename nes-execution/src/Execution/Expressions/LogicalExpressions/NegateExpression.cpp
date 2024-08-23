@@ -18,8 +18,8 @@ namespace NES::Runtime::Execution::Expressions {
 
 NegateExpression::NegateExpression(ExpressionPtr subExpression) : subExpression(std::move(subExpression)){};
 
-ExecDataType NegateExpression::execute(Record& record) const {
-    ExecDataType leftValue = subExpression->execute(record);
+VarVal NegateExpression::execute(Record& record) const {
+    VarVal leftValue = subExpression->execute(record);
     return !leftValue;
 }
 

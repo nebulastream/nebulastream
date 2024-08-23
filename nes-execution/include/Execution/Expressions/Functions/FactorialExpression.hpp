@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class FactorialExpression : public Expression {
   public:
     FactorialExpression(const ExpressionPtr& SubExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr SubExpression;

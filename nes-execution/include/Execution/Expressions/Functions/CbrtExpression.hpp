@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class CbrtExpression : public Expression {
   public:
     CbrtExpression(const ExpressionPtr& subExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

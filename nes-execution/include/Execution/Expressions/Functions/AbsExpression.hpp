@@ -24,8 +24,8 @@ namespace NES::Runtime::Execution::Expressions {
   */
 class AbsExpression : public Expression {
   public:
-    explicit AbsExpression(const ExpressionPtr& subExpression);
-    ExecDataType execute(Record& record) const override;
+    explicit AbsExpression(ExpressionPtr  subExpression);
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

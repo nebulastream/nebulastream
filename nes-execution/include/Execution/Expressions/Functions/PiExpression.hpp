@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Expressions {
 class PiExpression : public Expression {
   public:
     PiExpression(const ExpressionPtr& SubExpression);
-    ExecDataType execute(NES::Nautilus::Record& record) const override;
+    VarVal execute(NES::Nautilus::Record& record) const override;
 
   private:
     const ExpressionPtr SubExpression;

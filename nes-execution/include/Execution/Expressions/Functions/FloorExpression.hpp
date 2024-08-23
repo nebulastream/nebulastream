@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class FloorExpression : public Expression {
   public:
     FloorExpression(const ExpressionPtr& leftSubExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;

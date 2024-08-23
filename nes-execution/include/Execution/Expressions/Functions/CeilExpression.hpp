@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class CeilExpression : public Expression {
   public:
     CeilExpression(const ExpressionPtr& subExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

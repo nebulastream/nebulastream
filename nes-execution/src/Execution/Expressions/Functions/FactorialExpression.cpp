@@ -28,7 +28,7 @@ FactorialExpression::FactorialExpression(const NES::Runtime::Execution::Expressi
  */
 double calculateFactorial(double x) { return std::tgamma(x + 1); }
 
-ExecDataType FactorialExpression::execute(NES::Nautilus::Record& record) const {
+VarVal FactorialExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = SubExpression->execute(record);
 

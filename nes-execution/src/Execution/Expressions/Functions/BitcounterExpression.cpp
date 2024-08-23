@@ -24,7 +24,7 @@ BitcounterExpression::BitcounterExpression(const NES::Runtime::Execution::Expres
 
 uint32_t bitcounter(uint64_t number) { return std::popcount(number); }
 
-ExecDataType BitcounterExpression::execute(NES::Nautilus::Record& record) const {
+VarVal BitcounterExpression::execute(NES::Nautilus::Record& record) const {
     Value leftValue = SubExpression->execute(record);
 
     if (leftValue->isType<Int8>()) {

@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Expressions {
 class RandomExpression : public Expression {
   public:
     RandomExpression(ExpressionPtr subExpression);
-    ExecDataType execute(NES::Nautilus::Record& record) const override;
+    VarVal execute(NES::Nautilus::Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

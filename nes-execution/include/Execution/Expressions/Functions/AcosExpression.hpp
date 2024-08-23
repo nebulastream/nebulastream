@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Expressions {
 class AcosExpression : public Expression {
   public:
     explicit AcosExpression(const ExpressionPtr& expression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr expression;

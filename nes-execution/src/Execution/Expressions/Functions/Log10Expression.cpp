@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/Log10Expression.hpp>
@@ -24,10 +24,10 @@ Log10Expression::Log10Expression(const NES::Runtime::Execution::Expressions::Exp
     : subExpression(subExpression) {}
 
 
-ExecDataType Log10Expression::execute(NES::Nautilus::Record& record) const {
+VarVal Log10Expression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     const auto subValue = subExpression->execute(record);
-    return FixedSizeExecutableDataType<Double>::create(nautilus::log10(castAndLoadValue<double>(subValue)));
+    return subValue.customVisit(EVALUATE_FUNCTION(nautilus::log10));
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log10Expression>> log10Expression("log10");
 }// namespace NES::Runtime::Execution::Expressions

@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class MaxExpression : public Expression {
   public:
     MaxExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;

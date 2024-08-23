@@ -12,7 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AcosExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
@@ -23,13 +23,10 @@ namespace NES::Runtime::Execution::Expressions {
 
 AcosExpression::AcosExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& expression) : Expression() {}
 
-ExecDataType AcosExpression::execute(NES::Nautilus::Record& record) const {
+VarVal AcosExpression::execute(NES::Nautilus::Record& record) const {
     const auto subValue = expression->execute(record);
-    if (subValue->instanceOf<FixedSizeExecutableDataType<Float>>()) {
-        return FixedSizeExecutableDataType<Float>::create(nautilus::acos(castAndLoadValue<float>(subValue)));
-    } else {
-        return FixedSizeExecutableDataType<Float>::create(nautilus::acos(castAndLoadValue<double>(subValue)));
-    }
+
+    return subValue.customVisit(EVALUATE_FUNCTION(nautilus::acos));
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AcosExpression>> acosFunction("acos");
 }// namespace NES::Runtime::Execution::Expressions

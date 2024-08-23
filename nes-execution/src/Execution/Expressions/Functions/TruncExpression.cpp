@@ -28,7 +28,7 @@ TruncExpression::TruncExpression(const NES::Runtime::Execution::Expressions::Exp
  */
 double calculateTrunc(double x) { return std::trunc(x); }
 
-ExecDataType TruncExpression::execute(NES::Nautilus::Record& record) const {
+VarVal TruncExpression::execute(NES::Nautilus::Record& record) const {
     Value subValue = subExpression->execute(record);
 
     if (subValue->isType<Int8>()) {

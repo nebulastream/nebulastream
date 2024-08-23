@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Execution/Operators/Relational/Selection.hpp>
 #include <Nautilus/Interface/Record.hpp>
 
@@ -21,7 +21,7 @@ void Selection::execute(ExecutionContext& ctx, Record& record) const {
     // evaluate expression and call child operator if expression is valid
     const auto expressionResult = expression->execute(record);
 
-    if (*expressionResult) {
+    if (expressionResult) {
         child->execute(ctx, record);
     }
 }

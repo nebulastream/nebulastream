@@ -29,7 +29,7 @@ CotExpression::CotExpression(const NES::Runtime::Execution::Expressions::Express
 */
 double calculateCot(double x) { return std::cos(x) / std::sin(x); }
 
-ExecDataType CotExpression::execute(NES::Nautilus::Record& record) const {
+VarVal CotExpression::execute(NES::Nautilus::Record& record) const {
     Value subValue = radians->execute(record);
     if (subValue->isType<Int8>()) {
         return FunctionCall<>("calculateCot", calculateCot, subValue.as<Int8>());

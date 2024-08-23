@@ -12,15 +12,16 @@
     limitations under the License.
 */
 #include <Execution/Expressions/ArithmeticalExpressions/MulExpression.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Expressions {
 
-ExecDataType MulExpression::execute(Record& record) const {
+VarVal MulExpression::execute(Record& record) const {
     const auto leftValue = leftSubExpression->execute(record);
     const auto rightValue = rightSubExpression->execute(record);
     return leftValue * rightValue;
 }
-MulExpression::MulExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression)
-    : leftSubExpression(leftSubExpression), rightSubExpression(rightSubExpression) {}
+MulExpression::MulExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
+    : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(rightSubExpression) {}
 
 }// namespace NES::Runtime::Execution::Expressions

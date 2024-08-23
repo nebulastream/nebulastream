@@ -29,7 +29,7 @@ CbrtExpression::CbrtExpression(const NES::Runtime::Execution::Expressions::Expre
  */
 double calculateCbrt(double x) { return std::cbrt(x); }
 
-ExecDataType CbrtExpression::execute(NES::Nautilus::Record& record) const {
+VarVal CbrtExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     Value value = subExpression->execute(record);
 

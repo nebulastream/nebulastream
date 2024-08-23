@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Expressions {
 EqualsExpression::EqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
 
-ExecDataType EqualsExpression::execute(Record& record) const {
+VarVal EqualsExpression::execute(Record& record) const {
     const auto leftValue = leftSubExpression->execute(record);
     const auto rightValue = rightSubExpression->execute(record);
     return leftValue == rightValue;

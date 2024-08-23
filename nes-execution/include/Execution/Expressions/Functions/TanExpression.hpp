@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Expressions {
 class TanExpression : public Expression {
   public:
     TanExpression(const ExpressionPtr& expression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr expression;

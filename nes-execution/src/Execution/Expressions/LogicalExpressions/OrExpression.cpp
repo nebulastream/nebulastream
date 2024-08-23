@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Expressions {
 OrExpression::OrExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
 
-ExecDataType OrExpression::execute(Record& record) const {
+VarVal OrExpression::execute(Record& record) const {
     const auto leftValue = leftSubExpression->execute(record);
     const auto rightValue = rightSubExpression->execute(record);
     return leftValue || rightValue;

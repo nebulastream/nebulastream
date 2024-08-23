@@ -17,6 +17,6 @@ namespace NES::Runtime::Execution::Expressions {
 
 ReadFieldExpression::ReadFieldExpression(Record::RecordFieldIdentifier field) : field(field) {}
 
-ExecDataType ReadFieldExpression::execute(Record& record) const { return record.read(field); }
+VarVal ReadFieldExpression::execute(Record& record) const { return record.read(field); }
 
 }// namespace NES::Runtime::Execution::Expressions

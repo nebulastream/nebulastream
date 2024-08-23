@@ -23,7 +23,7 @@ namespace NES::Runtime::Execution::Expressions {
 class Atan2Expression : public Expression {
   public:
     Atan2Expression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;

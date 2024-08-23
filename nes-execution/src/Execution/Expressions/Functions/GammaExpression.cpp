@@ -28,7 +28,7 @@ GammaExpression::GammaExpression(const NES::Runtime::Execution::Expressions::Exp
  */
 double calculateGamma(double x) { return std::tgamma(x); }
 
-ExecDataType GammaExpression::execute(NES::Nautilus::Record& record) const {
+VarVal GammaExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = SubExpression->execute(record);
 

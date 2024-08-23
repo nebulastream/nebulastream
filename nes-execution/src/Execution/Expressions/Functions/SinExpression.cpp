@@ -30,7 +30,7 @@ SinExpression::SinExpression(const NES::Runtime::Execution::Expressions::Express
   */
 double calculateSin(double x) { return std::sin(x); }
 
-ExecDataType SinExpression::execute(NES::Nautilus::Record& record) const {
+VarVal SinExpression::execute(NES::Nautilus::Record& record) const {
 
     Value subValue = subExpression->execute(record);
 

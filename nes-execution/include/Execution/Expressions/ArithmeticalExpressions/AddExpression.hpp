@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::Expressions {
 class AddExpression : public Expression {
   public:
     AddExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;

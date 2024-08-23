@@ -25,7 +25,7 @@ namespace NES::Runtime::Execution::Expressions {
 class CosExpression : public Expression {
   public:
     explicit CosExpression(const ExpressionPtr& leftSubExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;

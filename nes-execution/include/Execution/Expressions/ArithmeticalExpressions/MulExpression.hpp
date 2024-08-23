@@ -23,8 +23,8 @@ namespace NES::Runtime::Execution::Expressions {
  */
 class MulExpression : public Expression {
   public:
-    MulExpression(const ExpressionPtr& leftSubExpression, const ExpressionPtr& rightSubExpression);
-    ExecDataType execute(Record& record) const override;
+    MulExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression);
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr leftSubExpression;

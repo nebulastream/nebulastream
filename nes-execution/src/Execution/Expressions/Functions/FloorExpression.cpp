@@ -30,7 +30,7 @@ FloorExpression::FloorExpression(const NES::Runtime::Execution::Expressions::Exp
 */
 double calculateFloor(double x) { return std::floor(x); }
 
-ExecDataType FloorExpression::execute(NES::Nautilus::Record& record) const {
+VarVal FloorExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.

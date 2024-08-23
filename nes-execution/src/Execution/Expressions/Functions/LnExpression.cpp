@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/LnExpression.hpp>
@@ -25,10 +25,10 @@ LnExpression::LnExpression(NES::Runtime::Execution::Expressions::ExpressionPtr  
     : subExpression(std::move(subExpression)) {}
 
 
-ExecDataType LnExpression::execute(NES::Nautilus::Record& record) const {
+VarVal LnExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     const auto subValue = subExpression->execute(record);
-    return FixedSizeExecutableDataType<Double>::create(nautilus::log(castAndLoadValue<double>(subValue)));
+    return subValue.customVisit(EVALUATE_FUNCTION(nautilus::log));
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<LnExpression>> lnFunction("ln");
 }// namespace NES::Runtime::Execution::Expressions

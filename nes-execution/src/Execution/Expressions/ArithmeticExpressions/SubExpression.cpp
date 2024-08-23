@@ -15,7 +15,7 @@
 
 namespace NES::Runtime::Execution::Expressions {
 
-ExecDataType SubExpression::execute(Record& record) const {
+VarVal SubExpression::execute(Record& record) const {
     const auto leftValue = leftSubExpression->execute(record);
     const auto rightValue = rightSubExpression->execute(record);
     return leftValue - rightValue;

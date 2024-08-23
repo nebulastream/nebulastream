@@ -26,7 +26,7 @@ namespace NES::Runtime::Execution::Expressions {
 class Log10Expression : public Expression {
   public:
     explicit Log10Expression(const ExpressionPtr& subExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

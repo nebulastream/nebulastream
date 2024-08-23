@@ -26,7 +26,7 @@ class SinExpression : public Expression {
 
   public:
     SinExpression(const ExpressionPtr& subExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr subExpression;

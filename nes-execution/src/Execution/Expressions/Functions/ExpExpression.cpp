@@ -29,7 +29,7 @@ ExpExpression::ExpExpression(const NES::Runtime::Execution::Expressions::Express
  */
 double calculateExp(double x) { return std::exp(x); }
 
-ExecDataType ExpExpression::execute(NES::Nautilus::Record& record) const {
+VarVal ExpExpression::execute(NES::Nautilus::Record& record) const {
     Value subValue = subExpression->execute(record);
 
     if (subValue->isType<Int8>()) {

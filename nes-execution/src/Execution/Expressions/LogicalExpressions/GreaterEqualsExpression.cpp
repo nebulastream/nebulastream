@@ -20,7 +20,7 @@ namespace NES::Runtime::Execution::Expressions {
 GreaterEqualsExpression::GreaterEqualsExpression(ExpressionPtr leftSubExpression, ExpressionPtr rightSubExpression)
     : leftSubExpression(std::move(leftSubExpression)), rightSubExpression(std::move(rightSubExpression)){};
 
-ExecDataType GreaterEqualsExpression::execute(Record& record) const {
+VarVal GreaterEqualsExpression::execute(Record& record) const {
     const auto leftValue = leftSubExpression->execute(record);
     const auto rightValue = rightSubExpression->execute(record);
     return leftValue >= rightValue;

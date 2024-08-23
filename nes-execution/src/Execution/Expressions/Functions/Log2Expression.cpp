@@ -14,8 +14,8 @@
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/Log2Expression.hpp>
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+
 #include <cmath>
 #include <nautilus/std/cmath.h>
 
@@ -24,11 +24,10 @@ namespace NES::Runtime::Execution::Expressions {
 Log2Expression::Log2Expression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
     : subExpression(subExpression) {}
 
-ExecDataType Log2Expression::execute(NES::Nautilus::Record& record) const {
+VarVal Log2Expression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the sub expression and retrieve the value.
     const auto subValue = subExpression->execute(record);
-
-    return FixedSizeExecutableDataType<Double>::create(nautilus::log2(castAndLoadValue<double>(subValue)));
+    return subValue.customVisit(EVALUATE_FUNCTION(nautilus::log2));
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<Log2Expression>> log2Expression("log2");
 }// namespace NES::Runtime::Execution::Expressions

@@ -12,26 +12,30 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AbsExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <cmath>
 #include <nautilus/std/cmath.h>
 #include <nautilus/val_ptr.hpp>
+#include <utility>
 
 namespace NES::Runtime::Execution::Expressions {
 
-AbsExpression::AbsExpression(const NES::Runtime::Execution::Expressions::ExpressionPtr& subExpression)
-    : subExpression(subExpression) {}
+AbsExpression::AbsExpression(ExpressionPtr  subExpression)
+    : subExpression(std::move(subExpression)) {}
 
-ExecDataType AbsExpression::execute(NES::Nautilus::Record& record) const {
+VarVal AbsExpression::execute(NES::Nautilus::Record& record) const {
     auto subValue = subExpression->execute(record);
     /// To the PR reviewers, this is a point that we could do the following if we want to do NULL-handling
     /// if (subValue->isNull()) {
     ///     return subValue;
     /// }
-    return FixedSizeExecutableDataType<Double>::create(nautilus::abs(castAndLoadValue<double>(subValue)));
+
+    return subValue.customVisit(EVALUATE_FUNCTION(nautilus::abs));
+
+    // return VarVal<double>(nautilus::abs(subValue);
 }
 static ExecutableFunctionRegistry::Add<UnaryFunctionProvider<AbsExpression>> absFunction("abs");
 }// namespace NES::Runtime::Execution::Expressions

@@ -31,7 +31,7 @@ ModExpression::ModExpression(const NES::Runtime::Execution::Expressions::Express
  */
 double calculateMod(double x, double y) { return std::fmod(x, y); }
 
-ExecDataType ModExpression::execute(NES::Nautilus::Record& record) const {
+VarVal ModExpression::execute(NES::Nautilus::Record& record) const {
     // Evaluate the left sub expression and retrieve the value.
     Value leftValue = leftSubExpression->execute(record);
     // Evaluate the right sub expression and retrieve the value.

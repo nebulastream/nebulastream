@@ -28,7 +28,7 @@ namespace NES::Runtime::Execution::Expressions {
 class CotExpression : public Expression {
   public:
     CotExpression(const ExpressionPtr& radians);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const ExpressionPtr radians;

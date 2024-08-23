@@ -13,7 +13,7 @@
 */
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_EXPRESSIONS_EXPRESSION_HPP_
-#include <Nautilus/DataTypes/AbstractDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <memory>
 
 namespace NES::Nautilus {
@@ -37,7 +37,7 @@ class Expression {
      * @param record
      * @return Value<>
      */
-    virtual ExecDataType execute(Record& record) const = 0;
+    virtual VarVal execute(Record& record) const = 0;
     virtual ~Expression() = default;
 };
 

@@ -31,7 +31,7 @@ class WriteFieldExpression : public Expression {
      * @param subExpression the input expression that generates a value that is written to the field.
      */
     WriteFieldExpression(Nautilus::Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression);
-    ExecDataType execute(Record& record) const override;
+    VarVal execute(Record& record) const override;
 
   private:
     const Nautilus::Record::RecordFieldIdentifier field;

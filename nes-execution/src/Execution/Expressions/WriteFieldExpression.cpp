@@ -18,8 +18,8 @@ namespace NES::Runtime::Execution::Expressions {
 WriteFieldExpression::WriteFieldExpression(Record::RecordFieldIdentifier field, const ExpressionPtr& subExpression)
     : field(field), subExpression(subExpression) {}
 
-ExecDataType WriteFieldExpression::execute(Record& record) const {
-    ExecDataType newValue = subExpression->execute(record);
+VarVal WriteFieldExpression::execute(Record& record) const {
+    VarVal newValue = subExpression->execute(record);
     record.write(field, newValue);
     return newValue;
 }

@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Expressions {
 class RadiansExpression : public Expression {
   public:
     RadiansExpression(const ExpressionPtr& SubExpression);
-    ExecDataType execute(NES::Nautilus::Record& record) const override;
+    VarVal execute(NES::Nautilus::Record& record) const override;
 
   private:
     const ExpressionPtr SubExpression;
