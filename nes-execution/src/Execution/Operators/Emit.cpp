@@ -25,9 +25,9 @@ class EmitState : public OperatorState {
   public:
     explicit EmitState(const RecordBuffer& resultBuffer)
         : resultBuffer(resultBuffer), bufferReference(resultBuffer.getBuffer()) {}
-    nautilus::val<uint64_t> outputIndex = 0_u64;
+    UInt64Val outputIndex = 0_u64;
     RecordBuffer resultBuffer;
-    nautilus::val<int8_t*> bufferReference;
+    MemRefVal bufferReference;
 };
 
 void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
@@ -41,7 +41,7 @@ void Emit::open(ExecutionContext& ctx, RecordBuffer&) const {
 void Emit::execute(ExecutionContext& ctx, Record& record) const {
     auto emitState = (EmitState*) ctx.getLocalState(this);
     // emit buffer if it reached the maximal capacity
-    const auto result = emitState->outputIndex >= nautilus::val<uint64_t>(maxRecordsPerBuffer);
+    const auto result = emitState->outputIndex >= UInt64Val(maxRecordsPerBuffer);
     if (result) {
         emitRecordBuffer(ctx, emitState->resultBuffer, emitState->outputIndex, false);
         auto resultBufferRef = ctx.allocateBuffer();
