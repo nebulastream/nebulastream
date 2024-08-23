@@ -156,7 +156,6 @@ const std::string SOURCE_TYPE_CONFIG = "type";
 const std::string NUMBER_OF_BUFFERS_TO_PRODUCE_CONFIG = "numberOfBuffersToProduce";
 const std::string NUMBER_OF_TUPLES_TO_PRODUCE_PER_BUFFER_CONFIG = "numberOfTuplesToProducePerBuffer";
 const std::string INPUT_FORMAT_CONFIG = "inputFormat";
-const std::string UDFS_CONFIG = "udfs";
 const std::string FILE_PATH_CONFIG = "filePath";
 
 const std::string SKIP_HEADER_CONFIG = "skipHeader";

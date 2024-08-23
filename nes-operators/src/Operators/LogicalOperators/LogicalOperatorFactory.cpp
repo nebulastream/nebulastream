@@ -23,8 +23,6 @@
 #include <Operators/LogicalOperators/RenameSourceOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/FlatMapUDF/FlatMapUDFLogicalOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/MapUDF/MapUDFLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Joins/LogicalJoinOperator.hpp>
@@ -108,18 +106,6 @@ LogicalUnaryOperatorPtr LogicalOperatorFactory::createWatermarkAssignerOperator(
     const Windowing::WatermarkStrategyDescriptorPtr& watermarkStrategyDescriptor, OperatorId id)
 {
     return std::make_shared<WatermarkAssignerLogicalOperator>(watermarkStrategyDescriptor, id);
-}
-
-LogicalUnaryOperatorPtr
-LogicalOperatorFactory::createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id)
-{
-    return std::make_shared<MapUDFLogicalOperator>(udfDescriptor, id);
-}
-
-LogicalUnaryOperatorPtr
-LogicalOperatorFactory::createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id)
-{
-    return std::make_shared<FlatMapUDFLogicalOperator>(udfDescriptor, id);
 }
 
 } /// namespace NES

@@ -21,8 +21,6 @@ add_source_files(nes-execution
         PhysicalLimitOperator.cpp
         PhysicalProjectOperator.cpp
         PhysicalMapOperator.cpp
-        PhysicalMapUDFOperator.cpp
-        PhysicalFlatMapUDFOperator.cpp
         PhysicalUnionOperator.cpp
         PhysicalDemultiplexOperator.cpp
         PhysicalWatermarkAssignmentOperator.cpp

@@ -155,17 +155,6 @@ if (NES_BUILD_BENCHMARKS)
     #-fno-omit-frame-pointer
 endif ()
 
-# Add Python UDF support using Nautilus
-option(NAUTILUS_PYTHON_UDF "Build supporting Nautilus Python UDF" OFF)
-message(STATUS "Python UDF support: ${NAUTILUS_PYTHON_UDF}")
-if (NAUTILUS_PYTHON_UDF)
-    add_compile_definitions(NAUTILUS_PYTHON_UDF_ENABLED)
-    find_package(PythonLibs 3 REQUIRED)
-    include_directories(${PYTHON_INCLUDE_DIRS})
-    # Python needs to link against libutil. "python3-config --ldflags" will give the recommended flags
-    set(LIBRARIES ${LIBRARIES} ${PYTHON_LIBRARIES} -lutil)
-endif ()
-
 # Native/Generic march support
 if (NES_BUILD_NATIVE)
     include(CheckCXXCompilerFlag)

@@ -24,7 +24,7 @@ The codebase is structured in the following components:
 | Component                                | Description                                                                                                                                               |
 |------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
 | [nes-benchmark](nes-benchmark)           | This component contains benchmarks for different components.                                                                                              |
-| [nes-catalogs](nes-catalogs)             | This component contains query, source, UDF, and topology catalogs and corresponding services.                                                             |
+| [nes-catalogs](nes-catalogs)             | This component contains query, source, and topology catalogs and corresponding services.                                                             |
 | [nes-client](nes-client)                 | This component contains the C++ client to interact with NebulaStream from C++ applications.                                                               |
 | [nes-common](nes-common)                 | This component contains some base functionality that is used across all other components, e.g., for logging and exceptions.                               |
 | [nes-compiler](nes-compiler)             | This component contains functionalities to compile source code or intermediate representations to executable binaries.                                    |

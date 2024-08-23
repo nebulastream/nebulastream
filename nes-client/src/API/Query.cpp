@@ -339,21 +339,6 @@ Query& Query::limit(const uint64_t limit)
     this->queryPlan = QueryPlanBuilder::addLimit(limit, this->queryPlan);
     return *this;
 }
-
-Query& Query::mapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor)
-{
-    NES_DEBUG("Query: add map java udf operator to query");
-    this->queryPlan = QueryPlanBuilder::addMapUDF(descriptor, this->queryPlan);
-    return *this;
-}
-
-Query& Query::flatMapUDF(const Catalogs::UDF::UDFDescriptorPtr& descriptor)
-{
-    NES_DEBUG("Query: add flat map java udf operator to query");
-    this->queryPlan = QueryPlanBuilder::addFlatMapUDF(descriptor, this->queryPlan);
-    return *this;
-}
-
 Query& Query::map(const FieldAssignmentExpressionNodePtr& mapExpression)
 {
     NES_DEBUG("Query: add map operator to query");
