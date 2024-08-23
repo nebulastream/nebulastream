@@ -12,8 +12,7 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/TimeFunction.hpp>
@@ -32,8 +31,8 @@ EventTimeFunction::EventTimeFunction(Expressions::ExpressionPtr timestampExpress
 
 UInt64Val EventTimeFunction::getTs(Execution::ExecutionContext& ctx, Nautilus::Record& record) {
     auto ts = this->timestampExpression->execute(record);
-    const auto timeMultiplier = unit.getMillisecondsConversionMultiplier();
-    auto tsInMs = castAndLoadValue<uint64_t>(ts * timeMultiplier);
+    const auto timeMultiplier = VarVal(unit.getMillisecondsConversionMultiplier());
+    auto tsInMs = (ts * timeMultiplier).cast<UInt64Val>();
     ctx.setCurrentTs(tsInMs);
     return tsInMs;
 }
