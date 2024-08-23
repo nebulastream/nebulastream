@@ -82,10 +82,10 @@ public:
     explicit PipelineExecutionContext(
         PipelineId pipelineId,
         QueryId queryId,
-        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
         size_t numberOfWorkerThreads,
-        std::function<void(TupleBuffer&, WorkerContext&)>&& emitFunctionHandler,
-        std::function<void(TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
+        std::function<void(Memory::TupleBuffer&, WorkerContext&)>&& emitFunctionHandler,
+        std::function<void(Memory::TupleBuffer&)>&& emitToQueryManagerFunctionHandler,
         std::vector<OperatorHandlerPtr> operatorHandlers);
 
     /**
@@ -93,7 +93,7 @@ public:
      * @param tupleBuffer the output tuple buffer that is passed to the Runtime
      * @param workerContext the worker context
      */
-    void emitBuffer(TupleBuffer& tupleBuffer, WorkerContext&);
+    void emitBuffer(Memory::TupleBuffer& tupleBuffer, WorkerContext&);
 
     /**
     * @brief Dispatch a buffer as a new task to the query manager.
@@ -101,7 +101,7 @@ public:
     * @param outputBuffer the output tuple buffer that is passed to the Runtime
     * @param workerContext the worker context
     */
-    void dispatchBuffer(TupleBuffer tupleBuffer);
+    void dispatchBuffer(Memory::TupleBuffer tupleBuffer);
 
     [[nodiscard]] std::vector<OperatorHandlerPtr> getOperatorHandlers();
 
@@ -133,7 +133,7 @@ public:
 
     [[nodiscard]] uint64_t getNumberOfWorkerThreads() const;
 
-    [[nodiscard]] std::shared_ptr<AbstractBufferProvider> getBufferManager() const;
+    [[nodiscard]] std::shared_ptr<Memory::AbstractBufferProvider> getBufferManager() const;
 
     /// Returns the next chunk number belonging to a sequence number for emitting a buffer
     [[nodiscard]] uint64_t getNextChunkNumber(const SeqNumberOriginId seqNumberOriginId);
@@ -159,15 +159,15 @@ private:
     QueryId queryId;
 
     /// Emit function handlers to react on an emitted tuple buffer
-    std::function<void(TupleBuffer&, WorkerContext&)> emitFunctionHandler;
-    std::function<void(TupleBuffer&)> emitToQueryManagerFunctionHandler;
+    std::function<void(Memory::TupleBuffer&, WorkerContext&)> emitFunctionHandler;
+    std::function<void(Memory::TupleBuffer&)> emitToQueryManagerFunctionHandler;
 
     const std::vector<std::shared_ptr<NES::Runtime::Execution::OperatorHandler>> operatorHandlers;
 
     folly::Synchronized<std::map<SeqNumberOriginId, SequenceState>> seqNumberOriginIdToChunkStateInput;
     folly::Synchronized<std::map<SeqNumberOriginId, uint64_t>> seqNumberOriginIdToOutputChunkNumber;
 
-    std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     size_t numberOfWorkerThreads;
 
     std::vector<PredecessorExecutablePipeline> predecessors;

@@ -16,14 +16,14 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include "TupleBufferImpl.hpp"
-namespace NES::Runtime
+namespace NES::Memory
 {
 
 TupleBuffer TupleBuffer::reinterpretAsTupleBuffer(void* bufferPointer)
 {
-    auto controlBlockSize = alignBufferSize(sizeof(Runtime::detail::BufferControlBlock), 64);
+    auto controlBlockSize = alignBufferSize(sizeof(detail::BufferControlBlock), 64);
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - controlBlockSize);
+    auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - controlBlockSize);
     auto memorySegment = block->getOwner();
     auto tb = TupleBuffer(memorySegment->controlBlock.get(), memorySegment->ptr, memorySegment->size);
     tb.retain();
@@ -208,7 +208,7 @@ bool recycleTupleBuffer(void* bufferPointer)
 {
     NES_ASSERT2_FMT(bufferPointer, "invalid bufferPointer");
     auto buffer = reinterpret_cast<uint8_t*>(bufferPointer);
-    auto block = reinterpret_cast<Runtime::detail::BufferControlBlock*>(buffer - sizeof(Runtime::detail::BufferControlBlock));
+    auto block = reinterpret_cast<detail::BufferControlBlock*>(buffer - sizeof(detail::BufferControlBlock));
     return block->release();
 }
 

@@ -38,7 +38,7 @@ void Parser::writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
+    const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
 {
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();

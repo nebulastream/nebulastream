@@ -35,7 +35,7 @@ void StreamJoinOperatorHandler::stop(QueryTerminationType queryTerminationType, 
     }
 }
 
-std::vector<TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS)
+std::vector<Memory::TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t startTS, uint64_t stopTS)
 {
     auto slicesLocked = slices.rlock();
 
@@ -53,7 +53,7 @@ std::vector<TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t s
             return (sliceStartTS >= startTS && sliceStartTS < stopTS) || (sliceEndTS > startTS && sliceEndTS < stopTS);
         });
 
-    auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
+    auto buffersToTransfer = std::vector<Memory::TupleBuffer>();
 
     /// metadata buffer
     auto mainMetadata = bufferProvider->getBufferBlocking();
@@ -116,7 +116,7 @@ std::vector<TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t s
     return buffersToTransfer;
 }
 
-void StreamJoinOperatorHandler::restoreState(std::vector<TupleBuffer>& buffers)
+void StreamJoinOperatorHandler::restoreState(std::vector<Memory::TupleBuffer>& buffers)
 {
     /// get main metadata buffer
     auto metadataBuffersIdx = 0;
@@ -158,7 +158,7 @@ void StreamJoinOperatorHandler::restoreState(std::vector<TupleBuffer>& buffers)
         auto numberOfBuffers = readFromMetadata();
 
         const auto spanStart = buffers.data() + numberOfMetadataBuffers + buffIdx;
-        auto recreatedSlice = deserializeSlice(std::span<const Runtime::TupleBuffer>(spanStart, numberOfBuffers));
+        auto recreatedSlice = deserializeSlice(std::span<const Memory::TupleBuffer>(spanStart, numberOfBuffers));
 
         /// insert recreated slice
         auto indexToInsert = std::find_if(
@@ -370,7 +370,7 @@ uint64_t StreamJoinOperatorHandler::getWindowSize() const
     return sliceAssigner.getWindowSize();
 }
 
-void StreamJoinOperatorHandler::setBufferManager(std::shared_ptr<AbstractBufferProvider> bufferProvider)
+void StreamJoinOperatorHandler::setBufferManager(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
 {
     this->bufferProvider = std::move(bufferProvider);
 }

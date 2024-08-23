@@ -40,8 +40,8 @@ public:
               queryId,
               queryManager->getBufferManager(),
               queryManager->getNumberOfWorkerThreads(),
-              [](TupleBuffer&, NES::Runtime::WorkerContext&) {},
-              [](TupleBuffer&) {},
+              [](Memory::TupleBuffer&, NES::Runtime::WorkerContext&) {},
+              [](Memory::TupleBuffer&) {},
               std::vector<Execution::OperatorHandlerPtr>())
     {
         /// nop
@@ -58,7 +58,7 @@ public:
         /// nop
     }
 
-    ExecutionResult execute(TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext)
+    ExecutionResult execute(Memory::TupleBuffer& buffer, Execution::PipelineExecutionContext&, WorkerContextRef workerContext)
     {
         NES_TRACE(
             "QueryManager: QueryManager::addReconfigurationMessage ReconfigurationMessageEntryPoint begin on thread {}",
@@ -162,7 +162,7 @@ ExecutionResult QueryManager::terminateLoop(WorkerContext& workerContext)
     return ExecutionResult::Finished;
 }
 
-void QueryManager::addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId)
+void QueryManager::addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId)
 {
     NES_TRACE("Add Work for executable for queue={}", queueId);
     if (auto nextPipeline = std::get_if<Execution::ExecutablePipelinePtr>(&executable); nextPipeline)
@@ -287,7 +287,7 @@ bool QueryManager::addReconfigurationMessage(QueryId queryId, const Reconfigurat
     return addReconfigurationMessage(queryId, std::move(buffer), blocking);
 }
 
-bool QueryManager::addReconfigurationMessage(QueryId queryId, TupleBuffer&& buffer, bool blocking)
+bool QueryManager::addReconfigurationMessage(QueryId queryId, Memory::TupleBuffer&& buffer, bool blocking)
 {
     auto* task = buffer.getBuffer<ReconfigurationMessage>();
     {
@@ -337,7 +337,10 @@ public:
 
     virtual ~PoisonPillEntryPointPipelineStage() = default;
 
-    ExecutionResult execute(TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef) { return ExecutionResult::AllFinished; }
+    ExecutionResult execute(Memory::TupleBuffer&, Execution::PipelineExecutionContext&, WorkerContextRef)
+    {
+        return ExecutionResult::AllFinished;
+    }
 };
 } /// namespace detail
 

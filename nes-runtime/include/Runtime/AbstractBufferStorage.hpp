@@ -33,7 +33,7 @@ public:
      * @param queryId id of current query
      * @param bufferPtr pointer to the buffer that will be stored
      */
-    virtual void insertBuffer(NES::Runtime::TupleBuffer bufferPtr) = 0;
+    virtual void insertBuffer(Memory::TupleBuffer bufferPtr) = 0;
 
     /**
      * @brief Deletes q pair<id,buffer> from buffer storage

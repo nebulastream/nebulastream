@@ -41,7 +41,7 @@ namespace NES::Runtime::Execution::Util
 * @param bufferProvider
 * @return Filled tupleBuffer
 */
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, AbstractBufferProvider& bufferProvider);
+Memory::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, Memory::AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief Writes from the nautilusRecord to the record at index recordIndex
@@ -52,7 +52,11 @@ Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& s
 * @param bufferProvider
 */
 void writeNautilusRecord(
-    uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferProvider);
+    uint64_t recordIndex,
+    int8_t* baseBufferPtr,
+    Nautilus::Record nautilusRecord,
+    SchemaPtr schema,
+    Memory::AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
@@ -62,8 +66,8 @@ void writeNautilusRecord(
 * @param bufferProvider
 * @return merged TupleBuffer
 */
-Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, AbstractBufferProvider& bufferProvider);
+Memory::TupleBuffer
+mergeBuffers(std::vector<Memory::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, Memory::AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
@@ -74,11 +78,11 @@ mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaP
 * @param bufferProvider
 * @return buffer of tuples
 */
-std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
-    std::vector<Runtime::TupleBuffer>& buffers,
+std::vector<Memory::TupleBuffer> mergeBuffersSameWindow(
+    std::vector<Memory::TupleBuffer>& buffers,
     SchemaPtr schema,
     const std::string& timeStampFieldName,
-    AbstractBufferProvider& bufferProvider,
+    Memory::AbstractBufferProvider& bufferProvider,
     uint64_t windowSize);
 
 /**
@@ -89,11 +93,11 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
 * @param bufferProvider
 * @return sorted buffers
 */
-std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
-    std::vector<Runtime::TupleBuffer>& buffersToSort,
+std::vector<Memory::TupleBuffer> sortBuffersInTupleBuffer(
+    std::vector<Memory::TupleBuffer>& buffersToSort,
     SchemaPtr schema,
     const std::string& sortFieldName,
-    AbstractBufferProvider& bufferProvider);
+    Memory::AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief Creates a TupleBuffer from a Nautilus::Record
@@ -102,7 +106,8 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
 * @param bufferProvider
 * @return Filled TupleBuffer
 */
-Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferProvider);
+Memory::TupleBuffer
+getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, Memory::AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief create CSV lines from the tuples
@@ -110,7 +115,7 @@ Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord,
 * @param schema how to read the tuples from the buffer
 * @return a full string stream as string
 */
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
+std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /// TODO Once #3693 is done, we can use the same function in UtilityFunction
 /**
@@ -122,10 +127,10 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 * @param bufferProvider
 * @return Vector of TupleBuffers
 */
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
+[[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    Runtime::AbstractBufferProvider& bufferProvider,
+    Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId = 0,
     const std::string& timestampFieldname = "ts",
     bool skipFirstLine = false);
@@ -147,7 +152,7 @@ void writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    Runtime::AbstractBufferProvider& bufferProvider);
+    Memory::AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief function to replace all string occurrences
@@ -171,7 +176,7 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema);
 * @param schema
 * @return True if the buffers contain the same tuples
 */
-bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte);
+bool checkIfBuffersAreEqual(Memory::TupleBuffer buffer1, Memory::TupleBuffer buffer2, uint64_t schemaSizeInByte);
 
 /**
 * @brief Gets the physical type of a given type given as template parameter

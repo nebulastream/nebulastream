@@ -32,7 +32,7 @@ class MemoryLayoutTupleBuffer;
  * @param childBufferIdx
  * @return Variable sized data as a string
  */
-std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx);
+std::string readVarSizedData(const Memory::TupleBuffer& buffer, uint64_t childBufferIdx);
 
 /**
  * @brief Writes the variable sized data to the buffer
@@ -41,7 +41,8 @@ std::string readVarSizedData(const TupleBuffer& buffer, uint64_t childBufferIdx)
  * @param bufferProvider
  * @return Index of the child buffer
  */
-std::optional<uint32_t> writeVarSizedData(const TupleBuffer& buffer, const std::string_view value, AbstractBufferProvider& bufferProvider);
+std::optional<uint32_t>
+writeVarSizedData(const Memory::TupleBuffer& buffer, const std::string_view value, Memory::AbstractBufferProvider& bufferProvider);
 
 /**
  * @brief A MemoryLayout defines a strategy in which a specific schema / a individual tuple is mapped to a tuple buffer.

@@ -31,8 +31,8 @@ public:
     uint32_t setup(PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t start(PipelineExecutionContext& pipelineExecutionContext) override;
     uint32_t open(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
-    ExecutionResult
-    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    ExecutionResult execute(
+        Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     uint32_t close(PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
     uint32_t stop(PipelineExecutionContext& pipelineExecutionContext) override;
     /**

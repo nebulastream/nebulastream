@@ -179,7 +179,7 @@ public:
            {TPCHTable::Region, regionSchema}};
 
     std::unordered_map<TPCHTable, NES::Runtime::MemoryLayouts::MemoryLayoutPtr> layouts;
-    TPCHTableGenerator(const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferProvider, TPCH_Scale_Factor scale_factor)
+    TPCHTableGenerator(const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, TPCH_Scale_Factor scale_factor)
         : bufferProvider(bufferProvider), scaleFactor(scale_factor)
     {
         for (auto& [table, schema] : tableSchemas)
@@ -468,7 +468,7 @@ public:
     }
 
 private:
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     TPCH_Scale_Factor scaleFactor;
 };
 

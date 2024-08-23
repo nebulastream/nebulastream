@@ -45,15 +45,15 @@ void PagedVectorVarSized::setEntrySizeAndCapacityPerPage()
 }
 
 PagedVectorVarSized::PagedVectorVarSized(
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider, SchemaPtr schema, uint64_t pageSize)
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, SchemaPtr schema, uint64_t pageSize)
     : PagedVectorVarSized(std::move(bufferProvider), std::move(schema), {}, pageSize)
 {
 }
 
 PagedVectorVarSized::PagedVectorVarSized(
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
     SchemaPtr schema,
-    std::span<const Runtime::TupleBuffer> buffers,
+    std::span<const Memory::TupleBuffer> buffers,
     uint64_t pageSize)
     : bufferProvider(std::move(bufferProvider)), schema(std::move(schema)), pageSize(pageSize)
 {
@@ -235,7 +235,7 @@ void PagedVectorVarSized::appendAllPages(PagedVectorVarSized& other)
     other.varSizedDataEntryMapCounter = 0;
 }
 
-std::vector<Runtime::TupleBuffer>& PagedVectorVarSized::getPages()
+std::vector<Memory::TupleBuffer>& PagedVectorVarSized::getPages()
 {
     return pages;
 }

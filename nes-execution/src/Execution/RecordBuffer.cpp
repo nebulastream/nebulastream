@@ -26,16 +26,16 @@ RecordBuffer::RecordBuffer(const Value<MemRef>& tupleBufferRef) : tupleBufferRef
 Value<UInt64> RecordBuffer::getNumRecords()
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__getNumberOfTuples",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples,
+        "NES__Memory__TupleBuffer__getNumberOfTuples",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__getNumberOfTuples,
         tupleBufferRef);
 }
 
 void RecordBuffer::setNumRecords(const Value<UInt64>& numRecordsValue)
 {
     FunctionCall<>(
-        "NES__Runtime__TupleBuffer__setNumberOfTuples",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setNumberOfTuples,
+        "NES__Memory__TupleBuffer__setNumberOfTuples",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__setNumberOfTuples,
         tupleBufferRef,
         numRecordsValue);
 }
@@ -43,7 +43,7 @@ void RecordBuffer::setNumRecords(const Value<UInt64>& numRecordsValue)
 Value<MemRef> RecordBuffer::getBuffer() const
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__getBuffer", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getBuffer, tupleBufferRef);
+        "NES__Memory__TupleBuffer__getBuffer", Runtime::ProxyFunctions::NES__Memory__TupleBuffer__getBuffer, tupleBufferRef);
 }
 const Value<MemRef>& RecordBuffer::getReference() const
 {
@@ -53,23 +53,20 @@ const Value<MemRef>& RecordBuffer::getReference() const
 Value<UInt64> RecordBuffer::getOriginId()
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__getOriginId", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getOriginId, tupleBufferRef);
+        "NES__Memory__TupleBuffer__getOriginId", Runtime::ProxyFunctions::NES__Memory__TupleBuffer__getOriginId, tupleBufferRef);
 }
 
 void RecordBuffer::setOriginId(const Value<UInt64>& originId)
 {
     FunctionCall<>(
-        "NES__Runtime__TupleBuffer__setOriginId",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setOriginId,
-        tupleBufferRef,
-        originId);
+        "NES__Memory__TupleBuffer__setOriginId", Runtime::ProxyFunctions::NES__Memory__TupleBuffer__setOriginId, tupleBufferRef, originId);
 }
 
 void RecordBuffer::setSequenceNr(const Value<UInt64>& seqNumber)
 {
     FunctionCall<>(
-        "NES__Runtime__TupleBuffer__setSequenceNr",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setSequenceNumber,
+        "NES__Memory__TupleBuffer__setSequenceNr",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__setSequenceNumber,
         tupleBufferRef,
         seqNumber);
 }
@@ -77,8 +74,8 @@ void RecordBuffer::setSequenceNr(const Value<UInt64>& seqNumber)
 void RecordBuffer::setChunkNr(const Value<UInt64>& chunkNumber)
 {
     FunctionCall<>(
-        "NES__Runtime__TupleBuffer__setChunkNumber",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setChunkNumber,
+        "NES__Memory__TupleBuffer__setChunkNumber",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__setChunkNumber,
         tupleBufferRef,
         chunkNumber);
 }
@@ -86,14 +83,14 @@ void RecordBuffer::setChunkNr(const Value<UInt64>& chunkNumber)
 Value<UInt64> RecordBuffer::getChunkNr()
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__getChunkNumber", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getChunkNumber, tupleBufferRef);
+        "NES__Memory__TupleBuffer__getChunkNumber", Runtime::ProxyFunctions::NES__Memory__TupleBuffer__getChunkNumber, tupleBufferRef);
 }
 
 void RecordBuffer::setLastChunk(const Value<Boolean>& isLastChunk)
 {
     FunctionCall<>(
-        "NES__Runtime__TupleBuffer__setLastChunk",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setLastChunk,
+        "NES__Memory__TupleBuffer__setLastChunk",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__setLastChunk,
         tupleBufferRef,
         isLastChunk);
 }
@@ -101,20 +98,20 @@ void RecordBuffer::setLastChunk(const Value<Boolean>& isLastChunk)
 Value<Boolean> RecordBuffer::isLastChunk()
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__isLastChunk", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__isLastChunk, tupleBufferRef);
+        "NES__Memory__TupleBuffer__isLastChunk", Runtime::ProxyFunctions::NES__Memory__TupleBuffer__isLastChunk, tupleBufferRef);
 }
 
 Value<UInt64> RecordBuffer::getWatermarkTs()
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__Watermark", Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getWatermark, tupleBufferRef);
+        "NES__Memory__TupleBuffer__Watermark", Runtime::ProxyFunctions::NES__Memory__TupleBuffer__getWatermark, tupleBufferRef);
 }
 
 void RecordBuffer::setWatermarkTs(const Value<UInt64>& watermarkTs)
 {
     FunctionCall<>(
-        "NES__Runtime__TupleBuffer__setWatermark",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setWatermark,
+        "NES__Memory__TupleBuffer__setWatermark",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__setWatermark,
         tupleBufferRef,
         watermarkTs);
 }
@@ -122,24 +119,24 @@ void RecordBuffer::setWatermarkTs(const Value<UInt64>& watermarkTs)
 Value<UInt64> RecordBuffer::getSequenceNr()
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__getSequenceNumber",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getSequenceNumber,
+        "NES__Memory__TupleBuffer__getSequenceNumber",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__getSequenceNumber,
         tupleBufferRef);
 }
 
 Value<UInt64> RecordBuffer::getCreatingTs()
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__getCreationTimestampInMS",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getCreationTimestampInMS,
+        "NES__Memory__TupleBuffer__getCreationTimestampInMS",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__getCreationTimestampInMS,
         tupleBufferRef);
 }
 
 void RecordBuffer::setCreationTs(const Value<NES::Nautilus::UInt64>& creationTs)
 {
     FunctionCall<>(
-        "NES__Runtime__TupleBuffer__setCreationTimestampInMS",
-        Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__setCreationTimestampInMS,
+        "NES__Memory__TupleBuffer__setCreationTimestampInMS",
+        Runtime::ProxyFunctions::NES__Memory__TupleBuffer__setCreationTimestampInMS,
         tupleBufferRef,
         creationTs);
 }

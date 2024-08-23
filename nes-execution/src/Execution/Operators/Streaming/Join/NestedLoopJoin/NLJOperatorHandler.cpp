@@ -20,7 +20,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-StreamSlicePtr NLJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer> buffers)
+StreamSlicePtr NLJOperatorHandler::deserializeSlice(std::span<const Memory::TupleBuffer> buffers)
 {
     return NLJSlice::deserialize(bufferProvider, leftSchema, pageSizeLeft, rightSchema, pageSizeRight, buffers);
 }

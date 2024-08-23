@@ -49,7 +49,7 @@ public:
         uint64_t sliceStart,
         uint64_t sliceEnd,
         uint64_t numWorkerThreads,
-        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
         SchemaPtr& leftSchema,
         uint64_t leftPageSize,
         SchemaPtr& rightSchema,
@@ -107,7 +107,7 @@ public:
      * @param bufferProvider for getting new tuple buffers
      * @return list of pages that store records and metadata
      */
-    std::vector<Runtime::TupleBuffer> serialize(AbstractBufferProvider& bufferProvider) override;
+    std::vector<Memory::TupleBuffer> serialize(Memory::AbstractBufferProvider& bufferProvider) override;
 
     /**
      * @brief Recreates the slice from tuple buffers [Not implemented for variable sized pages right now
@@ -126,12 +126,12 @@ public:
      * @param buffers List of tuple buffers to recreate the state of slice
      */
     static StreamSlicePtr deserialize(
-        std::shared_ptr<AbstractBufferProvider> bufferProvider,
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
         SchemaPtr& leftSchema,
         uint64_t leftPageSize,
         SchemaPtr& rightSchema,
         uint64_t rightPageSize,
-        std::span<const Runtime::TupleBuffer> buffers);
+        std::span<const Memory::TupleBuffer> buffers);
 
 private:
     std::vector<std::unique_ptr<Nautilus::Interface::PagedVectorVarSized>> leftPagedVectors;

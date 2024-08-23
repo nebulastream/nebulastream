@@ -32,7 +32,7 @@ namespace NES
 
 CSVSource::CSVSource(
     SchemaPtr schema,
-    std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
+    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     Runtime::QueryManagerPtr queryManager,
     CSVSourceTypePtr csvSourceType,
     OperatorId operatorId,
@@ -107,7 +107,7 @@ CSVSource::CSVSource(
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
 }
 
-std::optional<Runtime::TupleBuffer> CSVSource::receiveData()
+std::optional<Memory::TupleBuffer> CSVSource::receiveData()
 {
     NES_TRACE("CSVSource::receiveData called on  {}", operatorId);
     auto buffer = allocateBuffer();

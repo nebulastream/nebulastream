@@ -37,7 +37,7 @@ public:
      * @param bufferManagers list of BufferProvider
      * @return NodeEngineBuilder&
      */
-    NodeEngineBuilder& setBufferManagers(std::vector<BufferManagerPtr> bufferManagers);
+    NodeEngineBuilder& setBufferManagers(std::vector<Memory::BufferManagerPtr> bufferManagers);
 
     /**
      * setter used to pass a query manager to NodeEngineBuilder. Optional
@@ -53,7 +53,7 @@ public:
     std::unique_ptr<NodeEngine> build();
 
 private:
-    std::vector<BufferManagerPtr> bufferManagers;
+    std::vector<Memory::BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;
     const Configurations::WorkerConfiguration& workerConfiguration;
 };

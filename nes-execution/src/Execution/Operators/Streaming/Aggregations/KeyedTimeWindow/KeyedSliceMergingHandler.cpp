@@ -47,7 +47,7 @@ void KeyedSliceMergingHandler::stop(Runtime::QueryTerminationType queryTerminati
 KeyedSlicePtr KeyedSliceMergingHandler::createGlobalSlice(SliceMergeTask<KeyedSlice>* sliceMergeTask, uint64_t numberOfKeys)
 {
     /// allocate hash map
-    auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
     return std::make_unique<KeyedSlice>(std::move(hashMap), sliceMergeTask->startSlice, sliceMergeTask->endSlice);
 }

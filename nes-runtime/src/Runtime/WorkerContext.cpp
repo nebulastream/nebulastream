@@ -19,9 +19,10 @@
 namespace NES::Runtime
 {
 
-folly::ThreadLocalPtr<AbstractBufferProvider> WorkerContext::localBufferPoolTLS{};
+folly::ThreadLocalPtr<Memory::AbstractBufferProvider> WorkerContext::localBufferPoolTLS{};
 
-WorkerContext::WorkerContext(WorkerThreadId workerId, BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId)
+WorkerContext::WorkerContext(
+    WorkerThreadId workerId, Memory::BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId)
     : workerId(workerId), queueId(queueId)
 {
     ///we changed from a local pool to a fixed sized pool as it allows us to manage the numbers that are hold in the cache via the parameter
@@ -72,18 +73,18 @@ uint32_t WorkerContext::decreaseObjectRefCnt(void* object)
     return 0;
 }
 
-TupleBuffer WorkerContext::allocateTupleBuffer()
+Memory::TupleBuffer WorkerContext::allocateTupleBuffer()
 {
     return localBufferPool->getBufferBlocking();
 }
 
 
-AbstractBufferProvider* WorkerContext::getBufferProviderTLS()
+Memory::AbstractBufferProvider* WorkerContext::getBufferProviderTLS()
 {
     return localBufferPoolTLS.get();
 }
 
-std::shared_ptr<AbstractBufferProvider> WorkerContext::getBufferProvider()
+std::shared_ptr<Memory::AbstractBufferProvider> WorkerContext::getBufferProvider()
 {
     return localBufferPool;
 }

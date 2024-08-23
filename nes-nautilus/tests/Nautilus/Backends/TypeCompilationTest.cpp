@@ -224,7 +224,7 @@ Value<> listLengthTest(Value<List>& list)
 
 /*
 TEST_P(TypeCompilationTest, compileListLengthFunctionTest) {
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto list = RawList(10);
@@ -261,7 +261,7 @@ Value<> textTestFunction(Value<Text>& text)
 
 TEST_P(TypeCompilationTest, compileTextFunctionTest)
 {
-    Runtime::BufferManagerPtr bufferManager = Runtime::BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
 
     auto textA = Value<Text>("test");

@@ -26,12 +26,12 @@
 namespace NES
 {
 
-CsvFormat::CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider)
+CsvFormat::CsvFormat(SchemaPtr schema, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
     : SinkFormat(std::move(schema), std::move(bufferProvider))
 {
 }
 
-CsvFormat::CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider, bool addTimestamp)
+CsvFormat::CsvFormat(SchemaPtr schema, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, bool addTimestamp)
     : SinkFormat(std::move(schema), std::move(bufferProvider), addTimestamp)
 {
 }
@@ -47,7 +47,7 @@ std::string CsvFormat::getFormattedSchema()
     return out;
 }
 
-std::string CsvFormat::getFormattedBuffer(Runtime::TupleBuffer& inputBuffer)
+std::string CsvFormat::getFormattedBuffer(Memory::TupleBuffer& inputBuffer)
 {
     std::string bufferContent;
     if (addTimestamp)
@@ -76,7 +76,7 @@ FormatTypes CsvFormat::getSinkFormat()
     return FormatTypes::CSV_FORMAT;
 }
 
-FormatIterator CsvFormat::getTupleIterator(Runtime::TupleBuffer& inputBuffer)
+FormatIterator CsvFormat::getTupleIterator(Memory::TupleBuffer& inputBuffer)
 {
     return FormatIterator(schema, inputBuffer, FormatTypes::CSV_FORMAT);
 }

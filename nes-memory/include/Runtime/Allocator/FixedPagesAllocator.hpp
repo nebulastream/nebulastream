@@ -20,7 +20,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <sys/mman.h>
 
-namespace NES::Runtime
+namespace NES::Memory
 {
 namespace detail
 {
@@ -70,7 +70,7 @@ class FixedPagesAllocator
 public:
     explicit FixedPagesAllocator(size_t totalSize)
     {
-        head = NES::Runtime::detail::allocHugePages<uint8_t>(totalSize);
+        head = detail::allocHugePages<uint8_t>(totalSize);
         overrunAddress = reinterpret_cast<uintptr_t>(head) + totalSize;
         tail.store(reinterpret_cast<uintptr_t>(head));
         this->totalSize = totalSize;

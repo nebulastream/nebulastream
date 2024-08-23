@@ -35,7 +35,7 @@ public:
      * @param buffer
      * @param addBufferMetaData: If true, buffer meta data (e.g., sequence number, origin id, ...) is added to the buffer
      */
-    virtual void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) = 0;
+    virtual void emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData = true) = 0;
 
     virtual ~DataEmitter() NES_NOEXCEPT(false) = default;
 

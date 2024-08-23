@@ -31,7 +31,7 @@
 template <std::size_t v>
 static constexpr bool ispow2 = (!!v) && !(v & (v - 1));
 
-namespace NES::Runtime
+namespace NES::Memory
 {
 namespace detail
 {

@@ -32,8 +32,8 @@ namespace NES::Runtime::Execution
 class HashJoinOperatorVarSizedTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<BufferManager> bufferManager;
-    std::vector<TupleBuffer> emittedBuffers;
+    std::shared_ptr<Memory::BufferManager> bufferManager;
+    std::vector<Memory::TupleBuffer> emittedBuffers;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
@@ -47,7 +47,7 @@ public:
     {
         BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinOperatorVarSizedTest test case.");
-        bufferManager = BufferManager::create();
+        bufferManager = Memory::BufferManager::create();
     }
 
     /* Will be called after a test is executed. */
@@ -73,7 +73,7 @@ struct HashJoinBuildHelper
     size_t windowSize;
     Operators::HJBuildSlicingVarSizedPtr hashJoinBuild;
     std::string joinFieldName;
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::string timeStampField;
     HashJoinOperatorVarSizedTest* hashJoinOperatorTest;
@@ -82,7 +82,7 @@ struct HashJoinBuildHelper
     HashJoinBuildHelper(
         Operators::HJBuildSlicingVarSizedPtr hashJoinBuild,
         const std::string& joinFieldName,
-        BufferManagerPtr bufferManager,
+        Memory::BufferManagerPtr bufferManager,
         SchemaPtr schema,
         const std::string& timeStampField,
         HashJoinOperatorVarSizedTest* hashJoinOperatorTest,
@@ -130,9 +130,9 @@ bool hashJoinBuildAndCheck(HashJoinBuildHelper buildHelper)
         INVALID_QUERY_ID, /// mock query id
         buildHelper.bufferManager,
         buildHelper.noWorkerThreads,
-        [&hashJoinOperatorTest](TupleBuffer& buffer, WorkerContextRef)
+        [&hashJoinOperatorTest](Memory::TupleBuffer& buffer, WorkerContextRef)
         { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
-        [&hashJoinOperatorTest](TupleBuffer& buffer) { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
+        [&hashJoinOperatorTest](Memory::TupleBuffer& buffer) { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
         {hashJoinOpHandler});
 
     auto executionContext = ExecutionContext(
@@ -199,7 +199,7 @@ struct HashJoinProbeHelper
     size_t preAllocPageCnt;
     uint64_t windowSize;
     std::string joinFieldNameLeft, joinFieldNameRight;
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     SchemaPtr leftSchema, rightSchema;
     std::string timeStampFieldLeft;
     std::string timeStampFieldRight;
@@ -208,7 +208,7 @@ struct HashJoinProbeHelper
     HashJoinProbeHelper(
         const std::string& joinFieldNameLeft,
         const std::string& joinFieldNameRight,
-        BufferManagerPtr bufferManager,
+        Memory::BufferManagerPtr bufferManager,
         SchemaPtr leftSchema,
         SchemaPtr rightSchema,
         const std::string& timeStampFieldLeft,
@@ -272,9 +272,9 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         QueryId(1), /// mock query id
         hashJoinProbeHelper.bufferManager,
         hashJoinProbeHelper.noWorkerThreads,
-        [&hashJoinOperatorTest](TupleBuffer& buffer, WorkerContextRef)
+        [&hashJoinOperatorTest](Memory::TupleBuffer& buffer, WorkerContextRef)
         { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
-        [&hashJoinOperatorTest](TupleBuffer& buffer) { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
+        [&hashJoinOperatorTest](Memory::TupleBuffer& buffer) { hashJoinOperatorTest->emittedBuffers.emplace_back(std::move(buffer)); },
         {hashJoinOpHandler});
 
     auto executionContext = ExecutionContext(

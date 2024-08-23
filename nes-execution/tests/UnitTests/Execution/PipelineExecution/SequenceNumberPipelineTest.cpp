@@ -56,7 +56,7 @@ class SequenceNumberPipelineTest : public Testing::BaseUnitTest, public Abstract
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -86,9 +86,9 @@ public:
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(AbstractBufferProvider& bufferProvider, SchemaPtr schema)
+std::vector<Memory::TupleBuffer> createDataAllSeqNumbersEmitted(Memory::AbstractBufferProvider& bufferProvider, SchemaPtr schema)
 {
-    std::vector<TupleBuffer> retBuffers;
+    std::vector<Memory::TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
@@ -178,9 +178,9 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataFullWithConstantFieldValues(AbstractBufferProvider& bufferProvider, SchemaPtr schema)
+std::vector<Memory::TupleBuffer> createDataFullWithConstantFieldValues(Memory::AbstractBufferProvider& bufferProvider, SchemaPtr schema)
 {
-    std::vector<TupleBuffer> retBuffers;
+    std::vector<Memory::TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
@@ -427,7 +427,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
         pipeline3Context.buffers.begin(),
         pipeline3Context.buffers.end(),
         0_u64,
-        [](const auto sum, const TupleBuffer& buf) { return sum + buf.getNumberOfTuples(); });
+        [](const auto sum, const Memory::TupleBuffer& buf) { return sum + buf.getNumberOfTuples(); });
     EXPECT_EQ(numberOfTuples, expectedNumberOfTuples);
 
     /// Comparing expected output

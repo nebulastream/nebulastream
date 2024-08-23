@@ -82,7 +82,7 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(
         NES_TRACE("Deploy window ({}-{}) merge task for {} slices  ", windowStart, windowEnd, slicesForWindow.size());
         auto buffer = bufferProvider->getBufferBlocking();
         buffer.setSequenceNumber(resultSequenceNumber);
-        buffer.setChunkNumber(TupleBuffer::INITIAL_CHUNK_NUMBER);
+        buffer.setChunkNumber(Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
         /// Tasks always fit into a single chunk, thus this is the last chunk
         buffer.setLastChunk(true);
 
@@ -91,7 +91,7 @@ void AppendToSliceStoreHandler<Slice>::triggerSlidingWindows(
         task->endSlice = windowEnd;
         task->slices = slicesForWindow;
         task->sequenceNumber = resultSequenceNumber++;
-        task->chunkNumber = TupleBuffer::INITIAL_CHUNK_NUMBER;
+        task->chunkNumber = Memory::TupleBuffer::INITIAL_CHUNK_NUMBER;
         task->lastChunk = true;
         ctx.dispatchBuffer(buffer);
     }

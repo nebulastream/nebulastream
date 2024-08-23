@@ -19,7 +19,7 @@
 #include <ErrorHandling.hpp>
 #include "TupleBufferImpl.hpp"
 
-namespace NES::Runtime
+namespace NES::Memory
 {
 LocalBufferPool::LocalBufferPool(
     const BufferManagerPtr& bufferManager, std::deque<detail::MemorySegment*>&& buffers, size_t numberOfReservedBuffers)

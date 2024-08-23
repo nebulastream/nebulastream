@@ -84,7 +84,7 @@ public:
     */
     explicit QueryManager(
         std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
-        std::vector<BufferManagerPtr> bufferManagers,
+        std::vector<Memory::BufferManagerPtr> bufferManagers,
         WorkerId nodeEngineId,
         uint16_t numThreads,
         uint64_t numberOfBuffersPerEpoch,
@@ -122,7 +122,7 @@ public:
      * @param Pointer to the pipeline stage that will be executed next
      * @param id of the queue where to put the task (only necessary if multiple queues are used, default is 0)
      */
-    void addWorkForNextPipeline(TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0);
+    void addWorkForNextPipeline(Memory::TupleBuffer& buffer, Execution::SuccessorExecutablePipeline executable, uint32_t queueId = 0);
 
     /**
      * This method posts a reconfig callback task
@@ -214,7 +214,7 @@ public:
      * method to get the first buffer manger
      * @return first buffer manager
      */
-    [[nodiscard]] BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
+    [[nodiscard]] Memory::BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
 
 private:
     /**
@@ -227,7 +227,7 @@ private:
      * @param buffer: a tuple buffer storing the reconfiguration message
      * @param blocking: whether to block until the reconfiguration is done. Mind this parameter because it blocks!
      */
-    bool addReconfigurationMessage(QueryId queryId, TupleBuffer&& buffer, bool blocking = false);
+    bool addReconfigurationMessage(QueryId queryId, Memory::TupleBuffer&& buffer, bool blocking = false);
 
 public:
     /**
@@ -386,7 +386,7 @@ protected:
 protected:
     WorkerId nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
-    std::vector<BufferManagerPtr> bufferManagers;
+    std::vector<Memory::BufferManagerPtr> bufferManagers;
 
     uint16_t numThreads;
 

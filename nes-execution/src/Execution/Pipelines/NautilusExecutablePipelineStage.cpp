@@ -35,7 +35,7 @@ uint32_t NautilusExecutablePipelineStage::setup(PipelineExecutionContext& pipeli
 }
 
 ExecutionResult NautilusExecutablePipelineStage::execute(
-    TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
+    Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
 {
     auto pipelineExecutionContextRef = Value<MemRef>((int8_t*)&pipelineExecutionContext);
     auto workerContextRef = Value<MemRef>((int8_t*)&workerContext);

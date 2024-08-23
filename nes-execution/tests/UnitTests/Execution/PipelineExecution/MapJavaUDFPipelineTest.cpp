@@ -41,7 +41,7 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */

@@ -38,7 +38,7 @@ ThreadPool::ThreadPool(
     WorkerId nodeId,
     QueryManagerPtr queryManager,
     uint32_t numThreads,
-    std::vector<BufferManagerPtr> bufferManagers,
+    std::vector<Memory::BufferManagerPtr> bufferManagers,
     uint64_t numberOfBuffersPerWorker,
     std::vector<uint64_t> workerPinningPositionList)
     : nodeId(nodeId)
@@ -120,7 +120,7 @@ bool ThreadPool::start(const std::vector<uint64_t> threadToQueueMapping)
             [this, i, barrier, &threadToQueueMapping]()
             {
                 setThreadName("Wrk-%d-%d", nodeId, i);
-                BufferManagerPtr localBufferManager;
+                Memory::BufferManagerPtr localBufferManager;
                 uint64_t queueIdx = threadToQueueMapping.size() ? threadToQueueMapping[i] : 0;
 #if defined(__linux__)
                 if (workerPinningPositionList.size() != 0)

@@ -27,12 +27,12 @@ std::string JsonFormat::getFormattedSchema()
     NES_NOT_IMPLEMENTED();
 }
 
-JsonFormat::JsonFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider)
+JsonFormat::JsonFormat(SchemaPtr schema, std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
     : SinkFormat(std::move(schema), std::move(bufferProvider))
 {
 }
 
-std::string JsonFormat::getFormattedBuffer(Runtime::TupleBuffer&)
+std::string JsonFormat::getFormattedBuffer(Memory::TupleBuffer&)
 {
     NES_NOT_IMPLEMENTED();
 }
@@ -46,7 +46,7 @@ FormatTypes JsonFormat::getSinkFormat()
     return FormatTypes::JSON_FORMAT;
 }
 
-FormatIterator JsonFormat::getTupleIterator(Runtime::TupleBuffer& inputBuffer)
+FormatIterator JsonFormat::getTupleIterator(Memory::TupleBuffer& inputBuffer)
 {
     return FormatIterator(schema, inputBuffer, FormatTypes::JSON_FORMAT);
 }

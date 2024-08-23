@@ -36,7 +36,7 @@ bool JSONParser::writeInputTupleToTupleBuffer(
     uint64_t tupleCount,
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
-    const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
+    const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("JSONParser::writeInputTupleToTupleBuffer: Current TupleCount:  {}", tupleCount);
     std::vector<std::string> helperToken;

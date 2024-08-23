@@ -59,7 +59,7 @@ public:
      * @param schema - schema of tuples associated with paged vector
      * @param pageSize - size of page to get from buffer manager
      */
-    PagedVectorVarSized(std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
+    PagedVectorVarSized(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider, SchemaPtr schema, uint64_t pageSize = PAGE_SIZE);
 
     /**
      * @brief Constructor. Recreated PagedVectorVarSized from tuple buffers [Recreation not implemented for variable sized pages right now]
@@ -69,9 +69,9 @@ public:
      * @param pageSize - size of page to get from buffer manager
      */
     PagedVectorVarSized(
-        std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
+        std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
         SchemaPtr schema,
-        std::span<const Runtime::TupleBuffer> buffers,
+        std::span<const Memory::TupleBuffer> buffers,
         uint64_t pageSize = PAGE_SIZE);
 
     /**
@@ -112,7 +112,7 @@ public:
      * @brief Getter for the pages object.
      * @return std::vector<Runtime::TupleBuffer>&
      */
-    std::vector<Runtime::TupleBuffer>& getPages();
+    std::vector<Memory::TupleBuffer>& getPages();
 
     /**
      * @brief Returns the number of pages.
@@ -169,15 +169,15 @@ private:
     void setEntrySizeAndCapacityPerPage();
 
     friend PagedVectorVarSizedRef;
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
     SchemaPtr schema;
     uint64_t pageSize;
     uint64_t entrySize;
     uint64_t capacityPerPage;
     uint64_t totalNumberOfEntries;
     uint64_t numberOfEntriesOnCurrPage;
-    std::vector<Runtime::TupleBuffer> pages;
-    std::vector<Runtime::TupleBuffer> varSizedDataPages;
+    std::vector<Memory::TupleBuffer> pages;
+    std::vector<Memory::TupleBuffer> varSizedDataPages;
     uint8_t* currVarSizedDataEntry;
     std::map<uint64_t, VarSizedDataEntryMapValue> varSizedDataEntryMap;
     uint64_t varSizedDataEntryMapCounter;

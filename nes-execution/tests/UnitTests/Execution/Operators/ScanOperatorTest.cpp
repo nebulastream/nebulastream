@@ -50,7 +50,7 @@ public:
  */
 TEST_F(ScanOperatorTest, scanRowLayoutBuffer)
 {
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
@@ -88,7 +88,7 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer)
  */
 TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer)
 {
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
