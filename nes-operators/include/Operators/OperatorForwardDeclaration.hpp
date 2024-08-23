@@ -63,15 +63,6 @@ using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLog
 class SourceLogicalOperator;
 using SourceLogicalOperatorPtr = std::shared_ptr<SourceLogicalOperator>;
 
-namespace Catalogs::UDF
-{
-class PythonUDFDescriptor;
-using PythonUDFDescriptorPtr = std::shared_ptr<PythonUDFDescriptor>;
-
-class UDFDescriptor;
-using UDFDescriptorPtr = std::shared_ptr<UDFDescriptor>;
-} /// namespace Catalogs::UDF
-
 namespace InferModel
 {
 class LogicalInferModelOperator;

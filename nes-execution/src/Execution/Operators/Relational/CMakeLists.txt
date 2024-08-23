@@ -13,9 +13,6 @@
 add_subdirectory(Aggregation)
 add_subdirectory(Join)
 add_subdirectory(Sort)
-if (NAUTILUS_PYTHON_UDF)
-    add_subdirectory(PythonUDF)
-endif ()
 add_source_files(nes-execution
         Map.cpp
         Selection.cpp

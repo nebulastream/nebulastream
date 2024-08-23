@@ -23,7 +23,6 @@
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
 #include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -77,22 +76,6 @@ QueryPlanPtr QueryPlanBuilder::addLimit(const uint64_t limit, QueryPlanPtr query
 {
     NES_DEBUG("QueryPlanBuilder: add limit operator to query plan");
     OperatorPtr op = LogicalOperatorFactory::createLimitOperator(limit);
-    queryPlan->appendOperatorAsNewRoot(op);
-    return queryPlan;
-}
-
-QueryPlanPtr QueryPlanBuilder::addMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan)
-{
-    NES_DEBUG("QueryPlanBuilder: add map java udf operator to query plan");
-    auto op = LogicalOperatorFactory::createMapUDFLogicalOperator(descriptor);
-    queryPlan->appendOperatorAsNewRoot(op);
-    return queryPlan;
-}
-
-QueryPlanPtr QueryPlanBuilder::addFlatMapUDF(Catalogs::UDF::UDFDescriptorPtr const& descriptor, QueryPlanPtr queryPlan)
-{
-    NES_DEBUG("QueryPlanBuilder: add flat map java udf operator to query plan");
-    auto op = LogicalOperatorFactory::createFlatMapUDFLogicalOperator(descriptor);
     queryPlan->appendOperatorAsNewRoot(op);
     return queryPlan;
 }

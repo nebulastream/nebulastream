@@ -65,7 +65,6 @@
 #include <MemoryLayout/RowLayout.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
-#include <Operators/LogicalOperators/UDFs/PythonUDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Windows/Aggregations/WindowAggregationDescriptor.hpp>
@@ -77,11 +76,9 @@
 #include <QueryCompiler/Operators/PhysicalOperators/Joining/Streaming/PhysicalStreamJoinProbeOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalEmitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalFilterOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalFlatMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalInferModelOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalLimitOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapOperator.hpp>
-#include <QueryCompiler/Operators/PhysicalOperators/PhysicalMapUDFOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalProjectOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalWatermarkAssignmentOperator.hpp>
@@ -192,46 +189,6 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         auto map = lowerMap(pipeline, operatorNode);
         parentOperator->setChild(map);
         return map;
-    }
-    else if (operatorNode->instanceOf<PhysicalOperators::PhysicalMapUDFOperator>())
-    {
-        /// for creating the handler that the nautilus udf operator needs to execute the udf
-        const auto udfOperator = operatorNode->as<PhysicalOperators::PhysicalMapUDFOperator>();
-        const auto udfDescriptor = udfOperator->getUDFDescriptor();
-        const auto methodName = udfDescriptor->getMethodName();
-        const auto udfInputSchema = udfDescriptor->getInputSchema();
-        const auto udfOutputSchema = udfDescriptor->getOutputSchema();
-
-        /// for converting the Physical UDF Operator to the Nautilus Operator
-        const auto operatorInputSchema = udfOperator->getInputSchema();
-        const auto operatorOutputSchema = udfOperator->getOutputSchema();
-
-        if (!udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>())
-        {
-#ifdef NAUTILUS_PYTHON_UDF_ENABLED
-        }
-        else if (udfDescriptor->instanceOf<Catalogs::UDF::PythonUDFDescriptor>())
-        {
-            /// creating the python udf handler
-            const auto pythonUDFDescriptor = udfDescriptor->as<Catalogs::UDF::PythonUDFDescriptor>(udfDescriptor);
-            const auto functionString = pythonUDFDescriptor->getFunctionString();
-
-            const auto handler = std::make_shared<Runtime::Execution::Operators::PythonUDFOperatorHandler>(
-                functionString, methodName, udfInputSchema, udfOutputSchema);
-            operatorHandlers.push_back(handler);
-            const auto indexForThisHandler = operatorHandlers.size() - 1;
-
-            /// auto mapPythonUDF = lowerMapPythonUDF(pipeline, operatorNode, indexForThisHandler);
-            auto mapPythonUDF = std::make_shared<Runtime::Execution::Operators::MapPythonUDF>(
-                indexForThisHandler, operatorInputSchema, operatorOutputSchema);
-            parentOperator->setChild(mapPythonUDF);
-            return mapPythonUDF;
-#endif /// NAUTILUS_PYTHON_UDF_ENABLED
-        }
-        else
-        {
-            throw UnknownUserDefinedFunctionType();
-        }
     }
     else if (operatorNode->instanceOf<PhysicalOperators::PhysicalThresholdWindowOperator>())
     {

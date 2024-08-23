@@ -146,24 +146,6 @@ public:
     */
     static LogicalBinaryOperatorPtr createBatchJoinOperator(
         const Join::Experimental::LogicalBatchJoinDescriptorPtr& batchJoinDefinition, OperatorId id = getNextOperatorId());
-
-    /**
-     * @brief Create a new MapJavaUDFLogicalOperator.
-     * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
-     * @param id The operator ID.
-     * @return A logical operator node which encapsulates the Java UDF.
-     */
-    static LogicalUnaryOperatorPtr
-    createMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id = getNextOperatorId());
-
-    /**
-     * @brief Create a new FlatMapJavaUDFLogicalOperator.
-     * @param javaUdfDescriptor The descriptor of the Java UDF represented by this logical operator node.
-     * @param id The operator ID.
-     * @return A logical operator node which encapsulates the Java UDF.
-     */
-    static LogicalUnaryOperatorPtr
-    createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id = getNextOperatorId());
 };
 
 } /// namespace NES

@@ -159,18 +159,6 @@ protected:
     void lowerMapOperator(const LogicalOperatorPtr& operatorNode);
 
     /**
-    * @brief Lowers a udf map operator
-    * @param operatorNode current operator
-    */
-    void lowerUDFMapOperator(const LogicalOperatorPtr& operatorNode);
-
-    /**
-    * @brief Lowers a udf flat map operator
-    * @param operatorNode current operator
-    */
-    void lowerUDFFlatMapOperator(const LogicalOperatorPtr& operatorNode);
-
-    /**
     * @brief Lowers a window operator
     * @param operatorNode current operator
     */
