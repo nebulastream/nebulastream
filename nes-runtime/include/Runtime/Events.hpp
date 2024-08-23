@@ -69,7 +69,7 @@ public:
      * @brief creates a custom events that stores a buffer as a payload
      * @param buffer
      */
-    explicit CustomEventWrapper(Runtime::TupleBuffer&& buffer) : BaseEvent(EventType::kCustomEvent), buffer(buffer) { }
+    explicit CustomEventWrapper(Memory::TupleBuffer&& buffer) : BaseEvent(EventType::kCustomEvent), buffer(buffer) { }
 
     uint8_t* data() override { return buffer.getBuffer(); }
 
@@ -80,7 +80,7 @@ public:
     }
 
 private:
-    Runtime::TupleBuffer buffer;
+    Memory::TupleBuffer buffer;
 };
 
 /**

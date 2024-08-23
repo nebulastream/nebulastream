@@ -33,7 +33,7 @@
 namespace NES
 {
 
-std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer)
+std::string Util::printTupleBufferAsText(Memory::TupleBuffer& buffer)
 {
     std::stringstream ss;
     for (uint64_t i = 0; i < buffer.getNumberOfTuples(); i++)
@@ -43,7 +43,7 @@ std::string Util::printTupleBufferAsText(Runtime::TupleBuffer& buffer)
     return ss.str();
 }
 
-std::string Util::printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema)
+std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -145,14 +145,14 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
     return true;
 }
 
-std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(
+std::vector<Memory::TupleBuffer> Util::createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
     const std::string& timeStampFieldName,
     uint64_t lastTimeStamp)
 {
-    std::vector<Runtime::TupleBuffer> recordBuffers;
+    std::vector<Memory::TupleBuffer> recordBuffers;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
 
     /// Creating everything for the csv parser

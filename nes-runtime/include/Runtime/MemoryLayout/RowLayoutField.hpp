@@ -43,7 +43,8 @@ public:
      * @tparam T type of field
      * @return field handler via a fieldIndex and a layoutBuffer
      */
-    static inline RowLayoutField<T, boundaryChecks> create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer);
+    static inline RowLayoutField<T, boundaryChecks>
+    create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer);
 
     /**
     * Factory to create a RowLayoutField for a specific memory layout and a specific tuple buffer.
@@ -54,7 +55,7 @@ public:
     * @return field handler
     */
     static inline RowLayoutField<T, boundaryChecks>
-    create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer);
+    create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer);
 
     /**
      * Accesses the value of this field for a specific record.
@@ -82,7 +83,7 @@ private:
 
 template <class T, bool boundaryChecks>
 inline RowLayoutField<T, boundaryChecks>
-RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer)
+RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
     if (boundaryChecks && fieldIndex >= layout->getFieldOffSets().size())
     {
@@ -99,7 +100,7 @@ RowLayoutField<T, boundaryChecks>::create(uint64_t fieldIndex, std::shared_ptr<R
 
 template <class T, bool boundaryChecks>
 inline RowLayoutField<T, boundaryChecks>
-RowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, TupleBuffer& buffer)
+RowLayoutField<T, boundaryChecks>::create(const std::string& fieldName, std::shared_ptr<RowLayout> layout, Memory::TupleBuffer& buffer)
 {
     auto fieldIndex = layout->getFieldIndexFromName(fieldName);
     if (fieldIndex.has_value())

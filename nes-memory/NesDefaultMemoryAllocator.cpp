@@ -15,7 +15,7 @@
 #include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime
+namespace NES::Memory
 {
 
 void* NesDefaultMemoryAllocator::do_allocate(size_t bytes, size_t alignment)

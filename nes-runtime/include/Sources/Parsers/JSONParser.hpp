@@ -43,7 +43,7 @@ public:
         uint64_t tupleCount,
         Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
-        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
+        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager) override;
 
 private:
     uint64_t numberOfSchemaFields;

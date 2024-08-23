@@ -110,7 +110,7 @@ protected:
     std::vector<std::unique_ptr<Operators::StreamJoinHashTable>> hashTableRightSide;
     Operators::MergingHashTable mergingHashTableLeftSide;
     Operators::MergingHashTable mergingHashTableRightSide;
-    Runtime::FixedPagesAllocator fixedPagesAllocator;
+    Memory::FixedPagesAllocator fixedPagesAllocator;
     std::atomic<bool> alreadyMergedLocalToGlobalHashTable;
     std::mutex mutexMergeLocalToGlobalHashTable;
     QueryCompilation::StreamJoinStrategy joinStrategy;

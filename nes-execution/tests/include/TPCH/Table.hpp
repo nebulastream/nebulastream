@@ -34,7 +34,7 @@ class Table
 public:
     Table(MemoryLayouts::MemoryLayoutPtr layout) : layout(std::move(layout)) {};
 
-    std::vector<TupleBuffer>& getChunks() { return chunks; }
+    std::vector<Memory::TupleBuffer>& getChunks() { return chunks; }
     MemoryLayouts::MemoryLayoutPtr& getLayout() { return layout; }
 
     static void store(std::unique_ptr<Table>& table, std::string tableDir)
@@ -55,7 +55,7 @@ public:
 
     static std::unique_ptr<Table> load(
         const std::string& tableDir,
-        const std::shared_ptr<Runtime::AbstractBufferProvider>& bm,
+        const std::shared_ptr<Memory::AbstractBufferProvider>& bm,
         const MemoryLayouts::MemoryLayoutPtr& layout)
     {
         auto table = std::make_unique<Table>(layout);
@@ -86,9 +86,9 @@ public:
 
 private:
     friend TableBuilder;
-    TupleBuffer& addChunk(TupleBuffer& buffer) { return chunks.emplace_back(buffer); }
+    TupleBuffer& addChunk(Memory::TupleBuffer& buffer) { return chunks.emplace_back(buffer); }
     MemoryLayouts::MemoryLayoutPtr layout;
-    std::vector<TupleBuffer> chunks;
+    std::vector<Memory::TupleBuffer> chunks;
 };
 
 /**
@@ -97,7 +97,7 @@ private:
 class TableBuilder
 {
 public:
-    TableBuilder(std::shared_ptr<Runtime::AbstractBufferProvider> bm, const MemoryLayouts::MemoryLayoutPtr& layout)
+    TableBuilder(std::shared_ptr<Memory::AbstractBufferProvider> bm, const MemoryLayouts::MemoryLayoutPtr& layout)
         : bm(std::move(bm)), table(std::make_unique<Table>(layout))
     {
         appendBuffer();
@@ -133,7 +133,7 @@ private:
     }
 
 private:
-    std::shared_ptr<Runtime::AbstractBufferProvider> bm;
+    std::shared_ptr<Memory::AbstractBufferProvider> bm;
     std::unique_ptr<Table> table;
     std::unique_ptr<MemoryLayouts::TestTupleBuffer> currentBuffer;
 };

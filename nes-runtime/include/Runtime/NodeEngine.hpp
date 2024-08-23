@@ -75,17 +75,17 @@ public:
      */
     void stopQuery(QueryId queryId, QueryTerminationType terminationType = QueryTerminationType::HardStop);
 
-    BufferManagerPtr getBufferManager() { return bufferManagers[0]; }
+    Memory::BufferManagerPtr getBufferManager() { return bufferManagers[0]; }
     QueryManagerPtr getQueryManager() { return queryManager; }
 
     /**
      * @brief Create a node engine and gather node information
      * and initialize QueryManager, BufferManager and ThreadPool
      */
-    explicit NodeEngine(std::vector<BufferManagerPtr>&&, QueryManagerPtr&&);
+    explicit NodeEngine(std::vector<Memory::BufferManagerPtr>&&, QueryManagerPtr&&);
 
 private:
-    std::vector<BufferManagerPtr> bufferManagers;
+    std::vector<Memory::BufferManagerPtr> bufferManagers;
     std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> registeredQueries;
     QueryManagerPtr queryManager;
 };

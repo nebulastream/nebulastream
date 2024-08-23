@@ -29,7 +29,7 @@
 #include <Runtime/BufferRecycler.hpp>
 #include <folly/MPMCQueue.h>
 
-namespace NES::Runtime
+namespace NES::Memory
 {
 
 class TupleBuffer;

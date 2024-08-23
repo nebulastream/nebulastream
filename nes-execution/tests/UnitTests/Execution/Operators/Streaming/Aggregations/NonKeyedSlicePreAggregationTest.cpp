@@ -40,7 +40,7 @@ namespace NES::Runtime::Execution::Operators
 class NonKeyedSlicePreAggregationTest : public testing::Test
 {
 public:
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
@@ -130,8 +130,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performAggregation)
     auto sliceMergeTask = reinterpret_cast<SliceMergeTask<NonKeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
     ASSERT_EQ(sliceMergeTask->startSlice, 10);
     ASSERT_EQ(sliceMergeTask->endSlice, 20);
-    ASSERT_EQ(sliceMergeTask->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER);
-    ASSERT_EQ(sliceMergeTask->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+    ASSERT_EQ(sliceMergeTask->sequenceNumber, Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER);
+    ASSERT_EQ(sliceMergeTask->chunkNumber, Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
     ASSERT_EQ(sliceMergeTask->lastChunk, true);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }
@@ -189,8 +189,8 @@ TEST_F(NonKeyedSlicePreAggregationTest, performMultipleAggregation)
     auto sliceMergeTask = reinterpret_cast<SliceMergeTask<NonKeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
     ASSERT_EQ(sliceMergeTask->startSlice, 10);
     ASSERT_EQ(sliceMergeTask->endSlice, 20);
-    ASSERT_EQ(sliceMergeTask->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER);
-    ASSERT_EQ(sliceMergeTask->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+    ASSERT_EQ(sliceMergeTask->sequenceNumber, Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER);
+    ASSERT_EQ(sliceMergeTask->chunkNumber, Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
     ASSERT_EQ(sliceMergeTask->lastChunk, true);
     ASSERT_EQ(stateStore->getNumberOfSlices(), 1);
 }

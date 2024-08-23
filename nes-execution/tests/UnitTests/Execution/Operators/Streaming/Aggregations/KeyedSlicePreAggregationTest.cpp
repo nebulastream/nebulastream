@@ -43,7 +43,7 @@ namespace NES::Runtime::Execution::Operators
 class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest
 {
 public:
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -134,8 +134,8 @@ TEST_F(KeyedSlicePreAggregationTest, aggregate)
     auto smt = reinterpret_cast<SliceMergeTask<KeyedSlice>*>(pipelineContext.buffers[0].getBuffer());
     ASSERT_EQ(smt->startSlice, 10);
     ASSERT_EQ(smt->endSlice, 20);
-    ASSERT_EQ(smt->sequenceNumber, TupleBuffer::INITIAL_SEQUENCE_NUMBER);
-    ASSERT_EQ(smt->chunkNumber, TupleBuffer::INITIAL_CHUNK_NUMBER);
+    ASSERT_EQ(smt->sequenceNumber, Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER);
+    ASSERT_EQ(smt->chunkNumber, Memory::TupleBuffer::INITIAL_CHUNK_NUMBER);
     ASSERT_EQ(smt->lastChunk, true);
 }
 

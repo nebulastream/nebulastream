@@ -69,7 +69,7 @@ public:
      * @param inputBuffer The tuple buffer that should be written to the file sink.
      * @return True, if the contents of the tuple buffer could be written completely to the file sink.
      */
-    bool writeData(Runtime::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
+    bool writeData(Memory::TupleBuffer& inputBuffer, Runtime::WorkerContextRef) override;
 
     /**
      * @brief Return a string representation of the file sink.

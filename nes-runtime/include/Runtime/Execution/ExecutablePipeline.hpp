@@ -72,9 +72,9 @@ public:
         bool reconfiguration = false);
 
     /// Execute a pipeline stage
-    ExecutionResult execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext);
+    ExecutionResult execute(Memory::TupleBuffer& inputBuffer, WorkerContextRef workerContext);
 
-    [[nodiscard]] bool setup(const QueryManagerPtr& queryManager, const BufferManagerPtr& bufferManager);
+    [[nodiscard]] bool setup(const QueryManagerPtr& queryManager, const Memory::BufferManagerPtr& bufferManager);
     [[nodiscard]] bool start();
     [[nodiscard]] bool stop(QueryTerminationType terminationType);
     [[nodiscard]] bool fail();

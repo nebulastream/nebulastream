@@ -17,19 +17,17 @@
 #include <thread>
 #include <unistd.h>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <folly/MPMCQueue.h>
 #include <ErrorHandling.hpp>
-
-#include <Runtime/Allocator/NesDefaultMemoryAllocator.hpp>
-
 #include "FixedSizeBufferPool.hpp"
 #include "LocalBufferPool.hpp"
 #include "TupleBufferImpl.hpp"
 
-namespace NES::Runtime
+namespace NES::Memory
 {
 
 BufferManager::BufferManager(

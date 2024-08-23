@@ -67,7 +67,7 @@ public:
         std::vector<DataSinkPtr>&& sinks,
         std::vector<ExecutablePipelinePtr>&& pipelines,
         QueryManagerPtr&& queryManager,
-        BufferManagerPtr&& bufferManager);
+        Memory::BufferManagerPtr&& bufferManager);
 
     /**
      * @brief Factory to create an new executable query plan.
@@ -84,7 +84,7 @@ public:
         std::vector<DataSinkPtr> sinks,
         std::vector<ExecutablePipelinePtr> pipelines,
         QueryManagerPtr queryManager,
-        BufferManagerPtr bufferManager);
+        Memory::BufferManagerPtr bufferManager);
     ~ExecutableQueryPlan() override;
 
     /**
@@ -161,7 +161,7 @@ public:
      * @brief Returns a reference to the buffer manager
      * @return BufferManagerPtr
      */
-    [[nodiscard]] BufferManagerPtr getBufferManager();
+    [[nodiscard]] Memory::BufferManagerPtr getBufferManager();
 
     /**
      * @brief Get the query id
@@ -208,7 +208,7 @@ private:
     std::vector<DataSinkPtr> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     std::atomic<ExecutableQueryPlanStatus> qepStatus;
     /// number of producers that provide data to this qep
     std::atomic<uint32_t> numOfTerminationTokens;

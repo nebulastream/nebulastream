@@ -31,7 +31,7 @@ class PagedVectorTest : public Testing::BaseUnitTest
 {
 public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    std::unique_ptr<std::pmr::memory_resource> allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    std::unique_ptr<std::pmr::memory_resource> allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
@@ -101,7 +101,7 @@ public:
         for (auto& allItems : allItemsAndVectors)
         {
             allPagedVectors.emplace_back(
-                std::make_unique<PagedVector>(std::make_unique<Runtime::NesDefaultMemoryAllocator>(), entrySize, pageSize));
+                std::make_unique<PagedVector>(std::make_unique<Memory::NesDefaultMemoryAllocator>(), entrySize, pageSize));
             runStoreTest<Item>(*allPagedVectors.back(), entrySize, pageSize, allItems, allItems.size());
             runRetrieveTest<Item>(*allPagedVectors.back(), entrySize, allItems);
         }

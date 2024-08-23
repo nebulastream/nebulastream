@@ -59,7 +59,7 @@ class TPCH_Query1
 {
 public:
     static PipelinePlan getPipelinePlan(
-        std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, std::shared_ptr<Runtime::AbstractBufferProvider>)
+        std::unordered_map<TPCHTable, std::unique_ptr<NES::Runtime::Table>>& tables, std::shared_ptr<Memory::AbstractBufferProvider>)
     {
         PipelinePlan plan;
         auto& lineitems = tables[TPCHTable::LineItem];

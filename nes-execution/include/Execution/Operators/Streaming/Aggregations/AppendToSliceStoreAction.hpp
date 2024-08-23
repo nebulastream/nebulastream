@@ -44,7 +44,7 @@ private:
     std::unique_ptr<SlidingWindowSliceStore<Slice>> sliceStore;
     std::unique_ptr<MultiOriginWatermarkProcessor> watermarkProcessor;
     std::atomic<uint64_t> lastTriggerWatermark = 0;
-    std::atomic<uint64_t> resultSequenceNumber = TupleBuffer::INITIAL_SEQUENCE_NUMBER;
+    std::atomic<uint64_t> resultSequenceNumber = Memory::TupleBuffer::INITIAL_SEQUENCE_NUMBER;
     std::mutex triggerMutex;
 };
 

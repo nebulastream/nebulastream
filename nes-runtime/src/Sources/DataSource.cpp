@@ -55,7 +55,7 @@ void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::Success
 
 DataSource::DataSource(
     SchemaPtr pSchema,
-    std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
+    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     Runtime::QueryManagerPtr queryManager,
     OperatorId operatorId,
     OriginId originId,
@@ -88,7 +88,7 @@ DataSource::DataSource(
     ///    }
 }
 
-void DataSource::emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData)
+void DataSource::emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData)
 {
     if (addBufferMetaData)
     {

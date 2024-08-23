@@ -40,7 +40,7 @@ using BufferStoragePtr = std::shared_ptr<Runtime::BufferStorage>;
 class WorkerContext
 {
 private:
-    using WorkerContextBufferProviderPtr = std::shared_ptr<AbstractBufferProvider>;
+    using WorkerContextBufferProviderPtr = std::shared_ptr<Memory::AbstractBufferProvider>;
     using WorkerContextBufferProvider = WorkerContextBufferProviderPtr::element_type;
     using WorkerContextBufferProviderRawPtr = WorkerContextBufferProviderPtr::element_type*;
 
@@ -54,11 +54,11 @@ private:
     WorkerContextBufferProviderPtr localBufferPool;
     /// numa location of current worker
     uint32_t queueId = 0;
-    std::unordered_map<OperatorId, std::queue<NES::Runtime::TupleBuffer>> reconnectBufferStorage;
+    std::unordered_map<OperatorId, std::queue<NES::Memory::TupleBuffer>> reconnectBufferStorage;
 
 public:
     explicit WorkerContext(
-        WorkerThreadId workerId, BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId = 0);
+        WorkerThreadId workerId, Memory::BufferManagerPtr& bufferManager, uint64_t numberOfBuffersPerWorker, uint32_t queueId = 0);
 
     ~WorkerContext();
 
@@ -66,7 +66,7 @@ public:
      * @brief Allocates a new tuple buffer.
      * @return TupleBuffer
      */
-    TupleBuffer allocateTupleBuffer();
+    Memory::TupleBuffer allocateTupleBuffer();
 
     /**
      * @brief Returns the thread-local buffer provider singleton.

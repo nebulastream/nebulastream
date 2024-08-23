@@ -31,7 +31,7 @@ ExecutableQueryPlan::ExecutableQueryPlan(
     std::vector<DataSinkPtr>&& sinks,
     std::vector<ExecutablePipelinePtr>&& pipelines,
     QueryManagerPtr&& queryManager,
-    BufferManagerPtr&& bufferManager)
+    Memory::BufferManagerPtr&& bufferManager)
     : queryId(queryId)
     , sources(std::move(sources))
     , sinks(std::move(sinks))
@@ -51,7 +51,7 @@ ExecutableQueryPlanPtr ExecutableQueryPlan::create(
     std::vector<DataSinkPtr> sinks,
     std::vector<ExecutablePipelinePtr> pipelines,
     QueryManagerPtr queryManager,
-    BufferManagerPtr bufferManager)
+    Memory::BufferManagerPtr bufferManager)
 {
     return std::make_shared<ExecutableQueryPlan>(
         queryId, std::move(sources), std::move(sinks), std::move(pipelines), std::move(queryManager), std::move(bufferManager));
@@ -168,7 +168,7 @@ QueryManagerPtr ExecutableQueryPlan::getQueryManager()
     return queryManager;
 }
 
-BufferManagerPtr ExecutableQueryPlan::getBufferManager()
+Memory::BufferManagerPtr ExecutableQueryPlan::getBufferManager()
 {
     return bufferManager;
 }

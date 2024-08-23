@@ -53,14 +53,14 @@ auto constexpr DEFAULT_RIGHT_PAGE_SIZE = 256;
 class NLJBuildPipelineExecutionContext : public PipelineExecutionContext
 {
 public:
-    NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bufferManager)
+    NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, Memory::BufferManagerPtr bufferManager)
         : PipelineExecutionContext(
               INVALID_PIPELINE_ID, /// mock pipeline id
               INVALID_QUERY_ID, /// mock query id
               std::move(bufferManager),
               1,
-              [](TupleBuffer&, Runtime::WorkerContextRef) {},
-              [](TupleBuffer&) {},
+              [](Memory::TupleBuffer&, Runtime::WorkerContextRef) {},
+              [](Memory::TupleBuffer&) {},
               {nljOperatorHandler})
     {
     }
@@ -69,18 +69,18 @@ public:
 class NLJProbePipelineExecutionContext : public PipelineExecutionContext
 {
 public:
-    std::vector<TupleBuffer> emittedBuffers;
-    NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bufferManager)
+    std::vector<Memory::TupleBuffer> emittedBuffers;
+    NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, Memory::BufferManagerPtr bufferManager)
         : PipelineExecutionContext(
               INVALID_PIPELINE_ID, /// mock pipeline id
               INVALID_QUERY_ID, /// mock query id
               std::move(bufferManager),
               1,
-              [](TupleBuffer&, WorkerContextRef)
+              [](Memory::TupleBuffer&, WorkerContextRef)
               {
                   ///                emittedBuffers.emplace_back(std::move(buffer));
               },
-              [](TupleBuffer&)
+              [](Memory::TupleBuffer&)
               {
                   ///                emittedBuffers.emplace_back(std::move(buffer));
               },
@@ -93,7 +93,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest
 {
 public:
     Operators::NLJOperatorHandlerPtr nljOperatorHandler;
-    std::shared_ptr<Runtime::BufferManager> bufferManager;
+    std::shared_ptr<Memory::BufferManager> bufferManager;
     Expressions::ExpressionPtr joinExpression;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
@@ -134,7 +134,7 @@ public:
 
         nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
             {INVALID_ORIGIN_ID}, OriginId(1), windowSize, windowSize, leftSchema, rightSchema, leftPageSize, rightPageSize);
-        bufferManager = BufferManager::create(8196, 5000);
+        bufferManager = Memory::BufferManager::create(8196, 5000);
         nljOperatorHandler->setBufferManager(bufferManager);
     }
 
@@ -644,7 +644,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTestWithSmallBufferSize)
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     /// make buffer size less and check that more metadata buffers are created
-    bufferManager = BufferManager::create(20, 10000);
+    bufferManager = Memory::BufferManager::create(20, 10000);
     nljOperatorHandler->setBufferManager(bufferManager);
     /// Checking corner case when stopTS is equal to end timestamp of slice.
     auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);

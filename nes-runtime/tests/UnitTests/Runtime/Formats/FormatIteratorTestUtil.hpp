@@ -31,7 +31,7 @@ template <typename ExpectedType>
 class FormatIteratorTestUtil
 {
 public:
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
 
     /**
      * Takes a schema and creates a TestTupleBuffer with row layout (column layout currently breaks the iterator).

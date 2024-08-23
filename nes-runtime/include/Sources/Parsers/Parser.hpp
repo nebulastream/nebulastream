@@ -27,12 +27,6 @@ namespace Runtime::MemoryLayouts
 class TestTupleBuffer;
 }
 
-namespace Runtime
-{
-class BufferManager;
-using BufferManagerPtr = std::shared_ptr<BufferManager>;
-} /// namespace Runtime
-
 class PhysicalType;
 using PhysicalTypePtr = std::shared_ptr<PhysicalType>;
 /**
@@ -62,7 +56,7 @@ public:
         uint64_t tupleCount,
         Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
-        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager)
+        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
         = 0;
 
     /**
@@ -81,7 +75,7 @@ public:
         Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
         uint64_t tupleCount,
-        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager);
+        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager);
 
 private:
     std::vector<PhysicalTypePtr> physicalTypes;

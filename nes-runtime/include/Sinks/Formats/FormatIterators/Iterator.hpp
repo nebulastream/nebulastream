@@ -32,7 +32,7 @@ public:
     using iterator_category = std::forward_iterator_tag;
     using difference_type = std::ptrdiff_t;
 
-    explicit Iterator(uint64_t currentSeek, Runtime::TupleBuffer buffer, const SchemaPtr& schema, FormatTypes sinkFormatType)
+    explicit Iterator(uint64_t currentSeek, Memory::TupleBuffer buffer, const SchemaPtr& schema, FormatTypes sinkFormatType)
         : buffer(std::move(buffer)), sinkFormatType(sinkFormatType)
     {
         auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
@@ -98,7 +98,7 @@ private:
     /**
          * @brief Buffer to be read
          */
-    Runtime::TupleBuffer buffer;
+    Memory::TupleBuffer buffer;
 
     /**
          * @brief Format in which data is to be read

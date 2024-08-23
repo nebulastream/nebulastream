@@ -80,7 +80,7 @@ HJSliceVarSized::HJSliceVarSized(
     uint64_t sliceEnd,
     SchemaPtr& leftSchema,
     SchemaPtr& rightSchema,
-    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
     size_t pageSize,
     size_t numPartitions)
     : StreamSlice(sliceStart, sliceEnd)

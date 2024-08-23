@@ -29,7 +29,7 @@
 #    include <cpptrace.hpp>
 #endif
 
-namespace NES::Runtime
+namespace NES::Memory
 {
 class BufferManager;
 class LocalBufferPool;
@@ -273,11 +273,11 @@ static_assert(alignof(BufferControlBlock) % 64 == 0);
  */
 class MemorySegment
 {
-    friend class NES::Runtime::TupleBuffer;
-    friend class NES::Runtime::LocalBufferPool;
-    friend class NES::Runtime::FixedSizeBufferPool;
-    friend class NES::Runtime::BufferManager;
-    friend class NES::Runtime::detail::BufferControlBlock;
+    friend class NES::Memory::TupleBuffer;
+    friend class NES::Memory::LocalBufferPool;
+    friend class NES::Memory::FixedSizeBufferPool;
+    friend class NES::Memory::BufferManager;
+    friend class NES::Memory::detail::BufferControlBlock;
 
     enum class MemorySegmentType : uint8_t
     {
@@ -346,8 +346,8 @@ private:
 
     uint8_t* ptr{nullptr};
     uint32_t size{0};
-    TaggedPointer<detail::BufferControlBlock> controlBlock{nullptr};
+    TaggedPointer<BufferControlBlock> controlBlock{nullptr};
 };
 
 } /// namespace detail
-} /// namespace NES::Runtime
+} /// namespace NES::Memory

@@ -24,7 +24,7 @@ NLJSlice::NLJSlice(
     uint64_t windowStart,
     uint64_t windowEnd,
     uint64_t numberOfWorker,
-    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
     SchemaPtr& leftSchema,
     uint64_t leftPageSize,
     SchemaPtr& rightSchema,
@@ -114,9 +114,9 @@ void NLJSlice::combinePagedVectors()
     }
 }
 
-std::vector<Runtime::TupleBuffer> NLJSlice::serialize(AbstractBufferProvider& bufferProvider)
+std::vector<Memory::TupleBuffer> NLJSlice::serialize(Memory::AbstractBufferProvider& bufferProvider)
 {
-    auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
+    auto buffersToTransfer = std::vector<Memory::TupleBuffer>();
 
     auto mainMetadata = bufferProvider.getBufferBlocking();
     buffersToTransfer.emplace(buffersToTransfer.begin(), mainMetadata);
@@ -191,12 +191,12 @@ std::vector<Runtime::TupleBuffer> NLJSlice::serialize(AbstractBufferProvider& bu
 }
 
 StreamSlicePtr NLJSlice::deserialize(
-    std::shared_ptr<AbstractBufferProvider> bufferProvider,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
     SchemaPtr& leftSchema,
     uint64_t leftPageSize,
     SchemaPtr& rightSchema,
     uint64_t rightPageSize,
-    std::span<const Runtime::TupleBuffer> buffers)
+    std::span<const Memory::TupleBuffer> buffers)
 {
     /// create new slice with 0 number of worker thread (this will create empty vector of var sized pages) and 0 in slice start and end
     auto newSlice = std::make_shared<NLJSlice>(0, 0, 0, bufferProvider, leftSchema, leftPageSize, rightSchema, rightPageSize);
@@ -244,10 +244,7 @@ StreamSlicePtr NLJSlice::deserialize(
         auto numberOfPages = readFromMetadata();
 
         newSlice->leftPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVectorVarSized>(
-            bufferProvider,
-            leftSchema,
-            std::span<const Runtime::TupleBuffer>(buffers.data() + numberOfMetadataBuffers + buffIdx, numberOfPages),
-            leftPageSize));
+            bufferProvider, leftSchema, std::span(buffers.data() + numberOfMetadataBuffers + buffIdx, numberOfPages), leftPageSize));
         buffIdx += numberOfPages;
     }
 
@@ -258,10 +255,7 @@ StreamSlicePtr NLJSlice::deserialize(
         auto numberOfPages = readFromMetadata();
 
         newSlice->rightPagedVectors.emplace_back(std::make_unique<Nautilus::Interface::PagedVectorVarSized>(
-            bufferProvider,
-            rightSchema,
-            std::span<const Runtime::TupleBuffer>(buffers.data() + numberOfMetadataBuffers + buffIdx, numberOfPages),
-            rightPageSize));
+            bufferProvider, rightSchema, std::span(buffers.data() + numberOfMetadataBuffers + buffIdx, numberOfPages), rightPageSize));
         buffIdx += numberOfPages;
     }
 

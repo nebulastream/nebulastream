@@ -33,7 +33,7 @@ void BatchJoinHandler::setup(Runtime::Execution::PipelineExecutionContext& ctx, 
     this->valueSize = valueSize;
     for (uint64_t i = 0; i < ctx.getNumberOfWorkerThreads(); i++)
     {
-        auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+        auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
         auto pagedVector = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
         threadLocalStateStores.emplace_back(std::move(pagedVector));
     }
@@ -49,7 +49,7 @@ Nautilus::Interface::ChainedHashMap* BatchJoinHandler::mergeState()
         numberOfKeys += pagedVector->getNumberOfEntries();
     }
     /// 2. allocate hash map
-    auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     constexpr auto pageSize = 4096;
     globalMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator), pageSize);
 

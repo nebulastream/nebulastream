@@ -51,7 +51,7 @@ public:
      * @param size in characters
      * @return TextValue*
      */
-    static TextValue* create(Runtime::TupleBuffer& buffer, uint32_t size);
+    static TextValue* create(Memory::TupleBuffer& buffer, uint32_t size);
 
     /**
      * @brief Creates a new TextValue from a string on a specific tuple buffer
@@ -59,7 +59,7 @@ public:
      * @param string content
      * @return TextValue*
      */
-    static TextValue* create(Runtime::TupleBuffer& buffer, const std::string& string);
+    static TextValue* create(Memory::TupleBuffer& buffer, const std::string& string);
 
     /**
      * @brief Loads a text value from a tuple buffer.
@@ -67,7 +67,7 @@ public:
      * @param string
      * @return TextValue*
      */
-    static TextValue* load(Runtime::TupleBuffer& tupleBuffer);
+    static TextValue* load(Memory::TupleBuffer& tupleBuffer);
 
     /**
      * @brief Returns the length in the number of characters of the text value
@@ -99,7 +99,7 @@ public:
      * @brief Retrieves the underling buffer of this text value.
      * @return Runtime::TupleBuffer
      */
-    [[nodiscard]] Runtime::TupleBuffer getBuffer() const;
+    [[nodiscard]] Memory::TupleBuffer getBuffer() const;
 
     /**
      * @brief Destructor for the text value that also releases the underling tuple buffer.
@@ -107,7 +107,7 @@ public:
     ~TextValue();
 
 private:
-    static Runtime::TupleBuffer allocateBuffer(uint32_t size);
+    static Memory::TupleBuffer allocateBuffer(uint32_t size);
     /**
      * @brief Private constructor to initialize a new text
      * @param size

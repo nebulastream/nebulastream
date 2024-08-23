@@ -52,7 +52,7 @@ ExecutablePipeline::ExecutablePipeline(
     NES_ASSERT(this->executablePipelineStage && this->pipelineContext && numOfProducingPipelines > 0, "Wrong pipeline stage argument");
 }
 
-ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerContextRef workerContext)
+ExecutionResult ExecutablePipeline::execute(Memory::TupleBuffer& inputBuffer, WorkerContextRef workerContext)
 {
     NES_TRACE("Execute Pipeline Stage with id={} originId={} stage={}", queryId, inputBuffer.getOriginId(), pipelineId);
 
@@ -76,7 +76,7 @@ ExecutionResult ExecutablePipeline::execute(TupleBuffer& inputBuffer, WorkerCont
     }
 }
 
-bool ExecutablePipeline::setup(const QueryManagerPtr&, const BufferManagerPtr&)
+bool ExecutablePipeline::setup(const QueryManagerPtr&, const Memory::BufferManagerPtr&)
 {
     return executablePipelineStage->setup(*pipelineContext.get()) == 0;
 }

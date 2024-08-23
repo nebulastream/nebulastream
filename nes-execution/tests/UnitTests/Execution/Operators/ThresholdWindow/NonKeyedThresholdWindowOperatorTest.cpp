@@ -55,7 +55,7 @@ public:
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down NonKeyedThresholdWindowOperatorTest test class."); }
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
 };
 
 /**

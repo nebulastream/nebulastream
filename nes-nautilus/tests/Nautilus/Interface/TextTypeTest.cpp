@@ -45,7 +45,7 @@ public:
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down TextTypeTest test class."); }
-    Runtime::BufferManagerPtr bufferManager = Runtime::BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 

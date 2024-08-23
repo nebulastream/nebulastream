@@ -20,6 +20,7 @@
 #include <ostream>
 #include <string>
 #include <variant>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/MemoryLayout/BufferAccessException.hpp>
 #include <Runtime/MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
@@ -198,7 +199,7 @@ public:
      * @param memoryLayout
      * @param buffer
      */
-    DynamicTuple(uint64_t tupleIndex, MemoryLayoutPtr memoryLayout, TupleBuffer buffer);
+    DynamicTuple(uint64_t tupleIndex, MemoryLayoutPtr memoryLayout, Memory::TupleBuffer buffer);
     /**
      * @brief Accesses an individual field in the tuple by index.
      * @param fieldIndex
@@ -221,7 +222,8 @@ public:
      * @param value
      * @param bufferProvider
      */
-    void writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, AbstractBufferProvider& bufferProvider);
+    void
+    writeVarSized(std::variant<const uint64_t, const std::string> field, std::string value, Memory::AbstractBufferProvider& bufferProvider);
 
     /**
      * @brief Reads variable sized data and returns it as a string
@@ -247,7 +249,7 @@ public:
 private:
     const uint64_t tupleIndex;
     const MemoryLayoutPtr memoryLayout;
-    const TupleBuffer buffer;
+    const Memory::TupleBuffer buffer;
 };
 
 /**
@@ -296,7 +298,7 @@ public:
      * @param memoryLayout memory layout to calculate field offset
      * @param tupleBuffer buffer that we want to access
      */
-    explicit TestTupleBuffer(const MemoryLayoutPtr& memoryLayout, TupleBuffer buffer);
+    explicit TestTupleBuffer(const MemoryLayoutPtr& memoryLayout, Memory::TupleBuffer buffer);
 
     /**
      * @brief Creates a TestTupleBuffer from the TupleBuffer and the schema
@@ -304,7 +306,7 @@ public:
      * @param schema
      * @return TestTupleBuffer
      */
-    static TestTupleBuffer createTestTupleBuffer(Runtime::TupleBuffer buffer, const SchemaPtr& schema);
+    static TestTupleBuffer createTestTupleBuffer(Memory::TupleBuffer buffer, const SchemaPtr& schema);
 
     /**
     * @brief Gets the number of tuples a tuple buffer with this memory layout could occupy.
@@ -335,7 +337,7 @@ public:
      * @brief Gets the underling tuple buffer.
      * @return TupleBuffer
      */
-    TupleBuffer getBuffer();
+    Memory::TupleBuffer getBuffer();
 
     /**
      * @brief Iterator to process the tuples in a TestTupleBuffer.
@@ -436,7 +438,7 @@ public:
      */
     template <typename... Types>
     requires(ContainsString<Types> || ...)
-    void pushRecordToBuffer(std::tuple<Types...> record, BufferManager* bufferManager)
+    void pushRecordToBuffer(std::tuple<Types...> record, Memory::BufferManager* bufferManager)
     {
         pushRecordToBufferAtIndex(record, buffer.getNumberOfTuples(), bufferManager);
     }
@@ -452,7 +454,8 @@ public:
      * @return true if the record was pushed successfully, false otherwise.
      */
     template <typename... Types>
-    void pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, AbstractBufferProvider* bufferProvider = nullptr)
+    void
+    pushRecordToBufferAtIndex(std::tuple<Types...> record, uint64_t recordIndex, Memory::AbstractBufferProvider* bufferProvider = nullptr)
     {
         uint64_t numberOfRecords = buffer.getNumberOfTuples();
         uint64_t fieldIndex = 0;
@@ -542,7 +545,7 @@ private:
         {
             if constexpr (IsString<typename std::tuple_element<I, std::tuple<Types...>>::type>)
             {
-                auto childBufferIdx = (*this)[recordIndex][I].read<TupleBuffer::NestedTupleBufferKey>();
+                auto childBufferIdx = (*this)[recordIndex][I].read<Memory::TupleBuffer::NestedTupleBufferKey>();
                 std::get<I>(record) = readVarSizedData(this->buffer, childBufferIdx);
             }
             else
@@ -558,7 +561,7 @@ private:
 
 private:
     const MemoryLayoutPtr memoryLayout;
-    mutable TupleBuffer buffer;
+    mutable Memory::TupleBuffer buffer;
 };
 
 } /// namespace NES::Runtime::MemoryLayouts

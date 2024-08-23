@@ -49,7 +49,7 @@ TEST_F(LimitOperatorTest, TestLimit)
     constexpr uint64_t LIMIT = 10;
     constexpr uint64_t TUPLES = 20;
 
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
@@ -79,7 +79,7 @@ TEST_F(LimitOperatorTest, TestLimitZero)
     constexpr uint64_t LIMIT = 0;
     constexpr uint64_t TUPLES = 20;
 
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);

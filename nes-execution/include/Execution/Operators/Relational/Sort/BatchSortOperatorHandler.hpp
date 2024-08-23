@@ -72,9 +72,9 @@ public:
      */
     void setup(Runtime::Execution::PipelineExecutionContext&)
     {
-        auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+        auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
         stack = std::make_unique<Nautilus::Interface::PagedVector>(std::move(allocator), entrySize);
-        auto tempAllocator = std::make_unique<NesDefaultMemoryAllocator>();
+        auto tempAllocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
         tempStack = std::make_unique<Nautilus::Interface::PagedVector>(std::move(tempAllocator), entrySize);
     }
 

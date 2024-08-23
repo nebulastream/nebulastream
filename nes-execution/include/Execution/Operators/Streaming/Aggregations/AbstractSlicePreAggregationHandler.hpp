@@ -21,11 +21,6 @@
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Sequencing/SequenceData.hpp>
 
-namespace NES::Runtime
-{
-class AbstractBufferProvider;
-}
-
 namespace NES::Runtime::Execution::Operators
 {
 class MultiOriginWatermarkProcessor;
@@ -83,7 +78,7 @@ protected:
 private:
     void dispatchSliceMergingTasks(
         PipelineExecutionContext& ctx,
-        AbstractBufferProvider& bufferProvider,
+        Memory::AbstractBufferProvider& bufferProvider,
         std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices);
 };
 } /// namespace NES::Runtime::Execution::Operators

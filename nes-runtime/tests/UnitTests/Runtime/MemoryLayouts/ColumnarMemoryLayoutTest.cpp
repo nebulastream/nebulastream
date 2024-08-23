@@ -31,7 +31,7 @@ namespace NES::Runtime::MemoryLayouts
 class ColumnarMemoryLayoutTest : public Testing::BaseUnitTest
 {
 public:
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     static void SetUpTestCase()
     {
         NES::Logger::setupLogging("ColumnarMemoryLayoutTest.log", NES::LogLevel::LOG_DEBUG);
@@ -41,7 +41,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = BufferManager::create(4096, 10);
+        bufferManager = Memory::BufferManager::create(4096, 10);
     }
 };
 

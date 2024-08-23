@@ -30,7 +30,7 @@
 namespace NES::Runtime::Execution::Util
 {
 
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, AbstractBufferProvider& bufferProvider)
+Memory::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, Memory::AbstractBufferProvider& bufferProvider)
 {
     auto buffer = bufferProvider.getBufferBlocking();
     uint8_t* bufferPtr = buffer.getBuffer();
@@ -48,7 +48,11 @@ Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& s
 }
 
 void writeNautilusRecord(
-    uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferProvider)
+    uint64_t recordIndex,
+    int8_t* baseBufferPtr,
+    Nautilus::Record nautilusRecord,
+    SchemaPtr schema,
+    Memory::AbstractBufferProvider& bufferProvider)
 {
     Nautilus::Value<Nautilus::UInt64> nautilusRecordIndex(recordIndex);
     Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
@@ -72,8 +76,8 @@ void writeNautilusRecord(
     }
 }
 
-Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, Runtime::AbstractBufferProvider& bufferProvider)
+Memory::TupleBuffer
+mergeBuffers(std::vector<Memory::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, Memory::AbstractBufferProvider& bufferProvider)
 {
     auto retBuffer = bufferProvider.getBufferBlocking();
     auto retBufferPtr = retBuffer.getBuffer();
@@ -99,11 +103,11 @@ mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaP
     return retBuffer;
 }
 
-std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
-    std::vector<Runtime::TupleBuffer>& buffers,
+std::vector<Memory::TupleBuffer> mergeBuffersSameWindow(
+    std::vector<Memory::TupleBuffer>& buffers,
     SchemaPtr schema,
     const std::string& timeStampFieldName,
-    AbstractBufferProvider& bufferProvider,
+    Memory::AbstractBufferProvider& bufferProvider,
     uint64_t windowSize)
 {
     if (buffers.size() == 0)
@@ -118,7 +122,7 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
 
     NES_INFO("Merging buffers together!");
 
-    std::vector<Runtime::TupleBuffer> retVector;
+    std::vector<Memory::TupleBuffer> retVector;
 
     auto curBuffer = bufferProvider.getBufferBlocking();
     auto numberOfTuplesInBuffer = 0UL;
@@ -163,11 +167,11 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
     return retVector;
 }
 
-std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
-    std::vector<Runtime::TupleBuffer>& buffersToSort,
+std::vector<Memory::TupleBuffer> sortBuffersInTupleBuffer(
+    std::vector<Memory::TupleBuffer>& buffersToSort,
     SchemaPtr schema,
     const std::string& sortFieldName,
-    AbstractBufferProvider& bufferProvider)
+    Memory::AbstractBufferProvider& bufferProvider)
 {
     if (buffersToSort.size() == 0)
     {
@@ -178,7 +182,7 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
         NES_FATAL_ERROR("Column layout is not support for this function currently!");
     }
 
-    std::vector<Runtime::TupleBuffer> retVector;
+    std::vector<Memory::TupleBuffer> retVector;
     for (auto bufRead : buffersToSort)
     {
         std::vector<size_t> indexAlreadyInNewBuffer;
@@ -226,7 +230,8 @@ std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
     return retVector;
 }
 
-Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferProvider)
+Memory::TupleBuffer
+getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, Memory::AbstractBufferProvider& bufferProvider)
 {
     auto buffer = bufferProvider.getBufferBlocking();
     auto* bufferPtr = buffer.getBuffer<int8_t>();
@@ -237,7 +242,7 @@ Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord,
     return buffer;
 }
 
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema)
+std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema)
 {
     std::stringstream ss;
     auto numberOfTuples = tbuffer.getNumberOfTuples();
@@ -265,15 +270,15 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
     return ss.str();
 }
 
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
+[[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    Runtime::AbstractBufferProvider& bufferProvider,
+    Memory::AbstractBufferProvider& bufferProvider,
     uint64_t originId,
     const std::string& timestampFieldName,
     bool skipFirstLine)
 {
-    std::vector<Runtime::TupleBuffer> recordBuffers;
+    std::vector<Memory::TupleBuffer> recordBuffers;
     NES_ASSERT2_FMT(std::filesystem::exists(std::filesystem::path(csvFile)), "CSVFile " << csvFile << " does not exist!!!");
 
     /// Creating everything for the csv parser
@@ -343,7 +348,7 @@ void writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    Runtime::AbstractBufferProvider& bufferProvider)
+    Memory::AbstractBufferProvider& bufferProvider)
 {
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();
@@ -496,7 +501,7 @@ std::vector<PhysicalTypePtr> getPhysicalTypes(SchemaPtr schema)
     return retVector;
 }
 
-bool checkIfBuffersAreEqual(Runtime::TupleBuffer buffer1, Runtime::TupleBuffer buffer2, uint64_t schemaSizeInByte)
+bool checkIfBuffersAreEqual(Memory::TupleBuffer buffer1, Memory::TupleBuffer buffer2, uint64_t schemaSizeInByte)
 {
     NES_DEBUG("Checking if the buffers are equal, so if they contain the same tuples...");
     if (buffer1.getNumberOfTuples() != buffer2.getNumberOfTuples())

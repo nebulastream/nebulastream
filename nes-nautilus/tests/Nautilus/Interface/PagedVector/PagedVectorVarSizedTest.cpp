@@ -29,7 +29,7 @@ namespace NES::Nautilus::Interface
 class PagedVectorVarSizedTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<Runtime::BufferManager> bufferManager;
+    std::shared_ptr<Memory::BufferManager> bufferManager;
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
@@ -42,7 +42,7 @@ public:
     void SetUp() override
     {
         BaseUnitTest::SetUp();
-        bufferManager = Runtime::BufferManager::create();
+        bufferManager = Memory::BufferManager::create();
         NES_INFO("Setup PagedVectorVarSizedTest test case.");
     }
 

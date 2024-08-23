@@ -20,13 +20,13 @@ namespace NES::Runtime::Execution
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     std::vector<OperatorHandlerPtr> handler,
     bool logSeenSeqChunk,
-    std::shared_ptr<AbstractBufferProvider> bufferProvider)
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider)
     : PipelineExecutionContext(
           INVALID_PIPELINE_ID, /// mock pipeline id
           INVALID_QUERY_ID, /// mock query id
           std::move(bufferProvider),
           1,
-          [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef)
+          [this, logSeenSeqChunk](Memory::TupleBuffer& buffer, Runtime::WorkerContextRef)
           {
               if (logSeenSeqChunk)
               {
@@ -40,7 +40,7 @@ MockedPipelineExecutionContext::MockedPipelineExecutionContext(
               }
               buffers.emplace_back(std::move(buffer));
           },
-          [this, logSeenSeqChunk](TupleBuffer& buffer)
+          [this, logSeenSeqChunk](Memory::TupleBuffer& buffer)
           {
               if (logSeenSeqChunk)
               {

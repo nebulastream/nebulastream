@@ -48,7 +48,7 @@ class NestedLoopJoinMockedPipelineExecutionContext : public Runtime::Execution::
 {
 public:
     NestedLoopJoinMockedPipelineExecutionContext(
-        BufferManagerPtr bufferManager,
+        Memory::BufferManagerPtr bufferManager,
         uint64_t noWorkerThreads,
         OperatorHandlerPtr nljOpHandler,
         PipelineId pipelineId)
@@ -57,18 +57,18 @@ public:
               QueryId(1), /// mock query id
               bufferManager,
               noWorkerThreads,
-              [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
-              [this](TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              [this](Memory::TupleBuffer& buffer, WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              [this](Memory::TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
               {nljOpHandler}) {};
 
-    std::vector<Runtime::TupleBuffer> emittedBuffers;
+    std::vector<Memory::TupleBuffer> emittedBuffers;
 };
 
 class NestedLoopJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     WorkerContextPtr workerContext;
     Nautilus::CompilationOptions options;
     const uint64_t leftPageSize = 256;
@@ -91,7 +91,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bufferManager = BufferManager::create();
+        bufferManager = Memory::BufferManager::create();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
@@ -231,7 +231,7 @@ public:
         nljWorks = nljWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
         /// Executing sink buffers
-        std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
+        std::vector buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
         buildEmittedBuffers.insert(
             buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(), pipelineExecCtxRight.emittedBuffers.end());
         for (auto buf : buildEmittedBuffers)
@@ -245,7 +245,7 @@ public:
             pipelineExecCtxSink.emittedBuffers.begin(),
             pipelineExecCtxSink.emittedBuffers.end(),
             std::back_inserter(seqNumbers),
-            [](const TupleBuffer& buffer)
+            [](const Memory::TupleBuffer& buffer)
             { return SequenceData(buffer.getSequenceNumber(), buffer.getChunkNumber(), buffer.isLastChunk()); });
         std::sort(seqNumbers.begin(), seqNumbers.end());
         bool hasDuplicates = std::adjacent_find(seqNumbers.begin(), seqNumbers.end()) != seqNumbers.end();

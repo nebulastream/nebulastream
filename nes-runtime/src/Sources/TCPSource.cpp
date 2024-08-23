@@ -37,7 +37,7 @@ namespace NES
 
 TCPSource::TCPSource(
     SchemaPtr schema,
-    std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
+    std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
     Runtime::QueryManagerPtr queryManager,
     TCPSourceTypePtr tcpSourceType,
     OperatorId operatorId,
@@ -157,7 +157,7 @@ void TCPSource::open()
     NES_TRACE("TCPSource::open: Connected to server.");
 }
 
-std::optional<Runtime::TupleBuffer> TCPSource::receiveData()
+std::optional<Memory::TupleBuffer> TCPSource::receiveData()
 {
     NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
     auto tupleBuffer = allocateBuffer();

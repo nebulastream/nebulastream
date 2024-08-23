@@ -74,7 +74,7 @@ void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::trigger(
 template <class SliceType, typename SliceStore>
 void AbstractBucketPreAggregationHandler<SliceType, SliceStore>::dispatchSliceMergingTasks(
     PipelineExecutionContext& ctx,
-    AbstractBufferProvider& bufferProvider,
+    Memory::AbstractBufferProvider& bufferProvider,
     std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices)
 {
     /// for all thread local buckets that have been collected, emit a merge task to combine this buckets.

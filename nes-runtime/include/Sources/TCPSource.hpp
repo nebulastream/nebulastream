@@ -53,7 +53,7 @@ public:
      */
     explicit TCPSource(
         SchemaPtr schema,
-        std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
+        std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
         Runtime::QueryManagerPtr queryManager,
         TCPSourceTypePtr tcpSourceType,
         OperatorId operatorId,
@@ -67,7 +67,7 @@ public:
      * @brief override the receiveData method for the csv source
      * @return returns a buffer if available
      */
-    std::optional<Runtime::TupleBuffer> receiveData() override;
+    std::optional<Memory::TupleBuffer> receiveData() override;
 
     /**
      *  @brief method to fill the buffer with tuples

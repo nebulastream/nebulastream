@@ -34,7 +34,7 @@ public:
      * @param tupleBuffer
      * @param capacity
      */
-    MemoryLayoutTupleBuffer(TupleBuffer tupleBuffer, uint64_t capacity);
+    MemoryLayoutTupleBuffer(Memory::TupleBuffer tupleBuffer, uint64_t capacity);
 
     virtual ~MemoryLayoutTupleBuffer() = default;
 
@@ -54,10 +54,10 @@ public:
      * @brief This methods returns a reference to the associated buffer
      * @return
      */
-    TupleBuffer getTupleBuffer();
+    Memory::TupleBuffer getTupleBuffer();
 
 protected:
-    TupleBuffer tupleBuffer;
+    Memory::TupleBuffer tupleBuffer;
     uint64_t capacity;
     uint64_t numberOfRecords = 0;
 };

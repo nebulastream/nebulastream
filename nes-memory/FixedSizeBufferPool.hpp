@@ -20,14 +20,12 @@
 #include <mutex>
 #include <optional>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/BufferRecycler.hpp>
 #include <folly/MPMCQueue.h>
 
-namespace NES::Runtime
+namespace NES::Memory
 {
-class BufferManager;
-using BufferManagerPtr = std::shared_ptr<BufferManager>;
-class TupleBuffer;
 namespace detail
 {
 class MemorySegment;
