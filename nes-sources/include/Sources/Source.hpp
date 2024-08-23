@@ -16,7 +16,6 @@
 
 #include <string>
 #include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Util/TestTupleBuffer.hpp>
 

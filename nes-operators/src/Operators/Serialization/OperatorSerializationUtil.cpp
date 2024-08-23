@@ -14,6 +14,7 @@
 #include <fstream>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -56,6 +57,7 @@
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
+#include <Util/Logger/Logger.hpp>
 
 namespace NES
 {
@@ -997,21 +999,35 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         /// de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(tcpSerializedSourceDescriptor->sourceschema());
         SerializablePhysicalSourceType physicalSourceType = tcpSerializedSourceDescriptor->physicalsourcetype();
-        auto sourceConfig = TCPSourceType::create(physicalSourceType.logicalsourcename());
+        ///-todo auto sourceConfig = TCPSourceType::create(physicalSourceType.logicalsourcename());
         auto tcpSourceConfig = new SerializablePhysicalSourceType_SerializableTCPSourceType();
         tcpSerializedSourceDescriptor->physicalsourcetype().specificphysicalsourcetype().UnpackTo(tcpSourceConfig);
-        sourceConfig->setSocketHost(tcpSourceConfig->sockethost());
-        sourceConfig->setSocketPort(tcpSourceConfig->socketport());
-        sourceConfig->setSocketDomain(tcpSourceConfig->socketdomain());
-        sourceConfig->setSocketType(tcpSourceConfig->sockettype());
-        sourceConfig->setFlushIntervalMS(tcpSourceConfig->flushintervalms());
-        sourceConfig->setInputFormat(static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat()));
-        sourceConfig->setDecideMessageSize(static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize()));
-        sourceConfig->setTupleSeparator(tcpSourceConfig->tupleseparator().at(0));
-        sourceConfig->setSocketBufferSize(tcpSourceConfig->socketbuffersize());
-        sourceConfig->setBytesUsedForSocketBufferSizeTransfer(tcpSourceConfig->bytesusedforsocketbuffersizetransfer());
-        auto ret = TCPSourceDescriptor::create(schema, sourceConfig);
-        return ret;
+        SourceDescriptor::Config sourceDescriptorConfig{};
+        sourceDescriptorConfig.emplace(std::make_pair("socket_host", tcpSourceConfig->sockethost()));
+        sourceDescriptorConfig.emplace(std::make_pair("socket_port", tcpSourceConfig->socketport()));
+        sourceDescriptorConfig.emplace(std::make_pair("socket_domain", tcpSourceConfig->socketdomain()));
+        sourceDescriptorConfig.emplace(std::make_pair("socket_type", tcpSourceConfig->sockettype()));
+        sourceDescriptorConfig.emplace(std::make_pair("flush_interval_ms", tcpSourceConfig->flushintervalms()));
+        sourceDescriptorConfig.emplace(
+            std::make_pair("input_format", static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat())));
+        sourceDescriptorConfig.emplace(std::make_pair(
+            "decide_message_size", static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize())));
+        sourceDescriptorConfig.emplace(std::make_pair("tuple_separator", tcpSourceConfig->tupleseparator().at(0)));
+        sourceDescriptorConfig.emplace(std::make_pair("socket_buffer_size", tcpSourceConfig->socketbuffersize()));
+        sourceDescriptorConfig.emplace(
+            std::make_pair("bytes_used_for_socket_buffer_size_transfer", tcpSourceConfig->bytesusedforsocketbuffersizetransfer()));
+        ///-todo sourceConfig->setSocketHost(tcpSourceConfig->sockethost());
+        ///-todo sourceConfig->setSocketPort(tcpSourceConfig->socketport());
+        ///-todo sourceConfig->setSocketDomain(tcpSourceConfig->socketdomain());
+        ///-todo sourceConfig->setSocketType(tcpSourceConfig->sockettype());
+        ///-todo sourceConfig->setFlushIntervalMS(tcpSourceConfig->flushintervalms());
+        ///-todo sourceConfig->setInputFormat(static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat()));
+        ///-todo sourceConfig->setDecideMessageSize(static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize()));
+        ///-todo sourceConfig->setTupleSeparator(tcpSourceConfig->tupleseparator().at(0));
+        ///-todo sourceConfig->setSocketBufferSize(tcpSourceConfig->socketbuffersize());
+        ///-todo sourceConfig->setBytesUsedForSocketBufferSizeTransfer(tcpSourceConfig->bytesusedforsocketbuffersizetransfer());
+        ///-Todo: create a SourceDescriptor, passing the source name and the sourceConfig
+        return std::make_unique<SourceDescriptor>(schema, "CSV", std::move(sourceDescriptorConfig));
     }
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>())
     {

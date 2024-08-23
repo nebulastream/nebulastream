@@ -15,45 +15,41 @@
 #pragma once
 
 #include <memory>
+#include <unordered_map>
+#include <API/Schema.hpp>
+#include <Configurations/ConfigurationsNames.hpp>
 #include <Exceptions/RuntimeException.hpp>
 namespace NES
 {
 
-class Schema;
-using SchemaPtr = std::shared_ptr<Schema>;
-
 class SourceDescriptor
 {
+    using SourceDescriptorTypes = std::
+        variant<int32_t, uint32_t, bool, float, double, std::string, Configurations::InputFormat, Configurations::TCPDecideMessageSize>;
+
 public:
+    using Config = std::unordered_map<std::string, SourceDescriptorTypes>;
+
     static inline const std::string PLUGIN_NAME_CSV = "CSV";
     static inline const std::string PLUGIN_NAME_TCP = "TCP";
 
-    explicit SourceDescriptor(SchemaPtr schema);
+    explicit SourceDescriptor(SchemaPtr schema, std::string sourceName, Config&& config);
+    ~SourceDescriptor() = default;
 
-    explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName);
-
-    explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceName);
-
-    SchemaPtr getSchema() const;
-
-    std::string getLogicalSourceName() const;
-
-    void setSchema(const SchemaPtr& schema);
-
-    virtual std::string toString() const = 0;
-
-    [[nodiscard]] virtual bool equal(SourceDescriptor& other) const = 0;
-
-    virtual ~SourceDescriptor() = default;
+    SchemaPtr getSchema() const; ///-todo: can we remove the getter?
+    void setSchema(const SchemaPtr& schema); ///-todo: can we remove the setter?
 
     [[nodiscard]] std::string getSourceName() const;
-
     void setSourceName(std::string sourceName);
+
+    virtual std::string toString() const = 0; ///-todo: convert toString function to ostream operator '<<'
+
+    [[nodiscard]] virtual bool equal(SourceDescriptor& other) const = 0; ///-todo: overload '=='
 
 private:
     SchemaPtr schema;
-    std::string logicalSourceName;
     std::string sourceName;
+    Config config;
 };
 
 } /// namespace NES
