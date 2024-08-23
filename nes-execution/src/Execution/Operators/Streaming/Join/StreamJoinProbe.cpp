@@ -74,8 +74,8 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
 void StreamJoinProbe::createJoinedRecord(Record& joinedRecord,
                                          Record& leftRecord,
                                          Record& rightRecord,
-                                         const ExecDataUI64& windowStart,
-                                         const ExecDataUI64& windowEnd) const {
+                                         const VarVal& windowStart,
+                                         const VarVal& windowEnd) const {
     // Writing the window start, end, and key field
     joinedRecord.write(windowMetaData.windowStartFieldName, windowStart);
     joinedRecord.write(windowMetaData.windowEndFieldName, windowEnd);

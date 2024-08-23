@@ -12,8 +12,8 @@
     limitations under the License.
 */
 
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+
 #include <Nautilus/Interface/FixedPage/FixedPage.hpp>
 #include <Nautilus/Interface/FixedPage/FixedPageRef.hpp>
 
@@ -33,7 +33,8 @@ Nautilus::MemRefVal FixedPageRef::allocateEntry(const Nautilus::UInt64Val& hash)
         //TODO replace nautilus::invoke with Nautilus alternative, see #4176
         nautilus::invoke(addHashToBloomFilterProxy, fixedPageRef, hash);
 
-        auto ptr = getDataPtr() + currentPos * getSizeOfRecord();
+        const auto dataPtr = getDataPtr();
+        auto ptr = dataPtr + currentPos * getSizeOfRecord();
         setCurrentPos(currentPos + 1);
         entry = ptr;
     }

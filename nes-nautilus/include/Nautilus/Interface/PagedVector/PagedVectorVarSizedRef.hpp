@@ -41,13 +41,13 @@ class PagedVectorVarSizedRef {
      * @param pos
      * @return Record
      */
-    Record readRecord(const nautilus::val<uint64_t>& pos);
+    Record readRecord(const UInt64Val& pos);
 
     /**
      * @brief Returns the total number of entries in the PagedVectorVarSizedRef
      * @return UInt64Val
      */
-    nautilus::val<uint64_t> getTotalNumberOfEntries();
+    UInt64Val getTotalNumberOfEntries();
 
     /**
      * @brief Creates a PageVectorVarSizedRefIter that points to the first entry in the PagedVectorVarSizedRef
@@ -60,7 +60,7 @@ class PagedVectorVarSizedRef {
      * @param pos
      * @return PagedVectorVarSizedRefIter
      */
-    PagedVectorVarSizedRefIter at(nautilus::val<uint64_t> pos);
+    PagedVectorVarSizedRefIter at(UInt64Val pos);
 
     /**
      * @brief Creates a PageVectorVarSizedRefIter that points to the end of the PagedVectorVarSizedRef
@@ -80,7 +80,7 @@ class PagedVectorVarSizedRef {
      * @brief Returns the capacity per page
      * @return UInt64Val
      */
-    nautilus::val<uint64_t> getCapacityPerPage();
+    UInt64Val getCapacityPerPage();
 
     /**
      * @brief Sets the total number of entries to the given value
@@ -147,7 +147,7 @@ class PagedVectorVarSizedRefIter {
      */
     void setPos(UInt64Val newValue);
 
-    nautilus::val<uint64_t> pos;
+    UInt64Val pos;
     PagedVectorVarSizedRef pagedVectorVarSized;
 };
 

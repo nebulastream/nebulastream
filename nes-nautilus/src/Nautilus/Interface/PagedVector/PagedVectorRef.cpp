@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Util/Logger/Logger.hpp>
@@ -40,7 +40,9 @@ Nautilus::UInt64Val PagedVectorRef::getCapacityPerPage() const {
 
 Nautilus::MemRefVal PagedVectorRef::allocateEntry() {
     // check if we should allocate a new page
-    if (getNumberOfEntries() >= getCapacityPerPage()) {
+    const auto capacityPerPage = getCapacityPerPage();
+    const auto numberOfEntries = getNumberOfEntries();
+    if (numberOfEntries >= capacityPerPage) {
         nautilus::invoke(allocateNewPageProxy, pagedVectorRef);
     }
     // gets the current page and reserve space for the new entry.

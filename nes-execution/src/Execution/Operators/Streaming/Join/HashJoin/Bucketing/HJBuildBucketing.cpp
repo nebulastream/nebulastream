@@ -42,16 +42,15 @@ void HJBuildBucketing::insertRecordForWindow(const MemRefVal& allWindowsToFill,
         nautilus::invoke(getHashTableRefProxy, allWindowsToFill, curIndex, workerThreadId, UInt64Val(to_underlying(joinBuildSide)));
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = nautilus::invoke(insertFunctionProxy, hashTableReference,
-        castAndLoadValue<uint64_t>(record.read(joinFieldName)));
+    auto entryMemRef = nautilus::invoke(insertFunctionProxy, hashTableReference, record.read(joinFieldName).cast<UInt64Val>());
     //write data
     DefaultPhysicalTypeFactory physicalDataTypeFactory;
     for (auto& field : schema->fields) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 //        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
-        record.read(fieldName)->writeToMemRefVal(entryMemRef);
-        entryMemRef = entryMemRef + nautilus::val<uint64_t>(fieldType->size());
+        record.read(fieldName).writeToMemRefVal(entryMemRef);
+        entryMemRef = entryMemRef + UInt64Val(fieldType->size());
     }
 }
 

@@ -11,8 +11,8 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+
 #include <API/AttributeField.hpp>
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/DataTypes/DataTypeFactory.hpp>
@@ -127,14 +127,14 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
     }
 
     //get position in the HT where to write to auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
-    auto entryMemRef = nautilus::invoke(insertFunctionProxy, joinState->hashTableReference, castAndLoadValue<uint64_t>(record.read(joinFieldName)));
+    auto entryMemRef = nautilus::invoke(insertFunctionProxy, joinState->hashTableReference, record.read(joinFieldName).cast<UInt64Val>());
     //write data
     auto physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     for (auto& field : nautilus::static_iterable(schema->fields)) {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 //        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
-        record.read(fieldName)->writeToMemRefVal(entryMemRef);
+        record.read(fieldName).writeToMemRefVal(entryMemRef);
         entryMemRef = entryMemRef + UInt64Val(fieldType->size());
     }
 }

@@ -16,7 +16,7 @@
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_PAGEDVECTOR_PAGEDVECTORVARSIZED_HPP_
 
 #include <API/Schema.hpp>
-#include <Nautilus/DataTypes/AbstractDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <span>

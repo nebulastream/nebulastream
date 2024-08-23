@@ -13,8 +13,8 @@
 */
 
 #include <API/AttributeField.hpp>
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
-#include <Nautilus/DataTypes/VariableSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSized.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorVarSizedRef.hpp>
@@ -100,14 +100,14 @@ void PagedVectorVarSizedRef::writeRecord(const Record& record) {
         const auto& fieldValue = record.read(fieldName);
 
         if (fieldType->type->isText()) {
-            const auto textContent = std::dynamic_pointer_cast<VariableSizeExecutableDataType>(fieldValue);
-            auto textEntryMapKey =
-                nautilus::invoke(storeTextProxy, pagedVectorVarSizedRef, textContent->getContent(), textContent->getSize());
+            const auto textContent = fieldValue.cast<VariableSizedData>();
+            const auto textEntryMapKey =
+                nautilus::invoke(storeTextProxy, pagedVectorVarSizedRef, textContent.getContent(), textContent.getSize());
             writeValueToMemRef(pageEntry, textEntryMapKey, uint64_t);
             // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
             pageEntry = pageEntry + UInt64Val((uint64_t) sizeof(uint64_t));
         } else {
-            fieldValue->writeToMemRefVal(pageEntry);
+            fieldValue.writeToMemRefVal(pageEntry);
             pageEntry = pageEntry + UInt64Val(fieldType->size());
         }
     }
@@ -127,11 +127,11 @@ Record PagedVectorVarSizedRef::readRecord(const UInt64Val& pos) {
             // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
             pageEntry = pageEntry + UInt64Val((uint64_t) sizeof(uint64_t));
             auto ptrToVarSized = nautilus::invoke(loadTextProxy, pagedVectorVarSizedRef, textEntryMapKey);
-            const auto varSizedData = VariableSizeExecutableDataType::create(ptrToVarSized);
+            const auto varSizedData = VarVal(VariableSizedData(ptrToVarSized));
             record.write(fieldName, varSizedData);
         } else {
             auto fieldMemRef = pageEntry;
-            auto fieldValue = readExecDataTypeFromMemRef(fieldMemRef, fieldType);
+            auto fieldValue = readVarValFromMemRef(fieldMemRef, fieldType);
             record.write(fieldName, fieldValue);
             pageEntry = pageEntry + UInt64Val(fieldType->size());
         }

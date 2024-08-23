@@ -11,7 +11,7 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+
 #include <Execution/Operators/ExecutionContext.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/HJSliceVarSized.hpp>
 #include <Execution/Operators/Streaming/Join/HashJoin/Slicing/HJBuildSlicingVarSized.hpp>
@@ -104,26 +104,27 @@ void HJBuildSlicingVarSized::execute(ExecutionContext& ctx, Record& record) cons
         //                  to_underlying(joinBuildSide));
     }
 
-    // TODO we should come up with something else than this cast
     const auto key = record.read(joinFieldName);
-    if (key->instanceOf<FixedSizeExecutableDataType<Int64>>()) {
+
+    /// TODO we should come up with something else than this if-else chain
+    /// This should be done during the refactoring/porting to the new nautilus library
+    if (key.holdsVariant<Int64Val>()) {
         // Write record to the pagedVector
-        const auto joinFieldNameKey = castAndLoadValue<int64_t>(record.read(joinFieldName));
         auto hjPagedVectorMemRef = nautilus::invoke(getHJPagedVectorVarSizedProxy,
                                                     joinState->sliceReference,
                                                     ctx.getWorkerThreadId(),
                                                     UInt64Val(to_underlying(joinBuildSide)),
-                                                    castAndLoadValue<int64_t>(record.read(joinFieldName)));
+                                                    record.read(joinFieldName).cast<Int64Val>());
 
         Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
         pagedVectorVarSizedRef.writeRecord(record);
-    } else if (key->instanceOf<FixedSizeExecutableDataType<UInt64>>()) {
+    } else if ((key.holdsVariant<UInt64Val>())) {
         // Write record to the pagedVector
         auto hjPagedVectorMemRef = nautilus::invoke(getHJPagedVectorVarSizedProxy,
                                                     joinState->sliceReference,
                                                     ctx.getWorkerThreadId(),
                                                     UInt64Val(to_underlying(joinBuildSide)),
-                                                    castAndLoadValue<uint64_t>(record.read(joinFieldName)));
+                                                    record.read(joinFieldName).cast<UInt64Val>());
 
         Interface::PagedVectorVarSizedRef pagedVectorVarSizedRef(hjPagedVectorMemRef, schema);
         pagedVectorVarSizedRef.writeRecord(record);

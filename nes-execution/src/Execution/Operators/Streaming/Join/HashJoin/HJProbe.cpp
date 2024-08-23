@@ -138,6 +138,10 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                                                      UInt64Val(to_underlying(QueryCompilation::JoinBuildSideType::Right)),
                                                      partitionId);
 
+    nautilus::val<long> a = 5;
+    nautilus::val<int> b = 32;
+    auto c = operator<(a, b);
+
     //for every left page
     for (UInt64Val leftPageNo(0_u64); leftPageNo < numberOfPagesLeft; leftPageNo = leftPageNo + 1) {
         //for every key in left page
@@ -171,8 +175,8 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                     auto rightRecord = rightMemProvider->read({}, rightRecordRef, zeroValue);
 
                     Record joinedRecord;
-                    createJoinedRecord(joinedRecord, leftRecord, rightRecord, FixedSizeExecutableDataType<UInt64>::create(windowStart)->as<FixedSizeExecutableDataType<UInt64>>(), FixedSizeExecutableDataType<UInt64>::create(windowEnd)->as<FixedSizeExecutableDataType<UInt64>>());
-                    if (*(joinExpression->execute(joinedRecord))) {
+                    createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);
+                    if ((joinExpression->execute(joinedRecord))) {
                         // Calling the child operator for this joinedRecord
                         child->execute(ctx, joinedRecord);
                     }//end of key expression compare
