@@ -14,12 +14,13 @@
 
 #include <Nautilus/Interface/Record.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <fmt/format.h>
 #include <sstream>
 
 namespace NES::Nautilus {
 
-Record::Record(std::unordered_map<RecordFieldIdentifier, ExecDataType>&& fields) : recordFields(fields) {}
+Record::Record(std::unordered_map<RecordFieldIdentifier, VarVal>&& fields) : recordFields(fields) {}
 
 bool Record::operator==(const Record& rhs) const {
     if (recordFields.size() != rhs.recordFields.size()) {
@@ -41,11 +42,11 @@ bool Record::operator==(const Record& rhs) const {
 
 bool Record::operator!=(const Record& rhs) const { return !(*this == rhs); }
 
-const ExecDataType& Record::read(const std::string& recordFieldIdentifier) const {
+const VarVal& Record::read(const std::string& recordFieldIdentifier) const {
     return recordFields.at(recordFieldIdentifier);
 }
-void Record::write(const Record::RecordFieldIdentifier& recordFieldIdentifier, const ExecDataType& dataType) {
-    recordFields[recordFieldIdentifier] = dataType;
+void Record::write(const Record::RecordFieldIdentifier& recordFieldIdentifier, const VarVal& dataType) {
+    recordFields.insert_or_assign(recordFieldIdentifier, dataType);
 }
 
 std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
