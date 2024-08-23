@@ -14,8 +14,8 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_TUPLEBUFFERMEMORYPROVIDER_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_MEMORYPROVIDER_TUPLEBUFFERMEMORYPROVIDER_HPP_
 
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
-#include <Nautilus/DataTypes/VariableSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
@@ -42,29 +42,28 @@ class TupleBufferMemoryProvider {
                                   Nautilus::MemRefVal& bufferAddress,
                                   Nautilus::UInt64Val& recordIndex) const = 0;
 
-  /// Writes a record from the given bufferAddress and recordIndex.
-  /// @param bufferAddress: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
-  /// @param recordIndex: Index of the record to be stored to
+    /// Writes a record from the given bufferAddress and recordIndex.
+    /// @param bufferAddress: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
+    /// @param recordIndex: Index of the record to be stored to
     virtual void
     write(Nautilus::UInt64Val& recordIndex, Nautilus::MemRefVal& bufferAddress, NES::Nautilus::Record& rec) const = 0;
 
-    /// Currently, this method does not support Null handling. It loads an ExecDataType of type from the fieldReference
+    /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
     /// We require the bufferReference, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static Nautilus::ExecDataType
-    load(const PhysicalTypePtr& type, Nautilus::MemRefVal& bufferReference, Nautilus::MemRefVal& fieldReference);
+    static Nautilus::VarVal
+    load(const PhysicalTypePtr& type, const Nautilus::MemRefVal& bufferReference, Nautilus::MemRefVal& fieldReference);
 
-
-    /// Currently, this method does not support Null handling. It stores an ExecDataType of type to the fieldReference
+    /// Currently, this method does not support Null handling. It stores an VarVal of type to the fieldReference
     /// We require the bufferReference, as we store variable sized data in a childbuffer and therefore, we need access
     /// to the buffer if the type is of variable sized
-    static Nautilus::ExecDataType store(const NES::PhysicalTypePtr& type,
-                                        Nautilus::MemRefVal& bufferReference,
-                                        Nautilus::MemRefVal& fieldReference,
-                                        Nautilus::ExecDataType value);
+    static Nautilus::VarVal store(const NES::PhysicalTypePtr& type,
+                                  const Nautilus::MemRefVal& bufferReference,
+                                  Nautilus::MemRefVal& fieldReference,
+                                  Nautilus::VarVal value);
 
     [[nodiscard]] static bool includesField(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                                     const Nautilus::Record::RecordFieldIdentifier& fieldIndex) ;
+                                            const Nautilus::Record::RecordFieldIdentifier& fieldIndex);
 };
 
 }// namespace NES::Runtime::Execution::MemoryProvider

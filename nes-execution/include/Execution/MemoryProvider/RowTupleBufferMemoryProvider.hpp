@@ -28,20 +28,19 @@ class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider {
      * @param Row memory layout pointer used to create the RowTupleBufferMemoryProvider.
      */
     RowTupleBufferMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr);
-    ~RowTupleBufferMemoryProvider() = default;
+    ~RowTupleBufferMemoryProvider() override = default;
 
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
     Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          nautilus::val<int8_t*>& bufferAddress,
-                          nautilus::val<uint64_t>& recordIndex) const override;
+                          Nautilus::MemRefVal& bufferAddress,
+                          Nautilus::UInt64Val& recordIndex) const override;
 
-    void
-    write(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const override;
+    void write(Nautilus::UInt64Val& recordIndex, Nautilus::MemRefVal& bufferAddress, NES::Nautilus::Record& rec) const override;
 
   private:
-    [[nodiscard]] nautilus::val<int8_t*>
-    calculateFieldAddress(const nautilus::val<int8_t*>& recordOffset, const uint64_t fieldIndex) const;
+    [[nodiscard]] Nautilus::MemRefVal calculateFieldAddress(const Nautilus::MemRefVal& recordOffset,
+                                                            const uint64_t fieldIndex) const;
 
     const Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;
 };

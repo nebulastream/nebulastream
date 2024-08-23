@@ -13,7 +13,7 @@
 */
 #include <Execution/RecordBuffer.hpp>
 #include <Execution/TupleBufferProxyFunctions.hpp>
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <nautilus/function.hpp>
 

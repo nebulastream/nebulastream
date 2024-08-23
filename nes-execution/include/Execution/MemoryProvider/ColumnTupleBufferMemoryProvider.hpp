@@ -33,15 +33,14 @@ class ColumnTupleBufferMemoryProvider final : public TupleBufferMemoryProvider {
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
     Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
-                          nautilus::val<int8_t*>& bufferAddress,
-                          nautilus::val<uint64_t>& recordIndex) const override;
+                          Nautilus::MemRefVal& bufferAddress,
+                          Nautilus::UInt64Val& recordIndex) const override;
 
-    void
-    write(nautilus::val<uint64_t>& recordIndex, nautilus::val<int8_t*>& bufferAddress, NES::Nautilus::Record& rec) const override;
+    void write(Nautilus::UInt64Val& recordIndex, Nautilus::MemRefVal& bufferAddress, NES::Nautilus::Record& rec) const override;
 
   private:
-    nautilus::val<int8_t*>
-    calculateFieldAddress(nautilus::val<int8_t*>& bufferAddress, nautilus::val<uint64_t>& recordIndex, uint64_t fieldIndex) const;
+    Nautilus::MemRefVal
+    calculateFieldAddress(Nautilus::MemRefVal& bufferAddress, Nautilus::UInt64Val& recordIndex, uint64_t fieldIndex) const;
     Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
 };
 
