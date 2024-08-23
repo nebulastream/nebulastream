@@ -11,10 +11,7 @@
 # limitations under the License.
 
 add_source_files(nes-nautilus
-        AbstractDataType.cpp
-        FixedSizeExecutableDataType.cpp
-        VariableSizeExecutableDataType.cpp
-        Operations/ExecutableDataTypeArithmeticalOperations.cpp
-        Operations/ExecutableDataTypeLogicalOperations.cpp
-        Operations/ExecutableDataTypeBitwiseOperations.cpp
+        DataTypesUtil.cpp
+        VarVal.cpp
+        VariableSizedData.cpp
 )
