@@ -33,7 +33,7 @@ public:
      * @param schema
      * @param append
      */
-    SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
+    SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider);
 
     /**
      * @brief constructor for a sink format
@@ -41,7 +41,7 @@ public:
      * @param append flag to append or not
      * @param addTimestamp flag to add a timestamp in getFormattedBuffer
      */
-    SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, bool addTimestamp);
+    SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider, bool addTimestamp);
 
     virtual ~SinkFormat() noexcept = default;
 
@@ -77,14 +77,14 @@ public:
     void setSchemaPtr(SchemaPtr schema);
 
     std::shared_ptr<Runtime::AbstractBufferProvider> getBufferManager();
-    void setBufferManager(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
+    void setBufferManager(std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider);
 
     bool getAddTimestamp();
     void setAddTimestamp(bool addTimestamp);
 
 protected:
     SchemaPtr schema;
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager;
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider;
     bool addTimestamp;
 };
 

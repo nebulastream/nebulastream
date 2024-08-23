@@ -56,7 +56,7 @@ std::vector<TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t s
     auto buffersToTransfer = std::vector<Runtime::TupleBuffer>();
 
     /// metadata buffer
-    auto mainMetadata = bufferManager->getBufferBlocking();
+    auto mainMetadata = bufferProvider->getBufferBlocking();
     buffersToTransfer.insert(buffersToTransfer.begin(), mainMetadata);
     auto metadataBuffersCount = 1;
 
@@ -87,7 +87,7 @@ std::vector<TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t s
         {
             /// if current buffer does not contain enough space then
             /// get new buffer and insert to vector of buffers
-            auto newBuffer = bufferManager->getBufferBlocking();
+            auto newBuffer = bufferProvider->getBufferBlocking();
             buffersToTransfer.emplace(buffersToTransfer.begin() + metadataBuffersCount++, newBuffer);
             /// update pointer and index
             metadataPtr = newBuffer.getBuffer<uint64_t>();
@@ -103,7 +103,7 @@ std::vector<TupleBuffer> StreamJoinOperatorHandler::getStateToMigrate(uint64_t s
     for (const auto& slice : filteredSlices)
     {
         /// get buffers with records and store
-        auto sliceBuffers = slice->serialize(*bufferManager);
+        auto sliceBuffers = slice->serialize(*bufferProvider);
         buffersToTransfer.insert(buffersToTransfer.end(), sliceBuffers.begin(), sliceBuffers.end());
 
         /// 2. Insert number of buffers in i-th slice to metadata buffer
@@ -370,9 +370,9 @@ uint64_t StreamJoinOperatorHandler::getWindowSize() const
     return sliceAssigner.getWindowSize();
 }
 
-void StreamJoinOperatorHandler::setBufferManager(std::shared_ptr<AbstractBufferProvider> bufManager)
+void StreamJoinOperatorHandler::setBufferManager(std::shared_ptr<AbstractBufferProvider> bufferProvider)
 {
-    this->bufferManager = std::move(bufManager);
+    this->bufferProvider = std::move(bufferProvider);
 }
 
 StreamJoinOperatorHandler::StreamJoinOperatorHandler(

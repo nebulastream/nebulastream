@@ -24,11 +24,11 @@ public:
     /**
      * Ctor for CSV format.
      * @param schema Ptr to the schema
-     * @param bufferManager Ptr to the buffer manager
+     * @param bufferProvider Ptr to the buffer manager
      * @param addTimestamp Flag, to indicate if timestamp shall be added when formatting
      */
-    CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, bool addTimestamp);
-    CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
+    CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider, bool addTimestamp);
+    CsvFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider);
     virtual ~CsvFormat() noexcept = default;
 
     /**

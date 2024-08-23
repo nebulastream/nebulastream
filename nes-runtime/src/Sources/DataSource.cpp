@@ -55,7 +55,7 @@ void DataSource::addExecutableSuccessors(std::vector<Runtime::Execution::Success
 
 DataSource::DataSource(
     SchemaPtr pSchema,
-    std::shared_ptr<Runtime::AbstractPoolProvider> bufferManager,
+    std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
     Runtime::QueryManagerPtr queryManager,
     OperatorId operatorId,
     OriginId originId,
@@ -68,7 +68,7 @@ DataSource::DataSource(
     : Runtime::Reconfigurable()
     , DataEmitter()
     , queryManager(std::move(queryManager))
-    , bufferPoolProvider(std::move(bufferManager))
+    , bufferPoolProvider(std::move(poolProvider))
     , executableSuccessors(std::move(executableSuccessors))
     , operatorId(operatorId)
     , originId(originId)
@@ -328,14 +328,14 @@ void DataSource::setGatheringInterval(std::chrono::milliseconds interval)
 
 void DataSource::open()
 {
-    bufferManager = bufferPoolProvider->createFixedSizeBufferPool(numSourceLocalBuffers);
+    bufferProvider = bufferPoolProvider->createFixedSizeBufferPool(numSourceLocalBuffers);
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+        memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferProvider->getBufferSize());
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+        memoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferProvider->getBufferSize());
     }
 }
 
@@ -355,7 +355,7 @@ void DataSource::close()
         NES_DEBUG("DataSource {} : Data Source add end of stream. Gracefully={}", operatorId, queryTerminationType);
         endOfStreamSent = queryManager->addEndOfStream(shared_from_base<DataSource>(), queryTerminationType);
         NES_ASSERT2_FMT(endOfStreamSent, "Cannot send eos for source " << toString());
-        bufferManager->destroy();
+        bufferProvider->destroy();
         queryManager->notifySourceCompletion(shared_from_base<DataSource>(), queryTerminationType);
     }
 }
@@ -622,7 +622,7 @@ std::vector<Schema::MemoryLayoutType> DataSource::getSupportedLayouts()
 
 Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer()
 {
-    auto buffer = bufferManager->getBufferBlocking();
+    auto buffer = bufferProvider->getBufferBlocking();
     return Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 }
 

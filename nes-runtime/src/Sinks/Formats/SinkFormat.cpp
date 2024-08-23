@@ -19,13 +19,13 @@
 namespace NES
 {
 
-SinkFormat::SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
-    : SinkFormat(schema, bufferManager, false)
+SinkFormat::SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider)
+    : SinkFormat(schema, bufferProvider, false)
 {
 }
 
-SinkFormat::SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager, bool addTimestamp)
-    : schema(std::move(schema)), bufferManager(std::move(bufferManager)), addTimestamp(addTimestamp)
+SinkFormat::SinkFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider, bool addTimestamp)
+    : schema(std::move(schema)), bufferProvider(std::move(bufferProvider)), addTimestamp(addTimestamp)
 {
 }
 
@@ -41,12 +41,12 @@ void SinkFormat::setSchemaPtr(SchemaPtr schema)
 
 std::shared_ptr<Runtime::AbstractBufferProvider> SinkFormat::getBufferManager()
 {
-    return bufferManager;
+    return bufferProvider;
 }
 
-void SinkFormat::setBufferManager(std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
+void SinkFormat::setBufferManager(std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider)
 {
-    this->bufferManager = std::move(bufferManager);
+    this->bufferProvider = std::move(bufferProvider);
 }
 bool SinkFormat::getAddTimestamp()
 {

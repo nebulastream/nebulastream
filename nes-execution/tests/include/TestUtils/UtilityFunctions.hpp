@@ -38,10 +38,10 @@ namespace NES::Runtime::Execution::Util
 * @brief Creates a TupleBuffer from recordPtr
 * @param recordPtr
 * @param schema
-* @param bufferManager
+* @param bufferProvider
 * @return Filled tupleBuffer
 */
-Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, AbstractBufferProvider& bufferManager);
+Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& schema, AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief Writes from the nautilusRecord to the record at index recordIndex
@@ -49,21 +49,21 @@ Runtime::TupleBuffer getBufferFromPointer(uint8_t* recordPtr, const SchemaPtr& s
 * @param baseBufferPtr
 * @param nautilusRecord
 * @param schema
-* @param bufferManager
+* @param bufferProvider
 */
 void writeNautilusRecord(
-    uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferManager);
+    uint64_t recordIndex, int8_t* baseBufferPtr, Nautilus::Record nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief Merges a vector of TupleBuffers into one TupleBuffer. If the buffers in the vector do not fit into one TupleBuffer, the
 *        buffers that do not fit will be discarded.
 * @param buffersToBeMerged
 * @param schema
-* @param bufferManager
+* @param bufferProvider
 * @return merged TupleBuffer
 */
 Runtime::TupleBuffer
-mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, AbstractBufferProvider& bufferManager);
+mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaPtr schema, AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief this function iterates through all buffers and merges all buffers into a newly created vector so that the new buffers
@@ -71,14 +71,14 @@ mergeBuffers(std::vector<Runtime::TupleBuffer>& buffersToBeMerged, const SchemaP
 * @param buffers
 * @param schema
 * @param timeStampFieldName
-* @param bufferManager
+* @param bufferProvider
 * @return buffer of tuples
 */
 std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
     std::vector<Runtime::TupleBuffer>& buffers,
     SchemaPtr schema,
     const std::string& timeStampFieldName,
-    AbstractBufferProvider& bufferManager,
+    AbstractBufferProvider& bufferProvider,
     uint64_t windowSize);
 
 /**
@@ -86,23 +86,23 @@ std::vector<Runtime::TupleBuffer> mergeBuffersSameWindow(
 * @param buffersToSort
 * @param schema
 * @param sortFieldName
-* @param bufferManager
+* @param bufferProvider
 * @return sorted buffers
 */
 std::vector<Runtime::TupleBuffer> sortBuffersInTupleBuffer(
     std::vector<Runtime::TupleBuffer>& buffersToSort,
     SchemaPtr schema,
     const std::string& sortFieldName,
-    AbstractBufferProvider& bufferManager);
+    AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief Creates a TupleBuffer from a Nautilus::Record
 * @param nautilusRecord
 * @param schema
-* @param bufferManager
+* @param bufferProvider
 * @return Filled TupleBuffer
 */
-Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferManager);
+Runtime::TupleBuffer getBufferFromRecord(const Nautilus::Record& nautilusRecord, SchemaPtr schema, AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief create CSV lines from the tuples
@@ -119,13 +119,13 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 * @param schema
 * @param timeStampFieldName
 * @param lastTimeStamp
-* @param bufferManager
+* @param bufferProvider
 * @return Vector of TupleBuffers
 */
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    Runtime::AbstractBufferProvider& bufferManager,
+    Runtime::AbstractBufferProvider& bufferProvider,
     uint64_t originId = 0,
     const std::string& timestampFieldname = "ts",
     bool skipFirstLine = false);
@@ -139,7 +139,7 @@ std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr&
 * @param json: denotes whether input comes from JSON for correct parsing
 * @param schema: the schema the data are supposed to have
 * @param tupleCount: current tuple count, i.e. how many tuples have already been produced
-* @param bufferManager: the buffer manager
+* @param bufferProvider: the buffer manager
 */
 void writeFieldValueToTupleBuffer(
     std::string inputString,
@@ -147,7 +147,7 @@ void writeFieldValueToTupleBuffer(
     Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    Runtime::AbstractBufferProvider& bufferManager);
+    Runtime::AbstractBufferProvider& bufferProvider);
 
 /**
 * @brief function to replace all string occurrences

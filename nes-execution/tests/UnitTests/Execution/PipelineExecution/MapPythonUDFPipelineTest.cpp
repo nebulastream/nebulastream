@@ -40,7 +40,7 @@ class MapPythonUDFPipelineTest : public testing::Test, public AbstractPipelineEx
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -55,7 +55,7 @@ public:
     {
         NES_INFO("Setup MapPythonUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     std::string testDataPath = std::filesystem::path(TEST_DATA_DIRECTORY) / "PythonUDFTestData";
@@ -148,16 +148,16 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap)
 {
     auto variableName = "intVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT32);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<int32_t>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
 
     std::string function = "def integer_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "integer_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -173,15 +173,15 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap)
 {
     auto variableName = "shortVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT16);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<int16_t>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<int16_t>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def short_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "short_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -197,15 +197,15 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap)
 {
     auto variableName = "byteVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT8);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<int8_t>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<int8_t>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def byte_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "byte_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -221,15 +221,15 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap)
 {
     auto variableName = "longVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<int64_t>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def long_test(x):\n\ty = x + 10\n\treturn y\n";
     std::string functionName = "long_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -245,15 +245,15 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap)
 {
     auto variableName = "DoubleVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::FLOAT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<double>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     std::string function = "def double_test(x):\n\ty = x + 10.0\n\treturn y\n";
     std::string functionName = "double_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -269,10 +269,10 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap)
 {
     auto variableName = "BooleanVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::BOOLEAN);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
@@ -283,7 +283,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap)
     std::string function = "def boolean_test(x):\n\tx = False\n\treturn x\n";
     std::string functionName = "boolean_test";
     auto handler = initMapHandler(function, functionName, schema);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -308,16 +308,16 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap)
 {
     auto variableName = "stringVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, DataTypeFactory::createText());
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         std::string value = "X";
-        auto varLengthBuffer = bm->getBufferBlocking();
+        auto varLengthBuffer = bufferManager->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
         auto index = buffer.storeChildBuffer(varLengthBuffer);
@@ -330,7 +330,7 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap)
     std::string functionName = "string_test";
     auto handler = initMapHandler(function, functionName, schema);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -365,16 +365,16 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
     schema->addField("booleanVariable", BasicType::BOOLEAN);
     /// TODO #3980 enable once string works
     /// schema->addField("stringVariable", DataTypeFactory::createText());
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         std::string value = "X";
-        auto varLengthBuffer = bm->getBufferBlocking();
+        auto varLengthBuffer = bufferManager->getBufferBlocking();
         *varLengthBuffer.getBuffer<uint32_t>() = value.size();
         std::strcpy(varLengthBuffer.getBuffer<char>() + sizeof(uint32_t), value.c_str());
         auto strIndex = buffer.storeChildBuffer(varLengthBuffer);
@@ -404,7 +404,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
     std::string functionName = "complex_test";
     auto handler = initMapHandler(function, functionName, schema);
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

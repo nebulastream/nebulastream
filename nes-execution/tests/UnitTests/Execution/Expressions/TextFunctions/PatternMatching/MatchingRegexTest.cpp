@@ -39,12 +39,12 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
+        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 1024);
         NES_DEBUG("Setup MatchingRegexTest test case.")
     }
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down MatchingRegexTest test class."); }
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 

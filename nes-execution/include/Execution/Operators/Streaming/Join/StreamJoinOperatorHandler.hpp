@@ -203,7 +203,7 @@ public:
      */
     uint64_t getWindowSize() const;
 
-    void setBufferManager(std::shared_ptr<AbstractBufferProvider> bufManager);
+    void setBufferManager(std::shared_ptr<AbstractBufferProvider> bufferProvider);
 
 private:
     /**
@@ -231,6 +231,6 @@ protected:
     size_t sizeOfRecordRight;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
-    std::shared_ptr<AbstractBufferProvider> bufferManager;
+    std::shared_ptr<AbstractBufferProvider> bufferProvider;
 };
 } /// namespace NES::Runtime::Execution::Operators

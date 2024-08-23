@@ -266,7 +266,7 @@ public:
 protected:
     Runtime::QueryManagerPtr queryManager;
     std::shared_ptr<Runtime::AbstractPoolProvider> bufferPoolProvider;
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager{nullptr};
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     OriginId originId;

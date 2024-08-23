@@ -39,7 +39,7 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
 
@@ -56,7 +56,7 @@ public:
         NES_INFO("Setup FlatMapJavaUDFPipelineTest test case.");
         options.setDumpToConsole(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 };
 
@@ -155,15 +155,15 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
 {
     auto variableName = "stringVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, DataTypeFactory::createText());
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
-        testBuffer[i].writeVarSized("stringVariable", "X Y Z", bm);
+        testBuffer[i].writeVarSized("stringVariable", "X Y Z", bufferManager);
         testBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -179,7 +179,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -221,11 +221,11 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
@@ -235,7 +235,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
         testBuffer[i]["longVariable"].write((int64_t)i);
         testBuffer[i]["floatVariable"].write((float)i);
         testBuffer[i]["doubleVariable"].write((double)i);
-        testBuffer[i].writeVarSized("stringVariable", "X", bm);
+        testBuffer[i].writeVarSized("stringVariable", "X", bufferManager);
         testBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -256,7 +256,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

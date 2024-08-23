@@ -47,7 +47,7 @@ class KeyedTimeWindowPipelineTest : public testing::Test, public AbstractPipelin
 public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     ExecutablePipelineProvider* provider{};
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -62,7 +62,7 @@ public:
     {
         std::cout << "Setup GlobalTimeWindowPipelineTest test case." << std::endl;
         provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called before a test is executed. */
@@ -81,7 +81,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
     scanSchema->addField("k", BasicType::INT64);
     scanSchema->addField("v", BasicType::INT64);
     scanSchema->addField("ts", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -112,14 +112,14 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
         0 /*handler index*/, aggregationFunctions, std::move(sliceMergingAction), types, 8, 8);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     sliceMerging->setChild(emitOperator);
     auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -148,13 +148,13 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>();
 
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bufferManager);
     preAggExecutablePipeline->setup(pipeline1Context);
 
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     EXPECT_EQ(pipeline1Context.buffers.size(), 1);
 
-    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, bm);
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, bufferManager);
     sliceMergingExecutablePipeline->setup(pipeline2Context);
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
     EXPECT_EQ(pipeline2Context.buffers.size(), 1);
@@ -177,7 +177,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     scanSchema->addField("k2", BasicType::INT64);
     scanSchema->addField("v", BasicType::INT64);
     scanSchema->addField("ts", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -213,14 +213,14 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     emitSchema->addField("k1", BasicType::INT64);
     emitSchema->addField("k2", BasicType::INT64);
     emitSchema->addField("sum", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     sliceMerging->setChild(emitOperator);
     auto sliceMergingPipeline = std::make_shared<PhysicalOperatorPipeline>();
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -253,13 +253,13 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     auto sliceMergingExecutablePipeline = provider->create(sliceMergingPipeline, options);
     auto sliceMergingHandler = std::make_shared<Operators::KeyedSliceMergingHandler>();
 
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bufferManager);
     preAggExecutablePipeline->setup(pipeline1Context);
 
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     EXPECT_EQ(pipeline1Context.buffers.size(), 1);
 
-    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, bm);
+    auto pipeline2Context = MockedPipelineExecutionContext({sliceMergingHandler}, false, bufferManager);
     sliceMergingExecutablePipeline->setup(pipeline2Context);
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
     EXPECT_EQ(pipeline2Context.buffers.size(), 1);

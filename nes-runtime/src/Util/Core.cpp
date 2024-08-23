@@ -148,7 +148,7 @@ bool Util::assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::
 std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
     const std::string& timeStampFieldName,
     uint64_t lastTimeStamp)
 {
@@ -163,15 +163,15 @@ std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(
     auto parser = std::make_shared<CSVParser>(schema->fields.size(), getPhysicalTypes(schema), delimiter);
 
     /// Do-while loop for checking, if we have another line to parse from the inputFile
-    const auto maxTuplesPerBuffer = bufferManager->getBufferSize() / schema->getSchemaSizeInBytes();
+    const auto maxTuplesPerBuffer = bufferProvider->getBufferSize() / schema->getSchemaSizeInBytes();
     auto it = beginIt;
     auto tupleCount = 0UL;
-    auto buffer = bufferManager->getBufferBlocking();
+    auto buffer = bufferProvider->getBufferBlocking();
     do
     {
         std::string line = *it;
         auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
-        parser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferManager);
+        parser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferProvider);
         ++tupleCount;
 
         /// If we have read enough tuples from the csv file, then stop iterating over it
@@ -185,7 +185,7 @@ std::vector<Runtime::TupleBuffer> Util::createBuffersFromCSVFile(
         {
             buffer.setNumberOfTuples(tupleCount);
             recordBuffers.emplace_back(buffer);
-            buffer = bufferManager->getBufferBlocking();
+            buffer = bufferProvider->getBufferBlocking();
             tupleCount = 0UL;
         }
         ++it;

@@ -27,8 +27,8 @@ std::string JsonFormat::getFormattedSchema()
     NES_NOT_IMPLEMENTED();
 }
 
-JsonFormat::JsonFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager)
-    : SinkFormat(std::move(schema), std::move(bufferManager))
+JsonFormat::JsonFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider)
+    : SinkFormat(std::move(schema), std::move(bufferProvider))
 {
 }
 

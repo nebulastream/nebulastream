@@ -73,7 +73,7 @@ void createRecords(std::vector<Record>& records, size_t numRecords)
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest)
 {
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     using Type = typename TypeParam::first_type;
     using EncodedType = typename TypeParam::second_type;
     constexpr size_t NUM_RECORDS = 100;
@@ -86,7 +86,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest)
         std::vector<PhysicalTypePtr>({nType, nType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto sortOperator = BatchSort(0, {nType, nType}, {"f1", "f2"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
@@ -117,7 +117,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest)
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest)
 {
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     using Type = typename TypeParam::first_type;
     using EncodedType = typename TypeParam::second_type;
     constexpr size_t NUM_RECORDS = 100;
@@ -130,7 +130,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest)
         std::vector<PhysicalTypePtr>({nType, nType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f2"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto sortOperator = BatchSort(0, {nType, nType}, {"f1", "f2"}, {"f2"});
     auto collector = std::make_shared<CollectOperator>();
@@ -161,7 +161,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest)
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest)
 {
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     using Type = typename TypeParam::first_type;
     using EncodedType = typename TypeParam::second_type;
     constexpr auto NUM_RECORDS = 1025; /// 1025 * 2 (Fields) * 2 Bytes = 4100 Bytes > 4096 Bytes (Page Size)
@@ -174,7 +174,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest)
         std::vector<PhysicalTypePtr>({integerType, integerType}),
         std::vector<Record::RecordFieldIdentifier>({"f1", "f2"}),
         std::vector<Record::RecordFieldIdentifier>({"f1"}));
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto sortOperator = BatchSort(0, {integerType, integerType}, {"f1", "f2"}, {"f1"});
     auto collector = std::make_shared<CollectOperator>();
     sortOperator.setChild(collector);
