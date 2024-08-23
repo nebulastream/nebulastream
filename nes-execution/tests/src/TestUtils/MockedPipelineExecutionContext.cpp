@@ -20,11 +20,11 @@ namespace NES::Runtime::Execution
 MockedPipelineExecutionContext::MockedPipelineExecutionContext(
     std::vector<OperatorHandlerPtr> handler,
     bool logSeenSeqChunk,
-    std::shared_ptr<AbstractBufferProvider> bufferManager)
+    std::shared_ptr<AbstractBufferProvider> bufferProvider)
     : PipelineExecutionContext(
           INVALID_PIPELINE_ID, /// mock pipeline id
           INVALID_QUERY_ID, /// mock query id
-          std::move(bufferManager),
+          std::move(bufferProvider),
           1,
           [this, logSeenSeqChunk](TupleBuffer& buffer, Runtime::WorkerContextRef)
           {

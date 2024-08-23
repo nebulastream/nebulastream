@@ -40,13 +40,13 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
         NES_DEBUG("Setup ListTypeTest test case.");
     }
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_DEBUG("Tear down ListTypeTest test class."); }
-    Runtime::BufferManagerPtr bm = Runtime::BufferManager::create();
+    Runtime::BufferManagerPtr bufferManager = Runtime::BufferManager::create();
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 

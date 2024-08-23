@@ -24,7 +24,7 @@ using SerializableSchemaPtr = std::shared_ptr<SerializableSchema>;
 class NesFormat : public SinkFormat
 {
 public:
-    NesFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager);
+    NesFormat(SchemaPtr schema, std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider);
     virtual ~NesFormat() noexcept = default;
 
     /**

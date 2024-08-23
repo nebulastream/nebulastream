@@ -22,7 +22,7 @@ namespace NES::Runtime::Execution::Operators
 
 StreamSlicePtr NLJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer> buffers)
 {
-    return NLJSlice::deserialize(bufferManager, leftSchema, pageSizeLeft, rightSchema, pageSizeRight, buffers);
+    return NLJSlice::deserialize(bufferProvider, leftSchema, pageSizeLeft, rightSchema, pageSizeRight, buffers);
 }
 
 void NLJOperatorHandler::emitSliceIdsToProbe(
@@ -64,7 +64,7 @@ void NLJOperatorHandler::emitSliceIdsToProbe(
 StreamSlicePtr NLJOperatorHandler::createNewSlice(uint64_t sliceStart, uint64_t sliceEnd)
 {
     return std::make_shared<NLJSlice>(
-        sliceStart, sliceEnd, numberOfWorkerThreads, bufferManager, leftSchema, pageSizeLeft, rightSchema, pageSizeRight);
+        sliceStart, sliceEnd, numberOfWorkerThreads, bufferProvider, leftSchema, pageSizeLeft, rightSchema, pageSizeRight);
 }
 
 NLJOperatorHandler::NLJOperatorHandler(

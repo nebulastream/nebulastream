@@ -42,7 +42,7 @@ class BatchJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipel
 public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
@@ -62,7 +62,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -73,11 +73,11 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema = schema->addField("k1", BasicType::INT64)->addField("v1", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     resultSchema->addField("f1", BasicType::INT64);
-    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
+    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -98,7 +98,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
     /// Fill buffer
@@ -117,7 +117,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
 
     auto joinBuildExecutablePipeline = provider->create(pipeline, options);
     auto joinHandler = std::make_shared<Operators::BatchJoinHandler>();
-    auto pipeline1Context = MockedPipelineExecutionContext({joinHandler}, false, bm);
+    auto pipeline1Context = MockedPipelineExecutionContext({joinHandler}, false, bufferManager);
     joinBuildExecutablePipeline->setup(pipeline1Context);
     joinBuildExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     joinBuildExecutablePipeline->stop(pipeline1Context);

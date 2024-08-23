@@ -39,7 +39,7 @@ public:
      * @param sliceStart: Start timestamp of this slice
      * @param sliceEnd: End timestamp of this slice
      * @param numWorkerThreads: The number of worker threads that will operate on this slice
-     * @param bufferManager: Allocates pages for both pagedVectorVarSized
+     * @param bufferProvider: Allocates pages for both pagedVectorVarSized
      * @param leftSchema: schema of the tuple on the left
      * @param rightSchema: schema of the tuple on the right
      * @param leftPageSize: Size of a single page for the left paged vectors
@@ -49,7 +49,7 @@ public:
         uint64_t sliceStart,
         uint64_t sliceEnd,
         uint64_t numWorkerThreads,
-        std::shared_ptr<AbstractBufferProvider> bufferManager,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
         SchemaPtr& leftSchema,
         uint64_t leftPageSize,
         SchemaPtr& rightSchema,
@@ -104,10 +104,10 @@ public:
      * uint64_t | uint64_t | uint64_t | uint64_t | ... | uint64_t
      * -----------------------------------------
      * all other buffers are: 1st buffer of 1st var_sized_page | .... | m_0 buffer of 1 var_sized_page | ... | 1 buffer of n-th var_sized_page | m_n buffer of n-th var_sized_page
-     * @param bufferManager for getting new tuple buffers
+     * @param bufferProvider for getting new tuple buffers
      * @return list of pages that store records and metadata
      */
-    std::vector<Runtime::TupleBuffer> serialize(AbstractBufferProvider& bufferManager) override;
+    std::vector<Runtime::TupleBuffer> serialize(AbstractBufferProvider& bufferProvider) override;
 
     /**
      * @brief Recreates the slice from tuple buffers [Not implemented for variable sized pages right now
@@ -118,7 +118,7 @@ public:
      * uint64_t | uint64_t | uint64_t | uint64_t | ... | uint64_t
      * -----------------------------------------
      * all other buffers are: 1st buffer of 1st var_sized_page | .... | m_0 buffer of 1 var_sized_page | ... | 1 buffer of n-th var_sized_page | m_n buffer of n-th var_sized_page
-     * @param bufferManager: Allocates pages for both pagedVectorVarSized
+     * @param bufferProvider: Allocates pages for both pagedVectorVarSized
      * @param leftSchema: schema of the tuple on the left
      * @param leftPageSize: Size of a single page for the left paged vectors
      * @param rightSchema: schema of the tuple on the right
@@ -126,7 +126,7 @@ public:
      * @param buffers List of tuple buffers to recreate the state of slice
      */
     static StreamSlicePtr deserialize(
-        std::shared_ptr<AbstractBufferProvider> bufferManager,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
         SchemaPtr& leftSchema,
         uint64_t leftPageSize,
         SchemaPtr& rightSchema,

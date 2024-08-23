@@ -40,7 +40,7 @@ class LimitPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineE
 public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider{};
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
@@ -62,7 +62,7 @@ public:
         options.setDumpToConsole(true);
         options.setDumpToFile(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -78,7 +78,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     constexpr uint64_t TUPLES = 20;
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::UINT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -90,7 +90,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < TUPLES; ++i)
     {
@@ -101,7 +101,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     auto executablePipeline = provider->create(pipeline, options);
 
     auto handler = std::make_shared<Operators::LimitOperatorHandler>(LIMIT);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

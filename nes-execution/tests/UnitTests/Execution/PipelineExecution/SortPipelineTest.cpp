@@ -39,7 +39,7 @@ class SortPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineEx
 public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider{};
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
@@ -61,7 +61,7 @@ public:
         options.setDumpToConsole(true);
         options.setDumpToFile(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -78,7 +78,7 @@ TEST_P(SortPipelineTest, SortPipelineTest)
     schema->addField("f1", BasicType::INT32);
     schema->addField("f2", BasicType::INT32);
 
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto sortOperator = std::make_shared<Operators::Sort>(s);
     auto sortScanOperator = std::make_shared<Operators::SortScan>(s);
@@ -89,7 +89,7 @@ TEST_P(SortPipelineTest, SortPipelineTest)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(sortOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = numberOfTuples; i > 0; i--)
     {
@@ -100,7 +100,7 @@ TEST_P(SortPipelineTest, SortPipelineTest)
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext({}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

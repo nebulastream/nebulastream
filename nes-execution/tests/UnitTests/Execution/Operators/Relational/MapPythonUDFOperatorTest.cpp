@@ -61,7 +61,7 @@ TEST_F(MapPythonUdfOperatorTest, IntegerUDFTest)
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Int32>(initialValue)}});
     map.execute(ctx, record);
@@ -84,7 +84,7 @@ TEST_F(MapPythonUdfOperatorTest, LongUDFTest)
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Int64>(initialValue)}});
     map.execute(ctx, record);
@@ -107,7 +107,7 @@ TEST_F(MapPythonUdfOperatorTest, DoubleUDFTest)
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Double>(initialValue)}});
     map.execute(ctx, record);
@@ -130,7 +130,7 @@ TEST_F(MapPythonUdfOperatorTest, FloatUDFTest)
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Float>(initialValue)}});
     map.execute(ctx, record);
@@ -153,7 +153,7 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest)
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record({{"id", Value<Boolean>(initialValue)}});
     map.execute(ctx, record);
@@ -166,8 +166,8 @@ TEST_F(MapPythonUdfOperatorTest, BooleanUDFTest)
 */
 TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction)
 {
-    BufferManagerPtr bm = BufferManager::create();
-    auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bm, 1024);
+    BufferManagerPtr bufferManager = BufferManager::create();
+    auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bufferManager, 1024);
     inputSchema = Schema::create()
                       ->addField("byteVariable", BasicType::INT8)
                       ->addField("shortVariable", BasicType::INT16)
@@ -206,7 +206,7 @@ TEST_F(MapPythonUdfOperatorTest, ComplexMapFunction)
     auto map = MapPythonUDF(0, inputSchema, outputSchema);
     auto collector = std::make_shared<CollectOperator>();
     map.setChild(collector);
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
     auto record = Record(
         {{"byteVariable", Value<Int8>(initialByte)},

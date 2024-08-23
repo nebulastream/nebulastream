@@ -47,7 +47,7 @@ class BatchAggregationPipelineTest : public Testing::BaseUnitTest, public Abstra
 public:
     Nautilus::CompilationOptions options;
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
 
     /* Will be called before any test in this class are executed. */
@@ -67,7 +67,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -81,7 +81,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
@@ -99,7 +99,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
     /// Fill buffer
@@ -114,14 +114,14 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline)
 
     auto preAggExecutablePipeline = provider->create(pipeline, options);
     auto preAggregationHandler = std::make_shared<Operators::BatchAggregationHandler>();
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bufferManager);
 
     auto aggScan = std::make_shared<Operators::BatchAggregationScan>(0 /*handler index*/, aggregationFunctions);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     aggScan->setChild(emitOperator);
     auto pipeline2 = std::make_shared<PhysicalOperatorPipeline>();
     pipeline2->setRootOperator(aggScan);
-    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
+    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bufferManager);
     auto aggExecutablePipeline = provider->create(pipeline2, options);
 
     preAggExecutablePipeline->setup(pipeline1Context);
@@ -133,7 +133,7 @@ TEST_P(BatchAggregationPipelineTest, aggregationPipeline)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema = emitSchema->addField("f1", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
     EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 70);
 }
@@ -142,11 +142,11 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema = schema->addField("f1", BasicType::INT64)->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     resultSchema->addField("f1", BasicType::INT64);
-    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm->getBufferSize());
+    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -169,7 +169,7 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
     /// Fill buffer
@@ -188,7 +188,7 @@ TEST_P(BatchAggregationPipelineTest, keyedAggregationPipeline)
 
     auto preAggExecutablePipeline = provider->create(pipeline, options);
     auto preAggregationHandler = std::make_shared<Operators::BatchKeyedAggregationHandler>();
-    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
+    auto pipeline1Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bufferManager);
     preAggExecutablePipeline->setup(pipeline1Context);
     preAggExecutablePipeline->execute(buffer, pipeline1Context, *wc);
     preAggExecutablePipeline->stop(pipeline1Context);

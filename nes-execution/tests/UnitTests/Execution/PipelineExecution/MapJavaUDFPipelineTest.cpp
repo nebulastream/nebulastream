@@ -41,7 +41,7 @@ class MapJavaUDFPipelineTest : public testing::Test, public AbstractPipelineExec
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -56,7 +56,7 @@ public:
     {
         NES_INFO("Setup MapJavaUDFPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
         options.setDumpToConsole(true);
     }
 
@@ -156,10 +156,10 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap)
 {
     auto variableName = "intVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT32);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<int32_t>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<int32_t>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
                                       .setClassName("stream.nebula.IntegerMapFunction")
@@ -171,7 +171,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineIntegerMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -187,10 +187,10 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineShortMap)
 {
     auto variableName = "shortVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT16);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<int16_t>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<int16_t>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
                                       .setClassName("stream.nebula.ShortMapFunction")
@@ -202,7 +202,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineShortMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -218,10 +218,10 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineByteMap)
 {
     auto variableName = "byteVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT8);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<int8_t>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<int8_t>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
                                       .setClassName("stream.nebula.ByteMapFunction")
@@ -233,7 +233,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineByteMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -249,10 +249,10 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap)
 {
     auto variableName = "longVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<int64_t>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<int64_t>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
                                       .setClassName("stream.nebula.LongMapFunction")
@@ -264,7 +264,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineLongMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -280,10 +280,10 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap)
 {
     auto variableName = "DoubleVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::FLOAT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = initInputBuffer<double>(variableName, bm, memoryLayout);
+    auto buffer = initInputBuffer<double>(variableName, bufferManager, memoryLayout);
     auto executablePipeline = provider->create(pipeline, options);
     auto handler = initMapHandler(Catalogs::UDF::JavaUDFDescriptorBuilder()
                                       .setClassName("stream.nebula.DoubleMapFunction")
@@ -295,7 +295,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineDoubleMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -311,10 +311,10 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap)
 {
     auto variableName = "BooleanVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::BOOLEAN);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
@@ -332,7 +332,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineBooleanMap)
                                       .setOutputSchema(schema)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
@@ -356,15 +356,15 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
 {
     auto variableName = "stringVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, DataTypeFactory::createText());
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
-        testBuffer[i].writeVarSized("stringVariable", "X", bm);
+        testBuffer[i].writeVarSized("stringVariable", "X", bufferManager);
         testBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -380,7 +380,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
                                       .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
                                       .build());
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -410,11 +410,11 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
@@ -425,7 +425,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
         testBuffer[i]["floatVariable"].write((float)i);
         testBuffer[i]["doubleVariable"].write((double)i);
         testBuffer[i]["booleanVariable"].write(true);
-        testBuffer[i].writeVarSized("stringVariable", "X", bm);
+        testBuffer[i].writeVarSized("stringVariable", "X", bufferManager);
         testBuffer.setNumberOfTuples(i + 1);
     }
 
@@ -443,7 +443,7 @@ TEST_P(MapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
             .loadByteCodeFrom(JAVA_UDF_TEST_DATA)
             .build());
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

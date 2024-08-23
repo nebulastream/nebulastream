@@ -51,11 +51,11 @@ PagedVectorVarSized::PagedVectorVarSized(
 }
 
 PagedVectorVarSized::PagedVectorVarSized(
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
     SchemaPtr schema,
     std::span<const Runtime::TupleBuffer> buffers,
     uint64_t pageSize)
-    : bufferProvider(std::move(bufferManager)), schema(std::move(schema)), pageSize(pageSize)
+    : bufferProvider(std::move(bufferProvider)), schema(std::move(schema)), pageSize(pageSize)
 {
     appendVarSizedDataPage();
     varSizedDataEntryMapCounter = 0;

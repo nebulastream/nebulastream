@@ -41,7 +41,7 @@ class SelectionPipelineTest : public Testing::BaseUnitTest, public AbstractPipel
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -61,7 +61,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -76,7 +76,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -94,7 +94,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (int64_t i = 0; i < 100; i++)
     {
@@ -105,7 +105,7 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
 
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext({}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -125,14 +125,14 @@ TEST_P(SelectionPipelineTest, selectionPipeline)
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(AbstractBufferProvider& bm, SchemaPtr schema)
+std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(AbstractBufferProvider& bufferProvider, SchemaPtr schema)
 {
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
-        auto buffer = bm.getBufferBlocking();
+        auto buffer = bufferProvider.getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (int64_t i = 0; i < 100; ++i)
         {
@@ -165,7 +165,7 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -184,9 +184,9 @@ TEST_P(SelectionPipelineTest, testAllSequenceNumbersGetEmitted)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext({}, true, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, bufferManager);
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataAllSeqNumbersEmitted(*bm, schema))
+    for (auto& buf : createDataAllSeqNumbersEmitted(*bufferManager, schema))
     {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }

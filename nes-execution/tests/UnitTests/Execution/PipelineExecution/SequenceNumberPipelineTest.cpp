@@ -56,7 +56,7 @@ class SequenceNumberPipelineTest : public Testing::BaseUnitTest, public Abstract
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -76,7 +76,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -86,14 +86,14 @@ public:
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(AbstractBufferProvider& bm, SchemaPtr schema)
+std::vector<TupleBuffer> createDataAllSeqNumbersEmitted(AbstractBufferProvider& bufferProvider, SchemaPtr schema)
 {
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
-        auto buffer = bm.getBufferBlocking();
+        auto buffer = bufferProvider.getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (int64_t i = 0; i < 100; ++i)
         {
@@ -126,7 +126,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -145,9 +145,9 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext({}, true, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, bufferManager);
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataAllSeqNumbersEmitted(*bm, schema))
+    for (auto& buf : createDataAllSeqNumbersEmitted(*bufferManager, schema))
     {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
@@ -178,14 +178,14 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
 /**
  * @brief This method creates four buffers and sets the f1 = 10 for all tuples in the second and fourth buffer
  */
-std::vector<TupleBuffer> createDataFullWithConstantFieldValues(AbstractBufferProvider& bm, SchemaPtr schema)
+std::vector<TupleBuffer> createDataFullWithConstantFieldValues(AbstractBufferProvider& bufferProvider, SchemaPtr schema)
 {
     std::vector<TupleBuffer> retBuffers;
     constexpr uint64_t NUM_BUF = 4;
 
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
-        auto buffer = bm.getBufferBlocking();
+        auto buffer = bufferProvider.getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
         {
@@ -211,8 +211,8 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     auto inputSchema
         = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::INT64)->addField("f2", BasicType::INT64);
     auto outputSchema = inputSchema->copy()->addField("f3", BasicType::INT64);
-    auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
-    auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
+    auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
+    auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -232,9 +232,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     pipeline->setRootOperator(scanOperator);
     auto executablePipeline = provider->create(pipeline, options);
 
-    auto pipelineContext = MockedPipelineExecutionContext({}, true, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({}, true, bufferManager);
     executablePipeline->setup(pipelineContext);
-    for (auto& buf : createDataFullWithConstantFieldValues(*bm, inputSchema))
+    for (auto& buf : createDataFullWithConstantFieldValues(*bufferManager, inputSchema))
     {
         executablePipeline->execute(buf, pipelineContext, *wc);
     }
@@ -351,9 +351,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
                                   ->addField("end", BasicType::INT64)
                                   ->addField("test$count", BasicType::INT64);
 
-    auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bm->getBufferSize());
-    auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bm->getBufferSize());
-    auto memoryLayoutOutputWindow = Runtime::MemoryLayouts::RowLayout::create(outputSchemaWindow, bm->getBufferSize());
+    auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
+    auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize());
+    auto memoryLayoutOutputWindow = Runtime::MemoryLayouts::RowLayout::create(outputSchemaWindow, bufferManager->getBufferSize());
 
     /// Creating aggregation function
     const auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -375,9 +375,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
     auto sliceMergingHandler = std::make_shared<Operators::NonKeyedSliceMergingHandler>();
 
     /// Creating pipeline execution contexts
-    auto pipeline1Context = MockedPipelineExecutionContext({}, true, bm);
-    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bm);
-    auto pipeline3Context = MockedPipelineExecutionContext({sliceMergingHandler}, true, bm);
+    auto pipeline1Context = MockedPipelineExecutionContext({}, true, bufferManager);
+    auto pipeline2Context = MockedPipelineExecutionContext({preAggregationHandler}, false, bufferManager);
+    auto pipeline3Context = MockedPipelineExecutionContext({sliceMergingHandler}, true, bufferManager);
 
     /// Setting up all pipelines
     pipeline1->setup(pipeline1Context);
@@ -389,7 +389,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
     auto ts = 0_u64;
     for (auto bufCnt = 0_u64; bufCnt < NUM_BUFFERS; ++bufCnt)
     {
-        auto buffer = bm->getBufferBlocking();
+        auto buffer = bufferManager->getBufferBlocking();
         auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, inputSchema);
         for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
         {
