@@ -80,7 +80,7 @@ HJSliceVarSized::HJSliceVarSized(
     uint64_t sliceEnd,
     SchemaPtr& leftSchema,
     SchemaPtr& rightSchema,
-    std::shared_ptr<AbstractBufferProvider> bufferManager,
+    std::shared_ptr<AbstractBufferProvider> bufferProvider,
     size_t pageSize,
     size_t numPartitions)
     : StreamSlice(sliceStart, sliceEnd)
@@ -91,12 +91,12 @@ HJSliceVarSized::HJSliceVarSized(
     for (auto i = 0UL; i < numberOfWorker; ++i)
     {
         hashTableLeftSide.emplace_back(
-            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferManager, pageSize, leftSchema));
+            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferProvider, pageSize, leftSchema));
     }
     for (auto i = 0UL; i < numberOfWorker; ++i)
     {
         hashTableRightSide.emplace_back(
-            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferManager, pageSize, rightSchema));
+            std::make_unique<Operators::StreamJoinHashTableVarSized>(numPartitions, bufferProvider, pageSize, rightSchema));
     }
 
     NES_DEBUG(

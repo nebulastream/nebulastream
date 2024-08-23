@@ -51,7 +51,7 @@ public:
         NES_INFO("Setup ThresholdWindowOperatorTest test class.");
     }
 
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }
@@ -86,7 +86,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumAggTest)
     thresholdWindowOperator->setChild(collector);
 
     auto handler = std::make_shared<KeyedThresholdWindowOperatorHandler>();
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
 
@@ -139,7 +139,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMaxAggTest)
     thresholdWindowOperator->setChild(collector);
 
     auto handler = std::make_shared<KeyedThresholdWindowOperatorHandler>();
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
 
@@ -192,7 +192,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithSumTestDifferentKey)
     thresholdWindowOperator->setChild(collector);
 
     auto handler = std::make_shared<KeyedThresholdWindowOperatorHandler>();
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
 
@@ -268,7 +268,7 @@ TEST_F(KeyedThresholdWindowOperatorTest, thresholdWindowWithMultAggTestDifferent
     thresholdWindowOperator->setChild(collector);
 
     auto handler = std::make_shared<KeyedThresholdWindowOperatorHandler>();
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
 
     auto ctx = ExecutionContext(Value<MemRef>(nullptr), Value<MemRef>((int8_t*)&pipelineContext));
 

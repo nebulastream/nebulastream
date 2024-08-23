@@ -36,7 +36,7 @@ public:
       * @param sliceEnd
       * @param leftSchema
       * @param rightSchema
-      * @param bufferManager
+      * @param bufferProvider
       * @param pageSize
       * @param numPartitions
       */
@@ -46,7 +46,7 @@ public:
         uint64_t sliceEnd,
         SchemaPtr& leftSchema,
         SchemaPtr& rightSchema,
-        std::shared_ptr<AbstractBufferProvider> bufferManager,
+        std::shared_ptr<AbstractBufferProvider> bufferProvider,
         size_t pageSize,
         size_t numPartitions);
 

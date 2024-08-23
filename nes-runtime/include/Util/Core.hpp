@@ -118,13 +118,13 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
  * @param schema
  * @param timeStampFieldName
  * @param lastTimeStamp
- * @param bufferManager
+ * @param bufferProvider
  * @return Vector of TupleBuffers
  */
 [[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferManager,
+    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
     const std::string& timeStampFieldName,
     uint64_t lastTimeStamp);
 } /// namespace Util

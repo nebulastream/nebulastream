@@ -50,18 +50,18 @@ public:
  */
 TEST_F(ScanOperatorTest, scanRowLayoutBuffer)
 {
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bm->getBufferSize());
+    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = Scan(std::move(memoryProviderPtr));
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (auto i = 0_u64; i < testBuffer.getCapacity(); i++)
     {
@@ -88,11 +88,11 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer)
  */
 TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer)
 {
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bm->getBufferSize());
+    auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
 
     std::unique_ptr<MemoryProvider::MemoryProvider> memoryProviderPtr
         = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
@@ -100,7 +100,7 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer)
     auto collector = std::make_shared<CollectOperator>();
     scanOperator.setChild(collector);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < testBuffer.getCapacity(); i++)
     {

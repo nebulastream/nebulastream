@@ -50,7 +50,7 @@ public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bm = BufferManager::create();
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -70,7 +70,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 
     /* Will be called after all tests in this class are finished. */
@@ -85,7 +85,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -110,7 +110,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Sum", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -118,7 +118,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -140,7 +140,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -161,7 +161,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount)
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -186,7 +186,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Count", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -194,7 +194,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -216,7 +216,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithCount)
     aggValues.emplace_back(std::move(countAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -237,7 +237,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin)
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -261,7 +261,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Min", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -269,7 +269,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -291,7 +291,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMin)
     aggValues.emplace_back(std::move(minAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -312,7 +312,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax)
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -336,7 +336,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Max", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -344,7 +344,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -366,7 +366,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithMax)
     aggValues.emplace_back(std::move(maxAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -387,7 +387,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg)
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -411,7 +411,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Avg", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -419,7 +419,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -441,7 +441,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvg)
     aggValues.emplace_back(std::move(avgAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -460,7 +460,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat)
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::FLOAT32);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -484,7 +484,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Avg", BasicType::FLOAT32);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -492,7 +492,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -514,7 +514,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithAvgFloat)
     aggValues.emplace_back(std::move(avgAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);
@@ -535,7 +535,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate)
     auto scanSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     scanSchema->addField("f1", BasicType::FLOAT32);
     scanSchema->addField("f2", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bm->getBufferSize());
+    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -559,7 +559,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Sum", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bm->getBufferSize());
+    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -567,7 +567,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate)
     auto pipeline = std::make_shared<PhysicalOperatorPipeline>();
     pipeline->setRootOperator(scanOperator);
 
-    auto buffer = bm->getBufferBlocking();
+    auto buffer = bufferManager->getBufferBlocking();
     auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
@@ -589,7 +589,7 @@ TEST_P(NonKeyedThresholdWindowPipelineTest, thresholdWindowWithFloatPredicate)
     aggValues.emplace_back(std::move(sumAggregationValue));
     auto handler = std::make_shared<Operators::NonKeyedThresholdWindowOperatorHandler>(std::move(aggValues));
 
-    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bm);
+    auto pipelineContext = MockedPipelineExecutionContext({handler}, false, bufferManager);
     executablePipeline->setup(pipelineContext);
     executablePipeline->execute(buffer, pipelineContext, *wc);
     executablePipeline->stop(pipelineContext);

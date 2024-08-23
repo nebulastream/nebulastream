@@ -53,11 +53,11 @@ auto constexpr DEFAULT_RIGHT_PAGE_SIZE = 256;
 class NLJBuildPipelineExecutionContext : public PipelineExecutionContext
 {
 public:
-    NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
+    NLJBuildPipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bufferManager)
         : PipelineExecutionContext(
               INVALID_PIPELINE_ID, /// mock pipeline id
               INVALID_QUERY_ID, /// mock query id
-              std::move(bm),
+              std::move(bufferManager),
               1,
               [](TupleBuffer&, Runtime::WorkerContextRef) {},
               [](TupleBuffer&) {},
@@ -70,13 +70,13 @@ class NLJProbePipelineExecutionContext : public PipelineExecutionContext
 {
 public:
     std::vector<TupleBuffer> emittedBuffers;
-    NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bm)
+    NLJProbePipelineExecutionContext(OperatorHandlerPtr nljOperatorHandler, BufferManagerPtr bufferManager)
         : PipelineExecutionContext(
               INVALID_PIPELINE_ID, /// mock pipeline id
               INVALID_QUERY_ID, /// mock query id
-              std::move(bm),
+              std::move(bufferManager),
               1,
-              [](TupleBuffer&, Runtime::WorkerContextRef)
+              [](TupleBuffer&, WorkerContextRef)
               {
                   ///                emittedBuffers.emplace_back(std::move(buffer));
               },
@@ -93,7 +93,7 @@ class NestedLoopJoinOperatorTest : public Testing::BaseUnitTest
 {
 public:
     Operators::NLJOperatorHandlerPtr nljOperatorHandler;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    std::shared_ptr<Runtime::BufferManager> bufferManager;
     Expressions::ExpressionPtr joinExpression;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
@@ -134,8 +134,8 @@ public:
 
         nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
             {INVALID_ORIGIN_ID}, OriginId(1), windowSize, windowSize, leftSchema, rightSchema, leftPageSize, rightPageSize);
-        bm = BufferManager::create(8196, 5000);
-        nljOperatorHandler->setBufferManager(bm);
+        bufferManager = BufferManager::create(8196, 5000);
+        nljOperatorHandler->setBufferManager(bufferManager);
     }
 
     /**
@@ -313,8 +313,8 @@ public:
             std::make_unique<Runtime::Execution::Operators::EventTimeFunction>(readTsFieldRight, Windowing::TimeUnit::Milliseconds()),
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
-        NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
-        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        NLJBuildPipelineExecutionContext pipelineContext(nljOperatorHandler, bufferManager);
+        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
         auto executionContext = ExecutionContext(
             Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
             Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
@@ -434,8 +434,8 @@ public:
             QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
             QueryCompilation::WindowingStrategy::SLICING);
 
-        NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, bm);
-        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
+        NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, bufferManager);
+        WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
         auto executionContext = ExecutionContext(
             Nautilus::Value<Nautilus::MemRef>((int8_t*)workerContext.get()),
             Nautilus::Value<Nautilus::MemRef>((int8_t*)(&pipelineContext)));
@@ -462,7 +462,7 @@ public:
                 expectedNumberOfTuplesInWindowRight);
 
             {
-                auto tupleBuffer = bm->getBufferBlocking();
+                auto tupleBuffer = bufferManager->getBufferBlocking();
                 auto bufferMemory = tupleBuffer.getBuffer<Operators::EmittedNLJWindowTriggerTask>();
                 bufferMemory->leftSliceIdentifier = windowIdentifier;
                 bufferMemory->rightSliceIdentifier = windowIdentifier;
@@ -487,9 +487,9 @@ public:
         auto allLeftRecords = createRandomRecords(numberOfRecordsLeft, QueryCompilation::JoinBuildSideType::Left);
         auto allRightRecords = createRandomRecords(numberOfRecordsRight, QueryCompilation::JoinBuildSideType::Right);
 
-        auto memoryProviderLeft = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), leftSchema);
-        auto memoryProviderRight = MemoryProvider::MemoryProvider::createMemoryProvider(bm->getBufferSize(), rightSchema);
-        nljOperatorHandler->setBufferManager(bm);
+        auto memoryProviderLeft = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), leftSchema);
+        auto memoryProviderRight = MemoryProvider::MemoryProvider::createMemoryProvider(bufferManager->getBufferSize(), rightSchema);
+        nljOperatorHandler->setBufferManager(bufferManager);
 
         uint64_t maxTimestamp = 0;
         Value<UInt64> zeroVal(0_u64);
@@ -561,9 +561,10 @@ public:
         auto numberOfBuffersInLeft = std::ceil((double)windowSize / (leftPageSize / getSizeOfRecord(leftSchema)));
         auto numberOfBuffersInRight = std::ceil((double)windowSize / (rightPageSize / getSizeOfRecord(rightSchema)));
         /// 1 for number of metadata buffers, 2 for slice start and end, 1 for number of workers + 2 * number of workers (default one) (see documentation of NLJSlice serialize function)
-        auto numberOfOSliceMetadataBuffers = std::ceil((double)(4 + 2) * sizeof(uint64_t) / bm->getBufferSize());
+        auto numberOfOSliceMetadataBuffers = std::ceil((double)(4 + 2) * sizeof(uint64_t) / bufferManager->getBufferSize());
         /// 1 for number of metadata buffers, 1 for number of slices + number of slices (see documentation of StreamJoinOperatorHandler getStateToMigrate function)
-        auto numberOfOperatorMetadataBuffers = std::ceil((double)(2 + expectedNumberOfSlice) * sizeof(uint64_t) / bm->getBufferSize());
+        auto numberOfOperatorMetadataBuffers
+            = std::ceil((double)(2 + expectedNumberOfSlice) * sizeof(uint64_t) / bufferManager->getBufferSize());
 
         auto expectedNumberOfBuffers = numberOfOperatorMetadataBuffers
             + expectedNumberOfSlice * (numberOfOSliceMetadataBuffers + numberOfBuffersInLeft + numberOfBuffersInRight);
@@ -576,13 +577,13 @@ public:
 
         auto sliceEndIdx = 3;
         /// count index of sliceEnd metadata buffer (from of sliceEnd and pageSize)
-        auto sliceEndMetadataIdx = sliceEndIdx * sizeof(uint64_t) / bm->getBufferSize();
+        auto sliceEndMetadataIdx = sliceEndIdx * sizeof(uint64_t) / bufferManager->getBufferSize();
         auto startOfLastSliceBufferIdx = numberOfOperatorMetadataBuffers
             + (expectedNumberOfSlice - 1) * (numberOfOSliceMetadataBuffers + numberOfBuffersInLeft + numberOfBuffersInRight)
             + sliceEndMetadataIdx;
         auto endMetadataPtr = buffers[startOfLastSliceBufferIdx].getBuffer<uint64_t>();
         /// sliceEnd index is real index normed by number of data in slice
-        auto sliceEndIdxInBuffer = (sliceEndIdx - 1) % (bm->getBufferSize() / sizeof(uint64_t));
+        auto sliceEndIdxInBuffer = (sliceEndIdx - 1) % (bufferManager->getBufferSize() / sizeof(uint64_t));
         /// Third uint64_t in metadata is sliceEnd
         uint64_t sliceEnd = endMetadataPtr[sliceEndIdxInBuffer];
         ASSERT_EQ(sliceEnd, end);
@@ -643,8 +644,8 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTestWithSmallBufferSize)
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     /// make buffer size less and check that more metadata buffers are created
-    bm = BufferManager::create(20, 10000);
-    nljOperatorHandler->setBufferManager(bm);
+    bufferManager = BufferManager::create(20, 10000);
+    nljOperatorHandler->setBufferManager(bufferManager);
     /// Checking corner case when stopTS is equal to end timestamp of slice.
     auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);
     checkNumberOfBuffers(2000, 4000);

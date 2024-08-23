@@ -328,13 +328,13 @@ bool TCPSource::fillBuffer(Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer)
                 std::string_view buf(tupleData.data(), tupleData.size());
                 if (sourceConfig->getInputFormat()->getValue() == Configurations::InputFormat::NES_BINARY)
                 {
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferManager);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferProvider);
                     tupleCount = tupleBuffer.getNumberOfTuples();
                 }
                 else
                 {
                     NES_TRACE("TCPSOURCE::fillBuffer: Client consume message: '{}'.", buf);
-                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferManager);
+                    inputParser->writeInputTupleToTupleBuffer(buf, tupleCount, tupleBuffer, schema, bufferProvider);
                     tupleCount++;
                 }
             }

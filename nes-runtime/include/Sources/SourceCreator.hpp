@@ -24,7 +24,7 @@ namespace NES
 /**
  * @brief function to create a csvfile source
  * @param schema schema of data source
- * @param bufferManager pointer to the buffer manager
+ * @param poolProvider pointer to the buffer manager
  * @param queryManager pointer to the query manager
  * @param csvSourceType points to the current source configuration object
  * @param operatorId current operator id
@@ -36,7 +36,7 @@ namespace NES
  */
 DataSourcePtr createCSVFileSource(
     const SchemaPtr& schema,
-    const std::shared_ptr<Runtime::AbstractPoolProvider>& bufferManager,
+    const std::shared_ptr<Runtime::AbstractPoolProvider>& poolProvider,
     const Runtime::QueryManagerPtr& queryManager,
     const CSVSourceTypePtr& csvSourceType,
     OperatorId operatorId,
@@ -48,7 +48,7 @@ DataSourcePtr createCSVFileSource(
 /**
  * function to create a TCP source
  * @param schema of this data source
- * @param bufferManager The BufferManager is responsible for: 1. Pooled Buffers: preallocated fixed-size buffers of memory that
+ * @param poolProvider The BufferManager is responsible for: 1. Pooled Buffers: preallocated fixed-size buffers of memory that
  * must be reference counted 2. Unpooled Buffers: variable sized buffers that are allocated on-the-fly.
  * They are also subject to reference counting.
  * @param queryManager comes with functionality to manage the queries
@@ -62,7 +62,7 @@ DataSourcePtr createCSVFileSource(
  */
 DataSourcePtr createTCPSource(
     const SchemaPtr& schema,
-    const std::shared_ptr<Runtime::AbstractPoolProvider>& bufferManager,
+    const std::shared_ptr<Runtime::AbstractPoolProvider>& poolProvider,
     const Runtime::QueryManagerPtr& queryManager,
     const TCPSourceTypePtr& tcpSourceType,
     OperatorId operatorId,
