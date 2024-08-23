@@ -108,7 +108,7 @@ class ChainedHashMapRef {
       public:
         KeyEntryIterator(ChainedHashMapRef& hashTableRef,
                          const UInt64Val& hash,
-                         const std::vector<ExecDataType>& keys,
+                         const std::vector<VarVal>& keys,
                          const UInt64Val& currentIndex);
         KeyEntryIterator& operator++();
         bool operator==(KeyEntryIterator other) const;
@@ -118,7 +118,7 @@ class ChainedHashMapRef {
       private:
         ChainedHashMapRef& hashTableRef;
         UInt64Val currentIndex;
-        std::vector<ExecDataType> keys;
+        std::vector<VarVal> keys;
         EntryRef currentEntry;
     };
 
@@ -142,7 +142,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef find(const UInt64Val& hash, const std::vector<ExecDataType>& keys);
+    EntryRef find(const UInt64Val& hash, const std::vector<VarVal>& keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -152,7 +152,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return KeyEntryIterator
      */
-    KeyEntryIterator findAll(const UInt64Val& hash, const std::vector<ExecDataType>& keys);
+    KeyEntryIterator findAll(const UInt64Val& hash, const std::vector<VarVal>& keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -164,7 +164,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef findOrCreate(const UInt64Val& hash, const std::vector<ExecDataType>& keys);
+    EntryRef findOrCreate(const UInt64Val& hash, const std::vector<VarVal>& keys);
 
     /**
      * @brief This function performs a lookup to the hash map with a potentially compound key and an associated hash.
@@ -177,7 +177,7 @@ class ChainedHashMapRef {
      * @return EntryRef
      */
     EntryRef
-    findOrCreate(const UInt64Val& hash, const std::vector<ExecDataType>& keys, const std::function<void(EntryRef&)>& onInsert);
+    findOrCreate(const UInt64Val& hash, const std::vector<VarVal>& keys, const std::function<void(EntryRef&)>& onInsert);
 
     /**
      * @brief This function inserts an already existing entry from another hash map to this hash map.
@@ -213,7 +213,7 @@ class ChainedHashMapRef {
      * @param keys a list of keys.
      * @return EntryRef
      */
-    EntryRef insert(const UInt64Val& hash, const std::vector<ExecDataType>& keys);
+    EntryRef insert(const UInt64Val& hash, const std::vector<VarVal>& keys);
 
   private:
     UInt64Val getPageSize();
@@ -221,7 +221,7 @@ class ChainedHashMapRef {
     UInt64Val getEntriesPerPage();
     EntryRef findChain(const UInt64Val& hash) const;
     EntryRef insert(const UInt64Val& hash) const;
-    BooleanVal compareKeys(EntryRef& entry, const std::vector<ExecDataType>& keys);
+    BooleanVal compareKeys(EntryRef& entry, const std::vector<VarVal>& keys);
     MemRefVal hashTableRef;
     const std::vector<PhysicalTypePtr> keyDataTypes;
     uint64_t keySize;

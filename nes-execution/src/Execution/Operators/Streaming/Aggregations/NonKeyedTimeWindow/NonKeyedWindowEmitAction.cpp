@@ -30,17 +30,17 @@ NonKeyedWindowEmitAction::NonKeyedWindowEmitAction(
 
 void NonKeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                          ExecuteOperatorPtr& child,
-                                         ExecDataUI64& windowStart,
-                                         ExecDataUI64& windowEnd,
-                                         ExecDataUI64& sequenceNumber,
-                                         ExecDataUI64& chunkNumber,
-                                         ExecDataBool& lastChunk,
+                                         VarVal& windowStart,
+                                         VarVal& windowEnd,
+                                         VarVal& sequenceNumber,
+                                         VarVal& chunkNumber,
+                                         VarVal& lastChunk,
                                          ObjRefVal<void>& globalSlice) const {
-    ctx.setWatermarkTs(castAndLoadValue<uint64_t>(windowStart));
+    ctx.setWatermarkTs(windowStart.cast<UInt64Val>());
     ctx.setOrigin(resultOriginId.getRawValue());
-    ctx.setSequenceNumber(castAndLoadValue<uint64_t>(sequenceNumber));
-    ctx.setChunkNumber(castAndLoadValue<uint64_t>(chunkNumber));
-    ctx.setLastChunk(castAndLoadValue<bool>(lastChunk));
+    ctx.setSequenceNumber(sequenceNumber.cast<UInt64Val>());
+    ctx.setChunkNumber(chunkNumber.cast<UInt64Val>());
+    ctx.setLastChunk(lastChunk.cast<BooleanVal>());
 
     auto windowState = nautilus::invoke(getGlobalSliceState, globalSlice);
     Record resultWindow;

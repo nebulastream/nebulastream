@@ -94,7 +94,7 @@ void NonKeyedBucketPreAggregation::setup(ExecutionContext& executionCtx) const {
     auto defaultState = nautilus::invoke(getDefaultBucketState, globalOperatorHandler);
     for (const auto& function : aggregationFunctions) {
         function->reset(defaultState);
-        defaultState = defaultState + nautilus::val<uint64_t>(function->getSize());
+        defaultState = defaultState + UInt64Val(function->getSize());
     }
 }
 

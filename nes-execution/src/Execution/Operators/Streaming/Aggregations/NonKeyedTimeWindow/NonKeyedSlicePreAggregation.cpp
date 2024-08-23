@@ -114,7 +114,7 @@ void NonKeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionCont
     // 3. manipulate the current aggregate values
     uint64_t stateOffset = 0;
     for (const auto& aggregationFunction : nautilus::static_iterable(aggregationFunctions)) {
-        auto state = sliceState + nautilus::val<uint64_t>(stateOffset);
+        auto state = sliceState + UInt64Val(stateOffset);
         stateOffset = stateOffset + aggregationFunction->getSize();
         aggregationFunction->lift(state, record);
     }

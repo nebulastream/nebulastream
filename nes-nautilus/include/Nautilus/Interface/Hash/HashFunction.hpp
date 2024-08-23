@@ -14,8 +14,8 @@
 
 #ifndef NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
 #define NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
-#include <Nautilus/DataTypes/VariableSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
+#include <Nautilus/DataTypes/VariableSizedData.hpp>
 
 namespace NES::Nautilus::Interface {
 
@@ -32,7 +32,7 @@ class HashFunction {
      * @param value a nautilus value
      * @return the hash
      */
-    HashValue calculate(const ExecDataType& value);
+    HashValue calculate(const VarVal& value);
 
     /**
      * @brief This is only necessary as long as TODO #3648 is not merged
@@ -40,14 +40,14 @@ class HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculateWithState(ExecDataType value, MemRefVal& state);
+    HashValue calculateWithState(VarVal value, MemRefVal& state);
 
     /**
      * @brief Calculates the hash across a set of values.
      * @param values vector of nautilus values.
      * @return the hash
      */
-    HashValue calculate(std::vector<ExecDataType>& values);
+    HashValue calculate(std::vector<VarVal>& values);
     virtual ~HashFunction() = default;
 
   protected:
@@ -62,7 +62,7 @@ class HashFunction {
      * @param value
      * @return HashValue
      */
-    virtual HashValue calculate(const HashValue& hash, const ExecDataType& value) = 0;
+    virtual HashValue calculate(const HashValue& hash, const VarVal& value) = 0;
 
     /**
      * @brief This is only necessary as long as TODO #3648 is not merged
@@ -70,7 +70,7 @@ class HashFunction {
      * @param state
      * @return HashValue
      */
-    virtual HashValue calculateWithState(HashValue& hash, ExecDataType& value, MemRefVal& state) = 0;
+    virtual HashValue calculateWithState(HashValue& hash, VarVal& value, MemRefVal& state) = 0;
 };
 }// namespace NES::Nautilus::Interface
 #endif// NES_NAUTILUS_INCLUDE_NAUTILUS_INTERFACE_HASH_HASHFUNCTION_HPP_

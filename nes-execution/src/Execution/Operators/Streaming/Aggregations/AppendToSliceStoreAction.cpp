@@ -135,11 +135,11 @@ AppendToSliceStoreAction<Slice>::AppendToSliceStoreAction(const uint64_t operato
 template<class Slice>
 void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
                                                 ExecuteOperatorPtr& child,
-                                                ExecDataUI64&,
-                                                ExecDataUI64& sliceEnd,
-                                                ExecDataUI64& sequenceNumber,
-                                                ExecDataUI64& chunkNumber,
-                                                ExecDataBool& lastChunk,
+                                                VarVal&,
+                                                VarVal& sliceEnd,
+                                                VarVal& sequenceNumber,
+                                                VarVal& chunkNumber,
+                                                VarVal& lastChunk,
                                                 ObjRefVal<void>& combinedSlice) const {
 
     auto actionHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
@@ -148,10 +148,10 @@ void AppendToSliceStoreAction<Slice>::emitSlice(ExecutionContext& ctx,
                      actionHandler,
                      ctx.getWorkerContext(),
                      ctx.getPipelineContext(),
-                     castAndLoadValue<uint64_t>(sequenceNumber),
-                     castAndLoadValue<uint64_t>(chunkNumber),
-                     castAndLoadValue<uint64_t>(lastChunk),
-                     castAndLoadValue<uint64_t>(sliceEnd));
+                     sequenceNumber.cast<UInt64Val>(),
+                     chunkNumber.cast<UInt64Val>(),
+                     lastChunk.cast<BooleanVal>(),
+                     sliceEnd.cast<UInt64Val>());
 }
 
 // Instantiate types

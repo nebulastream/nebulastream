@@ -125,7 +125,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     auto timestampValue = timeFunction->getTs(ctx, record);
 
     // 2. derive key values
-    std::vector<ExecDataType> keyValues;
+    std::vector<VarVal> keyValues;
     keyValues.reserve(keyExpressions.size());
     for (const auto& exp : nautilus::static_iterable(keyExpressions)) {
         keyValues.emplace_back(exp->execute(record));
@@ -145,7 +145,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
         auto valuePtr = entry.getValuePtr();
         for (const auto& aggFunction : nautilus::static_iterable(aggregationFunctions)) {
             aggFunction->reset(valuePtr);
-            valuePtr = valuePtr + nautilus::val<uint64_t>(aggFunction->getSize());
+            valuePtr = valuePtr + UInt64Val(aggFunction->getSize());
         }
     });
 
@@ -153,7 +153,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
     auto valuePtr = entry.getValuePtr();
     for (const auto& aggregationFunction : nautilus::static_iterable(aggregationFunctions)) {
         aggregationFunction->lift(valuePtr, record);
-        valuePtr = valuePtr + nautilus::val<uint64_t>(aggregationFunction->getSize());
+        valuePtr = valuePtr + UInt64Val(aggregationFunction->getSize());
     }
 }
 void KeyedSlicePreAggregation::close(ExecutionContext& ctx, RecordBuffer&) const {

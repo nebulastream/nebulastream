@@ -12,7 +12,7 @@
     limitations under the License.
 */
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+
 
 namespace NES::Nautilus::Interface {
 
@@ -21,16 +21,18 @@ HashFunction::HashValue MurMur3HashFunction::init() { return {SEED}; }
 /**
  * @brief Hash Function that implements murmurhas3 by Robin-Hood-Hashing:
  * https://github.com/martinus/robin-hood-hashing/blob/fb1483621fda28d4afb31c0097c1a4a457fdd35b/src/include/robin_hood.h#L748
- * @param x
+ * @param input
  * @return
  */
-UInt64Val hashExecDataType(const UInt64Val& input) {
-    auto x = (input >> 33U);
-    x = x * (UINT64_C(0xff51afd7ed558ccd));
-    x = x ^ (x >> 33U);
-    x = x * (UINT64_C(0xc4ceb9fe1a85ec53));
-    x = x ^ (x >> 33U);
-    return x;
+VarVal hashVarVal(const VarVal& input) {
+    /// Somehow we can not use the same variable here. It will cause a "VarVal move assignment with mismatching types"
+    /// We have to think if it is okay that the underlying value changes its type. Without thinking too much about it, I would say it is not okay.
+    const auto x = (input >> VarVal(33));
+    const auto x1 = x * VarVal(UInt64Val(UINT64_C(0xff51afd7ed558ccd)));
+    const auto x2 = x1 ^ (x1 >> VarVal(33));
+    const auto x3 = x2 * VarVal(UInt64Val(UINT64_C(0xc4ceb9fe1a85ec53)));
+    const auto x4 = x3 ^ (x3 >> VarVal(33));
+    return x4;
 }
 
 /**
@@ -94,18 +96,18 @@ uint64_t hashBytes(const int8_t* data, uint64_t length) {
     return h;
 }
 
-HashFunction::HashValue MurMur3HashFunction::calculate(const HashValue& hash, const ExecDataType& value) {
-    if (value->instanceOf<VariableSizeExecutableDataType>()) {
-        const auto varSizedContent = value->as<VariableSizeExecutableDataType>();
-        return hash ^ invoke(hashBytes, varSizedContent->getContent(), varSizedContent->getSize());
+HashFunction::HashValue MurMur3HashFunction::calculate(const HashValue& hash, const VarVal& value) {
+    if (value.holdsVariant<VariableSizedData>()) {
+        const auto varSizedContent = value.cast<VariableSizedData>();
+        return hash ^ nautilus::invoke(hashBytes, varSizedContent.getContent(), varSizedContent.getSize());
     } else {
-        return hash ^ hashExecDataType(castAndLoadValue<uint64_t>(value));
+        return hash ^ hashVarVal(value).cast<UInt64Val>();
     };
 
     NES_NOT_IMPLEMENTED();
 }
 
-HashFunction::HashValue MurMur3HashFunction::calculateWithState(HashFunction::HashValue&, ExecDataType&, MemRefVal&) {
+HashFunction::HashValue MurMur3HashFunction::calculateWithState(HashFunction::HashValue&, VarVal&, MemRefVal&) {
     NES_THROW_RUNTIME_ERROR("This does not hash the value. Please use calculate().");
 }
 

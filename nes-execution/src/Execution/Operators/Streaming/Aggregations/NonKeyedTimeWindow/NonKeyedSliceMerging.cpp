@@ -18,7 +18,7 @@
 #include <Execution/Operators/Streaming/Aggregations/NonKeyedTimeWindow/NonKeyedSliceMergingHandler.hpp>
 #include <Execution/Operators/Streaming/Aggregations/WindowProcessingTasks.hpp>
 #include <Execution/RecordBuffer.hpp>
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+
 #include <Util/StdInt.hpp>
 
 namespace NES::Runtime::Execution::Operators {
@@ -83,10 +83,11 @@ void NonKeyedSliceMerging::setup(ExecutionContext& executionCtx) const {
     auto defaultState = nautilus::invoke(getDefaultMergingState, globalOperatorHandler);
     for (auto& function : nautilus::static_iterable(aggregationFunctions)) {
         function->reset(defaultState);
-        defaultState = defaultState + nautilus::val<uint64_t>(function->getSize());
+        defaultState = defaultState + UInt64Val(function->getSize());
     }
-    if (this->child != nullptr)
+    if (this->child != nullptr) {
         this->child->setup(executionCtx);
+    }
 }
 
 void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) const {
@@ -97,11 +98,11 @@ void NonKeyedSliceMerging::open(ExecutionContext& ctx, RecordBuffer& buffer) con
     // 1. get the operator handler
     auto globalOperatorHandler = ctx.getGlobalOperatorHandler(operatorHandlerIndex);
     auto sliceMergeTask = buffer.getBuffer();
-    auto startSliceTs = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, startSlice, uint64_t);
-    auto endSliceTs = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, endSlice, uint64_t);
-    auto sequenceNumber = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, sequenceNumber, uint64_t);
-    auto chunkNumber = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, chunkNumber, uint64_t);
-    auto lastChunk = getMemberAsFixedSizeExecutableDataType(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, lastChunk, bool);
+    auto startSliceTs = getMemberAsVarVal(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, startSlice, uint64_t);
+    auto endSliceTs = getMemberAsVarVal(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, endSlice, uint64_t);
+    auto sequenceNumber = getMemberAsVarVal(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, sequenceNumber, uint64_t);
+    auto chunkNumber = getMemberAsVarVal(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, chunkNumber, uint64_t);
+    auto lastChunk = getMemberAsVarVal(sliceMergeTask, SliceMergeTask<NonKeyedSlice>, lastChunk, bool);
     // 2. load the thread local slice store according to the worker id.
     auto combinedSlice = combineThreadLocalSlices(globalOperatorHandler, sliceMergeTask);
     nautilus::invoke(freeNonKeyedSliceMergeTask, sliceMergeTask);

@@ -38,7 +38,7 @@ class MurMur3HashFunction : public HashFunction {
      * @param value
      * @return HashValue
      */
-    HashValue calculate(const HashValue& hash, const ExecDataType& value) override;
+    HashValue calculate(const HashValue& hash, const VarVal& value) override;
 
     /**
      * @brief Calculates the hash of value and xor-es it with hash (passes the value over to calculate(hash, value) after hash init())
@@ -54,7 +54,7 @@ class MurMur3HashFunction : public HashFunction {
      * @param state
      * @return HashValue
      */
-    HashValue calculateWithState(HashValue& hash, ExecDataType& value, MemRefVal& state) override;
+    HashValue calculateWithState(HashValue& hash, VarVal& value, MemRefVal& state) override;
 };
 }// namespace NES::Nautilus::Interface
 

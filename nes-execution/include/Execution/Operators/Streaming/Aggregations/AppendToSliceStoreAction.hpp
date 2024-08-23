@@ -60,11 +60,11 @@ class AppendToSliceStoreAction : public SliceMergingAction {
 
     void emitSlice(ExecutionContext& ctx,
                    ExecuteOperatorPtr& child,
-                   ExecDataUI64& windowStart,
-                   ExecDataUI64& windowEnd,
-                   ExecDataUI64& sequenceNumber,
-                   ExecDataUI64& chunkNumber,
-                   ExecDataBool& lastChunk,
+                   VarVal& windowStart,
+                   VarVal& windowEnd,
+                   VarVal& sequenceNumber,
+                   VarVal& chunkNumber,
+                   VarVal& lastChunk,
                    ObjRefVal<void>& globalSlice) const override;
 
   private:

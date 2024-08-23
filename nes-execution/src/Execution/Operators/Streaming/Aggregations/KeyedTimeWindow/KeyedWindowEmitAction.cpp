@@ -40,17 +40,17 @@ KeyedWindowEmitAction::KeyedWindowEmitAction(
 
 void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
                                       ExecuteOperatorPtr& child,
-                                      ExecDataUI64& windowStart,
-                                      ExecDataUI64& windowEnd,
-                                      ExecDataUI64& sequenceNumber,
-                                      ExecDataUI64& chunkNumber,
-                                      ExecDataBool& lastChunk,
+                                      VarVal& windowStart,
+                                      VarVal& windowEnd,
+                                      VarVal& sequenceNumber,
+                                      VarVal& chunkNumber,
+                                      VarVal& lastChunk,
                                       ObjRefVal<void>& globalSlice) const {
-    ctx.setWatermarkTs(castAndLoadValue<uint64_t>(windowStart));
+    ctx.setWatermarkTs(windowStart.cast<UInt64Val>());
     ctx.setOrigin(resultOriginId.getRawValue());
-    ctx.setSequenceNumber(castAndLoadValue<uint64_t>(sequenceNumber));
-    ctx.setChunkNumber(castAndLoadValue<uint64_t>(chunkNumber));
-    ctx.setLastChunk(castAndLoadValue<bool>(lastChunk));
+    ctx.setSequenceNumber(sequenceNumber.cast<UInt64Val>());
+    ctx.setChunkNumber(chunkNumber.cast<UInt64Val>());
+    ctx.setLastChunk(lastChunk.cast<BooleanVal>());
 
     ((void) windowEnd);
     ((void) globalSlice);
@@ -74,15 +74,15 @@ void KeyedWindowEmitAction::emitSlice(ExecutionContext& ctx,
         // load keys and write them to result record
         auto sliceKeys = globalEntry.getKeyPtr();
         for (nautilus::static_val<size_t> i = 0; i < resultKeyFields.size(); ++i) {
-            const auto value = Nautilus::readExecDataTypeFromMemRef(sliceKeys, keyDataTypes[i]);
+            const auto value = Nautilus::readVarValFromMemRef(sliceKeys, keyDataTypes[i]);
             resultWindow.write(resultKeyFields[i], value);
-            sliceKeys = sliceKeys + nautilus::val<uint64_t>(keyDataTypes[i]->size());
+            sliceKeys = sliceKeys + UInt64Val(keyDataTypes[i]->size());
         }
         // load values and write them to result record
         auto sliceValue = globalEntry.getValuePtr();
         for (const auto& aggregationFunction : nautilus::static_iterable(aggregationFunctions)) {
             aggregationFunction->lower(sliceValue, resultWindow);
-            sliceValue = sliceValue + nautilus::val<uint64_t>(aggregationFunction->getSize());
+            sliceValue = sliceValue + UInt64Val(aggregationFunction->getSize());
         }
         // If we get rid of the .toString(), we receive another error
         // NES_INFO("Emitting window: {}", resultWindow.toString());

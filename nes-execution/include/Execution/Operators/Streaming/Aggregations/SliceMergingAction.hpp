@@ -15,7 +15,7 @@
 #ifndef NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_
 #define NES_EXECUTION_INCLUDE_EXECUTION_OPERATORS_STREAMING_AGGREGATIONS_SLICEMERGINGACTION_HPP_
 #include <Execution/Operators/ExecutableOperator.hpp>
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 namespace NES::Runtime::Execution::Operators {
 using namespace Nautilus;
@@ -37,11 +37,11 @@ class SliceMergingAction {
      */
     virtual void emitSlice(ExecutionContext& ctx,
                            ExecuteOperatorPtr& child,
-                           ExecDataUI64& windowStart,
-                           ExecDataUI64& windowEnd,
-                           ExecDataUI64& sequenceNumber,
-                           ExecDataUI64& chunkNumber,
-                           ExecDataBool& lastChunk,
+                           VarVal& windowStart,
+                           VarVal& windowEnd,
+                           VarVal& sequenceNumber,
+                           VarVal& chunkNumber,
+                           VarVal& lastChunk,
                            ObjRefVal<void>& globalSlice) const = 0;
 
     virtual ~SliceMergingAction() = default;

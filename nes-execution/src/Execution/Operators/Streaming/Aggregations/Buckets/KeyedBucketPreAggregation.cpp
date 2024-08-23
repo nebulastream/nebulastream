@@ -130,7 +130,7 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
     auto timestampValue = timeFunction->getTs(ctx, record);
 
     // 2. derive key values
-    std::vector<ExecDataType> keyValues;
+    std::vector<VarVal> keyValues;
     for (const auto& exp : keyExpressions) {
         keyValues.emplace_back(exp->execute(record));
     }
@@ -152,7 +152,7 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
             auto valuePtr = entry.getValuePtr();
             for (const auto& aggFunction : aggregationFunctions) {
                 aggFunction->reset(valuePtr);
-                valuePtr = valuePtr + nautilus::val<uint64_t>(aggFunction->getSize());
+                valuePtr = valuePtr + UInt64Val(aggFunction->getSize());
             }
         });
 
@@ -160,7 +160,7 @@ void KeyedBucketPreAggregation::execute(NES::Runtime::Execution::ExecutionContex
         auto valuePtr = entry.getValuePtr();
         for (const auto& aggregationFunction : aggregationFunctions) {
             aggregationFunction->lift(valuePtr, record);
-            valuePtr = valuePtr + nautilus::val<uint64_t>(aggregationFunction->getSize());
+            valuePtr = valuePtr + UInt64Val(aggregationFunction->getSize());
         }
     }
 }
