@@ -46,7 +46,7 @@ class HashJoinMockedPipelineExecutionContext : public Runtime::Execution::Pipeli
 {
 public:
     HashJoinMockedPipelineExecutionContext(
-        BufferManagerPtr bufferManager,
+        Memory::BufferManagerPtr bufferManager,
         uint64_t noWorkerThreads,
         OperatorHandlerPtr hashJoinOpHandler,
         PipelineId pipelineId)
@@ -55,18 +55,18 @@ public:
               QueryId(1), /// mock query id
               bufferManager,
               noWorkerThreads,
-              [this](TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
-              [this](TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              [this](Memory::TupleBuffer& buffer, Runtime::WorkerContextRef) { this->emittedBuffers.emplace_back(std::move(buffer)); },
+              [this](Memory::TupleBuffer& buffer) { this->emittedBuffers.emplace_back(std::move(buffer)); },
               {hashJoinOpHandler}) {};
 
-    std::vector<Runtime::TupleBuffer> emittedBuffers;
+    std::vector<Memory::TupleBuffer> emittedBuffers;
 };
 
 class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipelineExecutionTest
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     WorkerContextPtr workerContext;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -246,7 +246,7 @@ public:
         hashJoinWorks = hashJoinWorks && (!pipelineExecCtxLeft.emittedBuffers.empty() || !pipelineExecCtxRight.emittedBuffers.empty());
 
         /// Executing sink buffers
-        std::vector<Runtime::TupleBuffer> buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
+        std::vector buildEmittedBuffers(pipelineExecCtxLeft.emittedBuffers);
         buildEmittedBuffers.insert(
             buildEmittedBuffers.end(), pipelineExecCtxRight.emittedBuffers.begin(), pipelineExecCtxRight.emittedBuffers.end());
         for (auto buf : buildEmittedBuffers)

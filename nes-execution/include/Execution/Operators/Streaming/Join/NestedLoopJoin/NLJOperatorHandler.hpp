@@ -54,7 +54,7 @@ public:
         StreamSlice& sliceLeft, StreamSlice& sliceRight, const WindowInfo& windowInfo, PipelineExecutionContext* pipelineCtx) override;
 
 private:
-    StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) override;
+    StreamSlicePtr deserializeSlice(std::span<const Memory::TupleBuffer> buffers) override;
 
 protected:
     const uint64_t pageSizeLeft;

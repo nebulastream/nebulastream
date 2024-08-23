@@ -39,7 +39,7 @@ CompiledExecutablePipelineStage::CompiledExecutablePipelineStage(
 }
 
 ExecutionResult CompiledExecutablePipelineStage::execute(
-    TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
+    Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
 {
     /// wait till pipeline is ready
     executablePipeline.wait();

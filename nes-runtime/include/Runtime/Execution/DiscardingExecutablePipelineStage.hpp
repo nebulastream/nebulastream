@@ -27,7 +27,7 @@ namespace NES::Runtime::Execution
 class DiscardingExecutablePipelineStage : public ExecutablePipelineStage
 {
 public:
-    ExecutionResult
-    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
+    ExecutionResult execute(
+        Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext) override;
 };
 } /// namespace NES::Runtime::Execution

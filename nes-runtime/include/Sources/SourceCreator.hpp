@@ -36,7 +36,7 @@ namespace NES
  */
 DataSourcePtr createCSVFileSource(
     const SchemaPtr& schema,
-    const std::shared_ptr<Runtime::AbstractPoolProvider>& poolProvider,
+    const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider,
     const Runtime::QueryManagerPtr& queryManager,
     const CSVSourceTypePtr& csvSourceType,
     OperatorId operatorId,
@@ -62,7 +62,7 @@ DataSourcePtr createCSVFileSource(
  */
 DataSourcePtr createTCPSource(
     const SchemaPtr& schema,
-    const std::shared_ptr<Runtime::AbstractPoolProvider>& poolProvider,
+    const std::shared_ptr<Memory::AbstractPoolProvider>& poolProvider,
     const Runtime::QueryManagerPtr& queryManager,
     const TCPSourceTypePtr& tcpSourceType,
     OperatorId operatorId,

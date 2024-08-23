@@ -32,7 +32,7 @@ NodeEngineBuilder::NodeEngineBuilder(const Configurations::WorkerConfiguration& 
 {
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setBufferManagers(std::vector<BufferManagerPtr> bufferManagers)
+NodeEngineBuilder& NodeEngineBuilder::setBufferManagers(std::vector<Memory::BufferManagerPtr> bufferManagers)
 {
     this->bufferManagers = std::move(bufferManagers);
     return *this;
@@ -70,11 +70,11 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
     try
     {
-        std::vector<BufferManagerPtr> bufferManagers;
+        std::vector<Memory::BufferManagerPtr> bufferManagers;
 
         ///create buffer manager
 
-        bufferManagers.push_back(BufferManager::create(
+        bufferManagers.push_back(Memory::BufferManager::create(
             workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()));
 
         if (bufferManagers.empty())

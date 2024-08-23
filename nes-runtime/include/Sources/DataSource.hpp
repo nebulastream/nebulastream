@@ -70,7 +70,7 @@ public:
      */
     explicit DataSource(
         SchemaPtr schema,
-        std::shared_ptr<Runtime::AbstractPoolProvider> poolProvider,
+        std::shared_ptr<Memory::AbstractPoolProvider> poolProvider,
         Runtime::QueryManagerPtr queryManager,
         OperatorId operatorId,
         OriginId originId,
@@ -119,7 +119,7 @@ public:
      * @Note this function is overwritten by the particular data source
      * @return returns a tuple buffer
      */
-    virtual std::optional<Runtime::TupleBuffer> receiveData() = 0;
+    virtual std::optional<Memory::TupleBuffer> receiveData() = 0;
 
     /**
      * @brief virtual function to get a string describing the particular source
@@ -265,8 +265,8 @@ public:
 
 protected:
     Runtime::QueryManagerPtr queryManager;
-    std::shared_ptr<Runtime::AbstractPoolProvider> bufferPoolProvider;
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider{nullptr};
+    std::shared_ptr<Memory::AbstractPoolProvider> bufferPoolProvider;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider{nullptr};
     std::vector<Runtime::Execution::SuccessorExecutablePipeline> executableSuccessors;
     OperatorId operatorId;
     OriginId originId;
@@ -293,7 +293,7 @@ protected:
     std::atomic<uint64_t> refCounter = 0;
     std::atomic<uint64_t> numberOfConsumerQueries = 1;
 
-    void emitWork(Runtime::TupleBuffer& buffer, bool addBufferMetaData = true) override;
+    void emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData = true) override;
 
     NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer();
 

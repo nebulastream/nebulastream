@@ -48,7 +48,7 @@ bool NESBinaryParser::writeInputTupleToTupleBuffer(
     uint64_t,
     Runtime::MemoryLayouts::TestTupleBuffer& dynamicBuffer,
     const SchemaPtr& schema,
-    const std::shared_ptr<Runtime::AbstractBufferProvider>&)
+    const std::shared_ptr<Memory::AbstractBufferProvider>&)
 {
 #ifdef NES_DEBUG_MODE
     NES_ASSERT(binaryBuffer.size() % schema->getSchemaSizeInBytes() == 0, "Buffer size does not match expected buffer size");

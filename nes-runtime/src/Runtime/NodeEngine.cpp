@@ -25,7 +25,7 @@
 namespace NES::Runtime
 {
 
-NodeEngine::NodeEngine(std::vector<BufferManagerPtr>&& bufferManagers, QueryManagerPtr&& queryManager)
+NodeEngine::NodeEngine(std::vector<Memory::BufferManagerPtr>&& bufferManagers, QueryManagerPtr&& queryManager)
     : bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager))
 {
     this->queryManager->startThreadPool(100);

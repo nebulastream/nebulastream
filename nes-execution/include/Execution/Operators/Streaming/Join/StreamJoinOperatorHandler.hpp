@@ -74,7 +74,7 @@ public:
      * @param stopTS as a right border of slice
      * @return vector of tuple buffers
      */
-    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override;
+    std::vector<Memory::TupleBuffer> getStateToMigrate(uint64_t startTS, uint64_t stopTS) override;
 
     /**
      * @brief Restores the state from vector of tuple buffers
@@ -86,7 +86,7 @@ public:
      *-----------------------------------------
      * all other buffers are: 1st buffer of 1st slice | .... | m_0 buffer of 1 slice | ... | 1 buffer of n-th slice | m_n buffer of n-th slice
      */
-    void restoreState(std::vector<Runtime::TupleBuffer>& buffers) override;
+    void restoreState(std::vector<Memory::TupleBuffer>& buffers) override;
 
     /**
      * @brief Retrieves the slice/window by a slice/window identifier. If no slice/window exists for the windowIdentifier,
@@ -203,7 +203,7 @@ public:
      */
     uint64_t getWindowSize() const;
 
-    void setBufferManager(std::shared_ptr<AbstractBufferProvider> bufferProvider);
+    void setBufferManager(std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider);
 
 private:
     /**
@@ -211,7 +211,7 @@ private:
      * @param buffers as a span
      * @return recreated StreamSlicePtr
      */
-    virtual StreamSlicePtr deserializeSlice(std::span<const Runtime::TupleBuffer> buffers) = 0;
+    virtual StreamSlicePtr deserializeSlice(std::span<const Memory::TupleBuffer> buffers) = 0;
 
 protected:
     uint64_t numberOfWorkerThreads = 1;
@@ -231,6 +231,6 @@ protected:
     size_t sizeOfRecordRight;
     SchemaPtr leftSchema;
     SchemaPtr rightSchema;
-    std::shared_ptr<AbstractBufferProvider> bufferProvider;
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider;
 };
 } /// namespace NES::Runtime::Execution::Operators

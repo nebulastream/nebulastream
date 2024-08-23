@@ -54,13 +54,13 @@ public:
      * @param stopTS
      * @return list of TupleBuffers
      */
-    std::vector<Runtime::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) override;
+    std::vector<Memory::TupleBuffer> getStateToMigrate(uint64_t, uint64_t) override;
 
     /**
      * @brief Merges migrated slices
      * @param buffer
      */
-    void restoreState(std::vector<Runtime::TupleBuffer>&) override;
+    void restoreState(std::vector<Memory::TupleBuffer>&) override;
 
     /**
      * @brief Default deconstructor

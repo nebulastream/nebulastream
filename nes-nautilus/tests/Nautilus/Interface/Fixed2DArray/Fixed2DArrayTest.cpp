@@ -40,7 +40,7 @@ public:
 
 TEST_F(Fixed2DArrayTest, insertSimpleDataTypes)
 {
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto numRows = 5_u64;
     auto numCols = 5_u64;
     auto entrySize = sizeof(uint64_t);
@@ -79,7 +79,7 @@ TEST_F(Fixed2DArrayTest, insertCustomClass)
         double val2;
     };
 
-    auto allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto numRows = 5_u64;
     auto numCols = 5_u64;
     auto entrySize = sizeof(CustomClass);

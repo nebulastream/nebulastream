@@ -190,7 +190,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
     auto queryManager = nodeEngine->getQueryManager();
 
     auto emitToSuccessorFunctionHandler
-        = [executableSuccessorPipelines](Runtime::TupleBuffer& buffer, Runtime::WorkerContextRef workerContext)
+        = [executableSuccessorPipelines](Memory::TupleBuffer& buffer, Runtime::WorkerContextRef workerContext)
     {
         for (const auto& executableSuccessor : executableSuccessorPipelines)
         {
@@ -207,7 +207,7 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
         }
     };
 
-    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Runtime::TupleBuffer& buffer)
+    auto emitToQueryManagerFunctionHandler = [executableSuccessorPipelines, queryManager](Memory::TupleBuffer& buffer)
     {
         for (const auto& executableSuccessor : executableSuccessorPipelines)
         {

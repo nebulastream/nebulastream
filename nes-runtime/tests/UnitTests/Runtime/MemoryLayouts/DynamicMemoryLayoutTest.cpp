@@ -26,7 +26,7 @@ namespace NES::Runtime::MemoryLayouts
 class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
 {
 public:
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     SchemaPtr schema;
     std::unique_ptr<TestTupleBuffer> testBuffer;
     Schema::MemoryLayoutType memoryLayoutType = GetParam();
@@ -39,7 +39,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = BufferManager::create(4096, 10);
+        bufferManager = Memory::BufferManager::create(4096, 10);
 
         schema
             = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);

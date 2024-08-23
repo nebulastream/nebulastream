@@ -41,7 +41,7 @@ const char* TextValue::c_str() const
     return reinterpret_cast<const char*>(this) + DATA_FIELD_OFFSET;
 }
 
-TextValue* TextValue::create(Runtime::TupleBuffer& buffer, uint32_t size)
+TextValue* TextValue::create(Memory::TupleBuffer& buffer, uint32_t size)
 {
     buffer.retain();
     return new (buffer.getBuffer()) TextValue(size);
@@ -60,14 +60,14 @@ TextValue* TextValue::create(const std::string& string)
     return textValue;
 }
 
-TextValue* TextValue::create(Runtime::TupleBuffer& buffer, const std::string& string)
+TextValue* TextValue::create(Memory::TupleBuffer& buffer, const std::string& string)
 {
     auto* textValue = create(buffer, string.length());
     std::memcpy(textValue->str(), string.c_str(), string.length());
     return textValue;
 }
 
-TextValue* TextValue::load(Runtime::TupleBuffer& buffer)
+TextValue* TextValue::load(Memory::TupleBuffer& buffer)
 {
     buffer.retain();
     return reinterpret_cast<TextValue*>(buffer.getBuffer());
@@ -83,18 +83,18 @@ std::string TextValue::strn_copy() const
     return resultString;
 }
 
-Runtime::TupleBuffer TextValue::getBuffer() const
+Memory::TupleBuffer TextValue::getBuffer() const
 {
-    return Runtime::TupleBuffer::reinterpretAsTupleBuffer((void*)this);
+    return Memory::TupleBuffer::reinterpretAsTupleBuffer((void*)this);
 }
 
 TextValue::~TextValue()
 {
     /// A text value always is backed by the data region of a tuple buffer.
     /// In the following, we recycle the tuple buffer and return it to the buffer pool.
-    Runtime::recycleTupleBuffer(this);
+    Memory::recycleTupleBuffer(this);
 }
-Runtime::TupleBuffer TextValue::allocateBuffer(uint32_t size)
+Memory::TupleBuffer TextValue::allocateBuffer(uint32_t size)
 {
     auto* provider = Runtime::WorkerContext::getBufferProviderTLS();
     auto optBuffer = provider->getUnpooledBuffer(size + DATA_FIELD_OFFSET);

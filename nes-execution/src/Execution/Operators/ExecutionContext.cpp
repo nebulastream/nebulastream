@@ -47,7 +47,7 @@ void* allocateBufferProxy(void* workerContextPtr)
     /// This increases the reference counter in the buffer.
     /// When the heap allocated buffer is not required anymore, the operator code has to clean up the allocated memory to prevent memory leaks.
     auto buffer = wkrCtx->allocateTupleBuffer();
-    auto* tb = new Runtime::TupleBuffer(buffer);
+    auto* tb = new Memory::TupleBuffer(buffer);
     return tb;
 }
 
@@ -59,7 +59,7 @@ Value<MemRef> ExecutionContext::allocateBuffer()
 
 void emitBufferProxy(void* wc, void* pc, void* tupleBuffer)
 {
-    auto* tb = (Runtime::TupleBuffer*)tupleBuffer;
+    auto* tb = (Memory::TupleBuffer*)tupleBuffer;
     auto pipelineCtx = static_cast<PipelineExecutionContext*>(pc);
     auto workerCtx = static_cast<WorkerContext*>(wc);
 

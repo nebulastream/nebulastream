@@ -20,7 +20,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Runtime::TupleBuffer>)
+StreamSlicePtr HJOperatorHandler::deserializeSlice(std::span<const Memory::TupleBuffer>)
 {
     NES_WARNING("Deserialize Slice function is not implemented for HJOperatorHandler.")
     NES_NOT_IMPLEMENTED();

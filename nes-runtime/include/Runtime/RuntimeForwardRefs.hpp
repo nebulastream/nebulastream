@@ -71,8 +71,6 @@ class ArrayPhysicalField;
 class PhysicalSchema;
 using PhysicalSchemaPtr = std::shared_ptr<PhysicalSchema>;
 
-class TupleBuffer;
-
 class OpenCLManager;
 using OpenCLManagerPtr = std::shared_ptr<OpenCLManager>;
 

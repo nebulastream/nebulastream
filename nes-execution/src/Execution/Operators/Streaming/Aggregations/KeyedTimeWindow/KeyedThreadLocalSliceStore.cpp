@@ -31,7 +31,7 @@ KeyedSlicePtr KeyedThreadLocalSliceStore::allocateNewSlice(uint64_t startTs, uin
 {
     /// allocate hash map
     NES_DEBUG("allocateNewSlice {}-{}", startTs, endTs);
-    auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+    auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
     auto hashMap = std::make_unique<Nautilus::Interface::ChainedHashMap>(keySize, valueSize, numberOfKeys, std::move(allocator));
     return std::make_unique<KeyedSlice>(std::move(hashMap), startTs, endTs);
 }

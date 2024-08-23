@@ -32,7 +32,7 @@ struct __attribute__((packed)) CustomClass
 class FixedPageTest : public Testing::BaseUnitTest
 {
 public:
-    std::unique_ptr<std::pmr::memory_resource> allocator = std::make_unique<Runtime::NesDefaultMemoryAllocator>();
+    std::unique_ptr<std::pmr::memory_resource> allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
 
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()

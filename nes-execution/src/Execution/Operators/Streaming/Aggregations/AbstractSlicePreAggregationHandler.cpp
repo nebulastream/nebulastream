@@ -37,7 +37,7 @@ AbstractSlicePreAggregationHandler<SliceType, SliceStore>::AbstractSlicePreAggre
 template <class SliceType, typename SliceStore>
 void AbstractSlicePreAggregationHandler<SliceType, SliceStore>::dispatchSliceMergingTasks(
     PipelineExecutionContext& ctx,
-    AbstractBufferProvider& bufferProvider,
+    Memory::AbstractBufferProvider& bufferProvider,
     std::map<std::tuple<uint64_t, uint64_t>, std::vector<std::shared_ptr<SliceType>>>& collectedSlices)
 {
     /// for all slices that have been collected, emit a merge task to combine this slices.

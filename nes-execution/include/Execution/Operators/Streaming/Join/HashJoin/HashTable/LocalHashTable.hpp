@@ -43,7 +43,11 @@ public:
      * @param preAllocPageSizeCnt
      */
     explicit LocalHashTable(
-        size_t sizeOfRecord, size_t numPartitions, FixedPagesAllocator& fixedPagesAllocator, size_t pageSize, size_t preAllocPageSizeCnt);
+        size_t sizeOfRecord,
+        size_t numPartitions,
+        Memory::FixedPagesAllocator& fixedPagesAllocator,
+        size_t pageSize,
+        size_t preAllocPageSizeCnt);
 
     LocalHashTable(const LocalHashTable&) = delete;
 

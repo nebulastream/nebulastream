@@ -36,7 +36,7 @@ public:
      * @param id of the pipeline stage inside the QEP that should be applied
      * @param pointer to the tuple buffer that has to be process
      */
-    explicit Task(Execution::SuccessorExecutablePipeline pipeline, TupleBuffer buf, uint64_t taskId);
+    explicit Task(Execution::SuccessorExecutablePipeline pipeline, Memory::TupleBuffer buf, uint64_t taskId);
 
     constexpr explicit Task() noexcept = default;
 
@@ -87,11 +87,11 @@ public:
      * This method returns the reference to the buffer of this task
      * @return
      */
-    TupleBuffer const& getBufferRef() const;
+    Memory::TupleBuffer const& getBufferRef() const;
 
 private:
     Execution::SuccessorExecutablePipeline pipeline{};
-    TupleBuffer buf{};
+    Memory::TupleBuffer buf{};
     uint64_t id{std::numeric_limits<decltype(id)>::max()};
     uint64_t inputTupleCount = 0;
 };

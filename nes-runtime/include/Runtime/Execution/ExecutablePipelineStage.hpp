@@ -16,6 +16,7 @@
 
 #include <Runtime/ExecutionResult.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
+#include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <magic_enum.hpp>
 
@@ -77,7 +78,7 @@ public:
     * @return 0 if an error occurred.
     */
     virtual ExecutionResult
-    execute(TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
+    execute(Memory::TupleBuffer& inputTupleBuffer, PipelineExecutionContext& pipelineExecutionContext, WorkerContext& workerContext)
         = 0;
 
     /**

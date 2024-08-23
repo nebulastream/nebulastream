@@ -25,7 +25,7 @@
  * local: buffer manager that we give to the processing
  * fixed: buffer manager that we use for sources
  */
-namespace NES::Runtime
+namespace NES::Memory
 {
 enum class BufferManagerType : uint8_t
 {

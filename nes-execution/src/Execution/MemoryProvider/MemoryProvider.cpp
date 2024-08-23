@@ -29,7 +29,7 @@ namespace NES::Runtime::Execution::MemoryProvider
 
 Nautilus::TextValue* loadAssociatedTextValue(void* tupleBuffer, uint32_t childIndex)
 {
-    auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
+    auto tb = Memory::TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
     auto childBuffer = tb.loadChildBuffer(childIndex);
     return Nautilus::TextValue::load(childBuffer);
 }
@@ -103,8 +103,8 @@ Nautilus::Value<> MemoryProvider::load(
 
 uint32_t storeAssociatedTextValue(void* tupleBuffer, const Nautilus::TextValue* textValue)
 {
-    auto tb = TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
-    auto textBuffer = TupleBuffer::reinterpretAsTupleBuffer((void*)textValue);
+    auto tb = Memory::TupleBuffer::reinterpretAsTupleBuffer(tupleBuffer);
+    auto textBuffer = Memory::TupleBuffer::reinterpretAsTupleBuffer((void*)textValue);
     return tb.storeChildBuffer(textBuffer);
 }
 

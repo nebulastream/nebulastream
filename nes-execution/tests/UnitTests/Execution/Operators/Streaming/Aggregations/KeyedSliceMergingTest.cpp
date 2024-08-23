@@ -42,7 +42,7 @@ namespace NES::Runtime::Execution::Operators
 class KeyedSliceMergingTest : public Testing::BaseUnitTest
 {
 public:
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -61,7 +61,7 @@ public:
         auto integer = DataTypeFactory::createInt64();
         PhysicalTypePtr integerType = physicalDataTypeFactory.getPhysicalType(DataTypeFactory::createInt64());
 
-        auto allocator = std::make_unique<NesDefaultMemoryAllocator>();
+        auto allocator = std::make_unique<Memory::NesDefaultMemoryAllocator>();
         auto map = std::make_unique<Interface::ChainedHashMap>(8, 8, 1000, std::move(allocator));
         Interface::ChainedHashMapRef ref(Value<MemRef>(reinterpret_cast<int8_t*>(map.get())), {integerType}, integerType->size(), 8);
 

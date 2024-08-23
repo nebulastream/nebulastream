@@ -94,7 +94,7 @@ public:
      * @param std::shared_ptr<BufferManager>&
      * @return list of pages that store records and metadata
      */
-    std::vector<Runtime::TupleBuffer> serialize(AbstractBufferProvider&) override;
+    std::vector<Memory::TupleBuffer> serialize(Memory::AbstractBufferProvider&) override;
 
     /**
      * @brief Creates a string representation of this slice

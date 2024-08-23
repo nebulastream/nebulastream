@@ -73,7 +73,7 @@ public:
 */
 TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest)
 {
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bufferManager, 1024);
     auto inputRecord = Record({{"id", Value<Text>("Hallo World")}});
     auto javaUDFDescriptor = Catalogs::UDF::JavaUDFDescriptorBuilder()
@@ -96,7 +96,7 @@ TEST_F(FlatMapJavaUDFOperatorTest, StringUDFTest)
 */
 TEST_F(FlatMapJavaUDFOperatorTest, ComplexPojoFlatMapFunction)
 {
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<Runtime::WorkerContext>(INVALID<WorkerThreadId>, bufferManager, 1024);
     auto schema = Schema::create()
                       ->addField("byteVariable", BasicType::INT8)

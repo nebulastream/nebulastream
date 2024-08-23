@@ -20,6 +20,6 @@
 namespace NES
 {
 
-FormatIterator::FormatIterator(SchemaPtr schema, Runtime::TupleBuffer buffer, FormatTypes formatType)
+FormatIterator::FormatIterator(SchemaPtr schema, Memory::TupleBuffer buffer, FormatTypes formatType)
     : schema(std::move(schema)), buffer(std::move(buffer)), sinkFormatType(formatType) {};
 } /// namespace NES

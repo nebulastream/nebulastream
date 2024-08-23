@@ -33,7 +33,7 @@ using FixedSizedDataTuple = std::tuple<FIXED_SIZED_DATA_TYPES>;
 class TestTupleBufferTest : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
 {
 public:
-    BufferManagerPtr bufferManager;
+    Memory::BufferManagerPtr bufferManager;
     SchemaPtr schema, varSizedDataSchema;
     std::unique_ptr<TestTupleBuffer> testBuffer, testBufferVarSize;
 
@@ -46,7 +46,7 @@ public:
     {
         Testing::BaseUnitTest::SetUp();
         const auto memoryLayout = GetParam();
-        bufferManager = BufferManager::create(4096, 10);
+        bufferManager = Memory::BufferManager::create(4096, 10);
         schema = Schema::create(memoryLayout)
                      ->addField("test$t1", BasicType::UINT16)
                      ->addField("test$t2", BasicType::BOOLEAN)
@@ -69,7 +69,7 @@ public:
 
 TEST_P(TestTupleBufferTest, throwErrorIfEmpty)
 {
-    BufferManagerPtr bufferManager = BufferManager::create(4096, 2);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create(4096, 2);
     auto tupleBuffer1 = bufferManager->getBufferBlocking();
     auto tupleBuffer2 = bufferManager->getBufferBlocking();
     try
@@ -90,7 +90,7 @@ TEST_P(TestTupleBufferTest, throwErrorIfEmpty)
 
 TEST_P(TestTupleBufferTest, throwErrorIfEmptyAfterSequenceOfPulls)
 {
-    BufferManagerPtr bufferManager = BufferManager::create(4096, 3);
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create(4096, 3);
     auto tupleBuffer1 = bufferManager->getBufferBlocking();
     auto tupleBuffer2 = bufferManager->getBufferBlocking();
     auto tupleBuffer3 = bufferManager->getBufferBlocking();

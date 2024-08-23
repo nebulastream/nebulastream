@@ -53,7 +53,7 @@ public:
  */
 TEST_F(EmitOperatorTest, emitRecordsToRowBuffer)
 {
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
@@ -89,7 +89,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer)
  */
 TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow)
 {
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
@@ -129,7 +129,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow)
  */
 TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer)
 {
-    BufferManagerPtr bufferManager = BufferManager::create();
+    Memory::BufferManagerPtr bufferManager = Memory::BufferManager::create();
     auto wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);

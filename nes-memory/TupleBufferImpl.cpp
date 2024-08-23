@@ -24,7 +24,7 @@
 #    include <cpptrace.hpp>
 #endif
 
-namespace NES::Runtime
+namespace NES::Memory
 {
 
 namespace detail

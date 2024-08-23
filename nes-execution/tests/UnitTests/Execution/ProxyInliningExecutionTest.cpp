@@ -49,8 +49,8 @@ public:
 Value<UInt64> getNumberOfTuples(Value<MemRef> tupleBufferRef)
 {
     return FunctionCall<>(
-        "NES__Runtime__TupleBuffer__getNumberOfTuples",
-        NES::Runtime::ProxyFunctions::NES__Runtime__TupleBuffer__getNumberOfTuples,
+        "NES__Memory__TupleBuffer__getNumberOfTuples",
+        NES::Runtime::ProxyFunctions::NES__Memory__TupleBuffer__getNumberOfTuples,
         tupleBufferRef);
 }
 

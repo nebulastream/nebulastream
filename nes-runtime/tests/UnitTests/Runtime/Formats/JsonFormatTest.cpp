@@ -54,7 +54,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = BufferManager::create(4096, 10);
+        bufferManager = Memory::BufferManager::create(4096, 10);
     }
 
     /**

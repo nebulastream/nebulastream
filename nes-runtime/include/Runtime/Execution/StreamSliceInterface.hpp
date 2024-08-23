@@ -43,7 +43,7 @@ public:
      * @param std::shared_ptr<BufferManager>&
      * @return list of pages that store records and metadata
      */
-    virtual std::vector<TupleBuffer> serialize(AbstractBufferProvider&) = 0;
+    virtual std::vector<Memory::TupleBuffer> serialize(Memory::AbstractBufferProvider&) = 0;
 
     virtual ~StreamSliceInterface() = default;
 };

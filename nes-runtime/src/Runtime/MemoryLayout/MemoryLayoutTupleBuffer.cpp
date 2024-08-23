@@ -17,7 +17,7 @@
 
 namespace NES::Runtime::MemoryLayouts
 {
-MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(TupleBuffer tupleBuffer, uint64_t capacity)
+MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(Memory::TupleBuffer tupleBuffer, uint64_t capacity)
     : tupleBuffer(std::move(tupleBuffer)), capacity(capacity)
 {
 }
@@ -29,7 +29,7 @@ uint64_t MemoryLayoutTupleBuffer::getNumberOfRecords() const
 {
     return numberOfRecords;
 }
-TupleBuffer MemoryLayoutTupleBuffer::getTupleBuffer()
+Memory::TupleBuffer MemoryLayoutTupleBuffer::getTupleBuffer()
 {
     return tupleBuffer;
 }

@@ -20,7 +20,7 @@
 namespace NES::Runtime
 {
 
-void BufferStorage::insertBuffer(NES::Runtime::TupleBuffer buffer)
+void BufferStorage::insertBuffer(Memory::TupleBuffer buffer)
 {
     this->storage.push(buffer);
 }
@@ -39,7 +39,7 @@ size_t BufferStorage::getStorageSize() const
     return this->storage.size();
 }
 
-std::optional<TupleBuffer> BufferStorage::getTopElementFromQueue() const
+std::optional<Memory::TupleBuffer> BufferStorage::getTopElementFromQueue() const
 {
     if (storage.empty())
     {

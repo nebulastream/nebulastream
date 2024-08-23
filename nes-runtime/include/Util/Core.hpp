@@ -72,7 +72,7 @@ namespace Util
 * @param buffer the tuple buffer
 * @return string of tuple buffer
 */
-std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
+std::string printTupleBufferAsText(Memory::TupleBuffer& buffer);
 
 /**
  * @brief create CSV lines from the tuples
@@ -80,7 +80,7 @@ std::string printTupleBufferAsText(Runtime::TupleBuffer& buffer);
  * @param schema how to read the tuples from the buffer
  * @return a full string stream as string
  */
-std::string printTupleBufferAsCSV(Runtime::TupleBuffer tbuffer, const SchemaPtr& schema);
+std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& schema);
 
 /**
 * @brief Returns the physical types of all fields of the schema
@@ -121,10 +121,10 @@ bool assignPropertiesToQueryOperators(const QueryPlanPtr& queryPlan, std::vector
  * @param bufferProvider
  * @return Vector of TupleBuffers
  */
-[[maybe_unused]] std::vector<Runtime::TupleBuffer> createBuffersFromCSVFile(
+[[maybe_unused]] std::vector<Memory::TupleBuffer> createBuffersFromCSVFile(
     const std::string& csvFile,
     const SchemaPtr& schema,
-    std::shared_ptr<Runtime::AbstractBufferProvider> bufferProvider,
+    std::shared_ptr<Memory::AbstractBufferProvider> bufferProvider,
     const std::string& timeStampFieldName,
     uint64_t lastTimeStamp);
 } /// namespace Util
