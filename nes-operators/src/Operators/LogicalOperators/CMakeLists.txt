@@ -22,7 +22,6 @@ add_source_files(nes-operators
         RenameSourceOperator.cpp
         LogicalBinaryOperator.cpp
         LogicalUnaryOperator.cpp
-        LogicalOpenCLOperator.cpp
         LogicalLimitOperator.cpp
         LogicalBatchJoinDescriptor.cpp
 )

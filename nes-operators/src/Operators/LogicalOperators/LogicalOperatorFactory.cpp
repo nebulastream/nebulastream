@@ -17,7 +17,6 @@
 #include <Operators/LogicalOperators/LogicalInferModelOperator.hpp>
 #include <Operators/LogicalOperators/LogicalLimitOperator.hpp>
 #include <Operators/LogicalOperators/LogicalMapOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOpenCLOperator.hpp>
 #include <Operators/LogicalOperators/LogicalOperatorFactory.hpp>
 #include <Operators/LogicalOperators/LogicalProjectionOperator.hpp>
 #include <Operators/LogicalOperators/LogicalUnionOperator.hpp>
@@ -121,12 +120,6 @@ LogicalUnaryOperatorPtr
 LogicalOperatorFactory::createFlatMapUDFLogicalOperator(const Catalogs::UDF::UDFDescriptorPtr udfDescriptor, OperatorId id)
 {
     return std::make_shared<FlatMapUDFLogicalOperator>(udfDescriptor, id);
-}
-
-LogicalUnaryOperatorPtr
-LogicalOperatorFactory::createOpenCLLogicalOperator(const Catalogs::UDF::JavaUdfDescriptorPtr javaUdfDescriptor, OperatorId id)
-{
-    return std::make_shared<LogicalOpenCLOperator>(javaUdfDescriptor, id);
 }
 
 } /// namespace NES

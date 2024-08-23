@@ -25,7 +25,6 @@ const std::string OPERATOR_ID_KEY = "operatorId";
 const std::string CHILDREN_KEY = "children";
 const std::string CONSTRAINT_KEY = "constraint";
 const std::string INPUT_DATA_KEY = "inputData";
-const std::string JAVA_UDF_FIELD_KEY = "javaUdfField";
 
 ///Topology payload constants
 const std::string DEVICE_ID_KEY = "deviceID";

@@ -35,11 +35,6 @@ public:
     ElegantConfigurations(const std::string& name, const std::string& description) : BaseConfiguration(name, description) {};
 
     /**
-     * @brief Accelerate java UDFs.
-     */
-    BoolOption accelerateJavaUDFs = {ACCELERATE_JAVA_UDFS, "false", "Accelerate java UDFs.", {std::make_unique<BooleanValidation>()}};
-
-    /**
      * @brief ELEGANT external planner service URL. Example: https://localhost:8081/plan
      */
     StringOption plannerServiceURL = {PLANNER_SERVICE_URL, "Complete URL for connecting with the ELEGANT planner."};
@@ -59,6 +54,6 @@ public:
            {std::make_unique<FloatValidation>(), std::make_unique<NonZeroValidation>()}};
 
 private:
-    std::vector<Configurations::BaseOption*> getOptions() override { return {&accelerateJavaUDFs, &plannerServiceURL, &transferRate}; }
+    std::vector<Configurations::BaseOption*> getOptions() override { return {&plannerServiceURL, &transferRate}; }
 };
 } /// namespace NES::Configurations
