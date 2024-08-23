@@ -17,6 +17,7 @@
 CMakeUserPresets.json
 debug*
 vcpkg-repository
+build-docker
 
 # Deb file
 docker/executableImage/resources/NebulaStream*.deb
