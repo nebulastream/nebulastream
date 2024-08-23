@@ -33,8 +33,8 @@ class MinAggregationFunction : public AggregationFunction {
     uint64_t getSize() override;
 
   private:
-    static void storeMin(const Nautilus::ExecDataType& leftValue,
-                  const Nautilus::ExecDataType& rightValue,
+    static void storeMin(const Nautilus::VarVal& leftValue,
+                  const Nautilus::VarVal& rightValue,
                   const Nautilus::MemRefVal& state,
                   const PhysicalTypePtr& inputType);
 };

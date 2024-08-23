@@ -17,7 +17,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Execution/Expressions/Expression.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 
 
 namespace NES::Runtime::Execution::Aggregation {
@@ -77,15 +77,15 @@ class AggregationFunction {
      * @param physicalType the intended data type to which the value should be casted
      * @return value in the type of physicalType
      */
-    static Nautilus::ExecDataType loadFromMemRef(Nautilus::MemRefVal memRef, const PhysicalTypePtr& physicalType);
+    static Nautilus::VarVal loadFromMemRef(Nautilus::MemRefVal memRef, const PhysicalTypePtr& physicalType);
 
-    static void storeToMemRef(Nautilus::MemRefVal memRef, const Nautilus::ExecDataType& execValue, const PhysicalTypePtr& physicalType);
+    static void storeToMemRef(Nautilus::MemRefVal memRef, const Nautilus::VarVal& execValue, const PhysicalTypePtr& physicalType);
 
-    static Nautilus::ExecDataType createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
+    static Nautilus::VarVal createConstValue(int64_t value, const PhysicalTypePtr& physicalTypePtr);
 
-    static Nautilus::ExecDataType createMinValue(const PhysicalTypePtr& physicalTypePtr);
+    static Nautilus::VarVal createMinValue(const PhysicalTypePtr& physicalTypePtr);
 
-    static Nautilus::ExecDataType createMaxValue(const PhysicalTypePtr& physicalTypePtr);
+    static Nautilus::VarVal createMaxValue(const PhysicalTypePtr& physicalTypePtr);
 };
 
 using AggregationFunctionPtr = std::shared_ptr<AggregationFunction>;

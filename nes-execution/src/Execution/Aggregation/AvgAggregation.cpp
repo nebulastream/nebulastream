@@ -15,7 +15,7 @@
 #include <Common/DataTypes/DataTypeFactory.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Execution/Aggregation/AvgAggregation.hpp>
-#include <Nautilus/DataTypes/Operations/ExecutableDataTypeOperations.hpp>
+
 #include <Nautilus/Interface/Record.hpp>
 
 namespace NES::Runtime::Execution::Aggregation {
@@ -46,7 +46,7 @@ void AvgAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& r
     // add the values
     auto value = inputExpression->execute(record);
     auto newSum = oldSum + value;
-    auto newCount = oldCount + 1;
+    auto newCount = oldCount + Nautilus::UInt64Val(1);
     // put updated values back to the memRef
     AggregationFunction::storeToMemRef(state, newCount, inputType);
     AggregationFunction::storeToMemRef(oldSumMemRef, newSum, inputType);

@@ -14,7 +14,7 @@
 
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
-#include <Nautilus/DataTypes/FixedSizeExecutableDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <limits>
 
@@ -26,15 +26,15 @@ MaxAggregationFunction::MaxAggregationFunction(const PhysicalTypePtr& inputType,
     : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
 
-void MaxAggregationFunction::storeMax(const Nautilus::ExecDataType& leftValue,
-              const Nautilus::ExecDataType& rightValue,
+void MaxAggregationFunction::storeMax(const Nautilus::VarVal& leftValue,
+              const Nautilus::VarVal& rightValue,
               const Nautilus::MemRefVal& state,
               const PhysicalTypePtr& inputType) {
     // we have to do this, as otherwise we do not check if the val<> is true bti if there exists a pointer
-    if (*(leftValue < rightValue)) {
+    if (leftValue < rightValue) {
         // store the rightValue
         AggregationFunction::storeToMemRef(state, rightValue, inputType);
-    } else if (*(leftValue > rightValue)) {
+    } else if (leftValue > rightValue) {
         // store the leftValue
         AggregationFunction::storeToMemRef(state, leftValue, inputType);
     }

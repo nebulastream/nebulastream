@@ -33,8 +33,8 @@ class MaxAggregationFunction : public AggregationFunction {
     uint64_t getSize() override;
 
 private:
-    static void storeMax(const Nautilus::ExecDataType& leftValue,
-              const Nautilus::ExecDataType& rightValue,
+    static void storeMax(const Nautilus::VarVal& leftValue,
+              const Nautilus::VarVal& rightValue,
               const Nautilus::MemRefVal& state,
               const PhysicalTypePtr& inputType);
 };

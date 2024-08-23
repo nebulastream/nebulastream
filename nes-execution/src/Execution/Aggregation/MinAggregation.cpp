@@ -14,7 +14,7 @@
 
 #include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MinAggregation.hpp>
-#include <Nautilus/DataTypes/AbstractDataType.hpp>
+#include <Nautilus/DataTypes/VarVal.hpp>
 #include <Nautilus/Interface/Record.hpp>
 #include <limits>
 
@@ -26,15 +26,15 @@ MinAggregationFunction::MinAggregationFunction(const PhysicalTypePtr& inputType,
                                                const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
     : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
-void MinAggregationFunction::storeMin(const Nautilus::ExecDataType& leftValue,
-              const Nautilus::ExecDataType& rightValue,
-              const Nautilus::MemRefVal& state,
-              const PhysicalTypePtr& inputType) {
+void MinAggregationFunction::storeMin(const Nautilus::VarVal& leftValue,
+                                      const Nautilus::VarVal& rightValue,
+                                      const Nautilus::MemRefVal& state,
+                                      const PhysicalTypePtr& inputType) {
     // we have to do this, as otherwise we do not check if the val<> is true bti if there exists a pointer
-    if (*(leftValue > rightValue)) {
+    if (leftValue > rightValue) {
         // store the rightValue
         AggregationFunction::storeToMemRef(state, rightValue, inputType);
-    } else if (*(leftValue < rightValue))  {
+    } else if (leftValue < rightValue) {
         // store the leftValue
         AggregationFunction::storeToMemRef(state, leftValue, inputType);
     }
