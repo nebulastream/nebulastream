@@ -1,8 +1,6 @@
 # Files
-apex_memmove.hpp
 JNI.hpp
 JNI.cpp
-apex_memmove.cpp
 digestible.h
 
 # Folders
