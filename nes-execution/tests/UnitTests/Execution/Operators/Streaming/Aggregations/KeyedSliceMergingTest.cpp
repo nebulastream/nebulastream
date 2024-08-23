@@ -120,7 +120,7 @@ class MockedSliceMergingAction final : public SliceMergingAction {
                  ExecDataUInt64& windowEnd,
                  ExecDataUInt64& sequenceNumber,
                  ExecDataUInt64& chunkNumber,
-                 ExecDataBoolean& lastChunk,
+                 VarValean& lastChunk,
                  ObjRefVal<void>& globalSlice),
                 (const, override));
 };

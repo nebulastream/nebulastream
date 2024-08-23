@@ -43,10 +43,10 @@ auto CompiledExecutablePipelineStage::compilePipeline() {
     Timer timer("CompilationBasedPipelineExecutionEngine " + options.getOptionOrDefault<std::string>("engine_backend", ""));
     timer.start();
 
-    std::function<void(nautilus::val<int8_t*>, nautilus::val<int8_t*>, nautilus::val<int8_t*>)> compiledFunction =
-        [&](nautilus::val<int8_t*> workerContext,
-            nautilus::val<int8_t*> pipelineExecutionContext,
-            nautilus::val<int8_t*> recordBufferRef) {
+    std::function<void(Nautilus::MemRefVal, Nautilus::MemRefVal, Nautilus::MemRefVal)> compiledFunction =
+        [&](const Nautilus::MemRefVal& workerContext,
+            const Nautilus::MemRefVal& pipelineExecutionContext,
+            const Nautilus::MemRefVal& recordBufferRef) {
             auto ctx = ExecutionContext(workerContext, pipelineExecutionContext);
             RecordBuffer recordBuffer(recordBufferRef);
             physicalOperatorPipeline->getRootOperator()->open(ctx, recordBuffer);

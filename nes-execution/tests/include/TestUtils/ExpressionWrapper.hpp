@@ -27,7 +27,7 @@ class UnaryExpressionWrapper {
         auto input = std::make_shared<ReadFieldExpression>("value");
         expression = std::make_shared<ExpressionType>(input);
     }
-    ExecDataType eval(ExecDataType value) {
+    VarVal eval(VarVal value) {
         auto record = Record({{"value", value}});
         return expression->execute(record);
     }
@@ -43,7 +43,7 @@ class BinaryExpressionWrapper {
         auto rightExpression = std::make_shared<ReadFieldExpression>("right");
         expression = std::make_shared<ExpressionType>(leftExpression, rightExpression);
     }
-    ExecDataType eval(ExecDataType left, ExecDataType right) {
+    VarVal eval(VarVal left, VarVal right) {
         auto record = Record({{"left", left}, {"right", right}});
         return expression->execute(record);
     }
@@ -60,7 +60,7 @@ class TernaryExpressionWrapper {
         auto rightExpression = std::make_shared<ReadFieldExpression>("right");
         expression = std::make_shared<ExpressionType>(leftExpression, midExpression, rightExpression);
     }
-    ExecDataType eval(ExecDataType left, ExecDataType mid, ExecDataType right) {
+    VarVal eval(VarVal left, VarVal mid, VarVal right) {
         auto record = Record({{"left", left}, {"mid", mid}, {"right", right}});
         return expression->execute(record);
     }
