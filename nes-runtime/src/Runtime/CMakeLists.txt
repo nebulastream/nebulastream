@@ -12,7 +12,6 @@
 
 
 add_source_files(nes-runtime
-        apex_memmove.cpp
         BufferStorage.cpp
         WorkerContext.cpp
         NesThread.cpp
