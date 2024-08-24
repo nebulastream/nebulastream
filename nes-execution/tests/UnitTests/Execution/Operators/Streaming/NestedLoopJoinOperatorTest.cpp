@@ -134,7 +134,7 @@ public:
 
         nljOperatorHandler = Operators::NLJOperatorHandlerSlicing::create(
             {INVALID_ORIGIN_ID}, OriginId(1), windowSize, windowSize, leftSchema, rightSchema, leftPageSize, rightPageSize);
-        bm = std::make_shared<BufferManager>(8196, 5000);
+        bm = BufferManager::create(8196, 5000);
         nljOperatorHandler->setBufferManager(bm);
     }
 
@@ -643,7 +643,7 @@ TEST_F(NestedLoopJoinOperatorTest, gettingSlicesCheckEndTestWithSmallBufferSize)
 
     insertRecordsIntoBuild(numberOfRecordsLeft, numberOfRecordsRight);
     /// make buffer size less and check that more metadata buffers are created
-    bm = std::make_shared<BufferManager>(20, 10000);
+    bm = BufferManager::create(20, 10000);
     nljOperatorHandler->setBufferManager(bm);
     /// Checking corner case when stopTS is equal to end timestamp of slice.
     auto slices = nljOperatorHandler->getStateToMigrate(2000, 4000);

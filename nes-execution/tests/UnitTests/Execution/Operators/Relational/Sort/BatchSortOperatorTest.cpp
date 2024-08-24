@@ -73,6 +73,7 @@ void createRecords(std::vector<Record>& records, size_t numRecords)
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest)
 {
+    BufferManagerPtr bm = BufferManager::create();
     using Type = typename TypeParam::first_type;
     using EncodedType = typename TypeParam::second_type;
     constexpr size_t NUM_RECORDS = 100;
@@ -116,6 +117,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorMultipleFieldsTest)
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest)
 {
+    BufferManagerPtr bm = BufferManager::create();
     using Type = typename TypeParam::first_type;
     using EncodedType = typename TypeParam::second_type;
     constexpr size_t NUM_RECORDS = 100;
@@ -159,6 +161,7 @@ TYPED_TEST(BatchSortOperatorTest, SortOperatorOnSecondColumnTest)
  */
 TYPED_TEST(BatchSortOperatorTest, SortOperatorMuliplePagesTest)
 {
+    BufferManagerPtr bm = BufferManager::create();
     using Type = typename TypeParam::first_type;
     using EncodedType = typename TypeParam::second_type;
     constexpr auto NUM_RECORDS = 1025; /// 1025 * 2 (Fields) * 2 Bytes = 4100 Bytes > 4096 Bytes (Page Size)

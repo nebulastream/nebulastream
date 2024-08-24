@@ -38,13 +38,13 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bm = std::make_shared<Runtime::BufferManager>();
+        bm = Runtime::BufferManager::create();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
         NES_DEBUG("Setup LevenshteinTest test case.")
     }
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down LevenshteinTest class."); }
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<Runtime::WorkerContext> wc;
 };
 

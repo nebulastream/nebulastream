@@ -47,7 +47,7 @@ public:
     {
         BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinOperatorVarSizedTest test case.");
-        bm = std::make_shared<BufferManager>();
+        bm = BufferManager::create();
     }
 
     /* Will be called after a test is executed. */

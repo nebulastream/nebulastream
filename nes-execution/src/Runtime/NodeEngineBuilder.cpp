@@ -74,7 +74,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 
         ///create buffer manager
 
-        bufferManagers.push_back(std::make_shared<BufferManager>(
+        bufferManagers.push_back(BufferManager::create(
             workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()));
 
         if (bufferManagers.empty())

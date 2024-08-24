@@ -43,7 +43,7 @@ namespace NES::Runtime::Execution::Operators
 class KeyedSlicePreAggregationTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<BufferManager> bufferManager;
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
 
@@ -54,7 +54,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>();
+        bufferManager = BufferManager::create();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 

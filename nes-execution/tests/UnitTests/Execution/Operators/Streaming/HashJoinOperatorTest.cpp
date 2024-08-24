@@ -42,7 +42,7 @@ namespace NES::Runtime::Execution
 class HashJoinOperatorTest : public Testing::BaseUnitTest
 {
 public:
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::vector<TupleBuffer> emittedBuffers;
 
     /* Will be called before any test in this class are executed. */
@@ -57,7 +57,6 @@ public:
     {
         BaseUnitTest::SetUp();
         NES_INFO("Setup HashJoinOperatorTest test case.");
-        bm = std::make_shared<Runtime::BufferManager>();
     }
 
     /* Will be called after a test is executed. */

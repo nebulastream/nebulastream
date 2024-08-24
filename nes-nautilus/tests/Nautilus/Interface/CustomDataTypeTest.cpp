@@ -40,7 +40,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bm = std::make_shared<Runtime::BufferManager>();
+        bm = Runtime::BufferManager::create();
         wc = std::make_shared<Runtime::WorkerContext>(INITIAL<WorkerThreadId>, bm, 1024);
         NES_DEBUG("Setup TextTypeTest test case.")
     }

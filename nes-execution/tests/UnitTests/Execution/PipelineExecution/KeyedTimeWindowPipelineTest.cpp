@@ -47,7 +47,7 @@ class KeyedTimeWindowPipelineTest : public testing::Test, public AbstractPipelin
 public:
     DefaultPhysicalTypeFactory physicalDataTypeFactory = DefaultPhysicalTypeFactory();
     ExecutablePipelineProvider* provider{};
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -62,7 +62,7 @@ public:
     {
         std::cout << "Setup GlobalTimeWindowPipelineTest test case." << std::endl;
         provider = ExecutablePipelineProviderRegistry::getPlugin(GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
+        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 
