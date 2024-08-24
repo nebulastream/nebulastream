@@ -74,7 +74,7 @@ NLJBuildBucketing::NLJBuildBucketing(
     QueryCompilation::StreamJoinStrategy joinStrategy,
     const uint64_t windowSize,
     const uint64_t windowSlide)
-    : StreamJoinOperator(joinStrategy, QueryCompilation::WindowingStrategy::BUCKETING)
+    : StreamJoinOperator(joinStrategy)
     , StreamJoinBuildBucketing(
           operatorHandlerIndex,
           schema,
@@ -83,7 +83,6 @@ NLJBuildBucketing::NLJBuildBucketing(
           entrySize,
           std::move(timeFunction),
           joinStrategy,
-          windowingStrategy,
           windowSize,
           windowSlide)
 {

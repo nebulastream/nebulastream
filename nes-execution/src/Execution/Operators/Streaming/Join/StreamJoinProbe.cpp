@@ -35,21 +35,20 @@ void deleteAllSlicesProxy(
     uint64_t chunkNumber,
     bool lastChunk,
     uint64_t originId,
-    uint64_t joinStrategyInt,
-    uint64_t windowingStrategyInt)
+    uint64_t joinStrategyInt)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt);
     BufferMetaData bufferMetaData(watermarkTs, {sequenceNumber, chunkNumber, lastChunk}, OriginId(originId));
     opHandler->deleteSlices(bufferMetaData);
 }
 
-void deleteAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+void deleteAllWindowsProxy(void* ptrOpHandler, void* ptrPipelineCtx, uint64_t joinStrategyInt)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
 
-    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt);
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     NES_DEBUG("Deleting all slices for pipelineId {}!", pipelineCtx->getPipelineID());
 
@@ -71,8 +70,7 @@ void StreamJoinProbe::close(ExecutionContext& ctx, RecordBuffer& recordBuffer) c
             ctx.getChunkNumber(),
             ctx.getLastChunk(),
             ctx.getOriginId(),
-            Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-            Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+            Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)));
     }
 
     /// Now close for all children
@@ -105,9 +103,8 @@ StreamJoinProbe::StreamJoinProbe(
     Expressions::ExpressionPtr joinExpression,
     const WindowMetaData& windowMetaData,
     QueryCompilation::StreamJoinStrategy joinStrategy,
-    QueryCompilation::WindowingStrategy windowingStrategy,
     bool withDeletion)
-    : StreamJoinOperator(joinStrategy, windowingStrategy)
+    : StreamJoinOperator(joinStrategy)
     , operatorHandlerIndex(operatorHandlerIndex)
     , joinSchema(joinSchema)
     , withDeletion(withDeletion)
@@ -125,8 +122,7 @@ void StreamJoinProbe::terminate(ExecutionContext& ctx) const
         deleteAllWindowsProxy,
         operatorHandlerMemRef,
         ctx.getPipelineContext(),
-        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)));
     Operator::terminate(ctx);
 }
 

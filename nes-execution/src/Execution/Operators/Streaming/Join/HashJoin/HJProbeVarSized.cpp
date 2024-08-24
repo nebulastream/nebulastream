@@ -166,9 +166,8 @@ HJProbeVarSized::HJProbeVarSized(
     const SchemaPtr& leftSchema,
     const SchemaPtr& rightSchema,
     QueryCompilation::StreamJoinStrategy joinStrategy,
-    QueryCompilation::WindowingStrategy windowingStrategy,
     bool withDeletion)
-    : StreamJoinProbe(operatorHandlerIndex, joinSchema, joinExpression, windowMetaData, joinStrategy, windowingStrategy, withDeletion)
+    : StreamJoinProbe(operatorHandlerIndex, joinSchema, joinExpression, windowMetaData, joinStrategy, withDeletion)
     , leftSchema(leftSchema)
     , rightSchema(rightSchema)
 {

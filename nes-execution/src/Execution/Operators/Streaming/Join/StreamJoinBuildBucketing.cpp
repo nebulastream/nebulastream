@@ -20,11 +20,10 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-void* getAllWindowsToFillProxy(
-    void* ptrOpHandler, uint64_t ts, WorkerThreadId workerThreadId, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+void* getAllWindowsToFillProxy(void* ptrOpHandler, uint64_t ts, WorkerThreadId workerThreadId, uint64_t joinStrategyInt)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt);
     return dynamic_cast<StreamJoinOperatorHandlerBucketing*>(opHandler)->getAllWindowsToFillForTs(ts, workerThreadId);
 }
 
@@ -128,8 +127,7 @@ void StreamJoinBuildBucketing::updateLocalState(
         opHandlerMemRef,
         ts,
         workerThreadId,
-        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)));
     localStateBucketing->minWindowStart = getMinWindowStartForTs(ts);
     localStateBucketing->maxWindowEnd = getMaxWindowStartForTs(ts);
 }
@@ -142,11 +140,9 @@ StreamJoinBuildBucketing::StreamJoinBuildBucketing(
     const uint64_t entrySize,
     TimeFunctionPtr timeFunction,
     QueryCompilation::StreamJoinStrategy joinStrategy,
-    QueryCompilation::WindowingStrategy windowingStrategy,
     uint64_t windowSize,
     uint64_t windowSlide)
-    : StreamJoinBuild(
-          operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy, windowingStrategy)
+    : StreamJoinBuild(operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy)
     , windowSize(windowSize)
     , windowSlide(windowSlide)
 {

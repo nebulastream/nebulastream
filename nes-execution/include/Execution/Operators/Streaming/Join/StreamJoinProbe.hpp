@@ -53,7 +53,6 @@ public:
         Expressions::ExpressionPtr joinExpression,
         const WindowMetaData& windowMetaData,
         QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy,
         bool withDeletion = true);
 
     /**
