@@ -54,7 +54,7 @@ public:
     void SetUp() override
     {
         Testing::BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<BufferManager>(4096, 10);
+        bufferManager = BufferManager::create(4096, 10);
     }
 
     /**

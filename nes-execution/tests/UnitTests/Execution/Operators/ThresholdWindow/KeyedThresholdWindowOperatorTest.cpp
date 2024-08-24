@@ -22,6 +22,7 @@
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindow.hpp>
 #include <Execution/Operators/ThresholdWindow/KeyedThresholdWindow/KeyedThresholdWindowOperatorHandler.hpp>
 #include <Nautilus/Interface/Hash/MurMur3HashFunction.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <TestUtils/MockedPipelineExecutionContext.hpp>
 #include <TestUtils/RecordCollectOperator.hpp>
@@ -49,6 +50,8 @@ public:
         NES::Logger::setupLogging("ThresholdWindowOperatorTest.log", NES::LogLevel::LOG_DEBUG);
         NES_INFO("Setup ThresholdWindowOperatorTest test class.");
     }
+
+    BufferManagerPtr bm = BufferManager::create();
 
     /* Will be called after all tests in this class are finished. */
     static void TearDownTestCase() { NES_INFO("Tear down ThresholdWindowOperatorTest test class."); }

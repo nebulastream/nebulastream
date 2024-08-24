@@ -39,7 +39,7 @@ class FlatMapJavaUDFPipelineTest : public testing::Test, public AbstractPipeline
 {
 public:
     ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
 
@@ -56,7 +56,7 @@ public:
         NES_INFO("Setup FlatMapJavaUDFPipelineTest test case.");
         options.setDumpToConsole(true);
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
+        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 };

@@ -91,7 +91,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bufferManager = std::make_shared<Runtime::BufferManager>();
+        bufferManager = BufferManager::create();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 

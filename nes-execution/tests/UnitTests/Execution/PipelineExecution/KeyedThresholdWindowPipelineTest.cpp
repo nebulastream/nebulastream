@@ -48,7 +48,7 @@ public:
     std::vector<Aggregation::AggregationFunctionPtr> aggVector;
     std::vector<std::unique_ptr<Aggregation::AggregationValue>> aggValues;
     ExecutablePipelineProvider* provider;
-    std::shared_ptr<Runtime::BufferManager> bm;
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -64,7 +64,7 @@ public:
         Testing::BaseUnitTest::SetUp();
         NES_INFO("Setup KeyedThresholdWindowPipelineTest test case.");
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bm = std::make_shared<Runtime::BufferManager>();
+        bm = Runtime::BufferManager::create();
         wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
     }
 
