@@ -55,12 +55,6 @@ std::string getPipelineProviderIdentifier(const std::shared_ptr<QueryCompilerOpt
         case NautilusBackend::MLIR_COMPILER_BACKEND: {
             return "PipelineCompiler";
         };
-        case NautilusBackend::BC_INTERPRETER_BACKEND: {
-            return "BCInterpreter";
-        };
-        case NautilusBackend::CPP_COMPILER_BACKEND: {
-            return "CPPPipelineCompiler";
-        };
         default: {
             INVARIANT(false, "Invalid backend");
         }

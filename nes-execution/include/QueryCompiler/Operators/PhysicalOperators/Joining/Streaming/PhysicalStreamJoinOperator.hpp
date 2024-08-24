@@ -30,24 +30,16 @@ public:
      * @brief Constructor for a PhysicalStreamJoinOperator
      * @param joinOperatorHandler
      * @param joinStrategy
-     * @param windowingStrategy
      */
     PhysicalStreamJoinOperator(
         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& joinOperatorHandler,
-        QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy);
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Getter for the join strategy
      * @return StreamJoinStrategy
      */
     StreamJoinStrategy getJoinStrategy() const;
-
-    /**
-     * @brief Getter for the window strategy
-     * @return WindowingStrategy
-     */
-    WindowingStrategy getWindowingStrategy() const;
 
     const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& getJoinOperatorHandler() const;
 

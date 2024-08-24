@@ -253,8 +253,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                     probeOperator->getWindowMetaData(),
                     probeOperator->getLeftInputSchema(),
                     probeOperator->getRightInputSchema(),
-                    probeOperator->getJoinStrategy(),
-                    probeOperator->getWindowingStrategy());
+                    probeOperator->getJoinStrategy());
                 break;
             case StreamJoinStrategy::HASH_JOIN_LOCAL:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
@@ -264,8 +263,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                     probeOperator->getJoinSchema(),
                     joinExpression,
                     probeOperator->getWindowMetaData(),
-                    probeOperator->getJoinStrategy(),
-                    probeOperator->getWindowingStrategy());
+                    probeOperator->getJoinStrategy());
                 break;
             case StreamJoinStrategy::NESTED_LOOP_JOIN:
                 const auto leftSchema = probeOperator->getLeftInputSchema();
@@ -277,8 +275,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
                     probeOperator->getWindowMetaData(),
                     leftSchema,
                     rightSchema,
-                    probeOperator->getJoinStrategy(),
-                    probeOperator->getWindowingStrategy());
+                    probeOperator->getJoinStrategy());
                 break;
         }
         pipeline.setRootOperator(joinProbeNautilus);
@@ -303,46 +300,16 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
         switch (buildOperator->getJoinStrategy())
         {
             case StreamJoinStrategy::HASH_JOIN_VAR_SIZED:
-                switch (buildOperator->getWindowingStrategy())
-                {
-                    case WindowingStrategy::LEGACY:
-                        throw DeprecatedFeatureUsed();
-                    case WindowingStrategy::BUCKETING:
-                        throw FunctionNotImplemented();
-                    case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerHJSlicingVarSized(buildOperator, handlerIndex, std::move(timeFunction));
-                        break;
-                }
+                joinBuildNautilus = lowerHJSlicingVarSized(buildOperator, handlerIndex, std::move(timeFunction));
                 break;
             case StreamJoinStrategy::HASH_JOIN_LOCAL:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCKING:
             case StreamJoinStrategy::HASH_JOIN_GLOBAL_LOCK_FREE: {
-                switch (buildOperator->getWindowingStrategy())
-                {
-                    case WindowingStrategy::LEGACY:
-                        throw DeprecatedFeatureUsed();
-                    case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
-                        break;
-                    case WindowingStrategy::BUCKETING:
-                        joinBuildNautilus = lowerHJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
-                        break;
-                }
+                joinBuildNautilus = lowerHJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
                 break;
             };
             case StreamJoinStrategy::NESTED_LOOP_JOIN: {
-                switch (buildOperator->getWindowingStrategy())
-                {
-                    case WindowingStrategy::LEGACY:
-                        throw DeprecatedFeatureUsed();
-                    case WindowingStrategy::SLICING:
-                        joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
-                        break;
-                    case WindowingStrategy::BUCKETING:
-                        joinBuildNautilus
-                            = lowerNLJBucketing(buildOperator, handlerIndex, std::move(timeFunction), windowSize, windowSlide);
-                        break;
-                }
+                joinBuildNautilus = lowerNLJSlicing(buildOperator, handlerIndex, std::move(timeFunction));
                 break;
             };
         }
@@ -568,7 +535,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto endTs = physicalGSMO->getOutputSchema()->get(1)->getName();
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow || options->windowingStrategy == WindowingStrategy::BUCKETING)
+    if (isTumblingWindow)
     {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::NonKeyedWindowEmitAction>(
             aggregationFunctions, startTs, endTs, physicalGSMO->getWindowDefinition()->getOriginId());
@@ -628,7 +595,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto isTumblingWindow = std::dynamic_pointer_cast<Windowing::TumblingWindow>(windowType) != nullptr ? true : false;
 
     std::unique_ptr<Runtime::Execution::Operators::SliceMergingAction> sliceMergingAction;
-    if (isTumblingWindow || options->windowingStrategy == WindowingStrategy::BUCKETING)
+    if (isTumblingWindow)
     {
         sliceMergingAction = std::make_unique<Runtime::Execution::Operators::KeyedWindowEmitAction>(
             aggregationFunctions,
@@ -705,28 +672,13 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto timeWindow = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
     auto timeFunction = lowerTimeFunction(timeWindow);
 
-    if (options->windowingStrategy == WindowingStrategy::SLICING)
-    {
-        auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
-            timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
+    auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregationHandler>(
+        timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
 
-        operatorHandlers.emplace_back(handler);
-        auto slicePreAggregation = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(
-            operatorHandlers.size() - 1, std::move(timeFunction), aggregationFunctions);
-        return slicePreAggregation;
-    }
-    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
-    {
-        auto timeBasedWindowType = windowDefinition->getWindowType()->as<Windowing::TimeBasedWindowType>();
-
-        auto handler = std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregationHandler>(
-            timeBasedWindowType->getSize().getTime(), timeBasedWindowType->getSlide().getTime(), windowDefinition->getInputOriginIds());
-        operatorHandlers.emplace_back(handler);
-        auto bucketPreAggregation = std::make_shared<Runtime::Execution::Operators::NonKeyedBucketPreAggregation>(
-            operatorHandlers.size() - 1, std::move(timeFunction), aggregationFunctions);
-        return bucketPreAggregation;
-    }
-    throw FunctionNotImplemented();
+    operatorHandlers.emplace_back(handler);
+    auto slicePreAggregation = std::make_shared<Runtime::Execution::Operators::NonKeyedSlicePreAggregation>(
+        operatorHandlers.size() - 1, std::move(timeFunction), aggregationFunctions);
+    return slicePreAggregation;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerKeyedPreAggregationOperator(
@@ -752,40 +704,18 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
         keyDataTypes.emplace_back(df.getPhysicalType(key->getStamp()));
     }
 
-    if (options->windowingStrategy == WindowingStrategy::SLICING)
-    {
-        auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
-            timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
+    auto handler = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregationHandler>(
+        timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
 
-        operatorHandlers.emplace_back(handler);
-        auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
-            operatorHandlers.size() - 1,
-            std::move(timeFunction),
-            keyReadExpressions,
-            keyDataTypes,
-            aggregationFunctions,
-            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-        return sliceMergingOperator;
-    }
-    else if (options->windowingStrategy == WindowingStrategy::BUCKETING)
-    {
-        auto handler = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregationHandler>(
-            timeWindow->getSize().getTime(), timeWindow->getSlide().getTime(), windowDefinition->getInputOriginIds());
-
-        operatorHandlers.emplace_back(handler);
-        auto bucketPreAggregation = std::make_shared<Runtime::Execution::Operators::KeyedBucketPreAggregation>(
-            operatorHandlers.size() - 1,
-            std::move(timeFunction),
-            keyReadExpressions,
-            keyDataTypes,
-            aggregationFunctions,
-            std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
-        return bucketPreAggregation;
-    }
-    else
-    {
-        throw FunctionNotImplemented();
-    }
+    operatorHandlers.emplace_back(handler);
+    auto sliceMergingOperator = std::make_shared<Runtime::Execution::Operators::KeyedSlicePreAggregation>(
+        operatorHandlers.size() - 1,
+        std::move(timeFunction),
+        keyReadExpressions,
+        keyDataTypes,
+        aggregationFunctions,
+        std::make_unique<Nautilus::Interface::MurMur3HashFunction>());
+    return sliceMergingOperator;
 }
 
 std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysicalToNautilusOperators::lowerWatermarkAssignmentOperator(

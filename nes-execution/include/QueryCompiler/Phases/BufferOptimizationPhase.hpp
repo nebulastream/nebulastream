@@ -24,13 +24,8 @@ namespace NES::QueryCompilation
 class BufferOptimizationPhase
 {
 public:
-    explicit BufferOptimizationPhase(OutputBufferOptimizationLevel level);
-    static BufferOptimizationPhasePtr create(OutputBufferOptimizationLevel level);
 
     PipelineQueryPlanPtr apply(PipelineQueryPlanPtr pipelinedQueryPlan);
     OperatorPipelinePtr apply(OperatorPipelinePtr pipeline);
-
-private:
-    [[maybe_unused]] OutputBufferOptimizationLevel level;
 };
 }
