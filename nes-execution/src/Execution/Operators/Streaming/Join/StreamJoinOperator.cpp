@@ -17,9 +17,7 @@
 namespace NES::Runtime::Execution::Operators
 {
 
-StreamJoinOperator::StreamJoinOperator(
-    QueryCompilation::StreamJoinStrategy joinStrategy, QueryCompilation::WindowingStrategy windowingStrategy)
-    : joinStrategy(joinStrategy), windowingStrategy(windowingStrategy)
+StreamJoinOperator::StreamJoinOperator(QueryCompilation::StreamJoinStrategy joinStrategy) : joinStrategy(joinStrategy)
 {
 }
 

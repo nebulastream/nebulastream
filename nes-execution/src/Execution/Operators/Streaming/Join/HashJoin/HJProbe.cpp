@@ -213,9 +213,8 @@ HJProbe::HJProbe(
     const Expressions::ExpressionPtr joinExpression,
     const WindowMetaData& windowMetaData,
     QueryCompilation::StreamJoinStrategy joinStrategy,
-    QueryCompilation::WindowingStrategy windowingStrategy,
     bool withDeletion)
-    : StreamJoinProbe(operatorHandlerIndex, joinSchema, joinExpression, windowMetaData, joinStrategy, windowingStrategy, withDeletion)
+    : StreamJoinProbe(operatorHandlerIndex, joinSchema, joinExpression, windowMetaData, joinStrategy, withDeletion)
     ,
     /// As we are only ever reading a single record, we do not care about the buffer size
     leftMemProvider(Runtime::Execution::MemoryProvider::MemoryProvider::createMemoryProvider(/*bufferSize*/ 1, joinSchema.leftSchema))

@@ -33,7 +33,6 @@ public:
      * @param joinSchema
      * @param windowMetaData
      * @param joinStrategy
-     * @param windowingStrategy
      * @param withDeletion
      */
     HJProbe(
@@ -42,7 +41,6 @@ public:
         const Expressions::ExpressionPtr joinExpression,
         const WindowMetaData& windowMetaData,
         QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy,
         bool withDeletion = true);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

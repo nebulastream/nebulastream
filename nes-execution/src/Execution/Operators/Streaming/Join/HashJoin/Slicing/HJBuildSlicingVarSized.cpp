@@ -44,9 +44,7 @@ void* getHJSliceVarSizedProxy(void* ptrOpHandler, uint64_t timeStamp)
 {
     NES_DEBUG("getHJSliceVarSizedProxy with ts={}", timeStamp);
     auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(
-        ptrOpHandler,
-        magic_enum::enum_integer(QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED),
-        magic_enum::enum_integer(QueryCompilation::WindowingStrategy::SLICING));
+        ptrOpHandler, magic_enum::enum_integer(QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED));
     auto currentSlice = dynamic_cast<HJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timeStamp);
     NES_ASSERT2_FMT(currentSlice != nullptr, "invalid window");
     return currentSlice.get();
@@ -89,9 +87,8 @@ HJBuildSlicingVarSized::HJBuildSlicingVarSized(
     const uint64_t entrySize,
     TimeFunctionPtr timeFunction,
     QueryCompilation::StreamJoinStrategy joinStrategy)
-    : StreamJoinOperator(joinStrategy, QueryCompilation::WindowingStrategy::SLICING)
-    , StreamJoinBuild(
-          operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy, windowingStrategy)
+    : StreamJoinOperator(joinStrategy)
+    , StreamJoinBuild(operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy)
 {
 }
 

@@ -34,14 +34,13 @@ void checkWindowsTriggerProxy(
     uint64_t chunkNumber,
     bool lastChunk,
     uint64_t originId,
-    uint64_t joinStrategyInt,
-    uint64_t windowingStrategy)
+    uint64_t joinStrategyInt)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
     NES_ASSERT2_FMT(ptrPipelineCtx != nullptr, "pipeline context should not be null");
     NES_ASSERT2_FMT(ptrWorkerCtx != nullptr, "worker context should not be null");
 
-    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategy);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt);
     auto* pipelineCtx = static_cast<PipelineExecutionContext*>(ptrPipelineCtx);
     auto* workerCtx = static_cast<WorkerContext*>(ptrWorkerCtx);
 
@@ -68,8 +67,7 @@ void StreamJoinBuild::close(ExecutionContext& ctx, RecordBuffer&) const
         ctx.getChunkNumber(),
         ctx.getLastChunk(),
         ctx.getOriginId(),
-        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)));
 }
 
 StreamJoinBuild::StreamJoinBuild(
@@ -79,9 +77,8 @@ StreamJoinBuild::StreamJoinBuild(
     const QueryCompilation::JoinBuildSideType joinBuildSide,
     const uint64_t entrySize,
     TimeFunctionPtr timeFunction,
-    QueryCompilation::StreamJoinStrategy joinStrategy,
-    QueryCompilation::WindowingStrategy windowingStrategy)
-    : StreamJoinOperator(joinStrategy, windowingStrategy)
+    QueryCompilation::StreamJoinStrategy joinStrategy)
+    : StreamJoinOperator(joinStrategy)
     , operatorHandlerIndex(operatorHandlerIndex)
     , schema(schema)
     , joinFieldName(joinFieldName)

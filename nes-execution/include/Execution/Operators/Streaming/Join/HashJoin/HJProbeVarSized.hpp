@@ -35,7 +35,6 @@ public:
      * @param leftSchema
      * @param rightSchema
      * @param joinStrategy
-     * @param windowingStrategy
      * @param withDeletion
      */
     HJProbeVarSized(
@@ -46,7 +45,6 @@ public:
         const SchemaPtr& leftSchema,
         const SchemaPtr& rightSchema,
         QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy,
         bool withDeletion = true);
 
     void open(ExecutionContext& executionCtx, RecordBuffer& recordBuffer) const override;

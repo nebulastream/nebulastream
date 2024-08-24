@@ -59,7 +59,6 @@ public:
         const uint64_t entrySize,
         TimeFunctionPtr timeFunction,
         QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy,
         uint64_t windowSize,
         uint64_t windowSlide);
 

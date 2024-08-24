@@ -42,17 +42,17 @@ uint64_t getNLJSliceEndProxy(void* ptrNljSlice)
     return nljSlice->getSliceEnd();
 }
 
-void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+void* getCurrentWindowProxy(void* ptrOpHandler, uint64_t joinStrategyInt)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt);
     return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getCurrentSliceOrCreate();
 }
 
-void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinStrategyInt, uint64_t windowingStrategyInt)
+void* getNLJSliceRefProxy(void* ptrOpHandler, uint64_t timestamp, uint64_t joinStrategyInt)
 {
     NES_ASSERT2_FMT(ptrOpHandler != nullptr, "opHandler context should not be null!");
-    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt, windowingStrategyInt);
+    auto* opHandler = StreamJoinOperator::getSpecificOperatorHandler(ptrOpHandler, joinStrategyInt);
     return dynamic_cast<NLJOperatorHandlerSlicing*>(opHandler)->getSliceByTimestampOrCreateIt(timestamp).get();
 }
 
@@ -92,8 +92,7 @@ void NLJBuildSlicing::updateLocalJoinState(
         getNLJSliceRefProxy,
         operatorHandlerMemRef,
         timestamp,
-        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)));
     localJoinState->sliceStart = Nautilus::FunctionCall("getNLJSliceStartProxy", getNLJSliceStartProxy, localJoinState->sliceReference);
     localJoinState->sliceEnd = Nautilus::FunctionCall("getNLJSliceEndProxy", getNLJSliceEndProxy, localJoinState->sliceReference);
 }
@@ -107,8 +106,7 @@ void NLJBuildSlicing::open(ExecutionContext& ctx, RecordBuffer&) const
         "getCurrentWindowProxy",
         getCurrentWindowProxy,
         opHandlerMemRef,
-        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)),
-        Value<UInt64>(to_underlying<QueryCompilation::WindowingStrategy>(windowingStrategy)));
+        Value<UInt64>(to_underlying<QueryCompilation::StreamJoinStrategy>(joinStrategy)));
     auto nljPagedVectorMemRef = Nautilus::FunctionCall(
         "getNLJPagedVectorProxy", getNLJPagedVectorProxy, sliceReference, workerThreadId, Value<UInt64>(to_underlying(joinBuildSide)));
     auto pagedVectorVarSizedRef = Nautilus::Interface::PagedVectorVarSizedRef(nljPagedVectorMemRef, schema);
@@ -130,9 +128,8 @@ NLJBuildSlicing::NLJBuildSlicing(
     const uint64_t entrySize,
     TimeFunctionPtr timeFunction,
     QueryCompilation::StreamJoinStrategy joinStrategy)
-    : StreamJoinOperator(joinStrategy, QueryCompilation::WindowingStrategy::SLICING)
-    , StreamJoinBuild(
-          operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy, windowingStrategy)
+    : StreamJoinOperator(joinStrategy)
+    , StreamJoinBuild(operatorHandlerIndex, schema, joinFieldName, joinBuildSide, entrySize, std::move(timeFunction), joinStrategy)
 {
 }
 } /// namespace NES::Runtime::Execution::Operators

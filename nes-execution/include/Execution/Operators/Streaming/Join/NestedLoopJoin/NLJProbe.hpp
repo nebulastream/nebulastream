@@ -30,7 +30,6 @@ public:
      * @param leftEntrySize
      * @param rightEntrySize
      * @param joinStrategy
-     * @param windowingStrategy
      * @param withDeletion
      */
     NLJProbe(
@@ -41,7 +40,6 @@ public:
         const SchemaPtr& leftSchema,
         const SchemaPtr& rightSchema,
         QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy,
         bool withDeletion = true);
 
     void open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const override;
