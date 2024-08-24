@@ -21,15 +21,6 @@
 namespace NES::QueryCompilation
 {
 
-BufferOptimizationPhasePtr BufferOptimizationPhase::BufferOptimizationPhase::create(OutputBufferOptimizationLevel level)
-{
-    return std::make_shared<BufferOptimizationPhase>(level);
-}
-
-BufferOptimizationPhase::BufferOptimizationPhase(OutputBufferOptimizationLevel level) : level(level)
-{
-}
-
 PipelineQueryPlanPtr BufferOptimizationPhase::apply(PipelineQueryPlanPtr pipelinedQueryPlan)
 {
     for (const auto& pipeline : pipelinedQueryPlan->getPipelines())

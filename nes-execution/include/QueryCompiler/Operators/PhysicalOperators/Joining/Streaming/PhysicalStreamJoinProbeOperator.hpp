@@ -48,8 +48,7 @@ public:
         const std::string& windowStartFieldName,
         const std::string& windowEndFieldName,
         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-        QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy);
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Creates a PhysicalStreamJoinProbeOperator that retrieves a new operatorId by calling method
@@ -69,8 +68,7 @@ public:
         const std::string& windowStartFieldName,
         const std::string& windowEndFieldName,
         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-        QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy);
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Constructor for a PhysicalStreamJoinProbeOperator
@@ -89,8 +87,7 @@ public:
         const std::string& windowStartFieldName,
         const std::string& windowEndFieldName,
         const Runtime::Execution::Operators::StreamJoinOperatorHandlerPtr& operatorHandler,
-        QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy);
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Creates a string containing the name of this physical operator
