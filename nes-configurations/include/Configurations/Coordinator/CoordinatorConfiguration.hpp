@@ -18,7 +18,6 @@
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
-#include <Configurations/Enums/StorageHandlerType.hpp>
 #include <Configurations/Validation/IpValidation.hpp>
 #include <Configurations/Worker/WorkerConfiguration.hpp>
 
@@ -43,11 +42,6 @@ public:
 
     UIntOption requestExecutorThreads
         = {REQUEST_EXECUTOR_THREAD_CONFIG, "1", "Number of request executor thread", {std::make_shared<NumberValidation>()}};
-
-    EnumOption<RequestProcessor::StorageHandlerType> storageHandlerType
-        = {STORAGE_HANDLER_TYPE_CONFIG,
-           RequestProcessor::StorageHandlerType::TwoPhaseLocking,
-           "The Storage Handler Type (TwoPhaseLocking, SerialHandler)"};
 
     OptimizerConfiguration optimizer = {OPTIMIZER_CONFIG, "Defines the configuration for the optimizer."};
 

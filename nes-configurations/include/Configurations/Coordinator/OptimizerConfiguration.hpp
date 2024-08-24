@@ -15,16 +15,11 @@
 #pragma once
 
 #include <string>
-#include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/ConfigurationsNames.hpp>
-#include <Configurations/Enums/DistributedJoinOptimizationMode.hpp>
-#include <Configurations/Enums/EnumOption.hpp>
-#include <Configurations/Enums/MemoryLayoutPolicy.hpp>
-#include <Configurations/Enums/PlacementAmendmentMode.hpp>
-#include <Configurations/Enums/QueryMergerRule.hpp>
+#include "Configurations/BaseConfiguration.hpp"
+#include "Configurations/ConfigurationsNames.hpp"
 #include <Configurations/ScalarOption.hpp>
-#include <Configurations/Validation/BooleanValidation.hpp>
-#include <Configurations/Validation/NumberValidation.hpp>
+#include "Configurations/Validation/BooleanValidation.hpp"
+#include "Configurations/Validation/NumberValidation.hpp"
 
 namespace NES::Configurations
 {
@@ -34,26 +29,6 @@ class OptimizerConfiguration : public BaseConfiguration
 public:
     OptimizerConfiguration() : BaseConfiguration() {};
     OptimizerConfiguration(std::string name, std::string description) : BaseConfiguration(name, description) {};
-
-    /**
-     * @brief The rule to be used for performing query merging.
-     * Valid options are:
-     * SyntaxBasedCompleteQueryMergerRule,
-     * SyntaxBasedPartialQueryMergerRule,
-     * Z3SignatureBasedCompleteQueryMergerRule,
-     * Z3SignatureBasedPartialQueryMergerRule,
-     * Z3SignatureBasedPartialQueryMergerBottomUpRule,
-     * Z3SignatureBasedBottomUpQueryContainmentRule,
-     * Z3SignatureBasedTopDownQueryContainmentMergerRule,
-     * HashSignatureBasedCompleteQueryMergerRule,
-     * ImprovedHashSignatureBasedCompleteQueryMergerRule,
-     * ImprovedHashSignatureBasedPartialQueryMergerRule,
-     * HashSignatureBasedPartialQueryMergerRule,
-     * DefaultQueryMergerRule,
-     * HybridCompleteQueryMergerRule
-     */
-    EnumOption<Optimizer::QueryMergerRule> queryMergerRule = {
-        QUERY_MERGER_RULE_CONFIG, Optimizer::QueryMergerRule::DefaultQueryMergerRule, "The rule to be used for performing query merging"};
 
     /**
      * @brief allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP
@@ -66,17 +41,6 @@ public:
            "false",
            "Allow the containment based merging algorithms to identify if a newly arrived query contains an already running SQP.",
            {std::make_shared<BooleanValidation>()}};
-
-    /**
-     * @brief Indicates the memory layout policy and allows the engine to prefer a row or columnar layout.
-     * Depending on the concrete workload different memory layouts can be beneficial. Valid options are:
-     * FORCE_ROW_LAYOUT -> Enforces a row layout between all operators.
-     * FORCE_COLUMN_LAYOUT -> Enforces a column layout between all operators.
-     */
-    EnumOption<Optimizer::MemoryLayoutPolicy> memoryLayoutPolicy
-        = {MEMORY_LAYOUT_POLICY_CONFIG,
-           Optimizer::MemoryLayoutPolicy::FORCE_ROW_LAYOUT,
-           "selects the memory layout selection policy can be [FORCE_ROW_LAYOUT|FORCE_COLUMN_LAYOUT]"};
 
     /**
      * @brief Perform only source operator duplication when applying Logical Source Expansion Rewrite Rule.
@@ -109,16 +73,6 @@ public:
            {std::make_shared<BooleanValidation>()}};
 
     /**
-     * @brief Indicates the amender mode for performing placement amendment.
-     * PESSIMISTIC -> Use a pessimistic 2PL strategy to concurrently amend operator placements.
-     * OPTIMISTIC -> Use an optimistic OCC strategy to concurrently amend operator placements.
-     */
-    EnumOption<Optimizer::PlacementAmendmentMode> placementAmendmentMode
-        = {PLACEMENT_AMENDMENT_MODE_CONFIG,
-           Optimizer::PlacementAmendmentMode::PESSIMISTIC,
-           "selects the placement amender mode to use [PESSIMISTIC|OPTIMISTIC]"};
-
-    /**
      * @brief Set the thread count for running concurrent placement amenders
      */
     UIntOption placementAmendmentThreadCount
@@ -130,29 +84,14 @@ public:
            "Enable reconfiguration of running query plans. (Default: false)",
            {std::make_shared<BooleanValidation>()}};
 
-    /**
-     * @brief Indicates the optimization mode for distributed joins.
-     * NONE -> Perform join at the sink
-     * MATRIX -> Use the distributed matrix based partitioning join.
-     * NEMO -> Perform partial joins and push them down closer to the sources.
-     */
-    EnumOption<Optimizer::DistributedJoinOptimizationMode> joinOptimizationMode
-        = {DISTRIBUTED_JOIN_OPTIMIZATION_MODE_CONFIG,
-           Optimizer::DistributedJoinOptimizationMode::NONE,
-           "selects the distributed join optimization mode [NONE|MATRIX|NEMO]"};
-
 private:
     std::vector<BaseOption*> getOptions() override
     {
         return {
-            &queryMergerRule,
-            &memoryLayoutPolicy,
             &performOnlySourceOperatorExpansion,
             &performAdvanceSemanticValidation,
             &enableNemoPlacement,
-            &joinOptimizationMode,
             &allowExhaustiveContainmentCheck,
-            &placementAmendmentMode,
             &placementAmendmentThreadCount,
             &enableIncrementalPlacement};
     }
