@@ -172,12 +172,7 @@ public:
         auto keyExpressions = std::make_shared<Expressions::EqualsExpression>(onLeftKey, onRightKey);
 
         auto joinProbe = std::make_shared<Operators::HJProbe>(
-            handlerIndex,
-            joinSchemaStruct,
-            keyExpressions,
-            windowMetaData,
-            QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-            QueryCompilation::WindowingStrategy::SLICING);
+            handlerIndex, joinSchemaStruct, keyExpressions, windowMetaData, QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL);
 
         /// Creating the hash join operator
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};

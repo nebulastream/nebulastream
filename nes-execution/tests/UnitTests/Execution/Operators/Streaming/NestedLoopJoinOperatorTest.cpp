@@ -430,8 +430,7 @@ public:
             windowMetaData,
             leftSchema,
             rightSchema,
-            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-            QueryCompilation::WindowingStrategy::SLICING);
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
         NLJProbePipelineExecutionContext pipelineContext(nljOperatorHandler, bufferManager);
         WorkerContextPtr workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);

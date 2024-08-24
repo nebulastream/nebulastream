@@ -171,8 +171,7 @@ public:
             windowMetaData,
             leftSchema,
             rightSchema,
-            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN,
-            QueryCompilation::WindowingStrategy::SLICING);
+            QueryCompilation::StreamJoinStrategy::NESTED_LOOP_JOIN);
 
         /// Creating the NLJ operator handler
         std::vector<OriginId> originIds{INVALID_ORIGIN_ID, OriginId(1)};

@@ -320,7 +320,6 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         hashJoinProbeHelper.leftSchema,
         hashJoinProbeHelper.rightSchema,
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_VAR_SIZED,
-        QueryCompilation::WindowingStrategy::SLICING,
         /*withDeletion*/ false);
     auto collector = std::make_shared<Operators::CollectOperator>();
     hashJoinProbe->setChild(collector);
