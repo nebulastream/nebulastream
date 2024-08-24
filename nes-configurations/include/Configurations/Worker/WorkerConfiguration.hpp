@@ -17,7 +17,6 @@
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
 #include <Configurations/ConfigurationOption.hpp>
-#include <Configurations/Enums/EnumOptionDetails.hpp>
 #include <Configurations/Validation/NonZeroValidation.hpp>
 #include <Configurations/Worker/PhysicalSourceTypeFactory.hpp>
 #include <Configurations/Worker/QueryCompilerConfiguration.hpp>

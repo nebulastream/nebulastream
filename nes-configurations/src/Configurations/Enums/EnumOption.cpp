@@ -12,16 +12,18 @@
     limitations under the License.
 */
 
-#pragma once
+#include <Configurations/Enums/CompilationStrategy.hpp>
+#include <Configurations/Enums/DumpMode.hpp>
+#include <Configurations/Enums/NautilusBackend.hpp>
+#include <Configurations/Worker/WorkerConfiguration.hpp>
+#include <Util/Logger/Logger.hpp>
 
-#include <cstdint>
+namespace NES::Configurations
+{
 
-namespace NES::Optimizer
-{
-enum class DistributedJoinOptimizationMode : uint8_t
-{
-    NONE, /// distributed join optimization disabled
-    MATRIX, /// uses distributed matrix join approach
-    NEMO /// uses distributed nemo join
-};
-}
+template class EnumOption<NES::QueryCompilation::CompilationStrategy>;
+template class EnumOption<NES::QueryCompilation::DumpMode>;
+template class EnumOption<NES::QueryCompilation::NautilusBackend>;
+template class EnumOption<NES::LogLevel>;
+
+} /// namespace NES::Configurations
