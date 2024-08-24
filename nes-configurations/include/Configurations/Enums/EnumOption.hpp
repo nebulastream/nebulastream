@@ -15,7 +15,8 @@
 #include <string>
 #include <type_traits>
 #include <yaml-cpp/yaml.h>
-#include "Configurations/TypedBaseOption.hpp"
+#include <magic_enum.hpp>
+#include <Configurations/TypedBaseOption.hpp>
 
 namespace NES::Configurations
 {
@@ -36,19 +37,59 @@ public:
      * @param defaultValue of the EnumOption, has to be an member of the T.
      * @param description of the EnumOption.
      */
-    EnumOption(const std::string& name, T defaultValue, const std::string& description);
+    EnumOption(const std::string& name, T defaultValue, const std::string& description)
+        : TypedBaseOption<T>(name, defaultValue, description){};
 
     /**
      * @brief Operator to assign a new value as a value of this option.
      * @param value that will be assigned
      * @return Reference to this option.
      */
-    EnumOption<T>& operator=(const T& value);
-    std::string toString() override;
+    EnumOption<T>& operator=(const T& value)
+    {
+        this->value = value;
+        return *this;
+    };
+
+    std::string toString() override
+    {
+        std::stringstream os;
+        os << "Name: " << this->name << "\n";
+        os << "Description: " << this->description << "\n";
+        os << "Value: " << std::string(magic_enum::enum_name(this->value)) << "\n";
+        os << "Default Value: " << std::string(magic_enum::enum_name(this->defaultValue)) << "\n";
+        return os.str();
+    };
 
 protected:
-    void parseFromYAMLNode(YAML::Node node) override;
-    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override;
+    void parseFromYAMLNode(YAML::Node node) override
+    {
+        if (!magic_enum::enum_contains<T>(node.as<std::string>()))
+        {
+            std::stringstream ss;
+            for (const auto& name : magic_enum::enum_names<T>())
+            {
+                ss << name;
+            }
+            throw ConfigurationException("Enum for " + node.as<std::string>() + " was not found. Valid options are " + ss.str());
+        }
+        this->value = magic_enum::enum_cast<T>(node.as<std::string>()).value();
+    };
+    void parseFromString(std::string identifier, std::map<std::string, std::string>& inputParams) override
+    {
+        auto value = inputParams[identifier];
+        /// Check if the value is a member of this enum type.
+        if (!magic_enum::enum_contains<T>(value))
+        {
+            std::stringstream ss;
+            for (const auto& name : magic_enum::enum_names<T>())
+            {
+                ss << name;
+            }
+            throw ConfigurationException("Enum for " + value + " was not found. Valid options are " + ss.str());
+        }
+        this->value = magic_enum::enum_cast<T>(value).value();
+    };
 };
 
 } /// namespace NES::Configurations
