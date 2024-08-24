@@ -40,7 +40,7 @@ public:
     void SetUp() override
     {
         BaseUnitTest::SetUp();
-        bufferManager = std::make_shared<Runtime::BufferManager>();
+        bufferManager = Runtime::BufferManager::create();
         NES_INFO("Setup PagedVectorVarSizedTest test case.");
     }
 

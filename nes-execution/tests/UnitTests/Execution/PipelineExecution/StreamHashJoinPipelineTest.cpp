@@ -66,7 +66,7 @@ class HashJoinPipelineTest : public Testing::BaseUnitTest, public AbstractPipeli
 {
 public:
     ExecutablePipelineProvider* provider;
-    BufferManagerPtr bufferManager;
+    BufferManagerPtr bufferManager = BufferManager::create();
     WorkerContextPtr workerContext;
     Nautilus::CompilationOptions options;
     /* Will be called before any test in this class are executed. */
@@ -86,7 +86,7 @@ public:
             GTEST_SKIP();
         }
         provider = ExecutablePipelineProviderRegistry::getPlugin(this->GetParam()).get();
-        bufferManager = std::make_shared<Runtime::BufferManager>();
+        bufferManager = Runtime::BufferManager::create();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 

@@ -40,7 +40,7 @@ namespace NES::Runtime::Execution::Operators
 class NonKeyedSlicePreAggregationTest : public testing::Test
 {
 public:
-    std::shared_ptr<BufferManager> bufferManager;
+    BufferManagerPtr bufferManager = BufferManager::create();
     std::shared_ptr<WorkerContext> workerContext;
     /* Will be called before any test in this class are executed. */
     static void SetUpTestCase()
@@ -53,7 +53,7 @@ public:
     void SetUp() override
     {
         std::cout << "Setup NonKeyedSlicePreAggregationTest test case." << std::endl;
-        bufferManager = std::make_shared<BufferManager>();
+        bufferManager = BufferManager::create();
         workerContext = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bufferManager, 100);
     }
 

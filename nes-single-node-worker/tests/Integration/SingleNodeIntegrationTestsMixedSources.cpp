@@ -150,7 +150,7 @@ TEST_P(SingleNodeIntegrationTest, DISABLED_TestQueriesWithMixedSources)
     IntegrationTestUtil::stopQuery(queryId, HardStop, uut);
     IntegrationTestUtil::unregisterQuery(queryId, uut);
 
-    auto bufferManager = std::make_shared<NES::Runtime::BufferManager>();
+    auto bufferManager = Runtime::BufferManager::create();
     const auto sinkSchema = IntegrationTestUtil::loadSinkSchema(queryPlan);
     auto buffers = Runtime::Execution::Util::createBuffersFromCSVFile(queryResultFile, sinkSchema, bufferManager, 0, "", true);
 

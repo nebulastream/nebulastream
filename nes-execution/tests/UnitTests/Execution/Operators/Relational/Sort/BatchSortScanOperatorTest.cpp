@@ -134,7 +134,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTest)
     constexpr auto NUM_RECORDS = 100;
     constexpr auto NUM_FIELDS = 1;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto handler = std::make_shared<BatchSortOperatorHandler>(
@@ -178,7 +178,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnSecondColumnTest)
     constexpr auto NUM_RECORDS = 100;
     constexpr auto NUM_FIELDS = 2;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto pType = Util::getPhysicalTypePtr<NativeType>();
@@ -222,7 +222,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorDescendingTest)
     constexpr auto NUM_RECORDS = 100;
     constexpr auto NUM_FIELDS = 1;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto handler = std::make_shared<BatchSortOperatorHandler>(
@@ -265,7 +265,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorOnMultipleColumnsTest)
     constexpr auto NUM_RECORDS = 100;
     constexpr auto NUM_FIELDS = 2;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto pType = Util::getPhysicalTypePtr<NativeType>();
@@ -318,7 +318,7 @@ TYPED_TEST(BatchSortScanOperatorTest, SortOperatorTestMultiPage)
         = Interface::PagedVector::PAGE_SIZE / sizeof(NativeType) * 2 + sizeof(NativeType); /// 2 full pages + 1 record -> 3 Pages
     constexpr auto NUM_FIELDS = 1;
 
-    std::shared_ptr<BufferManager> bm = std::make_shared<BufferManager>();
+    BufferManagerPtr bm = BufferManager::create();
     std::shared_ptr<WorkerContext> wc = std::make_shared<WorkerContext>(INITIAL<WorkerThreadId>, bm, 100);
 
     auto handler = std::make_shared<BatchSortOperatorHandler>(
