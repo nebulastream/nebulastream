@@ -54,8 +54,7 @@ public:
         const QueryCompilation::JoinBuildSideType joinBuildSide,
         const uint64_t entrySize,
         TimeFunctionPtr timeFunction,
-        QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy);
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Updates the watermark and if needed, pass some slices to the second join phase (NLJProbe) for further processing
