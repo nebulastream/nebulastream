@@ -332,7 +332,6 @@ bool hashJoinProbeAndCheck(HashJoinProbeHelper hashJoinProbeHelper)
         keyExpressions,
         windowMetaData,
         QueryCompilation::StreamJoinStrategy::HASH_JOIN_LOCAL,
-        QueryCompilation::WindowingStrategy::SLICING,
         /*withDeletion*/ false);
     auto collector = std::make_shared<Operators::CollectOperator>();
     hashJoinProbe->setChild(collector);

@@ -86,8 +86,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile)
     EXPECT_EQ(
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile)
@@ -139,8 +137,6 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
     EXPECT_EQ(
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
     EXPECT_EQ(
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
@@ -197,8 +193,6 @@ TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
          "--numberOfBuffersInGlobalBufferManager=2048",
          "--numberOfBuffersInSourceLocalBufferPool=128",
          "--queryCompiler.compilationStrategy=FAST",
-         "--queryCompiler.pipeliningStrategy=OPERATOR_AT_A_TIME",
-         "--queryCompiler.outputBufferOptimizationLevel=ONLY_INPLACE_OPERATIONS_NO_FALLBACK",
          "--physicalSources.type=CSV_SOURCE",
          "--physicalSources.filePath=fileLoc",
          "--physicalSources.rowLayout=false",
@@ -222,11 +216,6 @@ TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)
     EXPECT_NE(
         workerConfigPtr->queryCompiler.compilationStrategy.getValue(),
         workerConfigPtr->queryCompiler.compilationStrategy.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->queryCompiler.pipeliningStrategy.getValue(), workerConfigPtr->queryCompiler.pipeliningStrategy.getDefaultValue());
-    EXPECT_NE(
-        workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getValue(),
-        workerConfigPtr->queryCompiler.outputBufferOptimizationLevel.getDefaultValue());
 }
 
 TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions)
