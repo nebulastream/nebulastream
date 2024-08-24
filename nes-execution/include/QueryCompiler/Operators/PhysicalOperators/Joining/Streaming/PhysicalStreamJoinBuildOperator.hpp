@@ -45,8 +45,7 @@ public:
         const JoinBuildSideType buildSide,
         TimestampField timestampField,
         const std::string& joinFieldName,
-        QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy);
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief creates a PhysicalStreamJoinBuildOperator that retrieves a new operatorId by calling method
@@ -66,8 +65,7 @@ public:
         const JoinBuildSideType buildSide,
         TimestampField timestampField,
         const std::string& joinFieldName,
-        QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy);
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Constructor for PhysicalStreamJoinBuildOperator
@@ -87,8 +85,7 @@ public:
         const JoinBuildSideType buildSide,
         TimestampField timestampField,
         const std::string& joinFieldName,
-        QueryCompilation::StreamJoinStrategy joinStrategy,
-        QueryCompilation::WindowingStrategy windowingStrategy);
+        QueryCompilation::StreamJoinStrategy joinStrategy);
 
     /**
      * @brief Deconstructor
