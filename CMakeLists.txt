@@ -208,10 +208,6 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 # folly relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
 
-# spdlog
-find_package(spdlog REQUIRED)
-set(LIBRARIES_SDP spdlog::spdlog)
-
 # jemalloc
 option(CMAKE_ENABLE_JEMALLOC "Build using jemalloc" OFF)
 message(STATUS "Using jemalloc: ${CMAKE_ENABLE_JEMALLOC}")
