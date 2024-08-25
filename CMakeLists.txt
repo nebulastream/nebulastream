@@ -178,25 +178,6 @@ message(STATUS "CMAKE_CXX_FLAGS_RELEASE: ${CMAKE_CXX_FLAGS_RELEASE}")
 
 # folly relies on boost so we set the right configuration flag
 set(Boost_NO_WARN_NEW_VERSIONS TRUE)
-
-# lcryto is required for asio to communicate
-if (APPLE)
-    find_library(SSL_LIB libssl.a REQUIRED)
-    find_library(CRYPTO_LIB libcrypto.a REQUIRED)
-    set(LIBRARIES ${LIBRARIES} -ldl -liconv ${CRYPTO_LIB} ${SSL_LIB})
-endif ()
-if (UNIX AND NOT APPLE)
-    find_package(OpenSSL REQUIRED)
-    set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
-endif ()
-
-# Library containing dlopen and dlcose.
-set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
-
-find_package(nlohmann_json REQUIRED)
-set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
-
-message(STATUS " Libraries: ${LIBRARIES}")
 # Definition of runtime variables ######################################################################################
 
 # Add tests with command
