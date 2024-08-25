@@ -15,7 +15,6 @@
 # running them multiple times. The cache files are created by the nebuli tool. The cache files are created in the
 # build directory in the cache folder. After the initial creation of the cache files they are only updated if the
 # system test file, nebuli or the single-node-worker binary changes.
-# TODO: add option to run locally tests by groups
 function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
         set(TEST_EXECUTABLE "ST_${SYSTEM_TEST_NAME}")
         set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/test/utils/SQLLogicTest.cpp")
@@ -86,3 +85,40 @@ function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAM
         gtest_discover_tests(${TEST_EXECUTABLE})
 endfunction()
 
+
+function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAMES)
+        set(TEST_EXECUTABLE "STGRP_${GROUP_NAME}")
+        set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/test/utils/SQLLogicTest.cpp")
+        set(CACHE_DIR "${CMAKE_BINARY_DIR}/cache/")
+        message("cache file_ ${SYSTEM_TEST_FILE_PATHS}")
+
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/result)
+
+        string(REGEX MATCHALL "[^ ]+" SYSTEM_TEST_FILE_PATHS_ "${SYSTEM_TEST_FILE_PATHS}")
+        set(CACHE_FILES)
+        foreach (SYSTEM_TEST_FILE_PATH IN LISTS SYSTEM_TEST_FILE_PATHS_)
+                get_filename_component(SYSTEM_TEST_NAME ${SYSTEM_TEST_FILE_PATH} NAME_WE)
+                set(CACHE_FILE "${CACHE_DIR}/${SYSTEM_TEST_NAME}_0.pb")
+                list(APPEND CACHE_FILES ${CACHE_FILE})
+        endforeach()
+
+        # Here we assume that the 'add_custom_command' rules for creating the cache files have already been created
+        # while creating the single test targets
+        add_executable(${TEST_EXECUTABLE} EXCLUDE_FROM_ALL ${SOURCE_FILE} ${CACHE_FILES})
+        target_link_libraries(${TEST_EXECUTABLE}
+                PRIVATE
+                nes-execution-test-util
+                nebuli-lib
+                nes-single-node-worker-test-util
+        )
+
+        target_compile_definitions(${TEST_EXECUTABLE}
+                PRIVATE
+                CMAKE_BINARY_DIR="${CMAKE_BINARY_DIR}"
+                CACHE_DIR="${CACHE_DIR}"
+                SYSTEM_TEST_NAME="${SYSTEM_TEST_NAMES}"
+                SYSTEM_TEST_FILE_PATH="${SYSTEM_TEST_FILE_PATHS}"
+        )
+
+        gtest_discover_tests(${TEST_EXECUTABLE})
+endfunction()

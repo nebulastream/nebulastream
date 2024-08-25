@@ -28,10 +28,9 @@ class SystemTestFactory : public testing::Test
 public:
     static void SetUpTestSuite()
     {
-        ///BaseIntegrationTest::SetUpTestSuite();
         Logger::setupLogging("SystemTest.log", LogLevel::LOG_DEBUG);
 
-        Configuration::SingleNodeWorkerConfiguration configuration{};
+        Configuration::SingleNodeWorkerConfiguration const configuration{};
         uut = std::make_unique<GRPCServer>(SingleNodeWorker{configuration});
 
         IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/" SYSTEM_TEST_NAME ".csv");
@@ -43,8 +42,8 @@ std::unique_ptr<GRPCServer> SystemTestFactory::uut = nullptr;
 class SystemTest : public SystemTestFactory
 {
 public:
-    explicit SystemTest(std::string cachedQueryPlanFile, std::string testFile, uint64_t testId)
-        : cachedQueryPlanFile(std::move(cachedQueryPlanFile)), testFile(std::move(testFile)), testId(testId)
+    explicit SystemTest(std::string systemTestName, std::string cachedQueryPlanFile, std::string testFile, uint64_t testId)
+        : systemTestName(std::move(systemTestName)), cachedQueryPlanFile(std::move(cachedQueryPlanFile)), testFile(std::move(testFile)), testId(testId)
     {
     }
 
@@ -66,39 +65,62 @@ public:
         }
         IntegrationTestUtil::unregisterQuery(queryId, *SystemTestFactory::uut);
 
-        ASSERT_TRUE(NES::CLI::checkResult(testFile, SYSTEM_TEST_NAME, testId + 1));
+        ASSERT_TRUE(NES::CLI::checkResult(testFile, systemTestName, testId + 1));
     }
 
 private:
-    std::string cachedQueryPlanFile;
-    std::string testFile;
-    uint64_t testId;
+    const std::string systemTestName;
+    const std::string cachedQueryPlanFile;
+    const std::string testFile;
+    const uint64_t testId;
 };
+
+namespace
+{
+std::vector<std::string> tokenize(std::string const& str)
+{
+    std::vector<std::string> result;
+    std::istringstream iss(str);
+    std::string word;
+    while (iss >> word) {
+        result.push_back(word);
+    }
+    return result;
+}
+}
 
 int main(int argc, char** argv)
 {
     testing::InitGoogleTest(&argc, argv);
 
-    for (int64_t i = 0;; ++i)
-    {
-        auto cacheFilePath = CACHE_DIR SYSTEM_TEST_NAME "_" + std::to_string(i) + ".pb";
-        std::filesystem::path const file = std::filesystem::path(cacheFilePath);
+    auto systemTestNames = tokenize(SYSTEM_TEST_NAME);
+    auto systemTestFiles = tokenize(SYSTEM_TEST_FILE_PATH);
 
-        if (!std::filesystem::is_regular_file(file))
-        {
-            break;
-        }
+    NES_ASSERT(systemTestNames.size() == systemTestFiles.size(), "The number of system test names and files must be equal.");
 
-        /// We register our value-parameterized tests programmatically
-        /// Reference: https://google.github.io/googletest/advanced.html#registering-tests-programmatically
-        testing::RegisterTest(
-            "SystemTest",
-            (SYSTEM_TEST_NAME + std::to_string(i)).c_str(),
+    for (size_t j = 0; j < systemTestNames.size(); ++j) {
+        const auto& systemTestName = systemTestNames[j];
+        const auto& systemTestFile = systemTestFiles[j];
+
+        for(int64_t i = 0;; ++i)
+        {    auto cacheFilePath = CACHE_DIR + systemTestName +  "_" + std::to_string(i) + ".pb";
+            std::filesystem::path const file = std::filesystem::path(cacheFilePath);
+
+            if (!std::filesystem::is_regular_file(file))
+            {    break;
+            }
+
+            /// We register our value-parameterized tests programmatically
+            /// Reference: https://google.github.io/googletest/advanced.html#registering-tests-programmatically
+            testing::RegisterTest(
+                "SystemTest",
+            (systemTestName + std::to_string(i)).c_str(),
             nullptr,
             nullptr,
             __FILE__,
             __LINE__,
-            [=]() -> SystemTestFactory* { return new SystemTest(cacheFilePath, SYSTEM_TEST_FILE_PATH, i); });
+                [=]() -> SystemTestFactory* { return new SystemTest(systemTestName, cacheFilePath, systemTestFile, i); });
+        }
     }
 
     return RUN_ALL_TESTS();
