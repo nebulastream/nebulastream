@@ -117,15 +117,10 @@ set(CMAKE_CXX_FLAGS "${NES_WARNINGS} -fno-omit-frame-pointer -fstandalone-debug 
 set(CMAKE_CXX_FLAGS_DEBUG "-g -O0 -DNES_DEBUG_MODE=1")
 set(CMAKE_CXX_FLAGS_RELEASE "-O3 -g -fno-omit-frame-pointer -DNES_RELEASE_MODE=1")
 
-# setup rpath for linker
-set(CMAKE_BUILD_RPATH "${CMAKE_BINARY_DIR}/nes-plugins")
-set(CMAKE_INSTALL_RPATH "$ORIGIN/nes-plugins")
-
 if (ENABLE_FTIME_TRACE)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -ftime-trace")
     message(STATUS "Use ftime-trace")
 endif ()
-
 
 include(cmake/Sanitizers.cmake)
 include(cmake/UseLibcxx.cmake)
@@ -301,8 +296,6 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
-
-add_custom_target(build_all_plugins)
 
 # Add target for common lib, which contains a minimal set
 add_subdirectory(grpc)
