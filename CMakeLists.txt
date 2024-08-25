@@ -28,7 +28,6 @@ option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
 option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
-option(CMAKE_NES_TRACE_NODE_CREATION "Debug flag such that we track the creation of specific operator nodes" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
@@ -95,12 +94,6 @@ endif ()
 #if(NES_COMPUTE_COVERAGE)
 #    set(NES_SPECIFIC_FLAGS "${NES_SPECIFIC_FLAGS} -fprofile-instr-generate -fcoverage-mapping")
 #endif
-
-# enables tracing of stack traces if operator / expression nodes are created
-if (CMAKE_NES_TRACE_NODE_CREATION)
-    add_compile_definitions(NES_TRACE_NODE_CREATION)
-    message(STATUS "Trace node creation")
-endif ()
 
 # Infers the log level based on the provided "NES_LOG_LEVEL" flag.
 # Currently we support the following log levels:
