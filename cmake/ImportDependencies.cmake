@@ -28,15 +28,31 @@ if (DEFINED CMAKE_TOOLCHAIN_FILE)
 elseif (DEFINED ENV{NES_PREBUILT_VCPKG_ROOT})
     # If we detect the NES_PREBUILT_VCPKG_ROOT environment we assume we are running in an environment
     # where an exported vcpkg sdk was prepared. This means we will not run in manifest mode,
-    # i.e. we will neither check if the current vcpkg.json manifest matches the pre-built dependencies nor built dependencies.
+    # We check if the VCPKG_DEPENDENCY_HASH environment matches the current hash
     message(STATUS "NES_PREBUILT_VCPKG_ROOT Environment is set: Assuming Docker Development Environment with pre-built dependencies at $ENV{NES_PREBUILT_VCPKG_ROOT}")
+    execute_process(COMMAND
+            bash -c "find ${CMAKE_SOURCE_DIR}/vcpkg/ ${CMAKE_SOURCE_DIR}/docker/dependency/ -type f -exec sha256sum {} \; | sort -k 2 | cut -d ' ' -f1 | sha256sum | cut -d ' ' -f1"
+            OUTPUT_VARIABLE VCPKG_HASH
+            OUTPUT_STRIP_TRAILING_WHITESPACE
+    )
+    if (NOT DEFINED ENV{VCPKG_DEPENDENCY_HASH} OR NOT $ENV{VCPKG_DEPENDENCY_HASH} STREQUAL ${VCPKG_HASH})
+        message(WARNING
+                "VCPKG Hash does not match, this is most likely due to an outdated development image."
+                "Make sure to update the current development image."
+                "The build will continue, but you may encounter errors during the build"
+                "Expected Hash:"
+                " ${VCPKG_HASH}"
+                "vs. Development Image Hash:"
+                " $ENV{VCPKG_DEPENDENCY_HASH}"
+        )
+    endif ()
     unset(VCPKG_MANIFEST_DIR) # prevents vcpkg from finding the vcpkg.json and building dependencies
     SET(CMAKE_TOOLCHAIN_FILE $ENV{NES_PREBUILT_VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 elseif (DEFINED ENV{VCPKG_ROOT})
     message(STATUS "VCPKG_ROOT Environment is set: Assuming user-managed vcpkg install at $ENV{VCPKG_ROOT}")
     SET(CMAKE_TOOLCHAIN_FILE $ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake)
 else ()
-    message(WARNING "Neither VCPKG_ROOT Environment nor CMAKE_TOOLCHAIN_FILE was supplied: Creating new internal vcpkg-repository and building dependencies. This might take a while. If possible, use the development container, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
+    message(WARNING "Neither VCPKG_ROOT/NES_PREBUILT_VCPKG_ROOT Environment nor CMAKE_TOOLCHAIN_FILE was supplied: Creating new internal vcpkg-repository and building dependencies. This might take a while. If possible, use the development container, check the docs: https://github.com/nebulastream/nebulastream-public/blob/main/docs/development.md")
     SET(CLONE_DIR ${CMAKE_SOURCE_DIR}/vcpkg-repository)
     SET(REPO_URL https://github.com/microsoft/vcpkg.git)
     if (NOT EXISTS ${CLONE_DIR})
