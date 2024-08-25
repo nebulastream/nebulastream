@@ -21,9 +21,7 @@ get_source(nes-nautilus NES_NAUTILUS_SOURCE_FILES)
 # Add Library
 add_library(nes-nautilus ${NES_NAUTILUS_SOURCE_FILES})
 target_link_libraries(nes-nautilus PUBLIC nes-runtime)
-target_include_directories(nes-nautilus PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+target_include_directories(nes-nautilus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
         
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
@@ -178,9 +176,3 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
     target_link_libraries(nes-execution PRIVATE nes-compiler)
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-nautilus
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

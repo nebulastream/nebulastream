@@ -19,9 +19,7 @@ get_source(nes-configurations NES_CONFIGURATIONS_SOURCE_FILES)
 add_library(nes-configurations ${NES_CONFIGURATIONS_SOURCE_FILES})
 target_link_libraries(nes-configurations PUBLIC nes-common)
 
-target_include_directories(nes-configurations PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+target_include_directories(nes-configurations PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-configurations REUSE_FROM nes-common)
@@ -35,9 +33,3 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-configurations
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

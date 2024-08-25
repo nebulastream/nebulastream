@@ -50,13 +50,7 @@ add_library(nes-grpc ${OUTPUT_SOURCES})
 target_link_libraries(nes-grpc PUBLIC ${GRPC_LIBRARIES})
 
 target_include_directories(nes-grpc PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-
-install(TARGETS nes-grpc
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
+        $<BUILD_INTERFACE:${CMAKE_BINARY_DIR}/nes-grpc>)
 
 get_source(nes-common NES_COMMON_SOURCE_FILES)
 
@@ -68,15 +62,7 @@ find_package(fmt CONFIG REQUIRED)
 find_package(magic_enum CONFIG REQUIRED)
 target_link_libraries(nes-common PUBLIC nes-grpc ${LIBRARIES_SDP} cpptrace::cpptrace magic_enum::magic_enum fmt::fmt)
 
-target_include_directories(nes-common PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Identifiers/ Identifiers)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Sequencing Sequencing)
-register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)
+target_include_directories(nes-common PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")
@@ -89,9 +75,3 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-common
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

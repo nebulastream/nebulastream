@@ -22,9 +22,7 @@ get_source(nes-execution NES_EXECUTION_SOURCE_FILES)
 add_library(nes-execution ${NES_EXECUTION_SOURCE_FILES})
 # link libraries
 target_link_libraries(nes-execution PUBLIC nes-nautilus)
-target_include_directories(nes-execution PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
+target_include_directories(nes-execution PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     target_link_libraries(nes-runtime PUBLIC ${JNI_LIBRARIES})
@@ -56,9 +54,3 @@ if (NES_ENABLES_TESTS)
 else ()
     message(STATUS "Tests are disabled")
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-execution
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

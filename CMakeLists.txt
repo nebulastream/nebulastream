@@ -326,44 +326,10 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
     endif ()
 endif ()
 
-# Print all used include directories
-message(STATUS "INCLUDE_DIRS: ${INCLUDE_DIRECTORIES}")
-set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
-get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
-foreach (dir ${dirs})
-    message(STATUS "  - ${dir}")
-endforeach ()
-
 message(STATUS " Libraries: ${LIBRARIES}")
 message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
-
-# Set definition values.
-set(GENERATED_CODE_DIRECTORY ${PROJECT_BINARY_DIR}/generated-code)
-set(PATH_TO_NES_SOURCE_CODE ${PROJECT_SOURCE_DIR})
-set(PATH_TO_DEB_SOURCE_CODE ${_VCPKG_INSTALLED_DIR}/${VCPKG_TARGET_TRIPLET})
-set(PATH_TO_BINARY_DIR ${CMAKE_BINARY_DIR})
-message("PATH_TO_DEB_SOURCE_CODE Dir: ${PATH_TO_DEB_SOURCE_CODE}")
-
-# Print definition values.
-message(STATUS "Clang Executable: ${CLANG_EXECUTABLE}")
-message(STATUS "Clang-Format Executable: ${CLANG_FORMAT_EXECUTABLE}")
-message(STATUS "Generated Code Directory: ${GENERATED_CODE_DIRECTORY}")
-
-# Add definitions as compile flag.
-add_definitions(-D 'CLANG_EXECUTABLE=\"${CLANG_EXECUTABLE}\"')
-add_definitions(-D 'CLANG_FORMAT_EXECUTABLE=\"${CLANG_FORMAT_EXECUTABLE}\"')
-add_definitions(-D 'GENERATED_CODE_DIRECTORY=\"${GENERATED_CODE_DIRECTORY}\"')
-add_definitions(-D 'PATH_TO_NES_SOURCE_CODE=\"${PATH_TO_NES_SOURCE_CODE}\"')
-add_definitions(-D 'PATH_TO_DEB_SOURCE_CODE=\"${PATH_TO_DEB_SOURCE_CODE}\"')
-add_definitions(-D 'PATH_TO_BINARY_DIR=\"${PATH_TO_BINARY_DIR}\"')
-if (APPLE)
-    add_definitions(-D 'NES_OSX_SYSROOT=\"${CMAKE_OSX_SYSROOT}\"')
-endif ()
-
-add_definitions(-D 'QUERY_COMPILATION_CC=\"${QUERY_COMPILATION_CC}\"')
-add_definitions(-D 'CLANG_INCLUDE_DIRS=\"${CLANG_INCLUDE_DIRS}\"')
 
 # fix compile error with llvm (https://stackoverflow.com/a/18966387)
 add_definitions(-D '__STDC_CONSTANT_MACROS')
@@ -430,60 +396,6 @@ message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM
 set(NES_TEST_REPEAT_UNTIL_FAIL 3)
 set(NES_TEST_TIMEOUT 300)
 add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
-
-install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
-
-include(CMakePackageConfigHelpers)
-# Create the Config.cmake files, which enables find_package(NebulaStream) from external CMAKE projects.
-configure_package_config_file(cmake/NebulaStreamConfig.cmake.in
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
-        INSTALL_DESTINATION NebulaStream/cmake)
-
-# Create Targets.cmake file, which exposes NebulaStream targets to external CMAKE projects
-export(EXPORT NebulaStreamTargets
-        FILE "${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamTargets.cmake"
-        NAMESPACE NebulaStream::)
-
-# Create version_file to enable specific version imports
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        VERSION "${${PROJECT_NAME}_VERSION_MAJOR}.${${PROJECT_NAME}_VERSION_MINOR}.${${PROJECT_NAME}_VERSION_PATCH}"
-        COMPATIBILITY AnyNewerVersion)
-
-# Install NebulaStreamConfig, NebulaStreamConfigVersion, and NebulaStreamTargets to exported package
-set(ConfigPackageLocation lib/NebulaStream/cmake)
-install(EXPORT NebulaStreamTargets
-        FILE
-        NebulaStreamTargets.cmake
-        NAMESPACE
-        NebulaStream::
-        EXPORT_LINK_INTERFACE_LIBRARIES
-        DESTINATION
-        ${ConfigPackageLocation}
-)
-install(FILES
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfig.cmake
-        ${CMAKE_CURRENT_BINARY_DIR}/NebulaStreamConfigVersion.cmake
-        DESTINATION ${ConfigPackageLocation})
-
-# Configure CPackage
-set(CPACK_GENERATOR "DEB")
-set(CPACK_PACKAGE_VERSION ${${PROJECT_NAME}_VERSION})
-set(CPACK_PACKAGE_NAME "NebulaStream")
-set(CPACK_PACKAGE_RELEASE 1)
-set(CPACK_STRIP_FILES TRUE)
-set(CPACK_PACKAGE_CONTACT "nebulastream@dima.tu-berlin.de")
-set(CPACK_PACKAGE_DESCRIPTION "NebulaStream is a general purpose, end-to-end data management system for the IoT. It provides an out-of-the box experience with rich data processing functionalities and a high ease-of-use.")
-set(CPACK_PACKAGE_VENDOR "Team NebulaStream")
-set(CPACK_PACKAGE_HOMEPAGE_URL "http://nebula.stream")
-set(CPACK_PACKAGING_INSTALL_PREFIX ${CMAKE_INSTALL_PREFIX})
-set(CPACK_COMPONENTS_ALL nesExecutables nesLibrary nesHeaders)
-set(CPACK_DEBIAN_PACKAGE_DEPENDS "libdwarf-dev, libdwarf1, binutils-dev, libdw-dev, liblz4-dev")
-set(CPACK_PACKAGE_FILE_NAME "${CPACK_PACKAGE_NAME}-${CPACK_PACKAGE_VERSION}-${CPACK_PACKAGE_RELEASE}-${CMAKE_SYSTEM_NAME}.${CMAKE_SYSTEM_PROCESSOR}")
-
-##This allows call to ldconfig to load the configuration after installation
-set(CPACK_DEBIAN_PACKAGE_CONTROL_EXTRA "${CMAKE_CURRENT_LIST_DIR}/triggers")
-set(CPACK_DEBIAN_PACKAGE_CONTROL_STRICT_PERMISSION TRUE)
-INCLUDE(CPack)
 
 #Other configurations
 project_enable_clang_format()

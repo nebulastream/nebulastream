@@ -17,17 +17,4 @@ get_source(nes-expressions NES_EXPRESSIONS_SOURCE_FILES)
 # Add Library
 add_library(nes-expressions SHARED ${NES_EXPRESSIONS_SOURCE_FILES})
 target_link_libraries(nes-expressions PUBLIC nes-data-types)
-target_include_directories(nes-expressions PUBLIC
-        $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
-        $<INSTALL_INTERFACE:include/nebulastream/>)
-
-register_public_header_file(nes-expressions ${CMAKE_CURRENT_SOURCE_DIR}/include/Expressions/ExpressionNode.hpp Expressions/ExpressionNode.hpp)
-register_public_header_file(nes-expressions ${CMAKE_CURRENT_SOURCE_DIR}/include/Expressions/FieldAccessExpressionNode.hpp Expressions/FieldAccessExpressionNode.hpp)
-
-
-
-#Add the nes expressions and headers to cpack
-install(TARGETS nes-expressions
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
+target_include_directories(nes-expressions PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
