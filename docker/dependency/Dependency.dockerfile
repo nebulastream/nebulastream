@@ -16,4 +16,8 @@ RUN cd /vcpkg_input \
     && cp vcpkg_repository/scripts/vcpkgTools.xml /vcpkg/scripts/ \
     && rm -rf /vcpkg_input \
     && chmod -R g=u,o=u /vcpkg
+
+# This hash is used to determine if a development/dependency image is compatible with the current checked out branch
+ARG VCPKG_DEPENDENCY_HASH
+ENV VCPKG_DEPENDENCY_HASH=${VCPKG_DEPENDENCY_HASH}
 ENV NES_PREBUILT_VCPKG_ROOT=/vcpkg
