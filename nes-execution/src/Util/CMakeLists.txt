@@ -15,7 +15,3 @@ add_subdirectory(DumpHandler)
 add_source_files(nes-execution
         Execution.cpp
 )
-
-if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
-    add_subdirectory(JNI)
-endif ()
