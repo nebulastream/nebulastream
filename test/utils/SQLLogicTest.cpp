@@ -33,7 +33,6 @@ public:
         Configuration::SingleNodeWorkerConfiguration const configuration{};
         uut = std::make_unique<GRPCServer>(SingleNodeWorker{configuration});
 
-        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/" SYSTEM_TEST_NAME ".csv");
     }
     static std::unique_ptr<GRPCServer> uut;
 };
@@ -49,6 +48,8 @@ public:
 
     void TestBody() override
     {
+        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/"+  systemTestName + std::to_string(testId + 1) +  ".csv");
+
         SerializableDecomposedQueryPlan queryPlan;
         std::ifstream file(cachedQueryPlanFile);
         if (!file || !queryPlan.ParseFromIstream(&file))
@@ -114,7 +115,7 @@ int main(int argc, char** argv)
             /// Reference: https://google.github.io/googletest/advanced.html#registering-tests-programmatically
             testing::RegisterTest(
                 "SystemTest",
-            (systemTestName + std::to_string(i)).c_str(),
+            (systemTestName + "_" + std::to_string(i)).c_str(),
             nullptr,
             nullptr,
             __FILE__,

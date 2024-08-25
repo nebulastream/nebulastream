@@ -23,9 +23,9 @@
 namespace NES
 {
 
-void SLTParser::registerSubstitutionRule(const std::string& before, const std::string& after)
+void SLTParser::registerSubstitutionRule(const std::string& substitute, const std::function<void(std::string&)>& rule)
 {
-    substitutionRules.push_back({before, after});
+    substitutionRules.emplace_back(substitute, rule);
 }
 
 /// We do not load the file in a constructor, as we want to be able to handle errors
@@ -57,22 +57,22 @@ using SourceCallback = std::function<void(std::vector<std::string>&&)>;
 
 void SLTParser::registerOnQueryCallback(QueryCallback callback)
 {
-    onQueryCallback = callback;
+    onQueryCallback = std::move(callback);
 }
 
 void SLTParser::registerOnQueryResultTuplesCallback(QueryResultTuplesCallback callback)
 {
-    onQueryResultTuplesCallback = callback;
+    onQueryResultTuplesCallback = std::move(callback);
 }
 
 void SLTParser::registerOnSourceInFileTuplesCallback(SourceInFileTuplesCallback callback)
 {
-    onSourceInFileTuplesCallback = callback;
+    onSourceInFileTuplesCallback = std::move(callback);
 }
 
 void SLTParser::registerOnSourceCallback(SourceCallback callback)
 {
-    onSourceCallback = callback;
+    onSourceCallback = std::move(callback);
 }
 
 /// Here we model the structure of the test file by what we `expect` to see.
@@ -148,10 +148,18 @@ void SLTParser::applySubstitutionRules(std::string& line)
     for (const auto& rule : substitutionRules)
     {
         size_t pos = 0;
-        while ((pos = line.find(rule.first, pos)) != std::string::npos)
+        const std::string& substitute = rule.first;
+        const auto& ruleFunction = rule.second;
+
+        while ((pos = line.find(substitute, pos)) != std::string::npos)
         {
-            line.replace(pos, rule.first.length(), rule.second);
-            pos += rule.second.length();
+            /// Apply the substitution function to the part of the string found
+            std::string substring = line.substr(pos, substitute.length());
+            ruleFunction(substring);
+
+            /// Replace the found substring with the modified substring
+            line.replace(pos, substitute.length(), substring);
+            pos += substring.length();
         }
     }
 }

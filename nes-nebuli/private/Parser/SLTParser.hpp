@@ -34,7 +34,7 @@ class SLTParser
 {
 public:
     /// Register a substitution rule to be applied to the file before parsing
-    void registerSubstitutionRule(const std::string& before, const std::string& after);
+    void registerSubstitutionRule(const std::string& substitute, const std::function<void(std::string&)>& rule);
 
     [[nodiscard]] bool loadFile(const std::string& filePath);
 
@@ -53,7 +53,7 @@ public:
     [[nodiscard]] bool parse();
 
 private:
-    std::vector<std::pair<std::string, std::string>> substitutionRules;
+    std::vector<std::pair<std::string, std::function<void(std::string&)>>> substitutionRules;
     void applySubstitutionRules(std::string& line);
 
     enum class TokenType : uint8_t

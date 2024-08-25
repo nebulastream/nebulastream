@@ -258,9 +258,17 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
     QueryConfig config{};
     SLTParser parser{};
 
-    auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/test/result/" + testname + ".csv";
-    parser.registerSubstitutionRule("SINK", "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));");
-    parser.registerSubstitutionRule("TESTDATA", std::string(PATH_TO_BINARY_DIR) + "/test/testdata");
+    parser.registerSubstitutionRule(
+        "SINK",
+        [&](std::string& substitute)
+        {
+            static uint64_t queryNr = 0;
+            auto resultFile = std::string(PATH_TO_BINARY_DIR) + "/test/result/" + testname + std::to_string(queryNr++) + ".csv";
+            substitute = "sink(FileSinkDescriptor::create(\"" + resultFile + "\", \"CSV_FORMAT\", \"APPEND\"));";
+        });
+
+    parser.registerSubstitutionRule(
+        "TESTDATA", [&](std::string& substitute) { substitute = std::string(PATH_TO_BINARY_DIR) + "/test/testdata"; });
 
     if (!parser.loadFile(filePath))
     {
@@ -357,7 +365,7 @@ std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path&
 
 bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector<std::string>& resultData)
 {
-    std::ifstream resultFile(PATH_TO_BINARY_DIR "/test/result/" + testName + ".csv");
+    std::ifstream resultFile(PATH_TO_BINARY_DIR "/test/result/" + testName + std::to_string(queryNr) + ".csv");
     if (!resultFile)
     {
         NES_FATAL_ERROR("Failed to open result file: {}", PATH_TO_BINARY_DIR "/test/result/" + testName + ".csv");
@@ -366,24 +374,14 @@ bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector
 
     std::string line;
     std::regex headerRegex(R"(.*\$.*:.*)");
-    std::size_t currentQuery = 0;
-    bool isCollecting = false;
-
     while (std::getline(resultFile, line))
     {
+        /// Skip the header
         if (std::regex_match(line, headerRegex))
         {
-            currentQuery++;
-            isCollecting = (currentQuery == queryNr);
+            continue;
         }
-        else if (isCollecting)
-        {
-            if (std::regex_match(line, headerRegex))
-            {
-                break;
-            }
-            resultData.push_back(line);
-        }
+        resultData.push_back(line);
     }
     return true;
 }
