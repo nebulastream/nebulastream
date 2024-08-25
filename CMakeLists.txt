@@ -233,37 +233,6 @@ if (UNIX AND NOT APPLE)
     set(LIBRARIES ${LIBRARIES} OpenSSL::SSL OpenSSL::Crypto)
 endif ()
 
-# GRPC and protobuf
-set(gRPC_RELEASE "v1.28.1")
-# This assumes that gRPC and all its dependencies are already installed
-# on this system, so they can be located by find_package().
-
-# Find Protobuf installation
-# Looks for protobuf-config.cmake file installed by Protobuf's cmake installation.
-set(protobuf_MODULE_COMPATIBLE TRUE)
-find_package(Protobuf REQUIRED)
-message(STATUS "Using protobuf ${protobuf_VERSION}")
-
-set(_PROTOBUF_LIBPROTOBUF protobuf::libprotobuf)
-if (CMAKE_CROSSCOMPILING)
-    find_program(_PROTOBUF_PROTOC protoc)
-else ()
-    set(_PROTOBUF_PROTOC $<TARGET_FILE:protobuf::protoc>)
-endif ()
-
-# Find gRPC installation
-# Looks for gRPCConfig.cmake file installed by gRPC's cmake installation.
-find_package(gRPC CONFIG REQUIRED)
-message(STATUS "Using gRPC ${gRPC_VERSION}")
-
-set(_GRPC_GRPCPP gRPC::grpc++)
-if (CMAKE_CROSSCOMPILING)
-    find_program(_GRPC_CPP_PLUGIN_EXECUTABLE grpc_cpp_plugin)
-else ()
-    set(_GRPC_CPP_PLUGIN_EXECUTABLE $<TARGET_FILE:gRPC::grpc_cpp_plugin>)
-endif ()
-set(GRPC_LIBRARIES ${_REFLECTION} ${_GRPC_GRPCPP} ${_PROTOBUF_LIBPROTOBUF})
-
 # Library containing dlopen and dlcose.
 set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
@@ -327,8 +296,6 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI)
 endif ()
 
 message(STATUS " Libraries: ${LIBRARIES}")
-message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
-
 # Definition of runtime variables ######################################################################################
 
 # Add tests with command
@@ -351,6 +318,7 @@ endif ()
 add_custom_target(build_all_plugins)
 
 # Add target for common lib, which contains a minimal set
+add_subdirectory(grpc)
 # of shared functionality used by all components of nes
 add_subdirectory(nes-common)
 # Add target for all data types
