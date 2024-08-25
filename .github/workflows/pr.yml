@@ -44,41 +44,45 @@ jobs:
           comment-header: "Thank you for your PR. Please pay attention to the following items before merging:"
 
   detect-dependency-changes:
-    # This job detects changes to files relevant for our dependency management
-    # If no changes are detected the docker image build jobs are skipped
+    # This job detects changes to files relevant for our dependency management by calculating a hash value
+    # and looking for existing development images with the same hash.
+    # If we find a development image matching the hash we skip building new docker images.
     # This Job also determines the development image tag used for building and testing
-    # If no changes are detected we can use the `latest` tag which refers to the last
-    # development image based on the main branch
-    # If changes are detected we use a branch-specific tag
     name: Detect changes to dependencies
     outputs:
-      change: ${{steps.changed-files.outputs.any_modified}}
-      tag: ${{ steps.image-tag.outputs.tag }}
+      build-dependency: ${{steps.hash-and-lookup.outputs.build-dependency}}
+      tag: ${{ steps.hash-and-lookup.outputs.tag }}
+      hash: ${{ steps.hash-and-lookup.outputs.hash }}
     runs-on: [ self-hosted, linux, Build ]
     steps:
       - uses: actions/checkout@v4
-      - name: Looking for changed dependency files
-        id: changed-files
-        uses: tj-actions/changed-files@v44
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
         with:
-          files: |
-            vcpkg/**
-            docker/dependency/**
-      - name: Choose Image Tag for CI
-        id: image-tag
-        env:
-          ANY_MODIFIED: ${{ steps.changed-files.outputs.any_modified }}
-          ALL_MODIFIED: ${{ steps.changed-files.outputs.all_modified_files }}
+          username: ${{ secrets.DOCKER_USER_NAME }}
+          password: ${{ secrets.DOCKER_SECRET }}
+      - name: Calculate and lookup hash
+        id: hash-and-lookup
         run: |
-          for file in ${ALL_MODIFIED}; do
-            echo "$file was modified"
-          done
-          if [[ "$ANY_MODIFIED" == "true" ]]
-          then
-            echo "tag=${{ github.event.pull_request.head.ref }}" >> "$GITHUB_OUTPUT"
+          # Compute the hash from files in vcpkg/ and docker/dependency/ directories
+          echo "Calculating checksum for dependency files:"
+          find vcpkg/ docker/dependency/ -type f
+          
+          HASH=$(find vcpkg/ docker/dependency/ -type f -exec sha256sum {} \; | sort -k 2 | cut -d ' ' -f1 | sha256sum | cut -d ' ' -f1)
+          echo "Using Hash: $HASH"
+          
+          # Check if the Docker manifest exists for the computed hash
+          if docker manifest inspect nebulastream/nes-development:"$HASH" > /dev/null 2>&1; then
+            echo "build-dependency=false" >> "$GITHUB_OUTPUT"
           else
-            echo "tag=latest" >> "$GITHUB_OUTPUT"
+            echo "Require rebuilt of dependency"
+            echo "build-dependency=true" >> "$GITHUB_OUTPUT"
           fi
+          
+          # Output the tag (hash) to GitHub Actions
+          echo "tag=$HASH" >> "$GITHUB_OUTPUT"
+          echo "hash=$HASH" >> "$GITHUB_OUTPUT"
+
 
   docker-development-images-pre:
     # We run the docker image build on separate machines and combine them into a single
@@ -91,7 +95,7 @@ jobs:
     # The Development Image contains the dependencies and additional tooling like clang-format.
     name: "Build Development Images"
     needs: [ detect-dependency-changes ]
-    if: needs.detect-dependency-changes.outputs.change == 'true'
+    if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
     runs-on: [ self-hosted, linux, Build, "${{ matrix.platform }}" ]
     strategy:
       fail-fast: false
@@ -110,7 +114,7 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+          tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
           cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
           cache-from: |
             type=registry,ref=nebulastream/nes-development-base-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
@@ -121,26 +125,27 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development-dependency:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
           cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
           cache-from: |
             type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
             type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.platform}}
           build-args: |
-            TAG=${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+            TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
             ARCH=${{matrix.platform}}
+            VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
           context: .
           file: docker/dependency/Dependency.dockerfile
       - name: Build Development Image
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
           cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
           cache-from: |
             type=registry,ref=nebulastream/nes-development-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
             type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.platform}}
-          build-args: TAG=${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
           context: .
           file: docker/dependency/Development.dockerfile
 
@@ -148,7 +153,7 @@ jobs:
     # This Job merges platform specific images into a single multi-platform image
     name: "Merge images for different platforms into a single Multi-Platform image"
     needs: [ docker-development-images-pre, detect-dependency-changes ]
-    if: needs.detect-dependency-changes.outputs.change == 'true'
+    if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
     runs-on: [ self-hosted, linux, Build ]
     steps:
       - uses: actions/checkout@v4
@@ -162,18 +167,27 @@ jobs:
         uses: docker/setup-buildx-action@v3
       - name: Combine Manifests
         run: |
-          docker buildx imagetools create -t nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }} \
-            nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }}-x64 \
-            nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }}-arm64
+          docker buildx imagetools create -t nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }} \
+            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
+            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
 
+          docker buildx imagetools create -t nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }} \
+            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
+            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
+
+          docker buildx imagetools create -t nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }} \
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-x64 \
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-arm64
+          
+          docker buildx imagetools create -t nebulastream/nes-development-base:${{ github.event.pull_request.head.ref }} \
+            nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}
+          
           docker buildx imagetools create -t nebulastream/nes-development-dependency:${{ github.event.pull_request.head.ref }} \
-            nebulastream/nes-development-dependency:${{ github.event.pull_request.head.ref }}-x64 \
-            nebulastream/nes-development-dependency:${{ github.event.pull_request.head.ref }}-arm64
+            nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}
 
           docker buildx imagetools create -t nebulastream/nes-development:${{ github.event.pull_request.head.ref }} \
-            nebulastream/nes-development:${{ github.event.pull_request.head.ref }}-x64 \
-            nebulastream/nes-development:${{ github.event.pull_request.head.ref }}-arm64
-
+            nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}
+  
 
   check-format:
     needs: [ docker-development-images, detect-dependency-changes ]
