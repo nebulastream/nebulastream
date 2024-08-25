@@ -27,7 +27,6 @@ option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
 option(CMAKE_USE_ONE_QUEUE_PER_NUMA_NODE "Build using NUMA optimization" OFF)
-option(CMAKE_USE_PAPI_PROFILER "Build using PAPI Profiler" OFF)
 option(ENABLE_IWYU "Enable include-what-you-use suggestions (if found on the system)" OFF)
 option(ENABLE_FTIME_TRACE "Enable ftime-trace as a compilation flag to profile the compiler" OFF)
 option(NES_COMPUTE_COVERAGE "Compute test coverage" OFF)
@@ -206,41 +205,6 @@ set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
-
-# PAPI
-if (CMAKE_USE_PAPI_PROFILER)
-    find_path(PAPI_PREFIX
-            NAMES include/papi.h
-    )
-
-    find_library(PAPI_LIBRARIES
-            # Pick the static library first for easier run-time linking.
-            NAMES libpapi.so libpapi.a papi
-            HINTS ${PAPI_PREFIX}/lib
-    )
-
-    find_path(PAPI_INCLUDE_DIRS
-            NAMES papi.h
-            HINTS ${PAPI_PREFIX}/include
-    )
-
-    include(FindPackageHandleStandardArgs)
-    find_package_handle_standard_args(PAPI DEFAULT_MSG
-            PAPI_LIBRARIES
-            PAPI_INCLUDE_DIRS
-    )
-
-    mark_as_advanced(
-            PAPI_PREFIX_DIRS
-            PAPI_LIBRARIES
-            PAPI_INCLUDE_DIRS
-    )
-    message(STATUS "Papi found at ${PAPI_LIBRARIES}")
-    message(STATUS "Papi found at ${PAPI_INCLUDE_DIRS}")
-    set(LIBRARIES ${LIBRARIES} ${PAPI_LIBRARIES})
-    add_compile_definitions(ENABLE_PAPI_PROFILER)
-    include_directories(${PAPI_INCLUDE_DIRS})
-endif ()
 
 message(STATUS " Libraries: ${LIBRARIES}")
 # Definition of runtime variables ######################################################################################
