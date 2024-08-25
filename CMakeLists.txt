@@ -20,9 +20,6 @@ set(CLANG_FORMAT_MAJOR_VERSION 18)
 # The regex must match all comments that are not allowed in the codebase per line.
 set(NOT_ALLOWED_COMMENT_STYLE_REGEX "([^\\/:]|^)(\\/\\/)+[^\\/]")
 
-# Enable native mtune/march for optimizations
-option(NES_BUILD_NATIVE "Override mtune/march to load native support" OFF)
-
 #toggle import and usage of s2 library
 option(CMAKE_EXPORT_COMPILE_COMMANDS "Write JSON compile commands database" ON)
 option(CMAKE_NES_DEBUG_TUPLE_BUFFER_LEAKS "Build using tuple buffer leak detector" OFF)
@@ -113,6 +110,7 @@ include(cmake/Sanitizers.cmake)
 include(cmake/UseLibcxx.cmake)
 include(cmake/UseCCache.cmake)
 include(cmake/UseMold.cmake)
+include(cmake/Native.cmake)
 
 if (ENABLE_IWYU)
     find_program(iwyu_path NAMES include-what-you-use iwyu)
@@ -134,43 +132,6 @@ if (NES_BUILD_BENCHMARKS)
     endif ()
     #-fno-omit-frame-pointer
 endif ()
-
-# Native/Generic march support
-if (NES_BUILD_NATIVE)
-    include(CheckCXXCompilerFlag)
-    CHECK_CXX_COMPILER_FLAG("-march=native" COMPILER_SUPPORTS_MARCH_NATIVE)
-    if (COMPILER_SUPPORTS_MARCH_NATIVE)
-        message(STATUS "CMAKE detects native arch support")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mtune=native -march=native -DNES_BENCHMARKS_NATIVE_MODE=1")
-        # AVX detection
-        find_package(AVX)
-        if (${AVX2_FOUND})
-            message(STATUS "CMAKE detects AVX2 support")
-            add_compile_definitions(HAS_AVX)
-            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mavx2")
-        endif ()
-    else ()
-        message(FATAL_ERROR "NES_BUILD_NATIVE was true but the compiler does not support it on this architecture.")
-    endif ()
-else ()
-    # Compiler should produce specific code for system architecture
-    if (CMAKE_SYSTEM_PROCESSOR MATCHES "x86_64")
-        message(STATUS "CMAKE detects generic x86_64 arch support")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=x86-64 -mtune=generic")
-    elseif (APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "arm64")
-        message(STATUS "CMAKE detects APPLE ARM64 support")
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -mcpu=apple-m1")
-    elseif (NOT APPLE AND CMAKE_SYSTEM_PROCESSOR MATCHES "aarch64")
-        message(STATUS "CMAKE detects generic ARM64 support")
-        # Arm themselves suggest using -mcpu=native, or in general,
-        # to use -mcpu=CPU_TYPE. For more info, here:
-        # https://community.arm.com/developer/tools-software/tools/b/tools-software-ides-blog/posts/compiler-flags-across-architectures-march-mtune-and-mcpu
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -march=armv8-a")
-    else ()
-        message(FATAL_ERROR "CMAKE_SYSTEM_PROCESSOR was ${CMAKE_SYSTEM_PROCESSOR} this is a unsupported architecture.")
-    endif ()
-endif ()
-
 
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_CXX_FLAGS_DEBUG: ${CMAKE_CXX_FLAGS_DEBUG}")
