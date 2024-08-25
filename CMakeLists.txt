@@ -331,19 +331,6 @@ message(STATUS " GRPC Libraries: ${GRPC_LIBRARIES}")
 
 # Definition of runtime variables ######################################################################################
 
-# fix compile error with llvm (https://stackoverflow.com/a/18966387)
-add_definitions(-D '__STDC_CONSTANT_MACROS')
-add_definitions(-D '__STDC_LIMIT_MACROS')
-
-
-# $ORIGIN is to read the shared object from the installation directory
-if (ORIGIN)
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,-rpath='$ORIGIN'")
-endif ()
-#https://cmake.org/cmake/help/latest/variable/CMAKE_INSTALL_RPATH_USE_LINK_PATH.html
-set(CMAKE_INSTALL_RPATH_USE_LINK_PATH "true")
-set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS}")
-
 # Add tests with command
 include(cmake/NebulaStreamTest.cmake)
 if (NES_ENABLES_TESTS)
