@@ -122,9 +122,6 @@ const std::string LOCATION_COORDINATES_CONFIG = "fieldNodeLocationCoordinates";
 const std::string CONNECT_SINKS_ASYNC = "connectSinksAsync";
 const std::string CONNECT_SOURCE_ASYNC = "connectSourceEventChannelsAsync";
 
-/// CUDA config names
-const std::string CUDA_SDK_PATH = "cudaSdkPath";
-
 const std::string NUMA_AWARENESS_CONFIG = "numaAwareness";
 const std::string PHYSICAL_SOURCES = "physicalSources";
 const std::string PHYSICAL_SOURCE_TYPE_CONFIGURATION = "configuration";

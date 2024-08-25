@@ -76,8 +76,6 @@ createQueryCompilationOptions(const Configurations::QueryCompilerConfiguration& 
 
     queryCompilationOptions->setStreamJoinStrategy(queryCompilerConfiguration.joinStrategy);
 
-    queryCompilationOptions->setCUDASdkPath(queryCompilerConfiguration.cudaSdkPath.getValue());
-
     return queryCompilationOptions;
 }
 

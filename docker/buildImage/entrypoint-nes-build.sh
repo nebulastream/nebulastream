@@ -28,11 +28,6 @@ if [ -z "${NesTestParallelism}" ]; then NesTestParallelism="1"; else NesTestPara
 if [ -z "${NesBuildParallelism}" ]; then NesBuildParallelism="8"; else NesBuildParallelism=${NesBuildParallelism}; fi
 echo "Required Build Failed=$RequireBuild"
 if [ $# -eq 1 ]; then
-  EXTRA_CMAKE_FLAG=""
-  # Check the test target
-    if [ "$1" = "gpu" ]; then
-       EXTRA_CMAKE_FLAG="-DNES_BUILD_PLUGIN_CUDA=1 -DNES_USE_GPU=1 -DCMAKE_CUDA_COMPILER=/usr/local/cuda/bin/nvcc"
-    fi
   # Build NES
   python3 /nebulastream/scripts/check_preamble.py /nebulastream /nebulastream/.no-license-check || exit 1
   # We use ccache to reuse intermediate build files across ci runs.
@@ -40,7 +35,7 @@ if [ $# -eq 1 ]; then
   ccache --set-config=cache_dir=/cache_dir/
   ccache -M 10G
   ccache -s
-  cmake --fresh -B /build_dir -DCMAKE_BUILD_TYPE=Release -DNES_USE_CCACHE=1 -DNES_TEST_PARALLELISM=$NesTestParallelism  ${EXTRA_CMAKE_FLAG} /nebulastream/
+  cmake --fresh -B /build_dir -DCMAKE_BUILD_TYPE=Release -DNES_USE_CCACHE=1 -DNES_TEST_PARALLELISM=$NesTestParallelism /nebulastream/
   cmake --build /build_dir -j$NesBuildParallelism
   # Check if build was successful
   errorCode=$?
