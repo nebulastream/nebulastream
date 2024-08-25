@@ -239,14 +239,6 @@ set(LIBRARIES ${LIBRARIES} ${CMAKE_DL_LIBS})
 find_package(nlohmann_json REQUIRED)
 set(LIBRARIES ${LIBRARIES} nlohmann_json::nlohmann_json)
 
-if (NES_ENABLES_TESTS)
-    find_package(GTest CONFIG REQUIRED)
-    if (NOT ${GTest_FOUND})
-        message(FATAL_ERROR "Unable to find GTest")
-    endif ()
-    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main)
-endif ()
-
 # PAPI
 if (CMAKE_USE_PAPI_PROFILER)
     find_path(PAPI_PREFIX
@@ -301,7 +293,6 @@ message(STATUS " Libraries: ${LIBRARIES}")
 # Add tests with command
 include(cmake/NebulaStreamTest.cmake)
 if (NES_ENABLES_TESTS)
-    set(GTEST_LIBRARIES ${GTEST_LIBRARIES} ${LIBRARIES})
     # Add tests with command
     enable_testing()
     message(STATUS "Tests are enabled")

@@ -23,7 +23,8 @@ add_library(nes-test-util "Util/src/BorrowedPort.cpp"
 
 message(STATUS "Test CMAKE_CURRENT_SOURCE_DIR Directory: ${CMAKE_CURRENT_SOURCE_DIR}")
 target_include_directories(nes-test-util PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/Util/include")
-target_link_libraries(nes-test-util PUBLIC ${GTEST_LIBRARIES} nes-common)
+find_package(GTest CONFIG REQUIRED)
+target_link_libraries(nes-test-util PUBLIC GTest::gtest GTest::gtest_main GTest::gmock GTest::gmock_main nes-common)
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-test-util REUSE_FROM nes-common)
 endif ()
