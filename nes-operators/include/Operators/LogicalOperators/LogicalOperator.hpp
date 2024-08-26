@@ -103,7 +103,7 @@ public:
     /**
      * @brief Update state of the operator
      * @param newOperatorState : new state of the operator
-     * @throws InvalidOperatorStateException
+     * @throws CannotInferSchema exception
      */
     void setOperatorState(OperatorState newOperatorState);
 
