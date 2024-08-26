@@ -42,8 +42,8 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const
 {
     if (rhs->instanceOf<SourceLogicalOperator>())
     {
-        auto sourceOperator = rhs->as<SourceLogicalOperator>();
-        return sourceOperator->getSourceDescriptor()->equal(*sourceDescriptor);
+        const auto sourceOperator = rhs->as<SourceLogicalOperator>();
+        return *sourceOperator->getSourceDescriptor() == *sourceDescriptor;
     }
     return false;
 }
@@ -51,12 +51,7 @@ bool SourceLogicalOperator::equal(NodePtr const& rhs) const
 std::string SourceLogicalOperator::toString() const
 {
     std::stringstream ss;
-    ss << "SOURCE(opId: " << id << ": originid: " << originId;
-    if (sourceDescriptor)
-    {
-        ss << ", " << sourceDescriptor->getLogicalSourceName() << "," << sourceDescriptor->toString();
-    }
-    ss << ")";
+    ss << "SOURCE(opId: " << id << ": originid: " << originId << ", " << sourceDescriptor << ")";
 
     return ss.str();
 }
@@ -93,8 +88,9 @@ OperatorPtr SourceLogicalOperator::copy()
 void SourceLogicalOperator::inferStringSignature()
 {
     ///Update the signature
-    auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")");
-    hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
+    NES_THROW_RUNTIME_ERROR("Not supporting 'inferStringSignature' for SourceLogicalOperator right now.");
+    ///-Todo auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getSourceName() + ")");
+    ///-Todo hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getSourceName() + ")"};
 }
 
 void SourceLogicalOperator::inferInputOrigins()

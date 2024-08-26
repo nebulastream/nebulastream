@@ -17,9 +17,7 @@
 #include <fstream>
 #include <Operators/LogicalOperators/Sinks/FileSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <fmt/core.h>
@@ -175,10 +173,10 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor();
-            if (auto csvSourceDescriptor = dynamic_cast<CSVSourceDescriptor*>(sourceDescriptor.get()))
+            if (sourceDescriptor->getSourceName() == SourceDescriptor::PLUGIN_NAME_CSV)
             {
                 /// Set socket port and serialize again.
-                csvSourceDescriptor->getSourceConfig()->setFilePath(std::move(newInputFileName));
+                sourceDescriptor->setConfigType("filepath", newInputFileName);
                 deserializedSourceOperator->as<SourceLogicalOperator>()->setSourceDescriptor(std::move(sourceDescriptor));
                 auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 
@@ -190,7 +188,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
     }
 }
 
-void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber)
+void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint32_t mockTcpServerPort, const int sourceNumber)
 {
     int queryPlanSourceTcpCounter = 0;
     for (auto& pair : *decomposedQueryPlan.mutable_operatormap())
@@ -201,12 +199,12 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor();
-            if (auto tcpSourceDescriptor = dynamic_cast<TCPSourceDescriptor*>(sourceDescriptor.get()))
+            if (sourceDescriptor->getSourceName() == SourceDescriptor::PLUGIN_NAME_TCP)
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// Set socket port and serialize again.
-                    tcpSourceDescriptor->getSourceConfig()->setSocketPort(mockTcpServerPort);
+                    sourceDescriptor->setConfigType("socket_port", mockTcpServerPort);
                     deserializedSourceOperator->as<SourceLogicalOperator>()->setSourceDescriptor(std::move(sourceDescriptor));
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 

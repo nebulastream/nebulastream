@@ -22,8 +22,6 @@
 #include <Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp>
 #include <Operators/LogicalOperators/LogicalBinaryOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/UDFs/UDFDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -39,7 +37,8 @@ namespace NES
 QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName)
 {
     NES_DEBUG("QueryPlanBuilder: create query plan for input source  {}", sourceName);
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create(sourceName, "INVALID"));
+    SourceDescriptor::Config sourceDescriptorConfig{};
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(std::make_unique<SourceDescriptor>(sourceName));
     auto queryPlanPtr = QueryPlan::create(sourceOperator);
     queryPlanPtr->setSourceConsumed(sourceName);
     return queryPlanPtr;

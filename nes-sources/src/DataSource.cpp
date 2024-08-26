@@ -88,7 +88,6 @@ bool DataSource::start()
             NES_WARNING("DataSource {}: is already running", originId);
             return false;
         }
-        type = sourceImplementation->getType();
         NES_DEBUG("DataSource {}: Spawn thread", originId);
         expected = false;
         if (wasStarted.compare_exchange_strong(expected, true))
@@ -204,7 +203,8 @@ void DataSource::runningRoutine()
         std::string thName = fmt::format("DataSrc-{}", originId);
         setThreadName(thName.c_str());
 
-        NES_DEBUG("DataSource {}: Running Data Source of type={}", originId, magic_enum::enum_name(sourceImplementation->getType()));
+        ///-Todo: improve debugging of descriptor
+        NES_DEBUG("DataSource {}: Running Data Source of type={}", originId, sourceImplementation->toString());
 
         /// open
         bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
@@ -225,7 +225,7 @@ void DataSource::runningRoutine()
                     "DataSource produced buffer {} type= {} string={}: Received Data: {}"
                     "originId={}",
                     numberOfBuffersProduced,
-                    magic_enum::enum_name(sourceImplementation->getType()),
+                    sourceImplementation->toString(),
                     this->toString(),
                     tupleBuffer.getNumberOfTuples(),
                     this->originId);

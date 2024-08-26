@@ -16,7 +16,7 @@
 
 #include <fstream>
 #include <string>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Util/TestTupleBuffer.hpp>
@@ -43,16 +43,14 @@ public:
 
     std::string toString() const override;
 
-    SourceType getType() const override;
-
-    const CSVSourceTypePtr& getSourceConfig() const;
+    const SourceDescriptor::Config& getSourceConfig() const;
 
 protected:
     std::ifstream input;
     bool fileEnded;
 
 private:
-    CSVSourceTypePtr csvSourceType;
+    std::unique_ptr<SourceDescriptor> descriptor;
     std::string filePath;
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;
@@ -63,7 +61,6 @@ private:
     bool skipHeader;
     CSVParserPtr inputParser;
 
-    uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
 };

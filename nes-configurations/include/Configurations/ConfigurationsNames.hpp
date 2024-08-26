@@ -25,8 +25,7 @@ namespace NES::Configurations
 enum class InputFormat : uint8_t
 {
     JSON,
-    CSV,
-    NES_BINARY
+    CSV
 };
 
 /**

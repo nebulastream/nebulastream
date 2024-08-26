@@ -18,38 +18,49 @@
 #include <unordered_map>
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
-#include <Exceptions/RuntimeException.hpp>
 namespace NES
 {
 
 class SourceDescriptor
 {
-    using SourceDescriptorTypes = std::
-        variant<int32_t, uint32_t, bool, float, double, std::string, Configurations::InputFormat, Configurations::TCPDecideMessageSize>;
-
 public:
-    using Config = std::unordered_map<std::string, SourceDescriptorTypes>;
+    using ConfigType
+        = std::variant<int32_t, int64_t, uint32_t, uint64_t, bool, char, float, double, std::string, Configurations::TCPDecideMessageSize>;
+    using Config = std::unordered_map<std::string, ConfigType>;
 
-    static inline const std::string PLUGIN_NAME_CSV = "CSV";
+    static inline const std::string PLUGIN_NAME_CSV = "CSV"; ///-Todo: looks ugly
     static inline const std::string PLUGIN_NAME_TCP = "TCP";
 
-    explicit SourceDescriptor(SchemaPtr schema, std::string sourceName, Config&& config);
+    explicit SourceDescriptor(std::string sourceName);
+    explicit SourceDescriptor(std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
+    explicit SourceDescriptor(SchemaPtr schema, std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
     ~SourceDescriptor() = default;
 
-    SchemaPtr getSchema() const; ///-todo: can we remove the getter?
-    void setSchema(const SchemaPtr& schema); ///-todo: can we remove the setter?
+    SchemaPtr getSchema() const;
+    void setSchema(const SchemaPtr& schema);
 
     [[nodiscard]] std::string getSourceName() const;
     void setSourceName(std::string sourceName);
 
-    virtual std::string toString() const = 0; ///-todo: convert toString function to ostream operator '<<'
+    friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceHandle);
 
-    [[nodiscard]] virtual bool equal(SourceDescriptor& other) const = 0; ///-todo: overload '=='
+    friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
+
+    [[nodiscard]] const Configurations::InputFormat& getInputFormat() const;
+
+    [[nodiscard]] const Config& getConfig() const;
+
+    /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
+    void setConfigType(const std::string& key, ConfigType value);
 
 private:
+    ///-Todo: workerId <-- currently always the same
     SchemaPtr schema;
     std::string sourceName;
+    Configurations::InputFormat inputFormat{};
     Config config;
+
+    friend std::ostream& operator<<(std::ostream& out, const Config& config);
 };
 
 } /// namespace NES

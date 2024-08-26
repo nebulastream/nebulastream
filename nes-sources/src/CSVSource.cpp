@@ -21,7 +21,6 @@
 #include <vector>
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Registry/GeneratedSourceRegistrar.hpp>
@@ -44,15 +43,13 @@ void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
 /// Todo #72: remove schema from CSVSource (only required by parser).
 CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
 {
-    auto csvSourceType = dynamic_cast<CSVSourceDescriptor*>(sourceDescriptor.get())->getSourceConfig();
-    this->csvSourceType = std::move(csvSourceType);
+    this->descriptor = std::move(sourceDescriptor);
     this->fileEnded = false;
-    this->filePath = this->csvSourceType->getFilePath()->getValue();
-    this->delimiter = this->csvSourceType->getDelimiter()->getValue();
-    this->skipHeader = this->csvSourceType->getSkipHeader()->getValue();
-
-    this->numberOfBuffersToProduce = this->csvSourceType->getNumberOfBuffersToProduce()->getValue();
-    this->numberOfTuplesToProducePerBuffer = this->csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
+    this->filePath = std::get<std::string>(this->descriptor->getConfig().at("filepath"));
+    this->delimiter = std::get<std::string>(this->descriptor->getConfig().at("delimiter"));
+    this->skipHeader = std::get<bool>(this->descriptor->getConfig().at("skipHeader"));
+    this->numberOfTuplesToProducePerBuffer = std::get<uint32_t>(
+        this->descriptor->getConfig().at("numberOfTuplesToProducePerBuffer")); ///-Todo: uint32_t vs uint64_t leads to crash
     this->tupleSize = schema.getSchemaSizeInBytes();
 
     struct Deleter
@@ -163,14 +160,9 @@ std::string CSVSource::toString() const
     return fmt::format("FILE={} numBuff={})", filePath, this->numberOfTuplesToProducePerBuffer);
 }
 
-SourceType CSVSource::getType() const
+const SourceDescriptor::Config& CSVSource::getSourceConfig() const
 {
-    return SourceType::CSV_SOURCE;
-}
-
-const CSVSourceTypePtr& CSVSource::getSourceConfig() const
-{
-    return csvSourceType;
+    return this->descriptor->getConfig();
 }
 
 }

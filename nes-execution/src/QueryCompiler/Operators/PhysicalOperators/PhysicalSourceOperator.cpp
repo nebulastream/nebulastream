@@ -67,10 +67,7 @@ std::string PhysicalSourceOperator::toString() const
     out << std::endl;
     out << "PhysicalSourceOperator:\n";
     out << PhysicalUnaryOperator::toString();
-    if (sourceDescriptor != nullptr)
-    {
-        out << sourceDescriptor->toString() << "\n";
-    }
+    out << sourceDescriptor;
     out << "originId: " << originId;
     out << std::endl;
     return out.str();

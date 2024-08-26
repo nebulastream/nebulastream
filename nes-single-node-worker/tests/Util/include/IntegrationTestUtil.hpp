@@ -58,8 +58,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
 void replaceFileSinkPath(SerializableDecomposedQueryPlan& decomposedQueryPlan, const std::string& fileName);
 
 /// @brief Iterates over a decomposed query plan and replaces all sockets with the a free port generated for the mocked tcp server.
-void replacePortInTcpSources(
-    SerializableDecomposedQueryPlan& decomposedQueryPlan, const uint16_t mockTcpServerPort, const int sourceNumber);
+void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPlan, uint32_t mockTcpServerPort, int sourceNumber);
 }
 
 }

@@ -31,10 +31,7 @@
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkDescriptor.hpp>
 #include <Operators/LogicalOperators/Sinks/SinkLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/CsvSourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
-#include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp>
 #include <Operators/LogicalOperators/Watermarks/WatermarkAssignerLogicalOperator.hpp>
@@ -871,43 +868,40 @@ OperatorSerializationUtil::deserializeBatchJoinOperator(const SerializableOperat
 void OperatorSerializationUtil::serializeSourceDescriptor(
     std::unique_ptr<SourceDescriptor> sourceDescriptor, SerializableOperator_SourceDetails& sourceDetails, bool isClientOriginated)
 {
-    NES_TRACE("OperatorSerializationUtil:: serialize to SourceDescriptor");
-    NES_DEBUG("OperatorSerializationUtil:: serialize to SourceDescriptor with ={}", sourceDescriptor->toString());
+    std::stringstream ss;
+    ss << *sourceDescriptor;
+    NES_TRACE("OperatorSerializationUtil:: serialize to SourceDescriptor with ={}", ss.str());
 
-    if (dynamic_cast<TCPSourceDescriptor*>(sourceDescriptor.get()))
+    if (sourceDescriptor->getSourceName() == SourceDescriptor::PLUGIN_NAME_TCP)
     {
         /// serialize TCP source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor");
-        auto tcpSourceDescriptor = dynamic_cast<TCPSourceDescriptor*>(sourceDescriptor.get());
-        ///init serializable source config
+        /// init serializable source config
         auto serializedPhysicalSourceType = new SerializablePhysicalSourceType();
-        serializedPhysicalSourceType->set_sourcetype(tcpSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
-        ///init serializable tcp source config
+        serializedPhysicalSourceType->set_sourcetype(SourceDescriptor::PLUGIN_NAME_TCP);
+        /// init serializable tcp source config
         auto tcpSerializedSourceConfig = SerializablePhysicalSourceType_SerializableTCPSourceType();
-        tcpSerializedSourceConfig.set_sockethost(tcpSourceDescriptor->getSourceConfig()->getSocketHost()->getValue());
-        tcpSerializedSourceConfig.set_socketport(tcpSourceDescriptor->getSourceConfig()->getSocketPort()->getValue());
-        tcpSerializedSourceConfig.set_socketdomain(tcpSourceDescriptor->getSourceConfig()->getSocketDomain()->getValue());
-        tcpSerializedSourceConfig.set_sockettype(tcpSourceDescriptor->getSourceConfig()->getSocketType()->getValue());
+        tcpSerializedSourceConfig.set_sockethost(std::get<std::string>(sourceDescriptor->getConfig().at("socket_host")));
+        tcpSerializedSourceConfig.set_socketport(std::get<uint32_t>(sourceDescriptor->getConfig().at("socket_port")));
+        tcpSerializedSourceConfig.set_socketdomain(std::get<uint32_t>(sourceDescriptor->getConfig().at("socket_domain")));
+        tcpSerializedSourceConfig.set_sockettype(std::get<uint32_t>(sourceDescriptor->getConfig().at("socket_type")));
         std::string tupleSeparator;
-        tupleSeparator = tcpSourceDescriptor->getSourceConfig()->getTupleSeparator()->getValue();
+        tupleSeparator = std::get<char>(sourceDescriptor->getConfig().at("tuple_separator"));
         tcpSerializedSourceConfig.set_tupleseparator(tupleSeparator);
-        tcpSerializedSourceConfig.set_flushintervalms(tcpSourceDescriptor->getSourceConfig()->getFlushIntervalMS()->getValue());
-        switch (tcpSourceDescriptor->getSourceConfig()->getInputFormat()->getValue())
+        tcpSerializedSourceConfig.set_flushintervalms(std::get<float>(sourceDescriptor->getConfig().at("flush_interval_ms")));
+        switch (sourceDescriptor->getInputFormat())
         {
             case Configurations::InputFormat::JSON:
-                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_JSON);
+                tcpSerializedSourceConfig.set_inputformat(InputFormat::JSON);
                 break;
             case Configurations::InputFormat::CSV:
-                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_CSV);
-                break;
-            case Configurations::InputFormat::NES_BINARY:
-                tcpSerializedSourceConfig.set_inputformat(SerializablePhysicalSourceType_InputFormat_NES_BINARY);
+                tcpSerializedSourceConfig.set_inputformat(InputFormat::CSV);
                 break;
         }
 
         using enum Configurations::TCPDecideMessageSize;
-        switch (tcpSourceDescriptor->getSourceConfig()->getDecideMessageSize()->getValue())
+        switch (std::get<Configurations::TCPDecideMessageSize>(sourceDescriptor->getConfig().at("decided_message_size")))
         {
             case TUPLE_SEPARATOR:
                 tcpSerializedSourceConfig.set_tcpdecidemessagesize(SerializablePhysicalSourceType_TCPDecideMessageSize_TUPLE_SEPARATOR);
@@ -921,66 +915,58 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
                     SerializablePhysicalSourceType_TCPDecideMessageSize_BUFFER_SIZE_FROM_SOCKET);
                 break;
         }
-        tcpSerializedSourceConfig.set_socketbuffersize(tcpSourceDescriptor->getSourceConfig()->getSocketBufferSize()->getValue());
+        tcpSerializedSourceConfig.set_socketbuffersize(std::get<uint32_t>(sourceDescriptor->getConfig().at("socket_buffer_size")));
         tcpSerializedSourceConfig.set_bytesusedforsocketbuffersizetransfer(
-            tcpSourceDescriptor->getSourceConfig()->getBytesUsedForSocketBufferSizeTransfer()->getValue());
+            std::get<uint32_t>(sourceDescriptor->getConfig().at("bytes_used_for_socket_buffer_size_transfer")));
         serializedPhysicalSourceType->mutable_specificphysicalsourcetype()->PackFrom(tcpSerializedSourceConfig);
-        ///init serializable tcp source descriptor
+        /// init serializable tcp source descriptor
         auto tcpSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor();
         tcpSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedPhysicalSourceType);
 
         /// serialize source schema
-        SchemaSerializationUtil::serializeSchema(tcpSourceDescriptor->getSchema(), tcpSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(sourceDescriptor->getSchema(), tcpSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(tcpSerializedSourceDescriptor);
     }
-    else if (dynamic_cast<CSVSourceDescriptor*>(sourceDescriptor.get()))
+    else if (sourceDescriptor->getSourceName() == SourceDescriptor::PLUGIN_NAME_CSV)
     {
         /// serialize csv source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
-        auto csvSourceDescriptor = dynamic_cast<CSVSourceDescriptor*>(sourceDescriptor.get());
         /// init serializable source config
         auto serializedSourceConfig = new SerializablePhysicalSourceType();
-        serializedSourceConfig->set_sourcetype(csvSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
+        serializedSourceConfig->set_sourcetype(SourceDescriptor::PLUGIN_NAME_CSV);
         /// init serializable csv source config
         auto csvSerializedSourceConfig = SerializablePhysicalSourceType_SerializableCSVSourceType();
-        csvSerializedSourceConfig.set_numberofbufferstoproduce(
-            csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
         csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
-            csvSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
-        csvSerializedSourceConfig.set_filepath(csvSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
-        csvSerializedSourceConfig.set_skipheader(csvSourceDescriptor->getSourceConfig()->getSkipHeader()->getValue());
-        csvSerializedSourceConfig.set_delimiter(csvSourceDescriptor->getSourceConfig()->getDelimiter()->getValue());
+            std::get<uint32_t>(sourceDescriptor->getConfig().at("numberOfTuplesToProducePerBuffer")));
+        csvSerializedSourceConfig.set_filepath(std::get<std::string>(sourceDescriptor->getConfig().at("filepath")));
+        csvSerializedSourceConfig.set_skipheader(std::get<bool>(sourceDescriptor->getConfig().at("skipHeader")));
+        csvSerializedSourceConfig.set_delimiter(std::get<std::string>(sourceDescriptor->getConfig().at("delimiter")));
         serializedSourceConfig->mutable_specificphysicalsourcetype()->PackFrom(csvSerializedSourceConfig);
         /// init serializable csv source descriptor
         auto csvSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor();
         csvSerializedSourceDescriptor.set_allocated_physicalsourcetype(serializedSourceConfig);
         /// serialize source schema
-        SchemaSerializationUtil::serializeSchema(csvSourceDescriptor->getSchema(), csvSerializedSourceDescriptor.mutable_sourceschema());
+        SchemaSerializationUtil::serializeSchema(sourceDescriptor->getSchema(), csvSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(csvSerializedSourceDescriptor);
     }
-    else if (dynamic_cast<LogicalSourceDescriptor*>(sourceDescriptor.get()))
+    else ///-Todo: handle cases better
     {
         /// serialize logical source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor");
-        auto logicalSourceDescriptor = dynamic_cast<LogicalSourceDescriptor*>(sourceDescriptor.get());
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
-        logicalSourceSerializedSourceDescriptor.set_logicalsourcename(logicalSourceDescriptor->getLogicalSourceName());
-        logicalSourceSerializedSourceDescriptor.set_sourcename(logicalSourceDescriptor->getSourceName());
+        ///-Todo: need to handle LogicalSourceDescriptor <-- logical source name as config parameter?
+        logicalSourceSerializedSourceDescriptor.set_logicalsourcename("INVALID");
+        logicalSourceSerializedSourceDescriptor.set_sourcename(sourceDescriptor->getSourceName());
 
         if (!isClientOriginated)
         {
             /// serialize source schema
             SchemaSerializationUtil::serializeSchema(
-                logicalSourceDescriptor->getSchema(), logicalSourceSerializedSourceDescriptor.mutable_sourceschema());
+                sourceDescriptor->getSchema(), logicalSourceSerializedSourceDescriptor.mutable_sourceschema());
         }
         sourceDetails.mutable_sourcedescriptor()->PackFrom(logicalSourceSerializedSourceDescriptor);
-    }
-    else
-    {
-        NES_ERROR("OperatorSerializationUtil: Unknown Source Descriptor Type {}", sourceDescriptor->toString());
-        throw std::invalid_argument("Unknown Source Descriptor Type");
     }
 }
 
@@ -990,6 +976,7 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
     NES_TRACE("OperatorSerializationUtil:: de-serialized SourceDescriptor id={}", sourceDetails.DebugString());
     const auto& serializedSourceDescriptor = sourceDetails.sourcedescriptor();
 
+    ///-Todo: error handling, check that values are not nullptrs, etc. (could use validation!)
     if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor>())
     {
         /// de-serialize tcp source descriptor
@@ -1003,31 +990,21 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         auto tcpSourceConfig = new SerializablePhysicalSourceType_SerializableTCPSourceType();
         tcpSerializedSourceDescriptor->physicalsourcetype().specificphysicalsourcetype().UnpackTo(tcpSourceConfig);
         SourceDescriptor::Config sourceDescriptorConfig{};
+        ///-Todo: solidify configuration, can we do better than strings? If strings, there must be a central place where strings are defined.
         sourceDescriptorConfig.emplace(std::make_pair("socket_host", tcpSourceConfig->sockethost()));
         sourceDescriptorConfig.emplace(std::make_pair("socket_port", tcpSourceConfig->socketport()));
         sourceDescriptorConfig.emplace(std::make_pair("socket_domain", tcpSourceConfig->socketdomain()));
         sourceDescriptorConfig.emplace(std::make_pair("socket_type", tcpSourceConfig->sockettype()));
         sourceDescriptorConfig.emplace(std::make_pair("flush_interval_ms", tcpSourceConfig->flushintervalms()));
-        sourceDescriptorConfig.emplace(
-            std::make_pair("input_format", static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat())));
+        ///-Todo: improve on enum
         sourceDescriptorConfig.emplace(std::make_pair(
-            "decide_message_size", static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize())));
+            "decided_message_size", static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize())));
         sourceDescriptorConfig.emplace(std::make_pair("tuple_separator", tcpSourceConfig->tupleseparator().at(0)));
         sourceDescriptorConfig.emplace(std::make_pair("socket_buffer_size", tcpSourceConfig->socketbuffersize()));
         sourceDescriptorConfig.emplace(
             std::make_pair("bytes_used_for_socket_buffer_size_transfer", tcpSourceConfig->bytesusedforsocketbuffersizetransfer()));
-        ///-todo sourceConfig->setSocketHost(tcpSourceConfig->sockethost());
-        ///-todo sourceConfig->setSocketPort(tcpSourceConfig->socketport());
-        ///-todo sourceConfig->setSocketDomain(tcpSourceConfig->socketdomain());
-        ///-todo sourceConfig->setSocketType(tcpSourceConfig->sockettype());
-        ///-todo sourceConfig->setFlushIntervalMS(tcpSourceConfig->flushintervalms());
-        ///-todo sourceConfig->setInputFormat(static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat()));
-        ///-todo sourceConfig->setDecideMessageSize(static_cast<Configurations::TCPDecideMessageSize>(tcpSourceConfig->tcpdecidemessagesize()));
-        ///-todo sourceConfig->setTupleSeparator(tcpSourceConfig->tupleseparator().at(0));
-        ///-todo sourceConfig->setSocketBufferSize(tcpSourceConfig->socketbuffersize());
-        ///-todo sourceConfig->setBytesUsedForSocketBufferSizeTransfer(tcpSourceConfig->bytesusedforsocketbuffersizetransfer());
-        ///-Todo: create a SourceDescriptor, passing the source name and the sourceConfig
-        return std::make_unique<SourceDescriptor>(schema, "CSV", std::move(sourceDescriptorConfig));
+        return std::make_unique<SourceDescriptor>(
+            schema, "TCP", static_cast<Configurations::InputFormat>(tcpSourceConfig->inputformat()), std::move(sourceDescriptorConfig));
     }
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor>())
     {
@@ -1038,16 +1015,18 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         /// de-serialize source schema
         auto schema = SchemaSerializationUtil::deserializeSchema(csvSerializedSourceDescriptor.sourceschema());
         auto physicalSourceType = csvSerializedSourceDescriptor.physicalsourcetype();
-        auto sourceConfig = CSVSourceType::create(physicalSourceType.logicalsourcename());
         auto csvSourceConfig = new SerializablePhysicalSourceType_SerializableCSVSourceType();
         physicalSourceType.specificphysicalsourcetype().UnpackTo(csvSourceConfig);
-        sourceConfig->setFilePath(csvSourceConfig->filepath());
-        sourceConfig->setSkipHeader(csvSourceConfig->skipheader());
-        sourceConfig->setDelimiter(csvSourceConfig->delimiter());
-        sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(csvSourceConfig->numberoftuplestoproduceperbuffer());
-        auto ret = CSVSourceDescriptor::create(schema, sourceConfig);
-        return ret;
+
+        SourceDescriptor::Config sourceDescriptorConfig{};
+        sourceDescriptorConfig.emplace(std::make_pair("filepath", csvSourceConfig->filepath()));
+        sourceDescriptorConfig.emplace(std::make_pair("skipHeader", csvSourceConfig->skipheader()));
+        sourceDescriptorConfig.emplace(std::make_pair("delimiter", csvSourceConfig->delimiter()));
+        ///-Todo, is this still used?
+        sourceDescriptorConfig.emplace(
+            std::make_pair("numberOfTuplesToProducePerBuffer", csvSourceConfig->numberoftuplestoproduceperbuffer()));
+        ///-Todo: must be changed when switching to FileSource
+        return std::make_unique<SourceDescriptor>(schema, "CSV", Configurations::InputFormat::CSV, std::move(sourceDescriptorConfig));
     }
     else if (serializedSourceDescriptor.Is<SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor>())
     {
@@ -1057,16 +1036,21 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         serializedSourceDescriptor.UnpackTo(&logicalSourceSerializedSourceDescriptor);
 
         /// de-serialize source schema
-        std::unique_ptr<SourceDescriptor> logicalSourceDescriptor = LogicalSourceDescriptor::create(
-            logicalSourceSerializedSourceDescriptor.logicalsourcename(), logicalSourceSerializedSourceDescriptor.sourcename());
+        SourceDescriptor::Config sourceDescriptorConfig{};
         /// check if the schema is set
         if (logicalSourceSerializedSourceDescriptor.has_sourceschema())
         {
             auto schema = SchemaSerializationUtil::deserializeSchema(logicalSourceSerializedSourceDescriptor.sourceschema());
-            logicalSourceDescriptor->setSchema(schema);
+            return std::make_unique<SourceDescriptor>(
+                std::move(schema),
+                logicalSourceSerializedSourceDescriptor.sourcename(),
+                static_cast<Configurations::InputFormat>(logicalSourceSerializedSourceDescriptor.inputformat()),
+                std::move(sourceDescriptorConfig));
         }
-
-        return logicalSourceDescriptor;
+        return std::make_unique<SourceDescriptor>(
+            logicalSourceSerializedSourceDescriptor.sourcename(),
+            static_cast<Configurations::InputFormat>(logicalSourceSerializedSourceDescriptor.inputformat()),
+            std::move(sourceDescriptorConfig));
     }
     else
     {

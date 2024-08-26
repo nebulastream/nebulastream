@@ -19,7 +19,6 @@
 #include <mutex>
 #include <string>
 #include <API/Schema.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/PhysicalSourceType.hpp>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
@@ -77,7 +76,6 @@ protected:
     SourceReturnType::EmitFunction emitFunction;
     std::shared_ptr<NES::Runtime::AbstractBufferProvider> bufferProvider{nullptr};
     uint64_t numSourceLocalBuffers;
-    SourceType type;
     std::atomic_bool wasStarted{false};
     std::atomic_bool futureRetrieved{false};
     std::atomic_bool running{false};

@@ -16,7 +16,6 @@
 
 #include <cstdint>
 #include <memory>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
 #include <Sources/Util/MMapCircularBuffer.hpp>
@@ -48,9 +47,7 @@ public:
 
     std::string toString() const override;
 
-    SourceType getType() const override;
-
-    const TCPSourceTypePtr& getSourceConfig() const;
+    const SourceDescriptor::Config& getSourceConfig() const;
 
     /// Open TCP connection.
     void open() override;
@@ -60,14 +57,14 @@ public:
 private:
     /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize
-    [[nodiscard]] size_t parseBufferSize(SPAN_TYPE<const char> data) const;
+    [[nodiscard]] static size_t parseBufferSize(SPAN_TYPE<const char> data);
 
     std::vector<NES::PhysicalTypePtr> physicalTypes;
     ParserPtr inputParser;
     int connection = -1;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
-    TCPSourceTypePtr sourceConfig;
+    std::unique_ptr<SourceDescriptor> descriptor; ///-Todo: make member of Source?, also 'generatedTuples' and 'generatedBuffers'?
     int sockfd = -1;
     timeval timeout;
     MMapCircularBuffer circularBuffer;
