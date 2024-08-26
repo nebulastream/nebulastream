@@ -20,6 +20,7 @@
 #include <Nautilus/Interface/PagedVector/PagedVector.hpp>
 #include <Nautilus/Interface/PagedVector/PagedVectorRef.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Runtime::Execution::Operators
@@ -122,7 +123,7 @@ Value<> encodeData(const Value<>& value, const Value<>& sortOrder)
     }
     else
     {
-        throw Exceptions::NotImplementedException("encodeData is not implemented for the given type.");
+        throw NotImplemented("encodeData is not implemented for the given type.");
     }
 }
 

@@ -39,7 +39,7 @@
  * SOFTWARE.
  */
 
-#include <Exceptions/NotImplementedException.hpp>
+#include <ErrorHandling.hpp>
 
 #include <bit>
 #include <cfloat>
@@ -86,7 +86,7 @@ inline constexpr T byteSwap(T value)
         case 8:
             return std::endian::big == std::endian::native ? value : __builtin_bswap64(value);
         default:
-            throw Exceptions::NotImplementedException("byteSwap only supports integral types with sizes 1, 2, 4, or 8 bytes.");
+            throw NotImplemented("byteSwap only supports integral types with sizes 1, 2, 4, or 8 bytes.");
     }
 }
 
@@ -102,7 +102,7 @@ struct EncoderTraits
 {
     using EncodedType = T;
 
-    static EncodedType Encode(T, bool) { throw Exceptions::NotImplementedException("Encode not implemented for this type"); }
+    static EncodedType Encode(T, bool) { throw NotImplemented("Encode not implemented for this type"); }
 };
 
 /**
