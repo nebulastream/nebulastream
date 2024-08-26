@@ -24,22 +24,24 @@ using SchemaPtr = std::shared_ptr<Schema>;
 class SourceDescriptor
 {
 public:
-    static inline const std::string PLUGIN_NAME_CSV = "CSV";
-    static inline const std::string PLUGIN_NAME_TCP = "TCP";
+    ///-Todo: can we somehow move Configurations::TCPDecideMessageSize out of the ConfigType variant? (it is too specialized)
+    using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, Configurations::TCPDecideMessageSize>;
+    using Config = std::unordered_map<std::string, ConfigType>;
 
-    explicit SourceDescriptor(SchemaPtr schema);
+    explicit SourceDescriptor(std::string sourceName);
+    explicit SourceDescriptor(std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
+    explicit SourceDescriptor(SchemaPtr schema, std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
+    ~SourceDescriptor() = default;
 
-    explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName);
-
-    explicit SourceDescriptor(SchemaPtr schema, std::string logicalSourceName, std::string sourceName);
+    friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceHandle);
+    friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
 
     SchemaPtr getSchema() const;
 
     std::string getLogicalSourceName() const;
 
     void setSchema(const SchemaPtr& schema);
-
-    virtual std::string toString() const = 0;
+virtual std::string toString() const = 0;
 
     [[nodiscard]] virtual bool equal(SourceDescriptor& other) const = 0;
 
@@ -48,8 +50,21 @@ public:
     [[nodiscard]] const std::string& getSourceName() const;
 
     void setSourceName(std::string sourceName);
+    [[nodiscard]] const Configurations::InputFormat& getInputFormat() const;
+
+    [[nodiscard]] const Config& getConfig() const;
+
+    /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
+    void setConfigType(const std::string& key, ConfigType value);
+
+    template <typename T>
+    T getFromConfig(const std::string& key)
+    {
+        return std::get<T>(config.at(key));
+    }
 
 private:
+    /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
     SchemaPtr schema;
     std::string logicalSourceName;
     std::string sourceType;

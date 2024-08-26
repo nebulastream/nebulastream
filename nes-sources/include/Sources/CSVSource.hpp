@@ -31,8 +31,9 @@ using CSVParserPtr = std::shared_ptr<CSVParser>;
 class CSVSource : public Source
 {
 public:
-    static inline const std::string PLUGIN_NAME = "CSV";
-    CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    static inline const std::string NAME = "CSV";
+
+    explicit CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
 
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;

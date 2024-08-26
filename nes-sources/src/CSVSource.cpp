@@ -34,15 +34,22 @@
 namespace NES::Sources
 {
 
+void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
+{
+    const auto constructorFunc = [](const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) -> std::unique_ptr<Source>
+    { return std::make_unique<CSVSource>(schema, std::move(sourceDescriptor)); };
+    registry.registerPlugin((CSVSource::NAME), constructorFunc);
+}
+
 /// Todo #72: remove schema from CSVSource (only required by parser).
 CSVSource::CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
     : fileEnded(false), tupleSize(schema.getSchemaSizeInBytes())
 {
-    auto csvSourceType = dynamic_cast<const CSVSourceDescriptor*>(&sourceDescriptor)->getSourceConfig();
-    this->filePath = csvSourceType->getFilePath()->getValue();
-    this->delimiter = csvSourceType->getDelimiter()->getValue();
-    this->skipHeader = csvSourceType->getSkipHeader()->getValue();
-    this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
+    this->fileEnded = false;
+    this->filePath = descriptor.getFromConfig<std::string>("filepath");
+    this->delimiter = descriptor.getFromConfig<std::string>("delimiter");
+    this->skipHeader = descriptor.getFromConfig<bool>("skipHeader");
+    this->tupleSize = schema.getSchemaSizeInBytes();
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema.fields)

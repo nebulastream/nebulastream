@@ -96,8 +96,7 @@ OperatorPtr SourceLogicalOperator::copy()
 void SourceLogicalOperator::inferStringSignature()
 {
     ///Update the signature
-    auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")");
-    hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getLogicalSourceName() + ")"};
+    throw FunctionNotImplemented("Not supporting 'inferStringSignature' for SourceLogicalOperator.");
 }
 
 void SourceLogicalOperator::inferInputOrigins()

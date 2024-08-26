@@ -22,6 +22,8 @@
 #include <Operators/LogicalOperators/Sources/TCPSourceDescriptor.hpp>
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
+#include <Sources/CSVSource.hpp>
+#include <Sources/TCPSource.hpp>
 #include <fmt/core.h>
 #include <gtest/gtest.h>
 
@@ -233,7 +235,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor();
-            if (sourceDescriptor->getSourceName() == Sources::SourceDescriptor::PLUGIN_NAME_CSV)
+            if (sourceDescriptor->getSourceName() == Sources::CSVSource::NAME)
             {
                 /// Set socket port and serialize again.
                 csvSourceDescriptor->getSourceConfig()->setFilePath(std::move(newInputFileName));
@@ -259,7 +261,7 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor();
-            if (sourceDescriptor->getSourceName() == Sources::SourceDescriptor::PLUGIN_NAME_TCP)
+            if (sourceDescriptor->getSourceName() == Sources::TCPSource::NAME)
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
