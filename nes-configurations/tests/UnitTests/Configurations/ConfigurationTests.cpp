@@ -84,7 +84,9 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile)
         coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
         coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(), coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
+    EXPECT_EQ(
+        coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
+        coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
     EXPECT_EQ(
         coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
     EXPECT_EQ(
@@ -142,10 +144,14 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
         coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
         coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(), coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
+    EXPECT_EQ(
+        coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
+        coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
     EXPECT_EQ(
         coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
+    EXPECT_EQ(
+        coordinatorConfigPtr->worker.numberOfWorkerThreads.getValue(),
+        coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile)
@@ -169,7 +175,7 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile)
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->numberOfBuffersPerEpoch.getValue(), workerConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
     EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.empty());
 }
 
@@ -193,7 +199,7 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
     EXPECT_TRUE(!workerConfigPtr->physicalSourceTypes.empty());
     EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.size() == 2);
 }
@@ -205,7 +211,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
     auto commandLineParams = makeCommandLineArgs(
         {"--localWorkerHost=localhost",
          "--coordinatorPort=5000",
-         "--numWorkerThreads=5",
+         "--numberOfWorkerThreads=5",
          "--numberOfBuffersInGlobalBufferManager=2048",
          "--numberOfBuffersInSourceLocalBufferPool=128",
          "--queryCompiler.compilationStrategy=FAST",
@@ -235,7 +241,7 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
     EXPECT_NE(
         workerConfigPtr->queryCompiler.compilationStrategy.getValue(),
         workerConfigPtr->queryCompiler.compilationStrategy.getDefaultValue());
@@ -253,7 +259,7 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
     auto commandLineParams = makeCommandLineArgs(
         {"--localWorkerHost=localhost",
          "--coordinatorPort=5000",
-         "--numWorkerThreads=5",
+         "--numberOfWorkerThreads=5",
          "--numberOfBuffersInGlobalBufferManager=2048",
          "--numberOfBuffersInSourceLocalBufferPool=128",
          "--queryCompiler.compilationStrategy=FAST",
@@ -282,7 +288,7 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->numWorkerThreads.getValue(), workerConfigPtr->numWorkerThreads.getDefaultValue());
+    EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
     EXPECT_NE(
         workerConfigPtr->queryCompiler.compilationStrategy.getValue(),
         workerConfigPtr->queryCompiler.compilationStrategy.getDefaultValue());
@@ -373,8 +379,8 @@ TEST_F(ConfigTest, invalidCommandLineInputForIntOptions)
            {"--rpcPort", {"not_an_int", "1.5", "-1"}},
            {"--dataPort", {"not_an_int", "1.5", "-1"}},
            {"--coordinatorPort", {"not_an_int", "1.5", "-1"}},
-           {"--numWorkerThreads", {"not_an_int", "1.5", "-1"}},
-           {"--numWorkerThreads", {"non_zero", "0", "0.0"}},
+           {"--numberOfWorkerThreads", {"not_an_int", "1.5", "-1"}},
+           {"--numberOfWorkerThreads", {"non_zero", "0", "0.0"}},
            {"--numberOfBuffersInGlobalBufferManager", {"not_an_int", "1.5", "-1"}},
            {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
            {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
@@ -468,8 +474,8 @@ TEST_F(ConfigTest, invalidIntYamlInputs)
            {"--rpcPort", {"not_an_int", "1.5", "-1"}},
            {"--dataPort", {"not_an_int", "1.5", "-1"}},
            {"--coordinatorPort", {"not_an_int", "1.5", "-1"}},
-           {"--numWorkerThreads", {"not_an_int", "1.5", "-1"}},
-           {"--numWorkerThreads", {"non_zero", "0", "0.0"}},
+           {"--numberOfWorkerThreads", {"not_an_int", "1.5", "-1"}},
+           {"--numberOfWorkerThreads", {"non_zero", "0", "0.0"}},
            {"--numberOfBuffersInGlobalBufferManager", {"not_an_int", "1.5", "-1"}},
            {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
            {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},

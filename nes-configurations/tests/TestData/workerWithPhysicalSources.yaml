@@ -9,7 +9,7 @@ localWorkerHost: localhost
 coordinatorPort: 5000
 
 # Set the number of worker threads
-numWorkerThreads: 5
+numberOfWorkerThreads: 5
 
 # Number buffers in global buffer pool
 numberOfBuffersInGlobalBufferManager: 2048

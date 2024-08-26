@@ -21,7 +21,7 @@
 #numberOfSlots: 65535
 
 # Set the number of worker threads
-#numWorkerThreads: 1
+#numberOfWorkerThreads: 1
 
 # Number buffers in global buffer pool
 #numberOfBuffersInGlobalBufferManager: 1024

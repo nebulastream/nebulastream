@@ -102,7 +102,7 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         QueryManagerPtr queryManager{this->queryManager};
         if (!this->queryManager)
         {
-            auto numOfThreads = static_cast<uint16_t>(workerConfiguration.numWorkerThreads.getValue());
+            auto numOfThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
             auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration.numberOfBuffersPerEpoch.getValue());
             std::vector<uint64_t> workerToCoreMappingVec
                 = NES::Util::splitWithStringDelimiter<uint64_t>(workerConfiguration.workerPinList.getValue(), ",");
