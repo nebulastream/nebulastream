@@ -21,7 +21,7 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
         set(CACHE_DIR "${CMAKE_BINARY_DIR}/cache/")
         set(CACHE_FILE "${CACHE_DIR}/${SYSTEM_TEST_NAME}_0.pb")
 
-        file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/test/result)
+        file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/result)
 
         add_custom_command(
                 OUTPUT ${CACHE_FILE}
@@ -45,7 +45,8 @@ function(add_system_test SYSTEM_TEST_FILE_PATH SYSTEM_TEST_NAME)
                 SYSTEM_TEST_FILE_PATH="${SYSTEM_TEST_FILE_PATH}"
         )
 
-        gtest_discover_tests(${TEST_EXECUTABLE})
+        gtest_discover_tests(${TEST_EXECUTABLE}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endfunction()
 
 function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAMES)
@@ -90,7 +91,6 @@ function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAM
         set(TEST_EXECUTABLE "STGRP_${GROUP_NAME}")
         set(SOURCE_FILE "${CMAKE_SOURCE_DIR}/test/utils/SQLLogicTest.cpp")
         set(CACHE_DIR "${CMAKE_BINARY_DIR}/cache/")
-        message("cache file_ ${SYSTEM_TEST_FILE_PATHS}")
 
         file(MAKE_DIRECTORY ${CMAKE_BINARY_DIR}/test/result)
 
@@ -102,7 +102,7 @@ function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAM
                 list(APPEND CACHE_FILES ${CACHE_FILE})
         endforeach()
 
-        # Here we assume that the 'add_custom_command' rules for creating the cache files have already been created
+        # Here we assume that the `add_custom_command` rules for creating the cache files have already been created
         # while creating the single test targets
         add_executable(${TEST_EXECUTABLE} EXCLUDE_FROM_ALL ${SOURCE_FILE} ${CACHE_FILES})
         target_link_libraries(${TEST_EXECUTABLE}
@@ -120,5 +120,6 @@ function(add_system_test_group GROUP_NAME SYSTEM_TEST_FILE_PATHS SYSTEM_TEST_NAM
                 SYSTEM_TEST_FILE_PATH="${SYSTEM_TEST_FILE_PATHS}"
         )
 
-        gtest_discover_tests(${TEST_EXECUTABLE})
+        gtest_discover_tests(${TEST_EXECUTABLE}
+                WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endfunction()

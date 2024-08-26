@@ -12,6 +12,7 @@
     limitations under the License.
 */
 
+#include <algorithm>
 #include <fstream>
 #include <regex>
 #include <Catalogs/Source/PhysicalSource.hpp>
@@ -386,39 +387,56 @@ bool getResultOfQuery(const std::string& testName, uint64_t queryNr, std::vector
     return true;
 }
 
-bool checkResult(const std::filesystem::path& filePath, const std::string& testName, uint64_t testNr)
+bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr)
 {
     SLTParser parser{};
-    if (!parser.loadFile(filePath))
+    if (!parser.loadFile(testFilePath))
     {
-        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
+        NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
         return false;
     }
 
     bool same = true;
+    std::string printMessages;
     std::string errorMessages;
-    uint64_t queryNr = 1;
+    uint64_t currentQueryNr1 = 1;
 
+    constexpr bool printOnlyDifferences = true;
     parser.registerOnQueryResultTuplesCallback(
         [&](std::vector<std::string>&& resultLines)
         {
-            if (queryNr == testNr)
+            if (currentQueryNr1 == queryNr)
             {
                 std::vector<std::string> queryResult;
-                if (!getResultOfQuery(testName, queryNr, queryResult))
+                if (!getResultOfQuery(testName, currentQueryNr1, queryResult))
                 {
                     same = false;
                     return;
                 }
 
-                /// Remove commas from the result
+                ///Remove commas
                 std::for_each(queryResult.begin(), queryResult.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
                 std::for_each(resultLines.begin(), resultLines.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
 
-                /// Check for equality - tuples may be in different order
+                ///Original lines with their indices
+                std::vector<std::pair<int, std::string>> originalResultLines;
+                std::vector<std::pair<int, std::string>> originalQueryResult;
+
+                originalResultLines.reserve(resultLines.size());
+                for (size_t i = 0; i < resultLines.size(); ++i)
+                {
+                    originalResultLines.emplace_back(i + 1, resultLines[i]); ///store with 1-based index
+                }
+
+                originalQueryResult.reserve(queryResult.size());
+                for (size_t i = 0; i < queryResult.size(); ++i)
+                {
+                    originalQueryResult.emplace_back(i + 1, queryResult[i]); ///store with 1-based index
+                }
+
                 if (queryResult.size() != resultLines.size())
                 {
-                    errorMessages += "Result does not match for query: " + std::to_string(queryNr) + "\n";
+                    errorMessages += "Result does not match for query: " + std::to_string(currentQueryNr1) + "\n";
                     errorMessages += "Result size does not match: expected " + std::to_string(resultLines.size()) + ", got "
                         + std::to_string(queryResult.size()) + "\n";
                     same = false;
@@ -427,46 +445,89 @@ bool checkResult(const std::filesystem::path& filePath, const std::string& testN
                 std::sort(queryResult.begin(), queryResult.end());
                 std::sort(resultLines.begin(), resultLines.end());
 
-                std::cout << "Query result: " << std::endl;
-                for (const auto& line : queryResult)
-                {
-                    std::cout << line << std::endl;
-                }
-                std::cout << "Expected result: " << std::endl;
-                for (const auto& line : resultLines)
-                {
-                    std::cout << line << std::endl;
-                }
-
                 if (!std::equal(queryResult.begin(), queryResult.end(), resultLines.begin()))
                 {
-                    /// Print the difference
-                    errorMessages += "Result does not match for query: " + std::to_string(queryNr) + "\n";
-                    errorMessages += "Expected:\n";
-                    for (const auto& line : resultLines)
+                    errorMessages += "Result does not match for query " + std::to_string(currentQueryNr1) + ":\n";
+                    errorMessages += "[#Line: Expected Result | #Line: Query Result]\n";
+
+                    ///Maximum width of "Expected (Line #)"
+                    size_t maxExpectedWidth = 0;
+                    for (const auto& line : originalResultLines)
                     {
-                        errorMessages += line + "\n";
+                        size_t currentWidth = std::to_string(line.first).length() + 2 + line.second.length();
+                        maxExpectedWidth = std::max(currentWidth, maxExpectedWidth);
                     }
-                    errorMessages += "Got:\n";
-                    for (const auto& line : queryResult)
+
+                    auto maxSize = std::max(originalResultLines.size(), originalQueryResult.size());
+                    for (size_t i = 0; i < maxSize; ++i)
                     {
-                        errorMessages += line + "\n";
+                        std::string expectedStr;
+                        if (i < originalResultLines.size())
+                        {
+                            expectedStr = std::to_string(originalResultLines[i].first) + ": " + originalResultLines[i].second;
+                        }
+                        else
+                        {
+                            expectedStr = "(missing)";
+                        }
+
+                        std::string gotStr;
+                        if (i < originalQueryResult.size())
+                        {
+                            gotStr = std::to_string(originalQueryResult[i].first) + ": " + originalQueryResult[i].second;
+                        }
+                        else
+                        {
+                            gotStr = "(missing)";
+                        }
+
+                        ///Check if they are different or if we are not filtering by differences
+                        bool const areDifferent
+                            = (i >= originalResultLines.size() || i >= originalQueryResult.size()
+                               || originalResultLines[i].second != originalQueryResult[i].second);
+
+                        if (areDifferent || !printOnlyDifferences)
+                        {
+                            ///Align the expected string by padding it to the maximum width
+                            errorMessages += expectedStr;
+                            errorMessages += std::string(maxExpectedWidth - expectedStr.length(), ' ');
+                            errorMessages += " | ";
+                            errorMessages += gotStr;
+                            errorMessages += "\n";
+                        }
                     }
+
                     same = false;
                 }
             }
-            queryNr++;
+            currentQueryNr1++;
+        });
+
+
+    uint64_t currentQueryNr2 = 1;
+    parser.registerOnQueryCallback(
+        [&](const std::string& query)
+        {
+            if (currentQueryNr2 == queryNr)
+            {
+                printMessages = query;
+            }
+            currentQueryNr2++;
         });
 
     if (!parser.parse())
     {
-        NES_FATAL_ERROR("Failed to parse test file: {}", filePath);
+        NES_FATAL_ERROR("Failed to parse test file: {}", testFilePath);
         return false;
     }
 
+    /// spd logger cannot handle multiline prints with proper color and pattern. And as this is only for test runs we use stdout here.
+    std::cout << "==============================================================" << std::endl;
+    std::cout << printMessages << std::endl;
+    std::cout << "==============================================================" << std::endl;
     if (!same)
     {
-        NES_FATAL_ERROR("{}", errorMessages);
+        std::cerr << errorMessages << std::endl;
     }
 
     return same;

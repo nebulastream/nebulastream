@@ -15,7 +15,7 @@
 #include <filesystem>
 #include <regex>
 #include <string>
-//#include <BaseIntegrationTest.hpp>
+#include <filesystem>
 #include <gtest/gtest.h>
 #include <IntegrationTestUtil.hpp>
 #include <NebuLI.hpp>
