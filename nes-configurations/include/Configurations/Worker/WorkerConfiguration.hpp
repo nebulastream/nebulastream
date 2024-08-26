@@ -122,11 +122,9 @@ public:
      */
     UIntOption latency = {LATENCY_IN_MS, "0", "The link latency in milliseconds.", {std::make_shared<NumberValidation>()}};
 
-    /**
-     * @brief Configures the number of worker threads.
-     */
-    UIntOption numWorkerThreads
-        = {"numWorkerThreads",
+    /// Configures the number of worker threads with a default value of 1.
+    UIntOption numberOfWorkerThreads
+        = {"numberOfWorkerThreads",
            "1",
            "Number of worker threads.",
            {std::make_shared<NonZeroValidation>(), std::make_shared<NumberValidation>()}};
@@ -298,7 +296,7 @@ private:
             &numberOfSlots,
             &bandwidth,
             &latency,
-            &numWorkerThreads,
+            &numberOfWorkerThreads,
             &numberOfBuffersInGlobalBufferManager,
             &numberOfBuffersPerWorker,
             &numberOfBuffersInSourceLocalBufferPool,
