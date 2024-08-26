@@ -100,7 +100,7 @@ bool LogicalBatchJoinOperator::inferSchema()
         NES_ERROR(
             "LogicalBatchJoinOperator: Left input schema is not initialized. Make sure that left join key is present: {}",
             buildJoinKeyName);
-        throw TypeInferenceException("LogicalBatchJoinOperator: Left input schema is not initialized.");
+        throw CannotInferSchema("LogicalBatchJoinOperator: Left input schema is not initialized.");
     }
 
     ///Check if right input schema was identified
@@ -109,14 +109,14 @@ bool LogicalBatchJoinOperator::inferSchema()
         NES_ERROR(
             "LogicalBatchJoinOperator: Right input schema is not initialized. Make sure that right join key is present: {}",
             probeJoinKeyName);
-        throw TypeInferenceException("LogicalBatchJoinOperator: Right input schema is not initialized.");
+        throw CannotInferSchema("LogicalBatchJoinOperator: Right input schema is not initialized.");
     }
 
     ///Check that both left and right schema should be different
     if (rightInputSchema->equals(leftInputSchema, false))
     {
         NES_ERROR("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
-        throw TypeInferenceException("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
+        throw CannotInferSchema("LogicalBatchJoinOperator: Found both left and right input schema to be same.");
     }
 
     NES_DEBUG("Binary infer left schema={} right schema={}", leftInputSchema->toString(), rightInputSchema->toString());
