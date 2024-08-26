@@ -32,10 +32,10 @@ class SourceProvider
 
 public:
     SourceProvider() = default;
-    static std::shared_ptr<SourceProvider> create();
+    static std::unique_ptr<SourceProvider> create();
 
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
-    SourceHandlePtr lower(
+    static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
         std::unique_ptr<SourceDescriptor>&& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
         std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
@@ -43,6 +43,5 @@ public:
 
     ~SourceProvider() = default;
 };
-using DataSourceProviderPtr = std::shared_ptr<SourceProvider>;
 
 }

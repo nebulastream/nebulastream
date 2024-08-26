@@ -29,12 +29,12 @@
 namespace NES::Sources
 {
 
-DataSourceProviderPtr SourceProvider::create()
+std::unique_ptr<SourceProvider> SourceProvider::create()
 {
-    return std::make_shared<SourceProvider>();
+    return std::make_unique<SourceProvider>();
 }
 
-SourceHandlePtr SourceProvider::lower(
+std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     std::unique_ptr<SourceDescriptor>&& sourceDescriptor,
     std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferPool,
@@ -45,7 +45,7 @@ SourceHandlePtr SourceProvider::lower(
     const auto sourceName = sourceDescriptor->getSourceName();
     if (auto source = SourceRegistry::instance().tryCreate(sourceName, schema, std::move(sourceDescriptor)); source.has_value())
     {
-        return std::make_shared<SourceHandle>(
+        return std::make_unique<SourceHandle>(
             std::move(originId),
             std::move(schema),
             std::move(bufferPool),

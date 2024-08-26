@@ -61,7 +61,7 @@ public:
      */
     explicit ExecutableQueryPlan(
         QueryId queryId,
-        std::vector<Sources::SourceHandlePtr>&& sources,
+        std::vector<std::unique_ptr<Sources::SourceHandle>>&& sources,
         std::vector<DataSinkPtr>&& sinks,
         std::vector<ExecutablePipelinePtr>&& pipelines,
         QueryManagerPtr&& queryManager,
@@ -78,7 +78,7 @@ public:
      */
     static ExecutableQueryPlanPtr create(
         QueryId queryId,
-        std::vector<Sources::SourceHandlePtr> sources,
+        std::vector<std::unique_ptr<Sources::SourceHandle>> sources,
         std::vector<DataSinkPtr> sinks,
         std::vector<ExecutablePipelinePtr> pipelines,
         QueryManagerPtr queryManager,
@@ -136,7 +136,7 @@ public:
     /**
      * @brief Get data sources.
      */
-    [[nodiscard]] const std::vector<Sources::SourceHandlePtr>& getSources() const;
+    [[nodiscard]] const std::vector<std::unique_ptr<Sources::SourceHandle>>& getSources() const;
 
     /**
      * @brief Get data sinks.
@@ -194,7 +194,7 @@ private:
 
 private:
     const QueryId queryId;
-    std::vector<Sources::SourceHandlePtr> sources;
+    std::vector<std::unique_ptr<Sources::SourceHandle>> sources;
     std::vector<DataSinkPtr> sinks;
     std::vector<ExecutablePipelinePtr> pipelines;
     QueryManagerPtr queryManager;
