@@ -18,10 +18,10 @@
 #include <vector>
 #include <API/Schema.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <Sources/CSVSource.hpp>
 #include <Sources/Parsers/CSVParser.hpp>
 #include <Sources/Registry/SourceRegistry.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceProvider.hpp>
 #include <Sources/TCPSource.hpp>

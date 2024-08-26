@@ -173,7 +173,7 @@ void replaceInputFileInCSVSources(SerializableDecomposedQueryPlan& decomposedQue
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor();
-            if (sourceDescriptor->getSourceName() == SourceDescriptor::PLUGIN_NAME_CSV)
+            if (sourceDescriptor->getSourceName() == Sources::SourceDescriptor::PLUGIN_NAME_CSV)
             {
                 /// Set socket port and serialize again.
                 sourceDescriptor->setConfigType("filepath", newInputFileName);
@@ -199,7 +199,7 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
         {
             auto deserializedSourceOperator = OperatorSerializationUtil::deserializeOperator(value);
             auto sourceDescriptor = deserializedSourceOperator->as<SourceLogicalOperator>()->getSourceDescriptor();
-            if (sourceDescriptor->getSourceName() == SourceDescriptor::PLUGIN_NAME_TCP)
+            if (sourceDescriptor->getSourceName() == Sources::SourceDescriptor::PLUGIN_NAME_TCP)
             {
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {

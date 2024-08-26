@@ -14,6 +14,7 @@
 #pragma once
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -26,19 +27,19 @@ public:
         OriginId originId,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
     static std::shared_ptr<PhysicalSourceOperator> create(
         OperatorId id,
         OriginId originId,
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
-        std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
     static std::shared_ptr<PhysicalSourceOperator>
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
-    std::unique_ptr<SourceDescriptor> getSourceDescriptor();
+    std::unique_ptr<Sources::SourceDescriptor> getSourceDescriptor();
 
     void setOriginId(OriginId originId);
 
@@ -47,7 +48,7 @@ public:
     OperatorPtr copy() override;
 
 private:
-    std::unique_ptr<SourceDescriptor> sourceDescriptor;
+    std::unique_ptr<Sources::SourceDescriptor> sourceDescriptor;
     OriginId originId;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators

@@ -117,7 +117,4 @@ using WatermarkStrategyPtr = std::shared_ptr<WatermarkStrategy>;
 class EventTimeWatermarkStrategy;
 using EventTimeWatermarkStrategyPtr = std::shared_ptr<EventTimeWatermarkStrategy>;
 
-class WatermarkStrategyDescriptor;
-using WatermarkStrategyDescriptorPtr = std::shared_ptr<WatermarkStrategyDescriptor>;
-
 } /// namespace NES::Windowing

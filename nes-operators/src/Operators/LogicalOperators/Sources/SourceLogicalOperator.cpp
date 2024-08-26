@@ -23,12 +23,13 @@
 namespace NES
 {
 
-SourceLogicalOperator::SourceLogicalOperator(std::unique_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id)
+SourceLogicalOperator::SourceLogicalOperator(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
 
-SourceLogicalOperator::SourceLogicalOperator(std::unique_ptr<SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
+SourceLogicalOperator::SourceLogicalOperator(
+    std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, OperatorId id, OriginId originId)
     : Operator(id), LogicalUnaryOperator(id), OriginIdAssignmentOperator(id, originId), sourceDescriptor(std::move(sourceDescriptor))
 {
 }
@@ -56,7 +57,7 @@ std::string SourceLogicalOperator::toString() const
     return ss.str();
 }
 
-std::unique_ptr<SourceDescriptor> SourceLogicalOperator::getSourceDescriptor()
+std::unique_ptr<Sources::SourceDescriptor> SourceLogicalOperator::getSourceDescriptor()
 {
     return std::move(sourceDescriptor);
 }
@@ -68,7 +69,7 @@ bool SourceLogicalOperator::inferSchema()
     return true;
 }
 
-void SourceLogicalOperator::setSourceDescriptor(std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+void SourceLogicalOperator::setSourceDescriptor(std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
 {
     this->sourceDescriptor = std::move(sourceDescriptor);
 }

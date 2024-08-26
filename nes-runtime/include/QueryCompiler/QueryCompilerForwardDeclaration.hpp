@@ -87,9 +87,6 @@ using LogicalOperatorPtr = std::shared_ptr<LogicalOperator>;
 class DecomposedQueryPlan;
 using DecomposedQueryPlanPtr = std::shared_ptr<DecomposedQueryPlan>;
 
-class SourceDescriptor;
-using SourceDescriptorPtr = std::shared_ptr<SourceDescriptor>;
-
 class SinkDescriptor;
 using SinkDescriptorPtr = std::shared_ptr<SinkDescriptor>;
 

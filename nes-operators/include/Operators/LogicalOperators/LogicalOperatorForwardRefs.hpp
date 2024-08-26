@@ -15,9 +15,6 @@
 #pragma once
 
 #include <memory>
-#include <Expressions/ExpressionNode.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
-#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES::Windowing
 {

@@ -15,11 +15,11 @@
 #include <ostream>
 #include <variant>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 #include <magic_enum.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 SourceDescriptor::SourceDescriptor(std::string sourceName) : sourceName(std::move(sourceName))

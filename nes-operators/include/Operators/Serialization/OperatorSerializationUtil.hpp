@@ -198,23 +198,12 @@ public:
      * @param isClientOriginated Indicate if the source operator is originated from a client
      */
     static void serializeSourceDescriptor(
-        std::unique_ptr<SourceDescriptor> sourceDescriptor,
+        std::unique_ptr<Sources::SourceDescriptor> sourceDescriptor,
         SerializableOperator_SourceDetails& sourceDetails,
         bool isClientOriginated = false);
 
-    /**
-     * @brief Deserializes the SerializableOperator_SourceDetails and all its properties back to a sink SourceDescriptorPtr.
-     * @param sourceDetails The serialized source operator details.
-     * @return SourceDescriptorPtr
-     */
-    static std::unique_ptr<SourceDescriptor> deserializeSourceDescriptor(const SerializableOperator_SourceDetails& sourceDetails);
+    static std::unique_ptr<Sources::SourceDescriptor> deserializeSourceDescriptor(const SerializableOperator_SourceDetails& sourceDetails);
 
-    /**
-     * @brief Serializes an sink descriptor and all its properties to a SerializableOperator_SinkDetails object.
-     * @param sinkDescriptor The sink descriptor.
-     * @param sinkDetails The sink details object.
-     * @param numberOfOrigins the number of origins
-     */
     static void
     serializeSinkDescriptor(const SinkDescriptor& sinkDescriptor, SerializableOperator_SinkDetails& sinkDetails, uint64_t numberOfOrigins);
 

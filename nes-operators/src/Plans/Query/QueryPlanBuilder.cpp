@@ -37,8 +37,8 @@ namespace NES
 QueryPlanPtr QueryPlanBuilder::createQueryPlan(std::string sourceName)
 {
     NES_DEBUG("QueryPlanBuilder: create query plan for input source  {}", sourceName);
-    SourceDescriptor::Config sourceDescriptorConfig{};
-    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(std::make_unique<SourceDescriptor>(sourceName));
+    Sources::SourceDescriptor::Config sourceDescriptorConfig{};
+    auto sourceOperator = LogicalOperatorFactory::createSourceOperator(std::make_unique<Sources::SourceDescriptor>(sourceName));
     auto queryPlanPtr = QueryPlan::create(sourceOperator);
     queryPlanPtr->setSourceConsumed(sourceName);
     return queryPlanPtr;

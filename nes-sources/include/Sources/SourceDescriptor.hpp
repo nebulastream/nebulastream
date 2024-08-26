@@ -14,11 +14,10 @@
 
 #pragma once
 
-#include <memory>
 #include <unordered_map>
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
-namespace NES
+namespace NES::Sources
 {
 
 class SourceDescriptor
@@ -63,4 +62,4 @@ private:
     friend std::ostream& operator<<(std::ostream& out, const Config& config);
 };
 
-} /// namespace NES
+}

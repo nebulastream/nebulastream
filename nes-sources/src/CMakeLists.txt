@@ -14,8 +14,9 @@ add_source_files(nes-sources
         CSVSource.cpp
         DataSource.cpp
         MMapCircularBuffer.cpp
-        SourceProvider.cpp
+        SourceDescriptor.cpp
         SourceHandle.cpp
+        SourceProvider.cpp
         TCPSource.cpp
 )
 add_subdirectory(Parsers)

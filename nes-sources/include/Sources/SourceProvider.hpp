@@ -16,6 +16,7 @@
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 
@@ -37,7 +38,7 @@ public:
     /// Returning a shared pointer, because sources may be shared by multiple executable query plans (qeps).
     static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
-        std::unique_ptr<SourceDescriptor>&& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
+        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
         std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 
