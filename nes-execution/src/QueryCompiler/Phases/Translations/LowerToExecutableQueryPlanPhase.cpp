@@ -27,6 +27,7 @@
 #include <QueryCompiler/Operators/PipelineQueryPlan.hpp>
 #include <QueryCompiler/Phases/Translations/DataSinkProvider.hpp>
 #include <QueryCompiler/Phases/Translations/LowerToExecutableQueryPlanPhase.hpp>
+#include <Runtime/Execution/ExecutableQueryPlan.hpp>
 #include <Runtime/Execution/OperatorHandler.hpp>
 #include <Runtime/Execution/PipelineExecutionContext.hpp>
 #include <Runtime/NodeEngine.hpp>
@@ -226,32 +227,6 @@ Runtime::Execution::SuccessorExecutablePipeline LowerToExecutableQueryPlanPhase:
 
     executablePipelines.emplace_back(executablePipeline);
     return executablePipeline;
-}
-
-std::unique_ptr<SourceDescriptor>
-LowerToExecutableQueryPlanPhase::createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType)
-{
-    auto logicalSourceName = physicalSourceType->getLogicalSourceName();
-    auto sourceType = physicalSourceType->getSourceType();
-    NES_DEBUG(
-        "PhysicalSourceConfig: create Actual source descriptor with physical source: {} {} ",
-        physicalSourceType->toString(),
-        magic_enum::enum_name(sourceType));
-
-    switch (sourceType)
-    {
-        case SourceType::CSV_SOURCE: {
-            auto csvSourceType = physicalSourceType->as<CSVSourceType>();
-            return CSVSourceDescriptor::create(schema, csvSourceType, logicalSourceName);
-        }
-        case SourceType::TCP_SOURCE: {
-            auto tcpSourceType = physicalSourceType->as<TCPSourceType>();
-            return TCPSourceDescriptor::create(schema, tcpSourceType, logicalSourceName);
-        }
-        default: {
-            throw UnknownSourceType(physicalSourceType->getSourceTypeAsString());
-        }
-    }
 }
 
 } /// namespace NES::QueryCompilation

@@ -108,11 +108,7 @@ public:
      */
     [[nodiscard]] uint64_t getCapacity() const;
 
-    /**
-     * @brief Gets the underling schema of this memory layout.
-     * @return SchemaPtr
-     */
-    [[nodiscard]] const SchemaPtr& getSchema() const;
+    [[nodiscard]] const std::shared_ptr<Schema>& getSchema() const;
 
     /**
      * @brief Gets a vector of all physical fields for this memory layout.

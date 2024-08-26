@@ -19,7 +19,6 @@
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
 #include <Configurations/Coordinator/LogicalSourceType.hpp>
 #include <Configurations/Coordinator/SchemaType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
@@ -163,7 +162,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile)
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
-    EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.empty());
 }
 
 TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
@@ -183,8 +181,6 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
-    EXPECT_TRUE(!workerConfigPtr->physicalSourceTypes.empty());
-    EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.size() == 2);
 }
 
 TEST_F(ConfigTest, testWorkerCSVSourceConsoleInput)

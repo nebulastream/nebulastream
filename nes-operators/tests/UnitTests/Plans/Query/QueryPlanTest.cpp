@@ -19,7 +19,6 @@
 #include <API/Query.hpp>
 #include <Operators/LogicalOperators/LogicalFilterOperator.hpp>
 #include <Operators/LogicalOperators/Sinks/PrintSinkDescriptor.hpp>
-#include <Operators/LogicalOperators/Sources/LogicalSourceDescriptor.hpp>
 #include <Plans/Query/QueryPlan.hpp>
 #include <Util/Logger/Logger.hpp>
 
@@ -39,7 +38,7 @@ public:
 TEST_F(QueryPlanTest, testHasOperator)
 {
     QueryPlanPtr queryPlan = QueryPlan::create();
-    LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("test_stream"));
+    LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator(std::make_unique<Sources::SourceDescriptor>("test_stream"));
     bool exists = queryPlan->hasOperatorWithId(op1->getId());
     EXPECT_FALSE(exists);
 
@@ -50,7 +49,7 @@ TEST_F(QueryPlanTest, testHasOperator)
 
 TEST_F(QueryPlanTest, testLeafOperators)
 {
-    LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator(LogicalSourceDescriptor::create("test_stream"));
+    LogicalOperatorPtr op1 = LogicalOperatorFactory::createSourceOperator(std::make_unique<Sources::SourceDescriptor>("test_stream"));
     QueryPlanPtr queryPlan = QueryPlan::create(op1);
     LogicalOperatorPtr op2 = LogicalOperatorFactory::createSinkOperator(PrintSinkDescriptor::create());
     queryPlan->appendOperatorAsNewRoot(op2);

@@ -171,4 +171,4 @@ INSTANTIATE_TEST_CASE_P(
         QueryTestParam{"qOneTCPSource", 1, 200, 19900 /* SUM(0, 1, ..., 199) */},
         QueryTestParam{"qOneTCPSourceWithFilter", 1, 16, 120 /* SUM(0, 1, ..., 31) */},
         QueryTestParam{"qTwoTCPSourcesWithFilter", 2, 32, 240 /* 2*SUM(0, 1, ..., 31) */}));
-} /// namespace NES::Testing
+}

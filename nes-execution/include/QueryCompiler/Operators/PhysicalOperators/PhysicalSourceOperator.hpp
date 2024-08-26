@@ -15,6 +15,7 @@
 #include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/AbstractScanOperator.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalUnaryOperator.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
 namespace NES::QueryCompilation::PhysicalOperators
 {
@@ -27,17 +28,17 @@ public:
         OriginId originId,
         SchemaPtr inputSchema,
         SchemaPtr outputSchema,
-        std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
     static std::shared_ptr<PhysicalSourceOperator> create(
         OperatorId id,
         OriginId originId,
         const SchemaPtr& inputSchema,
         const SchemaPtr& outputSchema,
-        std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+        std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
     static std::shared_ptr<PhysicalSourceOperator>
-    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+    create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor);
 
     const SourceDescriptor& getSourceDescriptorRef() const;
 
@@ -48,7 +49,7 @@ public:
     OperatorPtr copy() override;
 
 private:
-    const std::unique_ptr<SourceDescriptor> sourceDescriptor;
+    const std::unique_ptr<Sources::SourceDescriptor> sourceDescriptor;
     OriginId originId;
 };
 } /// namespace NES::QueryCompilation::PhysicalOperators

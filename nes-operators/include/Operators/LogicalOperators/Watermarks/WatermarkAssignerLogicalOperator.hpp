@@ -14,9 +14,8 @@
 
 #pragma once
 
-#include <Operators/AbstractOperators/Arity/UnaryOperator.hpp>
-#include <Operators/LogicalOperators/LogicalOperatorForwardRefs.hpp>
 #include <Operators/LogicalOperators/LogicalUnaryOperator.hpp>
+#include <Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp>
 
 namespace NES
 {
@@ -27,7 +26,8 @@ namespace NES
 class WatermarkAssignerLogicalOperator : public LogicalUnaryOperator
 {
 public:
-    WatermarkAssignerLogicalOperator(Windowing::WatermarkStrategyDescriptorPtr const& watermarkStrategyDescriptor, OperatorId id);
+    WatermarkAssignerLogicalOperator(
+        std::shared_ptr<Windowing::WatermarkStrategyDescriptor> const& watermarkStrategyDescriptor, OperatorId id);
     /**
     * @brief Returns the watermark strategy.
     * @return  Windowing::WatermarkStrategyDescriptorPtr
@@ -45,7 +45,7 @@ public:
     void inferStringSignature() override;
 
 private:
-    Windowing::WatermarkStrategyDescriptorPtr watermarkStrategyDescriptor;
+    std::shared_ptr<Windowing::WatermarkStrategyDescriptor> watermarkStrategyDescriptor;
 };
 
 using WatermarkAssignerLogicalOperatorPtr = std::shared_ptr<WatermarkAssignerLogicalOperator>;

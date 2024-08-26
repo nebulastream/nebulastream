@@ -16,9 +16,10 @@
 
 #include <fstream>
 #include <string>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Sources/Source.hpp>
+#include <Sources/SourceDescriptor.hpp>
+#include <Util/TestTupleBuffer.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
 namespace NES::Sources

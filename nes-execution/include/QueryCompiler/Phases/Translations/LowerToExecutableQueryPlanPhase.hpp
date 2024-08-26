@@ -76,7 +76,7 @@ private:
         const PipelineQueryPlanPtr& pipelineQueryPlan,
         std::map<PipelineId, Runtime::Execution::SuccessorExecutablePipeline>& pipelineToExecutableMap);
 
-    static std::unique_ptr<SourceDescriptor> createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType);
+    static std::unique_ptr<Sources::SourceDescriptor> createSourceDescriptor(SchemaPtr schema, PhysicalSourceTypePtr physicalSourceType);
 };
 } /// namespace QueryCompilation
 } /// namespace NES

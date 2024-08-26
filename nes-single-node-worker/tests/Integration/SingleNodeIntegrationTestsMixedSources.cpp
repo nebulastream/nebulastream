@@ -19,7 +19,6 @@
 #include <string>
 #include <thread>
 #include <vector>
-#include <Configurations/Worker/PhysicalSourceTypes/TCPSourceType.hpp>
 #include <TestUtils/UtilityFunctions.hpp>
 #include <detail/PortDispatcher.hpp>
 #include <fmt/core.h>

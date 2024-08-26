@@ -14,9 +14,8 @@
 
 #pragma once
 
-#include <memory>
 #include <Exceptions/RuntimeException.hpp>
-namespace NES
+namespace NES::Sources
 {
 
 class Schema;
@@ -56,4 +55,4 @@ private:
     std::string sourceType;
 };
 
-} /// namespace NES
+}

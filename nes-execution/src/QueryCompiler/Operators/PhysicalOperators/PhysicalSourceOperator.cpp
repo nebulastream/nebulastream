@@ -12,8 +12,9 @@
     limitations under the License.
 */
 #include <sstream>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <ErrorHandling.hpp>
 #include <QueryCompiler/Operators/PhysicalOperators/PhysicalSourceOperator.hpp>
+#include <Sources/SourceDescriptor.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <ErrorHandling.hpp>
 
@@ -21,7 +22,11 @@ namespace NES::QueryCompilation::PhysicalOperators
 {
 
 PhysicalSourceOperator::PhysicalSourceOperator(
-    OperatorId id, OriginId originId, SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+    OperatorId id,
+    OriginId originId,
+    SchemaPtr inputSchema,
+    SchemaPtr outputSchema,
+    std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
     : Operator(id)
     , PhysicalUnaryOperator(id, std::move(inputSchema), std::move(outputSchema))
     , sourceDescriptor(std::move(sourceDescriptor))
@@ -34,13 +39,13 @@ std::shared_ptr<PhysicalSourceOperator> PhysicalSourceOperator::create(
     OriginId originId,
     const SchemaPtr& inputSchema,
     const SchemaPtr& outputSchema,
-    std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+    std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
 {
     return std::make_shared<PhysicalSourceOperator>(id, originId, inputSchema, outputSchema, std::move(sourceDescriptor));
 }
 
 std::shared_ptr<PhysicalSourceOperator>
-PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor)
+PhysicalSourceOperator::create(SchemaPtr inputSchema, SchemaPtr outputSchema, std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor)
 {
     return create(getNextOperatorId(), INVALID_ORIGIN_ID, std::move(inputSchema), std::move(outputSchema), std::move(sourceDescriptor));
 }

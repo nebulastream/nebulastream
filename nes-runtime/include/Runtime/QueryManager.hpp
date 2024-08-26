@@ -72,7 +72,7 @@ public:
 
     explicit QueryManager(
         std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
-        std::vector<Memory::BufferManagerPtr> bufferManagers,
+        std::vector<NES::Memory::BufferManagerPtr> bufferManagers,
         WorkerId nodeEngineId,
         uint16_t numThreads,
         uint64_t numberOfBuffersPerEpoch,

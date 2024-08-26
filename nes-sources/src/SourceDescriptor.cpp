@@ -15,9 +15,9 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Operators/LogicalOperators/Sources/SourceDescriptor.hpp>
+#include <Sources/SourceDescriptor.hpp>
 
-namespace NES
+namespace NES::Sources
 {
 
 SourceDescriptor::SourceDescriptor(SchemaPtr schema)
