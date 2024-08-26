@@ -36,7 +36,7 @@ Nautilus::MemRefVal AvgAggregationFunction::loadSumMemRef(const Nautilus::MemRef
     return (memRef + sizeOfCountInBytes);
 }
 
-void AvgAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& record) {
+void AvgAggregationFunction::lift(Nautilus::MemRefVal& state, Nautilus::Record& record) {
     // load memRef
     auto oldCount = AggregationFunction::loadFromMemRef(state, countType);
     // calc the offset to get MemRefVal of the count value
@@ -52,7 +52,7 @@ void AvgAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& r
     AggregationFunction::storeToMemRef(oldSumMemRef, newSum, inputType);
 }
 
-void AvgAggregationFunction::combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) {
+void AvgAggregationFunction::combine(Nautilus::MemRefVal& state1, Nautilus::MemRefVal& state2) {
     // load memRef1
     auto countLeft = AggregationFunction::loadFromMemRef(state1, countType);
     // calc the offset to get MemRefVal of the count value
@@ -72,7 +72,7 @@ void AvgAggregationFunction::combine(Nautilus::MemRefVal state1, Nautilus::MemRe
     AggregationFunction::storeToMemRef(sumLeftMemRef, tmpSum, inputType);
 }
 
-void AvgAggregationFunction::lower(Nautilus::MemRefVal memRef, Nautilus::Record& resultRecord) {
+void AvgAggregationFunction::lower(Nautilus::MemRefVal& memRef, Nautilus::Record& resultRecord) {
     // load memRefs
     auto count = AggregationFunction::loadFromMemRef(memRef, countType);
     auto sumMemRef = loadSumMemRef(memRef);
@@ -88,7 +88,7 @@ void AvgAggregationFunction::lower(Nautilus::MemRefVal memRef, Nautilus::Record&
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
-void AvgAggregationFunction::reset(Nautilus::MemRefVal memRef) {
+void AvgAggregationFunction::reset(Nautilus::MemRefVal& memRef) {
     auto zero = createConstValue(0L, inputType);
     auto sumMemRef = loadSumMemRef(memRef);
 

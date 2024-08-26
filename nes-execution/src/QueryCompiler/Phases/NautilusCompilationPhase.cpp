@@ -49,13 +49,13 @@ std::string getPipelineProviderIdentifier(const QueryCompilation::QueryCompilerO
             return "PipelineInterpreter";
         };
         case NautilusBackend::MLIR_COMPILER_BACKEND: {
-            return "PipelineCompiler";
+            return "MLIRCompiler";
         };
         case NautilusBackend::BC_INTERPRETER_BACKEND: {
             return "BCInterpreter";
         };
         case NautilusBackend::CPP_COMPILER_BACKEND: {
-            return "CPPPipelineCompiler";
+            return "CPPMLIRCompiler";
         };
         default: {
             NES_THROW_RUNTIME_ERROR("No pipeline compiler implemented for this backend");

@@ -43,7 +43,7 @@ void Scan::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
     auto numberOfRecords = recordBuffer.getNumRecords();
     auto bufferAddress = recordBuffer.getBuffer();
     for (UInt64Val i = 0_u64; i < numberOfRecords; i = i + 1) {
-        auto record = memoryProvider->read(projections, bufferAddress, i);
+        auto record = memoryProvider->readRecord(projections, bufferAddress, i);
         child->execute(ctx, record);
     }
 }

@@ -358,7 +358,7 @@ TEST_P(NonKeyedTimeWindowPipelineTest, windowWithMultiAggregatesOnDifferentDataT
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         NonKeyedTimeWindowPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "MLIRCompiler"),
                         [](const testing::TestParamInfo<NonKeyedTimeWindowPipelineTest::ParamType>& info) {
                             return info.param;
                         });

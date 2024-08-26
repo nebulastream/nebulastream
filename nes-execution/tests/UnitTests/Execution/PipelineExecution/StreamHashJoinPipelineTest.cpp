@@ -315,7 +315,7 @@ TEST_P(HashJoinPipelineTest, simpleHashJoinPipeline) {
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         HashJoinPipelineTest,
                         ::testing::Values("PipelineInterpreter",
-                                          "PipelineCompiler"),
+                                          "MLIRCompiler"),
                         [](const testing::TestParamInfo<HashJoinPipelineTest::ParamType>& info) {
                             return info.param;
                         });

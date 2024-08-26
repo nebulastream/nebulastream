@@ -135,11 +135,11 @@ void KeyedSliceMerging::mergeHashTable(Interface::ChainedHashMapRef& globalSlice
     for (const auto& threadLocalEntry : threadLocalSliceHashMap) {
         // 2. insert entry or update existing one with same key.
         globalSliceHashMap.insertEntryOrUpdate(threadLocalEntry, [&](auto& globalEntry) {
-            // 2b. update aggregation if the entry was already existing in the global hash map
+            // 2.1. update aggregation if the entry was already existing in the global hash map
             auto key = threadLocalEntry.getKeyPtr();
             auto threadLocalValue = threadLocalEntry.getValuePtr();
             MemRefVal globalValue = globalEntry.getValuePtr();
-            // 2c. apply aggregation functions and combine the values
+            // 2.2. apply aggregation functions and combine the values
             for (const auto& function : static_iterable(aggregationFunctions)) {
                 function->combine(globalValue, threadLocalValue);
                 threadLocalValue = threadLocalValue + UInt64Val(function->getSize());

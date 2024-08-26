@@ -163,7 +163,7 @@ class VarVal {
 
     /// Writes the underlying value to the given memory reference.
     /// We call the operator= after the cast to the underlying type.
-    void writeToMemRefVal(MemRefVal& memRef) const;
+    void writeVarValToMemRefVal(const MemRefVal& memRef) const;
 
     explicit operator bool() const;
     [[nodiscard]] const nautilus::val<bool>& isNull() const;

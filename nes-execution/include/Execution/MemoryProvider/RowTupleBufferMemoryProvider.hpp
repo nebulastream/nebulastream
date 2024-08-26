@@ -32,11 +32,11 @@ class RowTupleBufferMemoryProvider final : public TupleBufferMemoryProvider {
 
     MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
 
-    Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+    Nautilus::Record readRecord(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
                           Nautilus::MemRefVal& bufferAddress,
                           Nautilus::UInt64Val& recordIndex) const override;
 
-    void write(Nautilus::UInt64Val& recordIndex, Nautilus::MemRefVal& bufferAddress, NES::Nautilus::Record& rec) const override;
+    void writeRecord(Nautilus::UInt64Val& recordIndex, Nautilus::MemRefVal& bufferAddress, NES::Nautilus::Record& rec) const override;
 
   private:
     [[nodiscard]] Nautilus::MemRefVal calculateFieldAddress(const Nautilus::MemRefVal& recordOffset,

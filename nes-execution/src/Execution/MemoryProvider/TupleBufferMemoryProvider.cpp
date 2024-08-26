@@ -62,7 +62,7 @@ Nautilus::VarVal TupleBufferMemoryProvider::store(const NES::PhysicalTypePtr& ty
                                                         Nautilus::MemRefVal& fieldReference,
                                                         Nautilus::VarVal value) {
     if (type->isBasicType()) {
-        value.writeToMemRefVal(fieldReference);
+        value.writeVarValToMemRefVal(fieldReference);
         return value;
     } else if (type->isTextType()) {
         auto textValue = value.cast<Nautilus::VariableSizedData>();

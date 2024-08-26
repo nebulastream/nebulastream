@@ -107,7 +107,7 @@ void PagedVectorVarSizedRef::writeRecord(const Record& record) {
             // We need casting sizeof() to a uint64 as it otherwise fails on MacOS
             pageEntry = pageEntry + UInt64Val((uint64_t) sizeof(uint64_t));
         } else {
-            fieldValue.writeToMemRefVal(pageEntry);
+            fieldValue.writeVarValToMemRefVal(pageEntry);
             pageEntry = pageEntry + UInt64Val(fieldType->size());
         }
     }

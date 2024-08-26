@@ -54,7 +54,7 @@ void Emit::execute(ExecutionContext& ctx, Record& record) const {
      * emit a tuple twice. Once in the execute() and then again in close(). This happens only for buffers that are filled
      * to the brim, i.e., have no more space left.
      */
-    memoryProvider->write(emitState->outputIndex, emitState->bufferReference, record);
+    memoryProvider->writeRecord(emitState->outputIndex, emitState->bufferReference, record);
     emitState->outputIndex = emitState->outputIndex + UInt64Val(1);
 }
 

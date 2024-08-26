@@ -25,6 +25,6 @@ std::unique_ptr<ExecutablePipelineStage> CompilationPipelineProvider::create(std
 }
 
 [[maybe_unused]] static ExecutablePipelineProviderRegistry::Add<CompilationPipelineProvider>
-    compilationPipelineProvider("PipelineCompiler");
+    compilationPipelineProvider("MLIRCompiler");
 
 }// namespace NES::Runtime::Execution

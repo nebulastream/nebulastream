@@ -60,15 +60,11 @@ std::vector<Record::RecordFieldIdentifier> Record::getAllFields() {
 }
 
 std::string Record::toString() {
-
-    // Figure out later why this does not seem to work.
-    //    return fmt::format("{}", fmt::join(recordFields, ", "));
-//    std::ostringstream oss;
-//    for (const auto& [fieldIdentifier, value] : recordFields) {
-//        oss << fieldIdentifier << ": " << value << ", ";
-//    }
-//    return oss.str();
-    return "NOT IMPLEMENTED";
+    std::ostringstream oss;
+    for (const auto& [fieldIdentifier, value] : recordFields) {
+        oss << fieldIdentifier << ": " << value << ", ";
+    }
+    return oss.str();
 }
 
 uint64_t Record::numberOfFields() const { return recordFields.size(); }

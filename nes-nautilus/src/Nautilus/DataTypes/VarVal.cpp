@@ -41,7 +41,7 @@ VarVal& VarVal::operator=(VarVal&& other) {
     return *this;
 }
 
-void VarVal::writeToMemRefVal(MemRefVal& memRef) const {
+void VarVal::writeVarValToMemRefVal(const MemRefVal& memRef) const {
     std::visit(
         [&]<typename ValType>(const ValType& val) {
             if constexpr (std::is_same_v<ValType, VariableSizedData>) {
@@ -67,7 +67,8 @@ VarVal::operator bool() const {
 [[nodiscard]] const nautilus::val<bool>& VarVal::isNull() const { return null; }
 
 BooleanVal memEquals(const MemRefVal& ptr1, const MemRefVal& ptr2, const UInt64Val& size) {
-    // Somehow we have to write our own memEquals, as we otherwise get a error: 'llvm.call' op result type mismatch: '!llvm.ptr' != 'i32'
+    /// TODO #259 Somehow we have to write our own memEquals, as we otherwise get a error: 'llvm.call' op result type mismatch: '!llvm.ptr' != 'i32'
+
     // return nautilus::memcmp(ptr1, ptr2, size) == UInt64Val(0);
 
     for (UInt64Val i(0); i < size; ++i) {

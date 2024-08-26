@@ -154,7 +154,7 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
 
         for (auto leftRecordRef : leftFixedPageRef) {
             UInt64Val zeroValue = 0_u64;
-            auto leftRecord = leftMemProvider->read({}, leftRecordRef, zeroValue);
+            auto leftRecord = leftMemProvider->readRecord({}, leftRecordRef, zeroValue);
 
             //for every right page
             for (UInt64Val rightPageNo(0); rightPageNo < numberOfPagesRight; rightPageNo = rightPageNo + 1) {
@@ -172,7 +172,7 @@ void HJProbe::open(ExecutionContext& ctx, RecordBuffer& recordBuffer) const {
                 Nautilus::Interface::FixedPageRef rightFixedPageRef(rightPageRef);
 
                 for (auto rightRecordRef : rightFixedPageRef) {
-                    auto rightRecord = rightMemProvider->read({}, rightRecordRef, zeroValue);
+                    auto rightRecord = rightMemProvider->readRecord({}, rightRecordRef, zeroValue);
 
                     Record joinedRecord;
                     createJoinedRecord(joinedRecord, leftRecord, rightRecord, windowStart, windowEnd);

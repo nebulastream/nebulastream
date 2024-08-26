@@ -113,7 +113,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         TextPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "MLIRCompiler"),
                         [](const testing::TestParamInfo<TextPipelineTest::ParamType>& info) {
                             return info.param;
                         });

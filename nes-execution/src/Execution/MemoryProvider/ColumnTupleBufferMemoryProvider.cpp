@@ -36,7 +36,7 @@ Nautilus::MemRefVal ColumnTupleBufferMemoryProvider::calculateFieldAddress(Nauti
     return fieldAddress;
 }
 
-Nautilus::Record ColumnTupleBufferMemoryProvider::read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+Nautilus::Record ColumnTupleBufferMemoryProvider::readRecord(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
                                                        Nautilus::MemRefVal& bufferAddress,
                                                        Nautilus::UInt64Val& recordIndex) const {
     auto& schema = columnMemoryLayoutPtr->getSchema();
@@ -54,7 +54,7 @@ Nautilus::Record ColumnTupleBufferMemoryProvider::read(const std::vector<Nautilu
     return record;
 }
 
-void ColumnTupleBufferMemoryProvider::write(Nautilus::UInt64Val& recordIndex,
+void ColumnTupleBufferMemoryProvider::writeRecord(Nautilus::UInt64Val& recordIndex,
                                             Nautilus::MemRefVal& bufferAddress,
                                             NES::Nautilus::Record& rec) const {
     auto& fieldSizes = columnMemoryLayoutPtr->getFieldSizes();

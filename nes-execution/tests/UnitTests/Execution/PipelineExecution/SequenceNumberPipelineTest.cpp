@@ -418,7 +418,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation) {
 
 INSTANTIATE_TEST_CASE_P(testIfCompilation,
                         SequenceNumberPipelineTest,
-                        ::testing::Values("PipelineInterpreter", "PipelineCompiler"),
+                        ::testing::Values("PipelineInterpreter", "MLIRCompiler"),
                         [](const testing::TestParamInfo<SequenceNumberPipelineTest::ParamType>& info) {
                             return info.param;
                         });

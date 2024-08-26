@@ -134,7 +134,7 @@ void HJBuildSlicing::execute(ExecutionContext& ctx, Record& record) const {
         auto const fieldName = field->getName();
         auto const fieldType = physicalDataTypeFactory.getPhysicalType(field->getDataType());
 //        NES_TRACE("write key={} value={}", field->getName(), record.read(fieldName)->toString());
-        record.read(fieldName).writeToMemRefVal(entryMemRef);
+        record.read(fieldName).writeVarValToMemRefVal(entryMemRef);
         entryMemRef = entryMemRef + UInt64Val(fieldType->size());
     }
 }

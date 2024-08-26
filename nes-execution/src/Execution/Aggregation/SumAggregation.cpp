@@ -21,7 +21,7 @@ SumAggregationFunction::SumAggregationFunction(const PhysicalTypePtr& inputType,
                                                const Nautilus::Record::RecordFieldIdentifier& resultFieldIdentifier)
     : AggregationFunction(inputType, resultType, inputExpression, resultFieldIdentifier) {}
 
-void SumAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& record) {
+void SumAggregationFunction::lift(Nautilus::MemRefVal& state, Nautilus::Record& record) {
     // load memRef
     auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
     // add the value
@@ -31,20 +31,20 @@ void SumAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& r
     AggregationFunction::storeToMemRef(state, newValue, inputType);
 }
 
-void SumAggregationFunction::combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) {
+void SumAggregationFunction::combine(Nautilus::MemRefVal& state1, Nautilus::MemRefVal& state2) {
     auto left = AggregationFunction::loadFromMemRef(state1, inputType);
     auto right = AggregationFunction::loadFromMemRef(state2, inputType);
     auto combinedSum = left + right;
     AggregationFunction::storeToMemRef(state1, combinedSum, inputType);
 }
 
-void SumAggregationFunction::lower(Nautilus::MemRefVal state, Nautilus::Record& resultRecord) {
+void SumAggregationFunction::lower(Nautilus::MemRefVal& state, Nautilus::Record& resultRecord) {
 
     auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
-void SumAggregationFunction::reset(Nautilus::MemRefVal state) {
+void SumAggregationFunction::reset(Nautilus::MemRefVal& state) {
     auto zero = createConstValue(0L, inputType);
     AggregationFunction::storeToMemRef(state, zero, inputType);
 }

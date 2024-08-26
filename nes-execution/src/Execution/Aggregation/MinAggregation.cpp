@@ -40,24 +40,24 @@ void MinAggregationFunction::storeMin(const Nautilus::VarVal& leftValue,
     }
 }
 
-void MinAggregationFunction::lift(Nautilus::MemRefVal state, Nautilus::Record& inputRecord) {
+void MinAggregationFunction::lift(Nautilus::MemRefVal& state, Nautilus::Record& inputRecord) {
     const auto oldValue = AggregationFunction::loadFromMemRef(state, inputType);
     const auto inputValue = inputExpression->execute(inputRecord);
     storeMin(inputValue, oldValue, state, inputType);
 }
 
-void MinAggregationFunction::combine(Nautilus::MemRefVal state1, Nautilus::MemRefVal state2) {
+void MinAggregationFunction::combine(Nautilus::MemRefVal& state1, Nautilus::MemRefVal& state2) {
     const auto left = AggregationFunction::loadFromMemRef(state1, inputType);
     const auto right = AggregationFunction::loadFromMemRef(state2, inputType);
     storeMin(left, right, state1, inputType);
 }
 
-void MinAggregationFunction::lower(Nautilus::MemRefVal state, Nautilus::Record& resultRecord) {
+void MinAggregationFunction::lower(Nautilus::MemRefVal& state, Nautilus::Record& resultRecord) {
     const auto finalVal = AggregationFunction::loadFromMemRef(state, resultType);
     resultRecord.write(resultFieldIdentifier, finalVal);
 }
 
-void MinAggregationFunction::reset(Nautilus::MemRefVal memRef) {
+void MinAggregationFunction::reset(Nautilus::MemRefVal& memRef) {
     const auto minVal = createMaxValue(inputType);
     AggregationFunction::storeToMemRef(memRef, minVal, inputType);
 }

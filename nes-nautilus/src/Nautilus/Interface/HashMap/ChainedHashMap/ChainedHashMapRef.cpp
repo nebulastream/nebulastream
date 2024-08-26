@@ -80,7 +80,7 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::insert(const UInt64Val& hash, con
     auto keyPtr = entry.getKeyPtr();
     for (nautilus::static_val<size_t> i = 0; i < keys.size(); ++i) {
         auto& key = keys[i];
-        key.writeToMemRefVal(keyPtr);
+        key.writeVarValToMemRefVal(keyPtr);
         keyPtr = keyPtr + UInt64Val(keyDataTypes[i]->size());
     }
     return entry;
@@ -119,12 +119,6 @@ ChainedHashMapRef::EntryRef ChainedHashMapRef::findOrCreate(const UInt64Val& has
         // create new entry
         entry = insert(hash, keys);
 
-        std::stringstream ss;
-        for (auto& key : nautilus::static_iterable(keys)) {
-            ss << key << ", ";
-        }
-        NES_INFO("Created new entry for keys: {}", ss.str());
-
         // call on insert lambda function to insert default values
         onInsert(entry);
     }
@@ -151,8 +145,7 @@ BooleanVal ChainedHashMapRef::compareKeys(EntryRef& entry, const std::vector<Var
     for (nautilus::static_val<size_t> i = 0; i < keys.size(); ++i) {
         auto& key = keys[i];
         const auto keyFromEntry = readVarValFromMemRef(keyPtr, keyDataTypes[i]);
-        const auto tmp = (key == keyFromEntry);
-        equals = tmp && equals;
+        equals = (key == keyFromEntry) && equals;
         keyPtr = keyPtr + UInt64Val(keyDataTypes[i]->size());
     }
 

@@ -24,7 +24,7 @@ namespace NES::Runtime::Execution::MemoryProvider {
 class TupleBufferMemoryProvider;
 using MemoryProviderPtr = std::unique_ptr<TupleBufferMemoryProvider>;
 
-/// This class takes care of reading and writing data from/to a TupleBuffer/RecordBuffer.
+/// This class takes care of reading and writing data from/to a TupleBuffer.
 /// A TupleBufferMemoryProvider is closely coupled with a memory layout and we support row and column layouts, currently.
 class TupleBufferMemoryProvider {
   public:
@@ -38,7 +38,7 @@ class TupleBufferMemoryProvider {
     /// @param projections: Stores what fields, the Record should contain. If {}, then Record contains all fields available
     /// @param bufferAddress: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be read
-    virtual Nautilus::Record read(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
+    virtual Nautilus::Record readRecord(const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
                                   Nautilus::MemRefVal& bufferAddress,
                                   Nautilus::UInt64Val& recordIndex) const = 0;
 
@@ -46,7 +46,7 @@ class TupleBufferMemoryProvider {
     /// @param bufferAddress: Stores the memRef to the memory segment of a tuplebuffer, e.g., tuplebuffer.getBuffer()
     /// @param recordIndex: Index of the record to be stored to
     virtual void
-    write(Nautilus::UInt64Val& recordIndex, Nautilus::MemRefVal& bufferAddress, NES::Nautilus::Record& rec) const = 0;
+    writeRecord(Nautilus::UInt64Val& recordIndex, Nautilus::MemRefVal& bufferAddress, NES::Nautilus::Record& rec) const = 0;
 
     /// Currently, this method does not support Null handling. It loads an VarVal of type from the fieldReference
     /// We require the bufferReference, as we store variable sized data in a childbuffer and therefore, we need access

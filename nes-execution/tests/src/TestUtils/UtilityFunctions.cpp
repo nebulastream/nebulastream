@@ -42,13 +42,13 @@ void writeNautilusRecord(uint64_t recordIndex,
         auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::RowTupleBufferMemoryProvider>(rowMemoryLayout);
 
-        memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
+        memoryProviderPtr->writeRecord(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
 
     } else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT) {
         auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnTupleBufferMemoryProvider>(columnMemoryLayout);
 
-        memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
+        memoryProviderPtr->writeRecord(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
 
     } else {
         NES_THROW_RUNTIME_ERROR("Schema Layout not supported!");
