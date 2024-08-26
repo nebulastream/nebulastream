@@ -23,28 +23,22 @@ namespace NES::Sources
 class SourceDescriptor
 {
 public:
-    using ConfigType
-        = std::variant<int32_t, int64_t, uint32_t, uint64_t, bool, char, float, double, std::string, Configurations::TCPDecideMessageSize>;
+    ///-Todo: can we somehow move Configurations::TCPDecideMessageSize out of the ConfigType variant? (it is too specialized)
+    using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, Configurations::TCPDecideMessageSize>;
     using Config = std::unordered_map<std::string, ConfigType>;
-
-    static inline const std::string PLUGIN_NAME_CSV = "CSV"; ///-Todo: looks ugly
-    static inline const std::string PLUGIN_NAME_TCP = "TCP";
 
     explicit SourceDescriptor(std::string sourceName);
     explicit SourceDescriptor(std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
     explicit SourceDescriptor(SchemaPtr schema, std::string sourceName, Configurations::InputFormat inputFormat, Config&& config);
     ~SourceDescriptor() = default;
 
-    SchemaPtr getSchema() const;
-    void setSchema(const SchemaPtr& schema);
-
-    [[nodiscard]] std::string getSourceName() const;
-    void setSourceName(std::string sourceName);
-
     friend std::ostream& operator<<(std::ostream& out, const SourceDescriptor& sourceHandle);
-
     friend bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs);
 
+    SchemaPtr getSchema() const;
+    void setSchema(const SchemaPtr& schema);
+    [[nodiscard]] std::string getSourceName() const;
+    void setSourceName(std::string sourceName);
     [[nodiscard]] const Configurations::InputFormat& getInputFormat() const;
 
     [[nodiscard]] const Config& getConfig() const;
@@ -52,8 +46,14 @@ public:
     /// Passing by const&, because unordered_map lookup requires std::string (vs std::string_view)
     void setConfigType(const std::string& key, ConfigType value);
 
+    template <typename T>
+    T getFromConfig(const std::string& key)
+    {
+        return std::get<T>(config.at(key));
+    }
+
 private:
-    ///-Todo: workerId <-- currently always the same
+    /// 'schema', 'sourceName', and 'inputFormat' are shared by all sources and are therefore not part of the config.
     SchemaPtr schema;
     std::string sourceName;
     Configurations::InputFormat inputFormat{};

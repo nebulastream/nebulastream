@@ -33,6 +33,8 @@ class TCPSource : public Source
     constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
 
 public:
+    static inline const std::string NAME = "TCP";
+
     explicit TCPSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
 
     bool fillTupleBuffer(

@@ -37,7 +37,7 @@ void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
 {
     const auto constructorFunc = [](const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor) -> std::unique_ptr<Source>
     { return std::make_unique<CSVSource>(schema, std::move(sourceDescriptor)); };
-    registry.registerPlugin((SourceDescriptor::PLUGIN_NAME_CSV), constructorFunc);
+    registry.registerPlugin((CSVSource::NAME), constructorFunc);
 }
 
 /// Todo #72: remove schema from CSVSource (only required by parser).
@@ -45,11 +45,10 @@ CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& s
 {
     this->descriptor = std::move(sourceDescriptor);
     this->fileEnded = false;
-    this->filePath = std::get<std::string>(this->descriptor->getConfig().at("filepath"));
-    this->delimiter = std::get<std::string>(this->descriptor->getConfig().at("delimiter"));
-    this->skipHeader = std::get<bool>(this->descriptor->getConfig().at("skipHeader"));
-    this->numberOfTuplesToProducePerBuffer = std::get<uint32_t>(
-        this->descriptor->getConfig().at("numberOfTuplesToProducePerBuffer")); ///-Todo: uint32_t vs uint64_t leads to crash
+    this->filePath = this->descriptor->getFromConfig<std::string>("filepath");
+    this->delimiter = this->descriptor->getFromConfig<std::string>("delimiter");
+    this->skipHeader = this->descriptor->getFromConfig<bool>("skipHeader");
+    this->numberOfTuplesToProducePerBuffer = this->descriptor->getFromConfig<uint32_t>("numberOfTuplesToProducePerBuffer");
     this->tupleSize = schema.getSchemaSizeInBytes();
 
     struct Deleter
@@ -57,7 +56,7 @@ CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& s
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
     };
     const auto realCSVPath = realpath(filePath.c_str(), nullptr); /// realpath: canonical absolute name of file
-    const auto path = std::unique_ptr<const char, Deleter>(const_cast<const char*>(realCSVPath));
+    const auto path = std::unique_ptr<const char, Deleter>(realCSVPath);
     if (path == nullptr)
     {
         NES_THROW_RUNTIME_ERROR("Could not determine absolute pathname: " << filePath.c_str());

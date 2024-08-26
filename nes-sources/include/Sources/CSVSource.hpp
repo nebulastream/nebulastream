@@ -31,6 +31,8 @@ using CSVParserPtr = std::shared_ptr<CSVParser>;
 class CSVSource : public Source
 {
 public:
+    static inline const std::string NAME = "CSV";
+
     explicit CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
 
     bool fillTupleBuffer(

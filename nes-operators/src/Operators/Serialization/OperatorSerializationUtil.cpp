@@ -50,6 +50,8 @@
 #include <Operators/Serialization/OperatorSerializationUtil.hpp>
 #include <Operators/Serialization/SchemaSerializationUtil.hpp>
 #include <Plans/Query/QueryPlan.hpp>
+#include <Sources/CSVSource.hpp>
+#include <Sources/TCPSource.hpp>
 #include <Types/SlidingWindow.hpp>
 #include <Types/ThresholdWindow.hpp>
 #include <Types/TumblingWindow.hpp>
@@ -872,14 +874,14 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     ss << *sourceDescriptor;
     NES_TRACE("OperatorSerializationUtil:: serialize to SourceDescriptor with ={}", ss.str());
 
-    if (sourceDescriptor->getSourceName() == Sources::SourceDescriptor::PLUGIN_NAME_TCP)
+    if (sourceDescriptor->getSourceName() == Sources::TCPSource::NAME)
     {
         /// serialize TCP source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableTCPSourceDescriptor");
         /// init serializable source config
         auto serializedPhysicalSourceType = new SerializablePhysicalSourceType();
-        serializedPhysicalSourceType->set_sourcetype(Sources::SourceDescriptor::PLUGIN_NAME_TCP);
+        serializedPhysicalSourceType->set_sourcetype(Sources::TCPSource::NAME);
         /// init serializable tcp source config
         auto tcpSerializedSourceConfig = SerializablePhysicalSourceType_SerializableTCPSourceType();
         tcpSerializedSourceConfig.set_sockethost(std::get<std::string>(sourceDescriptor->getConfig().at("socket_host")));
@@ -927,14 +929,14 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         SchemaSerializationUtil::serializeSchema(sourceDescriptor->getSchema(), tcpSerializedSourceDescriptor.mutable_sourceschema());
         sourceDetails.mutable_sourcedescriptor()->PackFrom(tcpSerializedSourceDescriptor);
     }
-    else if (sourceDescriptor->getSourceName() == Sources::SourceDescriptor::PLUGIN_NAME_CSV)
+    else if (sourceDescriptor->getSourceName() == Sources::CSVSource::NAME)
     {
         /// serialize csv source descriptor
         NES_TRACE("OperatorSerializationUtil:: serialized SourceDescriptor as "
                   "SerializableOperator_SourceDetails_SerializableCsvSourceDescriptor");
         /// init serializable source config
         auto serializedSourceConfig = new SerializablePhysicalSourceType();
-        serializedSourceConfig->set_sourcetype(Sources::SourceDescriptor::PLUGIN_NAME_CSV);
+        serializedSourceConfig->set_sourcetype(Sources::CSVSource::NAME);
         /// init serializable csv source config
         auto csvSerializedSourceConfig = SerializablePhysicalSourceType_SerializableCSVSourceType();
         csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
@@ -957,7 +959,7 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
                   "SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor");
         auto logicalSourceSerializedSourceDescriptor = SerializableOperator_SourceDetails_SerializableLogicalSourceDescriptor();
         ///-Todo: need to handle LogicalSourceDescriptor <-- logical source name as config parameter?
-        logicalSourceSerializedSourceDescriptor.set_logicalsourcename("INVALID");
+        logicalSourceSerializedSourceDescriptor.set_logicalsourcename("Logical");
         logicalSourceSerializedSourceDescriptor.set_sourcename(sourceDescriptor->getSourceName());
 
         if (!isClientOriginated)

@@ -89,9 +89,9 @@ OperatorPtr SourceLogicalOperator::copy()
 void SourceLogicalOperator::inferStringSignature()
 {
     ///Update the signature
-    NES_THROW_RUNTIME_ERROR("Not supporting 'inferStringSignature' for SourceLogicalOperator right now.");
-    ///-Todo auto hashCode = hashGenerator("SOURCE(" + sourceDescriptor->getSourceName() + ")");
-    ///-Todo hashBasedSignature[hashCode] = {"SOURCE(" + sourceDescriptor->getSourceName() + ")"};
+    auto exception = FunctionNotImplemented();
+    exception.what() += "Not supporting 'inferStringSignature' for SourceLogicalOperator.";
+    throw exception;
 }
 
 void SourceLogicalOperator::inferInputOrigins()
