@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <cmath>
-#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Execution/Expressions/Functions/Log2Expression.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -83,8 +82,7 @@ Value<> Log2Expression::execute(NES::Nautilus::Record& record) const
     else
     {
         /// Throw an exception if no type is applicable
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw UnknownExpressionArgumentType("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 std::unique_ptr<Expression> RegisterLog2Expression(const std::vector<ExpressionPtr>& args)

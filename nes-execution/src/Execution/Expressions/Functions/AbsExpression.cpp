@@ -13,7 +13,6 @@
 */
 
 #include <cmath>
-#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AbsExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -91,8 +90,7 @@ Value<> AbsExpression::execute(NES::Nautilus::Record& record) const
     }
     else
     {
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on a numeric input argument that is ether Float or Double.");
+        throw UnknownExpressionArgumentType("This expression is only defined on a numeric input argument that is ether Float or Double.");
     }
 }
 

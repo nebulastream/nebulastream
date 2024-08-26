@@ -13,7 +13,6 @@
 */
 
 #include <cmath>
-#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/CeilExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -57,7 +56,7 @@ Value<> CeilExpression::execute(NES::Nautilus::Record& record) const
     else
     {
         /// If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Float.");
+        throw UnknownExpressionArgumentType("This expression is only defined on numeric input arguments that are Float.");
     }
 }
 std::unique_ptr<Expression> RegisterCeilExpression(const std::vector<ExpressionPtr>& args)

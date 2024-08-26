@@ -13,10 +13,10 @@
 */
 
 #include <limits>
-#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Aggregation/MaxAggregation.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
 #include <Nautilus/Interface/Record.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Runtime::Execution::Aggregation
 {
@@ -83,7 +83,7 @@ Nautilus::Value<> callMax(const Nautilus::Value<>& leftValue, const Nautilus::Va
     {
         return callMaxTyped<Nautilus::Double>(leftValue, rightValue);
     }
-    throw Exceptions::NotImplementedException("Type not implemented");
+    throw UnknownAggregationType("This aggregation is only defined on numeric input arguments that are either Integer or Float.");
 }
 
 void MaxAggregationFunction::lift(Nautilus::Value<Nautilus::MemRef> state, Nautilus::Record& inputRecord)

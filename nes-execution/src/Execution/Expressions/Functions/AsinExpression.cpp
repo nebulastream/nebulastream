@@ -13,7 +13,6 @@
 */
 
 #include <cmath>
-#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/AsinExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -51,8 +50,7 @@ Value<> AsinExpression::execute(NES::Nautilus::Record& record) const
     else
     {
         /// If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on a numeric input argument that is ether Integer or Float.");
+        throw UnknownExpressionArgumentType("This expression is only defined on a numeric input argument that is ether Integer or Float.");
     }
 }
 std::unique_ptr<Expression> RegisterAsinExpression(const std::vector<ExpressionPtr>& args)

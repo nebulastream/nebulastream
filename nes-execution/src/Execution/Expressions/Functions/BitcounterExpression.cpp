@@ -13,7 +13,6 @@
 */
 
 #include <bit>
-#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/BitcounterExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -70,7 +69,7 @@ Value<> BitcounterExpression::execute(NES::Nautilus::Record& record) const
     else
     {
         /// If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException("This expression is only defined on numeric input arguments that are Integer.");
+        throw UnknownExpressionArgumentType("This expression is only defined on numeric input arguments that are Integer.");
     }
 }
 std::unique_ptr<Expression> RegisterBitcounterExpression(const std::vector<ExpressionPtr>& args)

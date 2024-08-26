@@ -14,10 +14,10 @@
 #pragma once
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
-#include <Exceptions/NotImplementedException.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Sinks/Formats/FormatType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 

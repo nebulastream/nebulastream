@@ -12,7 +12,6 @@
     limitations under the License.
 */
 #include <cmath>
-#include <Exceptions/NotImplementedException.hpp>
 #include <Execution/Expressions/Functions/CbrtExpression.hpp>
 #include <Execution/Expressions/Functions/ExecutableFunctionRegistry.hpp>
 #include <Nautilus/Interface/FunctionCall.hpp>
@@ -73,8 +72,7 @@ Value<> CbrtExpression::execute(NES::Nautilus::Record& record) const
     else
     {
         /// If no type was applicable we throw an exception.
-        throw Exceptions::NotImplementedException(
-            "This expression is only defined on numeric input arguments that are either Integer or Float.");
+        throw UnknownExpressionArgumentType("This expression is only defined on numeric input arguments that are either Integer or Float.");
     }
 }
 std::unique_ptr<Expression> RegisterCbrtExpression(const std::vector<ExpressionPtr>& args)
