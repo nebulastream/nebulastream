@@ -16,12 +16,13 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
-#include <Exceptions/NotImplementedException.hpp>
+#include <Exceptions/RuntimeException.hpp>
 #include <Exceptions/SignalHandling.hpp>
 #include <Identifiers/NESStrongTypeFormat.hpp>
 #include <Util/Logger/LogLevel.hpp>
 #include <Util/Logger/impl/NesLogger.hpp>
 #include <Util/StacktraceLoader.hpp>
+#include <ErrorHandling.hpp>
 namespace NES
 {
 
@@ -325,7 +326,7 @@ struct LogCaller<LogLevel::LOG_WARNING>
 #define NES_NOT_IMPLEMENTED() \
     do \
     { \
-        throw Exceptions::NotImplementedException("not implemented"); \
+        throw NotImplemented("not implemented"); \
     } while (0)
 
 #define NES_ERROR_OR_THROW_RUNTIME(THROW_EXCEPTION, ...) \
