@@ -125,14 +125,14 @@ bool LogicalJoinOperator::inferSchema()
                     const auto foundLeftKey = findSchemaInDistinctSchemas(*leftJoinKey, leftInputSchema);
                     if (!foundLeftKey)
                     {
-                        throw CannotInferSchema("LogicalJoinOperator: Unable to find left join key " + leftJoinKeyName + " in schemas.");
+                        throw CannotInferSchema("unable to find left join key " + leftJoinKeyName + " in schemas.");
                     }
                     const auto rightJoinKey = Util::as<NodeFunctionFieldAccess>(Util::as<NodeFunctionBinary>(*itr)->getRight());
                     const auto rightJoinKeyName = rightJoinKey->getFieldName();
                     const auto foundRightKey = findSchemaInDistinctSchemas(*rightJoinKey, rightInputSchema);
                     if (!foundRightKey)
                     {
-                        throw CannotInferSchema("LogicalJoinOperator: Unable to find right join key " + rightJoinKeyName + " in schemas.");
+                        throw CannotInferSchema("unable to find right join key " + rightJoinKeyName + " in schemas.");
                     }
                     NES_DEBUG("LogicalJoinOperator: Inserting operator in collection of already visited node.");
                     visitedFunctions.insert(visitingOp);
@@ -144,17 +144,17 @@ bool LogicalJoinOperator::inferSchema()
     distinctSchemas.clear();
 
     /// Checking if left and right input schema are not empty and are not equal
-    if(leftInputSchema->getSchemaSizeInBytes() == 0)
+    if (leftInputSchema->getSchemaSizeInBytes() == 0)
     {
-        throw CannotInferSchema("LogicalJoinOperator: left schema is emtpy");
+        throw CannotInferSchema("left schema is empty");
     }
-    if(rightInputSchema->getSchemaSizeInBytes() == 0)
+    if (rightInputSchema->getSchemaSizeInBytes() == 0)
     {
-        throw CannotInferSchema("LogicalJoinOperator: right schema is emtpy");
+        throw CannotInferSchema("right schema is empty");
     }
-    if(rightInputSchema->equals(leftInputSchema, false))
+    if (rightInputSchema->equals(leftInputSchema, false))
     {
-        throw CannotInferSchema("LogicalJoinOperator: Found both left and right input schema to be same.");
+        throw CannotInferSchema("found both left and right input schema to be same.");
     }
 
     ///Infer stamp of window definition
