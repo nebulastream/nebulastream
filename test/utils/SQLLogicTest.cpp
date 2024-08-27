@@ -28,7 +28,7 @@ class SystemTestFactory : public testing::Test
 public:
     static void SetUpTestSuite()
     {
-        Logger::setupLogging("SystemTest.log", LogLevel::LOG_DEBUG);
+        Logger::setupLogging("SystemTest.log", LogLevel::LOG_DEBUG, false);
 
         Configuration::SingleNodeWorkerConfiguration const configuration{};
         uut = std::make_unique<GRPCServer>(SingleNodeWorker{configuration});
