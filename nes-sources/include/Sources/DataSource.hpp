@@ -86,7 +86,7 @@ protected:
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine();
     void emitWork(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
-    [[nodiscard]] std::string toString() const;
+    friend std::ostream& operator<<(std::ostream& out, const DataSource& dataSource);
 };
 
 }

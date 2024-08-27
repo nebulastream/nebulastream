@@ -202,7 +202,9 @@ void DataSource::runningRoutine()
         std::string thName = fmt::format("DataSrc-{}", originId);
         setThreadName(thName.c_str());
 
-        NES_DEBUG("DataSource {}: Running Data Source of type={}", originId, magic_enum::enum_name(sourceImplementation->getType()));
+        std::stringstream ss;
+        ss << this;
+        NES_DEBUG("DataSource: {}", ss.str());
 
         /// open
         bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
@@ -221,13 +223,10 @@ void DataSource::runningRoutine()
             if (isReceivedData)
             {
                 NES_TRACE(
-                    "DataSource produced buffer {} type= {} string={}: Received Data: {}"
-                    "originId={}",
+                    "DataSource produced buffer {}, Num filled tuples: {}, DataSource: {}",
                     numberOfBuffersProduced,
-                    magic_enum::enum_name(sourceImplementation->getType()),
-                    this->toString(),
                     tupleBuffer.getNumberOfTuples(),
-                    this->originId);
+                    ss.str());
 
                 emitWork(tupleBuffer);
                 ++numberOfBuffersProduced;
@@ -280,14 +279,18 @@ void DataSource::runningRoutine()
     NES_DEBUG("DataSource {} end runningRoutine", originId);
 }
 
-std::string DataSource::toString() const
-{
-    return sourceImplementation->toString();
-}
-
 std::ostream& operator<<(std::ostream& out, const DataSource& dataSource)
 {
-    return out << dataSource.toString();
+    out << "DataSource(";
+    out << "originId: " << dataSource.originId;
+    out << "numSourceLocalBuffers: " << dataSource.numSourceLocalBuffers;
+    out << "Running: " << dataSource.running;
+    out << "wasStarted: " << dataSource.wasStarted;
+    out << "futureRetrieved: " << dataSource.futureRetrieved;
+    out << "maxSequenceNumber: " << dataSource.maxSequenceNumber;
+    out << "Source implementation: \n" << dataSource.sourceImplementation;
+    out << ")\n";
+    return out;
 }
 
 }

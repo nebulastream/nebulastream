@@ -35,12 +35,12 @@ public:
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
 
+    SourceType getType() const override;
+
     void open() override;
     void close() override;
 
-    std::string toString() const override;
-
-    SourceType getType() const override;
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     std::ifstream input;
@@ -54,7 +54,6 @@ private:
     bool skipHeader;
     CSVParserPtr inputParser;
 
-    uint64_t numberOfBuffersToProduce = std::numeric_limits<decltype(numberOfBuffersToProduce)>::max();
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
 };
