@@ -70,7 +70,6 @@ Nautilus::VarVal TupleBufferMemoryProvider::store(const NES::PhysicalTypePtr& ty
         auto fieldReferenceCastedU32 = static_cast<nautilus::val<uint32_t*>>(fieldReference);
         *fieldReferenceCastedU32 = childIndex;
         return value;
-        NES_NOT_IMPLEMENTED();
     }
     NES_NOT_IMPLEMENTED();
 }
