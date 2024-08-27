@@ -41,16 +41,14 @@ void GeneratedSourceRegistrar::RegisterCSVSource(SourceRegistry& registry)
     registry.registerPlugin((CSVSource::NAME), constructorFunc);
 }
 
-/// Todo #72: remove schema from CSVSource (only required by parser).
 CSVSource::CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
-    : fileEnded(false), tupleSize(schema.getSchemaSizeInBytes())
+    : fileEnded(false)
+    , filePath(sourceDescriptor.getFromConfig(ConfigParametersCSV::FILEPATH))
+    , tupleSize(schema.getSchemaSizeInBytes())
+    , delimiter(sourceDescriptor.getFromConfig(ConfigParametersCSV::DELIMITER))
+    , skipHeader(sourceDescriptor.getFromConfig(ConfigParametersCSV::SKIP_HEADER))
 {
-    this->fileEnded = false;
-    this->filePath = descriptor.getFromConfig<std::string>("filepath");
-    this->delimiter = descriptor.getFromConfig<std::string>("delimiter");
-    this->skipHeader = descriptor.getFromConfig<bool>("skipHeader");
-    this->tupleSize = schema.getSchemaSizeInBytes();
-
+    /// Determine the physical types and create the inputParser (Todo: remove in #72).
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema.fields)
     {
@@ -91,7 +89,7 @@ void CSVSource::open()
         this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }
 
-    NES_DEBUG("CSVSource: tupleSize={} numBuff={}", this->tupleSize, this->numberOfTuplesToProducePerBuffer);
+    NES_DEBUG("CSVSource: tupleSize={}", this->tupleSize);
 }
 
 void CSVSource::close()
@@ -154,9 +152,15 @@ bool CSVSource::fillTupleBuffer(
     return true;
 }
 
-std::string CSVSource::toString() const
+std::ostream& CSVSource::toString(std::ostream& str) const
 {
-    return fmt::format("FILE={})", filePath);
+    str << "TCPSource(";
+    str << "Filesize:" << this->fileSize;
+    str << "Tuplesize:" << this->tupleSize;
+    str << "Generated tuples: " << this->generatedTuples;
+    str << "Generated buffers: " << this->generatedBuffers;
+    str << ")\n";
+    return str;
 }
 
 SourceType CSVSource::getType() const

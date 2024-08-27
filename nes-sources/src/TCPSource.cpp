@@ -13,6 +13,7 @@
 */
 
 #include <chrono>
+#include <cstdint>
 #include <cstring>
 #include <memory>
 #include <sstream>
@@ -34,6 +35,8 @@
 #include <sys/socket.h> /// For socket functions
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
+#include <magic_enum.hpp>
+
 namespace NES::Sources
 {
 
@@ -45,20 +48,19 @@ void GeneratedSourceRegistrar::RegisterTCPSource(SourceRegistry& registry)
 }
 
 TCPSource::TCPSource(const Schema& schema, const SourceDescriptor& sourceDescriptor)
-    : tupleSize(schema.getSchemaSizeInBytes()), circularBuffer(getpagesize() * 2)
+    : tupleSize(schema.getSchemaSizeInBytes())
+    , circularBuffer(getpagesize() * 2)
+    , inputFormat(sourceDescriptor.getFromConfig(ConfigParametersTCP::INPUT_FORMAT))
+    , socketHost(sourceDescriptor.getFromConfig(ConfigParametersTCP::HOST))
+    , socketPort(std::to_string(sourceDescriptor.getFromConfig(ConfigParametersTCP::PORT)))
+    , socketType(sourceDescriptor.getFromConfig(ConfigParametersTCP::TYPE))
+    , socketDomain(sourceDescriptor.getFromConfig(ConfigParametersTCP::DOMAIN))
+    , decideMessageSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::DECIDED_MESSAGE_SIZE))
+    , tupleSeparator(sourceDescriptor.getFromConfig(ConfigParametersTCP::SEPARATOR))
+    , socketBufferSize(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE))
+    , bytesUsedForSocketBufferSizeTransfer(sourceDescriptor.getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE))
+    , flushIntervalInMs(sourceDescriptor.getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS))
 {
-    auto tcpSourceType = dynamic_cast<const TCPSourceDescriptor*>(&sourceDescriptor)->getSourceConfig();
-    this->inputFormat = tcpSourceType->getInputFormat()->getValue();
-    this->socketHost = tcpSourceType->getSocketHost()->getValue();
-    this->socketPort = std::to_string(static_cast<int>(tcpSourceType->getSocketPort()->getValue()));
-    this->socketType = static_cast<int>(tcpSourceType->getSocketType()->getValue());
-    this->socketDomain = static_cast<int>(tcpSourceType->getSocketDomain()->getValue());
-    this->decideMessageSize = tcpSourceType->getDecideMessageSize()->getValue();
-    this->tupleSeparator = tcpSourceType->getTupleSeparator()->getValue();
-    this->socketBufferSize = static_cast<size_t>(tcpSourceType->getSocketBufferSize()->getValue());
-    this->bytesUsedForSocketBufferSizeTransfer = static_cast<size_t>(tcpSourceType->getBytesUsedForSocketBufferSizeTransfer()->getValue());
-    this->flushIntervalInMs = tcpSourceType->getFlushIntervalMS()->getValue();
-
     /// init physical types
     std::vector<std::string> schemaKeys;
     const DefaultPhysicalTypeFactory defaultPhysicalTypeFactory{};
@@ -89,25 +91,24 @@ TCPSource::TCPSource(const Schema& schema, const SourceDescriptor& sourceDescrip
 
 std::string TCPSource::toString() const
 {
-    std::stringstream ss;
-    ss << "TCPSOURCE(";
-    ss << "Tuplesize:" << this->tupleSize;
-    ss << "Generated tuples: " << this->generatedTuples;
-    ss << "Generated buffers: " << this->generatedBuffers;
-    ss << "Connection: " << this->connection;
-    ss << "Timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
-    ss << "InputFormat: " << magic_enum::enum_name(inputFormat);
-    ss << "SocketHost: " << socketHost;
-    ss << "SocketPort: " << socketPort;
-    ss << "SocketType: " << socketType;
-    ss << "SocketDomain: " << socketDomain;
-    ss << "DecideMessageSize: " << magic_enum::enum_name(decideMessageSize);
-    ss << "TupleSeparator: " << tupleSeparator;
-    ss << "SocketBufferSize: " << socketBufferSize;
-    ss << "BytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
-    ss << "FlushIntervalInMs" << flushIntervalInMs;
-    ss << ")";
-    return ss.str();
+    str << "TCPSOURCE(";
+    str << "Tuplesize:" << this->tupleSize;
+    str << "Generated tuples: " << this->generatedTuples;
+    str << "Generated buffers: " << this->generatedBuffers;
+    str << "Connection: " << this->connection;
+    str << "Timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
+    str << "InputFormat: " << magic_enum::enum_name(inputFormat);
+    str << "SocketHost: " << socketHost;
+    str << "SocketPort: " << socketPort;
+    str << "SocketType: " << socketType;
+    str << "SocketDomain: " << socketDomain;
+    str << "DecideMessageSize: " << magic_enum::enum_name(decideMessageSize);
+    str << "TupleSeparator: " << tupleSeparator;
+    str << "SocketBufferSize: " << socketBufferSize;
+    str << "BytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
+    str << "FlushIntervalInMs" << flushIntervalInMs;
+    str << ")";
+    return str;
 }
 
 void TCPSource::open()
@@ -205,13 +206,8 @@ size_t binaryBufferSize(std::span<const char> data)
     return result;
 }
 
-size_t TCPSource::parseBufferSize(std::span<const char> data) const
+size_t TCPSource::parseBufferSize(const std::span<const char> data) const
 {
-    if (inputFormat == Configurations::InputFormat::NES_BINARY)
-    {
-        return binaryBufferSize(data);
-    }
-
     return asciiBufferSize(data);
 }
 

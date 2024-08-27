@@ -42,6 +42,19 @@ class TCPSource : public Source
     constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
 
 public:
+    struct ConfigParametersTCP
+    {
+        static inline const SourceDescriptor::ConfigKey<std::string> HOST{"socket_host"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> PORT{"socket_port"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> DOMAIN{"socket_domain"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> TYPE{"socket_type"};
+        static inline const SourceDescriptor::ConfigKey<char> SEPARATOR{"tuple_separator"};
+        static inline const SourceDescriptor::ConfigKey<float> FLUSH_INTERVAL_MS{"flush_interval_ms"};
+        static inline const SourceDescriptor::ConfigKey<Configurations::TCPDecideMessageSize> DECIDED_MESSAGE_SIZE{"decided_message_size"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> SOCKET_BUFFER_SIZE{"socket_buffer_size"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{"bytes_used_for_socket_buffer_size_transfer"};
+    };
+
     static inline const std::string NAME = "TCP";
 
     explicit TCPSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
@@ -50,8 +63,6 @@ public:
         NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
 
     std::string toString() const override;
-
-    SourceType getType() const override;
 
     /// Open TCP connection.
     void open() override;

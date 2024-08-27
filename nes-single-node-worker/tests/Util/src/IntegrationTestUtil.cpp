@@ -266,7 +266,7 @@ void replacePortInTcpSources(SerializableDecomposedQueryPlan& decomposedQueryPla
                 if (sourceNumber == queryPlanSourceTcpCounter)
                 {
                     /// Set socket port and serialize again.
-                    tcpSourceDescriptor->getSourceConfig()->setSocketPort(mockTcpServerPort);
+                    sourceDescriptor->setConfigType(Sources::TCPSource::ConfigParametersTCP::PORT.key, mockTcpServerPort);
                     deserializedSourceOperator->as<SourceLogicalOperator>()->setSourceDescriptor(std::move(sourceDescriptor));
                     auto serializedOperator = OperatorSerializationUtil::serializeOperator(deserializedSourceOperator);
 

@@ -31,6 +31,14 @@ using CSVParserPtr = std::shared_ptr<CSVParser>;
 class CSVSource : public Source
 {
 public:
+    struct ConfigParametersCSV
+    {
+        static inline const SourceDescriptor::ConfigKey<std::string> FILEPATH{"filepath"};
+        static inline const SourceDescriptor::ConfigKey<bool> SKIP_HEADER{"skipHeader"};
+        static inline const SourceDescriptor::ConfigKey<std::string> DELIMITER{"delimiter"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> NUMBER_OF_BUFFER_TO_PRODUCE_PER_TUPLE{"numberOfTuplesToProducePerBuffer"};
+    };
+
     static inline const std::string NAME = "CSV";
 
     explicit CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
@@ -42,8 +50,6 @@ public:
     void close() override;
 
     std::string toString() const override;
-
-    SourceType getType() const override;
 
 private:
     std::ifstream input;
