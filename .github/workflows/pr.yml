@@ -6,10 +6,6 @@ name: NES PR CI
 #
 # If this pr is called with act, it has to be used with a custom event.json and called via `act -e event.json`.
 # Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
-# The event.json should look like this:
-#  {
-#    "act": true
-#  }
 
 on:
   pull_request:
@@ -33,7 +29,7 @@ concurrency:
 jobs:
   validateTrigger:
     # This ensures we won't run the CI if it is in draft mode, or we called it via act.
-    if: ${{ !github.event.pull_request.draft && !github.event.ACT }}
+    if: ${{ !github.event.pull_request.draft && !github.event.act }}
     runs-on: [ self-hosted, linux, Build ]
     steps:
       - uses: actions/checkout@v4
@@ -47,8 +43,9 @@ jobs:
     # This job detects changes to files relevant for our dependency management by calculating a hash value
     # and looking for existing development images with the same hash.
     # If we find a development image matching the hash we skip building new docker images.
-    # This Job also determines the development image tag used for building and testing
+    # This job also determines the development image tag used for building and testing
     name: Detect changes to dependencies
+    if: ${{ !github.event.act }}
     outputs:
       build-dependency: ${{steps.hash-and-lookup.outputs.build-dependency}}
       tag: ${{ steps.hash-and-lookup.outputs.tag }}
@@ -150,7 +147,7 @@ jobs:
           file: docker/dependency/Development.dockerfile
 
   docker-development-images:
-    # This Job merges platform specific images into a single multi-platform image
+    # This job merges platform specific images into a single multi-platform image
     name: "Merge images for different platforms into a single Multi-Platform image"
     needs: [ docker-development-images-pre, detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
