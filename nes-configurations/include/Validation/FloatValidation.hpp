@@ -11,13 +11,31 @@
     See the License for the specific language governing permissions and
     limitations under the License.
 */
-#include <Configurations/ConfigurationException.hpp>
-#include <Util/Logger/Logger.hpp>
+
+#include <regex>
+
 namespace NES::Configurations
 {
 
-ConfigurationException::ConfigurationException(const std::string& message, std::string&& stacktrace, std::source_location location)
-    : RuntimeException(message, std::move(stacktrace), location)
+/**
+    * @brief This class implements validation for parameters that should represent non-negative floats
+    */
+class FloatValidation
 {
-}
+public:
+    /**
+     * @brief Method to check the validity of a parameter as a non-negative float
+     * @param parameter number to validate
+     * @return true if the parameter is a valid non-negative float, false otherwise
+     */
+    static bool isValid(const std::string& parameter)
+    {
+        std::regex numberRegex("^\\d*\\.?\\d+$");
+        if (!std::regex_match(parameter, numberRegex))
+        {
+            return false;
+        }
+        return true;
+    }
+};
 } /// namespace NES::Configurations

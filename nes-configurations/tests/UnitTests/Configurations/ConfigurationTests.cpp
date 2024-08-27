@@ -16,10 +16,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-#include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Coordinator/LogicalSourceType.hpp>
-#include <Configurations/Coordinator/SchemaType.hpp>
-#include <Configurations/Worker/PhysicalSourceTypes/CSVSourceType.hpp>
+#include <PhysicalSourceTypes/CSVSourceType.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <gtest/gtest.h>
 #include <BaseIntegrationTest.hpp>
@@ -61,92 +58,7 @@ public:
     static void TearDownTestCase() { NES_INFO("Tear down Configuration test class."); }
 };
 
-/**
- * @brief This reads an coordinator yaml and checks the configuration
- */
-TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile)
-{
-    CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
-    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::filesystem::path(TEST_DATA_DIRECTORY) / "emptyCoordinator.yaml");
-    EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->coordinatorHost.getValue(), coordinatorConfigPtr->coordinatorHost.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(), coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getValue(),
-        coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getValue(),
-        coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getDefaultValue());
-    EXPECT_NE(
-        coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
-        coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(), coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->worker.numberOfBuffersPerEpoch.getValue(),
-        coordinatorConfigPtr->worker.numberOfBuffersPerEpoch.getDefaultValue());
-}
 
-TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile)
-{
-    CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
-    coordinatorConfigPtr->overwriteConfigWithYAMLFileInput(std::string(TEST_DATA_DIRECTORY) + "coordinatorLogicalSourceAndSchema.yaml");
-    EXPECT_FALSE(coordinatorConfigPtr->logicalSourceTypes.empty());
-    EXPECT_EQ(coordinatorConfigPtr->logicalSourceTypes.size(), 3);
-    auto logicalSources = coordinatorConfigPtr->logicalSourceTypes.getValues();
-    EXPECT_EQ(logicalSources[0].getValue()->getLogicalSourceName(), "lsn1");
-    EXPECT_EQ(logicalSources[1].getValue()->getLogicalSourceName(), "lsn2");
-    EXPECT_EQ(logicalSources[2].getValue()->getLogicalSourceName(), "lsn3");
-    auto firstSourceSchema = logicalSources[0].getValue()->getSchemaType();
-    auto secondSourceSchema = logicalSources[1].getValue()->getSchemaType();
-    auto thirdSourceSchema = logicalSources[2].getValue()->getSchemaType();
-    EXPECT_EQ(firstSourceSchema->getSchemaFieldDetails().size(), 3);
-    EXPECT_EQ(secondSourceSchema->getSchemaFieldDetails().size(), 1);
-    EXPECT_TRUE(firstSourceSchema->contains("csv_id"));
-    EXPECT_TRUE(firstSourceSchema->contains("csv_id_2"));
-    EXPECT_TRUE(firstSourceSchema->contains("csv_id_3"));
-    EXPECT_TRUE(secondSourceSchema->contains("csv_id_4"));
-    EXPECT_TRUE(thirdSourceSchema->contains("csv_id_5"));
-}
-
-TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
-{
-    /// given
-    CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
-    auto commandLineParams = makeCommandLineArgs(
-        {"--restIp=localhost",
-         "--worker.numberOfSlots=10",
-         "--worker.numberOfBuffersInSourceLocalBufferPool=128",
-         "--worker.bufferSizeInBytes=1024"});
-    /// when
-    coordinatorConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
-    /// then
-    EXPECT_EQ(coordinatorConfigPtr->restPort.getValue(), coordinatorConfigPtr->restPort.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->coordinatorHost.getValue(), coordinatorConfigPtr->coordinatorHost.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(), coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getValue(),
-        coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getValue(),
-        coordinatorConfigPtr->worker.numberOfBuffersPerWorker.getDefaultValue());
-    EXPECT_NE(
-        coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getValue(),
-        coordinatorConfigPtr->worker.numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.bufferSizeInBytes.getValue(), coordinatorConfigPtr->worker.bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
-    EXPECT_EQ(coordinatorConfigPtr->worker.numWorkerThreads.getValue(), coordinatorConfigPtr->worker.numWorkerThreads.getDefaultValue());
-}
 
 TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile)
 {

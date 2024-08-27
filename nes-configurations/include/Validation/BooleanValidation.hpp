@@ -15,22 +15,27 @@
 #pragma once
 
 #include <string>
-#include "Configurations/Validation/ConfigurationValidation.hpp"
 
 namespace NES::Configurations
 {
 
 /**
- * @brief This class implements ip validation for ip configuration options.
- */
-class IpValidation : public ConfigurationValidation
+    * @brief This class implements validation for parameters that should represent booleans
+    */
+class BooleanValidation
 {
 public:
     /**
-     * @brief Method to check the validity of an ip address
-     * @param ip ip address
-     * @return success if validated
-     */
-    bool isValid(const std::string& ip) const override;
+         * @brief Method to check the validity of a parameter as a bool
+         * @param parameter number to validate
+         * @return true if the parameter is a valid bool, false otherwise
+         */
+    static bool isValid (const std::string& parameter)
+    {
+        std::string lowerParam = parameter;
+        std::transform(lowerParam.begin(), lowerParam.end(), lowerParam.begin(), [](unsigned char c) { return std::tolower(c); });
+
+        return lowerParam == "true" || lowerParam == "false" || lowerParam == "1" || lowerParam == "0";
+    }
 };
 } /// namespace NES::Configurations

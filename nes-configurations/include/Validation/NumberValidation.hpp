@@ -14,23 +14,30 @@
 
 #pragma once
 
-#include <string>
-#include <Configurations/Validation/ConfigurationValidation.hpp>
+#include <regex>
 
 namespace NES::Configurations
 {
 
 /**
-    * @brief This class implements validation for parameters that should represent booleans
-    */
-class BooleanValidation : public ConfigurationValidation
+* @brief This class implements validation for parameters that should represent non-negative integers
+*/
+class NumberValidation
 {
 public:
     /**
-         * @brief Method to check the validity of a parameter as a bool
-         * @param boolean number to validate
-         * @return true if the parameter is a valid bool, false otherwise
-         */
-    bool isValid(const std::string& boolean) const override;
+     * @brief Method to check the validity of a parameter as a non-negative integer
+     * @param parameter number to validate
+     * @return true if the parameter is a valid non-negative integer, false otherwise
+     */
+    static bool isValid(const std::string& parameter)
+    {
+        std::regex numberRegex("^\\d+$");
+        if (!std::regex_match(parameter, numberRegex))
+        {
+            return false;
+        }
+        return true;
+    }
 };
 } /// namespace NES::Configurations

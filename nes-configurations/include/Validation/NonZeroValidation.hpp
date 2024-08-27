@@ -14,8 +14,7 @@
 
 #pragma once
 
-#include <string>
-#include "Configurations/Validation/ConfigurationValidation.hpp"
+#include <regex>
 
 namespace NES::Configurations
 {
@@ -23,14 +22,22 @@ namespace NES::Configurations
 /**
 * @brief This class implements validation for parameters that should represent non-negative non-zero integers
 */
-class NonZeroValidation : public ConfigurationValidation
+class NonZeroValidation
 {
 public:
     /**
      * @brief Method to check the validity of a parameter as a non-negative non-zero integer
-     * @param number number to validate
+     * @param parameter number to validate
      * @return true if the parameter is a valid non-negative non-zero integer, false otherwise
      */
-    bool isValid(const std::string& number) const override;
+    static bool isValid(const std::string& parameter)
+    {
+        std::regex numberRegex("^0.?0?$");
+        if (std::regex_match(parameter, numberRegex))
+        {
+            return false;
+        }
+        return true;
+    }
 };
 } /// namespace NES::Configurations
