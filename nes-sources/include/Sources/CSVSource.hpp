@@ -50,7 +50,7 @@ public:
     void open() override { /* noop */ };
     void close() override { /* noop */ };
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 protected:
     std::ifstream input;

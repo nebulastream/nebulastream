@@ -143,9 +143,16 @@ bool CSVSource::fillTupleBuffer(
     return true;
 }
 
-std::string CSVSource::toString() const
+std::ostream& CSVSource::toString(std::ostream& str) const
 {
-    return fmt::format("FILE={})", filePath);
+    str << "TCPSource(";
+    str << "Filesize:" << this->fileSize;
+    str << "Tuplesize:" << this->tupleSize;
+    str << "Generated tuples: " << this->generatedTuples;
+    str << "Generated buffers: " << this->generatedBuffers;
+    str << "Descriptor: \n" << this->descriptor;
+    str << ")\n";
+    return str;
 }
 
 }

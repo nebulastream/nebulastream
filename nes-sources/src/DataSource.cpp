@@ -203,8 +203,9 @@ void DataSource::runningRoutine()
         std::string thName = fmt::format("DataSrc-{}", originId);
         setThreadName(thName.c_str());
 
-        ///-Todo: improve debugging of descriptor
-        NES_DEBUG("DataSource {}: Running Data Source of type={}", originId, sourceImplementation->toString());
+        std::stringstream ss;
+        ss << this;
+        NES_DEBUG("DataSource: {}", ss.str());
 
         /// open
         bufferProvider = localBufferManager->createFixedSizeBufferPool(numSourceLocalBuffers);
@@ -222,13 +223,10 @@ void DataSource::runningRoutine()
             if (isReceivedData)
             {
                 NES_TRACE(
-                    "DataSource produced buffer {} type= {} string={}: Received Data: {}"
-                    "originId={}",
+                    "DataSource produced buffer {}, Num filled tuples: {}, DataSource: {}",
                     numberOfBuffersProduced,
-                    sourceImplementation->toString(),
-                    this->toString(),
                     tupleBuffer.getNumberOfTuples(),
-                    this->originId);
+                    ss.str());
 
                 auto buffer = tupleBuffer.getBuffer();
                 emitWork(buffer);
@@ -288,14 +286,18 @@ Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() const
     return Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
 }
 
-std::string DataSource::toString() const
-{
-    return sourceImplementation->toString();
-}
-
 std::ostream& operator<<(std::ostream& out, const DataSource& dataSource)
 {
-    return out << dataSource.toString();
+    out << "DataSource(";
+    out << "originId: " << dataSource.originId;
+    out << "numSourceLocalBuffers: " << dataSource.numSourceLocalBuffers;
+    out << "Running: " << dataSource.running;
+    out << "wasStarted: " << dataSource.wasStarted;
+    out << "futureRetrieved: " << dataSource.futureRetrieved;
+    out << "maxSequenceNumber: " << dataSource.maxSequenceNumber;
+    out << "Source implementation: \n" << dataSource.sourceImplementation;
+    out << ")\n";
+    return out;
 }
 
 }

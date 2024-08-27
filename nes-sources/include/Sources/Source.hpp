@@ -41,7 +41,11 @@ public:
     virtual void open() = 0;
     virtual void close() = 0;
 
-    [[nodiscard]] virtual std::string toString() const = 0;
+    friend std::ostream& operator<<(std::ostream& out, const Source& source);
+
+protected:
+    /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.
+    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 };
 
 }

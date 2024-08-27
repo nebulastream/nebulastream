@@ -60,7 +60,7 @@ public:
         const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
         const Schema& schema);
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
     /// Open TCP connection.
     void open() override;
