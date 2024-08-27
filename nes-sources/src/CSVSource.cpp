@@ -45,10 +45,10 @@ CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& s
 {
     this->descriptor = std::move(sourceDescriptor);
     this->fileEnded = false;
-    this->filePath = this->descriptor->getFromConfig<std::string>("filepath");
-    this->delimiter = this->descriptor->getFromConfig<std::string>("delimiter");
-    this->skipHeader = this->descriptor->getFromConfig<bool>("skipHeader");
-    this->numberOfTuplesToProducePerBuffer = this->descriptor->getFromConfig<uint32_t>("numberOfTuplesToProducePerBuffer");
+    this->filePath = this->descriptor->getFromConfig(ConfigParametersCSV::FILEPATH);
+    this->delimiter = this->descriptor->getFromConfig(ConfigParametersCSV::DELIMITER);
+    this->skipHeader = this->descriptor->getFromConfig(ConfigParametersCSV::SKIP_HEADER);
+    this->numberOfTuplesToProducePerBuffer = this->descriptor->getFromConfig(ConfigParametersCSV::NUMBER_OF_BUFFER_TO_PRODUCE_PER_TUPLE);
     this->tupleSize = schema.getSchemaSizeInBytes();
 
     struct Deleter
@@ -157,11 +157,6 @@ bool CSVSource::fillTupleBuffer(
 std::string CSVSource::toString() const
 {
     return fmt::format("FILE={} numBuff={})", filePath, this->numberOfTuplesToProducePerBuffer);
-}
-
-const SourceDescriptor::Config& CSVSource::getSourceConfig() const
-{
-    return this->descriptor->getConfig();
 }
 
 }

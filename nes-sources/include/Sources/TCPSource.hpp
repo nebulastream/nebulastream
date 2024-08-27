@@ -33,6 +33,19 @@ class TCPSource : public Source
     constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
 
 public:
+    struct ConfigParametersTCP
+    {
+        static inline const SourceDescriptor::ConfigKey<std::string> HOST{"socket_host"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> PORT{"socket_port"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> DOMAIN{"socket_domain"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> TYPE{"socket_type"};
+        static inline const SourceDescriptor::ConfigKey<char> SEPARATOR{"tuple_separator"};
+        static inline const SourceDescriptor::ConfigKey<float> FLUSH_INTERVAL_MS{"flush_interval_ms"};
+        static inline const SourceDescriptor::ConfigKey<Configurations::TCPDecideMessageSize> DECIDED_MESSAGE_SIZE{"decided_message_size"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> SOCKET_BUFFER_SIZE{"socket_buffer_size"};
+        static inline const SourceDescriptor::ConfigKey<uint32_t> SOCKET_BUFFER_TRANSFER_SIZE{"bytes_used_for_socket_buffer_size_transfer"};
+    };
+
     static inline const std::string NAME = "TCP";
 
     explicit TCPSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
@@ -48,8 +61,6 @@ public:
         const Schema& schema);
 
     std::string toString() const override;
-
-    const SourceDescriptor::Config& getSourceConfig() const;
 
     /// Open TCP connection.
     void open() override;

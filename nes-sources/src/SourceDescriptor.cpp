@@ -16,7 +16,6 @@
 #include <variant>
 #include <API/Schema.hpp>
 #include <Sources/SourceDescriptor.hpp>
-
 #include <magic_enum.hpp>
 
 namespace NES::Sources
@@ -57,11 +56,6 @@ void SourceDescriptor::setSourceName(std::string sourceName)
 const Configurations::InputFormat& SourceDescriptor::getInputFormat() const
 {
     return this->inputFormat;
-}
-
-const SourceDescriptor::Config& SourceDescriptor::getConfig() const
-{
-    return this->config;
 }
 
 void SourceDescriptor::setConfigType(const std::string& key, ConfigType value)
@@ -159,4 +153,5 @@ bool operator==(const SourceDescriptor& lhs, const SourceDescriptor& rhs)
 {
     return lhs.schema == rhs.getSchema() && lhs.sourceName == rhs.sourceName && lhs.config == rhs.config;
 }
+
 }

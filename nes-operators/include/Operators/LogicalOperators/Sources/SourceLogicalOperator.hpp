@@ -20,9 +20,7 @@
 namespace NES
 {
 
-/**
- * @brief Node representing logical source operator
- */
+/// Is constructed during parsing and represents a logical source as an operator node in the query plan.
 class SourceLogicalOperator : public LogicalUnaryOperator, public OriginIdAssignmentOperator
 {
 public:

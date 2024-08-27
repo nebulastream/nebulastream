@@ -94,13 +94,13 @@ void TCPSource::open()
     addrinfo hints;
     addrinfo* result;
 
-    hints.ai_family = descriptor->getFromConfig<uint32_t>("socket_domain");
-    hints.ai_socktype = descriptor->getFromConfig<uint32_t>("socket_type");
+    hints.ai_family = descriptor->getFromConfig(ConfigParametersTCP::DOMAIN);
+    hints.ai_socktype = descriptor->getFromConfig(ConfigParametersTCP::TYPE);
     hints.ai_flags = 0; /// use default behavior
     hints.ai_protocol = 0; /// specifying 0 in this field indicates that socket addresses with any protocol can be returned by getaddrinfo()
 
-    auto host = descriptor->getFromConfig<std::string>("socket_host");
-    auto port = std::to_string(descriptor->getFromConfig<uint32_t>("socket_port"));
+    auto host = descriptor->getFromConfig(ConfigParametersTCP::HOST);
+    auto port = std::to_string(descriptor->getFromConfig(ConfigParametersTCP::PORT));
 
     const auto errorCode = getaddrinfo(host.c_str(), port.c_str(), &hints, &result);
     if (errorCode != 0)
@@ -225,8 +225,8 @@ bool TCPSource::fillBuffer(
             {
                 NES_TRACE(
                     "TCPSource::fillBuffer: No data received from {}:{}.",
-                    descriptor->getFromConfig<std::string>("socket_host"),
-                    std::to_string(descriptor->getFromConfig<uint32_t>("socket_port")));
+                    descriptor->getFromConfig(ConfigParametersTCP::HOST),
+                    std::to_string(descriptor->getFromConfig(ConfigParametersTCP::PORT)));
             }
 
             writer.consume(bufferSizeReceived);
@@ -245,7 +245,7 @@ bool TCPSource::fillBuffer(
             NES_ASSERT(tupleData.empty(), "not empty");
             /// Every protocol returns a view into the tuple (or Buffer for Binary) memory in tupleData;
             /// switch case depends on the message receiving that was chosen when creating the source. Three choices are available:
-            const auto decidedMessageSize = descriptor->getFromConfig<Configurations::TCPDecideMessageSize>("decided_message_size");
+            const auto decidedMessageSize = descriptor->getFromConfig(ConfigParametersTCP::DECIDED_MESSAGE_SIZE);
             switch (decidedMessageSize)
             {
                 /// The user inputted a tuple separator that indicates the end of a tuple. We're going to search for that
@@ -253,7 +253,7 @@ bool TCPSource::fillBuffer(
                 case Configurations::TCPDecideMessageSize::TUPLE_SEPARATOR: {
                     /// search the circularBuffer until Tuple seperator is found to obtain size of tuple
                     auto [foundSeparator, inputTupleSize]
-                        = sizeUntilSearchToken(reader, descriptor->getFromConfig<char>("tuple_separator"));
+                        = sizeUntilSearchToken(reader, descriptor->getFromConfig(ConfigParametersTCP::SEPARATOR));
 
                     if (!foundSeparator)
                     {
@@ -262,12 +262,12 @@ bool TCPSource::fillBuffer(
                     }
 
                     tupleData = reader.consume(inputTupleSize);
-                    reader.consume(sizeof(descriptor->getFromConfig<char>("tuple_separator")));
+                    reader.consume(sizeof(descriptor->getFromConfig(ConfigParametersTCP::SEPARATOR)));
                     break;
                 }
                 /// The user inputted a fixed buffer size.
                 case Configurations::TCPDecideMessageSize::USER_SPECIFIED_BUFFER_SIZE: {
-                    auto inputTupleSize = descriptor->getFromConfig<uint32_t>("socket_buffer_size");
+                    auto inputTupleSize = descriptor->getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE);
 
                     if (reader.size() < inputTupleSize)
                     {
@@ -283,7 +283,7 @@ bool TCPSource::fillBuffer(
                     /// Tuple (or Buffer for Binary) Size preceds the actual data.
                     /// Peek BytesUserForSocketBufferSize so if the buffer contains not enough bytes the next iteration does not
                     /// loose the tuple size information.
-                    auto bufferSizeSize = descriptor->getFromConfig<uint32_t>("bytes_used_for_socket_buffer_size_transfer");
+                    auto bufferSizeSize = descriptor->getFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE);
                     if (reader.size() < bufferSizeSize)
                     {
                         break;
@@ -317,9 +317,9 @@ bool TCPSource::fillBuffer(
         /// If bufferFlushIntervalMs was defined by the user (> 0), we check whether the time on receiving
         /// and writing data exceeds the user defined limit (bufferFlushIntervalMs).
         /// If so, we flush the current TupleBuffer(TB) and proceed with the next TB.
-        if ((descriptor->getFromConfig<float>("flush_interval_ms") > 0
+        if ((descriptor->getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS) > 0
              && std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now() - flushIntervalTimerStart).count()
-                 >= descriptor->getFromConfig<float>("flush_interval_ms")))
+                 >= descriptor->getFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS)))
         {
             NES_DEBUG("TCPSource::fillBuffer: Reached TupleBuffer flush interval. Finishing writing to current TupleBuffer.");
             flushIntervalPassed = true;
@@ -341,11 +341,6 @@ void TCPSource::close()
         ::close(sockfd);
         NES_TRACE("TCPSource::close: connection closed.");
     }
-}
-
-const SourceDescriptor::Config& TCPSource::getSourceConfig() const
-{
-    return this->descriptor->getConfig();
 }
 
 }
