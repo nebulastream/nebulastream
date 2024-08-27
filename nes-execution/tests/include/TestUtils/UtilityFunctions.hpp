@@ -149,7 +149,7 @@ std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& 
 void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
-    Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider);

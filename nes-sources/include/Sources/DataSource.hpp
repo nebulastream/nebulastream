@@ -26,7 +26,7 @@
 #include <Sources/Source.hpp>
 #include <Sources/SourceReturnType.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 class TestTupleBuffer;
 }
@@ -47,7 +47,7 @@ public:
     explicit DataSource(
         OriginId originId, /// Todo #241: Rethink use of originId for sources, use new identifier for unique identification.
         SchemaPtr schema,
-        std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
+        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&&,
         size_t numSourceLocalBuffers,
         std::unique_ptr<Source> sourceImplementation);
@@ -73,9 +73,9 @@ public:
 protected:
     OriginId originId;
     SchemaPtr schema;
-    std::shared_ptr<NES::Runtime::AbstractPoolProvider> localBufferManager;
+    std::shared_ptr<NES::Memory::AbstractPoolProvider> localBufferManager;
     SourceReturnType::EmitFunction emitFunction;
-    std::shared_ptr<NES::Runtime::AbstractBufferProvider> bufferProvider{nullptr};
+    std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider{nullptr};
     uint64_t numSourceLocalBuffers;
     SourceType type;
     std::atomic_bool wasStarted{false};
@@ -91,9 +91,9 @@ protected:
     /// Runs in detached thread and kills thread when finishing.
     /// while (running) { ... }: orchestrates data ingestion until end of stream or failure.
     void runningRoutine();
-    void emitWork(NES::Runtime::TupleBuffer& buffer, bool addBufferMetaData = true);
+    void emitWork(NES::Memory::TupleBuffer& buffer, bool addBufferMetaData = true);
     [[nodiscard]] std::string toString() const;
-    NES::Runtime::MemoryLayouts::TestTupleBuffer allocateBuffer() const;
+    NES::Memory::MemoryLayouts::TestTupleBuffer allocateBuffer() const;
 };
 
 }

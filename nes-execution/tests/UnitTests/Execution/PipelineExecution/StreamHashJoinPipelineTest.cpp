@@ -129,9 +129,9 @@ public:
         NES_DEBUG("rightBuffers: \n{}", Util::printTupleBufferAsCSV(rightBuffers[0], rightSchema));
 
         /// Creating the scan (for build) and emit operator (for sink)
-        auto memoryLayoutLeft = Runtime::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
-        auto memoryLayoutRight = Runtime::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
-        auto memoryLayoutJoined = Runtime::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
+        auto memoryLayoutLeft = Memory::MemoryLayouts::RowLayout::create(leftSchema, bufferManager->getBufferSize());
+        auto memoryLayoutRight = Memory::MemoryLayouts::RowLayout::create(rightSchema, bufferManager->getBufferSize());
+        auto memoryLayoutJoined = Memory::MemoryLayouts::RowLayout::create(joinSchema, bufferManager->getBufferSize());
 
         auto scanMemoryProviderLeft = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutLeft);
         auto scanMemoryProviderRight = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutRight);

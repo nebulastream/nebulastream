@@ -959,7 +959,7 @@ std::shared_ptr<Runtime::Execution::Operators::Operator> LowerPhysicalToNautilus
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     /// pass buffer size here
-    auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider
         = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Scan>(std::move(memoryProvider));
@@ -971,7 +971,7 @@ std::shared_ptr<Runtime::Execution::Operators::ExecutableOperator> LowerPhysical
     auto schema = operatorNode->getOutputSchema();
     NES_ASSERT(schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT, "Currently only row layout is supported");
     /// pass buffer size here
-    auto layout = std::make_shared<Runtime::MemoryLayouts::RowLayout>(schema, bufferSize);
+    auto layout = std::make_shared<Memory::MemoryLayouts::RowLayout>(schema, bufferSize);
     std::unique_ptr<Runtime::Execution::MemoryProvider::MemoryProvider> memoryProvider
         = std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(layout);
     return std::make_shared<Runtime::Execution::Operators::Emit>(std::move(memoryProvider));

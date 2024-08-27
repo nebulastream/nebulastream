@@ -20,7 +20,7 @@
 #include <BaseIntegrationTest.hpp>
 #include <magic_enum.hpp>
 #include <Common/ExecutableType/Array.hpp>
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 class DynamicMemoryLayoutTestParameterized : public Testing::BaseUnitTest, public testing::WithParamInterface<Schema::MemoryLayoutType>
@@ -120,4 +120,4 @@ INSTANTIATE_TEST_CASE_P(
     ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
     [](const testing::TestParamInfo<DynamicMemoryLayoutTestParameterized::ParamType>& info)
     { return std::string(magic_enum::enum_name(info.param)); });
-} /// namespace NES::Runtime::MemoryLayouts
+}

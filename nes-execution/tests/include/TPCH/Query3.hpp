@@ -74,7 +74,7 @@ public:
         auto& customers = tables[TPCHTable::Customer];
 
         auto c_scanMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(customers->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(customers->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> customersProjection = {"c_mksegment", "c_custkey"};
         auto customersScan = std::make_shared<Operators::Scan>(std::move(c_scanMemoryProviderPtr), customersProjection);
 
@@ -121,7 +121,7 @@ public:
         * Pipeline 2 with scan orders -> selection -> JoinPrope with customers from pipeline 1
         */
         auto ordersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(orders->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(orders->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection
             = {"o_orderdate", "o_shippriority", "o_custkey", "o_orderkey"};
         auto orderScan = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
@@ -188,7 +188,7 @@ public:
    * Pipeline 3 with scan lineitem -> selection -> JoinProbe with order_customers from pipeline 2 -> aggregation
    */
         auto lineitemsMP = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProjection
             = {"l_orderkey", "l_extendedprice", "l_discount", "l_shipdate"};
         auto lineitemsScan = std::make_shared<Operators::Scan>(std::move(lineitemsMP), lineItemProjection);

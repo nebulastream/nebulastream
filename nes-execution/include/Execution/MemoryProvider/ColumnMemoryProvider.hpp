@@ -14,6 +14,7 @@
 #pragma once
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <MemoryLayout/ColumnLayout.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {
@@ -28,10 +29,10 @@ public:
      * @brief Creates a column memory provider based on a valid column memory layout pointer.
      * @param Column memory layout pointer used to create the ColumnMemoryProvider.
      */
-    ColumnMemoryProvider(Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr);
+    ColumnMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr);
     ~ColumnMemoryProvider() = default;
 
-    MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
+    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayoutPtr() override;
 
     Nautilus::Record read(
         const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
@@ -46,7 +47,7 @@ public:
 private:
     Nautilus::Value<Nautilus::MemRef> calculateFieldAddress(
         Nautilus::Value<Nautilus::MemRef>& bufferAddress, Nautilus::Value<Nautilus::UInt64>& recordIndex, uint64_t fieldIndex) const;
-    Runtime::MemoryLayouts::ColumnLayoutPtr columnMemoryLayoutPtr;
+    std::shared_ptr<Memory::MemoryLayouts::ColumnLayout> columnMemoryLayoutPtr;
 };
 
 } /// namespace NES::Runtime::Execution::MemoryProvider

@@ -193,12 +193,12 @@ QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutabl
     return [this, successors = std::move(executableSuccessorPipelines)](
                const OriginId originId, Sources::SourceReturnType::SourceReturnType returntype)
     {
-        if (std::holds_alternative<TupleBuffer>(returntype))
+        if (std::holds_alternative<NES::Memory::TupleBuffer>(returntype))
         {
             for (const auto& successorPipeline : successors)
             {
                 /// Using a const taskQueueId of 0
-                this->addWorkForNextPipeline(std::get<TupleBuffer>(returntype), successorPipeline);
+                this->addWorkForNextPipeline(std::get<NES::Memory::TupleBuffer>(returntype), successorPipeline);
             }
         }
         else

@@ -15,7 +15,7 @@
 #include <utility>
 #include <MemoryLayout/MemoryLayoutTupleBuffer.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 MemoryLayoutTupleBuffer::MemoryLayoutTupleBuffer(Memory::TupleBuffer tupleBuffer, uint64_t capacity)
     : tupleBuffer(std::move(tupleBuffer)), capacity(capacity)
@@ -33,4 +33,4 @@ Memory::TupleBuffer MemoryLayoutTupleBuffer::getTupleBuffer()
 {
     return tupleBuffer;
 }
-} /// namespace NES::Runtime::MemoryLayouts
+}

@@ -60,7 +60,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer)
     schema->addField("f2", BasicType::INT64);
 
     auto pipelineContext = MockedPipelineExecutionContext({}, false, bufferManager);
-    auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
     auto emitOperator = Emit(std::move(memoryProviderPtr));
     auto ctx = ExecutionContext(Value<MemRef>((int8_t*)wc.get()), Value<MemRef>((int8_t*)&pipelineContext));
@@ -77,7 +77,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBuffer)
     auto buffer = pipelineContext.buffers[0];
     EXPECT_EQ(buffer.getNumberOfTuples(), rowMemoryLayout->getCapacity());
 
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(rowMemoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(rowMemoryLayout, buffer);
     for (uint64_t i = 0; i < rowMemoryLayout->getCapacity(); i++)
     {
         EXPECT_EQ(testBuffer[i]["f1"].read<int64_t>(), i);
@@ -94,7 +94,7 @@ TEST_F(EmitOperatorTest, emitRecordsToRowBufferWithOverflow)
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipelineContext = MockedPipelineExecutionContext({}, false, bufferManager);
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
@@ -134,7 +134,7 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer)
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipelineContext = MockedPipelineExecutionContext({}, false, bufferManager);
     auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
@@ -153,7 +153,7 @@ TEST_F(EmitOperatorTest, emitRecordsToColumnBuffer)
     auto buffer = pipelineContext.buffers[0];
     EXPECT_EQ(buffer.getNumberOfTuples(), columnMemoryLayout->getCapacity());
 
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < columnMemoryLayout->getCapacity(); i++)
     {
         EXPECT_EQ(testBuffer[i]["f1"].read<int64_t>(), i);
