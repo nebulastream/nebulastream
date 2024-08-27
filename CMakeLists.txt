@@ -39,8 +39,6 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_ENGINE "Enables the experimental execut
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR "Enables the MLIR backend." ON)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_MLIR_INLINING "Enables the inlining for the MLIR backend." OFF)
 option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
-option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
-option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
 
 #toggle GPU runtime and test
@@ -144,16 +142,6 @@ if (ENABLE_IWYU)
     else ()
         message(WARNING "IWYU is enabled but not found! You will not get any suggestions")
     endif ()
-endif ()
-
-if (NES_BUILD_BENCHMARKS)
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNES_BENCHMARKS_FLAG_MODE=1")
-    message("Build with all flags on, only use for benchmarking")
-    if (NES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT)
-        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}  -DNES_BENCHMARKS_DETAILED_LATENCY_MEASUREMENT=1")
-        message("use latency measurement")
-    endif ()
-    #-fno-omit-frame-pointer
 endif ()
 
 # Add Python UDF support using Nautilus

@@ -21,13 +21,6 @@ target_include_directories(nes-operators PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-# Library containing OPC client
-if (NES_USE_OPC)
-    find_package(open62541 CONFIG REQUIRED)
-    target_link_libraries(nes-operators PUBLIC open62541::open62541)
-    add_compile_definitions(ENABLE_OPC_BUILD)
-endif (NES_USE_OPC)
-
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp)
 register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp)
 register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/ Operators/LogicalOperators/Windows/)
