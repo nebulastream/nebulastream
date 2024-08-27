@@ -15,10 +15,8 @@ physical:
       type: CSV_SOURCE
       filePath: oneToThirtyOneDoubleColumn.csv
       delimiter: ","
-      numberOfBuffersToProduce: 1
   - logical: default_source
     config:
       type: CSV_SOURCE
       filePath: oneToThirtyOneDoubleColumn.csv
       delimiter: ","
-      numberOfBuffersToProduce: 1

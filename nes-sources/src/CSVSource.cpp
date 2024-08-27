@@ -40,7 +40,6 @@ CSVSource::CSVSource(const Schema& schema, const SourceDescriptor& sourceDescrip
 {
     auto csvSourceType = dynamic_cast<const CSVSourceDescriptor*>(&sourceDescriptor)->getSourceConfig();
     this->filePath = csvSourceType->getFilePath()->getValue();
-    this->numberOfTuplesToProducePerBuffer = csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
     this->delimiter = csvSourceType->getDelimiter()->getValue();
     this->skipHeader = csvSourceType->getSkipHeader()->getValue();
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
@@ -105,17 +104,7 @@ bool CSVSource::fillTupleBuffer(
 
     input.seekg(currentPositionInFile, std::ifstream::beg);
 
-    uint64_t generatedTuplesThisPass = 0;
-    ///fill buffer maximally
-    if (numberOfTuplesToProducePerBuffer == 0)
-    {
-        generatedTuplesThisPass = tupleBuffer.getBufferSize() / tupleSize;
-    }
-    else
-    {
-        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < tupleBuffer.getBufferSize(), "Wrong parameters");
-    }
+    uint64_t generatedTuplesThisPass = tupleBuffer.getCapacity();
     NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
     std::string line;
@@ -160,7 +149,7 @@ bool CSVSource::fillTupleBuffer(
 
 std::string CSVSource::toString() const
 {
-    return fmt::format("FILE={} numBuff={})", filePath, this->numberOfTuplesToProducePerBuffer);
+    return fmt::format("FILE={})", filePath);
 }
 
 SourceType CSVSource::getType() const

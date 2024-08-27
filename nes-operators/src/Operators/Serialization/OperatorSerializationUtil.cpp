@@ -943,8 +943,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         auto csvSerializedSourceConfig = SerializablePhysicalSourceType_SerializableCSVSourceType();
         csvSerializedSourceConfig.set_numberofbufferstoproduce(
             csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
-        csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
-            csvSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
         csvSerializedSourceConfig.set_filepath(csvSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
         csvSerializedSourceConfig.set_skipheader(csvSourceDescriptor->getSourceConfig()->getSkipHeader()->getValue());
         csvSerializedSourceConfig.set_delimiter(csvSourceDescriptor->getSourceConfig()->getDelimiter()->getValue());
@@ -1033,9 +1031,6 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         sourceDescriptorConfig.emplace(std::make_pair("filepath", csvSourceConfig->filepath()));
         sourceDescriptorConfig.emplace(std::make_pair("skipHeader", csvSourceConfig->skipheader()));
         sourceDescriptorConfig.emplace(std::make_pair("delimiter", csvSourceConfig->delimiter()));
-        ///-Todo, is this still used?
-        sourceDescriptorConfig.emplace(
-            std::make_pair("numberOfTuplesToProducePerBuffer", csvSourceConfig->numberoftuplestoproduceperbuffer()));
         ///-Todo: must be changed when switching to FileSource
         return std::make_unique<Sources::SourceDescriptor>(
             schema, "CSV", Configurations::InputFormat::CSV, std::move(sourceDescriptorConfig));
