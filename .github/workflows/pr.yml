@@ -175,7 +175,7 @@ jobs:
             nebulastream/nes-development:${{ github.event.pull_request.head.ref }}-arm64
 
 
-  pre-build-checks:
+  check-format:
     needs: [ docker-development-images, detect-dependency-changes ]
     if: ${{ ! failure() && ! cancelled() }}
     runs-on: [ self-hosted, linux, Build ]
@@ -186,12 +186,12 @@ jobs:
       - uses: actions/checkout@v4
       - name: Configure CMake
         run: cmake -B build
-      - name: Check preamble
-        run: cmake --build build --target check-preamble
-      - name: Check format
-        run: cmake --build build --target check-format
-      - name: Check comment format
-        run: cmake --build build --target check-comment-format
+      - name: Check Format Preamble
+        run: cmake --build build --target check-format-preamble
+      - name: Check Format Clang
+        run: cmake --build build --target check-format-clang
+      - name: Check Format Comment
+        run: cmake --build build --target check-format-comment
 
   build-linux:
     name: "Build ${{matrix.platform}}"
