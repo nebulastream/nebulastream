@@ -78,7 +78,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     constexpr uint64_t TUPLES = 20;
 
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::UINT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -91,7 +91,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < TUPLES; ++i)
     {
         testBuffer[i]["f1"].write((uint64_t)i);
@@ -110,7 +110,7 @@ TEST_P(LimitPipelineTest, LimitPipelineTest)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), LIMIT);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < LIMIT; ++i)
     {
         ASSERT_EQ(resulttestBuffer[i]["f1"].read<uint64_t>(), (uint64_t)i);

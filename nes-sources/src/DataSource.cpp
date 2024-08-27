@@ -22,10 +22,10 @@
 #include <Util/ThreadNaming.hpp>
 #include <magic_enum.hpp>
 
-#include <Exceptions/Exception.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sources
 {
@@ -281,10 +281,10 @@ void DataSource::runningRoutine()
     NES_DEBUG("DataSource {} end runningRoutine", originId);
 }
 
-Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() const
+Memory::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() const
 {
     const auto buffer = bufferProvider->getBufferBlocking();
-    return Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+    return Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
 }
 
 std::string DataSource::toString() const

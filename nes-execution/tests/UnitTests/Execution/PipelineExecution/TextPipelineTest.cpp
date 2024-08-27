@@ -75,7 +75,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", DataTypeFactory::createText());
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -94,7 +94,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 100; i++)
     {
         testBuffer[i].writeVarSized("f1", "test", *bufferManager);
@@ -111,7 +111,7 @@ TEST_P(TextPipelineTest, textEqualsPipeline)
     ASSERT_EQ(pipelineContext.buffers.size(), 1);
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 100);
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (auto i = 0_u64; i < resultBuffer.getNumberOfTuples(); ++i)
     {
         ASSERT_EQ(resulttestBuffer[i].readVarSized("f1"), "test");

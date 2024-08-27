@@ -178,13 +178,13 @@ public:
            {TPCHTable::Nation, nationSchema},
            {TPCHTable::Region, regionSchema}};
 
-    std::unordered_map<TPCHTable, NES::Runtime::MemoryLayouts::MemoryLayoutPtr> layouts;
+    std::unordered_map<TPCHTable, NES::Memory::MemoryLayouts::MemoryLayoutPtr> layouts;
     TPCHTableGenerator(const std::shared_ptr<Memory::AbstractBufferProvider>& bufferProvider, TPCH_Scale_Factor scale_factor)
         : bufferProvider(bufferProvider), scaleFactor(scale_factor)
     {
         for (auto& [table, schema] : tableSchemas)
         {
-            layouts[table] = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferProvider->getBufferSize());
+            layouts[table] = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferProvider->getBufferSize());
         }
     }
 

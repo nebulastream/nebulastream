@@ -35,14 +35,14 @@ public:
     explicit CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType);
 
     bool fillTupleBuffer(
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager) override;
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
 
     void open() override { /* noop */ };
     void close() override { /* noop */ };
 
     void
-    fillBuffer(NES::Runtime::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager);
+    fillBuffer(NES::Memory::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager);
 
     std::string toString() const override;
 

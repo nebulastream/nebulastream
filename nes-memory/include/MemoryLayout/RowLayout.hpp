@@ -17,7 +17,7 @@
 #include <vector>
 #include <MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 /**
  * @brief Implements a row layout, that maps all tuples in a tuple buffer to a row-wise layout.
@@ -69,4 +69,4 @@ private:
     std::vector<uint64_t> fieldOffSets;
 };
 
-} /// namespace NES::Runtime::MemoryLayouts
+}

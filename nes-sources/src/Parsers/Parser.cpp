@@ -33,10 +33,10 @@ Parser::Parser(std::vector<NES::PhysicalTypePtr> physicalTypes) : physicalTypes(
 void Parser::writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
-    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
-    const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
+    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
     auto fields = schema->fields;
     auto dataType = fields[schemaFieldIndex]->getDataType();

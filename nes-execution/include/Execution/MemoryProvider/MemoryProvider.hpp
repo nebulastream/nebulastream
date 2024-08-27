@@ -13,8 +13,8 @@
 */
 #pragma once
 
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Nautilus/Interface/Record.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {
@@ -28,7 +28,7 @@ using MemoryProviderPtr = std::unique_ptr<MemoryProvider>;
 class MemoryProvider
 {
 public:
-    virtual ~MemoryProvider();
+    virtual ~MemoryProvider() = default;
 
     /**
      * @brief Helper function for creating a memory provider from the buffer size and the schema
@@ -42,7 +42,7 @@ public:
      * @brief Return the memory layout pointer used by the MemoryProvider.
      * @return MemoryLayouts::MemoryLayoutPtr: Pointer to the memory layout.
      */
-    virtual MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() = 0;
+    virtual std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayoutPtr() = 0;
 
     /**
      * @brief Read fields from a record using projections.

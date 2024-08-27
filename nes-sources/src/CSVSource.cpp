@@ -81,7 +81,7 @@ CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
 }
 
 bool CSVSource::fillTupleBuffer(
-    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager)
+    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
     if (this->fileEnded)

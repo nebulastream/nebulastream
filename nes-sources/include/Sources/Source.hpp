@@ -32,9 +32,9 @@ public:
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
     virtual bool fillTupleBuffer(
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         /// Todo #72 : get rid of bufferManager, as soon as parser/formatter is moved out of the Source
-        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager)
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
         = 0;
 
     /// If applicable, opens a connection, e.g., a socket connection to get ready for data consumption.

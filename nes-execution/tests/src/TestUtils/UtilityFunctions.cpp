@@ -58,14 +58,14 @@ void writeNautilusRecord(
     Nautilus::Value<Nautilus::MemRef> nautilusBufferPtr(baseBufferPtr);
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto rowMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferProvider.getBufferSize());
+        auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferProvider.getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
 
         memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferProvider.getBufferSize());
+        auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferProvider.getBufferSize());
         auto memoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
 
         memoryProviderPtr->write(nautilusRecordIndex, nautilusBufferPtr, nautilusRecord);
@@ -129,8 +129,8 @@ std::vector<Memory::TupleBuffer> mergeBuffersSameWindow(
     auto lastTimeStamp = windowSize - 1;
     for (auto buf : buffers)
     {
-        auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferProvider.getBufferSize());
-        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
+        auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferProvider.getBufferSize());
+        auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
 
         for (auto curTuple = 0UL; curTuple < testTupleBuffer.getNumberOfTuples(); ++curTuple)
         {
@@ -186,8 +186,8 @@ std::vector<Memory::TupleBuffer> sortBuffersInTupleBuffer(
     for (auto bufRead : buffersToSort)
     {
         std::vector<size_t> indexAlreadyInNewBuffer;
-        auto memLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferProvider.getBufferSize());
-        auto testTupleBuf = Runtime::MemoryLayouts::TestTupleBuffer(memLayout, bufRead);
+        auto memLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferProvider.getBufferSize());
+        auto testTupleBuf = Memory::MemoryLayouts::TestTupleBuffer(memLayout, bufRead);
 
         auto bufRet = bufferProvider.getBufferBlocking();
 
@@ -300,7 +300,7 @@ std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& 
     uint64_t watermarkTS = 0;
     for (std::string line; std::getline(file, line);)
     {
-        auto testBuffer = MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
+        auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(tupleBuffer, schema);
         auto values = NES::Util::splitWithStringDelimiter<std::string>(line, ",");
 
         /// iterate over fields of schema and cast string values to correct type
@@ -345,7 +345,7 @@ std::string printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const SchemaPtr& 
 void writeFieldValueToTupleBuffer(
     std::string inputString,
     uint64_t schemaFieldIndex,
-    Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const SchemaPtr& schema,
     uint64_t tupleCount,
     Memory::AbstractBufferProvider& bufferProvider)

@@ -81,7 +81,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
     scanSchema->addField("k", BasicType::INT64);
     scanSchema->addField("v", BasicType::INT64);
     scanSchema->addField("ts", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
+    auto scanMemoryLayout = Memory::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -112,7 +112,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
         0 /*handler index*/, aggregationFunctions, std::move(sliceMergingAction), types, 8, 8);
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$sum", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
+    auto emitMemoryLayout = Memory::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     sliceMerging->setChild(emitOperator);
@@ -120,7 +120,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
     testBuffer[0]["k"].write(+1_s64);
@@ -159,7 +159,7 @@ TEST_P(KeyedTimeWindowPipelineTest, windowWithSum)
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
     EXPECT_EQ(pipeline2Context.buffers.size(), 1);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
     EXPECT_EQ(resulttestBuffer.getNumberOfTuples(), 3);
     EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
     EXPECT_EQ(resulttestBuffer[1][aggregationResultFieldName].read<int64_t>(), 20);
@@ -177,7 +177,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     scanSchema->addField("k2", BasicType::INT64);
     scanSchema->addField("v", BasicType::INT64);
     scanSchema->addField("ts", BasicType::INT64);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
+    auto scanMemoryLayout = Memory::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -213,7 +213,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     emitSchema->addField("k1", BasicType::INT64);
     emitSchema->addField("k2", BasicType::INT64);
     emitSchema->addField("sum", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
+    auto emitMemoryLayout = Memory::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     sliceMerging->setChild(emitOperator);
@@ -221,7 +221,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     sliceMergingPipeline->setRootOperator(sliceMerging);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
     testBuffer[0]["k1"].write(+1_s64);
@@ -264,7 +264,7 @@ TEST_P(KeyedTimeWindowPipelineTest, multiKeyWindowWithSum)
     sliceMergingExecutablePipeline->execute(pipeline1Context.buffers[0], pipeline2Context, *wc);
     EXPECT_EQ(pipeline2Context.buffers.size(), 1);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, pipeline2Context.buffers[0]);
     EXPECT_EQ(resulttestBuffer.getNumberOfTuples(), 3);
     EXPECT_EQ(resulttestBuffer[0]["k1"].read<int64_t>(), 1);
     EXPECT_EQ(resulttestBuffer[0]["k2"].read<int64_t>(), 1);

@@ -18,7 +18,7 @@
 #include <map>
 #include <string>
 #include <API/Schema.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 
 /**
  * @brief a collection of shared utility functions
@@ -96,7 +96,7 @@ std::string toCSVString(const SchemaPtr& schema);
  * @param bufferSize
  * @return MemoryLayoutPtr
  */
-Runtime::MemoryLayouts::MemoryLayoutPtr createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
+std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout> createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
 
 /**
  *

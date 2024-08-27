@@ -18,6 +18,7 @@
 #include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/QueryStatusListener.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/ExecutableQueryPlanStatus.hpp>
 #include <Runtime/QueryStatistics.hpp>
 #include <Runtime/Reconfigurable.hpp>
@@ -75,7 +76,7 @@ public:
     */
     explicit QueryManager(
         std::shared_ptr<AbstractQueryStatusListener> queryStatusListener,
-        std::vector<Memory::BufferManagerPtr> bufferManagers,
+        std::vector<NES::Memory::BufferManagerPtr> bufferManagers,
         WorkerId nodeEngineId,
         uint16_t numThreads,
         uint64_t numberOfBuffersPerEpoch,
@@ -211,7 +212,7 @@ public:
      * method to get the first buffer manger
      * @return first buffer manager
      */
-    [[nodiscard]] Memory::BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
+    [[nodiscard]] NES::Memory::BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
 
 private:
     /**
@@ -378,7 +379,7 @@ protected:
 protected:
     WorkerId nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
-    std::vector<Memory::BufferManagerPtr> bufferManagers;
+    std::vector<NES::Memory::BufferManagerPtr> bufferManagers;
 
     uint16_t numThreads;
 

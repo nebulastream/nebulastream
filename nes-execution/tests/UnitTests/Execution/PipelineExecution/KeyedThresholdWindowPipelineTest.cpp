@@ -80,7 +80,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
     scanSchema->addField("key", BasicType::UINT32);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
+    auto scanMemoryLayout = Memory::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -116,7 +116,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
 
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Sum", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
+    auto emitMemoryLayout = Memory::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -125,7 +125,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
     testBuffer[0]["f1"].write(+1_s64); /// does not qualify
@@ -159,7 +159,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSum)
     auto resultBuffer = pipelineContext.buffers[0];
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 1);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, resultBuffer);
     EXPECT_EQ(resulttestBuffer[0][aggregationResultFieldName].read<int64_t>(), 50);
 }
 
@@ -172,7 +172,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     scanSchema->addField("f1", BasicType::INT64);
     scanSchema->addField("f2", BasicType::INT64);
     scanSchema->addField("key", BasicType::UINT32);
-    auto scanMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
+    auto scanMemoryLayout = Memory::MemoryLayouts::RowLayout::create(scanSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(scanMemoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -214,7 +214,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     auto emitSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     emitSchema->addField("test$Sum", BasicType::INT64);
     emitSchema->addField("test$Max", BasicType::INT64);
-    auto emitMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
+    auto emitMemoryLayout = Memory::MemoryLayouts::RowLayout::create(emitSchema, bufferManager->getBufferSize());
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(emitMemoryLayout);
     auto emitOperator = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
     thresholdWindowOperator->setChild(emitOperator);
@@ -223,7 +223,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(scanMemoryLayout, buffer);
 
     /// Fill buffer
     testBuffer[0]["f1"].write(+1_s64); /// does not qualify
@@ -272,7 +272,7 @@ TEST_P(KeyedThresholdWindowPipelineTest, thresholdWindowWithSumAndMaxDifferentKe
     auto resultBuffer = pipelineContext.buffers[0];
     EXPECT_EQ(resultBuffer.getNumberOfTuples(), 2);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(emitMemoryLayout, resultBuffer);
     EXPECT_EQ(resulttestBuffer[0][sumAggregationResultFieldName].read<int64_t>(), 50);
     EXPECT_EQ(resulttestBuffer[0][maxAggregationResultFieldName].read<int64_t>(), 30);
     EXPECT_EQ(resulttestBuffer[1][sumAggregationResultFieldName].read<int64_t>(), 500);

@@ -15,7 +15,6 @@
 
 #include <memory>
 #include <Identifiers/Identifiers.hpp>
-#include <QueryCompiler/QueryCompilerForwardDeclaration.hpp>
 #include <Sources/SourceHandle.hpp>
 #include <Sources/SourceReturnType.hpp>
 
@@ -38,7 +37,7 @@ public:
     SourceHandlePtr lower(
         OriginId originId,
         SourceDescriptorPtr&& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
-        std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
+        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 
     ~SourceProvider() = default;

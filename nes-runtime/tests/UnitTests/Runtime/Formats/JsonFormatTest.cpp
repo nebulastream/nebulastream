@@ -110,7 +110,7 @@ public:
      */
     bool validateJsonIterator(
         SchemaPtr schema,
-        NES::Runtime::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
+        NES::Memory::MemoryLayouts::TestTupleBuffer* testTupleBuffer,
         const std::vector<std::vector<JsonKVPair>>& expectedKVPairs)
     {
         /// Get the test tuple buffer and use it to create a json iterator.

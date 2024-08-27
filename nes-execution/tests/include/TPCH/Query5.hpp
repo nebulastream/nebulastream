@@ -79,7 +79,7 @@ public:
         auto& customerTable = tables[TPCHTable::Customer];
 
         auto c_scanMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(customerTable->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(customerTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> customersProjection = {"c_custkey", "c_nationkey"};
         auto customersScanOperator = std::make_shared<Operators::Scan>(std::move(c_scanMemoryProviderPtr), customersProjection);
 
@@ -119,7 +119,7 @@ public:
         */
         /// Scan the Order table
         auto ordersMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(orderTable->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(orderTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> ordersProjection = {"o_orderkey", "o_orderdate", "o_custkey"};
         auto orderScanOperator = std::make_shared<Operators::Scan>(std::move(ordersMemoryProviderPtr), ordersProjection);
 
@@ -186,7 +186,7 @@ public:
         */
         /// Scan the LineItem table
         auto lineItemMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineItemTable->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(lineItemTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> lineItemProjection
             = {"l_orderkey", "l_suppkey", "l_extendedprice", "l_discount"};
         auto lineItemScanOperator = std::make_shared<Operators::Scan>(std::move(lineItemMemoryProviderPtr), lineItemProjection);
@@ -247,7 +247,7 @@ public:
         */
         /// Scan the Supplier table
         auto supplierMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(supplierTable->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(supplierTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> supplierProjection = {"s_nationkey", "s_suppkey"};
         auto supplierScanOperator = std::make_shared<Operators::Scan>(std::move(supplierMemoryProviderPtr), supplierProjection);
 
@@ -313,7 +313,7 @@ public:
         */
         /// Scan the Nation table
         auto nationMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(nationTable->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(nationTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> nationProjection = {"n_nationkey", "n_regionkey", "n_name"};
         auto nationScanOperator = std::make_shared<Operators::Scan>(std::move(nationMemoryProviderPtr), nationProjection);
 
@@ -372,7 +372,7 @@ public:
         */
         /// Scan the Region table
         auto regionMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(regionTable->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(regionTable->getLayout()));
         std::vector<Nautilus::Record::RecordFieldIdentifier> regionProjection = {"r_name", "r_regionkey"};
         auto regionScanOperator = std::make_shared<Operators::Scan>(std::move(regionMemoryProviderPtr), regionProjection);
 

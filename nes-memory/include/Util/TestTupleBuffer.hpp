@@ -29,7 +29,7 @@
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 class MemoryLayoutTupleBuffer;
@@ -563,4 +563,4 @@ private:
     mutable Memory::TupleBuffer buffer;
 };
 
-} /// namespace NES::Runtime::MemoryLayouts
+}

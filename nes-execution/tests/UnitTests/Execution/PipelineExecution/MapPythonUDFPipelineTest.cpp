@@ -96,7 +96,7 @@ template <typename T>
 auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout)
 {
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         testBuffer[i][variableName].write((T)i);
@@ -134,7 +134,7 @@ void checkBufferResult(std::string variableName, auto pipelineContext, auto memo
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         ASSERT_EQ(resulttestBuffer[i][variableName].read<T>(), i + 10);
@@ -148,7 +148,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineIntegerMap)
 {
     auto variableName = "intVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT32);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int32_t>(variableName, bufferManager, memoryLayout);
@@ -173,7 +173,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineShortMap)
 {
     auto variableName = "shortVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT16);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int16_t>(variableName, bufferManager, memoryLayout);
@@ -197,7 +197,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineByteMap)
 {
     auto variableName = "byteVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT8);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int8_t>(variableName, bufferManager, memoryLayout);
@@ -221,7 +221,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineLongMap)
 {
     auto variableName = "longVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<int64_t>(variableName, bufferManager, memoryLayout);
@@ -245,7 +245,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineDoubleMap)
 {
     auto variableName = "DoubleVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::FLOAT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = initInputBuffer<double>(variableName, bufferManager, memoryLayout);
@@ -269,11 +269,11 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap)
 {
     auto variableName = "BooleanVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, BasicType::BOOLEAN);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         testBuffer[i][variableName].write((bool)true);
@@ -293,7 +293,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineBooleanMap)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         ASSERT_EQ(resulttestBuffer[i][variableName].read<bool>(), false);
@@ -308,12 +308,12 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap)
 {
     auto variableName = "stringVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, DataTypeFactory::createText());
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         std::string value = "X";
@@ -339,7 +339,7 @@ TEST_P(MapPythonUDFPipelineTest, DISABLED_scanMapEmitPipelineStringMap)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         auto index = resulttestBuffer[i]["stringVariable"].read<uint32_t>();
@@ -365,12 +365,12 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
     schema->addField("booleanVariable", BasicType::BOOLEAN);
     /// TODO #3980 enable once string works
     /// schema->addField("stringVariable", DataTypeFactory::createText());
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         std::string value = "X";
@@ -413,7 +413,7 @@ TEST_P(MapPythonUDFPipelineTest, scanMapEmitPipelineComplexMap)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         EXPECT_EQ(resulttestBuffer[i]["byteVariable"].read<int8_t>(), i + 10);

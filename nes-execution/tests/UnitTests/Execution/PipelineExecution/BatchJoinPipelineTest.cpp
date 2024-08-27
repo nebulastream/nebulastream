@@ -73,11 +73,11 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
 {
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema = schema->addField("k1", BasicType::INT64)->addField("v1", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     resultSchema->addField("f1", BasicType::INT64);
-    auto resultMemoryLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bufferManager->getBufferSize());
+    auto resultMemoryLayout = Memory::MemoryLayouts::RowLayout::create(resultSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -99,7 +99,7 @@ TEST_P(BatchJoinPipelineTest, joinBuildPipeline)
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
 
     /// Fill buffer
     testBuffer[0]["k1"].write(+1_s64);

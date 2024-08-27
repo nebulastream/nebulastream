@@ -96,7 +96,7 @@ template <typename T>
 auto initInputBuffer(std::string variableName, auto bufferManager, auto memoryLayout)
 {
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         testBuffer[i][variableName].write((T)i);
@@ -139,7 +139,7 @@ void checkBufferResult(std::string variableName, auto pipelineContext, auto memo
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 10);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     T udfState = 10;
     for (uint64_t i = 1; i < 10; i++)
     {
@@ -155,12 +155,12 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
 {
     auto variableName = "stringVariable";
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField(variableName, DataTypeFactory::createText());
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         testBuffer[i].writeVarSized("stringVariable", "X Y Z", bufferManager);
@@ -188,7 +188,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineStringMap)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), 30);
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 30; i = i + 1)
     {
         const auto text = resulttestBuffer[i].readVarSized("stringVariable");
@@ -221,12 +221,12 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
     schema->addField("floatVariable", BasicType::FLOAT32);
     schema->addField("doubleVariable", BasicType::FLOAT64);
     schema->addField("booleanVariable", BasicType::BOOLEAN);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto pipeline = initPipelineOperator(schema, memoryLayout);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         testBuffer[i]["byteVariable"].write((int8_t)i);
@@ -267,7 +267,7 @@ TEST_P(FlatMapJavaUDFPipelineTest, scanMapEmitPipelineComplexMap)
 
     std::string flatMapStateString = "Appended String:";
     auto udfState = 10;
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < 10; i++)
     {
         udfState += i;
