@@ -271,8 +271,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     ASSERT_THAT(pipelineContext.seenSeqChunkLastChunk, ::testing::UnorderedElementsAreArray(expectedSeqChunkLastChunk));
 }
 
-std::shared_ptr<PhysicalOperatorPipeline>
-createFirstPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput, const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput)
+std::shared_ptr<PhysicalOperatorPipeline> createFirstPipeline(
+    const std::shared_ptr<Memory::MemoryLayouts::RowLayout>& memoryLayoutInput,
+    const std::shared_ptr<Memory::MemoryLayouts::RowLayout>& memoryLayoutOutput)
 {
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -293,8 +294,8 @@ createFirstPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput, const 
     return pipeline;
 }
 
-std::shared_ptr<PhysicalOperatorPipeline>
-createSecondPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput, Aggregation::AggregationFunctionPtr aggregationFunction)
+std::shared_ptr<PhysicalOperatorPipeline> createSecondPipeline(
+    const std::shared_ptr<Memory::MemoryLayouts::RowLayout>& memoryLayoutInput, Aggregation::AggregationFunctionPtr aggregationFunction)
 {
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -312,8 +313,8 @@ createSecondPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutInput, Aggre
     return pipeline;
 }
 
-std::shared_ptr<PhysicalOperatorPipeline>
-createThirdPipeline(const MemoryLayouts::RowLayoutPtr& memoryLayoutOutput, Aggregation::AggregationFunctionPtr aggregationFunction)
+std::shared_ptr<PhysicalOperatorPipeline> createThirdPipeline(
+    const std::shared_ptr<Memory::MemoryLayouts::RowLayout>& memoryLayoutOutput, Aggregation::AggregationFunctionPtr aggregationFunction)
 {
     std::vector<Aggregation::AggregationFunctionPtr> aggregationFunctions = {std::move(aggregationFunction)};
     auto sliceMergingAction
