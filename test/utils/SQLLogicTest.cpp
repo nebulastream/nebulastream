@@ -12,11 +12,10 @@
     limitations under the License.
 */
 
+#include <chrono>
 #include <filesystem>
 #include <regex>
 #include <string>
-#include <chrono>
-#include <filesystem>
 #include <gtest/gtest.h>
 #include <IntegrationTestUtil.hpp>
 #include <NebuLI.hpp>
@@ -31,7 +30,6 @@ public:
     {
         Configuration::SingleNodeWorkerConfiguration const configuration{};
         uut = std::make_unique<GRPCServer>(SingleNodeWorker{configuration});
-
     }
     static std::unique_ptr<GRPCServer> uut;
 };
@@ -41,7 +39,10 @@ class SystemTest : public SystemTestFactory
 {
 public:
     explicit SystemTest(std::string systemTestName, std::string cachedQueryPlanFile, std::string testFile, uint64_t testId)
-        : systemTestName(std::move(systemTestName)), cachedQueryPlanFile(std::move(cachedQueryPlanFile)), testFile(std::move(testFile)), testId(testId)
+        : systemTestName(std::move(systemTestName))
+        , cachedQueryPlanFile(std::move(cachedQueryPlanFile))
+        , testFile(std::move(testFile))
+        , testId(testId)
     {
     }
 
@@ -60,7 +61,7 @@ public:
         /// file:// to make the link clickable in the console
         std::cout << "Find the test log at: file://" << logPath.string() << std::endl;
 
-        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/"+  systemTestName + std::to_string(testId + 1) +  ".csv");
+        IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/" + systemTestName + std::to_string(testId + 1) + ".csv");
 
         SerializableDecomposedQueryPlan queryPlan;
         std::ifstream file(cachedQueryPlanFile);
@@ -95,7 +96,8 @@ std::vector<std::string> tokenize(std::string const& str)
     std::vector<std::string> result;
     std::istringstream iss(str);
     std::string word;
-    while (iss >> word) {
+    while (iss >> word)
+    {
         result.push_back(word);
     }
     return result;
@@ -111,27 +113,30 @@ int main(int argc, char** argv)
 
     NES_ASSERT(systemTestNames.size() == systemTestFiles.size(), "The number of system test names and files must be equal.");
 
-    for (size_t j = 0; j < systemTestNames.size(); ++j) {
+    for (size_t j = 0; j < systemTestNames.size(); ++j)
+    {
         const auto& systemTestName = systemTestNames[j];
         const auto& systemTestFile = systemTestFiles[j];
 
-        for(int64_t i = 0;; ++i)
-        {    auto cacheFilePath = CACHE_DIR + systemTestName +  "_" + std::to_string(i) + ".pb";
+        for (int64_t i = 0;; ++i)
+        {
+            auto cacheFilePath = CACHE_DIR + systemTestName + "_" + std::to_string(i) + ".pb";
             std::filesystem::path const file = std::filesystem::path(cacheFilePath);
 
             if (!std::filesystem::is_regular_file(file))
-            {    break;
+            {
+                break;
             }
 
             /// We register our value-parameterized tests programmatically
             /// Reference: https://google.github.io/googletest/advanced.html#registering-tests-programmatically
             testing::RegisterTest(
                 "SystemTest",
-            (systemTestName + "_" + std::to_string(i)).c_str(),
-            nullptr,
-            nullptr,
-            __FILE__,
-            __LINE__,
+                (systemTestName + "_" + std::to_string(i)).c_str(),
+                nullptr,
+                nullptr,
+                __FILE__,
+                __LINE__,
                 [=]() -> SystemTestFactory* { return new SystemTest(systemTestName, cacheFilePath, systemTestFile, i); });
         }
     }

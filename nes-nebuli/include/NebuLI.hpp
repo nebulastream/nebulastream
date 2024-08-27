@@ -22,4 +22,4 @@ DecomposedQueryPlanPtr loadFromYAMLFile(const std::filesystem::path& file);
 DecomposedQueryPlanPtr loadFrom(std::istream& inputStream);
 std::vector<DecomposedQueryPlanPtr> loadFromSLTFile(const std::filesystem::path& filePath, const std::string& testName);
 bool checkResult(const std::filesystem::path& testFilePath, const std::string& testName, uint64_t queryNr);
-}
+} /// namespace NES::CLI

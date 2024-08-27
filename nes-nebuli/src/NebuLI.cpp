@@ -414,24 +414,24 @@ bool checkResult(const std::filesystem::path& testFilePath, const std::string& t
                     return;
                 }
 
-                ///Remove commas
+                /// Remove commas
                 std::for_each(queryResult.begin(), queryResult.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
                 std::for_each(resultLines.begin(), resultLines.end(), [](std::string& s) { std::replace(s.begin(), s.end(), ',', ' '); });
 
-                ///Original lines with their indices
+                /// Original lines with their indices
                 std::vector<std::pair<int, std::string>> originalResultLines;
                 std::vector<std::pair<int, std::string>> originalQueryResult;
 
                 originalResultLines.reserve(resultLines.size());
                 for (size_t i = 0; i < resultLines.size(); ++i)
                 {
-                    originalResultLines.emplace_back(i + 1, resultLines[i]); ///store with 1-based index
+                    originalResultLines.emplace_back(i + 1, resultLines[i]); /// store with 1-based index
                 }
 
                 originalQueryResult.reserve(queryResult.size());
                 for (size_t i = 0; i < queryResult.size(); ++i)
                 {
-                    originalQueryResult.emplace_back(i + 1, queryResult[i]); ///store with 1-based index
+                    originalQueryResult.emplace_back(i + 1, queryResult[i]); /// store with 1-based index
                 }
 
                 if (queryResult.size() != resultLines.size())
@@ -450,7 +450,7 @@ bool checkResult(const std::filesystem::path& testFilePath, const std::string& t
                     errorMessages += "Result does not match for query " + std::to_string(currentQueryNr1) + ":\n";
                     errorMessages += "[#Line: Expected Result | #Line: Query Result]\n";
 
-                    ///Maximum width of "Expected (Line #)"
+                    /// Maximum width of "Expected (Line #)"
                     size_t maxExpectedWidth = 0;
                     for (const auto& line : originalResultLines)
                     {
@@ -481,14 +481,14 @@ bool checkResult(const std::filesystem::path& testFilePath, const std::string& t
                             gotStr = "(missing)";
                         }
 
-                        ///Check if they are different or if we are not filtering by differences
+                        /// Check if they are different or if we are not filtering by differences
                         bool const areDifferent
                             = (i >= originalResultLines.size() || i >= originalQueryResult.size()
                                || originalResultLines[i].second != originalQueryResult[i].second);
 
                         if (areDifferent || !printOnlyDifferences)
                         {
-                            ///Align the expected string by padding it to the maximum width
+                            /// Align the expected string by padding it to the maximum width
                             errorMessages += expectedStr;
                             errorMessages += std::string(maxExpectedWidth - expectedStr.length(), ' ');
                             errorMessages += " | ";

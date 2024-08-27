@@ -417,19 +417,21 @@ add_subdirectory(cmake/docs)
 # Define test suffixes for filtering
 set(GPU_TEST_SUFFIX "__GPU$$")
 set(ALL_SUFFIXES "${GPU_TEST_SUFFIX}") # use pipe (|) to add more suffixes, e.g., ${GPU_TEST_SUFFIX}|${DPU_TEST_SUFFIX}"
+# We always want to exclude the local system test targets
+set(SYSTEM_TEST_REGEX "^(STGRP_|ST_)")
 
 # The test_default target runs tests without any special suffix
 message(STATUS "Adding test_debug target with parallelism=${NES_TEST_PARALLELISM}")
 set(NES_TEST_REPEAT_UNTIL_FAIL 3)
 set(NES_TEST_TIMEOUT 300)
-add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E "${ALL_SUFFIXES}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+add_custom_target(test_default COMMAND ${CMAKE_CTEST_COMMAND} -E \"${ALL_SUFFIXES}\" -E \"${SYSTEM_TEST_REGEX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure)
 
 # The test_gpu target runs tests with ${GPU_TEST_SUFFIX}
 if (NES_USE_GPU)
     message(STATUS "Adding test_gpu target with parallelism=${NES_TEST_PARALLELISM}")
     set(NES_TEST_REPEAT_UNTIL_FAIL 3)
     set(NES_TEST_TIMEOUT 300)
-    add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R "${GPU_TEST_SUFFIX}" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure DEPENDS ${UNITTESTS})
+    add_custom_target(test_gpu COMMAND ${CMAKE_CTEST_COMMAND} -R \"${GPU_TEST_SUFFIX}\" --parallel ${NES_TEST_PARALLELISM} --test-load 90 --timeout ${NES_TEST_TIMEOUT} --repeat until-pass:${NES_TEST_REPEAT_UNTIL_FAIL} --output-on-failure)
 endif ()
 
 install(SCRIPT "${CMAKE_SOURCE_DIR}/cmake/flatten.cmake")
