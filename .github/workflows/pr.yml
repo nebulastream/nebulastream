@@ -6,10 +6,6 @@ name: NES PR CI
 #
 # If this pr is called with act, it has to be used with a custom event.json and called via `act -e event.json`.
 # Otherwise, we are not running the job, as mentioned: https://github.com/nektos/act/issues/720
-# The event.json should look like this:
-#  {
-#    "act": true
-#  }
 
 on:
   pull_request:
@@ -25,7 +21,7 @@ concurrency:
 jobs:
   validateTrigger:
     # This ensures we won't run the CI if it is in draft mode, or we called it via act.
-    if: ${{ !github.event.pull_request.draft && !github.event.ACT }}
+    if: ${{ !github.event.pull_request.draft && !github.event.act }}
     runs-on: [ self-hosted, linux, Build ]
     steps:
       - uses: actions/checkout@v4
@@ -39,8 +35,9 @@ jobs:
     # This job detects changes to files relevant for our dependency management by calculating a hash value
     # and looking for existing development images with the same hash.
     # If we find a development image matching the hash we skip building new docker images.
-    # This Job also determines the development image tag used for building and testing
+    # This job also determines the development image tag used for building and testing
     name: Detect changes to dependencies
+    if: ${{ !github.event.act }}
     outputs:
       build-dependency: ${{steps.hash-and-lookup.outputs.build-dependency}}
       tag: ${{ steps.hash-and-lookup.outputs.tag }}
@@ -78,7 +75,7 @@ jobs:
 
   docker-development-images-pre:
     # We run the docker image build on separate machines and combine them into a single
-    # multi-platform docker image in the docker-development-images job.
+    # multi-arch docker image in the docker-development-images job.
     # The Docker build uses a cache based on previous branch-specific images or the
     # main branch
     # This job builds a Base image which contains the llvm based toolchain and a recent
@@ -88,11 +85,11 @@ jobs:
     name: "Build Development Images"
     needs: [ detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
-    runs-on: [ self-hosted, linux, Build, "${{ matrix.platform }}" ]
+    runs-on: [ self-hosted, linux, Build, "${{ matrix.arch }}" ]
     strategy:
       fail-fast: false
       matrix:
-        platform: [ x64, arm64 ]
+        arch: [ x64, arm64 ]
     steps:
       - uses: actions/checkout@v4
       - name: Login to Docker Hub
@@ -106,25 +103,25 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
-          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
+          tags: nebulastream/nes-development-base:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+          cache-to: type=registry,ref=nebulastream/nes-development-base-cache:${{ github.event.pull_request.head.ref }}-${{matrix.arch}},mode=max
           cache-from: |
-            type=registry,ref=nebulastream/nes-development-base-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
-            type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.platform}}
+            type=registry,ref=nebulastream/nes-development-base-cache:${{ github.event.pull_request.head.ref }}-${{matrix.arch}}
+            type=registry,ref=nebulastream/nes-development-base-cache:latest-${{matrix.arch}}
           context: .
           file: docker/dependency/Base.dockerfile
       - name: Build Dependency Image
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
-          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
+          tags: nebulastream/nes-development-dependency:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+          cache-to: type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.event.pull_request.head.ref }}-${{matrix.arch}},mode=max
           cache-from: |
-            type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.platform}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:${{ github.event.pull_request.head.ref }}-${{matrix.arch}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}
           build-args: |
-            TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
-            ARCH=${{matrix.platform}}
+            TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+            ARCH=${{matrix.arch}}
             VCPKG_DEPENDENCY_HASH=${{ needs.detect-dependency-changes.outputs.hash }}
           context: .
           file: docker/dependency/Dependency.dockerfile
@@ -132,18 +129,18 @@ jobs:
         uses: docker/build-push-action@v6
         with:
           push: true
-          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
-          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}},mode=max
+          tags: nebulastream/nes-development:${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
+          cache-to: type=registry,ref=nebulastream/nes-development-cache:${{ github.event.pull_request.head.ref }}-${{matrix.arch}},mode=max
           cache-from: |
-            type=registry,ref=nebulastream/nes-development-cache:${{ github.event.pull_request.head.ref }}-${{matrix.platform}}
-            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.platform}}
-          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.platform}}
+            type=registry,ref=nebulastream/nes-development-cache:${{ github.event.pull_request.head.ref }}-${{matrix.arch}}
+            type=registry,ref=nebulastream/nes-development-dependency-cache:latest-${{matrix.arch}}
+          build-args: TAG=${{ needs.detect-dependency-changes.outputs.tag }}-${{matrix.arch}}
           context: .
           file: docker/dependency/Development.dockerfile
 
   docker-development-images:
-    # This Job merges platform specific images into a single multi-platform image
-    name: "Merge images for different platforms into a single Multi-Platform image"
+    # This job merges arch specific images into a single multi-arch image
+    name: "Merge images for different archs into a single Multi-arch image"
     needs: [ docker-development-images-pre, detect-dependency-changes ]
     if: needs.detect-dependency-changes.outputs.build-dependency == 'true'
     runs-on: [ self-hosted, linux, Build ]
@@ -200,7 +197,7 @@ jobs:
         run: cmake --build build --target check-format-comment
 
   build-linux:
-    name: "Build ${{matrix.platform}}"
+    name: "Build ${{matrix.arch}}"
     if: ${{ ! failure() && ! cancelled() }}
     needs: [ docker-development-images , detect-dependency-changes ]
     container:
@@ -211,11 +208,11 @@ jobs:
         CCACHE_DIR: /ccache
       options: --user root
     timeout-minutes: 40
-    runs-on: [ self-hosted, linux, Build, "${{matrix.platform}}" ]
+    runs-on: [ self-hosted, linux, Build, "${{matrix.arch}}" ]
     strategy:
       fail-fast: false
       matrix:
-        platform: [ x64, arm64 ]
+        arch: [ x64, arm64 ]
     steps:
       - uses: actions/checkout@v4
       - name: Configure NebulaStream
@@ -226,7 +223,7 @@ jobs:
         run: ctest --test-dir build -j --output-on-failure --output-junit /junit.xml
       - name: Upload Test Summary
         uses: actions/upload-artifact@v4
-        if: ${{ !cancelled() }}
+        if: ${{ !cancelled() && !github.event.act }}
         with:
-          name: junit-${{ matrix.platform }}.xml
+          name: junit-${{ matrix.arch }}.xml
           path: /junit.xml
