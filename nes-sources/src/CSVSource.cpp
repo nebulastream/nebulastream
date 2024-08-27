@@ -41,7 +41,6 @@ CSVSource::CSVSource(const Schema& schema, const SourceDescriptor& sourceDescrip
     this->filePath = csvSourceType->getFilePath()->getValue();
     this->delimiter = csvSourceType->getDelimiter()->getValue();
     this->skipHeader = csvSourceType->getSkipHeader()->getValue();
-    this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema.fields)
@@ -145,16 +144,24 @@ bool CSVSource::fillTupleBuffer(
     return true;
 }
 
-std::string CSVSource::toString() const
-{
-    return fmt::format("FILE={})", filePath);
-}
-
 SourceType CSVSource::getType() const
 {
     return SourceType::CSV_SOURCE;
 }
 
+std::ostream& CSVSource::toString(std::ostream& str) const
+{
+    str << "CSVSOURCE(";
+    str << "Tuplesize:" << this->tupleSize;
+    str << "Generated tuples: " << this->generatedTuples;
+    str << "Generated buffers: " << this->generatedBuffers;
+    str << "Filepath: " << this->filePath;
+    str << "Delimiter: " << this->delimiter;
+    str << "Delimiter: " << this->skipHeader;
+    str << "FileEnded: " << this->fileEnded;
+    str << ")";
+    return str;
+}
 
 std::unique_ptr<Source> GeneratedSourceRegistrar::RegisterSourceCSV(const Schema& schema, const SourceDescriptor& sourceDescriptor)
 {
