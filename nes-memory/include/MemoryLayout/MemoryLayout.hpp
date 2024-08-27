@@ -14,13 +14,15 @@
 
 #pragma once
 
+#include <memory>
 #include <optional>
 #include <unordered_map>
 #include <vector>
+#include <API/Schema.hpp>
 #include <Runtime/BufferManager.hpp>
-#include <Runtime/RuntimeForwardRefs.hpp>
+#include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 using FIELD_SIZE = uint64_t;
@@ -57,7 +59,7 @@ public:
      * @param bufferSize A memory layout is always created for a specific buffer size.
      * @param schema A memory layout is always created for a specific schema.
      */
-    MemoryLayout(uint64_t bufferSize, SchemaPtr schema);
+    MemoryLayout(uint64_t bufferSize, std::shared_ptr<Schema> schema);
     virtual ~MemoryLayout() = default;
 
     /**
@@ -116,7 +118,7 @@ public:
      * @brief Gets a vector of all physical fields for this memory layout.
      * @return Reference to vector physical fields.
      */
-    [[nodiscard]] const std::vector<PhysicalTypePtr>& getPhysicalTypes() const;
+    [[nodiscard]] const std::vector<std::shared_ptr<PhysicalType>>& getPhysicalTypes() const;
 
     /**
      * Gets a vector that contains the physical size of all tuple fields.
@@ -135,13 +137,14 @@ public:
 
 protected:
     const uint64_t bufferSize;
-    const SchemaPtr schema;
+    std::shared_ptr<Schema> schema;
     uint64_t recordSize;
     uint64_t capacity;
     std::vector<uint64_t> physicalFieldSizes;
-    std::vector<PhysicalTypePtr> physicalTypes;
+    std::vector<std::shared_ptr<PhysicalType>> physicalTypes;
     std::unordered_map<std::string, uint64_t> nameFieldIndexMap;
 };
-} /// namespace NES::Runtime::MemoryLayouts
 
-using MemoryLayoutPtr = std::shared_ptr<NES::Runtime::MemoryLayouts::MemoryLayout>;
+using MemoryLayoutPtr = std::shared_ptr<NES::Memory::MemoryLayouts::MemoryLayout>;
+
+}

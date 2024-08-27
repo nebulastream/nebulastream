@@ -17,7 +17,7 @@
 #include <Util/Logger/Logger.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 RowLayout::RowLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
@@ -59,4 +59,4 @@ uint64_t RowLayout::getFieldOffset(uint64_t tupleIndex, uint64_t fieldIndex) con
     return offSet;
 }
 
-} /// namespace NES::Runtime::MemoryLayouts
+}

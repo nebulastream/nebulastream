@@ -16,7 +16,7 @@
 
 #include <MemoryLayout/MemoryLayout.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 class ColumnLayout;
@@ -69,4 +69,4 @@ private:
     std::vector<uint64_t> columnOffsets;
 };
 
-} /// namespace NES::Runtime::MemoryLayouts
+}

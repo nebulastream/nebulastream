@@ -69,7 +69,7 @@ public:
         PhysicalTypePtr floatType = physicalTypeFactory.getPhysicalType(DataTypeFactory::createFloat());
 
         auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
         std::vector<std::string> projections = {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"};
         auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
 

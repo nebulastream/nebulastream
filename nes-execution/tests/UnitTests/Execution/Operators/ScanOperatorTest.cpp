@@ -54,7 +54,7 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer)
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto memoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = Scan(std::move(memoryProviderPtr));
@@ -62,7 +62,7 @@ TEST_F(ScanOperatorTest, scanRowLayoutBuffer)
     scanOperator.setChild(collector);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (auto i = 0_u64; i < testBuffer.getCapacity(); i++)
     {
         testBuffer[i]["f1"].write((int64_t)i % 2_s64);
@@ -92,7 +92,7 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer)
     auto schema = Schema::create(Schema::MemoryLayoutType::COLUMNAR_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto columnMemoryLayout = Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
+    auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferManager->getBufferSize());
 
     std::unique_ptr<MemoryProvider::MemoryProvider> memoryProviderPtr
         = std::make_unique<MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
@@ -101,7 +101,7 @@ TEST_F(ScanOperatorTest, scanColumnarLayoutBuffer)
     scanOperator.setChild(collector);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(columnMemoryLayout, buffer);
     for (uint64_t i = 0; i < testBuffer.getCapacity(); i++)
     {
         testBuffer[i]["f1"].write((int64_t)i % 2);

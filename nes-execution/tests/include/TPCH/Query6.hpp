@@ -61,7 +61,7 @@ public:
         auto& lineitems = tables[TPCHTable::LineItem];
 
         auto scanMemoryProviderPtr = std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(
-            std::dynamic_pointer_cast<Runtime::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
+            std::dynamic_pointer_cast<Memory::MemoryLayouts::ColumnLayout>(lineitems->getLayout()));
         std::vector<std::string> projections = {"l_shipdate", "l_discount", "l_quantity", "l_extendedprice"};
         auto scan = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr), projections);
 
@@ -120,7 +120,7 @@ public:
         /// emit operator
         auto resultSchema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
         resultSchema->addField("revenue", BasicType::FLOAT32);
-        auto resultLayout = Runtime::MemoryLayouts::RowLayout::create(resultSchema, bm.getBufferSize());
+        auto resultLayout = Memory::MemoryLayouts::RowLayout::create(resultSchema, bm.getBufferSize());
         auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(resultLayout);
         auto emit = std::make_shared<Operators::Emit>(std::move(emitMemoryProviderPtr));
         aggScan->setChild(emit);

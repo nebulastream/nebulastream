@@ -21,7 +21,7 @@
 #include "Common/DataTypes/DataTypeFactory.hpp"
 #include <Common/ExecutableType/Array.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 #define VAR_SIZED_DATA_TYPES uint16_t, std::string, double, std::string
@@ -337,4 +337,4 @@ INSTANTIATE_TEST_CASE_P(
     TestTupleBufferTest,
     ::testing::Values(Schema::MemoryLayoutType::COLUMNAR_LAYOUT, Schema::MemoryLayoutType::ROW_LAYOUT),
     [](const testing::TestParamInfo<TestTupleBufferTest::ParamType>& info) { return std::string(magic_enum::enum_name(info.param)); });
-} /// namespace NES::Runtime::MemoryLayouts
+}

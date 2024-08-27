@@ -24,7 +24,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 std::string readVarSizedData(const Memory::TupleBuffer& buffer, uint64_t childBufferIdx)
@@ -129,4 +129,4 @@ bool MemoryLayout::operator!=(const MemoryLayout& rhs) const
 {
     return !(rhs == *this);
 }
-} /// namespace NES::Runtime::MemoryLayouts
+}

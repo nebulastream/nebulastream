@@ -84,7 +84,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline)
     schema->addField("f9", BasicType::FLOAT32);
     schema->addField("f10", BasicType::FLOAT64);
     schema->addField("f11", BasicType::BOOLEAN);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto emitMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
@@ -96,7 +96,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline)
     pipeline->setRootOperator(scanOperator);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = 0; i < testBuffer.getCapacity(); i++)
     {
         testBuffer[i]["f1"].write((int8_t)i);
@@ -126,7 +126,7 @@ TEST_P(ScanEmitPipelineTest, scanEmitPipeline)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), memoryLayout->getCapacity());
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++)
     {
         ASSERT_EQ(resulttestBuffer[i]["f1"].read<int8_t>(), (int8_t)i);

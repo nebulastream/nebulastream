@@ -29,9 +29,9 @@ public:
     bool writeInputTupleToTupleBuffer(
         std::string_view csvInput,
         uint64_t tupleCount,
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const SchemaPtr& schema,
-        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager) override;
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
 
 private:
     uint64_t numberOfSchemaFields;
