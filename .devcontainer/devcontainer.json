@@ -8,5 +8,8 @@
         "Docker:app:DockerSettings.dockerPath": "/usr/bin/docker"
       }
     }
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/github-cli:1": {}
   }
 }
