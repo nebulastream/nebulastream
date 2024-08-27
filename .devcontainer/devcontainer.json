@@ -1,0 +1,12 @@
+{
+  "image": "nebulastream/nes-development:latest",
+  "customizations": {
+    "jetbrains": {
+      "settings": {
+        "com.intellij:app:BuiltInServerOptions.builtInServerPort": 64492,
+        "Docker:app:DockerSettings.dockerComposePath": "/usr/bin/docker",
+        "Docker:app:DockerSettings.dockerPath": "/usr/bin/docker"
+      }
+    }
+  }
+}
