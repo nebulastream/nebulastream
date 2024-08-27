@@ -79,27 +79,26 @@ TCPSource::TCPSource(const Schema& schema, const SourceDescriptor& sourceDescrip
     NES_TRACE("TCPSource::TCPSource: Init TCPSource.");
 }
 
-std::string TCPSource::toString() const
+std::ostream& TCPSource::toString(std::ostream& str) const
 {
-    std::stringstream ss;
-    ss << "TCPSOURCE(";
-    ss << "Tuplesize:" << this->tupleSize;
-    ss << "Generated tuples: " << this->generatedTuples;
-    ss << "Generated buffers: " << this->generatedBuffers;
-    ss << "Connection: " << this->connection;
-    ss << "Timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
-    ss << "InputFormat: " << magic_enum::enum_name(inputFormat);
-    ss << "SocketHost: " << socketHost;
-    ss << "SocketPort: " << socketPort;
-    ss << "SocketType: " << socketType;
-    ss << "SocketDomain: " << socketDomain;
-    ss << "DecideMessageSize: " << magic_enum::enum_name(decideMessageSize);
-    ss << "TupleSeparator: " << tupleSeparator;
-    ss << "SocketBufferSize: " << socketBufferSize;
-    ss << "BytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
-    ss << "FlushIntervalInMs" << flushIntervalInMs;
-    ss << ")";
-    return ss.str();
+    str << "TCPSOURCE(";
+    str << "Tuplesize:" << this->tupleSize;
+    str << "Generated tuples: " << this->generatedTuples;
+    str << "Generated buffers: " << this->generatedBuffers;
+    str << "Connection: " << this->connection;
+    str << "Timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
+    str << "InputFormat: " << magic_enum::enum_name(inputFormat);
+    str << "SocketHost: " << socketHost;
+    str << "SocketPort: " << socketPort;
+    str << "SocketType: " << socketType;
+    str << "SocketDomain: " << socketDomain;
+    str << "DecideMessageSize: " << magic_enum::enum_name(decideMessageSize);
+    str << "TupleSeparator: " << tupleSeparator;
+    str << "SocketBufferSize: " << socketBufferSize;
+    str << "BytesUsedForSocketBufferSizeTransfer" << bytesUsedForSocketBufferSizeTransfer;
+    str << "FlushIntervalInMs" << flushIntervalInMs;
+    str << ")";
+    return str;
 }
 
 void TCPSource::open()
@@ -158,7 +157,9 @@ void TCPSource::open()
 bool TCPSource::fillTupleBuffer(
     NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema)
 {
-    NES_DEBUG("TCPSource  {}: receiveData ", this->toString());
+    std::stringstream ss;
+    ss << this;
+    NES_DEBUG("TCPSource  {}: receiveData ", ss.str());
     NES_DEBUG("TCPSource buffer allocated ");
     try
     {

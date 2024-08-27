@@ -47,14 +47,14 @@ public:
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
 
-    std::string toString() const override;
-
     SourceType getType() const override;
 
     /// Open TCP connection.
     void open() override;
     /// Close TCP connection.
     void close() override;
+
+    std::ostream& toString(std::ostream& str) const override;
 
 private:
     bool
