@@ -45,7 +45,7 @@ public:
             = Schema::create()->addField("t1", BasicType::UINT16)->addField("t2", BasicType::BOOLEAN)->addField("t3", BasicType::FLOAT64);
         if (GetParam() == Schema::MemoryLayoutType::ROW_LAYOUT)
         {
-            RowLayoutPtr layout;
+            std::shared_ptr<RowLayout> layout;
             ASSERT_NO_THROW(layout = RowLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 
@@ -54,7 +54,7 @@ public:
         }
         else
         {
-            ColumnLayoutPtr layout;
+            std::shared_ptr<ColumnLayout> layout;
             ASSERT_NO_THROW(layout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
             ASSERT_NE(layout, nullptr);
 

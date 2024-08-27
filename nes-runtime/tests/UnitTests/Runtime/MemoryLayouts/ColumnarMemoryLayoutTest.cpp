@@ -53,7 +53,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutCreateTest)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
-    ColumnLayoutPtr columnLayout;
+    std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 }
@@ -66,7 +66,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutMapCalcOffsetTest)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    ColumnLayoutPtr columnLayout;
+    std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
@@ -90,7 +90,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestOneRecor
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    ColumnLayoutPtr columnLayout;
+    std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
@@ -115,7 +115,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutPushRecordAndReadRecordTestMultiple
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    ColumnLayoutPtr columnLayout;
+    std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
@@ -187,7 +187,7 @@ TEST_F(ColumnarMemoryLayoutTest, columnLayoutLayoutFieldBoundaryCheck)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    ColumnLayoutPtr columnLayout;
+    std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
@@ -237,7 +237,7 @@ TEST_F(ColumnarMemoryLayoutTest, getFieldViaFieldNameColumnLayout)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    ColumnLayoutPtr columnLayout;
+    std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
@@ -262,7 +262,7 @@ TEST_F(ColumnarMemoryLayoutTest, accessDynamicColumnBufferTest)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    ColumnLayoutPtr columnLayout;
+    std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
@@ -294,7 +294,7 @@ TEST_F(ColumnarMemoryLayoutTest, pushRecordTooManyRecordsColumnLayout)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    ColumnLayoutPtr columnLayout;
+    std::shared_ptr<ColumnLayout> columnLayout;
     ASSERT_NO_THROW(columnLayout = ColumnLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(columnLayout, nullptr);
 
