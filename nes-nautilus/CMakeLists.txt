@@ -25,6 +25,7 @@ target_include_directories(nes-nautilus PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
         
+target_compile_options(nes-nautilus PUBLIC "-Wno-weak-vtables")
 
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-nautilus REUSE_FROM nes-common)
