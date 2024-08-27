@@ -48,7 +48,6 @@ CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& s
     this->filePath = this->descriptor->getFromConfig(ConfigParametersCSV::FILEPATH);
     this->delimiter = this->descriptor->getFromConfig(ConfigParametersCSV::DELIMITER);
     this->skipHeader = this->descriptor->getFromConfig(ConfigParametersCSV::SKIP_HEADER);
-    this->numberOfTuplesToProducePerBuffer = this->descriptor->getFromConfig(ConfigParametersCSV::NUMBER_OF_BUFFER_TO_PRODUCE_PER_TUPLE);
     this->tupleSize = schema.getSchemaSizeInBytes();
 
     struct Deleter
@@ -79,7 +78,7 @@ CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& s
         this->fileSize = static_cast<decltype(this->fileSize)>(reportedFileSize);
     }
 
-    NES_DEBUG("CSVSource: tupleSize={} numBuff={}", this->tupleSize, this->numberOfTuplesToProducePerBuffer);
+    NES_DEBUG("CSVSource: tupleSize={}", this->tupleSize);
 
     DefaultPhysicalTypeFactory defaultPhysicalTypeFactory = DefaultPhysicalTypeFactory();
     for (const AttributeFieldPtr& field : schema.fields)
@@ -105,17 +104,7 @@ bool CSVSource::fillTupleBuffer(
 
     input.seekg(currentPositionInFile, std::ifstream::beg);
 
-    uint64_t generatedTuplesThisPass = 0;
-    ///fill buffer maximally
-    if (numberOfTuplesToProducePerBuffer == 0)
-    {
-        generatedTuplesThisPass = tupleBuffer.getCapacity();
-    }
-    else
-    {
-        generatedTuplesThisPass = numberOfTuplesToProducePerBuffer;
-        NES_ASSERT2_FMT(generatedTuplesThisPass * tupleSize < tupleBuffer.getBuffer().getBufferSize(), "Wrong parameters");
-    }
+    uint64_t generatedTuplesThisPass = tupleBuffer.getCapacity();
     NES_TRACE("CSVSource::fillBuffer: fill buffer with #tuples={} of size={}", generatedTuplesThisPass, tupleSize);
 
     std::string line;
@@ -156,7 +145,7 @@ bool CSVSource::fillTupleBuffer(
 
 std::string CSVSource::toString() const
 {
-    return fmt::format("FILE={} numBuff={})", filePath, this->numberOfTuplesToProducePerBuffer);
+    return fmt::format("FILE={})", filePath);
 }
 
 }

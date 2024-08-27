@@ -941,8 +941,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         serializedSourceConfig->set_sourcetype(Sources::CSVSource::NAME);
         /// init serializable csv source config
         auto csvSerializedSourceConfig = SerializablePhysicalSourceType_SerializableCSVSourceType();
-        csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
-            sourceDescriptor->getFromConfig(Sources::CSVSource::ConfigParametersCSV::NUMBER_OF_BUFFER_TO_PRODUCE_PER_TUPLE));
         csvSerializedSourceConfig.set_filepath(sourceDescriptor->getFromConfig(Sources::CSVSource::ConfigParametersCSV::FILEPATH));
         csvSerializedSourceConfig.set_skipheader(sourceDescriptor->getFromConfig(Sources::CSVSource::ConfigParametersCSV::SKIP_HEADER));
         csvSerializedSourceConfig.set_delimiter(sourceDescriptor->getFromConfig(Sources::CSVSource::ConfigParametersCSV::DELIMITER));
@@ -957,8 +955,8 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
     else
     {
         auto exception = UnknownOperator();
-        exception.what += "Not supporting operator in serializeSourceDescriptor: ";
-        exception.what += sourceDescriptor->getSourceName().c_str();
+        exception.what() += "Not supporting operator in serializeSourceDescriptor: ";
+        exception.what() += sourceDescriptor->getSourceName().c_str();
         throw exception;
     }
 }
@@ -1016,9 +1014,6 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         sourceDescriptorConfig.emplace(std::make_pair(CSVConf::FILEPATH.key, csvSourceConfig->filepath()));
         sourceDescriptorConfig.emplace(std::make_pair(CSVConf::SKIP_HEADER.key, csvSourceConfig->skipheader()));
         sourceDescriptorConfig.emplace(std::make_pair(CSVConf::DELIMITER.key, csvSourceConfig->delimiter()));
-        ///-Todo, is this still used?
-        sourceDescriptorConfig.emplace(
-            std::make_pair(CSVConf::NUMBER_OF_BUFFER_TO_PRODUCE_PER_TUPLE.key, csvSourceConfig->numberoftuplestoproduceperbuffer()));
         return std::make_unique<Sources::SourceDescriptor>(
             schema, Sources::CSVSource::NAME, Configurations::InputFormat::CSV, std::move(sourceDescriptorConfig));
     }

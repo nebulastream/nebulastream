@@ -65,8 +65,6 @@ message SerializablePhysicalSourceType{
     string filePath = 1;
     bool skipHeader = 2;
     string delimiter = 3;
-    uint32 numberOfBuffersToProduce = 4;
-    uint32 numberOfTuplesToProducePerBuffer = 5;
   }
 
   /**

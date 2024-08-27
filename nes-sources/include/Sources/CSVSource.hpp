@@ -36,7 +36,6 @@ public:
         static inline const SourceDescriptor::ConfigKey<std::string> FILEPATH{"filepath"};
         static inline const SourceDescriptor::ConfigKey<bool> SKIP_HEADER{"skipHeader"};
         static inline const SourceDescriptor::ConfigKey<std::string> DELIMITER{"delimiter"};
-        static inline const SourceDescriptor::ConfigKey<uint32_t> NUMBER_OF_BUFFER_TO_PRODUCE_PER_TUPLE{"numberOfTuplesToProducePerBuffer"};
     };
 
     static inline const std::string NAME = "CSV";
@@ -61,7 +60,6 @@ private:
     std::unique_ptr<SourceDescriptor> descriptor;
     std::string filePath;
     uint64_t tupleSize;
-    uint64_t numberOfTuplesToProducePerBuffer;
     std::string delimiter;
     uint64_t currentPositionInFile{0};
     std::vector<PhysicalTypePtr> physicalTypes;
