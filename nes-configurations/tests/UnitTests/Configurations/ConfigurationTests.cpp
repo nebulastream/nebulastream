@@ -117,9 +117,7 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
     /// given
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     auto commandLineParams = makeCommandLineArgs(
-        {"--restIp=localhost",
-         "--worker.numberOfBuffersInSourceLocalBufferPool=128",
-         "--worker.bufferSizeInBytes=1024"});
+        {"--restIp=localhost", "--worker.numberOfBuffersInSourceLocalBufferPool=128", "--worker.bufferSizeInBytes=1024"});
     /// when
     coordinatorConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     /// then
