@@ -76,7 +76,7 @@ We use clang-format and clang-tidy to ensure code quality and consistency.
 To run the clang tools, you need to use the cmake option: `-DNES_SELF_HOSTING=ON`.
 Afterward, there exist multiple new targets:
 - `format` runs clang-format 
-- `check-format` runs clang-format and checks if the code is formatted correctly but does not fix it
+- `check-format-clang` runs clang-format and checks if the code is formatted correctly but does not fix it
 - `tidy`  runs clang-tidy 
 - `check-license-and-pragma-once` runs a script that checks that all of our header files start with our license preamble followed by `#pragma once` 
-- `check-comment-format` runs a script that checks if the comments are correct.
+- `check-format-comment` runs a script that checks if the comments are correct.
