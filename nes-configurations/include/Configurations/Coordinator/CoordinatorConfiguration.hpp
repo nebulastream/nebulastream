@@ -16,7 +16,6 @@
 
 #include <string>
 #include <Configurations/BaseConfiguration.hpp>
-#include <Configurations/Coordinator/ElegantConfigurations.hpp>
 #include <Configurations/Coordinator/LogicalSourceTypeFactory.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Configurations/Enums/StorageHandlerType.hpp>
@@ -118,11 +117,6 @@ public:
         = {REST_SERVER_CORS_ORIGIN, "*", "The allowed origins to be set in the header of the responses to rest requests"};
 
     /**
-     * @brief ELEGANT related configuration parameters
-     */
-    ElegantConfigurations elegant = {ELEGANT, "Define ELEGANT configuration"};
-
-    /**
      * @brief Create a default CoordinatorConfiguration object with default values.
      * @return A CoordinatorConfiguration object with default values.
      */
@@ -152,7 +146,7 @@ private:
             &logicalSourceTypes,
             &coordinatorHealthCheckWaitTime,
             &restServerCorsAllowedOrigin,
-            &elegant};
+        };
     }
 };
 

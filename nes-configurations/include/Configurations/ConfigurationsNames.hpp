@@ -95,12 +95,6 @@ const std::string ALLOW_EXHAUSTIVE_CONTAINMENT_CHECK = "allowExhaustiveContainme
 const std::string PERFORM_ADVANCE_SEMANTIC_VALIDATION = "advanceSemanticValidation";
 const std::string ENABLE_NEMO_PLACEMENT = "enableNemoPlacement";
 
-///Elegant Configurations
-const auto ELEGANT = "elegant"s; /// elegant configurations are initialize with this constant
-const auto PLANNER_SERVICE_URL = "plannerServiceURL"s; /// URL for ELEGANT planner
-const auto ACCELERATION_SERVICE_URL = "accelerationServiceURL"s; /// URL for acceleration service
-const auto TRANSFER_RATE = "transferRate"s; /// Fake transfer rate between two workers
-
 ///Worker Configuration Names
 const std::string COORDINATOR_PORT_CONFIG = "coordinatorPort"; ///needs to be same as RPC Port of Coordinator
 const std::string LOCAL_WORKER_HOST_CONFIG = "localWorkerHost";

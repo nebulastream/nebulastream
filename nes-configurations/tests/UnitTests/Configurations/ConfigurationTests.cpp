@@ -268,23 +268,6 @@ TEST_F(ConfigTest, invalidCommandLineInputForIntOptions)
     }
 }
 
-TEST_F(ConfigTest, invalidCommandLineInputForFloatOptions)
-{
-    std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs = {{"--transferRate", {"not_a_float", "2..5", "-1.0"}}};
-
-    for (const auto& optionPair : commandLineArgs)
-    {
-        for (const auto& value : optionPair.second)
-        {
-            EXPECT_ANY_THROW({
-                auto config = std::make_shared<ElegantConfigurations>();
-                std::vector<std::string> args = {optionPair.first + "=" + value};
-                config->overwriteConfigWithCommandLineInput(makeCommandLineArgs(args));
-            });
-        }
-    }
-}
-
 TEST_F(ConfigTest, invalidCommandLineInputForIpOptions)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs
@@ -352,33 +335,6 @@ TEST_F(ConfigTest, invalidIntYamlInputs)
 
             EXPECT_ANY_THROW({
                 WorkerConfigurationPtr config = std::make_shared<WorkerConfiguration>();
-                config->overwriteConfigWithYAMLFileInput(filePath);
-            });
-
-            std::filesystem::remove(filePath);
-        }
-    }
-}
-
-TEST_F(ConfigTest, invalidFloatYamlInputs)
-{
-    std::vector<std::pair<std::string, std::vector<std::string>>> invalidFloatConfigs
-        = {{"--transferRate", {"not_a_float", "2..5", "-1.0"}}};
-
-    for (const auto& [optionName, invalidValues] : invalidFloatConfigs)
-    {
-        for (const auto& value : invalidValues)
-        {
-            std::string fileName = optionName + "_" + value + ".yaml";
-            auto filePath = std::filesystem::path(TEST_DATA_DIRECTORY) / fileName;
-
-            std::ofstream file(filePath);
-            ASSERT_TRUE(file.is_open());
-            file << optionName << ": " << value << std::endl;
-            file.close();
-
-            EXPECT_ANY_THROW({
-                auto config = std::make_shared<ElegantConfigurations>();
                 config->overwriteConfigWithYAMLFileInput(filePath);
             });
 
