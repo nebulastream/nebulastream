@@ -39,7 +39,12 @@ public:
     template <typename... Args>
     [[nodiscard]] typename Registrar::Type create(const typename Registrar::Key& key, Args&&... args) const
     {
-        return registryImpl.at(key)(std::forward<Args>(args)...);
+        if (const auto plugin = registryImpl.find(key); plugin != registryImpl.end())
+        {
+            /// Call the creator function of the plugin.
+            return (*plugin).second(std::forward<Args>(args)...);
+        }
+        return nullptr;
     }
 
     [[nodiscard]] std::vector<typename Registrar::Key> getRegisteredNames() const
