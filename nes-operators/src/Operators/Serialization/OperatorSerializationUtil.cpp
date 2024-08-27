@@ -943,10 +943,6 @@ void OperatorSerializationUtil::serializeSourceDescriptor(
         serializedSourceConfig->set_sourcetype(csvSourceDescriptor->getSourceConfig()->getSourceTypeAsString());
         /// init serializable csv source config
         auto csvSerializedSourceConfig = SerializablePhysicalSourceType_SerializableCSVSourceType();
-        csvSerializedSourceConfig.set_numberofbufferstoproduce(
-            csvSourceDescriptor->getSourceConfig()->getNumberOfBuffersToProduce()->getValue());
-        csvSerializedSourceConfig.set_numberoftuplestoproduceperbuffer(
-            csvSourceDescriptor->getSourceConfig()->getNumberOfTuplesToProducePerBuffer()->getValue());
         csvSerializedSourceConfig.set_filepath(csvSourceDescriptor->getSourceConfig()->getFilePath()->getValue());
         csvSerializedSourceConfig.set_skipheader(csvSourceDescriptor->getSourceConfig()->getSkipHeader()->getValue());
         csvSerializedSourceConfig.set_delimiter(csvSourceDescriptor->getSourceConfig()->getDelimiter()->getValue());
@@ -1029,8 +1025,6 @@ OperatorSerializationUtil::deserializeSourceDescriptor(const SerializableOperato
         sourceConfig->setFilePath(csvSourceConfig->filepath());
         sourceConfig->setSkipHeader(csvSourceConfig->skipheader());
         sourceConfig->setDelimiter(csvSourceConfig->delimiter());
-        sourceConfig->setNumberOfBuffersToProduce(csvSourceConfig->numberofbufferstoproduce());
-        sourceConfig->setNumberOfTuplesToProducePerBuffer(csvSourceConfig->numberoftuplestoproduceperbuffer());
         auto ret = CSVSourceDescriptor::create(schema, sourceConfig);
         return ret;
     }

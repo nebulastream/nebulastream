@@ -47,7 +47,6 @@ private:
     bool fileEnded;
     std::string filePath;
     uint64_t tupleSize;
-    uint64_t numberOfTuplesToProducePerBuffer;
     std::string delimiter;
     uint64_t currentPositionInFile{0};
     std::vector<PhysicalTypePtr> physicalTypes;
