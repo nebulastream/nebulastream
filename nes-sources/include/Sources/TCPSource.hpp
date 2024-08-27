@@ -60,6 +60,8 @@ public:
         const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
         const Schema& schema);
 
+    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) override;
+
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
     /// Open TCP connection.

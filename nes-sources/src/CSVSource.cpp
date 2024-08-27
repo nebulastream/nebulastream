@@ -143,6 +143,16 @@ bool CSVSource::fillTupleBuffer(
     return true;
 }
 
+bool CSVSource::validateConfig(const SourceDescriptor& config)
+{
+    bool isCorrectConfig = true;
+    /// All below config paramaters are mandatory and therefore need to be validated.
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersCSV::FILEPATH).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersCSV::SKIP_HEADER).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersCSV::DELIMITER).has_value();
+    return isCorrectConfig;
+}
+
 std::ostream& CSVSource::toString(std::ostream& str) const
 {
     str << "TCPSource(";

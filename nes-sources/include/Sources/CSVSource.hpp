@@ -47,6 +47,8 @@ public:
         const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager,
         const Schema& schema) override;
 
+    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) override;
+
     void open() override { /* noop */ };
     void close() override { /* noop */ };
 
