@@ -13,7 +13,6 @@
 */
 
 #include <Configurations/Coordinator/CoordinatorConfiguration.hpp>
-#include <Configurations/Coordinator/ElegantConfigurations.hpp>
 #include <Configurations/Coordinator/OptimizerConfiguration.hpp>
 #include <Optimizer/Phases/QueryRewritePhase.hpp>
 #include <Optimizer/QueryRewrite/AttributeSortRule.hpp>
