@@ -17,13 +17,14 @@
 #include <iostream>
 #include <thread>
 #include <utility>
-#include <Sources/DataSource.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/ThreadNaming.hpp>
-#include <magic_enum.hpp>
-
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Sources/DataSource.hpp>
+#include <Util/Logger/Logger.hpp>
+#include <Util/TestTupleBuffer.hpp>
+#include <Util/ThreadNaming.hpp>
+#include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 #include <ErrorHandling.hpp>
 
 namespace NES::Sources

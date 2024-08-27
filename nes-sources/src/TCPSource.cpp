@@ -352,6 +352,21 @@ bool TCPSource::fillBuffer(
     /// Return false, if there are tuples in the buffer, or the EoS was reached.
     return testTupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
+bool TCPSource::validateConfig(const SourceDescriptor& config) const
+{
+    bool isCorrectConfig = true;
+    /// All below config paramaters are mandatory and therefore need to be validated.
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::HOST).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::PORT).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::TYPE).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::DOMAIN).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::SEPARATOR).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::FLUSH_INTERVAL_MS).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::SOCKET_BUFFER_SIZE).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::DECIDED_MESSAGE_SIZE).has_value();
+    isCorrectConfig &= config.tryGetFromConfig(ConfigParametersTCP::SOCKET_BUFFER_TRANSFER_SIZE).has_value();
+    return isCorrectConfig;
+}
 
 void TCPSource::close()
 {

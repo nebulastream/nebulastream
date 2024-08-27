@@ -42,12 +42,17 @@ public:
     static inline const std::string NAME = "CSV";
 
     explicit CSVSource(const Schema& schema, const SourceDescriptor& sourceDescriptor);
+    ~CSVSource() override = default;
 
     bool fillTupleBuffer(
         NES::Memory::TupleBuffer& tupleBuffer, NES::Memory::AbstractBufferProvider& bufferManager, std::shared_ptr<Schema> schema) override;
 
+    /// Open file socket.
     void open() override;
+    /// Close file socket.
     void close() override;
+
+    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

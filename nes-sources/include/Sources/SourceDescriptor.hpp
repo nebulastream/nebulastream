@@ -51,7 +51,16 @@ public:
         ConfigKey(std::string key) : key(std::move(key)) { }
     };
 
-    using ConfigType = std::variant<int32_t, uint32_t, bool, char, float, double, std::string, Configurations::TCPDecideMessageSize>;
+    using ConfigType = std::variant<
+        int32_t,
+        uint32_t,
+        bool,
+        char,
+        float,
+        double,
+        std::string,
+        Configurations::TCPDecideMessageSize,
+        Configurations::InputFormat>;
     using Config = std::unordered_map<std::string, ConfigType>;
 
     /// Constructor used during initial parsing to create an initial SourceDescriptor.
@@ -98,12 +107,12 @@ virtual std::string toString() const = 0;
     template <typename ConfigKey>
     std::optional<typename ConfigKey::Type> tryGetFromConfig(const ConfigKey& configKey) const
     {
-        if (config.contains(configKey.key) && std::holds_alternative<ConfigKey::Type>(config.at(configKey.key)))
+        if (config.contains(configKey.key) && std::holds_alternative<typename ConfigKey::Type>(config.at(configKey.key)))
         {
             const auto& value = config.at(configKey.key);
             return std::get<typename ConfigKey::Type>(value);
         }
-        NES_TRACE("SourceDescriptor did not contain key: {}, with type: {}", configKey.key, typeid(ConfigKey).name());
+        NES_DEBUG("SourceDescriptor did not contain key: {}, with type: {}", configKey.key, typeid(ConfigKey).name());
         return std::nullopt;
     }
 
