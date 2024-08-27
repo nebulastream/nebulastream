@@ -52,12 +52,6 @@ public:
     static WorkerConfigurationPtr create() { return std::make_shared<WorkerConfiguration>(); }
 
     /**
-     * @brief Id of the Worker.
-     * This is used to uniquely identify workers within the cluster.
-     */
-    ScalarOption<WorkerId> workerId = {WORKER_ID, INVALID_WORKER_NODE_ID.toString(), "Worker id.", {std::make_shared<NumberValidation>()}};
-
-    /**
      * @brief IP of the Worker.
      */
     StringOption localWorkerHost = {LOCAL_WORKER_HOST_CONFIG, "127.0.0.1", "Worker IP or hostname."};
@@ -69,60 +63,14 @@ public:
     UIntOption rpcPort = {RPC_PORT_CONFIG, "0", "RPC server port of the NES Worker.", {std::make_shared<NumberValidation>()}};
 
     /**
-     * @brief Port of the Data server of this worker.
-     * This is used to receive data.
-     */
-    UIntOption dataPort = {DATA_PORT_CONFIG, "0", "Data port of the NES Worker.", {std::make_shared<NumberValidation>()}};
-
-    /**
-     * @brief Server IP of the NES Coordinator to which the NES Worker should connect.
-     */
-    StringOption coordinatorHost
-        = {COORDINATOR_HOST_CONFIG, "127.0.0.1", "Server IP or hostname of the NES Coordinator to which the NES Worker should connect."};
-    /**
-     * @brief RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs
-     * to be the same as rpcPort in Coordinator.
-     */
-    UIntOption coordinatorPort
-        = {COORDINATOR_PORT_CONFIG,
-           "4000",
-           "RPC server Port of the NES Coordinator to which the NES Worker should connect. Needs to be set and needs "
-           "to be the same as rpcPort in Coordinator.",
-           {std::make_shared<NumberValidation>()}};
-
-    /**
-     * @brief Parent ID of this node.
-     */
-    ScalarOption<WorkerId> parentId
-        = {PARENT_ID_CONFIG, INVALID_WORKER_NODE_ID.toString(), "Parent ID of this node.", {std::make_shared<NumberValidation>()}};
-
-    /**
      * @brief The current log level. Controls the detail of log messages.
      */
     EnumOption<LogLevel> logLevel
         = {LOG_LEVEL_CONFIG, LogLevel::LOG_INFO, "The log level (LOG_NONE, LOG_WARNING, LOG_DEBUG, LOG_INFO, LOG_TRACE)"};
 
     /**
-     * @brief Number of Slots define the amount of computing resources that are usable at the coordinator.
-     * This enables the restriction of the amount of concurrently deployed queryIdAndCatalogEntryMapping and operators.
+     * @brief Configures the number of worker threads.
      */
-    UIntOption numberOfSlots
-        = {NUMBER_OF_SLOTS_CONFIG,
-           std::to_string(UINT16_MAX),
-           "Number of computing slots for the NES Worker.",
-           {std::make_shared<NumberValidation>()}};
-
-    /**
-     * @brief The link bandwidth of the link in Mbps.
-     */
-    UIntOption bandwidth = {BANDWIDTH_IN_MBPS, "0", "The link bandwidth in Mbps.", {std::make_shared<NumberValidation>()}};
-
-    /**
-     * @brief The link latency in milliseconds.
-     */
-    UIntOption latency = {LATENCY_IN_MS, "0", "The link latency in milliseconds.", {std::make_shared<NumberValidation>()}};
-
-    /// Configures the number of worker threads with a default value of 1.
     UIntOption numberOfWorkerThreads
         = {"numberOfWorkerThreads",
            "1",
@@ -161,35 +109,6 @@ public:
     UIntOption bufferSizeInBytes = {BUFFERS_SIZE_IN_BYTES_CONFIG, "4096", "BufferSizeInBytes.", {std::make_shared<NumberValidation>()}};
 
     /**
-     * @brief Indicates a list of cpu cores, which are used to pin data sources to specific cores.
-     * @deprecated this value is deprecated and will be removed.
-     */
-    StringOption sourcePinList = {SOURCE_PIN_LIST_CONFIG, "", "comma separated list of where to map the sources"};
-
-    /**
-     * @brief Indicates a list of cpu cores, which are used  to pin worker threads to specific cores.
-     * @deprecated this value is deprecated and will be removed.
-     */
-    StringOption workerPinList = {WORKER_PIN_LIST_CONFIG, "", "comma separated list of where to map the worker"};
-
-    /**
-     * @brief Pins specific worker threads to specific queues.
-     * @deprecated this value is deprecated and will be removed.
-     */
-    StringOption queuePinList = {QUEUE_PIN_LIST_CONFIG, "", "comma separated list of where to map the worker on the queue"};
-
-    /**
-     * @brief Enables support for Non-Uniform Memory Access (NUMA) systems.
-     */
-    BoolOption numaAwareness = {NUMA_AWARENESS_CONFIG, "false", "Enable Numa-Aware execution", {std::make_shared<BooleanValidation>()}};
-
-    /**
-     * @brief Enables source sharing
-     * */
-    BoolOption enableSourceSharing
-        = {ENABLE_SOURCE_SHARING_CONFIG, "false", "Enable source sharing", {std::make_shared<BooleanValidation>()}};
-
-    /**
      * @brief Enables the statistic output
      */
     BoolOption enableStatisticOuput
@@ -212,48 +131,6 @@ public:
      */
     StringOption configPath = {CONFIG_PATH, "", "Path to configuration file."};
 
-#ifdef TFDEF
-    BoolOption isTensorflowSupported = {TENSORFLOW_SUPPORTED_CONFIG, false, "Tensorflow model execution supported by the worker"};
-#endif /// TFDEF
-
-    /**
-     * @brief Configuration numberOfQueues.
-     * Set the number of processing queues in the system
-     */
-    UIntOption numberOfQueues = {NUMBER_OF_QUEUES, "1", "Number of processing queues.", {std::make_shared<NumberValidation>()}};
-
-    /**
-     * @brief Configuration numberOfThreadsPerQueue.
-     * Set the number of threads per processing queue in the system
-     */
-    UIntOption numberOfThreadsPerQueue
-        = {NUMBER_OF_THREAD_PER_QUEUE, "0", "Number of threads per processing queue.", {std::make_shared<NumberValidation>()}};
-
-    /**
-     * @brief Number of buffers per epoch
-     * Set trimming frequency for upstream backup
-     */
-    UIntOption numberOfBuffersPerEpoch
-        = {NUMBER_OF_BUFFERS_PER_EPOCH, "100", "Number of tuple buffers allowed in one epoch.", {std::make_shared<NumberValidation>()}};
-
-    /**
-     * @brief Configuration queryManagerMode
-     * The modus in which the query manager is running
-     *      - Dynamic: only one queue overall
-     *      - Static: use queue per query and a specified number of threads per queue
-     */
-    EnumOption<Runtime::QueryExecutionMode> queryManagerMode
-        = {QUERY_MANAGER_MODE,
-           Runtime::QueryExecutionMode::Dynamic,
-           "Which mode the query manager is running in. (Dynamic, Static, NumaAware, Invalid)"};
-
-    /**
-     * @brief Configuration of waiting time of the worker health check.
-     * Set the number of seconds waiting to perform health checks
-     */
-    UIntOption workerHealthCheckWaitTime
-        = {HEALTH_CHECK_WAIT_TIME, "1", "Number of seconds to wait between health checks", {std::make_shared<NumberValidation>()}};
-
     /* Network specific settings */
 
     UIntOption senderHighwatermark
@@ -265,62 +142,21 @@ public:
     BoolOption isJavaUDFSupported
         = {TENSORFLOW_SUPPORTED_CONFIG, "false", "Java UDF execution supported by the worker", {std::make_shared<BooleanValidation>()}};
 
-    /**
-     * @brief Let network sinks use a separate thread to establish a connection
-     */
-    BoolOption connectSinksAsync
-        = {CONNECT_SINKS_ASYNC,
-           "false",
-           "Let network sinks use a separate thread to establish a connection",
-           {std::make_shared<BooleanValidation>()}};
-
-    /**
-     * @brief Let network sources use a separate thread to establish an event channel to their upstream sink
-     */
-    BoolOption connectSourceEventChannelsAsync
-        = {CONNECT_SOURCE_ASYNC,
-           "false",
-           "Let network sources use a separate thread to establish a the upstream event channel",
-           {std::make_shared<BooleanValidation>()}};
-
 private:
     std::vector<Configurations::BaseOption*> getOptions() override
     {
         return {
-            &workerId,
             &localWorkerHost,
-            &coordinatorHost,
             &rpcPort,
-            &dataPort,
-            &coordinatorPort,
-            &numberOfSlots,
-            &bandwidth,
-            &latency,
             &numberOfWorkerThreads,
             &numberOfBuffersInGlobalBufferManager,
             &numberOfBuffersPerWorker,
             &numberOfBuffersInSourceLocalBufferPool,
             &bufferSizeInBytes,
-            &parentId,
             &logLevel,
-            &sourcePinList,
-            &workerPinList,
-            &queuePinList,
-            &numaAwareness,
             &queryCompiler,
             &physicalSourceTypes,
-            &numberOfQueues,
-            &numberOfThreadsPerQueue,
-            &numberOfBuffersPerEpoch,
-            &queryManagerMode,
-            &enableSourceSharing,
-            &workerHealthCheckWaitTime,
             &configPath,
-            &connectSinksAsync,
-            &connectSourceEventChannelsAsync,
-#ifdef TFDEF
-            &isTensorflowSupported
-#endif
         };
     }
 };
