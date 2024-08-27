@@ -175,7 +175,7 @@ jobs:
             nebulastream/nes-development:${{ github.event.pull_request.head.ref }}-arm64
 
 
-  format-checks:
+  pre-build-checks:
     needs: [ docker-development-images, detect-dependency-changes ]
     if: ${{ ! failure() && ! cancelled() }}
     runs-on: [ self-hosted, linux, Build ]
