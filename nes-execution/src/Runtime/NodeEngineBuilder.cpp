@@ -72,25 +72,10 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
     {
         std::vector<BufferManagerPtr> bufferManagers;
 
-        ///get the list of queue where to pin from the config
-        auto numberOfQueues = workerConfiguration.numberOfQueues.getValue();
+        ///create buffer manager
 
-        ///create one buffer manager per queue
-        if (numberOfQueues == 1)
-        {
-            bufferManagers.push_back(std::make_shared<BufferManager>(
-                workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()));
-        }
-        else
-        {
-            for (auto i = 0u; i < numberOfQueues; ++i)
-            {
-                bufferManagers.push_back(std::make_shared<BufferManager>(
-                    workerConfiguration.bufferSizeInBytes.getValue(),
-                    ///if we run in static with multiple queues, we divide the whole buffer manager among the queues
-                    workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue() / numberOfQueues));
-            }
-        }
+        bufferManagers.push_back(std::make_shared<BufferManager>(
+            workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()));
 
         if (bufferManagers.empty())
         {
@@ -103,16 +88,9 @@ std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
         if (!this->queryManager)
         {
             auto numOfThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
-            auto numberOfBuffersPerEpoch = static_cast<uint16_t>(workerConfiguration.numberOfBuffersPerEpoch.getValue());
-            std::vector<uint64_t> workerToCoreMappingVec
-                = NES::Util::splitWithStringDelimiter<uint64_t>(workerConfiguration.workerPinList.getValue(), ",");
+            std::vector<uint64_t> workerToCoreMappingVec = NES::Util::splitWithStringDelimiter<uint64_t>("", ",");
             queryManager = std::make_shared<QueryManager>(
-                std::make_shared<SimpleQueryStatusListener>(),
-                bufferManagers,
-                WorkerId(0),
-                numOfThreads,
-                numberOfBuffersPerEpoch,
-                workerToCoreMappingVec);
+                std::make_shared<SimpleQueryStatusListener>(), bufferManagers, WorkerId(0), numOfThreads, 100, workerToCoreMappingVec);
         }
         if (!queryManager)
         {

@@ -24,6 +24,6 @@ RUN apt-get update -qq && DEBIAN_FRONTEND="noninteractive" apt-get install -qq  
 COPY ./entrypoint-nes-executable.sh /entrypoint.sh
 
 ENV coordinatorCLIConf="--coordinatorHost=127.0.0.1 --rpcPort=12346 --restIp=0.0.0.0 --restPort=8081 --logLevel=LOG_INFO"
-ENV workerCLIConf="--coordinatorPort=12346 --logLevel=LOG_INFO"
+ENV workerCLIConf="--logLevel=LOG_INFO"
 
 ENTRYPOINT ["/entrypoint.sh"]

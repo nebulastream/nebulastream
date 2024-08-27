@@ -4,10 +4,6 @@
 # Set worker IP
 localWorkerHost: localhost
 
-# Set RPC Server port of NES Coordinator to which the NES Worker should connect
-# Needs to be the same as rpcPort in Coordinator
-coordinatorPort: 5000
-
 # Set the number of worker threads
 numberOfWorkerThreads: 5
 

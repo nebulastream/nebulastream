@@ -72,7 +72,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile)
     EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->coordinatorHost.getValue(), coordinatorConfigPtr->coordinatorHost.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(), coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
     EXPECT_EQ(
         coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getValue(),
@@ -89,9 +88,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsCoordinatorYAMLFile)
         coordinatorConfigPtr->worker.numberOfWorkerThreads.getDefaultValue());
     EXPECT_EQ(
         coordinatorConfigPtr->optimizer.queryMergerRule.getValue(), coordinatorConfigPtr->optimizer.queryMergerRule.getDefaultValue());
-    EXPECT_EQ(
-        coordinatorConfigPtr->worker.numberOfBuffersPerEpoch.getValue(),
-        coordinatorConfigPtr->worker.numberOfBuffersPerEpoch.getDefaultValue());
 }
 
 TEST_F(ConfigTest, testLogicalSourceAndSchemaParamsCoordinatorYAMLFile)
@@ -121,10 +117,7 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
     /// given
     CoordinatorConfigurationPtr coordinatorConfigPtr = std::make_shared<CoordinatorConfiguration>();
     auto commandLineParams = makeCommandLineArgs(
-        {"--restIp=localhost",
-         "--worker.numberOfSlots=10",
-         "--worker.numberOfBuffersInSourceLocalBufferPool=128",
-         "--worker.bufferSizeInBytes=1024"});
+        {"--restIp=localhost", "--worker.numberOfBuffersInSourceLocalBufferPool=128", "--worker.bufferSizeInBytes=1024"});
     /// when
     coordinatorConfigPtr->overwriteConfigWithCommandLineInput(commandLineParams);
     /// then
@@ -132,7 +125,6 @@ TEST_F(ConfigTest, testCoordinatorEPERATPRmptyParamsConsoleInput)
     EXPECT_EQ(coordinatorConfigPtr->rpcPort.getValue(), coordinatorConfigPtr->rpcPort.getDefaultValue());
     EXPECT_NE(coordinatorConfigPtr->restIp.getValue(), coordinatorConfigPtr->restIp.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->coordinatorHost.getValue(), coordinatorConfigPtr->coordinatorHost.getDefaultValue());
-    EXPECT_NE(coordinatorConfigPtr->worker.numberOfSlots.getValue(), coordinatorConfigPtr->worker.numberOfSlots.getDefaultValue());
     EXPECT_EQ(coordinatorConfigPtr->logLevel.getValue(), coordinatorConfigPtr->logLevel.getDefaultValue());
     EXPECT_EQ(
         coordinatorConfigPtr->worker.numberOfBuffersInGlobalBufferManager.getValue(),
@@ -161,10 +153,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile)
 
     EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->coordinatorHost.getValue(), workerConfigPtr->coordinatorHost.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
     EXPECT_NE(
         workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -174,7 +162,6 @@ TEST_F(ConfigTest, testEmptyParamsAndMissingParamsWorkerYAMLFile)
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getValue(),
         workerConfigPtr->numberOfBuffersInSourceLocalBufferPool.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->bufferSizeInBytes.getValue(), workerConfigPtr->bufferSizeInBytes.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->numberOfBuffersPerEpoch.getValue(), workerConfigPtr->numberOfBuffersPerEpoch.getDefaultValue());
     EXPECT_NE(workerConfigPtr->numberOfWorkerThreads.getValue(), workerConfigPtr->numberOfWorkerThreads.getDefaultValue());
     EXPECT_TRUE(workerConfigPtr->physicalSourceTypes.empty());
 }
@@ -186,10 +173,6 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithMultiplePhysicalSource)
 
     EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->coordinatorHost.getValue(), workerConfigPtr->coordinatorHost.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
     EXPECT_NE(
         workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -210,7 +193,6 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     auto commandLineParams = makeCommandLineArgs(
         {"--localWorkerHost=localhost",
-         "--coordinatorPort=5000",
          "--numberOfWorkerThreads=5",
          "--numberOfBuffersInGlobalBufferManager=2048",
          "--numberOfBuffersInSourceLocalBufferPool=128",
@@ -228,10 +210,6 @@ TEST_F(ConfigTest, testWorkerEmptyParamsConsoleInput)
     /// then
     EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->coordinatorHost.getValue(), workerConfigPtr->coordinatorHost.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
     EXPECT_NE(
         workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -258,7 +236,6 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
     WorkerConfigurationPtr workerConfigPtr = std::make_shared<WorkerConfiguration>();
     auto commandLineParams = makeCommandLineArgs(
         {"--localWorkerHost=localhost",
-         "--coordinatorPort=5000",
          "--numberOfWorkerThreads=5",
          "--numberOfBuffersInGlobalBufferManager=2048",
          "--numberOfBuffersInSourceLocalBufferPool=128",
@@ -275,10 +252,6 @@ TEST_F(ConfigTest, testWorkerCSCVSourceConsoleInput)
     /// then
     EXPECT_NE(workerConfigPtr->localWorkerHost.getValue(), workerConfigPtr->localWorkerHost.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->rpcPort.getValue(), workerConfigPtr->rpcPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->dataPort.getValue(), workerConfigPtr->dataPort.getDefaultValue());
-    EXPECT_NE(workerConfigPtr->coordinatorPort.getValue(), workerConfigPtr->coordinatorPort.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->coordinatorHost.getValue(), workerConfigPtr->coordinatorHost.getDefaultValue());
-    EXPECT_EQ(workerConfigPtr->numberOfSlots.getValue(), workerConfigPtr->numberOfSlots.getDefaultValue());
     EXPECT_EQ(workerConfigPtr->logLevel.getValue(), workerConfigPtr->logLevel.getDefaultValue());
     EXPECT_NE(
         workerConfigPtr->numberOfBuffersInGlobalBufferManager.getValue(),
@@ -352,13 +325,7 @@ TEST_F(ConfigTest, testWorkerYAMLFileWithCSVPhysicalSourceAdaptiveGatheringMode)
 TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs
-        = {{"--numaAwareness", {"not_a_bool", "2", "-1"}},
-           {"--enableSourceSharing", {"not_a_bool", "2", "-1"}},
-           {"--enableStatisticOuput", {"not_a_bool", "2", "-1"}},
-           {"--isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
-           {"--connectSinksAsync", {"not_a_bool", "2", "-1"}},
-           {"--connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}};
-
+        = {{"--enableStatisticOuput", {"not_a_bool", "2", "-1"}}, {"--isJavaUDFSupported", {"not_a_bool", "2", "-1"}}};
     for (const auto& optionPair : commandLineArgs)
     {
         for (const auto& value : optionPair.second)
@@ -375,17 +342,12 @@ TEST_F(ConfigTest, invalidCommandLineInputForBoolOptions)
 TEST_F(ConfigTest, invalidCommandLineInputForIntOptions)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> commandLineArgs
-        = {{"--workerId", {"not_an_int", "1.5", "-1"}},
-           {"--rpcPort", {"not_an_int", "1.5", "-1"}},
-           {"--dataPort", {"not_an_int", "1.5", "-1"}},
-           {"--coordinatorPort", {"not_an_int", "1.5", "-1"}},
+        = {{"--rpcPort", {"not_an_int", "1.5", "-1"}},
            {"--numberOfWorkerThreads", {"not_an_int", "1.5", "-1"}},
-           {"--numberOfWorkerThreads", {"non_zero", "0", "0.0"}},
            {"--numberOfBuffersInGlobalBufferManager", {"not_an_int", "1.5", "-1"}},
            {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
            {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
-           {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
-           {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}};
+           {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}}};
 
     for (const auto& optionPair : commandLineArgs)
     {
@@ -438,13 +400,7 @@ TEST_F(ConfigTest, invalidCommandLineInputForIpOptions)
 TEST_F(ConfigTest, invalidBooleanYamlInputs)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidBooleanConfigs
-        = {{"numaAwareness", {"not_a_bool", "2", "-1"}},
-           {"enableSourceSharing", {"not_a_bool", "2", "-1"}},
-           {"enableStatisticOutput", {"not_a_bool", "2", "-1"}},
-           {"isJavaUDFSupported", {"not_a_bool", "2", "-1"}},
-           {"connectSinksAsync", {"not_a_bool", "2", "-1"}},
-           {"connectSourceEventChannelsAsync", {"not_a_bool", "2", "-1"}}};
-
+        = {{"enableStatisticOutput", {"not_a_bool", "2", "-1"}}, {"isJavaUDFSupported", {"not_a_bool", "2", "-1"}}};
     for (const auto& [optionName, invalidValues] : invalidBooleanConfigs)
     {
         for (const auto& value : invalidValues)
@@ -470,18 +426,12 @@ TEST_F(ConfigTest, invalidBooleanYamlInputs)
 TEST_F(ConfigTest, invalidIntYamlInputs)
 {
     std::vector<std::pair<std::string, std::vector<std::string>>> invalidIntConfigs
-        = {{"--workerId", {"not_an_int", "1.5", "-1"}},
-           {"--rpcPort", {"not_an_int", "1.5", "-1"}},
-           {"--dataPort", {"not_an_int", "1.5", "-1"}},
-           {"--coordinatorPort", {"not_an_int", "1.5", "-1"}},
+        = {{"--rpcPort", {"not_an_int", "1.5", "-1"}},
            {"--numberOfWorkerThreads", {"not_an_int", "1.5", "-1"}},
-           {"--numberOfWorkerThreads", {"non_zero", "0", "0.0"}},
            {"--numberOfBuffersInGlobalBufferManager", {"not_an_int", "1.5", "-1"}},
            {"--numberOfBuffersPerWorker", {"not_an_int", "1.5", "-1"}},
            {"--numberOfBuffersInSourceLocalBufferPool", {"not_an_int", "1.5", "-1"}},
-           {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}},
-           {"--numberOfQueues", {"not_an_int", "1.5", "-1"}}};
-
+           {"--bufferSizeInBytes", {"not_an_int", "1.5", "-1"}}};
     for (const auto& [optionName, invalidValues] : invalidIntConfigs)
     {
         for (const auto& value : invalidValues)
