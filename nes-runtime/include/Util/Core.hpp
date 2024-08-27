@@ -18,6 +18,7 @@
 #include <map>
 #include <string>
 #include <API/Schema.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
 #include <Runtime/RuntimeForwardRefs.hpp>
 
 /**
@@ -96,7 +97,7 @@ std::string toCSVString(const SchemaPtr& schema);
  * @param bufferSize
  * @return MemoryLayoutPtr
  */
-Runtime::MemoryLayouts::MemoryLayoutPtr createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
+MemoryLayoutPtr createMemoryLayout(SchemaPtr schema, uint64_t bufferSize);
 
 /**
  *

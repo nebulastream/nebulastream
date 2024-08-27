@@ -21,7 +21,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 /**
  * @brief The RowLayoutField enables assesses to a specific field in a row layout.
@@ -121,4 +121,4 @@ inline T& RowLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
     return *reinterpret_cast<T*>(basePointer + recordSize * recordIndex);
 }
 
-} /// namespace NES::Runtime::MemoryLayouts
+}

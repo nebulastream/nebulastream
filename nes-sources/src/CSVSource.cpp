@@ -91,8 +91,8 @@ CSVSource::CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& s
 }
 
 bool CSVSource::fillTupleBuffer(
-    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
     const Schema& schema)
 {
     NES_TRACE("CSVSource::fillBuffer: start at pos={} fileSize={}", currentPositionInFile, fileSize);
@@ -143,7 +143,7 @@ bool CSVSource::fillTupleBuffer(
     return true;
 }
 
-bool CSVSource::validateConfig(const SourceDescriptor& config)
+bool CSVSource::validateConfig(const SourceDescriptor& config) const
 {
     bool isCorrectConfig = true;
     /// All below config paramaters are mandatory and therefore need to be validated.

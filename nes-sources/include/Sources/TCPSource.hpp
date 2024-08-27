@@ -49,18 +49,19 @@ public:
     static inline const std::string NAME = "TCP";
 
     explicit TCPSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+    ~TCPSource() override = default;
 
     bool fillTupleBuffer(
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
         const Schema& schema) override;
 
     bool fillBuffer(
-        NES::Runtime::MemoryLayouts::TestTupleBuffer&,
-        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
         const Schema& schema);
 
-    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) override;
+    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) const override;
 
     [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 

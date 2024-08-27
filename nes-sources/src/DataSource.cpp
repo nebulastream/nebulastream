@@ -17,15 +17,14 @@
 #include <iostream>
 #include <thread>
 #include <utility>
-#include <Sources/DataSource.hpp>
-#include <Util/Logger/Logger.hpp>
-#include <Util/ThreadNaming.hpp>
-#include <magic_enum.hpp>
-
-#include <Exceptions/Exception.hpp>
 #include <Runtime/AbstractBufferProvider.hpp>
 #include <Runtime/BufferManager.hpp>
+#include <Sources/DataSource.hpp>
+#include <Util/Logger/Logger.hpp>
 #include <Util/TestTupleBuffer.hpp>
+#include <Util/ThreadNaming.hpp>
+#include <ErrorHandling.hpp>
+#include <magic_enum.hpp>
 
 namespace NES::Sources
 {
@@ -280,10 +279,10 @@ void DataSource::runningRoutine()
     NES_DEBUG("DataSource {} end runningRoutine", originId);
 }
 
-Runtime::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() const
+Memory::MemoryLayouts::TestTupleBuffer DataSource::allocateBuffer() const
 {
     const auto buffer = bufferProvider->getBufferBlocking();
-    return Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+    return Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
 }
 
 std::ostream& operator<<(std::ostream& out, const DataSource& dataSource)

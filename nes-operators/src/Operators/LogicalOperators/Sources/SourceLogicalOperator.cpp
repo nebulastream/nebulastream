@@ -15,10 +15,9 @@
 #include <sstream>
 #include <utility>
 #include <API/Schema.hpp>
-#include <Exceptions/Exception.hpp>
-#include <Exceptions/ExceptionDefinitions.hpp>
 #include <Operators/LogicalOperators/Sources/SourceLogicalOperator.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

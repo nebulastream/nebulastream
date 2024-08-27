@@ -23,7 +23,7 @@
 namespace NES::Sources
 {
 
-namespace Runtime::MemoryLayouts
+namespace Memory::MemoryLayouts
 {
 class TestTupleBuffer;
 }
@@ -43,19 +43,19 @@ public:
     virtual bool writeInputTupleToTupleBuffer(
         std::string_view inputTuple,
         uint64_t tupleCount,
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const Schema& schema,
-        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
         = 0;
 
     /// casts a value in string format to the correct type and writes it to the TupleBuffer
     void writeFieldValueToTupleBuffer(
         std::string value,
         uint64_t schemaFieldIndex,
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const Schema& schema,
         uint64_t tupleCount,
-        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager);
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager);
 
 private:
     std::vector<NES::PhysicalTypePtr> physicalTypes;

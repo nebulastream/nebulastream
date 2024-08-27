@@ -94,7 +94,7 @@ std::vector<Memory::TupleBuffer> createDataAllSeqNumbersEmitted(Memory::Abstract
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
         auto buffer = bufferProvider.getBufferBlocking();
-        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (int64_t i = 0; i < 100; ++i)
         {
             testBuffer[i]["f1"].write(i % 10_s64);
@@ -126,7 +126,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
     auto schema = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT);
     schema->addField("f1", BasicType::INT64);
     schema->addField("f2", BasicType::INT64);
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayout);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -157,7 +157,7 @@ TEST_P(SequenceNumberPipelineTest, testAllSequenceNumbersGetEmitted)
     ASSERT_EQ(pipelineContext.buffers.size(), 4);
     for (const auto& buf : pipelineContext.buffers)
     {
-        auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
+        auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buf);
         for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++)
         {
             ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 5);
@@ -186,7 +186,7 @@ std::vector<Memory::TupleBuffer> createDataFullWithConstantFieldValues(Memory::A
     for (uint64_t bufCnt = 0; bufCnt < NUM_BUF; ++bufCnt)
     {
         auto buffer = bufferProvider.getBufferBlocking();
-        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
         {
             testBuffer[i]["f1"].write(+10_s64);
@@ -211,8 +211,8 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     auto inputSchema
         = Schema::create(Schema::MemoryLayoutType::ROW_LAYOUT)->addField("f1", BasicType::INT64)->addField("f2", BasicType::INT64);
     auto outputSchema = inputSchema->copy()->addField("f3", BasicType::INT64);
-    auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
-    auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize());
+    auto memoryLayoutInput = Memory::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
+    auto memoryLayoutOutput = Memory::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize());
 
     auto scanMemoryProviderPtr = std::make_unique<MemoryProvider::RowMemoryProvider>(memoryLayoutInput);
     auto scanOperator = std::make_shared<Operators::Scan>(std::move(scanMemoryProviderPtr));
@@ -255,7 +255,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbers)
     auto expectedSeqChunkLastChunkIt = expectedSeqChunkLastChunk.begin();
     for (const auto& buf : pipelineContext.buffers)
     {
-        auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayoutOutput, buf);
+        auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayoutOutput, buf);
         for (uint64_t i = 0; i < resulttestBuffer.getNumberOfTuples(); i++)
         {
             ASSERT_EQ(resulttestBuffer[i]["f1"].read<int64_t>(), 10);
@@ -351,9 +351,9 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
                                   ->addField("end", BasicType::INT64)
                                   ->addField("test$count", BasicType::INT64);
 
-    auto memoryLayoutInput = Runtime::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
-    auto memoryLayoutOutput = Runtime::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize());
-    auto memoryLayoutOutputWindow = Runtime::MemoryLayouts::RowLayout::create(outputSchemaWindow, bufferManager->getBufferSize());
+    auto memoryLayoutInput = Memory::MemoryLayouts::RowLayout::create(inputSchema, bufferManager->getBufferSize());
+    auto memoryLayoutOutput = Memory::MemoryLayouts::RowLayout::create(outputSchema, bufferManager->getBufferSize());
+    auto memoryLayoutOutputWindow = Memory::MemoryLayouts::RowLayout::create(outputSchemaWindow, bufferManager->getBufferSize());
 
     /// Creating aggregation function
     const auto readF1 = std::make_shared<Expressions::ReadFieldExpression>("f1");
@@ -390,7 +390,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
     for (auto bufCnt = 0_u64; bufCnt < NUM_BUFFERS; ++bufCnt)
     {
         auto buffer = bufferManager->getBufferBlocking();
-        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, inputSchema);
+        auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, inputSchema);
         for (auto i = 0_u64; i < testBuffer.getCapacity(); ++i)
         {
             testBuffer[i]["f1"].write(+10_s64);
@@ -433,7 +433,7 @@ TEST_P(SequenceNumberPipelineTest, testMultipleSequenceNumbersWithAggregation)
     /// Comparing expected output
     for (const auto& buf : pipeline3Context.buffers)
     {
-        auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, outputSchemaWindow);
+        auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buf, outputSchemaWindow);
         for (auto i = 0_u64; i < testBuffer.getNumberOfTuples(); ++i)
         {
             /// As we count the number of tuple per window, the count should be the window size

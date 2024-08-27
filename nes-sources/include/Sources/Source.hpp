@@ -32,14 +32,14 @@ public:
     virtual ~Source() = default;
 
     /// Read data from a source into a TupleBuffer, until the TupleBuffer is full (or a timeout is reached).
-    [[nodiscard]] virtual bool fillTupleBuffer(
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    virtual bool fillTupleBuffer(
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         /// Todo #72 : get rid of bufferManager, as soon as parser/formatter is moved out of the Source
-        const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
         const Schema& schema)
         = 0;
 
-    [[nodiscard]] virtual bool validateConfig(const SourceDescriptor& config);
+    [[nodiscard]] virtual bool validateConfig(const SourceDescriptor& config) const = 0;
 
     virtual void open() = 0;
     virtual void close() = 0;

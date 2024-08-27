@@ -69,7 +69,7 @@ std::string Util::printTupleBufferAsCSV(Memory::TupleBuffer tbuffer, const Schem
 
                 /// read the child buffer index from the tuple buffer
                 auto childIdx = *reinterpret_cast<uint32_t const*>(indexInBuffer);
-                str = Runtime::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
+                str = Memory::MemoryLayouts::readVarSizedData(tbuffer, childIdx);
             }
             else
             {
@@ -100,14 +100,14 @@ std::string Util::toCSVString(const SchemaPtr& schema)
     return ss.str();
 }
 
-Runtime::MemoryLayouts::MemoryLayoutPtr Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize)
+MemoryLayoutPtr Util::createMemoryLayout(SchemaPtr schema, uint64_t bufferSize)
 {
     switch (schema->getLayoutType())
     {
         case Schema::MemoryLayoutType::ROW_LAYOUT:
-            return Runtime::MemoryLayouts::RowLayout::create(schema, bufferSize);
+            return Memory::MemoryLayouts::RowLayout::create(schema, bufferSize);
         case Schema::MemoryLayoutType::COLUMNAR_LAYOUT:
-            return Runtime::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+            return Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
     }
 }
 
@@ -170,7 +170,7 @@ std::vector<Memory::TupleBuffer> Util::createBuffersFromCSVFile(
     do
     {
         std::string line = *it;
-        auto testTupleBuffer = Runtime::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
+        auto testTupleBuffer = Memory::MemoryLayouts::TestTupleBuffer::createTestTupleBuffer(buffer, schema);
         parser->writeInputTupleToTupleBuffer(line, tupleCount, testTupleBuffer, schema, bufferProvider);
         ++tupleCount;
 

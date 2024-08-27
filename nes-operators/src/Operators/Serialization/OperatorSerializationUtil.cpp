@@ -15,7 +15,6 @@
 #include <API/AttributeField.hpp>
 #include <API/Schema.hpp>
 #include <Configurations/ConfigurationsNames.hpp>
-#include <Exceptions/Exception.hpp>
 #include <Expressions/ExpressionSerializationUtil.hpp>
 #include <Expressions/FieldAssignmentExpressionNode.hpp>
 #include <Measures/TimeCharacteristic.hpp>
@@ -58,6 +57,7 @@
 #include <Types/TumblingWindow.hpp>
 #include <Types/WindowType.hpp>
 #include <Util/Logger/Logger.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES
 {

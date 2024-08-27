@@ -146,8 +146,8 @@ void TCPSource::open()
 }
 
 bool TCPSource::fillTupleBuffer(
-    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
     const Schema& schema)
 {
     std::stringstream ss;
@@ -197,8 +197,8 @@ size_t TCPSource::parseBufferSize(SPAN_TYPE<const char> data)
 }
 
 bool TCPSource::fillBuffer(
-    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-    const std::shared_ptr<NES::Runtime::AbstractBufferProvider>& bufferManager,
+    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager,
     const Schema& schema)
 {
     /// determine how many tuples fit into the buffer
@@ -337,7 +337,7 @@ bool TCPSource::fillBuffer(
     /// Return false, if there are tuples in the buffer, or the EoS was reached.
     return tupleBuffer.getNumberOfTuples() == 0 && !isEoS;
 }
-bool TCPSource::validateConfig(const SourceDescriptor& config)
+bool TCPSource::validateConfig(const SourceDescriptor& config) const
 {
     bool isCorrectConfig = true;
     /// All below config paramaters are mandatory and therefore need to be validated.

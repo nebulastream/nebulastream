@@ -78,7 +78,7 @@ TEST_P(SortPipelineTest, SortPipelineTest)
     schema->addField("f1", BasicType::INT32);
     schema->addField("f2", BasicType::INT32);
 
-    auto memoryLayout = Runtime::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
+    auto memoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferManager->getBufferSize());
 
     auto sortOperator = std::make_shared<Operators::Sort>(s);
     auto sortScanOperator = std::make_shared<Operators::SortScan>(s);
@@ -90,7 +90,7 @@ TEST_P(SortPipelineTest, SortPipelineTest)
     pipeline->setRootOperator(sortOperator);
 
     auto buffer = bufferManager->getBufferBlocking();
-    auto testBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
+    auto testBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, buffer);
     for (uint64_t i = numberOfTuples; i > 0; i--)
     {
         testBuffer[i]["f1"].write((int32_t)i);
@@ -109,7 +109,7 @@ TEST_P(SortPipelineTest, SortPipelineTest)
     auto resultBuffer = pipelineContext.buffers[0];
     ASSERT_EQ(resultBuffer.getNumberOfTuples(), memoryLayout->getCapacity());
 
-    auto resulttestBuffer = Runtime::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
+    auto resulttestBuffer = Memory::MemoryLayouts::TestTupleBuffer(memoryLayout, resultBuffer);
     for (uint64_t i = 0; i < memoryLayout->getCapacity(); i++)
     {
         ASSERT_EQ(resulttestBuffer[i]["f1"].read<int32_t>(), (int32_t)i);

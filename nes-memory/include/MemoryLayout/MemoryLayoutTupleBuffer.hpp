@@ -17,7 +17,7 @@
 #include <cstring>
 #include <Runtime/TupleBuffer.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 /**
@@ -60,4 +60,4 @@ protected:
     uint64_t capacity;
     uint64_t numberOfRecords = 0;
 };
-} /// namespace NES::Runtime::MemoryLayouts
+}

@@ -24,7 +24,7 @@
 #include <Common/DataTypes/DataType.hpp>
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 DynamicField::DynamicField(const uint8_t* address, PhysicalTypePtr physicalType) : address(address), physicalType(physicalType)
@@ -386,4 +386,4 @@ uint64_t TestTupleBuffer::countOccurrences(DynamicTuple& tuple) const
     return count;
 }
 
-} /// namespace NES::Runtime::MemoryLayouts
+}

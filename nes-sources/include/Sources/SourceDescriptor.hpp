@@ -86,7 +86,7 @@ public:
     template <typename ConfigKey>
     std::optional<typename ConfigKey::Type> tryGetFromConfig(const ConfigKey& configKey) const
     {
-        if (config.contains(configKey.key) && std::holds_alternative<ConfigKey::Type>(config.at(configKey.key)))
+        if (config.contains(configKey.key) && std::holds_alternative<typename ConfigKey::Type>(config.at(configKey.key)))
         {
             const auto& value = config.at(configKey.key);
             return std::get<typename ConfigKey::Type>(value);

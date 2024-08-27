@@ -41,13 +41,14 @@ public:
     static inline const std::string NAME = "CSV";
 
     explicit CSVSource(const Schema& schema, std::unique_ptr<SourceDescriptor>&& sourceDescriptor);
+    ~CSVSource() override = default;
 
     bool fillTupleBuffer(
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const std::shared_ptr<Runtime::AbstractBufferProvider>& bufferManager,
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager,
         const Schema& schema) override;
 
-    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) override;
+    [[nodiscard]] bool validateConfig(const SourceDescriptor& config) const override;
 
     void open() override { /* noop */ };
     void close() override { /* noop */ };

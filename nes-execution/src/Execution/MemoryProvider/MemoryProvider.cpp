@@ -149,12 +149,12 @@ MemoryProviderPtr MemoryProvider::createMemoryProvider(const uint64_t bufferSize
 {
     if (schema->getLayoutType() == Schema::MemoryLayoutType::ROW_LAYOUT)
     {
-        auto rowMemoryLayout = MemoryLayouts::RowLayout::create(schema, bufferSize);
+        auto rowMemoryLayout = Memory::MemoryLayouts::RowLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::RowMemoryProvider>(rowMemoryLayout);
     }
     else if (schema->getLayoutType() == Schema::MemoryLayoutType::COLUMNAR_LAYOUT)
     {
-        auto columnMemoryLayout = MemoryLayouts::ColumnLayout::create(schema, bufferSize);
+        auto columnMemoryLayout = Memory::MemoryLayouts::ColumnLayout::create(schema, bufferSize);
         return std::make_unique<Runtime::Execution::MemoryProvider::ColumnMemoryProvider>(columnMemoryLayout);
     }
     else

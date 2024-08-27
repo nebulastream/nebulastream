@@ -27,11 +27,11 @@ public:
 
     /// takes csv string line as input, casts its values to the correct types and writes it to the TupleBuffer
     bool writeInputTupleToTupleBuffer(
-        std::string_view csvInput,
+        std::string_view inputTuple,
         uint64_t tupleCount,
-        NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
-        const SchemaPtr& schema,
-        const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager) override;
+        NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+        const Schema& schema,
+        const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
 
 private:
     uint64_t numberOfSchemaFields;

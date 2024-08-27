@@ -20,16 +20,16 @@
 #include <ostream>
 #include <string>
 #include <variant>
-#include <Runtime/BufferManager.hpp>
 #include <MemoryLayout/BufferAccessException.hpp>
 #include <MemoryLayout/MemoryLayout.hpp>
+#include <Runtime/BufferManager.hpp>
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 #include <Common/ExecutableType/NESType.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 #include <Common/PhysicalTypes/PhysicalTypeUtil.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 class MemoryLayoutTupleBuffer;
@@ -563,4 +563,4 @@ private:
     mutable Memory::TupleBuffer buffer;
 };
 
-} /// namespace NES::Runtime::MemoryLayouts
+}

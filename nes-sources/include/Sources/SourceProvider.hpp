@@ -39,7 +39,7 @@ public:
     static std::unique_ptr<SourceHandle> lower(
         OriginId originId,
         std::unique_ptr<Sources::SourceDescriptor>&& sourceDescriptor, /// Todo #74: Can we use a unique_ptr for source descriptors?
-        std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferManager,
+        std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferManager,
         SourceReturnType::EmitFunction&& emitFunction);
 
     ~SourceProvider() = default;

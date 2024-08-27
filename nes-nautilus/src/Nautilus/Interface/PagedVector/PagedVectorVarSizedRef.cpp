@@ -30,13 +30,13 @@ PagedVectorVarSizedRef::PagedVectorVarSizedRef(const Value<MemRef>& pagedVectorV
 
 void allocateNewPageVarSizedProxy(void* pagedVectorVarSizedPtr)
 {
-    auto* pagedVectorVarSized = (PagedVectorVarSized*)pagedVectorVarSizedPtr;
+    auto* pagedVectorVarSized = static_cast<PagedVectorVarSized*>(pagedVectorVarSizedPtr);
     pagedVectorVarSized->appendPage();
 }
 
 void* getEntryVarSizedProxy(void* pagedVectorVarSizedPtr, uint64_t entryPos)
 {
-    auto* pagedVectorVarSized = (PagedVectorVarSized*)pagedVectorVarSizedPtr;
+    auto* pagedVectorVarSized = static_cast<PagedVectorVarSized*>(pagedVectorVarSizedPtr);
     auto& allPages = pagedVectorVarSized->getPages();
     for (auto& page : allPages)
     {
@@ -64,13 +64,13 @@ void* getEntryVarSizedProxy(void* pagedVectorVarSizedPtr, uint64_t entryPos)
 
 uint64_t storeTextProxy(void* pagedVectorVarSizedPtr, TextValue* textValue)
 {
-    auto* pagedVectorVarSized = (PagedVectorVarSized*)pagedVectorVarSizedPtr;
+    auto* pagedVectorVarSized = static_cast<PagedVectorVarSized*>(pagedVectorVarSizedPtr);
     return pagedVectorVarSized->storeText(textValue->c_str(), textValue->length());
 }
 
 TextValue* loadTextProxy(void* pagedVectorVarSizedPtr, uint64_t textEntryMapKey)
 {
-    auto* pagedVectorVarSized = (PagedVectorVarSized*)pagedVectorVarSizedPtr;
+    auto* pagedVectorVarSized = static_cast<PagedVectorVarSized*>(pagedVectorVarSizedPtr);
     return pagedVectorVarSized->loadText(textEntryMapKey);
 }
 

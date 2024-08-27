@@ -38,9 +38,9 @@ CSVParser::CSVParser(uint64_t numberOfSchemaFields, std::vector<NES::PhysicalTyp
 bool CSVParser::writeInputTupleToTupleBuffer(
     std::string_view csvInputLine,
     uint64_t tupleCount,
-    NES::Runtime::MemoryLayouts::TestTupleBuffer& tupleBuffer,
+    NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
     const Schema& schema,
-    const std::shared_ptr<Memory::AbstractBufferProvider>& bufferManager)
+    const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager)
 {
     NES_TRACE("CSVParser::parseCSVLine: Current TupleCount:  {}", tupleCount);
 

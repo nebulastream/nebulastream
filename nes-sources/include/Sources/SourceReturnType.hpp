@@ -16,9 +16,8 @@
 
 #include <cstdint>
 #include <variant>
-#include <Exceptions/Exception.hpp>
 #include <Identifiers/Identifiers.hpp>
-#include <Runtime/TupleBuffer.hpp>
+#include <ErrorHandling.hpp>
 
 namespace NES::Sources::SourceReturnType
 {
@@ -34,7 +33,7 @@ struct SourceTermination
     TerminationType type;
     std::optional<Exception> exception;
 };
-using SourceReturnType = std::variant<NES::Runtime::TupleBuffer, SourceTermination>;
+using SourceReturnType = std::variant<NES::Memory::TupleBuffer, SourceTermination>;
 using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 
 }

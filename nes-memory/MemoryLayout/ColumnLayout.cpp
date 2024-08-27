@@ -17,7 +17,7 @@
 #include <Common/PhysicalTypes/DefaultPhysicalTypeFactory.hpp>
 #include <Common/PhysicalTypes/PhysicalType.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 ColumnLayout::ColumnLayout(SchemaPtr schema, uint64_t bufferSize) : MemoryLayout(bufferSize, schema)
@@ -58,4 +58,4 @@ const std::vector<uint64_t>& ColumnLayout::getColumnOffsets() const
     return columnOffsets;
 }
 
-} /// namespace NES::Runtime::MemoryLayouts
+}

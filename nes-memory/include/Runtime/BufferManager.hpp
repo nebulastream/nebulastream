@@ -22,7 +22,6 @@
 #include <deque>
 #include <map>
 #include <memory>
-#include <memory_resource>
 #include <mutex>
 #include <optional>
 #include <vector>
@@ -240,4 +239,4 @@ private:
 
 using BufferManagerPtr = std::shared_ptr<BufferManager>;
 
-} /// namespace NES::Runtime
+}

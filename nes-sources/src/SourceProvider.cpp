@@ -37,7 +37,7 @@ std::unique_ptr<SourceProvider> SourceProvider::create()
 std::unique_ptr<SourceHandle> SourceProvider::lower(
     OriginId originId,
     std::unique_ptr<SourceDescriptor>&& sourceDescriptor,
-    std::shared_ptr<NES::Runtime::AbstractPoolProvider> bufferPool,
+    std::shared_ptr<NES::Memory::AbstractPoolProvider> bufferPool,
     SourceReturnType::EmitFunction&& emitFunction)
 {
     auto schema = sourceDescriptor->getSchema();

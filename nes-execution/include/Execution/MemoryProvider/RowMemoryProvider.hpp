@@ -14,6 +14,8 @@
 #pragma once
 
 #include <Execution/MemoryProvider/MemoryProvider.hpp>
+#include <MemoryLayout/MemoryLayout.hpp>
+#include <MemoryLayout/RowLayout.hpp>
 
 namespace NES::Runtime::Execution::MemoryProvider
 {
@@ -28,10 +30,10 @@ public:
      * @brief Creates a row memory provider based on a valid row memory layout pointer.
      * @param Row memory layout pointer used to create the RowMemoryProvider.
      */
-    RowMemoryProvider(Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr);
+    RowMemoryProvider(std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr);
     ~RowMemoryProvider() = default;
 
-    MemoryLayouts::MemoryLayoutPtr getMemoryLayoutPtr() override;
+    std::shared_ptr<Memory::MemoryLayouts::MemoryLayout> getMemoryLayoutPtr() override;
 
     Nautilus::Record read(
         const std::vector<Nautilus::Record::RecordFieldIdentifier>& projections,
@@ -45,7 +47,7 @@ public:
 
 private:
     Nautilus::Value<Nautilus::MemRef> calculateFieldAddress(Nautilus::Value<>& recordOffset, uint64_t fieldIndex) const;
-    const Runtime::MemoryLayouts::RowLayoutPtr rowMemoryLayoutPtr;
+    std::shared_ptr<Memory::MemoryLayouts::RowLayout> rowMemoryLayoutPtr;
 };
 
 } /// namespace NES::Runtime::Execution::MemoryProvider

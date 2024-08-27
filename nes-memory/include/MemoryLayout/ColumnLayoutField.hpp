@@ -20,7 +20,7 @@
 #include <Runtime/TupleBuffer.hpp>
 #include <Util/Logger/Logger.hpp>
 
-namespace NES::Runtime::MemoryLayouts
+namespace NES::Memory::MemoryLayouts
 {
 
 /**
@@ -114,4 +114,4 @@ inline T& ColumnLayoutField<T, boundaryChecks>::operator[](size_t recordIndex)
     return *(basePointer + recordIndex);
 }
 
-} /// namespace NES::Runtime::MemoryLayouts
+}
