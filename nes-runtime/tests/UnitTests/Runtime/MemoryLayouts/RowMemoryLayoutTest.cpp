@@ -51,7 +51,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutCreateTest)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT8)->addField("t3", BasicType::UINT8);
 
-    RowLayoutPtr rowLayout;
+    std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 }
@@ -64,7 +64,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutMapCalcOffsetTest)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    RowLayoutPtr rowLayout;
+    std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
@@ -86,7 +86,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestOneRecord)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    RowLayoutPtr rowLayout;
+    std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
@@ -111,7 +111,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutPushRecordAndReadRecordTestMultipleRecord)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    RowLayoutPtr rowLayout;
+    std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
@@ -146,7 +146,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldSimple)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    RowLayoutPtr rowLayout;
+    std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
@@ -184,7 +184,7 @@ TEST_F(RowMemoryLayoutTest, rowLayoutLayoutFieldBoundaryCheck)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    RowLayoutPtr rowLayout;
+    std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
@@ -234,7 +234,7 @@ TEST_F(RowMemoryLayoutTest, getFieldViaFieldNameRowLayout)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    RowLayoutPtr rowLayout;
+    std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
@@ -257,7 +257,7 @@ TEST_F(RowMemoryLayoutTest, pushRecordTooManyRecordsRowLayout)
     SchemaPtr schema
         = Schema::create()->addField("t1", BasicType::UINT8)->addField("t2", BasicType::UINT16)->addField("t3", BasicType::UINT32);
 
-    RowLayoutPtr rowLayout;
+    std::shared_ptr<RowLayout> rowLayout;
     ASSERT_NO_THROW(rowLayout = RowLayout::create(schema, bufferManager->getBufferSize()));
     ASSERT_NE(rowLayout, nullptr);
 
