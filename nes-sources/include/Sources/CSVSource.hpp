@@ -49,7 +49,7 @@ public:
     void open() override;
     void close() override;
 
-    std::string toString() const override;
+    [[nodiscard]] std::ostream& toString(std::ostream& str) const override;
 
 private:
     std::ifstream input;

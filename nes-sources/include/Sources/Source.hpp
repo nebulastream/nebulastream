@@ -46,9 +46,13 @@ public:
     /// If applicable, closes a connection, e.g., a socket connection.
     virtual void close() = 0;
 
+    friend std::ostream& operator<<(std::ostream& out, const Source& source);
+
+protected:
+    /// Implemented by children of Source. Called by '<<'. Allows to use '<<' on abstract Source.
     [[nodiscard]] virtual SourceType getType() const = 0;
 
-    [[nodiscard]] virtual std::string toString() const = 0;
+    [[nodiscard]] virtual std::ostream& toString(std::ostream& str) const = 0;
 };
 
 }

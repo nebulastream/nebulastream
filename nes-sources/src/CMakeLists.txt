@@ -17,6 +17,7 @@ add_source_files(nes-sources
         SourceDescriptor.cpp
         SourceHandle.cpp
         SourceProvider.cpp
+        Source.cpp
         TCPSource.cpp
 )
 add_subdirectory(Parsers)
