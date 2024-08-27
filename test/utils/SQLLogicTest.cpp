@@ -15,6 +15,7 @@
 #include <filesystem>
 #include <regex>
 #include <string>
+#include <chrono>
 #include <filesystem>
 #include <gtest/gtest.h>
 #include <IntegrationTestUtil.hpp>
@@ -28,8 +29,6 @@ class SystemTestFactory : public testing::Test
 public:
     static void SetUpTestSuite()
     {
-        Logger::setupLogging("SystemTest.log", LogLevel::LOG_DEBUG, false);
-
         Configuration::SingleNodeWorkerConfiguration const configuration{};
         uut = std::make_unique<GRPCServer>(SingleNodeWorker{configuration});
 
@@ -48,6 +47,19 @@ public:
 
     void TestBody() override
     {
+        /// We do not log to the console to reduce the amount of output. Instead we provide a link to the log. This is okay as these
+        /// system tests are intended to run locally.
+        std::time_t now_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
+        char timestamp[20]; /// Buffer large enough for "YYYY-MM-DD_HH-MM-SS"
+        std::strftime(timestamp, sizeof(timestamp), "%Y-%m-%d_%H-%M-%S", std::localtime(&now_time_t));
+        /// Ordering: time -> system test name -> test id
+        std::string logFileName = std::string("SystemTest_") + timestamp + "_" + systemTestName + "_" + std::to_string(testId) + ".log";
+
+        Logger::setupLogging(logFileName, LogLevel::LOG_DEBUG, false);
+        std::filesystem::path logPath = std::filesystem::current_path() / "test" / logFileName;
+        /// file:// to make the link clickable in the console
+        std::cout << "Find the test log at: file://" << logPath.string() << std::endl;
+
         IntegrationTestUtil::removeFile(CMAKE_BINARY_DIR "/test/result/"+  systemTestName + std::to_string(testId + 1) +  ".csv");
 
         SerializableDecomposedQueryPlan queryPlan;
