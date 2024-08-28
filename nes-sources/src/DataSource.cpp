@@ -71,7 +71,7 @@ void DataSource::emitWork(Memory::TupleBuffer& buffer, bool addBufferMetaData)
             buffer.getChunkNumber(),
             buffer.isLastChunk());
     }
-    emitFunction(originId, buffer);
+    emitFunction(originId, SourceReturnType::Data{buffer});
 }
 
 bool DataSource::start()
@@ -171,7 +171,7 @@ bool DataSource::stop()
                 /// Todo #237: Improve error handling in sources
                 auto ingestionException = StopBeforeStartFailure();
                 ingestionException.what() += e.what();
-                emitFunction(originId, SourceReturnType::SourceTermination{SourceReturnType::TerminationType::FAILURE, ingestionException});
+                emitFunction(originId, SourceReturnType::Error{ingestionException});
             }
             isStopped = true;
         }
@@ -185,7 +185,7 @@ void DataSource::close()
     sourceImplementation->close();
     std::unique_lock lock(startStopMutex);
     {
-        emitFunction(originId, SourceReturnType::SourceTermination{SourceReturnType::TerminationType::STOP, std::nullopt});
+        emitFunction(originId, SourceReturnType::Stopped{});
         bufferProvider->destroy();
     }
 }
@@ -255,7 +255,7 @@ void DataSource::runningRoutine()
         /// Todo #237: Improve error handling in sources
         auto ingestionException = RunningRoutineFailure();
         ingestionException.what() += e.what();
-        emitFunction(originId, SourceReturnType::SourceTermination{SourceReturnType::TerminationType::FAILURE, ingestionException});
+        emitFunction(originId, SourceReturnType::Error{ingestionException});
         completedPromise.set_exception(std::make_exception_ptr(ingestionException));
     }
     catch (...)
@@ -274,7 +274,7 @@ void DataSource::runningRoutine()
             /// Todo #237: Improve error handling in sources
             auto ingestionException = RunningRoutineFailure();
             ingestionException.what() += e.what();
-            emitFunction(originId, SourceReturnType::SourceTermination{SourceReturnType::TerminationType::FAILURE, ingestionException});
+            emitFunction(originId, SourceReturnType::Error{ingestionException});
         }
     }
     NES_DEBUG("DataSource {} end runningRoutine", originId);
