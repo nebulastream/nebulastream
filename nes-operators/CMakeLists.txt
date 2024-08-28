@@ -28,16 +28,6 @@ if (NES_USE_OPC)
     add_compile_definitions(ENABLE_OPC_BUILD)
 endif (NES_USE_OPC)
 
-register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp Operators/LogicalOperators/LogicalBatchJoinDescriptor.hpp)
-register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp Operators/LogicalOperators/Windows/Joins/JoinForwardRefs.hpp)
-register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Windows/ Operators/LogicalOperators/Windows/)
-register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp Operators/LogicalOperators/Watermarks/EventTimeWatermarkStrategyDescriptor.hpp)
-register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp Operators/LogicalOperators/Watermarks/IngestionTimeWatermarkStrategyDescriptor.hpp)
-register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp Operators/LogicalOperators/Watermarks/WatermarkStrategyDescriptor.hpp)
-register_public_header_file(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Plans/Query/QueryPlan.hpp Plans/Query/QueryPlan.hpp)
-register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sources Operators/LogicalOperators/Sources)
-register_public_header_dir(nes-operators ${CMAKE_CURRENT_SOURCE_DIR}/include/Operators/LogicalOperators/Sinks Operators/LogicalOperators/Sinks)
-
 if (NES_ENABLES_TESTS)
     # Add tests with command
     add_subdirectory(tests)

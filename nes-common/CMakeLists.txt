@@ -72,12 +72,6 @@ target_include_directories(nes-common PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Identifiers/ Identifiers)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Util/ Util)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Exceptions/ Exceptions)
-register_public_header_dir(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Sequencing Sequencing)
-register_public_header_file(nes-common ${CMAKE_CURRENT_SOURCE_DIR}/include/Nodes/Node.hpp Nodes/Node.hpp)
-
 if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_precompile_headers(nes-common PRIVATE "include/PrecompiledHeaders.hpp")
 endif ()

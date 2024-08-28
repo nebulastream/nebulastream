@@ -33,11 +33,6 @@ else ()
     message(STATUS "Tests are disabled")
 endif ()
 
-register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/DataTypes Common/DataTypes)
-register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/ExecutableType Common/ExecutableType)
-register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/Common/PhysicalTypes Common/PhysicalTypes)
-register_public_header_dir(nes-data-types ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
-
 #Add the nes common and headers to cpack
 install(TARGETS nes-data-types
         EXPORT NebulaStreamTargets

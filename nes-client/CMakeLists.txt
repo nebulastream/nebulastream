@@ -22,8 +22,6 @@ target_include_directories(nes-client PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/nebulastream/>)
 
-register_public_header_dir(nes-client ${CMAKE_CURRENT_SOURCE_DIR}/include/API/ API)
-
 #Add the nes client and headers to cpack
 install(TARGETS nes-client
         EXPORT NebulaStreamTargets
