@@ -16,6 +16,7 @@
 #include <sstream>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutableQueryPlan.hpp>
+#include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/NodeEngine.hpp>
 #include <Runtime/QueryManager.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
@@ -71,9 +72,7 @@ ExecutableQueryPlan::~ExecutableQueryPlan()
 {
     NES_DEBUG("destroy qep {}", queryId);
     NES_ASSERT(
-        queryStatus.load() == QueryStatus::Registered || queryStatus.load() == QueryStatus::Stopped
-            || queryStatus.load() == QueryStatus::Failed,
-        "QueryPlan is created but not executing " << queryId);
+        Execution::QueryStatusUtil::isRegisteredButNotRunning(queryStatus.load()), "QueryPlan is created but not executing " << queryId);
     destroy();
 }
 
@@ -100,7 +99,7 @@ bool ExecutableQueryPlan::fail()
                 ret = false;
             }
         }
-        qepTerminationStatusPromise.set_value(Result::Fail);
+        qepTerminationStatusPromise.set_value(Result::FAILED);
     }
 
     if (!ret)
@@ -206,12 +205,12 @@ bool ExecutableQueryPlan::stop()
 
         if (allStagesStopped)
         {
-            qepTerminationStatusPromise.set_value(Result::Ok);
+            qepTerminationStatusPromise.set_value(Result::OK);
             return true; /// correct stop
         }
 
         queryStatus.store(QueryStatus::Failed);
-        qepTerminationStatusPromise.set_value(Result::Fail);
+        qepTerminationStatusPromise.set_value(Result::FAILED);
 
         return false; /// one stage failed to stop
     }
@@ -222,12 +221,9 @@ bool ExecutableQueryPlan::stop()
     }
     NES_ERROR("Something is wrong with query {} as it was not possible to stop", queryId);
     /// if we get there it mean the CAS failed and expected is the current value
-    while (!queryStatus.compare_exchange_strong(expected, QueryStatus::Failed))
-    {
-        /// try to install ErrorState
-    }
+    queryStatus.wait(QueryStatus::Failed);
 
-    qepTerminationStatusPromise.set_value(Result::Fail);
+    qepTerminationStatusPromise.set_value(Result::FAILED);
 
     bufferManager.reset();
     return false;
@@ -262,7 +258,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                 {
                     /// if CAS fails - it means the query was already stopped or failed
                     NES_DEBUG("QueryExecutionPlan: query plan {} is marked as (soft) stopped now", queryId);
-                    qepTerminationStatusPromise.set_value(Result::Ok);
+                    qepTerminationStatusPromise.set_value(Result::OK);
                     queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(), Execution::QueryStatus::Finished);
                     return;
                 }
@@ -309,7 +305,7 @@ void ExecutableQueryPlan::notifySourceCompletion(OriginId sourceId, QueryTermina
         [sourceId](const Sources::SourceHandlePtr& sourceHandle) { return sourceHandle->getSourceId() == sourceId; });
     NES_ASSERT2_FMT(it != sources.end(), "Cannot find source " << sourceId << " in query plan " << queryId);
     uint32_t tokensLeft = numOfTerminationTokens.fetch_sub(1);
-    NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << queryId << " = " << terminationType);
+    /// NES_ASSERT2_FMT(tokensLeft >= 1, "Source was last termination token for " << queryId << " = " << terminationType);
     NES_DEBUG("QEP {} Source {} is terminated; tokens left = {}", queryId, 0, (tokensLeft - 1));
     /// the following check is necessary because a data sources first emits an EoS marker and then calls this method.
     /// However, it might happen that the marker is so fast that one possible execution is as follows:

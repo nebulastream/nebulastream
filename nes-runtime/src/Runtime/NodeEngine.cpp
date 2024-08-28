@@ -25,10 +25,10 @@ namespace NES::Runtime
 {
 
 NodeEngine::NodeEngine(
-    std::vector<std::shared_ptr<Memory::BufferManager>>&& bufferManagers,
-    std::shared_ptr<QueryManager>&& queryManager,
-    std::shared_ptr<QueryLog>&& queryLog)
-    : bufferManagers(std::move(bufferManagers)), queryManager(std::move(queryManager)), queryLog(std::move(queryLog))
+    const std::shared_ptr<Memory::BufferManager>& bufferManager,
+    const std::shared_ptr<QueryManager>& queryManager,
+    const std::shared_ptr<QueryLog>& queryLog)
+    : bufferManager(bufferManager), queryManager(queryManager), queryLog(queryLog)
 {
     this->queryManager->startThreadPool(100);
 }

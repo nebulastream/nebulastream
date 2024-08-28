@@ -32,6 +32,8 @@ QueryId registerQueryPlan(const SerializableDecomposedQueryPlan& queryPlan, GRPC
 
 void startQuery(QueryId queryId, GRPCServer& uut);
 
+bool isQueryStopped(QueryId queryId, GRPCServer& uut);
+
 void stopQuery(QueryId queryId, StopQueryRequest::QueryTerminationType type, GRPCServer& uut);
 
 void unregisterQuery(QueryId queryId, GRPCServer& uut);

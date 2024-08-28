@@ -17,6 +17,7 @@
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
+#include <fmt/format.h>
 #include <folly/Synchronized.h>
 #include <ErrorHandling.hpp>
 #include <magic_enum.hpp>
@@ -55,12 +56,12 @@ inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statu
 struct QueryLog : AbstractQueryStatusListener
 {
     using Log = std::vector<QueryStatusChange>;
-    /// In the future, we might want to use a threadsafe map here instead (e.g., folly/AtomicHashmap.h)
     using QueryStatusLog = std::unordered_map<QueryId, std::vector<QueryStatusChange>>;
 
-    bool notifySourceTermination(QueryId queryId, OriginId sourceId, QueryTerminationType) override;
-    bool notifyQueryFailure(QueryId queryId, Exception exception) override;
-    bool notifyQueryStatusChange(QueryId queryId, Execution::QueryStatus Status) override;
+    /// TODO(#214): we should use the new unique sourceId/hash once implemented here instead
+    bool logSourceTermination(QueryId queryId, OriginId sourceId, QueryTerminationType) override;
+    bool logQueryFailure(QueryId queryId, Exception exception) override;
+    bool logQueryStatusChange(QueryId queryId, Execution::QueryStatus Status) override;
 
     [[nodiscard]] std::optional<Log> getLogForQuery(QueryId queryId);
     [[nodiscard]] std::optional<QuerySummary> getQuerySummary(QueryId queryId);
