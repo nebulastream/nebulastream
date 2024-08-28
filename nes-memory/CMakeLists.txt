@@ -33,8 +33,3 @@ target_include_directories(nes-memory
 )
 find_package(folly REQUIRED)
 target_link_libraries(nes-memory PUBLIC nes-common nes-data-types PRIVATE folly::folly)
-
-install(TARGETS nes-memory
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
