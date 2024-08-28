@@ -48,14 +48,11 @@ public:
 
     SourceType getType() const override;
 
-    const CSVSourceTypePtr& getSourceConfig() const;
-
 protected:
     std::ifstream input;
     bool fileEnded;
 
 private:
-    CSVSourceTypePtr csvSourceType;
     std::string filePath;
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;

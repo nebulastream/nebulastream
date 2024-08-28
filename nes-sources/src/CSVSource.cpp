@@ -30,7 +30,6 @@ namespace NES::Sources
 
 CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
     : fileEnded(false)
-    , csvSourceType(csvSourceType)
     , filePath(csvSourceType->getFilePath()->getValue())
     , delimiter(csvSourceType->getDelimiter()->getValue())
     , skipHeader(csvSourceType->getSkipHeader()->getValue())
@@ -149,11 +148,6 @@ std::string CSVSource::toString() const
 SourceType CSVSource::getType() const
 {
     return SourceType::CSV_SOURCE;
-}
-
-const CSVSourceTypePtr& CSVSource::getSourceConfig() const
-{
-    return csvSourceType;
 }
 
 }
