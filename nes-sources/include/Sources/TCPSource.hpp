@@ -44,8 +44,6 @@ public:
 
     SourceType getType() const override;
 
-    const TCPSourceTypePtr& getSourceConfig() const;
-
     /// Open TCP connection.
     void open() override;
     /// Close TCP connection.
@@ -64,12 +62,21 @@ private:
     int connection = -1;
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
-    TCPSourceTypePtr sourceConfig;
     int sockfd = -1;
     timeval timeout;
     MMapCircularBuffer circularBuffer;
 
     SchemaPtr schema;
+    Configurations::InputFormat inputFormat;
+    std::string socketHost;
+    std::string socketPort;
+    int socketType;
+    int socketDomain;
+    Configurations::TCPDecideMessageSize decideMessageSize;
+    char tupleSeparator;
+    size_t socketBufferSize;
+    size_t bytesUsedForSocketBufferSizeTransfer;
+    float flushIntervalInMs;
     uint64_t generatedTuples{0};
     uint64_t generatedBuffers{0};
 };
