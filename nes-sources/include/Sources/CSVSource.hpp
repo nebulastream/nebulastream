@@ -38,8 +38,8 @@ public:
         NES::Memory::MemoryLayouts::TestTupleBuffer& tupleBuffer,
         const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager) override;
 
-    void open() override { /* noop */ };
-    void close() override { /* noop */ };
+    void open() override;
+    void close() override;
 
     void
     fillBuffer(NES::Memory::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager);
