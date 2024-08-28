@@ -31,12 +31,13 @@ inline std::ostream& operator<<(std::ostream& os, const QueryStatusChange& statu
     return os;
 }
 
-bool QueryLog::notifySourceTermination(QueryId, OriginId, QueryTerminationType)
+bool QueryLog::logSourceTermination(QueryId, OriginId, QueryTerminationType)
 {
+    /// TODO(#34): part of redesign of single node worker
     return true; /// nop
 }
 
-bool QueryLog::notifyQueryFailure(QueryId queryId, Exception exception)
+bool QueryLog::logQueryFailure(QueryId queryId, Exception exception)
 {
     auto writeLock = queryStatusLog.wlock();
     if (writeLock->contains(queryId))
@@ -47,7 +48,7 @@ bool QueryLog::notifyQueryFailure(QueryId queryId, Exception exception)
     return false;
 }
 
-bool QueryLog::notifyQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus status)
+bool QueryLog::logQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus status)
 {
     auto writeLock = queryStatusLog.wlock();
     (*writeLock)[queryId].emplace_back(status);
@@ -68,7 +69,7 @@ std::optional<QueryLog::Log> QueryLog::getLogForQuery(QueryId queryId)
 std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
 {
     auto readLock = queryStatusLog.rlock();
-    auto log = readLock->find(queryId);
+    const auto log = readLock->find(queryId);
     if (log != readLock->end())
     {
         QuerySummary summary = {queryId, Execution::QueryStatus::Invalid, 0, {}};
@@ -81,8 +82,7 @@ std::optional<QuerySummary> QueryLog::getQuerySummary(QueryId queryId)
             {
                 summary.exceptions.push_back(statusChange.exception.value());
             }
-            if ((previousState == Execution::QueryStatus::Failed || previousState == Execution::QueryStatus::Stopped)
-                && statusChange.state == Execution::QueryStatus::Running)
+            if (Execution::QueryStatusUtil::hasRestarted(previousState, statusChange.state))
             {
                 ++(summary.numberOfRestarts);
             }

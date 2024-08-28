@@ -40,7 +40,7 @@ public:
     NodeEngine& operator=(const NodeEngine&) = delete;
 
     explicit NodeEngine(
-        std::vector<std::shared_ptr<Memory::BufferManager>>&&, std::shared_ptr<QueryManager>&&, std::shared_ptr<QueryLog>&&);
+        const std::shared_ptr<Memory::BufferManager>&, const std::shared_ptr<QueryManager>&, const std::shared_ptr<QueryLog>&);
 
     [[nodiscard]] QueryId registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan);
     void unregisterQuery(QueryId queryId);
@@ -49,15 +49,16 @@ public:
     /// been called.
     void stopQuery(QueryId queryId, QueryTerminationType terminationType = QueryTerminationType::HardStop);
 
-    [[nodiscard]] std::shared_ptr<Memory::BufferManager> getBufferManager() { return bufferManagers[0]; }
+    [[nodiscard]] std::shared_ptr<Memory::BufferManager> getBufferManager() { return bufferManager; }
     [[nodiscard]] std::shared_ptr<QueryManager> getQueryManager() { return queryManager; }
     [[nodiscard]] std::shared_ptr<QueryLog> getQueryLog() { return queryLog; }
 
 private:
-    std::vector<std::shared_ptr<Memory::BufferManager>> bufferManagers;
-    std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> registeredQueries;
-    QueryManagerPtr queryManager;
+    std::shared_ptr<Memory::BufferManager> bufferManager;
+    std::shared_ptr<QueryManager> queryManager;
     std::shared_ptr<QueryLog> queryLog;
+
+    std::unordered_map<QueryId, Execution::ExecutableQueryPlanPtr> registeredQueries;
 };
 using NodeEnginePtr = std::shared_ptr<NodeEngine>;
 } /// namespace NES::Runtime

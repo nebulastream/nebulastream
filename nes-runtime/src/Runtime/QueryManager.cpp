@@ -232,7 +232,7 @@ uint64_t QueryManager::getNextTaskId()
     return ++taskIdCounter;
 }
 
-uint64_t QueryManager::getNumberOfWorkerThreads()
+uint64_t QueryManager::getNumberOfWorkerThreads() const
 {
     return numThreads;
 }

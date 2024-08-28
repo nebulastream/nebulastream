@@ -60,6 +60,16 @@ void startQuery(QueryId queryId, GRPCServer& uut)
     EXPECT_TRUE(uut.StartQuery(&context, &request, &reply).ok());
 }
 
+bool isQueryStopped(QueryId queryId, GRPCServer& uut)
+{
+    grpc::ServerContext context;
+    QuerySummaryRequest request;
+    QuerySummaryReply reply;
+    request.set_queryid(queryId.getRawValue());
+    EXPECT_TRUE(uut.RequestQuerySummary(&context, &request, &reply).ok());
+    return reply.status() == Stopped;
+}
+
 void stopQuery(QueryId queryId, StopQueryRequest::QueryTerminationType type, GRPCServer& uut)
 {
     grpc::ServerContext context;
