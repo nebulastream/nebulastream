@@ -186,6 +186,11 @@ QueryStatisticsPtr QueryManager::getQueryStatistics(QueryId queryId)
     return nullptr;
 }
 
+template <class... Ts>
+struct overloaded : Ts...
+{
+    using Ts::operator()...;
+};
 Sources::SourceReturnType::EmitFunction
 QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutablePipeline>&& executableSuccessorPipelines)
 {
@@ -193,37 +198,33 @@ QueryManager::createSourceEmitFunction(std::vector<Execution::SuccessorExecutabl
     return [this, successors = std::move(executableSuccessorPipelines)](
                const OriginId originId, Sources::SourceReturnType::SourceReturnType returntype)
     {
-        if (std::holds_alternative<NES::Memory::TupleBuffer>(returntype))
-        {
-            for (const auto& successorPipeline : successors)
-            {
-                /// Using a const taskQueueId of 0
-                this->addWorkForNextPipeline(std::get<NES::Memory::TupleBuffer>(returntype), successorPipeline);
-            }
-        }
-        else
-        {
-            const auto terminationType = std::get<Sources::SourceReturnType::SourceTermination>(returntype);
-            switch (terminationType.type)
-            {
-                /// Todo #237: Improve error handling in sources
-                /// ReSharper disable once CppDFAUnreachableCode (the code below is reachable)
-                case Sources::SourceReturnType::TerminationType::EOS:
+        std::visit(
+            overloaded{
+                [&](Sources::SourceReturnType::Data& data)
+                {
+                    for (const auto& successorPipeline : successors)
+                    {
+                        this->addWorkForNextPipeline(data.buffer, successorPipeline);
+                    }
+                },
+                [&](const Sources::SourceReturnType::EoS&)
+                {
                     NES_DEBUG("DataSource {} : End of stream.", originId);
                     this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::Graceful);
                     this->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
-                    break;
-                case Sources::SourceReturnType::TerminationType::STOP:
+                },
+                [&](const Sources::SourceReturnType::Stopped&)
+                {
                     NES_DEBUG("DataSource {} : Stopping.", originId);
                     this->addEndOfStream(originId, successors, Runtime::QueryTerminationType::HardStop);
                     this->notifySourceCompletion(originId, Runtime::QueryTerminationType::HardStop);
-                    break;
-                case Sources::SourceReturnType::TerminationType::FAILURE:
+                },
+                [&](const Sources::SourceReturnType::Error& error)
+                {
                     NES_DEBUG("DataSource {} : Failure.", originId);
-                    this->notifySourceFailure(originId, terminationType.exception->what());
-                    break;
-            }
-        }
+                    this->notifySourceFailure(originId, error.ex.what());
+                }},
+            returntype);
     };
 }
 
