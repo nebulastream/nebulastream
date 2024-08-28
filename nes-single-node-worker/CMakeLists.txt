@@ -40,8 +40,3 @@ else ()
     message(STATUS "Tests are disabled for single-node-worker")
 endif ()
 
-#Add the nes lib and headers to cpack
-install(TARGETS nes-single-node-worker-lib
-        EXPORT NebulaStreamTargets
-        LIBRARY
-        COMPONENT nesLibrary)

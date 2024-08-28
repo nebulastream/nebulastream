@@ -174,7 +174,7 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
 endif ()
 
 #Add the nes common and headers to cpack
-install(TARGETS nes-nautilus
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
+#install(TARGETS nes-nautilus
+#        EXPORT NebulaStreamTargets
+#        COMPONENT nesLibrary
+#        DESTINATION lib)

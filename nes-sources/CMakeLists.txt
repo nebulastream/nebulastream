@@ -32,9 +32,3 @@ endif ()
 if (NES_ENABLES_TESTS)
     add_subdirectory(tests)
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-sources
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)

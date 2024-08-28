@@ -49,3 +49,7 @@ target_link_libraries(nebuli PRIVATE nebuli-lib argparse::argparse)
 register_public_header_dir(nebuli ${CMAKE_CURRENT_SOURCE_DIR}/../nes-client/include/API/ API)
 register_public_header_dir(nebuli ${CMAKE_CURRENT_SOURCE_DIR}/../nes-window-types/include/Measures/ Measures/)
 register_public_header_dir(nebuli ${CMAKE_CURRENT_SOURCE_DIR}/../nes-window-types/include/Types/ Types/)
+
+install(TARGETS nebuli
+        RUNTIME
+        COMPONENT nesExecutables)

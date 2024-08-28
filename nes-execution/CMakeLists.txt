@@ -58,7 +58,7 @@ else ()
 endif ()
 
 #Add the nes common and headers to cpack
-install(TARGETS nes-execution
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
+#install(TARGETS nes-execution
+#        EXPORT NebulaStreamTargets
+#        COMPONENT nesLibrary
+#        DESTINATION lib)
