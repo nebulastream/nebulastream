@@ -28,7 +28,10 @@ using NautilusCompilationPhasePtr = std::shared_ptr<NautilusCompilationPhase>;
 class NautilusQueryCompiler : public QueryCompilation::QueryCompiler
 {
 public:
-    QueryCompilation::QueryCompilationResultPtr compileQuery(QueryCompilation::QueryCompilationRequestPtr request) override;
+    QueryCompilation::QueryCompilationResultPtr
+    compileQuery(QueryCompilation::QueryCompilationRequestPtr request, QueryId queryId) override;
+    NautilusQueryCompiler(
+        QueryCompilation::QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory, bool sourceSharing);
 
     NautilusQueryCompiler(QueryCompilation::QueryCompilerOptionsPtr const& options, Phases::PhaseFactoryPtr const& phaseFactory);
 
