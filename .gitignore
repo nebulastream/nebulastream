@@ -42,3 +42,9 @@ nes-asp/data/*.csv
 
 # Ignore cached cables
 tpch_cached_tables
+
+# System test files
+.lit_test_times.txt
+*.test.script
+*.test.tmp
+*.test.tmpsink

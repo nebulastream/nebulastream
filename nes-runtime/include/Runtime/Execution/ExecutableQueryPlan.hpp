@@ -98,8 +98,8 @@ public:
 
     enum class Result : uint8_t
     {
-        Ok,
-        Fail
+        OK,
+        FAILED
     };
 
     /**

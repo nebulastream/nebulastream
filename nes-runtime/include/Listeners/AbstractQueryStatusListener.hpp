@@ -24,10 +24,10 @@ struct AbstractQueryStatusListener
 {
     virtual ~AbstractQueryStatusListener() noexcept = default;
 
-    virtual bool notifySourceTermination(QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType) = 0;
+    virtual bool logSourceTermination(QueryId queryId, OriginId sourceId, Runtime::QueryTerminationType) = 0;
 
-    virtual bool notifyQueryFailure(QueryId queryId, Exception exception) = 0;
+    virtual bool logQueryFailure(QueryId queryId, Exception exception) = 0;
 
-    virtual bool notifyQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus Status) = 0;
+    virtual bool logQueryStatusChange(QueryId queryId, Runtime::Execution::QueryStatus Status) = 0;
 };
 } /// namespace NES

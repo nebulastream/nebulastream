@@ -16,9 +16,7 @@
 
 namespace NES::Runtime
 {
-/**
- * This class is used to create instances of NodeEngine using the builder pattern.
- */
+/// Create instances of NodeEngine using the builder pattern.
 class NodeEngineBuilder
 {
 public:
@@ -26,14 +24,12 @@ public:
 
     explicit NodeEngineBuilder(const Configurations::WorkerConfiguration& workerConfiguration);
 
-    NodeEngineBuilder& setBufferManagers(std::vector<Memory::BufferManagerPtr> bufferManagers);
     NodeEngineBuilder& setQueryManager(QueryManagerPtr queryManager);
 
     std::unique_ptr<NodeEngine> build();
 
 private:
-    std::vector<Memory::BufferManagerPtr> bufferManagers;
     QueryManagerPtr queryManager;
     const Configurations::WorkerConfiguration& workerConfiguration;
 };
-} /// namespace NES::Runtime
+}

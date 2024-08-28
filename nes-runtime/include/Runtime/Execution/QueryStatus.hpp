@@ -26,4 +26,18 @@ enum class QueryStatus : uint8_t
     Failed,
     Invalid
 };
+
+namespace QueryStatusUtil
+{
+
+inline bool hasRestarted(QueryStatus previousState, QueryStatus currentState)
+{
+    return (previousState == QueryStatus::Failed || previousState == QueryStatus::Stopped) && currentState == QueryStatus::Running;
+}
+
+inline bool isRegisteredButNotRunning(QueryStatus status)
+{
+    return status == QueryStatus::Registered || status == QueryStatus::Stopped || status == QueryStatus::Failed;
+}
+}
 } /// namespace NES::Runtime::Execution

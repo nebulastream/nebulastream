@@ -18,7 +18,6 @@
 #include <unordered_map>
 #include <Identifiers/Identifiers.hpp>
 #include <Listeners/AbstractQueryStatusListener.hpp>
-#include <Listeners/QueryLog.hpp>
 #include <Runtime/BufferManager.hpp>
 #include <Runtime/Execution/QueryStatus.hpp>
 #include <Runtime/QueryStatistics.hpp>
@@ -52,10 +51,10 @@ using ThreadPoolPtr = std::shared_ptr<ThreadPool>; /// TODO consider moving this
 class AsyncTaskExecutor;
 using AsyncTaskExecutorPtr = std::shared_ptr<AsyncTaskExecutor>;
 
-class QueryManager : public NES::detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable
+class QueryManager : public detail::virtual_enable_shared_from_this<QueryManager, false>, public Reconfigurable
 {
 public:
-    using inherited0 = NES::detail::virtual_enable_shared_from_this<QueryManager, false>;
+    using inherited0 = detail::virtual_enable_shared_from_this<QueryManager, false>;
 
     using inherited1 = Reconfigurable;
     enum class QueryManagerStatus : uint8_t
@@ -150,8 +149,7 @@ public:
      */
     bool addReconfigurationMessage(QueryId queryId, const ReconfigurationMessage& reconfigurationMessage, bool blocking = false);
 
-    /// Gives the first buffer manager
-    [[nodiscard]] NES::Memory::BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
+    [[nodiscard]] Memory::BufferManagerPtr getBufferManager() { return *bufferManagers.begin(); }
 
 private:
     /**
@@ -198,7 +196,7 @@ public:
 
     [[nodiscard]] uint64_t getCurrentTaskSum() const;
 
-    [[nodiscard]] uint64_t getNumberOfWorkerThreads();
+    [[nodiscard]] uint64_t getNumberOfWorkerThreads() const;
 
     void notifySourceCompletion(OriginId sourceId, QueryTerminationType terminationType);
 
@@ -238,7 +236,7 @@ protected:
 protected:
     WorkerId nodeEngineId;
     std::atomic_uint64_t taskIdCounter = 0;
-    std::vector<NES::Memory::BufferManagerPtr> bufferManagers;
+    std::vector<Memory::BufferManagerPtr> bufferManagers;
 
     uint16_t numThreads;
 

@@ -51,7 +51,7 @@ void QueryManager::notifyQueryStatusChange(const Execution::ExecutableQueryPlanP
             ReconfigurationMessage(qep->getQueryId(), ReconfigurationType::Destroy, inherited1::shared_from_this()),
             false);
     }
-    queryStatusListener->notifyQueryStatusChange(qep->getQueryId(), status);
+    queryStatusListener->logQueryStatusChange(qep->getQueryId(), status);
 }
 void QueryManager::notifySourceFailure(const OriginId failedSourceOriginId, const Exception& exception)
 {
@@ -73,7 +73,7 @@ void QueryManager::notifySourceFailure(const OriginId failedSourceOriginId, cons
                 if (failQuery(qepToFail))
                 {
                     NES_DEBUG("Failed query id= {}", qepToFail->getQueryId());
-                    queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), exception);
+                    queryStatusListener->logQueryFailure(qepToFail->getQueryId(), exception);
                     return qepToFail;
                 }
                 return nullptr;
@@ -114,7 +114,7 @@ void QueryManager::notifyTaskFailure(Execution::SuccessorExecutablePipeline pipe
                 NES_DEBUG("Failed query id= {}", qepToFail->getQueryId());
                 auto exception = UnknownException();
                 exception.what() += errorMessage;
-                queryStatusListener->notifyQueryFailure(qepToFail->getQueryId(), exception);
+                queryStatusListener->logQueryFailure(qepToFail->getQueryId(), exception);
                 return qepToFail;
             }
             return nullptr;
@@ -132,7 +132,7 @@ void QueryManager::notifySourceCompletion(OriginId sourceId, QueryTerminationTyp
         entry->notifySourceCompletion(sourceId, terminationType);
         if (terminationType == QueryTerminationType::Graceful)
         {
-            queryStatusListener->notifySourceTermination(entry->getQueryId(), sourceId, QueryTerminationType::Graceful);
+            queryStatusListener->logSourceTermination(entry->getQueryId(), sourceId, QueryTerminationType::Graceful);
         }
     }
 }

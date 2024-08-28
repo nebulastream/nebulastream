@@ -30,12 +30,6 @@ NodeEngineBuilder::NodeEngineBuilder(const Configurations::WorkerConfiguration& 
 {
 }
 
-NodeEngineBuilder& NodeEngineBuilder::setBufferManagers(std::vector<Memory::BufferManagerPtr> bufferManagers)
-{
-    this->bufferManagers = std::move(bufferManagers);
-    return *this;
-}
-
 NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManager)
 {
     this->queryManager = std::move(queryManager);
@@ -44,45 +38,25 @@ NodeEngineBuilder& NodeEngineBuilder::setQueryManager(QueryManagerPtr queryManag
 
 std::unique_ptr<NodeEngine> NodeEngineBuilder::build()
 {
-    try
+    auto bufferManager = Memory::BufferManager::create(
+        workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue());
+
+    auto queryLog = std::make_shared<QueryLog>();
+    QueryManagerPtr queryManager{this->queryManager};
+    if (!this->queryManager)
     {
-        std::vector<Memory::BufferManagerPtr> bufferManagers;
-
-        ///create buffer manager
-
-        bufferManagers.push_back(Memory::BufferManager::create(
-            workerConfiguration.bufferSizeInBytes.getValue(), workerConfiguration.numberOfBuffersInGlobalBufferManager.getValue()));
-
-        if (bufferManagers.empty())
-        {
-            NES_ERROR("Runtime: error while building NodeEngine: no BufferManager provided");
-            throw Exceptions::RuntimeException(
-                "Error while building NodeEngine : no BufferManager provided", NES::collectAndPrintStacktrace());
-        }
-
-        auto queryLog = std::make_shared<QueryLog>();
-
-        QueryManagerPtr queryManager{this->queryManager};
-        if (!this->queryManager)
-        {
-            auto numOfThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
-            std::vector<uint64_t> workerToCoreMappingVec = NES::Util::splitWithStringDelimiter<uint64_t>("", ",");
-            queryManager = std::make_shared<QueryManager>(queryLog, bufferManagers, WorkerId(0), numOfThreads, 100, workerToCoreMappingVec);
-        }
+        auto numThreads = static_cast<uint16_t>(workerConfiguration.numberOfWorkerThreads.getValue());
+        auto workerToCoreMapping = NES::Util::splitWithStringDelimiter<uint64_t>("", ",");
+        std::vector<Memory::BufferManagerPtr> bufferManagers = {bufferManager};
+        /// TODO(#34): For now, the worker id is always 0 and the numberOfBuffersPerEpoch always 100. We need to change this during the refactoring.
+        queryManager = std::make_shared<QueryManager>(queryLog, bufferManagers, WorkerId(0), numThreads, 100, workerToCoreMapping);
         if (!queryManager)
         {
-            NES_ERROR("Runtime: error while building NodeEngine: error while creating QueryManager");
-            throw Exceptions::RuntimeException(
-                "Error while building NodeEngine : Error while creating QueryManager", NES::collectAndPrintStacktrace());
+            throw CannotStartQueryManager("during creation of NodeEngine");
         }
+    }
 
-        return std::make_unique<NodeEngine>(std::move(bufferManagers), std::move(queryManager), std::move(queryLog));
-    }
-    catch (std::exception& err)
-    {
-        NES_ERROR("Cannot start node engine {}", err.what());
-        NES_THROW_RUNTIME_ERROR("Cant start node engine");
-    }
+    return std::make_unique<NodeEngine>(std::move(bufferManager), std::move(queryManager), std::move(queryLog));
 }
 
 } ///namespace NES::Runtime
