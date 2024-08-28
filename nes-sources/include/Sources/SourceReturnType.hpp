@@ -23,18 +23,24 @@
 namespace NES::Sources::SourceReturnType
 {
 /// Todo #237: Improve error handling in sources
-enum class TerminationType : uint8_t
+struct Error
 {
-    STOP,
-    EOS,
-    FAILURE
+    Exception ex;
 };
-struct SourceTermination
+
+struct Data
 {
-    TerminationType type;
-    std::optional<Exception> exception;
+    NES::Memory::TupleBuffer buffer;
 };
-using SourceReturnType = std::variant<NES::Memory::TupleBuffer, SourceTermination>;
+
+struct EoS
+{
+};
+struct Stopped
+{
+};
+
+using SourceReturnType = std::variant<Error, Data, EoS, Stopped>;
 using EmitFunction = std::function<void(const OriginId, SourceReturnType)>;
 
 }
