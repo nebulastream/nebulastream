@@ -82,6 +82,27 @@ public:
         }
     }
 
+    void status(size_t queryId)
+    {
+        grpc::ClientContext context;
+        QueryStatusRequest request;
+        request.set_queryid(queryId);
+        QueryStatusReply response;
+        auto status = stub->QueryStatus(&context, request, &response);
+        if (status.ok())
+        {
+            NES_DEBUG("Stopping was successful.");
+        }
+        else
+        {
+            NES_THROW_RUNTIME_ERROR(fmt::format(
+                "Registration failed. Status: {}\nMessage: {}\nDetail: {}",
+                magic_enum::enum_name(status.error_code()),
+                status.error_message(),
+                status.error_details()));
+        }
+    }
+
     void start(size_t queryId)
     {
         grpc::ClientContext context;
@@ -125,7 +146,6 @@ public:
     }
 };
 
-
 int main(int argc, char** argv)
 {
     using namespace NES;
@@ -146,6 +166,10 @@ int main(int argc, char** argv)
     stopQuery.add_argument("queryId").scan<'i', size_t>();
     stopQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
 
+    ArgumentParser testQuery("test");
+    testQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
+    testQuery.add_argument("-f", "--file").help("e.g., fliter.test");
+
     ArgumentParser unregisterQuery("unregister");
     unregisterQuery.add_argument("queryId").scan<'i', size_t>();
     unregisterQuery.add_argument("-s", "--server").help("grpc uri e.g., 127.0.0.1:8080");
@@ -157,6 +181,7 @@ int main(int argc, char** argv)
     program.add_subparser(registerQuery);
     program.add_subparser(startQuery);
     program.add_subparser(stopQuery);
+    program.add_subparser(testQuery);
     program.add_subparser(unregisterQuery);
     program.add_subparser(dump);
 
@@ -204,15 +229,82 @@ int main(int argc, char** argv)
     DecomposedQueryPlanPtr decomposedQueryPlan;
     try
     {
-        std::string command = program.is_subcommand_used("register") ? "register" : "dump";
+        if (program.is_subcommand_used("test"))
+        {
+            auto& testArgs = program.at<ArgumentParser>("test");
+            auto serverUri = testArgs.get<std::string>("-s");
+            auto testFile = testArgs.get<std::string>("-f");
+            GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
+
+            /// Get from input the filename without the extension
+            auto testname = std::filesystem::path(testFile).filename().string();            /// A SqlLogicTest format file might have >=1 tests
+
+            auto decomposedQueryPlans = NES::CLI::loadFromSLTFile(testFile, testname);
+            for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
+            {
+                SerializableDecomposedQueryPlan serialized;
+                DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, &serialized);
+
+                GRPCClient client(grpc::CreateChannel(serverUri, grpc::InsecureChannelCredentials()));
+                auto queryId = client.registerQuery(plan);
+                client.start(queryId);
+                ++testnr;
+            }
+            return 0;
+        }
+
+        std::string const command = program.is_subcommand_used("register") ? "register" : "dump";
         auto input = program.at<ArgumentParser>(command).get("-i");
         if (input == "-")
         {
+            /// TODO: for now we do only support yaml files over the cin.
+            /// We might want to either remove it cin support or add checking logic (yaml vs test)
             decomposedQueryPlan = NES::CLI::loadFrom(std::cin);
         }
         else
         {
-            decomposedQueryPlan = NES::CLI::loadFromFile(input);
+            if (input.ends_with(".yaml"))
+            {
+                decomposedQueryPlan = NES::CLI::loadFromYAMLFile(input);
+            }
+            else if (input.ends_with(".test") || input.ends_with(".test_nightly"))
+            {
+                /// Get from input the filename without the extension
+                auto testname = std::filesystem::path(input).stem().string();
+                auto outputDir = program.at<ArgumentParser>(command).get("-o");
+                /// Check if it is a directory and not a file
+                if (!std::filesystem::is_directory(outputDir))
+                {
+                    NES_FATAL_ERROR("The output is not a directory: {}", outputDir);
+                    std::exit(1);
+                }
+
+                /// A SqlLogicTest format file might have >=1 tests
+                auto decomposedQueryPlans = NES::CLI::loadFromSLTFile(input, testname);
+                for (std::size_t testnr = 0; const auto& plan : decomposedQueryPlans)
+                {
+                    SerializableDecomposedQueryPlan serialized;
+                    DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(plan, &serialized);
+                    auto outfilename = std::string(outputDir + "/" + testname + "_" + std::to_string(testnr) + ".pb");
+                    std::ofstream file;
+                    file = std::ofstream(outfilename);
+                    if (!file)
+                    {
+                        NES_FATAL_ERROR("Could not open output file: {}", outfilename);
+                        std::exit(1);
+                    }
+                    if (!serialized.SerializeToOstream(&file))
+                    {
+                        NES_FATAL_ERROR("Failed to write message to file.");
+                        return -1;
+                    }
+                    std::string output;
+                    google::protobuf::TextFormat::PrintToString(serialized, &output);
+                    NES_INFO("GRPC QueryPlan: {}", output);
+                    ++testnr;
+                }
+            }
+            exit(0);
         }
     }
     catch (...)
@@ -229,34 +321,32 @@ int main(int argc, char** argv)
     if (program.is_subcommand_used("dump"))
     {
         auto& dumpArgs = program.at<ArgumentParser>("dump");
-        auto intput = dumpArgs.get<std::string>("-o");
+        auto outputPath = dumpArgs.get<std::string>("-o");
         std::ostream* output;
         std::ofstream file;
-        if (intput == "-")
+        if (outputPath == "-")
         {
             output = &std::cout;
         }
         else
         {
-            file = std::ofstream(intput);
+            file = std::ofstream(outputPath);
             if (!file)
             {
-                NES_FATAL_ERROR("Could not open output file: {}", intput);
+                NES_FATAL_ERROR("Could not open output file: {}", outputPath);
                 std::exit(1);
             }
             output = &file;
         }
-        SerializableDecomposedQueryPlan serialized;
-        DecomposedQueryPlanSerializationUtil::serializeDecomposedQueryPlan(decomposedQueryPlan, &serialized);
         if (!serialized.SerializeToOstream(output))
         {
             NES_FATAL_ERROR("Failed to write message to file.");
             return -1;
         }
 
-        if (intput == "-")
+        if (outputPath == "-")
         {
-            NES_INFO("Wrote protobuf to {}", intput);
+            NES_INFO("Wrote protobuf to {}", outputPath);
         }
     }
     else if (program.is_subcommand_used("register"))

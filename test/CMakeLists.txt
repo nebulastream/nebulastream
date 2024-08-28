@@ -10,9 +10,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-add_subdirectory(Catalogs)
-add_subdirectory(Compiler)
-add_subdirectory(Parser)
-add_subdirectory(Optimizer)
-add_subdirectory(QueryValidation)
-add_subdirectory(Services)
+# In this function we create target for system tests. We make heavy use of cache files to speed up the tests when
+# running them multiple times. The cache files are created by the nebuli tool. The cache files are created in the
+# build directory in the cache folder. After the initial creation of the cache files the are only updated if the
+# system test file changes.
+
+add_subdirectory(utils)

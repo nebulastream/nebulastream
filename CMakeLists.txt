@@ -42,6 +42,7 @@ option(NES_ENABLE_EXPERIMENTAL_EXECUTION_JNI "Build JNI Backend" OFF)
 option(NES_BUILD_BENCHMARKS "Build benchmarks" ON)
 option(NES_BUILD_MULTITHREADED "Build multithreaded query execution tests" ON)
 option(BUILD_SHARED_LIBS "Build using shared libraries" ON)
+option(NES_ENABLE_LLVM_LIT "Create targets for llvm lit system testing (intended for CI testing)" OFF)
 
 #toggle GPU runtime and test
 option(NES_USE_GPU "Build with GPU acceleration" OFF)
@@ -407,6 +408,7 @@ add_subdirectory(nes-memory)
 
 add_subdirectory(nes-single-node-worker)
 add_subdirectory(nes-nebuli)
+add_subdirectory(test)
 
 # Documentation
 add_subdirectory(cmake/docs)
@@ -489,3 +491,5 @@ project_enable_clang_format()
 project_enable_check_comment_format()
 project_enable_check_preamble()
 instrument_codebase()
+include(cmake/SystemTests.cmake)
+project_enable_system_level_tests()
