@@ -38,7 +38,10 @@ CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
     this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
     this->numberOfTuplesToProducePerBuffer = csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
     this->tupleSize = schema->getSchemaSizeInBytes();
+}
 
+void CSVSource::open()
+{
     struct Deleter
     {
         void operator()(const char* ptr) { std::free(const_cast<char*>(ptr)); }
@@ -77,6 +80,11 @@ CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
     }
 
     this->inputParser = std::make_shared<CSVParser>(schema->getSize(), physicalTypes, delimiter);
+}
+
+void CSVSource::close()
+{
+    input.close();
 }
 
 bool CSVSource::fillTupleBuffer(
