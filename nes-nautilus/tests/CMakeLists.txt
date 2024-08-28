@@ -10,4 +10,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+function(add_nes_execution_test)
+    add_nes_test(${ARGN})
+    set(TARGET_NAME ${ARGV0})
+    target_link_libraries(${TARGET_NAME} nes-execution-test-util)
+endfunction()
+
 add_subdirectory(Nautilus)

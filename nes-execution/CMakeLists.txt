@@ -49,13 +49,6 @@ if (NES_ENABLE_PRECOMPILED_HEADERS)
     target_compile_options(nes-execution PUBLIC "-fPIC")
 endif ()
 
-if (NES_ENABLES_TESTS)
-    # Add tests with command
-    add_subdirectory(tests)
-    message(STATUS "Tests are enabled")
-else ()
-    message(STATUS "Tests are disabled")
-endif ()
 
 #Add the nes common and headers to cpack
 install(TARGETS nes-execution

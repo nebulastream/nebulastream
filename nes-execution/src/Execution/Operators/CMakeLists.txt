@@ -16,7 +16,3 @@ add_source_files(nes-execution
         Emit.cpp
         Scan.cpp
         ExecutionContext.cpp)
-
-add_subdirectory(Relational)
-add_subdirectory(ThresholdWindow)
-add_subdirectory(Streaming)

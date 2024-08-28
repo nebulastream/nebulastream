@@ -14,8 +14,6 @@ add_source_files(nes-execution
         RecordBuffer.cpp
         )
 
-add_subdirectory(Aggregation)
-add_subdirectory(Expressions)
 add_subdirectory(Operators)
 add_subdirectory(Pipelines)
 add_subdirectory(MemoryProvider)
