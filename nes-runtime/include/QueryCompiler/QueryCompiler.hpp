@@ -24,12 +24,7 @@ namespace NES::QueryCompilation
 class QueryCompiler
 {
 public:
-    /**
-     * @brief Submits a new query compilation request for compilation.
-     * @param request The compilation request.
-     * @return QueryCompilationResultPtr result for the query compilation.
-     */
-    virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request) = 0;
+    virtual QueryCompilationResultPtr compileQuery(QueryCompilationRequestPtr request, QueryId queryId) = 0;
     virtual ~QueryCompiler() = default;
 
 protected:
