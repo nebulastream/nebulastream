@@ -77,7 +77,6 @@ protected:
     SourceReturnType::EmitFunction emitFunction;
     std::shared_ptr<NES::Memory::AbstractBufferProvider> bufferProvider{nullptr};
     uint64_t numSourceLocalBuffers;
-    SourceType type;
     std::atomic_bool wasStarted{false};
     std::atomic_bool futureRetrieved{false};
     std::atomic_bool running{false};

@@ -31,13 +31,13 @@ namespace NES::Sources
 CSVSource::CSVSource(SchemaPtr schema, CSVSourceTypePtr csvSourceType)
     : fileEnded(false)
     , filePath(csvSourceType->getFilePath()->getValue())
+    , tupleSize(schema->getSchemaSizeInBytes())
+    , numberOfTuplesToProducePerBuffer(csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue())
     , delimiter(csvSourceType->getDelimiter()->getValue())
     , skipHeader(csvSourceType->getSkipHeader()->getValue())
+    , numberOfBuffersToProduce(csvSourceType->getNumberOfBuffersToProduce()->getValue())
     , schema(schema)
 {
-    this->numberOfBuffersToProduce = csvSourceType->getNumberOfBuffersToProduce()->getValue();
-    this->numberOfTuplesToProducePerBuffer = csvSourceType->getNumberOfTuplesToProducePerBuffer()->getValue();
-    this->tupleSize = schema->getSchemaSizeInBytes();
 }
 
 void CSVSource::open()

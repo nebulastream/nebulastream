@@ -41,18 +41,13 @@ public:
     void open() override;
     void close() override;
 
-    void
-    fillBuffer(NES::Memory::MemoryLayouts::TestTupleBuffer&, const std::shared_ptr<NES::Memory::AbstractBufferProvider>& bufferManager);
-
     std::string toString() const override;
 
     SourceType getType() const override;
 
-protected:
+private:
     std::ifstream input;
     bool fileEnded;
-
-private:
     std::string filePath;
     uint64_t tupleSize;
     uint64_t numberOfTuplesToProducePerBuffer;
