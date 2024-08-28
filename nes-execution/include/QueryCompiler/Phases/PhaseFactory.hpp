@@ -51,13 +51,6 @@ public:
     * @return LowerToExecutableQueryPlanPhasePtr
     */
     virtual LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase() = 0;
-
-    /**
-    * @brief Creates buffer optimization phase
-    * @param QueryCompilerOptionsPtr options
-    * @return BufferOptimizationPhasePtr
-    */
-    virtual BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) = 0;
 };
 
 } /// namespace NES::QueryCompilation::Phases

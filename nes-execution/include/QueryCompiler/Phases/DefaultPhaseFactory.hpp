@@ -29,7 +29,6 @@ public:
     PipeliningPhasePtr createPipeliningPhase(QueryCompilerOptionsPtr options) override;
     AddScanAndEmitPhasePtr createAddScanAndEmitPhase(QueryCompilerOptionsPtr options) override;
     LowerToExecutableQueryPlanPhasePtr createLowerToExecutableQueryPlanPhase() override;
-    BufferOptimizationPhasePtr createBufferOptimizationPhase(QueryCompilerOptionsPtr options) override;
 };
 
 } /// namespace NES::QueryCompilation::Phases
