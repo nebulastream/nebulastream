@@ -137,7 +137,7 @@ VarVal readVarValFromMemRef(const MemRefVal& memRef, const PhysicalTypePtr& type
 std::ostream& operator<<(std::ostream& os, const VarVal& varVal) {
     /// We can later refine this by using a std::visit and calling toString() as toString() is implemented for all nautilus::val<T>
     /// We would have to implement a toString() for the VariableSizedDataType though
-    return os << "NES::Nautilus::VarVal{null: " << varVal.null.toString() << "}";
+    return os << "NES::Nautilus::VarVal{null: " << varVal.null << "}";
 }
 
 }// namespace NES::Nautilus

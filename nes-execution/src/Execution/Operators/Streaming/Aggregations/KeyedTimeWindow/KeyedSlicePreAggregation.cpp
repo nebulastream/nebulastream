@@ -137,7 +137,7 @@ void KeyedSlicePreAggregation::execute(NES::Runtime::Execution::ExecutionContext
 
     // 4. calculate hash
     auto hash = hashFunction->calculate(keyValues);
-    NES_INFO("Calculated hash: {} from record {}", hash.toString(), record.toString());
+    NES_INFO("Calculated hash: {} from record {}", hash, record.toString());
 
     // 5. create entry in the slice hash map. If the entry is new set default values for aggregations.
     auto entry = sliceState.findOrCreate(hash, keyValues, [this](auto& entry) {

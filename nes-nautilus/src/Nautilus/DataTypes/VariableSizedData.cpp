@@ -57,7 +57,7 @@ BooleanVal VariableSizedData::operator!() const { return size > 0 && content != 
 
 
 [[nodiscard]] std::ostream& VariableSizedData::operator<<(std::ostream& os) const {
-    os << "Size(" << size.toString() << ")";
+    os << "Size(" << size << ")";
     /// Once https://github.com/nebulastream/nautilus/pull/27 is merged, we can print out the content via hex
     return os;
 }

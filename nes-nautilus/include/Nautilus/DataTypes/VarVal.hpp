@@ -21,6 +21,7 @@
 #include <nautilus/val.hpp>
 #include <nautilus/val_ptr.hpp>
 #include <variant>
+#include <fmt/ostream.h>
 
 namespace NES::Nautilus {
 #define DEFINE_BINARY_OPERATOR_VAR_VAL(operatorName, op)                                                                                 \
@@ -194,5 +195,12 @@ VarVal readVarValFromMemRef(const MemRefVal& memRef, const PhysicalTypePtr& type
 
 std::ostream& operator<<(std::ostream& os, const VarVal& varVal);
 }// namespace NES::Nautilus
+
+namespace fmt {
+template <typename ValueType>
+struct formatter<nautilus::val<ValueType>> : ostream_formatter {
+
+};
+}
 
 #endif// NES_NAUTILUS_INCLUDE_NAUTILUS_DATATYPES_VARVAL_HPP_
