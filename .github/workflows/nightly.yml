@@ -25,43 +25,8 @@ jobs:
         run: echo "Long running tests will be added in the future."
 
   create-nightly-image:
-    runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
-    needs: [ long-running-tests ]
-    if: github.ref == 'refs/heads/main'
-    env:
-      DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
-      DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
-      EVENT: ${{ github.event_name }}
-      NEXT_VERSION: ${{ github.event.inputs.version }}
-    timeout-minutes: 60
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - osversion: ubuntu-22_04
-            arch: X64
-            platform: linux/amd64
-            package_name: nes-amd64
-          - osversion: ubuntu-22_04
-            arch: arm64
-            platform: linux/arm64
-            package_name: nes-arm64
-    steps:
-      - uses: AutoModality/action-clean@v1
-      - name: "Checkout NebulaStream Repository"
-        uses: actions/checkout@v4
-        with:
-          ssh-key: ${{ secrets.CI_SECRET }}
-          ssh-strict: 'false'
-      - name: Build Executable Docker Image
-        working-directory: ${{ github.workspace }}/docker
-        # Example docker image name: nebulastream/nes-public-executable-image:nightly-X64 or nebulastream/nes-public-executable-image:nightly-arm64
-        run: bash scripts/build_docker_image_executable_image.sh nebulastream/nes-public-executable-image:nightly-${{ matrix.arch }} ${{ matrix.arch }} ${{ matrix.package_name }}
-      - name: "Release and Push NES Executable Image"
-        run: |
-          nes_version=${GITHUB_REF_NAME:1}
-          echo "Preparing and Releasing new executable image version nightly"
-          echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-          docker image push nebulastream/nes-public-executable-image-${{ github.event.inputs.branch }}:nightly-${{ matrix.arch }}
-          echo "Pushed the execution image"
-          docker logout
+    uses: ./.github/workflows/create_release_image.yml
+    secrets: inherit
+    with:
+      ref: "main"
+      dockerhub-tag: "nightly"
