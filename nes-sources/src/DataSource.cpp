@@ -88,7 +88,6 @@ bool DataSource::start()
             NES_WARNING("DataSource {}: is already running", originId);
             return false;
         }
-        type = sourceImplementation->getType();
         NES_DEBUG("DataSource {}: Spawn thread", originId);
         expected = false;
         if (wasStarted.compare_exchange_strong(expected, true))
