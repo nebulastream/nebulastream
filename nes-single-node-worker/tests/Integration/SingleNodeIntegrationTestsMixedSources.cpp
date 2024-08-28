@@ -29,10 +29,7 @@
 #include <IntegrationTestUtil.hpp>
 #include <SingleNodeWorkerRPCService.pb.h>
 
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Wdeprecated"
 #include <boost/asio.hpp>
-#pragma clang diagnostic pop
 
 namespace NES::Testing
 {

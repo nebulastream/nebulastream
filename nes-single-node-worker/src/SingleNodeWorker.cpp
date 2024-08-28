@@ -94,11 +94,16 @@ SingleNodeWorker::SingleNodeWorker(const Configuration::SingleNodeWorkerConfigur
 {
 }
 
+/// This is a hotfix to get again unique queryId after our ininital worker refactoring.
+/// We might want to move this to the engine.
+static std::atomic counter = INITIAL<QueryId>.getRawValue();
+
 QueryId SingleNodeWorker::registerQuery(DecomposedQueryPlanPtr plan)
 {
     try
     {
-        auto compilationResult = qc->compileQuery(QueryCompilation::QueryCompilationRequest::create(std::move(plan), nodeEngine));
+        auto compilationResult
+            = qc->compileQuery(QueryCompilation::QueryCompilationRequest::create(std::move(plan), nodeEngine), QueryId(counter++));
         return nodeEngine->registerExecutableQueryPlan(compilationResult->getExecutableQueryPlan());
     }
     catch (Exception& e)

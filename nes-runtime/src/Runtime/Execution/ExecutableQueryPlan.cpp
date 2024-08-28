@@ -77,7 +77,7 @@ ExecutableQueryPlan::~ExecutableQueryPlan()
     destroy();
 }
 
-std::shared_future<ExecutableQueryPlanResult> ExecutableQueryPlan::getTerminationFuture()
+std::shared_future<ExecutableQueryPlan::Result> ExecutableQueryPlan::getTerminationFuture()
 {
     return qepTerminationStatusFuture.share();
 }
@@ -100,7 +100,7 @@ bool ExecutableQueryPlan::fail()
                 ret = false;
             }
         }
-        qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Fail);
+        qepTerminationStatusPromise.set_value(Result::Fail);
     }
 
     if (!ret)
@@ -207,12 +207,12 @@ bool ExecutableQueryPlan::stop()
 
         if (allStagesStopped)
         {
-            qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+            qepTerminationStatusPromise.set_value(ExecutableQueryPlan::Result::Ok);
             return true; /// correct stop
         }
 
         queryStatus.store(QueryStatus::Failed);
-        qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Fail);
+        qepTerminationStatusPromise.set_value(ExecutableQueryPlan::Result::Fail);
 
         return false; /// one stage failed to stop
     }
@@ -228,7 +228,7 @@ bool ExecutableQueryPlan::stop()
         /// try to install ErrorState
     }
 
-    qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Fail);
+    qepTerminationStatusPromise.set_value(ExecutableQueryPlan::Result::Fail);
 
     bufferManager.reset();
     return false;
@@ -263,7 +263,7 @@ void ExecutableQueryPlan::postReconfigurationCallback(ReconfigurationMessage& ta
                 {
                     /// if CAS fails - it means the query was already stopped or failed
                     NES_DEBUG("QueryExecutionPlan: query plan {} is marked as (soft) stopped now", queryId);
-                    qepTerminationStatusPromise.set_value(ExecutableQueryPlanResult::Ok);
+                    qepTerminationStatusPromise.set_value(ExecutableQueryPlan::Result::Ok);
                     queryManager->notifyQueryStatusChange(shared_from_base<ExecutableQueryPlan>(), Execution::QueryStatus::Finished);
                     return;
                 }

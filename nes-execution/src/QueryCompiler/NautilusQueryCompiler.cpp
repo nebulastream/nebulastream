@@ -52,14 +52,14 @@ NautilusQueryCompiler::create(QueryCompilerOptionsPtr const& options, Phases::Ph
     return std::make_shared<NautilusQueryCompiler>(NautilusQueryCompiler(options, phaseFactory, sourceSharing));
 }
 
-QueryCompilation::QueryCompilationResultPtr NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request)
+QueryCompilation::QueryCompilationResultPtr
+NautilusQueryCompiler::compileQuery(QueryCompilation::QueryCompilationRequestPtr request, QueryId queryId)
 {
     NES_INFO("Compile Query with Nautilus");
     Timer timer("NautilusQueryCompiler");
-    auto queryId = request->getDecomposedQueryPlan()->getQueryId();
-    auto query = fmt::format("{}", queryId);
+    request->getDecomposedQueryPlan()->setQueryId(queryId);
     /// create new context for handling debug output
-    auto dumpContext = DumpContext::create("QueryCompilation-" + query);
+    auto dumpContext = DumpContext::create(fmt::format("QueryCompilation-{}", queryId));
     dumpContext->registerDumpHandler(ConsoleDumpHandler::create(std::cout));
 
     timer.start();

@@ -220,7 +220,7 @@ bool QueryManager::failQuery(const Execution::ExecutableQueryPlanPtr& qep)
     switch (terminationStatus)
     {
         case std::future_status::ready: {
-            if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Fail)
+            if (terminationFuture.get() != Execution::ExecutableQueryPlan::Result::Fail)
             {
                 NES_FATAL_ERROR("QueryManager: QEP {} could not be failed", qep->getQueryId());
                 ret = false;
@@ -297,7 +297,7 @@ bool QueryManager::stopQuery(const Execution::ExecutableQueryPlanPtr& qep, Runti
     switch (terminationStatus)
     {
         case std::future_status::ready: {
-            if (terminationFuture.get() != Execution::ExecutableQueryPlanResult::Ok)
+            if (terminationFuture.get() != Execution::ExecutableQueryPlan::Result::Ok)
             {
                 NES_FATAL_ERROR("QueryManager: QEP {} could not be stopped", qep->getQueryId());
                 ret = false;
