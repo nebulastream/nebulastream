@@ -108,16 +108,14 @@ bool QueryManager::startQuery(const Execution::ExecutableQueryPlanPtr& qep)
     /// 5. start data sources
     for (const auto& source : qep->getSources())
     {
-        std::stringstream sourceStringStream;
-        sourceStringStream << source;
-        NES_DEBUG("QueryManager: start source: {}", sourceStringStream.str());
+        NES_DEBUG("QueryManager: start source: {}", *source);
         if (!source->start())
         {
-            NES_WARNING("QueryManager: source {} could not started as it is already running", sourceStringStream.str());
+            NES_WARNING("QueryManager: source {} could not started as it is already running", *source);
         }
         else
         {
-            NES_DEBUG("QueryManager: source  {}  started successfully", sourceStringStream.str());
+            NES_DEBUG("QueryManager: source  {}  started successfully", *source);
         }
     }
 

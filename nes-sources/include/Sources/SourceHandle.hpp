@@ -17,6 +17,7 @@
 #include <memory>
 #include <Sources/DataSource.hpp>
 #include <Sources/SourceReturnType.hpp>
+#include <fmt/format.h>
 
 namespace NES::Sources
 {
@@ -55,4 +56,14 @@ private:
 
 using SourceHandlePtr = std::shared_ptr<SourceHandle>;
 
+}
+
+/// Specializing the fmt ostream_formatter to accept SourceHandle objects.
+/// Allows to call fmt::format("SourceHandle: {}", sourceHandleObject); and therefore also works with our logging.
+namespace fmt
+{
+template <>
+struct formatter<NES::Sources::SourceHandle> : ostream_formatter
+{
+};
 }
