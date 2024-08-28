@@ -31,7 +31,7 @@ using ParserPtr = std::shared_ptr<Parser>;
 class TCPSource : public Source
 {
     /// TODO #74: make timeout configurable via descriptor
-    constexpr static timeval TCP_SOCKET_DEFAULT_TIMEOUT{0, 100000};
+    constexpr static std::chrono::microseconds TCP_SOCKET_DEFAULT_TIMEOUT{100000};
 
 public:
     explicit TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType);
@@ -55,7 +55,7 @@ private:
 
     /// Converts buffersize in either binary (NES Format) or ASCII (Json and CSV)
     /// takes 'data', which is a data memory segment which contains the buffersize
-    [[nodiscard]] size_t parseBufferSize(SPAN_TYPE<const char> data) const;
+    [[nodiscard]] size_t parseBufferSize(std::span<const char> data) const;
 
     std::vector<NES::PhysicalTypePtr> physicalTypes;
     ParserPtr inputParser;
@@ -63,7 +63,6 @@ private:
     uint64_t tupleSize;
     uint64_t tuplesThisPass;
     int sockfd = -1;
-    timeval timeout;
     MMapCircularBuffer circularBuffer;
 
     SchemaPtr schema;
