@@ -36,7 +36,6 @@ namespace NES::Sources
 
 TCPSource::TCPSource(SchemaPtr schema, TCPSourceTypePtr tcpSourceType)
     : tupleSize(schema->getSchemaSizeInBytes())
-    , timeout(TCP_SOCKET_DEFAULT_TIMEOUT)
     , circularBuffer(getpagesize() * 2)
     , schema(schema)
     , inputFormat(tcpSourceType->getInputFormat()->getValue())
@@ -87,7 +86,7 @@ std::string TCPSource::toString() const
     ss << "Generated tuples: " << this->generatedTuples;
     ss << "Generated buffers: " << this->generatedBuffers;
     ss << "Connection: " << this->connection;
-    ss << "Timeout: " << this->timeout.tv_sec << "seconds and " << this->timeout.tv_usec << " microseconds";
+    ss << "Timeout: " << TCP_SOCKET_DEFAULT_TIMEOUT.count() << " microseconds";
     ss << "InputFormat: " << magic_enum::enum_name(inputFormat);
     ss << "SocketHost: " << socketHost;
     ss << "SocketPort: " << socketPort;
@@ -132,7 +131,8 @@ void TCPSource::open()
             continue;
         }
 
-        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+        constexpr static timeval timeout{0, TCP_SOCKET_DEFAULT_TIMEOUT.count()};
+        setsockopt(sockfd, SOL_SOCKET, SO_RCVTIMEO, &timeout, sizeof(timeout));
         connection = connect(sockfd, result->ai_addr, result->ai_addrlen);
 
         if (connection != -1)
@@ -174,19 +174,19 @@ bool TCPSource::fillTupleBuffer(
     }
 }
 
-std::pair<bool, size_t> sizeUntilSearchToken(SPAN_TYPE<const char> data, char token)
+std::pair<bool, size_t> sizeUntilSearchToken(std::span<const char> data, char token)
 {
     auto result = std::find_if(data.begin(), data.end(), [token](auto& c) { return c == token; });
 
     return {result != data.end(), std::distance(data.begin(), result)};
 }
 
-size_t asciiBufferSize(const SPAN_TYPE<const char> data)
+size_t asciiBufferSize(const std::span<const char> data)
 {
     return std::stoll(std::string(data.begin(), data.end()));
 }
 
-size_t binaryBufferSize(SPAN_TYPE<const char> data)
+size_t binaryBufferSize(std::span<const char> data)
 {
     static_assert(std::endian::native == std::endian::little, "Only implemented for little endian");
     NES_ASSERT(data.size() <= sizeof(size_t), "Not implemented for " << data.size() << "socket buffer size");
@@ -196,7 +196,7 @@ size_t binaryBufferSize(SPAN_TYPE<const char> data)
     return result;
 }
 
-size_t TCPSource::parseBufferSize(SPAN_TYPE<const char> data) const
+size_t TCPSource::parseBufferSize(std::span<const char> data) const
 {
     if (inputFormat == Configurations::InputFormat::NES_BINARY)
     {
@@ -252,7 +252,7 @@ bool TCPSource::fillBuffer(
         if (!circularBuffer.empty())
         {
             auto reader = circularBuffer.read();
-            auto tupleData = SPAN_TYPE<const char>{};
+            auto tupleData = std::span<const char>{};
             NES_ASSERT(tupleData.empty(), "not empty");
             /// Every protocol returns a view into the tuple (or Buffer for Binary) memory in tupleData;
             /// switch case depends on the message receiving that was chosen when creating the source. Three choices are available:
@@ -298,7 +298,7 @@ bool TCPSource::fillBuffer(
                         break;
                     }
 
-                    auto bufferSizeMemory = SPAN_TYPE<const char>(reader).subspan(0, bufferSizeSize);
+                    auto bufferSizeMemory = std::span<const char>(reader).subspan(0, bufferSizeSize);
                     auto size = parseBufferSize(bufferSizeMemory);
                     NES_TRACE("tuple size from socket: {}", size);
                     if (reader.size() < bufferSizeSize + size)
