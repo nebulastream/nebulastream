@@ -12,8 +12,11 @@
     limitations under the License.
 */
 
+#include <iostream>
+#include <optional>
 #include <Sources/Registry/GeneratedSourceRegistrar.hpp>
 #include <Sources/Registry/SourceRegistry.hpp>
+#include <API/Schema.hpp>
 
 namespace NES::Sources
 {
