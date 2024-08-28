@@ -15,6 +15,7 @@
 #include <iostream>
 #include <memory>
 #include <variant>
+#include <Identifiers/Identifiers.hpp>
 #include <Runtime/AsyncTaskExecutor.hpp>
 #include <Runtime/Execution/ExecutablePipeline.hpp>
 #include <Runtime/Execution/ExecutablePipelineStage.hpp>
@@ -25,7 +26,6 @@
 #include <Runtime/WorkerContext.hpp>
 #include <Sinks/Mediums/SinkMedium.hpp>
 #include <Util/Logger/Logger.hpp>
-#include "Identifiers/Identifiers.hpp"
 
 namespace NES::Runtime
 {
