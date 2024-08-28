@@ -35,13 +35,11 @@ NodeEngine::NodeEngine(
 
 QueryId NodeEngine::registerExecutableQueryPlan(const Execution::ExecutableQueryPlanPtr& queryExecutionPlan)
 {
-    /// TODO(#123): Query Instantiation
-    static std::atomic counter = INITIAL<QueryId>.getRawValue();
+    auto queryId = queryExecutionPlan->getQueryId();
     queryManager->registerQuery(queryExecutionPlan);
 
-    const auto nextQueryId = QueryId(counter++);
-    registeredQueries[nextQueryId] = queryExecutionPlan;
-    return nextQueryId;
+    registeredQueries[queryId] = queryExecutionPlan;
+    return queryId;
 }
 
 void NodeEngine::startQuery(QueryId queryId)
