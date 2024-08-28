@@ -172,9 +172,3 @@ if (NES_ENABLE_EXPERIMENTAL_EXECUTION_CPP)
     message(STATUS "Enable cpp compiler backend")
     target_link_libraries(nes-execution PRIVATE nes-compiler)
 endif ()
-
-#Add the nes common and headers to cpack
-install(TARGETS nes-nautilus
-        EXPORT NebulaStreamTargets
-        COMPONENT nesLibrary
-        DESTINATION lib)
