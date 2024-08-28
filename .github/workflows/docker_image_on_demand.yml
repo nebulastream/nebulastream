@@ -9,48 +9,14 @@ on:
   workflow_dispatch:
     inputs:
       branch:
-        description: 'Branch to build docker executable images for'
+        description: 'Branch (or ref) to build docker executable images for'
         required: true
         default: 'main'
 
 jobs:
-    build-docker:
-      runs-on: [ self-hosted, linux, '${{ matrix.arch }}', Build ]
-      env:
-        DOCKER_USER_NAME: ${{ secrets.DOCKER_USER_NAME}}
-        DOCKER_SECRET: ${{ secrets.DOCKER_SECRET}}
-        EVENT: ${{ github.event_name }}
-        NEXT_VERSION: ${{ github.event.inputs.version }}
-      timeout-minutes: 60
-      strategy:
-        fail-fast: false
-        matrix:
-          include:
-            - osversion: ubuntu-22_04
-              arch: X64
-              platform: linux/amd64
-              package_name: nes-amd64
-            - osversion: ubuntu-22_04
-              arch: arm64
-              platform: linux/arm64
-              package_name: nes-arm64
-      steps:
-        - uses: AutoModality/action-clean@v1
-        - name: "Checkout NebulaStream Repository"
-          uses: actions/checkout@v4
-          with:
-            ssh-key: ${{ secrets.CI_SECRET }}
-            ssh-strict: 'false'
-            ref: ${{ github.event.inputs.branch }}
-        - name: Build Executable Docker Image
-          working-directory: ${{ github.workspace }}/docker
-          # Will create a docker image with the name dod-<branchname>-<arch>, e.g., dod-main-X64
-          run: bash scripts/build_docker_image_executable_image.sh dod-${{ github.event.inputs.branch }}-${{ matrix.arch }} ${{ matrix.arch }} ${{ matrix.package_name }} ${{ matrix.platform }} nes-public-executable-image
-        - name: "Release and Push NES Executable Image"
-          run: |
-            nes_version=${GITHUB_REF_NAME:1}
-            echo "Preparing and Releasing new executable image version"
-            echo "$DOCKER_SECRET" | docker login -u "$DOCKER_USER_NAME" --password-stdin
-            docker image push nebulastream/nes-public-executable-image:dod-${{ github.event.inputs.branch }}-${{ matrix.arch }}
-            echo "Pushed the execution image nebulastream/nes-public-executable-image:dod-${{ github.event.inputs.branch }}-${{ matrix.arch }} to docker hub"
-            docker logout
+  create_image:
+    uses: ./.github/workflows/create_release_image.yml
+    secrets: inherit
+    with:
+      ref: ${{ inputs.branch }}
+      dockerhub-tag: ${{ inputs.branch }}
