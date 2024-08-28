@@ -60,6 +60,16 @@ void startQuery(QueryId queryId, GRPCServer& uut)
     EXPECT_TRUE(uut.StartQuery(&context, &request, &reply).ok());
 }
 
+bool IntegrationTestUtil::isQueryFinished(QueryId queryId, GRPCServer& uut)
+{
+    grpc::ServerContext context;
+    QueryStatusRequest request;
+    QueryStatusReply reply;
+    request.set_queryid(queryId.getRawValue());
+    EXPECT_TRUE(uut.QueryStatus(&context, &request, &reply).ok());
+    return reply.status() == QueryStatusReply::Finished;
+}
+
 void stopQuery(QueryId queryId, Runtime::QueryTerminationType type, GRPCServer& uut)
 {
     grpc::ServerContext context;
